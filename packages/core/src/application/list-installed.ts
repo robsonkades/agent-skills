@@ -71,9 +71,13 @@ export class ListInstalled {
         for (const target of targetsFor(this.ctx, adapter, scope, projectRoot)) {
           // An agent whose global and project roots resolve to the same directory (possible
           // when the config directory has been relocated into a repository) must not have its
-          // skills counted twice.
-          if (seenRoots.has(`${adapter.id}:${target.root}`)) continue;
-          seenRoots.add(`${adapter.id}:${target.root}`);
+          // skills counted twice. The comparison must be on the canonical path: the global
+          // root comes from an environment variable and the project root from the cwd, and
+          // on macOS those can name the same directory through different symlink forms
+          // (/var/... versus /private/var/...).
+          const rootKey = await this.canonical(target.root);
+          if (seenRoots.has(`${adapter.id}:${rootKey}`)) continue;
+          seenRoots.add(`${adapter.id}:${rootKey}`);
 
           const all = await this.ctx.installer.list(target);
           const skills =
@@ -89,5 +93,14 @@ export class ListInstalled {
       ...(projectRoot === undefined ? {} : { projectRoot }),
       total,
     };
+  }
+
+  /**
+   * Canonical form of a root for identity comparison. A root that does not exist yet has no
+   * canonical form to resolve — the resolved literal path is the best available identity.
+   */
+  private async canonical(root: string): Promise<string> {
+    if (!(await this.ctx.fs.exists(root))) return this.ctx.fs.resolve(root);
+    return this.ctx.fs.realpath(root);
   }
 }
