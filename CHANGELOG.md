@@ -1,0 +1,130 @@
+# Changelog
+
+All notable changes to this project are documented here.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
+project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+All seven published packages move together in the 1.x line, so a single version identifies a
+compatible set.
+
+## [Unreleased]
+
+### Added
+
+- **`kind` in `skill.yaml`** — `skill` (the default, and what every existing package is) or
+  `command`. A command package uses `COMMAND.md` as its entrypoint; everything else about the
+  format is unchanged. Additive under `schemaVersion: 1`.
+- **Claude Code commands** install to `$CLAUDE_CONFIG_DIR/commands/<name>.md` globally and
+  `<project>/.claude/commands/<name>.md` per project. The adapter projects `description` plus
+  `argument-hint`, `allowed-tools` and `model`; the file name is the command name, so `name`
+  is dropped on projection.
+- **Single-file installs** in `AtomicInstaller`: a package can now be one file instead of a
+  directory, committed by the same staging-and-rename path, with the same receipt, drift
+  detection and refusal to overwrite what the tool does not own.
+- `agent-skills create <name> --kind command` scaffolds a command package.
+- **Workflow packages** (`kind: workflow`), installed to `$CLAUDE_CONFIG_DIR/workflows/<name>.js`
+  and `<project>/.claude/workflows/<name>.js`. The script is copied verbatim: Claude Code
+  compiles it, so nothing is projected or reformatted.
+- **`export const meta` is read statically** for workflow packages, by a literal parser
+  (`core/domain/js-literal.ts`) that never executes the script. `parseEntrypoint` normalises it
+  into the same `SkillDocument` a Markdown entrypoint produces, so identity, validation, search
+  and `info` treat every kind alike. Claude Code's own rules — `meta` first, pure literal — are
+  enforced here so a package that validates is one the agent can compile.
+- **Workflow validation** in the Claude Code adapter: the determinism rules
+  (`Date.now()`/`Math.random()`/`new Date()` are unavailable), disallowed control characters, and
+  the shape of `meta.phases`. What used to fail at run time now fails at `publish`.
+- `agent-skills create <name> --kind workflow` scaffolds a runnable skeleton.
+
+### Changed
+
+- **`AgentAdapter.skillRoot(scope, ctx)` is now `locationFor(kind, scope, ctx)`**, returning
+  `{ root, shape, extension }` or `undefined` when the agent has no such kind. Out-of-tree
+  adapters must be updated; see [docs/adding-an-agent.md](docs/adding-an-agent.md).
+- **`AgentLayout` no longer carries `directoryName`.** The installer names the installed
+  package after the manifest, for both entry shapes.
+- `AgentTarget` gained `kind`, `shape` and `extension`. `list`, `uninstall` and `doctor`
+  now visit every kind an agent supports; `install` writes only into the kind of the package.
+- `agents.<id>.globalRoot` / `projectRoot` in config name the **skills** root; other kinds
+  keep the agent's own convention rather than being redirected into it.
+
+### Notes
+
+- Codex declares no location for commands. Its custom-prompt directory has not been verified
+  against the binary the way `$CODEX_HOME/skills` was, and installing a command there is
+  reported as skipped rather than written to a guessed path.
+
+## [1.0.0] — 2026-08-23
+
+First release.
+
+### Added
+
+**Skill package format (`schemaVersion: 1`)**
+
+- `SKILL.md` with YAML frontmatter as the agent-facing entrypoint, plus `skill.yaml` as the
+  machine-readable packaging manifest.
+- Semantic versioning, dependencies and optional dependencies, agent compatibility
+  declarations, SPDX licence, authors, repository, homepage, keywords, capability tags and
+  content integrity.
+- `agentOverrides`, a narrow escape hatch for presentation-only per-agent metadata, with keys
+  allowlisted by the consuming adapter.
+
+**Agents**
+
+- Claude Code adapter — `$CLAUDE_CONFIG_DIR/skills` globally, `.claude/skills` per project.
+- Codex adapter — `$CODEX_HOME/skills` globally, `.agents/skills` per project, with a
+  synthesised `agents/openai.yaml` and `metadata.short-description`.
+- Evidence-based detection that distinguishes strong signals (config directory, executable on
+  `PATH`) from weak ones (a project directory alone).
+
+**Registries**
+
+- Local, git and HTTPS registry drivers behind one interface.
+- Precedence-aware federation: the first registry publishing a name owns it, which closes the
+  dependency-confusion class of attack.
+- `agent-skills registry add|remove|list`, with `--first` to control precedence.
+
+**Installation**
+
+- Atomic install: stage, validate, commit by rename, roll back on failure.
+- Install receipts recording every file written and its hash, so uninstall never deletes a
+  file the tool did not install or one you edited.
+- Project-scope `skills.lock` for reproducible installs, with integrity verification.
+- Dependency resolution with semver constraints, conflict detection, cycle detection and
+  deterministic output.
+
+**Security**
+
+- Path-safety rules shared by validation and extraction: traversal, absolute paths, UNC paths,
+  drive letters, alternate data streams, Windows reserved names, trailing dot/space filenames
+  and control characters, all rejected on every platform.
+- Symlinks and hardlinks refused in packages.
+- Archive limits on entry count, entry size, total size and compression ratio.
+- HTTPS enforced for remote registries outside loopback.
+- `scripts/` shipped as data and never executed.
+
+**CLI**
+
+- `install`, `uninstall`, `update`, `list`, `search`, `info`, `validate`, `create`, `publish`,
+  `doctor`, `agents`, `registry`.
+- `--agent` (repeatable, or `all`), `--global` / `--project`, `--registry`, `--dry-run`,
+  `--force`, `--json`, `--verbose`, `--quiet`, `--no-color`.
+- Stable `ASK_*` error codes and distinct exit codes for usage, validation, resolution and
+  security failures.
+
+**Skills published in this repository**
+
+- `java-performance@1.0.0`
+- `java-clean-code@1.1.0`
+- `jvm-gc-tuning@1.0.0`
+
+### Notes
+
+- Codex's global skill location is `$CODEX_HOME/skills` (default `~/.codex/skills`), verified
+  against the Codex binary rather than assumed. It is overridable in config.
+- Package signing is not implemented. Integrity proves a payload matches what the registry
+  served, not who authored it.
+
+[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/robsonkades/agent-skills/releases/tag/v1.0.0

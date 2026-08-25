@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Validate without publishing
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  id-token: write # npm provenance
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.18
+          cache: npm
+      - run: npm ci
+      - run: npm run verify
+
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    needs: [verify]
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.18
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run build
+
+      - name: Check the tag matches the package version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF#refs/tags/v}"
+          pkg="$(node -p "require('./packages/cli/package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "Tag v$tag does not match @jvm-expert/agent-skills@$pkg" >&2
+            exit 1
+          fi
+
+      # Dependencies publish before dependents, so an install is never briefly broken.
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          DRY_RUN: ${{ inputs.dry-run }}
+        run: |
+          set -euo pipefail
+          args="--provenance --access public"
+          if [ "${DRY_RUN:-false}" = "true" ]; then args="$args --dry-run"; fi
+          for pkg in core node registry installer adapter-claude adapter-codex cli; do
+            name="$(node -p "require('./packages/$pkg/package.json').name")"
+            echo "--- publishing $name"
+            npm publish "packages/$pkg" $args
+          done
+
+      - name: Create the GitHub release
+        if: startsWith(github.ref, 'refs/tags/') && inputs.dry-run != true
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body_path: CHANGELOG.md

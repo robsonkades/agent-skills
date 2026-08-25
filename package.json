@@ -1,0 +1,46 @@
+{
+  "name": "agent-skills-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A cross-agent package manager for AI coding-agent skills",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "workspaces": [
+    "packages/core",
+    "packages/node",
+    "packages/registry",
+    "packages/installer",
+    "packages/adapter-claude",
+    "packages/adapter-codex",
+    "packages/cli"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "tsc --build --clean",
+    "rebuild": "npm run clean && npm run build",
+    "typecheck": "tsc --build --force",
+    "test": "npm run build && node --test \"packages/*/test/**/*.test.ts\"",
+    "test:only": "node --test \"packages/*/test/**/*.test.ts\"",
+    "lint": "eslint packages scripts",
+    "lint:fix": "eslint packages scripts --fix",
+    "format": "prettier --write \"**/*.{ts,js,mjs,json,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,mjs,json,md,yaml,yml}\"",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "verify": "npm run build && npm run check:boundaries && npm run lint && npm run format:check && npm run registry:check && npm run test:only",
+    "agent-skills": "node packages/cli/bin/agent-skills.mjs",
+    "registry:build": "node scripts/build-registry-index.mjs",
+    "registry:check": "node scripts/build-registry-index.mjs --check"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "@types/node": "^22.13.0",
+    "@types/semver": "^7.5.8",
+    "eslint": "^9.20.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.23.0"
+  }
+}

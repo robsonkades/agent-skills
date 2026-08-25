@@ -1,0 +1,36 @@
+name: Feature request
+description: Propose a change to the tool
+labels: [enhancement, needs-triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: |
+        What are you trying to do that is hard or impossible today? Describe the situation,
+        not the solution — the best fix is often not the one first imagined.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What you have in mind, including the command line if it adds one.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Including doing nothing, and why that is not enough.
+
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Architecture constraints
+      description: |
+        See [ARCHITECTURE.md](https://github.com/robsonkades/agent-skills/blob/main/ARCHITECTURE.md).
+        Not required — we can work these out together — but worth a thought.
+      options:
+        - label: This does not require agent-specific logic in `core`
+        - label: This does not add a new way to write to disk outside the installer

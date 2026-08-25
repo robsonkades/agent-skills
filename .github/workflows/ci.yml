@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Static checks are OS-independent, so they run once rather than nine times.
+  static:
+    name: Lint, format and boundaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.18
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Architecture boundaries
+        run: npm run check:boundaries
+      - run: npm run lint
+      - run: npm run format:check
+      - name: Registry index is up to date
+        run: npm run registry:check
+
+  test:
+    name: Test (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Path handling, symlinks and case sensitivity differ across all three.
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [22.18, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:only
+
+  # Proves the published artefact works, not just the sources.
+  smoke:
+    name: Packed CLI smoke test
+    runs-on: ubuntu-latest
+    needs: [static]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.18
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Install a skill from this repository into a clean environment
+        run: |
+          set -euo pipefail
+          export HOME="$(mktemp -d)"
+          export AGENT_SKILLS_HOME="$HOME/.agent-skills"
+          export CLAUDE_CONFIG_DIR="$HOME/.claude"
+          export CODEX_HOME="$HOME/.codex"
+          mkdir -p "$CLAUDE_CONFIG_DIR" "$CODEX_HOME"
+
+          cli() { node "$GITHUB_WORKSPACE/packages/cli/bin/agent-skills.mjs" "$@"; }
+
+          cli registry remove official
+          cli registry add local "$GITHUB_WORKSPACE" --kind local
+          cli install java-performance --agent all --global
+          cli list
+          cli doctor
+
+          test -f "$CLAUDE_CONFIG_DIR/skills/java-performance/SKILL.md"
+          test -f "$CODEX_HOME/skills/java-performance/agents/openai.yaml"
+          test -f "$CLAUDE_CONFIG_DIR/skills/jvm-gc-tuning/SKILL.md"
+
+          cli uninstall java-performance --agent all --global
+          test ! -d "$CLAUDE_CONFIG_DIR/skills/java-performance"

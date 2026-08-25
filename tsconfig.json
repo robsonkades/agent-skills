@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/node" },
+    { "path": "packages/registry" },
+    { "path": "packages/installer" },
+    { "path": "packages/adapter-claude" },
+    { "path": "packages/adapter-codex" },
+    { "path": "packages/cli" }
+  ]
+}

@@ -1,0 +1,69 @@
+name: Agent support
+description: Request or propose support for another coding agent
+labels: [agent-adapter, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Adding an agent is one adapter package and no change to the core — see
+        [docs/adding-an-agent.md](https://github.com/robsonkades/agent-skills/blob/main/docs/adding-an-agent.md).
+
+        The research below is the hard part, and the part we cannot do without access to the
+        agent. Please verify against the real thing rather than its documentation.
+
+  - type: input
+    id: agent
+    attributes:
+      label: Agent
+      placeholder: Cursor
+    validations:
+      required: true
+
+  - type: input
+    id: global-path
+    attributes:
+      label: Global skill directory
+      description: Include any environment variable that overrides it.
+      placeholder: $CURSOR_HOME/skills, default ~/.cursor/skills
+    validations:
+      required: true
+
+  - type: input
+    id: project-path
+    attributes:
+      label: Project skill directory
+      placeholder: <project>/.cursor/skills
+
+  - type: textarea
+    id: frontmatter
+    attributes:
+      label: Entrypoint and frontmatter
+      description: |
+        Which file is the entrypoint, which frontmatter keys are required, which are read, and
+        whether unknown keys are tolerated or rejected.
+    validations:
+      required: true
+
+  - type: textarea
+    id: metadata
+    attributes:
+      label: Vendor metadata file
+      description: Any extra file the agent reads, e.g. Codex's `agents/openai.yaml`.
+
+  - type: textarea
+    id: detection
+    attributes:
+      label: How to detect it
+      description: Config directory, executable name, anything else that proves it is installed.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: How you verified this
+      description: |
+        Paths inspected, strings extracted from the binary, official documentation. We were
+        bitten by a widely repeated but wrong path for Codex, so this matters.
+    validations:
+      required: true
