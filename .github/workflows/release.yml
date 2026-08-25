@@ -67,7 +67,14 @@ jobs:
           if [ "${DRY_RUN:-false}" = "true" ]; then args="$args --dry-run"; fi
           for pkg in core node registry installer adapter-claude adapter-codex cli; do
             name="$(node -p "require('./packages/$pkg/package.json').name")"
-            echo "--- publishing $name"
+            version="$(node -p "require('./packages/$pkg/package.json').version")"
+            # Skip what is already on the registry, so a run interrupted mid-loop can be
+            # re-run without dying on E409 at the first already-published package.
+            if [ "$(npm view "$name@$version" version 2>/dev/null || true)" = "$version" ]; then
+              echo "--- $name@$version already published, skipping"
+              continue
+            fi
+            echo "--- publishing $name@$version"
             # The ./ prefix is load-bearing: without it npm parses packages/<pkg> as a
             # <user>/<repo> GitHub spec and tries to publish from a remote repository.
             npm publish "./packages/$pkg" $args

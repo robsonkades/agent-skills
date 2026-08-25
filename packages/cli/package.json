@@ -19,7 +19,7 @@
   },
   "type": "module",
   "bin": {
-    "agent-skills": "./bin/agent-skills.mjs"
+    "agent-skills": "bin/agent-skills.mjs"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
