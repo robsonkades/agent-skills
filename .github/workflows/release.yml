@@ -68,7 +68,9 @@ jobs:
           for pkg in core node registry installer adapter-claude adapter-codex cli; do
             name="$(node -p "require('./packages/$pkg/package.json').name")"
             echo "--- publishing $name"
-            npm publish "packages/$pkg" $args
+            # The ./ prefix is load-bearing: without it npm parses packages/<pkg> as a
+            # <user>/<repo> GitHub spec and tries to publish from a remote repository.
+            npm publish "./packages/$pkg" $args
           done
 
       - name: Create the GitHub release
