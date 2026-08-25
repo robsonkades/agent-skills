@@ -166,7 +166,14 @@ export class GitRegistry extends LocalRegistry {
   }
 
   private async git(args: readonly string[], cwd: string): Promise<void> {
-    const result = await this.commands.run('git', args, { cwd, timeoutMs: 120_000 });
+    // core.longpaths: on Windows, git refuses paths past MAX_PATH (260) by default, and a
+    // registry checkout under ~/.agent-skills/cache plus a skill's reference path can exceed
+    // it — the clone then half-succeeds and every later sync fails. The setting is read only
+    // by Git for Windows; elsewhere it is inert.
+    const result = await this.commands.run('git', ['-c', 'core.longpaths=true', ...args], {
+      cwd,
+      timeoutMs: 120_000,
+    });
     if (result.code === 0) return;
 
     throw new AgentSkillsError(
