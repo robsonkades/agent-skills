@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "Local, Git and HTTP skill registries with precedence-aware federation",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robsonkades/agent-skills.git",
+    "directory": "packages/registry"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

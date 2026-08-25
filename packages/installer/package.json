@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "Atomic, rollback-safe skill installation engine",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robsonkades/agent-skills.git",
+    "directory": "packages/installer"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -12,6 +12,11 @@
     "cli"
   ],
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robsonkades/agent-skills.git",
+    "directory": "packages/cli"
+  },
   "type": "module",
   "bin": {
     "agent-skills": "./bin/agent-skills.mjs"

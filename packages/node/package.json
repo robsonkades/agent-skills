@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "Node.js implementations of the agent-skills infrastructure ports",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robsonkades/agent-skills.git",
+    "directory": "packages/node"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "Claude Code agent adapter for agent-skills",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robsonkades/agent-skills.git",
+    "directory": "packages/adapter-claude"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
