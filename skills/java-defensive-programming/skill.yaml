@@ -1,0 +1,48 @@
+schemaVersion: 1
+
+name: java-defensive-programming
+version: 1.0.0
+description: >-
+  Where to defend in Java and where defence becomes noise: trust boundaries,
+  preconditions with Objects.requireNonNull, fail-fast, input normalisation at the
+  edge, and assert for internal invariants only. Use when adding or reviewing
+  validation, when the same invariant is re-checked on every layer, or when hardening
+  a public API. Does not cover contract semantics (java-design-by-contract),
+  nullability contracts (java-null-safety), defensive copies (java-immutability) or
+  exception design (java-exception-design).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-defensive-programming
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-defensive-programming
+
+keywords:
+  - java
+  - validation
+  - preconditions
+  - fail-fast
+  - trust-boundaries
+  - assertions
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Defensive Programming
+      short_description: Trust boundaries, preconditions, fail-fast

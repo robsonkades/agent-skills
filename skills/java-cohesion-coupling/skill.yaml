@@ -1,0 +1,48 @@
+schemaVersion: 1
+
+name: java-cohesion-coupling
+version: 1.0.0
+description: >-
+  Cohesion and coupling in Java at class, package and module level: cohesion and
+  coupling types in real code, afferent/efferent coupling and instability, package
+  dependency graphs, and JPMS module boundaries as enforced coupling limits. Use
+  when a small change fans out across packages, when a package cycle appears, or
+  when reviewing package architecture. Inverting a specific dependency edge lives
+  in java-dependency-inversion.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-cohesion-coupling
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-cohesion-coupling
+
+keywords:
+  - java
+  - cohesion
+  - coupling
+  - packages
+  - jpms
+  - architecture
+  - dependency-graph
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Cohesion and Coupling
+      short_description: Package coupling, cohesion and dependency graphs

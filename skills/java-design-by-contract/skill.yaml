@@ -1,0 +1,49 @@
+schemaVersion: 1
+
+name: java-design-by-contract
+version: 1.0.0
+description: >-
+  Contracts as the semantics of a Java API: preconditions, postconditions and
+  invariants mapped to Java 25 mechanisms — constructor validation, invariants as
+  types, postconditions via tests and assert, Javadoc contracts, behavioural
+  subtyping, and contracts across sealed hierarchies. Use when invariants live in
+  callers' heads, when an override adds a requirement, or when assert guards public
+  input. Does not cover boundary validation practice (java-defensive-programming) or
+  LSP in its five-principle context (java-solid).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-design-by-contract
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-design-by-contract
+
+keywords:
+  - java
+  - contracts
+  - preconditions
+  - invariants
+  - liskov
+  - behavioural-subtyping
+  - javadoc
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Design by Contract
+      short_description: Preconditions, invariants, subtyping rules

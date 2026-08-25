@@ -1,0 +1,48 @@
+schemaVersion: 1
+
+name: java-clean-code
+version: 2.0.0
+description: >-
+  Readability and intention-revealing structure in Java: method and class sizing —
+  including the point where splitting becomes harmful fragmentation — abstraction
+  levels within a method, comments, hidden side effects, temporal coupling and hidden
+  dependencies. Does not cover naming and API shape (java-api-design), the smell
+  catalogue (java-code-smells), exception handling (java-exception-design) or null
+  handling (java-null-safety).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-clean-code
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-clean-code
+
+keywords:
+  - java
+  - clean-code
+  - readability
+  - method-size
+  - abstraction-levels
+  - temporal-coupling
+  - side-effects
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Clean Code
+      short_description: Readability, sizing, abstraction levels, coupling

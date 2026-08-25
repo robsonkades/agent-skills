@@ -1,0 +1,49 @@
+schemaVersion: 1
+
+name: java-exception-design
+version: 1.0.0
+description: >-
+  Exceptions as API design in Java: checked versus unchecked as a deliberate decision,
+  hierarchy sizing, translation at layer boundaries with cause preservation, retryable
+  versus non-retryable as an explicit property, and when a sealed result type beats an
+  exception. Use when designing an exception surface, when causes are being lost or
+  failures swallowed, or when retry logic parses exception messages. Does not cover
+  boundary input validation (java-defensive-programming) or contract semantics
+  (java-design-by-contract).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-exception-design
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-exception-design
+
+keywords:
+  - java
+  - exceptions
+  - error-handling
+  - api-design
+  - checked-exceptions
+  - result-types
+  - retry
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Exception Design
+      short_description: Exception surfaces, boundaries, result types

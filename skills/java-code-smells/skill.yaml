@@ -1,0 +1,50 @@
+schemaVersion: 1
+
+name: java-code-smells
+version: 1.0.0
+description: >-
+  The detection catalogue for Java code smells: Long Method, God Object, Feature Envy,
+  Primitive Obsession, Data Clumps, Shotgun Surgery, Divergent Change, Message Chains,
+  Speculative Generality, Refused Bequest, Duplicate and Dead Code, boolean blindness,
+  null-heavy APIs, Optional overuse, leaky abstraction, and how modern Java changes the
+  list — including a default branch on a switch over a sealed type. Detection and
+  severity only — refactoring mechanics are java-refactoring.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-code-smells
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-code-smells
+
+keywords:
+  - java
+  - code-smells
+  - detection
+  - refactoring
+  - god-object
+  - feature-envy
+  - primitive-obsession
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: java-refactoring
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Code Smells
+      short_description: Smell detection catalogue and severity weighing

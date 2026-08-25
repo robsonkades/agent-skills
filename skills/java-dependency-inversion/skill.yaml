@@ -1,0 +1,48 @@
+schemaVersion: 1
+
+name: java-dependency-inversion
+version: 1.0.0
+description: >-
+  Dependency direction in Java: policy versus mechanism, ports and adapters,
+  constructor injection as plain Java, factories, composition roots, and JPMS
+  module edges as physical enforcement. Use when deciding whether to introduce an
+  interface or port, when domain code imports a transport or vendor SDK, or when
+  reviewing a codebase where every class has a matching interface. For the wider
+  five-principle review context, use java-solid.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-dependency-inversion
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-dependency-inversion
+
+keywords:
+  - java
+  - dependency-inversion
+  - ports-and-adapters
+  - dependency-injection
+  - jpms
+  - architecture
+  - testability
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Dependency Inversion
+      short_description: Dependency direction, ports and adapters, DI

@@ -1,0 +1,48 @@
+schemaVersion: 1
+
+name: java-tell-dont-ask
+version: 1.0.0
+description: >-
+  Decision ownership: the object that has the data makes the decision. Use when a
+  service reads state with getters, decides, and writes state back, when the same
+  rule is re-derived from the same getters in several places, when an invariant
+  exists but no type enforces it, when a domain model is all getters and setters
+  with the logic in services, or when a getter has side effects. Covers
+  command–query separation and when asking is correct. Navigation chains are
+  java-law-of-demeter.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-tell-dont-ask
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-tell-dont-ask
+
+keywords:
+  - java
+  - tell-dont-ask
+  - encapsulation
+  - anemic-model
+  - invariants
+  - command-query-separation
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Tell Don't Ask
+      short_description: Behaviour placement, invariants and CQS

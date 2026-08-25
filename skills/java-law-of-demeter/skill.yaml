@@ -1,0 +1,48 @@
+schemaVersion: 1
+
+name: java-law-of-demeter
+version: 1.0.0
+description: >-
+  Navigation coupling: what the Law of Demeter actually constrains — structure
+  exposure, not dot-counting — train wrecks versus legitimate chains, and the
+  wrapper-explosion failure mode of dogmatic application. Use when reviewing
+  chains like order.getCustomer().getAddress().getCity(), when shape changes
+  ripple through unrelated files, or when a fix proposes forwarding methods on
+  every intermediate class. Fluent chain design is java-fluent-apis; decision
+  placement is java-tell-dont-ask.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-law-of-demeter
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-law-of-demeter
+
+keywords:
+  - java
+  - law-of-demeter
+  - coupling
+  - train-wreck
+  - navigation
+  - encapsulation
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Law of Demeter
+      short_description: Navigation coupling — chains, train wrecks, real fixes

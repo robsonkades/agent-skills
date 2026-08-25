@@ -1,0 +1,49 @@
+schemaVersion: 1
+
+name: java-composition-over-inheritance
+version: 1.0.0
+description: >-
+  Choosing between inheritance, composition and sealed hierarchies in Java: fragile base
+  classes, self-use of overridable methods, subclass explosion, the costs of delegation and
+  decoration, sealed types with exhaustive switch as the modern middle ground, and the
+  cases where inheritance is genuinely right. Use when reviewing an extends between classes
+  you maintain, when a base-class change broke subclasses, or when variants multiply along
+  more than one axis. Does not cover substitutability formalism (java-design-by-contract)
+  or the SOLID framing of LSP (java-solid).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-composition-over-inheritance
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-composition-over-inheritance
+
+keywords:
+  - java
+  - inheritance
+  - composition
+  - delegation
+  - sealed
+  - decorator
+  - hierarchy
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Composition over Inheritance
+      short_description: Inheritance vs composition vs sealed hierarchies

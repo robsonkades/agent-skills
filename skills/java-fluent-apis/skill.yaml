@@ -1,0 +1,49 @@
+schemaVersion: 1
+
+name: java-fluent-apis
+version: 1.0.0
+description: >-
+  Fluent interfaces and builders as API decisions: when a builder pays for itself
+  versus a record, constructor or static factory; staged builders and their
+  compatibility cost; immutable wither-style APIs; and the debugging and binary
+  compatibility consequences of method chaining. Use when designing or reviewing
+  a type with four or more constructor parameters, several optional ones, or a
+  proposed builder, staged builder or DSL. Navigation chains are covered by
+  java-law-of-demeter.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-fluent-apis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-fluent-apis
+
+keywords:
+  - java
+  - builder
+  - fluent
+  - method-chaining
+  - api-design
+  - immutability
+  - dsl
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Fluent APIs
+      short_description: Builders, chaining and staged builders as API decisions

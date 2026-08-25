@@ -1,0 +1,45 @@
+schemaVersion: 1
+
+name: skill-engineering
+version: 1.0.0
+description: >-
+  Designing and reviewing agent skills: scope boundaries, the SKILL.md frontmatter
+  contract, progressive disclosure across references and scripts, explicit decision rules,
+  and quality gates. Use when creating a new skill, when reviewing one that is too long or
+  never activates, when deciding what belongs in SKILL.md versus a reference, or when
+  converting an existing prompt into a skill. Does not cover packaging, versioning or
+  distribution, and does not cover writing the domain expertise itself.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/skill-engineering
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/skill-engineering
+
+keywords:
+  - skills
+  - prompt-engineering
+  - agent-design
+  - meta
+
+# No `compatibility` block: the skill is deliberately runtime-neutral.
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Skill Engineering
+      short_description: Design and review agent skills that change behaviour
+      default_prompt: Use Skill Engineering to design or review this skill.

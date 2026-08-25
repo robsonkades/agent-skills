@@ -1,0 +1,49 @@
+schemaVersion: 1
+
+name: java-solid
+version: 1.0.0
+description: >-
+  The five SOLID principles as decision tools for evidence-based Java review, with
+  depth on single responsibility, open-closed, Liskov substitution and interface
+  segregation. Use when reviewing a design or pull request against SOLID, when a
+  principle is being cited to justify a change, or when an override breaks
+  substitutability. Dependency inversion depth lives in java-dependency-inversion.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-solid
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-solid
+
+keywords:
+  - java
+  - solid
+  - code-review
+  - single-responsibility
+  - open-closed
+  - liskov
+  - interface-segregation
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: java-dependency-inversion
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java SOLID Review
+      short_description: SOLID as evidence-based review findings

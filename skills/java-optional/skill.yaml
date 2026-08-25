@@ -1,0 +1,49 @@
+schemaVersion: 1
+
+name: java-optional
+version: 1.0.0
+description: >-
+  Optional as designed: a return type for "no result is a normal outcome". Covers
+  orElse versus orElseGet (eager versus lazy), orElseThrow over get,
+  map/flatMap/filter chains versus a plain conditional, or(), ifPresentOrElse,
+  stream() integration, why not fields, parameters or collections, and when Optional
+  makes an API worse. Use when reviewing Optional.get(), isPresent()+get() pairs,
+  Optional fields or parameters, or costly orElse fallbacks. Nullability contracts
+  are java-null-safety.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-optional
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-optional
+
+keywords:
+  - java
+  - optional
+  - orelse
+  - orelseget
+  - absence
+  - return-types
+  - streams
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Optional
+      short_description: Optional as a return type, used where it pays

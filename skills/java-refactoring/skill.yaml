@@ -1,0 +1,47 @@
+schemaVersion: 1
+
+name: java-refactoring
+version: 1.0.0
+description: >-
+  Refactoring mechanics and the safety workflow for Java: characterisation tests, small
+  reversible steps, behaviour preservation, binary/source/behavioural compatibility, and
+  the technique catalogue — Extract/Inline, Move, Rename, Parameter Object with records,
+  Replace Conditional with Polymorphism or sealed + exhaustive switch, Encapsulate
+  Collection, Replace Inheritance with Composition. What to detect is java-code-smells.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-refactoring
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-refactoring
+
+keywords:
+  - java
+  - refactoring
+  - characterisation-tests
+  - behaviour-preservation
+  - binary-compatibility
+  - sealed-types
+  - records
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Refactoring
+      short_description: Safe refactoring mechanics and compatibility

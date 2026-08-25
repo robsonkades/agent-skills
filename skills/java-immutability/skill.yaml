@@ -1,0 +1,48 @@
+schemaVersion: 1
+
+name: java-immutability
+version: 1.0.0
+description: >-
+  Immutable objects in modern Java: records in depth, defensive copies, immutable
+  collection factories versus unmodifiable views, deep versus shallow immutability,
+  final-field semantics and safe publication (JMM), and the withers pattern. Use when
+  designing a value object, when a record has a List, Map or array component, when an
+  accessor returns internal mutable state, or when deciding whether immutability is
+  worth its allocation cost. Null validation in constructors is java-null-safety.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-immutability
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-immutability
+
+keywords:
+  - java
+  - immutability
+  - records
+  - defensive-copies
+  - value-objects
+  - safe-publication
+  - jmm
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Immutability
+      short_description: Records, defensive copies and safe publication

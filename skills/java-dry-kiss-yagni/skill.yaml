@@ -1,0 +1,49 @@
+schemaVersion: 1
+
+name: java-dry-kiss-yagni
+version: 1.0.0
+description: >-
+  The economics of duplication and abstraction in Java: knowledge duplication versus
+  incidental (textual) duplication, what a shared abstraction costs, the wrong-abstraction
+  failure mode, premature abstraction and speculative generality, essential versus
+  accidental complexity. Use when deciding whether similar code should be merged, whether
+  a shared helper should be inlined back into its callers, or when a utility has grown
+  boolean parameters. Does not cover the smell catalogue (java-code-smells) or refactoring
+  mechanics (java-refactoring).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-dry-kiss-yagni
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-dry-kiss-yagni
+
+keywords:
+  - java
+  - dry
+  - kiss
+  - yagni
+  - duplication
+  - abstraction
+  - simplicity
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java DRY, KISS and YAGNI
+      short_description: Duplication vs abstraction economics in Java

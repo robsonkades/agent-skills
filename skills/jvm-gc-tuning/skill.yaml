@@ -1,0 +1,33 @@
+schemaVersion: 1
+
+name: jvm-gc-tuning
+version: 1.0.0
+description: >-
+  JVM garbage collection: choosing between G1, ZGC, Parallel and Serial, sizing the
+  heap, reading GC logs, and deciding whether a problem is actually a GC problem.
+  Start from java-performance instead when the symptom is latency or CPU and GC has
+  not yet been confirmed.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/jvm-gc-tuning
+
+keywords:
+  - java
+  - jvm
+  - gc
+  - garbage-collection
+  - tuning
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []

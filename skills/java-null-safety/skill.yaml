@@ -1,0 +1,49 @@
+schemaVersion: 1
+
+name: java-null-safety
+version: 1.0.0
+description: >-
+  Null as a semantic problem: what each null means (absence, error, uninitialised),
+  nullability as an API contract, JSpecify @NullMarked/@Nullable, where
+  Objects.requireNonNull belongs, empty collections over null, and the boundaries
+  where null leaks in (deserialisation, ORMs, Map.get, arrays). Use when NPEs surface
+  far from their cause, when hardening a service boundary, or when adopting
+  nullability annotations. The Optional API itself is java-optional; general
+  validation strategy at trust boundaries is java-defensive-programming.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-null-safety
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-null-safety
+
+keywords:
+  - java
+  - 'null'
+  - nullability
+  - jspecify
+  - nullmarked
+  - npe
+  - contracts
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Null Safety
+      short_description: Nullability contracts, JSpecify and boundary hardening
