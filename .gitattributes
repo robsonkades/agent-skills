@@ -1,0 +1,5 @@
+# Skill integrity is a hash over file bytes, and the git registry serves working-copy
+# bytes from a clone — so checkouts must be byte-identical on every platform. Forcing LF
+# overrides core.autocrlf on the user's machine; without this, a Windows clone checks out
+# CRLF and every install fails its integrity check.
+* text=auto eol=lf
