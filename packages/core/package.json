@@ -1,0 +1,33 @@
+{
+  "name": "@jvm-expert/core",
+  "version": "1.0.0",
+  "description": "Agent-agnostic domain model, ports and application services for agent-skills",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "semver": "^7.6.3",
+    "yaml": "^2.6.1"
+  }
+}

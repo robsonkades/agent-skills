@@ -1,0 +1,29 @@
+{
+  "name": "@jvm-expert/node",
+  "version": "1.0.0",
+  "description": "Node.js implementations of the agent-skills infrastructure ports",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@jvm-expert/core": "1.0.0",
+    "tar": "^7.4.3"
+  }
+}

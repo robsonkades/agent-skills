@@ -1,0 +1,48 @@
+{
+  "name": "@jvm-expert/agent-skills",
+  "version": "1.0.0",
+  "description": "Install, update and publish AI coding-agent skills across Claude Code, Codex and future agents",
+  "keywords": [
+    "agent-skills",
+    "claude-code",
+    "codex",
+    "ai",
+    "skills",
+    "package-manager",
+    "cli"
+  ],
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "agent-skills": "./bin/agent-skills.mjs"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@jvm-expert/adapter-claude": "1.0.0",
+    "@jvm-expert/adapter-codex": "1.0.0",
+    "@jvm-expert/core": "1.0.0",
+    "@jvm-expert/installer": "1.0.0",
+    "@jvm-expert/node": "1.0.0",
+    "@jvm-expert/registry": "1.0.0",
+    "commander": "^13.1.0",
+    "picocolors": "^1.1.1"
+  }
+}
