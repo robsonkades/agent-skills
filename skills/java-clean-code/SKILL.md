@@ -1,15 +1,14 @@
 ---
 name: java-clean-code
 description: >
-  Readability and intention-revealing structure in Java: method and class sizing —
-  including the point where splitting becomes harmful fragmentation — abstraction
-  levels within a method, comments, hidden side effects, temporal coupling and
-  hidden dependencies. Use when reviewing or refactoring for clarity, when a method
-  has grown past comprehension or a class has shattered into fragments that only
-  make sense together, or when callers must know an unwritten call order. Does not
-  cover naming and API shape (java-api-design), the smell catalogue
-  (java-code-smells), exception handling (java-exception-design) or null handling
-  (java-null-safety).
+  Readability and intention-revealing structure in Java: method and class sizing — including
+  the point where splitting becomes harmful fragmentation — abstraction levels within a
+  method, comments, hidden side effects, temporal coupling and hidden dependencies. Use when
+  reviewing or refactoring for clarity, when a method has grown past comprehension or a
+  class has shattered into fragments that only make sense together, or when callers must
+  know an unwritten call order. Does not cover naming and API shape (java-api-design), the
+  smell catalogue (java-code-smells), exception handling (java-exception-design) or null
+  handling (java-null-safety).
 ---
 
 # Java Clean Code

@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-pattern-confusion
+version: 1.0.0
+description: >-
+  Telling apart the patterns that look alike, so a design is not chosen because a name sounded
+  right. Covers the four wrappers (Adapter, Decorator, Proxy, Facade) and the two questions that
+  separate them, Strategy against State against Template Method against Command, Observer against
+  Mediator, the three creational lookalikes plus the static factory that is not Factory Method,
+  Composite against Decorator, Visitor against Iterator, Command against Event, and Memento
+  against snapshot against event sourcing. Use when two patterns both seem to fit, when a review
+  comment disputes what a class is, when a wrapper's kind must be named, when a class is described
+  with a pattern name that does not match what it does, or when documenting an existing design.
+  Does not cover getting from a problem to a shortlist (gof-pattern-selection), the reasoning
+  discipline (gof-pattern-thinking), any individual pattern's own guidance (the gof-* skills), or
+  misuse catalogues (gof-pattern-antipatterns).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-pattern-confusion
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-pattern-confusion
+
+keywords:
+  - design-patterns
+  - gof
+  - confusion
+  - classification
+  - review
+  - design
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Pattern Confusion
+      short_description: Telling the lookalikes apart
+      default_prompt: Use Pattern Confusion to settle what this class actually is.

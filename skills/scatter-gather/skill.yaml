@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: scatter-gather
+version: 1.1.0
+description: >-
+  Fanning one request out to N workers and combining the answers: the root's latency is the
+  max over N leaves, not their mean, choosing N against tail exposure, the completion rule
+  (all-of-N, first-of-N, k-of-N-by-deadline), hedges and the two conditions that make them
+  safe, partial results with a completeness field, deadline propagation, and cancelling
+  losers. Use when a keyless query fans out to every shard, when leaf dashboards are green
+  but user-facing p99 is not, when more leaves made the request slower, when a fan-out gives
+  no way to tell no-data from no-answer, when a hedge is proposed, or when an in-flight
+  gauge stays high after the caller gave up. Not StructuredTaskScope
+  (structured-concurrency), bounding in-flight work (concurrency-limiting-and-bulkheads),
+  tail arithmetic (tail-latency-analysis), percentiles (latency-statistics), retry policy
+  (retries-and-backoff), offline fan-out (distributed-aggregation-and-barriers), deadlines
+  (timeouts-and-deadlines), or shard keys (sharding-and-partitioning).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/scatter-gather
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/scatter-gather
+
+keywords:
+  - distributed-systems
+  - fan-out
+  - tail-latency
+  - hedging
+  - partial-results
+  - deadlines
+  - java
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: timeouts-and-deadlines
+    version: ^1.0.0
+  - name: sharding-and-partitioning
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Scatter Gather
+      short_description: Fan-out latency, hedging and partial results
+      default_prompt: Use Scatter Gather to review this fan-out for tail exposure, deadlines and cancellation.

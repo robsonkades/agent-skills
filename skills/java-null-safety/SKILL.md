@@ -1,15 +1,14 @@
 ---
 name: java-null-safety
 description: >
-  Null as a semantic problem, not a syntax problem: what each null means (absence,
-  error, uninitialised), nullability as an API contract, JSpecify @NullMarked and
-  @Nullable, where Objects.requireNonNull belongs, empty collections over null, and
-  the boundaries where null leaks in (deserialisation, ORMs, Map.get, arrays). Use
-  when an NPE surfaces far from its cause, when hardening a service or module
-  boundary, when adopting nullability annotations, or when reviewing constructors and
-  public entry points. Does not cover the Optional API — orElse/orElseGet, chaining,
-  where Optional belongs — which is java-optional, nor general validation strategy at
-  trust boundaries — range and state checks, normalisation — which is
+  Null as a semantic problem, not a syntax problem: what each null means (absence, error,
+  uninitialised), nullability as an API contract, JSpecify @NullMarked and @Nullable, where
+  Objects.requireNonNull belongs, empty collections over null, and the boundaries where null
+  leaks in (deserialisation, ORMs, Map.get, arrays). Use when an NPE surfaces far from its
+  cause, when hardening a service or module boundary, when adopting nullability annotations,
+  or when reviewing constructors and public entry points. Does not cover the Optional API —
+  orElse/orElseGet, chaining, where Optional belongs — which is java-optional, nor general
+  validation strategy at trust boundaries — range and state checks, normalisation — which is
   java-defensive-programming.
 ---
 

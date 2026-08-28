@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: metrics-and-cardinality
+version: 1.0.0
+description: >-
+  What to count and what not to label: RED for request-driven services and USE for
+  resources, counter versus gauge versus histogram and the failure each mis-selection
+  produces, label cardinality as a computed budget, path templating, and business outcomes
+  as the metrics that detect an incident a health check misses. Use when a label carries a
+  user id, a request id, a raw URL path or an exception message, when the metrics backend's
+  series count grows without a matching traffic increase, when a scrape fails after a deploy
+  that added a tag, when a dashboard averages per-instance quantiles, when a gauge reports
+  NaN or misses everything between scrapes, when a counter is read as a value rather than a
+  rate, or when saturation has no metric at all. Does not cover percentiles and histogram
+  aggregation (latency-statistics), decomposing the tail (tail-latency-analysis), exporter
+  cost (opentelemetry-performance), turning metrics into pages (slo-and-alerting), or the
+  individual event (structured-logging).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/metrics-and-cardinality
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/metrics-and-cardinality
+
+keywords:
+  - metrics
+  - cardinality
+  - observability
+  - micrometer
+  - prometheus
+  - red
+  - use
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Metrics And Cardinality
+      short_description: What to count, and what never to label
+      default_prompt: Use Metrics And Cardinality to review this service's metrics and their label budget.

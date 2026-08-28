@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: gof-patterns-in-modern-java
+version: 1.1.0
+description: >-
+  Which Gang-of-Four patterns modern Java and Spring already implement, which they only
+  change the expression of, and which still need writing by hand. Covers records, sealed
+  types and pattern matching against Visitor, State, Composite and Interpreter; lambdas and
+  functional interfaces against Strategy, Command, Factory Method and Observer; the
+  container against Singleton, Abstract Factory and Factory Method; framework mechanisms
+  against Decorator and Proxy; and what virtual threads and ScopedValue change about
+  patterns that carry context or defer work. Use when implementing a pattern from an older
+  text, when a hand-rolled mechanism duplicates something the framework provides, or when
+  deciding whether a pattern is obsolete or merely invisible. Does not cover choosing a
+  pattern (gof-pattern-selection), any individual pattern's guidance (the gof-\* skills),
+  enterprise patterns against frameworks (patterns-and-modern-frameworks), or the
+  inheritance decision (java-composition-over-inheritance).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-patterns-in-modern-java
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-patterns-in-modern-java
+
+keywords:
+  - design-patterns
+  - gof
+  - java
+  - records
+  - sealed-types
+  - spring
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Patterns in Modern Java
+      short_description: What the language and framework already do
+      default_prompt: Use Patterns in Modern Java to check whether this pattern needs writing.

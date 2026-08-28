@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: timeouts-and-deadlines
+version: 1.0.0
+description: >-
+  Bounding how long a call may take and propagating that bound: per-hop timeouts versus an
+  absolute deadline, deadline propagation over HTTP and gRPC, remaining-budget arithmetic
+  and refusing work that cannot finish, cancellation so a timed-out caller stops the callee,
+  and keeping connect, read, total and retry timeouts consistent. Use when a client sets a
+  connect timeout but no request timeout, when Future.get() or join() is called with no
+  bound, when a timeout is a round number repeated across services, when three hops each
+  wait five seconds, when a retry policy total exceeds the caller timeout, when a JDBC call
+  has no setQueryTimeout, when a Kafka consumer rebalances during slow processing, or when a
+  timed-out request leaves work running downstream. Does not cover what to do after the
+  timeout fires (retries-and-backoff), percentiles (latency-statistics), tail decomposition
+  (tail-latency-analysis), tripping on repeated timeouts (circuit-breakers),
+  or pool sizing (connection-pool-sizing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/timeouts-and-deadlines
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/timeouts-and-deadlines
+
+keywords:
+  - java
+  - distributed-systems
+  - timeout
+  - deadline
+  - cancellation
+  - resilience
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: failure-models
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Timeouts And Deadlines
+      short_description: Bounding a call and propagating the budget
+      default_prompt: Use Timeouts And Deadlines to check what actually bounds this call and what happens when the bound is hit.

@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: structured-logging
+version: 1.1.0
+description: >-
+  Logs as queryable events rather than prose: named fields instead of a sentence with values
+  interpolated in, the correlation ids every event must carry and the MDC lifecycle behind
+  them, log levels as a contract with the on-call, redaction at the encoder, and volume as a
+  cost. Use when finding something in the logs needs a regex, when MDC is empty on a
+  handed-off thread or stale on a pooled one, when a handled-and-retried failure is logged
+  at ERROR, when e.getMessage() is concatenated into a message and the stack trace is gone,
+  when one failure is logged at every layer it passes through, or when a request body or a
+  token reaches an appender. Not aggregate counting and label cardinality
+  (metrics-and-cardinality), causality across services (distributed-tracing-design), trace
+  propagation cost (opentelemetry-performance), the exception hierarchy
+  (java-exception-design), context mechanics (scoped-values), thread cost
+  (thread-sizing-and-virtual-threads), or alerting policy (slo-and-alerting).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/structured-logging
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/structured-logging
+
+keywords:
+  - logging
+  - observability
+  - slf4j
+  - mdc
+  - correlation
+  - java
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Structured Logging
+      short_description: Queryable log events, fields and levels
+      default_prompt: Use Structured Logging to review what this service logs and how it correlates.

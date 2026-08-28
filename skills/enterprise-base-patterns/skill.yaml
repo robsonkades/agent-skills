@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: enterprise-base-patterns
+version: 1.1.0
+description: >-
+  The small structural patterns that hold an enterprise application together — Gateway,
+  Mapper, Layer Supertype, Separated Interface, Registry, Special Case, Plugin and Service
+  Stub — with the judgement about when each earns its place and when it is indirection. Use
+  when an external system's API is being called directly from business code, when the same
+  null check appears in twenty callers, when a base class is accumulating unrelated
+  protected helpers, when a Registry or a static holder is being used to reach a
+  collaborator, when an interface is needed on the caller's side of a dependency, when tests
+  are slow because they call a real third-party sandbox, when a plugin mechanism is proposed
+  for a variation that has one implementation, or when a mapper has started making
+  decisions. Does not cover data-access specifics (data-source-patterns), the aggregate
+  boundary abstraction (repository-pattern), overall layering (layering-and-boundaries), or
+  detecting overuse in general (enterprise-architecture-smells).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/enterprise-base-patterns
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/enterprise-base-patterns
+
+keywords:
+  - gateway
+  - mapper
+  - separated-interface
+  - registry
+  - special-case
+  - service-stub
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: layering-and-boundaries
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Enterprise Base Patterns
+      short_description: Gateway, Mapper, Special Case and friends
+      default_prompt: Use Enterprise Base Patterns to choose the right small pattern here.

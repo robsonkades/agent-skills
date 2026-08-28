@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: java-resource-management
+version: 1.1.0
+description: >-
+  Deterministic release of what a Java program holds open: try-with-resources and the
+  exception semantics that make it non-optional, designing an AutoCloseable (ownership,
+  idempotent close, close that fails), decorators and partially constructed resource chains,
+  resources that cross an async or executor boundary, and the difference between closing a
+  resource and returning one to a pool. Use when a close sits in a finally block, when a
+  resource is created inside a try block or inside a lambda that outlives it, when a method
+  closes something it was handed, when connections or file descriptors leak under load, when
+  ExecutorService or StructuredTaskScope is used in try-with-resources, or when a stream
+  from Files.lines or Files.walk is never closed. Does not cover reachability-driven cleanup
+  — WeakReference, SoftReference, Cleaner and the leaks they hide
+  (java-reference-types-and-leaks) — pool sizing (connection-pool-sizing), or native segment
+  lifetimes (off-heap-memory).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-resource-management
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-resource-management
+
+keywords:
+  - java
+  - try-with-resources
+  - autocloseable
+  - resource-leak
+  - connection-pool
+  - shutdown
+  - virtual-threads
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Resource Management
+      short_description: try-with-resources, AutoCloseable design and resource ownership

@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-facade
+version: 1.0.0
+description: >-
+  Facade in modern Java: one coherent entry point over a subsystem of collaborators, so callers
+  depend on an intention rather than on a sequence. Covers the difference between a facade
+  (simplifies, does not forbid) and a boundary (forbids), the god-facade drift where one class
+  accumulates a method per use case until it is the application, why an application service is
+  this pattern under another name, why an API gateway is not, and the transaction and fan-out
+  decisions a facade method silently owns. Use when callers repeat the same five-call sequence,
+  when a legacy subsystem needs fencing, when a service class has grown past a dozen dependencies,
+  or when a facade method fans out to several remote services. Does not cover changing one type's
+  interface (gof-adapter), adding behaviour to one object (gof-decorator), hub-based coordination
+  between peers (gof-mediator), the coarse-grained remote boundary and its DTOs
+  (remote-facade-and-dto), or transaction-boundary mechanics (enterprise-transactions).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-facade
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-facade
+
+keywords:
+  - design-patterns
+  - gof
+  - structural
+  - facade
+  - application-service
+  - boundaries
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Facade
+      short_description: One entry point, before it becomes the app
+      default_prompt: Use Facade to review this coordinating class.

@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: java-concurrency
+version: 1.0.0
+description: >-
+  Entry point for modern Java concurrency: turn a requirement or a symptom into the one construct
+  or investigation that fits it, and hand off to the skill that owns it. Covers the
+  classification that decides everything downstream — concurrency versus parallelism, I/O-bound
+  versus CPU-bound, request-scoped versus long-lived — and routes to executors, virtual
+  threads, structured concurrency, scoped values, CompletableFuture, reactive pipelines, limits,
+  diagnostics and testing. Use when designing concurrent code and the construct is not yet
+  decided, when someone proposes replacing every executor with virtual threads, when "add more
+  threads" is offered as a fix, when a concurrency symptom arrives without a cause, or when two
+  skills in this family seem to give different advice. Does not itself cover any construct in
+  depth, the sizing arithmetic (littles-law-and-queueing), correctness and happens-before
+  (java-memory-model), or general JVM performance triage (java-performance).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-concurrency
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-concurrency
+
+keywords:
+  - java
+  - concurrency
+  - routing
+  - virtual-threads
+  - parallelism
+  - design
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: littles-law-and-queueing
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Concurrency
+      short_description: Classify the workload and route to the owning skill
+      default_prompt: Use Java Concurrency to classify this workload and pick the construct that fits it.

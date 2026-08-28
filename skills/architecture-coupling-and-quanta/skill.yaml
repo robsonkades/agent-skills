@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: architecture-coupling-and-quanta
+version: 1.0.0
+description: >-
+  Naming the unit that actually ships and the coupling crossing its edge: static and synchronous
+  dynamic coupling, connascence, and the architecture quantum as the maximal region closed under
+  both. Use when a team calls the system decoupled because the services communicate by events,
+  when twelve services always release together and nobody can say which one forces it, when a
+  synchronous call was removed and the two parts still cannot ship separately, when nobody can
+  say what would break if one component were deployed alone, when a diagram box maps to nothing
+  that ships, when a schema is shared by several services with no compatibility policy, or when
+  two people argue about whether something is "coupled". Does not cover whether to distribute
+  (distribution-boundaries), package coupling (java-cohesion-coupling), the coordinated release
+  shared jars force (component-and-release-boundaries), the trade-off method
+  (architecture-trade-off-analysis), or publishing a fact versus making a call
+  (event-driven-architecture).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/architecture-coupling-and-quanta
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/architecture-coupling-and-quanta
+
+keywords:
+  - architecture
+  - coupling
+  - architecture-quantum
+  - connascence
+  - change-coupling
+  - deployability
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Architecture Coupling and Quanta
+      short_description: Name the unit that ships and the coupling crossing its edge
+      default_prompt: Use Architecture Coupling and Quanta to map this estate's quanta and deployment units.

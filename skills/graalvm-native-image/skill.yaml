@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: graalvm-native-image
+version: 1.1.0
+description: >-
+  Ahead-of-time compilation with GraalVM Native Image: the closed-world assumption and
+  points-to reachability analysis, reflection, proxy, serialisation and resource metadata,
+  build-time versus run-time class initialisation and heap snapshotting, the peak-throughput
+  trade against the JIT, profile-guided optimisation, and measuring the real startup and
+  memory win. Use when deciding whether a service should be a native binary, when a build
+  succeeds but ClassNotFoundException or NoSuchMethodException appears at run time, when a
+  static initializer captured a build-environment value, when --pgo or --gc=G1 fails on the
+  installed distribution, when a copied -H: option does nothing, when a "5-10x less memory"
+  claim needs checking, or when JFR events are missing from a native binary. Does not cover
+  Graal as a JIT inside the JVM (graalvm-jit), the JVM-preserving startup strategies
+  (startup-cds-crac-leyden), or warm-up on the JVM (jit-compilation).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/graalvm-native-image
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/graalvm-native-image
+
+keywords:
+  - java
+  - graalvm
+  - native-image
+  - aot
+  - startup
+  - reflection
+  - pgo
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: graalvm-jit
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: GraalVM Native Image
+      short_description: Closed-world AOT builds, metadata and measurement
+      default_prompt: Use GraalVM Native Image to decide, build or measure an ahead-of-time native binary.

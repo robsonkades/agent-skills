@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: clean-delivery-workflow
+version: 1.0.0
+description: >-
+  The order of work for a change, and how much of that order a given change actually warrants:
+  understanding before editing, clarifying what is ambiguous, deciding the test approach,
+  implementing in reversible steps, keeping refactoring in separate commits from behaviour,
+  running the gates the risk deserves, and verifying before declaring done. Also the entry point
+  that routes a situation to the skill that owns it. Use when starting a change and the order is
+  not obvious, when a change has sprawled and needs re-sequencing, when refactoring and
+  behaviour changes have been mixed in one commit, when work is being declared done without
+  verification, when the same ceremony is being applied to a one-line fix and a migration, or
+  when you know the problem but not which skill covers it. Does not itself cover any step in
+  depth — it routes to requirements-and-acceptance, java-testing-strategy, tdd, java-refactoring,
+  code-review and quality-gates, each of which owns its own.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/clean-delivery-workflow
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/clean-delivery-workflow
+
+keywords:
+  - workflow
+  - delivery
+  - routing
+  - risk
+  - commits
+  - process
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: requirements-and-acceptance
+    version: ^1.0.0
+  - name: quality-gates
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Clean Delivery Workflow
+      short_description: Order of work, scaled to risk
+      default_prompt: Use Clean Delivery Workflow to sequence this change.

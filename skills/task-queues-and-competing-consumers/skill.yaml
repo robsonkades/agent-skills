@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: task-queues-and-competing-consumers
+version: 1.1.0
+description: >-
+  Distributing work to a pool of interchangeable workers through a queue: the lease and
+  visibility-timeout model, and why an expired lease duplicates work instead of failing it;
+  sizing the timeout from the processing-time distribution; heartbeats and their failure
+  mode; bounding the queue; priority starvation; and oldest-message-age rather than queue
+  depth as the autoscaling signal. Use when two workers process one message although nothing
+  retried or failed, when a lease is relied on for mutual exclusion, when a handler outlives
+  its lease, when a queue has no maximum depth, when autoscaling is driven by queue depth,
+  or when a poll loop feeds an unbounded executor. Not ack placement (delivery-semantics),
+  repeat-safe handlers (idempotency), the message that never succeeds
+  (poison-messages-and-dlq), queue arithmetic (littles-law-and-queueing), the concurrency
+  limit (concurrency-limiting-and-bulkheads), shedding (rate-limiting-and-load-shedding), or
+  the Kafka consumer group, a log (kafka-consumers-in-java).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/task-queues-and-competing-consumers
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/task-queues-and-competing-consumers
+
+keywords:
+  - distributed-systems
+  - queue
+  - workers
+  - visibility-timeout
+  - backpressure
+  - messaging
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: delivery-semantics
+    version: ^1.0.0
+  - name: idempotency
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Task Queues And Competing Consumers
+      short_description: Leases, worker pools and queue-driven scaling
+      default_prompt: Use Task Queues And Competing Consumers to design or review this worker pool.

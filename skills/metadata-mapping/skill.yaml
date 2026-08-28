@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: metadata-mapping
+version: 1.1.0
+description: >-
+  Expressing the object-to-schema mapping as metadata rather than hand-written code: where
+  the mapping lives (annotations, external XML, programmatic), what reflection costs versus
+  generated code, and how metadata drifts from the schema it describes. Use when persistence
+  annotations accumulate on a domain class that is supposed to be framework-free, when the
+  same mapping is expressed twice, when a schema change is discovered at runtime instead of
+  at startup, when ddl-auto generates a schema in an environment that has migrations, when
+  string literals name columns across the codebase, or when a fully metadata-driven model is
+  proposed. Does not cover the mapping decisions themselves (orm-structural-mapping,
+  inheritance-mapping-strategies) runtime ORM behaviour (orm-behavioral-patterns), or
+  migrating from one mapping approach to another (architecture-refactoring-paths).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/metadata-mapping
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/metadata-mapping
+
+keywords:
+  - metadata-mapping
+  - annotations
+  - orm-xml
+  - code-generation
+  - schema-drift
+  - jpa
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: orm-structural-mapping
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Metadata Mapping
+      short_description: Where the mapping lives, and how it drifts
+      default_prompt: Use Metadata Mapping to place this mapping configuration and guard it against drift.

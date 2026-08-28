@@ -1,0 +1,52 @@
+schemaVersion: 1
+
+name: java-lambdas-and-functional-interfaces
+version: 1.1.0
+description: >-
+  Lambdas, method references and the functional interfaces they implement: what a lambda
+  captures and what that costs, why its this differs from an anonymous class's, when a
+  method reference is clearer, choosing among the standard java.util.function interfaces
+  instead of inventing one, primitive specialisations that avoid boxing, checked exceptions
+  inside lambdas, and the runtime shape (invokedynamic, capturing versus non-capturing,
+  megamorphic call sites). Use when a lambda captures mutable state or a large object, when
+  a codebase reinvents Function or Predicate, when checked exceptions force a try/catch
+  inside a pipeline, or when a queued lambda outlives what it captured. Stream pipelines are
+  java-streams, inlining is jit-inlining-and-escape-analysis, and per-request context a
+  lambda must not capture is scoped-values.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-lambdas-and-functional-interfaces
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-lambdas-and-functional-interfaces
+
+keywords:
+  - java
+  - lambdas
+  - method-references
+  - functional-interfaces
+  - capture
+  - invokedynamic
+  - boxing
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Lambdas and Functional Interfaces
+      short_description: Capture, method references and java.util.function

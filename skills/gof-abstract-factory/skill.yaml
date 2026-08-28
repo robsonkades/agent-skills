@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-abstract-factory
+version: 1.0.0
+description: >-
+  Abstract Factory in modern Java: the pattern exists to keep a _family_ of related objects
+  mutually consistent when the family varies, not to centralise construction. Covers the family
+  invariant that justifies it, why dependency injection already resolves the deployment-time case,
+  when per-request or per-tenant selection makes the factory unavoidable, and how to express it as
+  a record of suppliers or a sealed provider rather than a four-level interface hierarchy. Use
+  when a factory interface is proposed, when profile-specific object graphs are being built by
+  hand, when a family of parser/renderer/validator types must never be mixed across formats, when
+  a plugin SPI must supply several related types at once, or when reviewing a factory whose
+  products have nothing to do with each other. Does not cover single-product creation
+  (gof-factory-method), assembling one complex object (gof-builder), copying an existing instance
+  (gof-prototype), or wiring policy in general (java-dependency-inversion).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-abstract-factory
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-abstract-factory
+
+keywords:
+  - design-patterns
+  - gof
+  - creational
+  - factory
+  - java
+  - dependency-injection
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Abstract Factory
+      short_description: Families that must not be mixed
+      default_prompt: Use Abstract Factory to check whether these products form a family worth protecting.

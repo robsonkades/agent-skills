@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: architecture-fitness-functions
+version: 1.0.0
+description: >-
+  The governance decision for an architecture characteristic — what to govern, at what threshold, where,
+  and what happens when it goes red — not how the test is written: the objectivity test, triaging an
+  inherited suite, and marking a characteristic explicitly ungoverned. Use when incidents pass a gate that
+  stayed green, when rules are skipped or red on main and nobody remembers why, when a driving
+  characteristic has no check, when "maintainable" is proposed as the thing to measure, when a scanner
+  ships a threshold that cannot fail, when a frozen baseline has not shrunk in a year, when an SLO
+  dashboard is called a fitness function but nothing stops, or when a green pipeline reads as
+  architectural health. Does not cover writing the test (architecture-testing), pipeline composition and
+  ratcheting onto legacy code (quality-gates), deriving the list (architecture-characteristics), the
+  analysis method (architecture-trade-off-analysis), CI thresholds (performance-regression-ci), or error
+  budgets (slo-and-alerting).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/architecture-fitness-functions
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/architecture-fitness-functions
+
+keywords:
+  - architecture
+  - fitness-functions
+  - governance
+  - architecture-characteristics
+  - evolutionary-architecture
+  - objectivity
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+  - scripts/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Architecture Fitness Functions
+      short_description: Govern one characteristic, or record that you do not
+      default_prompt: Use Architecture Fitness Functions to pick a governance mode for this characteristic.

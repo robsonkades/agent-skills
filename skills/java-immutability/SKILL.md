@@ -1,14 +1,13 @@
 ---
 name: java-immutability
 description: >
-  Immutable objects in modern Java: records in depth, defensive copies, immutable
-  collection factories versus unmodifiable views, deep versus shallow immutability,
-  final-field semantics and safe publication (JMM), and the withers pattern. Use when
-  designing a value object, when a record has a List, Map or array component, when an
-  accessor returns internal mutable state, when an "immutable" object is observed
-  changing, or when deciding whether immutability is worth its allocation cost. Does
-  not cover null validation in constructors (java-null-safety) or Optional usage
-  (java-optional).
+  Immutable objects in modern Java: records in depth, defensive copies, immutable collection
+  factories versus unmodifiable views, deep versus shallow immutability, final-field
+  semantics and safe publication (JMM), and the withers pattern. Use when designing a value
+  object, when a record has a List, Map or array component, when an accessor returns
+  internal mutable state, when an "immutable" object is observed changing, or when deciding
+  whether immutability is worth its allocation cost. Does not cover null validation in
+  constructors (java-null-safety) or Optional usage (java-optional).
 ---
 
 # Java Immutability

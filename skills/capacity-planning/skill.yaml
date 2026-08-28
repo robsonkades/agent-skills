@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: capacity-planning
+version: 1.1.0
+description: >-
+  Quantitative capacity planning: building an instance-count model from measured data,
+  sizing against both a throughput ceiling and a latency SLO, forecasting headroom against
+  growth, peak versus average provisioning, cost per request, and validating the plan
+  against a real saturation test. Use when deciding how many instances or pods a target load
+  needs, when an autoscaler is configured on a fixed CPU threshold, when adding replicas
+  stopped improving throughput, when someone asks for a saturation date or an infrastructure
+  budget, when p99 spikes during scale-up events, or when a downstream connection limit may
+  be the real ceiling. Does not cover the scalability model and its contention and coherency
+  coefficients (universal-scalability-law), queueing model selection and fitting
+  (queueing-models), or designing and running the saturation experiment itself
+  (load-testing-advanced).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/capacity-planning
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/capacity-planning
+
+keywords:
+  - capacity-planning
+  - performance
+  - scalability
+  - autoscaling
+  - slo
+  - forecasting
+  - cost
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: universal-scalability-law
+    version: ^1.0.0
+  - name: queueing-models
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Capacity Planning
+      short_description: Instance counts, saturation dates and cost
+      default_prompt: Use Capacity Planning to size this system from measured data.

@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: serialization-performance
+version: 1.0.0
+description: >-
+  The cost of turning objects into bytes: comparing formats and libraries on throughput,
+  allocation per operation, wire size and schema evolution together, buffer reuse and
+  streaming, why Java serialisation is the wrong default and how to harden the paths that
+  cannot be removed, and benchmarking a serialiser without lying. Use when a consumer's
+  flame graph is dominated by ObjectMapper.readValue, when ObjectInputStream appears on a
+  path that reads data from outside the process, when Kryo register() calls sit beside the
+  default setRegistrationRequired(false), when a mixed deploy broke a distributed cache with
+  KryoException, when a serialiser comparison is timed with System.nanoTime in a loop, when
+  a benchmark reports average time and no allocation figure, or when picking a format for a
+  new topic or contract. Does not cover writing the benchmark correctly
+  (jmh-microbenchmarks), finding the allocation in production (allocation-profiling), or
+  buffers outside the heap (off-heap-memory).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/serialization-performance
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/serialization-performance
+
+keywords:
+  - java
+  - serialization
+  - protobuf
+  - avro
+  - kryo
+  - jmh
+  - allocation
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jmh-microbenchmarks
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Serialization Performance
+      short_description: Format choice, allocation and honest benchmarks
+      default_prompt: Use Serialization Performance to choose or justify the serialisation format on this path.

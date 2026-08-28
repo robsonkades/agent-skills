@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: escape-analysis-internals
+version: 1.1.0
+description: >-
+  How C2's escape analysis actually works: the connection graph and its node and edge kinds,
+  the three escape states and how they propagate to a fixed point, flow insensitivity and
+  what it costs, macro expansion as the point where the decision becomes code, scalar
+  replacement limits, lock elision, rematerialisation on deoptimisation, and reading the
+  analysis output. Use when an object that should be eliminated still allocates, when
+  PrintInlining shows "too big" or "not inlineable" on the path, when someone raises
+  MaxBCEAEstimateSize expecting less allocation, when -XX:CompileCommand=PrintEscapeAnalysis
+  produces no output, when zero jdk.ObjectAllocationInNewTLAB events are read as proof, or
+  when a hot method both eliminates many objects and deoptimises repeatedly. Does not cover
+  the introductory design rules and the gc.alloc.rate.norm measurement
+  (jit-inlining-and-escape-analysis), the surrounding compiler phases (c2-sea-of-nodes), or
+  partial escape analysis as an alternative (graalvm-jit).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/escape-analysis-internals
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/escape-analysis-internals
+
+keywords:
+  - java
+  - jvm
+  - escape-analysis
+  - scalar-replacement
+  - connection-graph
+  - allocation
+  - c2
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jit-inlining-and-escape-analysis
+    version: ^1.0.0
+  - name: c2-sea-of-nodes
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Escape Analysis Internals
+      short_description: Connection graph, escape states and scalar replacement
+      default_prompt: Use Escape Analysis Internals to explain why this object was not eliminated.

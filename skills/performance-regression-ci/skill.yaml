@@ -1,0 +1,60 @@
+schemaVersion: 1
+
+name: performance-regression-ci
+version: 1.0.0
+description: >-
+  Turning a performance measurement into an automatic gate: choosing a metric stable enough
+  to gate on, calibrating thresholds against the pipeline's own measured variance, fixed
+  thresholds versus historical trending, noise control on shared CI runners, and updating a
+  baseline deliberately. Use when a benchmark job runs on a shared runner, when a threshold
+  was picked by convention rather than measured, when a comparison script compares means and
+  ignores scoreError, when scoreError is assumed to be a 95% interval, when a delta's sign
+  convention was not checked against the BenchmarkMode, when a step captures a piped
+  command's status with raw $?, when a benchmark has a single @Param value, or when a stale
+  baseline keeps producing false positives. Does not cover running or writing the benchmark
+  itself (jmh-advanced), the full-system run (load-testing), or the general question of
+  whether two measurements differ (latency-statistics).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/performance-regression-ci
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/performance-regression-ci
+
+keywords:
+  - java
+  - performance
+  - regression
+  - ci
+  - jmh
+  - benchmark
+  - baseline
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jmh-advanced
+    version: ^1.0.0
+  - name: load-testing
+    version: ^1.0.0
+  - name: latency-statistics
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Performance Regression CI
+      short_description: Calibrated performance gates that block real regressions
+      default_prompt: Use Performance Regression CI to calibrate or review this performance gate.

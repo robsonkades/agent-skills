@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: streaming-pipeline-topologies
+version: 1.1.0
+description: >-
+  Composable stage shapes for event-driven pipelines — copier, filter, splitter, sharder,
+  merger — each with the ordering it preserves or destroys, whether it is safe above
+  concurrency 1, the state it needs and how it fails; a stage parallelises safely only when
+  stateless or partitioned by its input key, so re-partitioning is where ordering and
+  exactly-once end; the unbounded-state join; watermarks and a named late-data policy; lag
+  as backpressure; and replay, which wall-clock windows destroy. Use when a stage is
+  parallelised, when a join grows state without bound, when a stage re-keys the stream, when
+  late events arrive after a window closed, when a windowed test uses wall-clock, or when
+  reprocessing gives a different answer. Not whether to be event-driven
+  (event-driven-architecture), ordering scope (message-ordering-and-partitioning), barriers
+  (distributed-aggregation-and-barriers), skew (hot-partitions-and-rebalancing), the
+  consumer (kafka-consumers-in-java), or in-process demand (reactive-backpressure).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/streaming-pipeline-topologies
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/streaming-pipeline-topologies
+
+keywords:
+  - streaming
+  - pipeline
+  - windowing
+  - watermarks
+  - partitioning
+  - event-driven
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: message-ordering-and-partitioning
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Streaming Pipeline Topologies
+      short_description: Stage shapes, windowing and safe parallelism
+      default_prompt: Use Streaming Pipeline Topologies to design or review this pipeline's stages.

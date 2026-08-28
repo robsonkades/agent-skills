@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: slo-and-alerting
+version: 1.1.0
+description: >-
+  Turning measurements into an on-call contract: SLI, SLO and SLA, choosing an indicator
+  that reflects the user's experience and where it is measured, the availability definition
+  (window, which status classes count, shed traffic), error budgets as a change-velocity
+  decision, and multi-window burn-rate alerting on symptoms not causes. Use when an SLO is
+  quoted with no window or definition of a good event, when the target equals or is looser
+  than the SLA, when 100% is proposed as a target, when high CPU or heap pages someone, when
+  a page fires for one instance in a replicated fleet, when an alert is routinely
+  acknowledged and ignored, when shed 429s are counted as errors, or when anomaly detection
+  is proposed for paging. Does not cover the metrics themselves (metrics-and-cardinality),
+  percentile correctness (latency-statistics), tail decomposition (tail-latency-analysis),
+  the log event (structured-logging), the shedding mechanism
+  (rate-limiting-and-load-shedding), or the fault model detected (failure-models).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/slo-and-alerting
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/slo-and-alerting
+
+keywords:
+  - slo
+  - sli
+  - alerting
+  - error-budget
+  - burn-rate
+  - on-call
+  - observability
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: metrics-and-cardinality
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: SLO And Alerting
+      short_description: Error budgets and burn-rate alerting
+      default_prompt: Use SLO And Alerting to review this service's targets and what pages the on-call.

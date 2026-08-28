@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-visitor
+version: 1.0.0
+description: >-
+  Visitor in modern Java: adding operations over a stable set of element types without editing
+  them, and why a sealed hierarchy with an exhaustive switch now replaces the classical
+  double-dispatch version for any hierarchy you own. Covers the expression problem — new
+  operations cheap versus new element types cheap — the cases where classical Visitor still wins
+  (types you do not compile, libraries whose API is accept()), stateful visitors that are unsafe
+  to share, recursion depth on deep structures, and unknown element types from a newer producer.
+  Use when several operations must run over one object structure, when instanceof chains grow over
+  a closed hierarchy, when adding an operation means editing every element class, or when an
+  accept/visit pair is proposed. Does not cover the structure being traversed (gof-composite),
+  traversal protocols (gof-iterator), sealed hierarchy design (java-composition-over-inheritance),
+  or value semantics (java-immutability).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-visitor
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-visitor
+
+keywords:
+  - design-patterns
+  - gof
+  - behavioral
+  - visitor
+  - pattern-matching
+  - sealed
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Visitor
+      short_description: Operations over a stable set of types
+      default_prompt: Use Visitor to decide between double dispatch and a sealed switch.

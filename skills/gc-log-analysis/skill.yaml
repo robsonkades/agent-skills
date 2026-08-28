@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: gc-log-analysis
+version: 1.1.0
+description: >-
+  Configuring and reading JVM unified GC logs: the -Xlog:gc* baseline with decorators and
+  rotation, the cause field, the before->after->capacity triple and headroom, pause
+  distribution, premature promotion via gc+age, and correlating with -Xlog:safepoint. Use
+  when a GC log needs to be interpreted, when GC logging is not enabled and the right GC
+  tag-sets have to be chosen, when full collections or Metadata GC Threshold appear, when
+  the heap floor rises after each complete collection, or when an analysis script reports
+  zero pauses. Does not cover collector mechanics (gc-fundamentals), collector choice and
+  heap sizing (jvm-gc-tuning), or allocation profiling (jfr-and-async-profiler). The -Xlog
+  syntax itself — proving a selection emits anything, rotation, async logging and migrating
+  pre-JDK-9 flags — is unified-logging. Attributing an observed pause across layers is
+  pause-attribution.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gc-log-analysis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gc-log-analysis
+
+keywords:
+  - java
+  - jvm
+  - gc
+  - gc-log
+  - xlog
+  - safepoint
+  - diagnosis
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gc-fundamentals
+    version: ^1.0.0
+  - name: latency-statistics
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: GC Log Analysis
+      short_description: Configuring and reading unified GC logs
+      default_prompt: Use GC Log Analysis to configure or interpret this GC log.

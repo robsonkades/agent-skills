@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: queueing-models
+version: 1.1.0
+description: >-
+  Choosing a queueing model and reading what it says: M/M/1 versus M/M/c versus M/G/1 versus
+  M/D/1, the Erlang C and Erlang B formulas, Kingman's G/G/1 approximation, the service-time
+  coefficient of variation, and what each model's assumptions cost when they are violated.
+  Use when a predicted wait time disagrees with the measured one, when latency is far worse
+  than utilisation suggests, when service times are bimodal or GC-spiked, when arrivals are
+  retries or cron bursts rather than independent users, when Erlang C must be computed for a
+  large number of servers, or when deciding whether a measured p99 is even reachable by an
+  M/* model. Does not cover the N = lambda x R law, the utilisation cliff as a rule of
+  thumb, or thread and connection pool sizing (littles-law-and-queueing), the alpha/beta
+  scalability model (universal-scalability-law), or the statistics of the measured numbers
+  themselves (latency-statistics).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/queueing-models
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/queueing-models
+
+keywords:
+  - performance
+  - queueing
+  - erlang
+  - kingman
+  - latency
+  - utilisation
+  - modelling
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: littles-law-and-queueing
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Queueing Models
+      short_description: Picking and reading M/M/c, M/D/1 and Kingman
+      default_prompt: Use Queueing Models to choose the queueing model this system actually satisfies and read it correctly.

@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: connection-pool-sizing
+version: 1.1.0
+description: >-
+  Sizing and diagnosing a JDBC connection pool: L = λ × W where W is connection hold time
+  rather than query latency, the database-side ceiling, HikariCP timeouts and lifetimes,
+  transaction boundaries and idle-in-transaction, N+1 detection, JDBC batching, and what
+  virtual threads change. Use when choosing maximumPoolSize, when connection-timeout is 0 or
+  30 s, when threads wait for connections under load, when HTTP or queue calls happen inside
+  @Transactional, when connections die silently behind a firewall or load balancer, when
+  hibernate.jdbc.batch_size appears not to work, or when raising the pool is proposed as the
+  fix. Does not cover the general queueing arithmetic (littles-law-and-queueing), thread
+  pool sizing (thread-sizing-and-virtual-threads), or caching to reduce load
+  (caching-strategies).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/connection-pool-sizing
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/connection-pool-sizing
+
+keywords:
+  - java
+  - jdbc
+  - hikaricp
+  - connection-pool
+  - transaction
+  - n-plus-one
+  - sizing
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: littles-law-and-queueing
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Connection Pool Sizing
+      short_description: Pool sizing, hold time and database triage
+      default_prompt: Use Connection Pool Sizing to size or diagnose this database pool.

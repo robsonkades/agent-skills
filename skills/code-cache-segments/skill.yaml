@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: code-cache-segments
+version: 1.1.0
+description: >-
+  The segmented code cache as three independent CodeHeaps: non-nmethods, profiled and
+  non-profiled nmethods, their separate exhaustion, sweeper and flushing behaviour,
+  fragmentation that no aggregate metric shows, sizing each segment consistently, and
+  reading jcmd Compiler.codecache. Use when CPU rises with no load change while an aggregate
+  "Code Cache usage" dashboard looks healthy, when doubling ReservedCodeCacheSize fixed one
+  incident and not the next, when setting ProfiledCodeHeapSize or NonProfiledCodeHeapSize
+  makes the JVM refuse to start, when a long-running service degrades with the cache
+  reportedly not full, or when only one unnamed CodeHeap appears in the output. Does not
+  cover the introductory code-cache exhaustion signature (jit-compilation), the code cache's
+  share of the container memory budget (jvm-memory-regions), or Metaspace internals
+  (metaspace-internals).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/code-cache-segments
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/code-cache-segments
+
+keywords:
+  - java
+  - jvm
+  - jit
+  - code-cache
+  - codeheap
+  - fragmentation
+  - sizing
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jit-compilation
+    version: ^1.0.0
+  - name: jvm-memory-regions
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Code Cache Segments
+      short_description: Three independent CodeHeaps and their sizing
+      default_prompt: Use Code Cache Segments to find which CodeHeap is actually under pressure.

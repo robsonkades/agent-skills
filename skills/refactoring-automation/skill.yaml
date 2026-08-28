@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: refactoring-automation
+version: 1.1.0
+description: >-
+  Applying a code change by machine rather than by hand: choosing between an IDE
+  refactoring, an OpenRewrite recipe, structural search-and-replace, a compiler-driven
+  change and hand-editing; what each tool can and cannot see; the places a rename never
+  reaches; making a change spanning hundreds of files reviewable, reproducible and
+  revertible; and proving a mechanical change was mechanical. Use when one edit must land
+  across many files, when a framework or library migration must be applied repo-wide (javax
+  to jakarta, JUnit 4 to 5, a Spring major version), when a rename must reach names that
+  live in strings and configuration, when someone is about to run sed or a regex over Java
+  source, when a tool-generated diff is too large to review line by line, when an automated
+  refactoring changed behaviour, or when a cleanup keeps regressing because nothing stops it
+  coming back. Which refactoring to apply is java-refactoring, what to detect is
+  java-code-smells, and the CI gates the result must pass are quality-gates.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/refactoring-automation
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/refactoring-automation
+
+keywords:
+  - refactoring
+  - automation
+  - openrewrite
+  - large-scale-change
+  - migration
+  - error-prone
+  - reproducibility
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Refactoring Automation
+      short_description: Machine-applied refactoring and large-scale change

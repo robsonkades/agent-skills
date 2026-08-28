@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: view-and-representation-patterns
+version: 1.1.0
+description: >-
+  Producing the response: Template View, Transform View and Two Step View as three ways to
+  turn a model into output, and what each becomes in a JSON API, a server-rendered page or a
+  hypermedia fragment. Use when logic is accumulating inside templates, when a template
+  triggers database queries during rendering, when the same data must be rendered in several
+  formats and the mapping is duplicated per format, when a consistent look or envelope must
+  be applied across every screen or endpoint, when entities are being serialised directly to
+  clients, when a response shape is decided by whatever the service happened to return, or
+  when server-rendered fragments and a JSON API are both being served from the same
+  handlers. Does not cover routing and cross-cutting request concerns
+  (mvc-and-request-handling), the remote operation's granularity and its payload contract
+  (remote-facade-and-dto), compatibility and versioning of that contract
+  (rpc-and-api-contracts), or serialisation throughput (serialization-performance).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/view-and-representation-patterns
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/view-and-representation-patterns
+
+keywords:
+  - template-view
+  - transform-view
+  - two-step-view
+  - problem-detail
+  - rendering
+  - api
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: mvc-and-request-handling
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: View and Representation Patterns
+      short_description: Templates, transforms and one shared second step
+      default_prompt: Use View and Representation Patterns to decide how this response is produced.

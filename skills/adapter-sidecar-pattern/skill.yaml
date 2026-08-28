@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: adapter-sidecar-pattern
+version: 2.0.0
+description: >-
+  A Kubernetes sidecar that normalises what an application emits — metrics, logs, health —
+  so a heterogeneous fleet presents one interface to the platform; not the Gang-of-Four
+  Adapter design pattern for in-process object interfaces (that is java-api-design). Use
+  when a legacy or vendor process exposes metrics in a format the platform cannot scrape,
+  when every service logs in a different shape, when a legacy process has no usable health
+  endpoint, when choosing between a per-pod log sidecar and a DaemonSet node agent, when an
+  adapter is being asked to synthesise a trace or correlation ID the application never
+  emitted, or when an application upgrade silently changed a log format that an adapter
+  parses. Does not cover pod-level container mechanics (sidecar-pattern), how to design the
+  telemetry itself (metrics-and-cardinality, structured-logging,
+  distributed-tracing-design), probe semantics and configuration
+  (kubernetes-service-lifecycle), or collector cost and sampling
+  (opentelemetry-performance).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/adapter-sidecar-pattern
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/adapter-sidecar-pattern
+
+keywords:
+  - kubernetes
+  - sidecar
+  - observability
+  - logs
+  - metrics
+  - daemonset
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: sidecar-pattern
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Adapter Pattern
+      short_description: Normalising what a container emits
+      default_prompt: Use Adapter Pattern to review how this workload's telemetry reaches the platform.

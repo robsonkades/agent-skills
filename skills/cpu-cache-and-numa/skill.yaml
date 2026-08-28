@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: cpu-cache-and-numa
+version: 1.2.0
+description: >-
+  Hardware-aware Java: the cache line as the hardware's indivisible unit, false sharing and
+  how it differs from lock contention, object layout measured with JOL, LongAdder versus
+  AtomicLong, data locality in arrays and collections, and NUMA topology. Use when
+  throughput gets **worse** as threads are added, when scaling efficiency is below 0.5, when
+  fields are being added to a class shared between threads, when volatile counters sit next
+  to each other, when @Contended or padding is proposed, when -XX:+UseNUMA is being set, or
+  when someone says a volatile write "flushes the cache". Does not cover happens-before
+  correctness (java-memory-model), pool and queue sizing (littles-law-and-queueing), or
+  kernel and cgroup behaviour (linux-for-jvm). Proving and fixing false sharing is
+  false-sharing-and-contended, and topology and pinning is numa-and-cpu-affinity.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/cpu-cache-and-numa
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/cpu-cache-and-numa
+
+keywords:
+  - java
+  - cpu-cache
+  - false-sharing
+  - numa
+  - jol
+  - longadder
+  - scalability
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: java-memory-model
+    version: ^1.0.0
+  - name: linux-for-jvm
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: CPU Cache and NUMA
+      short_description: False sharing, object layout and memory locality
+      default_prompt: Use CPU Cache and NUMA to investigate this scalability or layout problem.

@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: java-legacy-code-testing
+version: 1.0.0
+description: >-
+  Getting Java code under test before you change it, when you cannot construct the class or
+  reach the method at all: seams and their enabling points, the dependency-breaking
+  catalogue (Parameterize Constructor, Extract Interface, Extract and Override, Introduce
+  Instance Delegator, Break Out Method Object, Expose Static Method), Sprout and Wrap when
+  there is no time, approval testing when the output to pin is too large to assert on, and
+  the disciplines that make a change safe while no test exists. Use when a constructor opens
+  a connection, when a method reads a static singleton, when a test would need the real
+  database, when mockStatic is proposed, when a setXxxForTest is being added, or when
+  2004-era advice (PowerMock, mockito-inline) is followed. Does not cover
+  characterisation-test mechanics (java-refactoring), strangler work
+  (legacy-enterprise-modernization), doubles (java-test-doubles), test level
+  (java-testing-strategy), the red-green-refactor loop (tdd), or how a test is written
+  (java-test-design).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-legacy-code-testing
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-legacy-code-testing
+
+keywords:
+  - java
+  - legacy-code
+  - seams
+  - dependency-breaking
+  - feathers
+  - testability
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+  - scripts/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Legacy Code Testing
+      short_description: Seams and dependency breaking, to get untestable code under test
+      default_prompt: Use Java Legacy Code Testing to find a seam in this class.

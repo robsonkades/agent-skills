@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: container-awareness
+version: 1.1.0
+description: >-
+  What the JVM actually detects inside a container: cgroup v1 versus v2 detection,
+  ActiveProcessorCount and how a CPU quota becomes a processor count, MaxRAMPercentage and
+  every ergonomic derived from it, GC and JIT thread counts sized from the wrong number, and
+  verifying all of it from inside the running container. Use when a pod is OOMKilled while
+  heap usage is well below Xmx, when a Deployment has no resources.limits or sets
+  limits.memory equal to Xmx, when MaxRAMPercentage is pushed to 90, when someone reads
+  ActiveProcessorCount out of PrintFlagsFinal or jcmd VM.flags and gets -1, when a cgroup
+  command reads /sys/fs/cgroup/cpu/cpu.stat and finds nothing, or when latency spikes have
+  no matching GC pause. Does not cover host-side kernel behaviour such as the node OOM
+  killer, page faults, swap, PSI or signals (linux-for-jvm), the memory-region budget itself
+  (jvm-memory-regions), or CPU topology and pinning (numa-and-cpu-affinity).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/container-awareness
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/container-awareness
+
+keywords:
+  - java
+  - jvm
+  - container
+  - cgroups
+  - kubernetes
+  - ergonomics
+  - throttling
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: linux-for-jvm
+    version: ^1.0.0
+  - name: jvm-memory-regions
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Container Awareness
+      short_description: What the JVM detects from cgroup limits
+      default_prompt: Use Container Awareness to check what this container's JVM actually detected.

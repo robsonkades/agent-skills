@@ -1,0 +1,52 @@
+schemaVersion: 1
+
+name: java-object-contracts
+version: 1.1.0
+description: >-
+  The four contracts every Java object inherits or opts into — equals, hashCode, toString,
+  Comparable — plus why clone is not one of them. The equals properties and how inheritance
+  breaks symmetry, the hashCode obligation and what is stable across JVMs, records'
+  generated implementations and their array and floating-point edges, entity identity under
+  JPA and Hibernate proxies, total ordering and TimSort contract violations, and copying
+  without Cloneable. Use when equals is overridden without hashCode, when an object is a
+  HashMap key, when an entity's equals is built on a database id, when a TreeSet loses an
+  element, when compareTo subtracts, or when a record's generated toString reaches a log.
+  Immutability is java-immutability, null handling inside these methods is java-null-safety,
+  and cross-process hashing is consistent-hashing.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-object-contracts
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-object-contracts
+
+keywords:
+  - java
+  - equals
+  - hashcode
+  - comparable
+  - comparator
+  - tostring
+  - clone
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Object Contracts
+      short_description: equals, hashCode, toString, Comparable and copying

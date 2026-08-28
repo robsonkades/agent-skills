@@ -3,10 +3,10 @@ name: java-composition-over-inheritance
 description: >
   Choosing between inheritance, composition and sealed hierarchies in Java: fragile base
   classes, self-use of overridable methods, subclass explosion, the costs of delegation and
-  decoration, sealed types with exhaustive switch as the modern middle ground, and the
-  cases where inheritance is genuinely right. Use when reviewing an `extends` between
-  classes you maintain, when a base-class change broke subclasses, when variants multiply
-  along more than one axis, or when designing a new hierarchy. Does not cover behavioural
+  decoration, sealed types with exhaustive switch as the modern middle ground, and the cases
+  where inheritance is genuinely right. Use when reviewing an `extends` between classes you
+  maintain, when a base-class change broke subclasses, when variants multiply along more
+  than one axis, or when designing a new hierarchy. Does not cover behavioural
   substitutability formalism (java-design-by-contract) or the SOLID framing of LSP
   (java-solid).
 ---

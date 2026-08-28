@@ -1,0 +1,48 @@
+schemaVersion: 1
+
+name: incident-evidence-capture
+version: 1.0.0
+description: >-
+  What to collect from a degrading JVM before someone restarts it, in what order, and what the
+  restart destroys: the artefacts that already exist and survive, three spaced thread dumps
+  rather than one, the heap dump as the last and most disruptive item, capturing to a path that
+  outlives the container, and the timestamps that make any of it correlatable afterwards. Use
+  when a service is degrading right now and the instinct is to restart, when an incident is over
+  and nobody captured anything, when a runbook says "restart the pod" with no collection step,
+  when a dump was taken and made the outage worse, when jcmd or jmap hangs against a wedged JVM,
+  or when evidence was written inside a container that was then replaced. Owns the order and the
+  budget; each tool's own use belongs elsewhere — heap-dump-analysis, concurrency-diagnostics,
+  jfr-and-async-profiler, jhsdb-and-core-dumps, gc-log-analysis. Not diagnosis (java-performance)
+  or postmortem writing (engineering-communication).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/incident-evidence-capture
+
+keywords:
+  - incident
+  - diagnostics
+  - thread-dump
+  - heap-dump
+  - jfr
+  - production
+  - java
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: heap-dump-analysis
+    version: ^1.0.0
+  - name: concurrency-diagnostics
+    version: ^1.0.0
+  - name: jfr-and-async-profiler
+    version: ^1.0.0

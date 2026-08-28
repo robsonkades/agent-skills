@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: enterprise-transactions
+version: 1.1.0
+description: >-
+  Transaction boundaries as an architectural decision: where a transaction starts and ends,
+  what isolation level actually buys, how propagation and rollback rules behave in practice,
+  why a transaction must not span a network call or a user's thinking time, and what
+  replaces atomicity once it must. Use when a use case writes twice and nobody can say
+  whether it is atomic, when @Transactional sits on a repository or a controller, when a
+  transaction stays open across an HTTP call or a message publish, when a rollback did not
+  happen because the exception was checked or the call was self-invoked, when isolation is
+  being raised to fix a race, when a read-only flag is added without knowing what it does,
+  when a long-running batch holds locks, or when a transaction is expected to cover two
+  services. Does not cover locks held across user think time (offline-concurrency-control),
+  what a client may observe across replicas (consistency-models), repeat-safety of an
+  operation (idempotency), or database-specific lock behaviour.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/enterprise-transactions
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/enterprise-transactions
+
+keywords:
+  - transactions
+  - isolation
+  - propagation
+  - rollback
+  - jpa
+  - spring
+  - enterprise
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: consistency-models
+    version: ^1.0.0
+  - name: idempotency
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Enterprise Transactions
+      short_description: Boundaries, isolation, propagation and rollback
+      default_prompt: Use Enterprise Transactions to place and verify this transaction boundary.

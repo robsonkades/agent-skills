@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-mediator
+version: 1.0.0
+description: >-
+  Mediator in modern Java, treated as high-risk: replacing many-to-many collaboration with a hub
+  that owns the interaction protocol, and the god object that hub becomes when nothing bounds it.
+  Covers the direction test that separates it from a facade, why an event bus is the decoupled
+  alternative and what it gives up, the reentrancy loop when a colleague notifies the hub that
+  notifies it back, the hub as a serialisation point, and orchestration versus choreography with
+  the availability coupling an orchestrator introduces. Use when collaborators reference each
+  other in a web, when a coordinator class keeps growing, when a command bus is called a mediator,
+  when a saga orchestrator is designed, or when a notification loops between two components. Does
+  not cover one-way notification to unknown subscribers (gof-observer, event-driven-architecture),
+  a simplifying entry point (gof-facade), request dispatch to one handler (gof-command), or saga
+  mechanics (distributed-transactions-and-sagas).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-mediator
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-mediator
+
+keywords:
+  - design-patterns
+  - gof
+  - behavioral
+  - mediator
+  - orchestration
+  - coordination
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Mediator
+      short_description: A hub that must stay small
+      default_prompt: Use Mediator to review this coordinator.

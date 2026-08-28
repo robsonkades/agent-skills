@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: architecture-decision-making
+version: 2.0.0
+description: >-
+  Writing an architecture decision down so it can be re-opened on evidence: what earns an ADR,
+  reversibility pricing how much record it earns, superseding rather than editing in place, and
+  the recorded refusal. Use when nobody can say why the system is built this way, when the same
+  decision is argued or deferred for the third time, when an accepted record is about to be
+  edited in place, when every record says "accepted" and none says "superseded", when nobody can
+  say who may change a status, or when a rejected proposal is being closed without a written
+  reason. Does not cover the choice itself (layering-and-boundaries, distribution-boundaries),
+  naming and capping the characteristics (architecture-characteristics), deliberate shortcuts
+  (technical-debt-decisions), choosing a pattern once the forces are known
+  (pattern-selection-and-composition), or the method of analysing the trade-off itself — MECE
+  option sets, qualitative versus quantitative analysis, resisting evangelism
+  (architecture-trade-off-analysis).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/architecture-decision-making
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/architecture-decision-making
+
+keywords:
+  - architecture
+  - decision-making
+  - adr
+  - decision-record
+  - reversibility
+  - supersession
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Architecture Decision Making
+      short_description: Records that stay re-openable on evidence
+      default_prompt: Use Architecture Decision Making to write this decision down so it can be re-opened.

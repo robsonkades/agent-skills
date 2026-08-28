@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: remote-facade-and-dto
+version: 1.1.0
+description: >-
+  Designing what crosses a remote boundary: a Remote Facade providing coarse,
+  business-shaped operations, and DTOs carrying the data in one round trip — plus when a DTO
+  earns its mapping cost. Use when an API mirrors the domain model method for method, when a
+  client makes five calls to render one screen, when JPA entities are serialised to clients,
+  when a DTO is a field-for-field copy of an entity, when adding a field means editing seven
+  classes, when internal fields appear in a public payload, or when a shared DTO library
+  couples services at compile time. Does not cover whether the boundary should be remote
+  (distribution-boundaries), contract versioning (rpc-and-api-contracts), the view layer
+  (view-and-representation-patterns), or the application service the facade calls
+  (service-layer-design).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/remote-facade-and-dto
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/remote-facade-and-dto
+
+keywords:
+  - remote-facade
+  - dto
+  - api-design
+  - chatty-interface
+  - projections
+  - boundaries
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: distribution-boundaries
+    version: ^1.0.0
+  - name: rpc-and-api-contracts
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Remote Facade and DTO
+      short_description: Coarse operations and deliberate payloads
+      default_prompt: Use Remote Facade and DTO to shape what crosses this boundary.

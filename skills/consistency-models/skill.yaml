@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: consistency-models
+version: 1.1.0
+description: >-
+  Choosing a consistency model as an engineering decision: the ladder from linearizable
+  through sequential, causal and the session guarantees (read-your-writes, monotonic reads)
+  to eventual, stated as what a client can and cannot observe; CAP stated correctly — the
+  choice between C and A exists only while partitioned — and PACELC as the more useful
+  framing; and where the surprise lives, from a replica serving a stale read to the writer
+  that just wrote to transaction isolation being orthogonal to distributed consistency. Use
+  when a user cannot see their own write, when a read after a write returns the previous
+  value, when a design names a model instead of an observable requirement, when reads are
+  being routed to replicas, or when someone cites "pick two". Does not cover multi-service
+  atomicity (distributed-transactions-and-sagas), quorum arithmetic (consensus-and-quorums),
+  caches (caching-strategies), replicated cache topology (cache-sharding-and-replication),
+  or the JMM's happens-before (java-memory-model).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/consistency-models
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/consistency-models
+
+keywords:
+  - distributed-systems
+  - consistency
+  - linearizability
+  - cap
+  - pacelc
+  - replication
+  - read-your-writes
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: failure-models
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Consistency Models
+      short_description: Linearizable to eventual, and what a client sees
+      default_prompt: Use Consistency Models to pick the weakest model that meets this requirement.

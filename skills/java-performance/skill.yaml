@@ -1,13 +1,18 @@
 schemaVersion: 1
 
 name: java-performance
-version: 1.0.0
+version: 2.2.0
 description: >-
-  Java performance engineering on the JVM: JIT compilation, garbage collection,
-  allocation pressure, and profiling methodology. Use when diagnosing a latency
-  regression, high CPU with normal GC, suspected GC pauses, memory growth that is
-  not a leak, or slow startup and warmup. Hands off to jvm-gc-tuning once GC is
-  confirmed as the cause.
+  Triage entry point for JVM performance problems: turn a reported symptom into the one
+  investigation that can resolve it, and hand off to the specialist skill that owns it. Use
+  when a performance problem arrives without a known cause — "it got slow", a p99 regression
+  after a deploy, high CPU, memory growth, a slow start — and the next step is unclear.
+  Routes to performance-methodology for the process, jfr-and-async-profiler for evidence,
+  jvm-gc-tuning for collectors, sql-query-performance and orm-fetch-and-batching-performance
+  for the database, incident-evidence-capture when a restart is imminent, and the rest of
+  the family for each specific cause. Does not itself cover the investigation process,
+  profiling commands, GC, JIT, concurrency, the database, load testing, pools or caches —
+  each of those is its own skill.
 
 license: Apache-2.0
 
@@ -25,9 +30,9 @@ keywords:
   - java
   - jvm
   - performance
-  - profiling
-  - jit
-  - gc
+  - triage
+  - diagnosis
+  - routing
 
 # No `compatibility` block: this skill works with any agent that reads SKILL.md.
 
@@ -37,8 +42,12 @@ files:
   - references/
 
 dependencies:
-  - name: jvm-gc-tuning
+  - name: performance-methodology
     version: ^1.0.0
+  - name: jfr-and-async-profiler
+    version: ^1.0.0
+  - name: jvm-gc-tuning
+    version: ^2.0.0
 
 capabilities:
   - reads-source
@@ -47,5 +56,5 @@ agentOverrides:
   codex:
     interface:
       display_name: Java Performance
-      short_description: JVM, JIT, GC and allocation diagnostics
-      default_prompt: Use Java Performance to diagnose this latency or CPU problem.
+      short_description: Symptom triage and routing for JVM performance
+      default_prompt: Use Java Performance to triage this performance problem and route it.

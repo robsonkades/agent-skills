@@ -1,0 +1,60 @@
+schemaVersion: 1
+
+name: distribution-boundaries
+version: 1.1.0
+description: >-
+  Deciding whether a boundary should be a process boundary, and designing it when it must
+  be: what distribution actually costs (latency, serialisation, partial failure, lost
+  atomicity, independent deployment), why a remote interface must be coarser than a local
+  one, and choosing between synchronous call, messaging and replication. Use when a module
+  is proposed for extraction into a service, when microservices are being adopted without a
+  named driver, when a service call sits inside a transaction, when one request fans out to
+  a dozen downstream calls, when two services share a database, when a "service" cannot be
+  deployed without another being deployed too, when a synchronous chain has three or more
+  hops, or when a distributed transaction is being designed. Does not cover the remote API's
+  shape and payload types (remote-facade-and-dto), contract compatibility and versioning
+  (rpc-and-api-contracts), transaction mechanics on one database (enterprise-transactions),
+  or in-process layering (layering-and-boundaries).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/distribution-boundaries
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/distribution-boundaries
+
+keywords:
+  - distribution
+  - microservices
+  - service-extraction
+  - saga
+  - outbox
+  - boundaries
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: layering-and-boundaries
+    version: ^1.0.0
+  - name: rpc-and-api-contracts
+    version: ^1.0.0
+  - name: failure-models
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Distribution Boundaries
+      short_description: When to distribute, and what it costs
+      default_prompt: Use Distribution Boundaries to decide and design this process boundary.

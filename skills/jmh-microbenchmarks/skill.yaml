@@ -1,0 +1,62 @@
+schemaVersion: 1
+
+name: jmh-microbenchmarks
+version: 1.2.0
+description: >-
+  Writing microbenchmarks that do not lie: dead-code elimination and constant folding,
+  Blackhole and returning results, fork and state scoping, warm-up verification, reading
+  Score and Error as a confidence interval, gc.alloc.rate.norm as the most reliable number,
+  and converting a bench result into a system prediction via Amdahl. Use when a benchmark is
+  being written or reviewed, when @Fork(0) or a hand-rolled timing loop appears, when a
+  benchmark discards its result, when two variants are compared with different boundaries,
+  when overlapping error intervals are read as "no difference", or when a CI performance
+  gate needs a threshold. Does not cover finding what to benchmark (jfr-and-async-profiler,
+  flame-graph-analysis), the compilation model itself (jit-compilation), or full-system load
+  tests (load-testing). The profilers and variance diagnosis are jmh-advanced, and gating is
+  performance-regression-ci.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/jmh-microbenchmarks
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/jmh-microbenchmarks
+
+keywords:
+  - java
+  - jmh
+  - benchmark
+  - microbenchmark
+  - blackhole
+  - measurement
+  - ci-gate
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: latency-statistics
+    version: ^1.0.0
+  - name: jit-compilation
+    version: ^1.0.0
+
+optionalDependencies:
+  - name: performance-methodology
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: JMH Microbenchmarks
+      short_description: Benchmarks that do not lie, and what they prove
+      default_prompt: Use JMH Microbenchmarks to write or validate this benchmark.

@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: java-annotations
+version: 1.1.0
+description: >-
+  Annotations as metadata that only means something if code reads it: retention policies and
+  what each one costs, targets and where an annotation on a record component actually lands,
+  @Inherited and its limits, marker interfaces versus marker annotations, @Override as a
+  correctness check rather than decoration, and the gap between annotating something and
+  enforcing it. Use when defining a custom annotation, when an annotation appears to have no
+  effect, when validation or security annotations are trusted without a validator or a proxy
+  invoking them, when @Override is missing on an override, when a naming convention encodes
+  behaviour that an annotation should carry, when annotation scanning slows startup or
+  breaks under native image, or when deciding between a marker interface and a marker
+  annotation. Does not cover nullability annotation contracts (java-null-safety), reflective
+  access mechanics (java-reflection-and-method-handles), or the enum type itself
+  (java-enums).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-annotations
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-annotations
+
+keywords:
+  - java
+  - annotations
+  - retention
+  - marker-interface
+  - annotation-processing
+  - override
+  - validation
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Annotations
+      short_description: Retention, targets, markers and annotation enforcement

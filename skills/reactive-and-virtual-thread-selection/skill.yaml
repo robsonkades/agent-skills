@@ -1,0 +1,61 @@
+schemaVersion: 1
+
+name: reactive-and-virtual-thread-selection
+version: 1.1.0
+description: >-
+  Choosing between a reactive pipeline and thread-per-request on virtual threads, and
+  deciding where they legitimately coexist: what each model actually gives you, where
+  backpressure comes from in each, memory per in-flight request versus per idle connection,
+  the diagnosability difference, and the framework configuration that decides which model a
+  request runs under. Use when a team proposes migrating away from WebFlux or towards it,
+  when virtual threads are described as making reactive obsolete, when a blocking call is
+  about to be added to a reactive pipeline, when spring.threads.virtual.enabled is being
+  turned on, when Quarkus RunOnVirtualThread is applied per endpoint, or when both models
+  exist in one service and nobody can say which runs what. Not what blocks a carrier
+  (blocking-and-nonblocking-io), demand and overflow (reactive-backpressure), the migration
+  programme (virtual-thread-migration), or thread costs and sizing
+  (thread-sizing-and-virtual-threads).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/reactive-and-virtual-thread-selection
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/reactive-and-virtual-thread-selection
+
+keywords:
+  - java
+  - concurrency
+  - reactive
+  - virtual-threads
+  - webflux
+  - quarkus
+  - architecture
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: thread-sizing-and-virtual-threads
+    version: ^1.0.0
+  - name: reactive-backpressure
+    version: ^1.0.0
+  - name: blocking-and-nonblocking-io
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Reactive and Virtual Thread Selection
+      short_description: Choosing an execution model, with the trade-offs
+      default_prompt: Use Reactive and Virtual Thread Selection to decide which execution model this workload needs.

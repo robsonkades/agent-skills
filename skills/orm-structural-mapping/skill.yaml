@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: orm-structural-mapping
+version: 1.1.0
+description: >-
+  Mapping the structure of an object model onto tables: Identity Field, Foreign Key Mapping,
+  Association Table Mapping, Dependent Mapping, Embedded Value and Serialized LOB. Use when
+  choosing an identifier strategy or when a generated identity breaks batching, when a
+  bidirectional association updates the wrong side and no foreign key is written, when a
+  many-to-many link already has attributes, when child rows are given repositories of their
+  own, when a value type is flattened into columns or hidden in a JSON column, or when a
+  collection is deleted and reinserted on every save. Does not cover subtype mapping
+  (inheritance-mapping-strategies), where the mapping lives (metadata-mapping), runtime
+  fetch behaviour (orm-behavioral-patterns), or which data-access pattern to use in the
+  first place (data-source-patterns).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/orm-structural-mapping
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/orm-structural-mapping
+
+keywords:
+  - mapping
+  - identity-field
+  - associations
+  - embeddable
+  - json-column
+  - jpa
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: data-source-patterns
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: ORM Structural Mapping
+      short_description: Keys, associations, embedded values and LOBs
+      default_prompt: Use ORM Structural Mapping to decide or review this mapping.

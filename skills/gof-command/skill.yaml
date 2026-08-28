@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-command
+version: 1.0.0
+description: >-
+  Command in modern Java: turning an invocation into an object so it can be queued, logged,
+  scheduled, retried or undone — and the distinction from an event, which is a fact rather than a
+  request. Covers when reifying a call earns its cost and when a method reference is enough, undo
+  through inverses versus mementos versus compensation, what changes when a command is persisted
+  or sent to a broker (versioning, at-least-once delivery, idempotency), and the captured-state
+  hazard when a command executes later than it was created. Use when an operation must be
+  deferred, queued, audited or undone, when a command bus is proposed, when a class is created per
+  method with no queue or undo behind it, or when commands and events are being used
+  interchangeably. Does not cover domain and integration events and the outbox
+  (event-driven-architecture), broker delivery semantics (delivery-semantics), executor and task
+  lifecycle (executors-and-task-lifecycle), or algorithm selection (gof-strategy).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-command
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-command
+
+keywords:
+  - design-patterns
+  - gof
+  - behavioral
+  - command
+  - undo
+  - messaging
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Command
+      short_description: An invocation as a value; not an event
+      default_prompt: Use Command to review this reified operation.

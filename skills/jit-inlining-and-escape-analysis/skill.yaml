@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: jit-inlining-and-escape-analysis
+version: 1.2.0
+description: >-
+  Inlining and escape analysis in C2: why inlining is the multiplier that enables every
+  other optimisation, scalar replacement versus "stack allocation", flow-insensitivity as
+  the central limitation, megamorphic call sites, and measuring the result with
+  gc.alloc.rate.norm. Use when allocation rate is high on a hot path, when someone proposes
+  an object pool for small objects, when an interface gains a third implementation on a
+  critical path, when "the JIT will handle it" or "allocation is expensive" is asserted
+  without a measurement, when a rare branch makes an object escape, or when reflection or a
+  lambda capture sits on a hot path. Does not cover the tiered pipeline and warm-up
+  (jit-compilation), benchmark construction (jmh-microbenchmarks), or GC cost itself
+  (gc-fundamentals). The analysis algorithm itself is escape-analysis-internals and byte
+  attribution is allocation-profiling.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/jit-inlining-and-escape-analysis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/jit-inlining-and-escape-analysis
+
+keywords:
+  - java
+  - jvm
+  - jit
+  - inlining
+  - escape-analysis
+  - allocation
+  - c2
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jit-compilation
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: JIT Inlining and Escape Analysis
+      short_description: Inlining, scalar replacement and allocation measurement
+      default_prompt: Use JIT Inlining and Escape Analysis to decide this allocation question by measurement.

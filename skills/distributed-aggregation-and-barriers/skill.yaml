@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: distributed-aggregation-and-barriers
+version: 1.1.0
+description: >-
+  Computing one answer from data spread across many workers, and its synchronisation cost:
+  the barrier, which runs at the speed of the slowest participant; reduce correctness, where
+  the combiner must be associative and commutative, average is not reducible, and
+  floating-point addition is not associative so a distributed sum of doubles varies between
+  runs; mergeable summaries; broadcast versus shuffle joins and skew; partial failure and
+  checkpointing. Use when a nightly total does not reconcile with itself between runs, when
+  a job's wall-clock time is set by two tasks out of 10,000, when adding workers stopped
+  making a job faster, when per-worker percentiles are averaged, when an exact distinct
+  count runs out of memory, or when a join makes one worker do all the work. Does not cover
+  fan-out inside one request (scatter-gather), windowed processing
+  (streaming-pipeline-topologies), percentile statistics (latency-statistics), ordering
+  (message-ordering-and-partitioning), or key skew (hot-partitions-and-rebalancing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/distributed-aggregation-and-barriers
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/distributed-aggregation-and-barriers
+
+keywords:
+  - aggregation
+  - barrier
+  - reduce
+  - straggler
+  - hyperloglog
+  - distributed-join
+  - java
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: failure-models
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Distributed Aggregation And Barriers
+      short_description: Reduce correctness, barriers and stragglers
+      default_prompt: Use Distributed Aggregation And Barriers to check this job's combiner and its synchronisation points.

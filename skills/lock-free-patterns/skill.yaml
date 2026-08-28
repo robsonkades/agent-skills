@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: lock-free-patterns
+version: 1.1.0
+description: >-
+  Lock-free algorithm patterns: CAS retry loops and how they fail, the ABA problem and when
+  it is actually reachable in Java, lock-free versus wait-free versus obstruction-free
+  progress, spin backoff, LongAdder-style striping, lock-free queues and stacks, and
+  deciding when a plain lock is the better answer. Use when a CAS loop spins without
+  backoff, when AtomicLong stops scaling with thread count, when CPU is high but throughput
+  is flat and jstack shows no BLOCKED threads, when a node pool is added to a lock-free
+  structure, when someone plans to hand-roll a structure that java.util.concurrent already
+  ships, or when a lock-free rewrite is justified by "biased locking" or measured with a
+  System.nanoTime loop. Does not cover the access modes and barriers the algorithms are
+  built from (varhandles-and-memory-ordering), happens-before and safe publication
+  (java-memory-model), or what a contended monitor actually costs (lock-inflation).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/lock-free-patterns
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/lock-free-patterns
+
+keywords:
+  - java
+  - concurrency
+  - lock-free
+  - cas
+  - aba
+  - longadder
+  - disruptor
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: varhandles-and-memory-ordering
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Lock-Free Patterns
+      short_description: CAS loops, ABA, striping and when to use a lock
+      default_prompt: Use Lock-Free Patterns to decide whether this should be lock-free and get the loop right.

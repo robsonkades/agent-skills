@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: java-memory-model
+version: 1.2.0
+description: >-
+  The Java Memory Model as a contract about reordering: happens-before as the only currency,
+  volatile piggyback publication, atomicity versus visibility versus ordering, safe
+  publication and final-field semantics, double-checked locking, and why x86 and aarch64
+  differ. Use when reviewing code where one thread writes a field another reads, when a flag
+  between threads is not volatile, when an invariant spans two fields, when a constructor
+  lets this escape, when two methods synchronise on different monitors, when Thread.sleep is
+  used as synchronisation, when a bug appears only after migrating to aarch64, or when a
+  mitigation only made a race rarer. Does not cover thread sizing and virtual threads
+  (thread-sizing-and-virtual-threads), cache-line effects and false sharing
+  (cpu-cache-and-numa), or lock contention profiling (jfr-and-async-profiler). Explicit
+  access modes are varhandles-and-memory-ordering and monitor cost under contention is
+  lock-inflation.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-memory-model
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-memory-model
+
+keywords:
+  - java
+  - jmm
+  - concurrency
+  - happens-before
+  - volatile
+  - memory-model
+  - publication
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Memory Model
+      short_description: Happens-before, volatile and safe publication
+      default_prompt: Use Java Memory Model to check whether this concurrent code is correct.

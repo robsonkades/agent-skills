@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: engineering-communication
+version: 1.0.0
+description: >-
+  Communicating engineering facts to people who will act on them: stating what is true, what
+  follows from it, what is still uncertain, the options and a recommendation — in that order.
+  Covers raising a risk early, saying no to a request in a way that leaves a
+  yes on the table, resolving technical disagreement by making the checkable claim checkable,
+  escalating without going around someone, and status updates during an incident. Use when bad
+  news has to travel, when a risk is visible but unspoken, when you are being asked to commit
+  to something you believe is not achievable, when a technical argument has gone two rounds
+  without new information, when a message hedges every claim it makes, or when
+  non-engineers need to make a decision that depends on a technical fact. Does not cover the
+  numbers in an estimate (estimation-under-uncertainty), clarifying a requirement
+  (requirements-and-acceptance), review comments specifically (code-review), or deciding to
+  take on debt (technical-debt-decisions).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/engineering-communication
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/engineering-communication
+
+keywords:
+  - communication
+  - risk
+  - escalation
+  - incident-updates
+  - disagreement
+  - uncertainty
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities: []
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Engineering Communication
+      short_description: Fact, impact, uncertainty, options, recommendation
+      default_prompt: Use Engineering Communication to shape this message.

@@ -3,12 +3,11 @@ name: java-cohesion-coupling
 description: >
   Cohesion and coupling in Java at class, package and module level: cohesion types
   (functional, communicational, temporal, logical), coupling types in real code,
-  afferent/efferent coupling and instability, package dependency graphs, and JPMS
-  module boundaries as enforced coupling limits. Use when a small change fans out
-  across packages, when a package cycle appears, when deciding which package or
-  module a class belongs in, or when reviewing package architecture. Principle
-  framing lives in java-solid; inverting a specific dependency edge in
-  java-dependency-inversion.
+  afferent/efferent coupling and instability, package dependency graphs, and JPMS module
+  boundaries as enforced coupling limits. Use when a small change fans out across packages,
+  when a package cycle appears, when deciding which package or module a class belongs in, or
+  when reviewing package architecture. Principle framing lives in java-solid; inverting a
+  specific dependency edge in java-dependency-inversion.
 ---
 
 # Java Cohesion and Coupling

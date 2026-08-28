@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: repository-pattern
+version: 1.1.0
+description: >-
+  The repository as a collection-like boundary over aggregates: what belongs behind it, why
+  there is one per aggregate root and not one per table, where queries and read models sit
+  instead, and when a repository is genuinely just a CRUD wrapper that should be deleted.
+  Use when a repository is being added for a child entity, when a generic or base repository
+  is proposed, when repository methods carry business verbs (cancelExpired,
+  activateEligible), when a managed entity escapes through the repository interface, when
+  reads and writes both go through the same interface and reads are slow, when a repository
+  interface wraps a Spring Data interface that wraps the ORM, or when someone argues that
+  Spring Data repositories make the pattern unnecessary. Does not cover query composition
+  (query-objects-and-specifications), ORM runtime behaviour (orm-behavioral-patterns), which
+  data-access pattern underlies it (data-source-patterns), or aggregate design itself
+  (domain-logic-organization).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/repository-pattern
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/repository-pattern
+
+keywords:
+  - repository
+  - aggregate
+  - spring-data
+  - dao
+  - read-model
+  - persistence
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: domain-logic-organization
+    version: ^1.0.0
+  - name: query-objects-and-specifications
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Repository Pattern
+      short_description: One per aggregate root, or not at all
+      default_prompt: Use Repository Pattern to review or design this data-access boundary.

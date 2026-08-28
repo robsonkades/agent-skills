@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-factory-method
+version: 1.0.0
+description: >-
+  Factory Method in modern Java, and the three different things that share its name: the GoF
+  pattern (a creation hook a subclass overrides inside an inherited algorithm), Effective Java's
+  static factory method (a named constructor, not this pattern), and any method someone called
+  createX. Covers when the subclass hook is genuinely right, why an injected Supplier or a keyed
+  map replaces it in most application code, and the constructor-calls-an-overridable-method trap
+  it invites. Use when a protected createX() hook is proposed, when a class is subclassed only to
+  change which type it instantiates, when tests subclass production code to substitute an object,
+  when a static factory is being called Factory Method in review, or when deciding between a
+  subclass hook and a Supplier. Does not cover families of related products
+  (gof-abstract-factory), the surrounding algorithm skeleton (gof-template-method), or static
+  factory naming conventions (java-object-construction).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-factory-method
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-factory-method
+
+keywords:
+  - design-patterns
+  - gof
+  - creational
+  - factory-method
+  - supplier
+  - java
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Factory Method
+      short_description: A creation hook, not a static factory
+      default_prompt: Use Factory Method to judge this creation hook.

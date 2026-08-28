@@ -20,14 +20,15 @@ npm run verify
 
 `npm run verify` is the same set of checks CI runs:
 
-| Step       | Command                    | What it catches                             |
-| ---------- | -------------------------- | ------------------------------------------- |
-| Build      | `npm run build`            | Type errors across all seven packages       |
-| Boundaries | `npm run check:boundaries` | An import that violates the dependency rule |
-| Lint       | `npm run lint`             | Style and correctness rules                 |
-| Format     | `npm run format:check`     | Formatting drift                            |
-| Registry   | `npm run registry:check`   | `registry/skills.yaml` out of date          |
-| Tests      | `npm run test:only`        | Everything else                             |
+| Step       | Command                    | What it catches                                                                                                       |
+| ---------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Build      | `npm run build`            | Type errors across all seven packages                                                                                 |
+| Boundaries | `npm run check:boundaries` | An import that violates the dependency rule                                                                           |
+| Lint       | `npm run lint`             | Style and correctness rules                                                                                           |
+| Format     | `npm run format:check`     | Formatting drift                                                                                                      |
+| Registry   | `npm run registry:check`   | `registry/skills.yaml` out of date, an unsatisfiable dependency range, a description that disagrees with its manifest |
+| Versions   | `npm run check:versions`   | A skill whose contents changed without its `version` moving                                                           |
+| Tests      | `npm run test:only`        | Everything else                                                                                                       |
 
 Requires Node 22.18 or newer. Tests run TypeScript sources directly via Node's native type
 stripping, so there is no separate test build step.
@@ -123,8 +124,14 @@ What makes a skill worth merging:
 - **`scripts/` is never executed by this tool.** It ships as data for the agent to run
   deliberately.
 
-Bump the version in `skill.yaml` for any change to a published skill, following semver:
+**Bump the version in `skill.yaml` for any change to a published skill**, following semver:
 a reworded rule is a patch, new coverage is a minor, removing or inverting guidance is a major.
+
+This is not a nicety. A published version is immutable, because integrity is a hash over the
+package contents: editing a skill without bumping it breaks lockfile verification for anyone
+pinned to the old hash, and hides the change from anyone who already installed that version.
+`npm run check:versions` — part of `verify` — compares every package against the last committed
+`registry/skills.yaml` and fails the build if one changed without moving.
 
 ## Releasing
 

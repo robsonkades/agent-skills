@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: domain-logic-organization
+version: 1.2.0
+description: >-
+  Choosing where business rules live — Transaction Script, Domain Model or Table Module —
+  from the shape of the logic rather than from convention, and recognising when the choice
+  made no longer fits. Use when starting a new module and the "standard" layered structure
+  is about to be applied by default, when a service class has grown past a thousand lines of
+  procedural steps, when entities have only getters and setters and every rule sits in a
+  service, when the same business rule is implemented in three places, when a domain model
+  is proposed for CRUD screens, when set-based updates are being rewritten as object loops,
+  or when a report needs data that the aggregate boundary makes expensive to reach. Does not
+  cover the application service that wraps whichever choice you make (service-layer-design),
+  the persistence patterns underneath it (data-source-patterns, repository-pattern),
+  transaction boundaries (enterprise-transactions), or the migration between organisations
+  once chosen (architecture-refactoring-paths).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/domain-logic-organization
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/domain-logic-organization
+
+keywords:
+  - domain-model
+  - transaction-script
+  - table-module
+  - anaemic-model
+  - business-logic
+  - enterprise
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: architecture-decision-making
+    version: ^2.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Domain Logic Organization
+      short_description: Script, model or table module, chosen on evidence
+      default_prompt: Use Domain Logic Organization to decide where these business rules belong.

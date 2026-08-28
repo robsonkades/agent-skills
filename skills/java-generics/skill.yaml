@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: java-generics
+version: 1.1.0
+description: >-
+  Generics as a compile-time contract over an erased runtime: raw types and what they
+  disable, eliminating unchecked warnings rather than suppressing them, why arrays and
+  generics do not mix, generic types and methods, bounded wildcards for API flexibility
+  (PECS), generic varargs and @SafeVarargs, and typesafe heterogeneous containers with class
+  tokens. Use when a raw type, a cast to a generic type, or an unchecked warning appears;
+  when code creates an array of a generic type or a generic varargs parameter; when a
+  collection parameter forces callers to convert before calling; when ClassCastException
+  surfaces far from any visible cast; when a deserialised list of strings turns out to
+  contain something else; or when designing a container that must hold values of several
+  types safely. Does not cover null contracts (java-null-safety), collection choice and
+  stream pipelines (java-streams), or the wider API-shape decisions (java-api-design).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-generics
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-generics
+
+keywords:
+  - java
+  - generics
+  - erasure
+  - wildcards
+  - type-safety
+  - unchecked-warnings
+  - type-tokens
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Generics
+      short_description: Erasure, wildcards, unchecked warnings and type tokens

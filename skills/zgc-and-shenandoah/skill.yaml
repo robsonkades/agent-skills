@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: zgc-and-shenandoah
+version: 1.1.0
+description: >-
+  Operating ZGC and Shenandoah in production: concurrent relocation via coloured pointers
+  and load barriers, the CPU the concurrent phases actually take, allocation stalls, and
+  which flags still exist. Use when a service migrated to a concurrent collector and
+  throughput dropped, when a GC log shows "Allocation Stall", when a pod of 1-2 CPUs runs
+  ZGC or Shenandoah, when a config still carries -XX:+ZGenerational or G1 flags after the
+  migration, when a ZGC-versus-Shenandoah comparison does not declare ShenandoahGCMode, or
+  when RSS from ps/top is being used to size a ZGC container. Does not cover deciding
+  whether GC is the bottleneck or which collector to pick (jvm-gc-tuning), the introductory
+  collector model (gc-fundamentals), or collector source-level internals
+  (zgc-generational-internals, epsilon-and-shenandoah-internals).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/zgc-and-shenandoah
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/zgc-and-shenandoah
+
+keywords:
+  - java
+  - jvm
+  - gc
+  - zgc
+  - shenandoah
+  - latency
+  - concurrent-gc
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gc-fundamentals
+    version: ^1.0.0
+  - name: jvm-gc-tuning
+    version: ^2.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: ZGC and Shenandoah
+      short_description: Operating the concurrent collectors
+      default_prompt: Use ZGC and Shenandoah to budget and diagnose a concurrent collector.

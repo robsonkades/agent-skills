@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: completablefuture-composition
+version: 1.1.0
+description: >-
+  CompletableFuture as a dependency graph of stages: which thread each stage actually runs
+  on, the common pool as a silent default that changes with core count, thenApply versus
+  thenCompose, exceptionally versus handle versus whenComplete, the CompletionException
+  wrapper that breaks type matching, and what allOf and anyOf do and do not promise. Use
+  when a chain runs on a client library's I/O thread, when a stage blocks on the common
+  pool, when an exception disappears from a chain nobody joined, when catch or exceptionally
+  matches a type and never fires, when allOf is expected to fail fast or to return results,
+  when anyOf is expected to mean first success, when MDC or trace context is empty inside a
+  stage, or when a fan-out over CompletableFuture has no concurrency limit. Not stopping the
+  underlying work (cancellation-and-interruption), scoped fan-out (structured-concurrency),
+  the pool underneath (forkjoinpool-and-work-stealing), or choosing an async style
+  (java-concurrency).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/completablefuture-composition
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/completablefuture-composition
+
+keywords:
+  - java
+  - concurrency
+  - completablefuture
+  - async
+  - composition
+  - forkjoinpool
+  - error-handling
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: forkjoinpool-and-work-stealing
+    version: ^1.0.0
+  - name: cancellation-and-interruption
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: CompletableFuture Composition
+      short_description: Stage graphs, executors, exceptions and context
+      default_prompt: Use CompletableFuture Composition to check which thread runs this chain and where its failures go.

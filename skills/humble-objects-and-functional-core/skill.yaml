@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: humble-objects-and-functional-core
+version: 1.0.0
+description: >-
+  Splitting a component into the part that decides and the part that acts, so the decision is
+  pure, deterministic and cheap to test while the effectful part stays too thin to be worth
+  testing — the Humble Object pattern and the functional core / imperative shell shape of the
+  same idea. Use when a rule can only be exercised by standing up the framework because the
+  decision lives inside the component that performs the effect, when logic sits in a controller,
+  scheduler, message listener or UI component, when a test needs a mocking framework to reach
+  the branch it cares about, or when retry, fallback or routing policy is entangled with the
+  call it governs. Does not cover which test level to use (architecture-testing,
+  java-testing-strategy), choosing and writing the doubles themselves (java-test-doubles), where
+  business rules belong across layers (domain-logic-organization), the mechanics of immutable
+  types (java-immutability), or module dependency direction (layering-and-boundaries).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/humble-objects-and-functional-core
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/humble-objects-and-functional-core
+
+keywords:
+  - architecture
+  - testability
+  - humble-object
+  - functional-core
+  - purity
+  - java
+  - sealed-types
+  - design
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: java-immutability
+    version: ^1.0.0
+  - name: architecture-testing
+    version: ^1.0.0
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Humble Objects and Functional Core
+      short_description: Split the part that decides from the part that acts

@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: debugging
+version: 1.0.0
+description: >-
+  Finding the cause of a fault instead of a change that makes the symptom go away: reproducing
+  before diagnosing, shrinking the reproduction until nothing is removable, stating a
+  hypothesis that predicts an observation, changing one variable at a time, bisecting, and
+  choosing which evidence to collect from a running production system before it is destroyed.
+  Use when a fix is being guessed at, when a change "seems to work", when the same bug keeps
+  coming back, when a fault cannot be reproduced, when a production incident needs a cause
+  rather than a restart, when print statements are being added everywhere, or when several
+  changes were made at once and it now works. Does not cover JVM performance triage
+  (java-performance), GC (jvm-gc-tuning), live thread diagnosis (concurrency-diagnostics), heap
+  dump mechanics (heap-dump-analysis), or deliberately injecting failures
+  (distributed-systems-testing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/debugging
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/debugging
+
+keywords:
+  - debugging
+  - root-cause
+  - incident
+  - bisect
+  - thread-dump
+  - reproduction
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Debugging
+      short_description: Reproduce, shrink, hypothesise, verify
+      default_prompt: Use Debugging to find the cause of this fault.

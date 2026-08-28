@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: technical-debt-decisions
+version: 1.0.0
+description: >-
+  Deciding when a shortcut is a legitimate trade and when it is just damage: separating
+  deliberate debt from mess, the things that are never tradeable at any deadline, containing a
+  shortcut so it can be undone, recording it where someone will find it, and choosing which debt
+  to repay by its carrying cost rather than by how much it annoys you. Use when a deadline or an
+  incident is pushing work to be cut, when someone proposes shipping now and cleaning up later,
+  when a spike is about to become production code, when "technical debt" is being used to
+  justify a rewrite, when a debt backlog has grown into a list nobody reads, or when deciding
+  whether to fix something you have just noticed. Does not cover the refactoring mechanics of
+  repaying it (java-refactoring), how to detect the problem (java-code-smells), how to
+  communicate the trade (engineering-communication), or which gates may be skipped
+  (quality-gates).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/technical-debt-decisions
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/technical-debt-decisions
+
+keywords:
+  - technical-debt
+  - trade-offs
+  - deadlines
+  - incidents
+  - refactoring
+  - decision-records
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Technical Debt Decisions
+      short_description: Deliberate trades, contained and recorded
+      default_prompt: Use Technical Debt Decisions to judge this shortcut.

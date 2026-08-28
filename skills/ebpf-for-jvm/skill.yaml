@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: ebpf-for-jvm
+version: 1.1.0
+description: >-
+  Observing a JVM from the kernel with eBPF and bpftrace: syscall and futex latency, block
+  I/O, run queue latency, page faults, JVM USDT probes, and correlating kernel-side evidence
+  with JVM-side evidence. Use when JFR and a CPU profile show a healthy runtime but p99 is
+  bad, when threads are RUNNABLE yet not scheduled, when a bpftrace script returns an empty
+  histogram under known contention, when a script filters `sched:*` tracepoints by
+  `args->pid`, when a USDT probe listed by `tplist` never fires, or when someone is about to
+  run `profiler.sh`. Does not cover host metrics and incident commands that need no eBPF
+  (linux-for-jvm), running a single JVM-side profile (jfr-and-async-profiler), or always-on
+  collection (continuous-profiling).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/ebpf-for-jvm
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/ebpf-for-jvm
+
+keywords:
+  - ebpf
+  - bpftrace
+  - jvm
+  - kernel
+  - tracepoint
+  - usdt
+  - profiling
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: linux-for-jvm
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: eBPF For JVM
+      short_description: Kernel-side JVM tracing with bpftrace
+      default_prompt: Use eBPF For JVM to get kernel-side evidence for this latency.

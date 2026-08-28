@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: framework-coupling-and-independence
+version: 1.0.0
+description: >-
+  Deciding how much of a system may depend on its framework, and pricing that dependency
+  honestly: which couplings are cheap and correct, which are expensive and reversible, which are
+  irreversible, and what "framework-independent" actually costs in mapping code. Use when a
+  framework or major version upgrade is being planned or has stalled, when a domain class
+  carries persistence or serialisation annotations, when someone proposes a framework-free
+  domain and the price is not stated, when a base class from the framework appears in business
+  code, or when a framework's programming model is spreading beyond the adapters. Does not cover
+  which patterns a framework already implements (patterns-and-modern-frameworks), layer
+  dependency direction (layering-and-boundaries), the data-access pattern behind the
+  one-model/two-model choice (data-source-patterns), the mapping itself
+  (orm-structural-mapping), releasable component boundaries (component-and-release-boundaries),
+  or testing strategy (architecture-testing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/framework-coupling-and-independence
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/framework-coupling-and-independence
+
+keywords:
+  - architecture
+  - frameworks
+  - spring
+  - coupling
+  - migration
+  - upgrade
+  - portability
+  - jpa
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: layering-and-boundaries
+    version: ^1.0.0
+  - name: architecture-decision-making
+    version: ^2.0.0
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Framework Coupling and Independence
+      short_description: Place framework coupling deliberately and price it

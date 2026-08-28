@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: code-review
+version: 1.0.0
+description: >-
+  Reviewing a change as an engineering activity: setting review depth from the change's risk
+  rather than its size, looking in the order that finds the expensive defects first, refusing
+  to spend human attention on what a formatter or linter should own, writing a finding that can
+  be acted on, separating blocking objections from preferences, and receiving review without
+  either capitulating or defending. Use when reviewing a pull request or a diff, when a review
+  has become a list of style comments, when reviews are slow or rubber-stamped, when a reviewer
+  and an author are deadlocked, when a defect reached production through an approved change, or
+  when deciding what a review must catch versus what CI should. Does not cover the smell
+  catalogue (java-code-smells), SOLID as review criteria (java-solid), readability heuristics
+  (java-clean-code), or which automated gates to run (quality-gates).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/code-review
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/code-review
+
+keywords:
+  - code-review
+  - pull-request
+  - feedback
+  - pairing
+  - review-depth
+  - collaboration
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: quality-gates
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Code Review
+      short_description: Depth by risk, findings that can be acted on
+      default_prompt: Use Code Review to review this change.

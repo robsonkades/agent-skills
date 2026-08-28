@@ -1,14 +1,14 @@
 ---
 name: java-optional
 description: >
-  Optional as designed: a return type for "no result is a normal outcome". Covers
-  orElse versus orElseGet (eager versus lazy), orElseThrow over get, map/flatMap/filter
-  chains versus a plain conditional, or(), ifPresentOrElse, stream() integration, why
-  Optional does not belong in fields, parameters or collections, and when Optional
-  makes an API worse. Use when reviewing Optional.get() without a guard, orElse with a
-  costly or side-effecting fallback, isPresent()+get() pairs, Optional-typed fields or
-  parameters, or when deciding whether a lookup should return Optional, null or throw.
-  Nullability contracts and annotations are java-null-safety.
+  Optional as designed: a return type for "no result is a normal outcome". Covers orElse
+  versus orElseGet (eager versus lazy), orElseThrow over get, map/flatMap/filter chains
+  versus a plain conditional, or(), ifPresentOrElse, stream() integration, why Optional does
+  not belong in fields, parameters or collections, and when Optional makes an API worse. Use
+  when reviewing Optional.get() without a guard, orElse with a costly or side-effecting
+  fallback, isPresent()+get() pairs, Optional-typed fields or parameters, or when deciding
+  whether a lookup should return Optional, null or throw. Nullability contracts and
+  annotations are java-null-safety.
 ---
 
 # Java Optional

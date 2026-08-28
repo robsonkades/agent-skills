@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-builder
+version: 1.0.0
+description: >-
+  Builder in modern Java: what it actually buys once records, compact constructors and named
+  static factories exist — named arguments the language does not have, whole-object validation at
+  one point, and safe construction of a large immutable value. Covers the arity and optionality
+  thresholds that justify it, staged builders, where validation must live so it cannot be
+  bypassed, the thread-safety hazards of a mutable builder, and test data builders. Use when a
+  constructor has grown past four parameters or several booleans, when telescoping constructors or
+  a half-initialised object appear, when a builder is proposed for a two-field type, when Lombok's
+  @Builder is applied to an entity, or when a builder permits invalid combinations that only fail
+  later. Does not cover selecting which type to create (gof-factory-method, gof-abstract-factory),
+  copying an existing instance (gof-prototype), fluent APIs in general (java-fluent-apis), or
+  record and value semantics (java-immutability).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-builder
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-builder
+
+keywords:
+  - design-patterns
+  - gof
+  - creational
+  - builder
+  - records
+  - immutability
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Builder
+      short_description: Named arguments and whole-object validation
+      default_prompt: Use Builder to decide how this object should be constructed.

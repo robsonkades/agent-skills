@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: scoped-values
+version: 1.1.0
+description: >-
+  ScopedValue as one-way, immutable, lexically bounded context: where/run/call, rebinding in
+  a nested scope, inheritance by StructuredTaskScope subtasks and by nothing else, and the
+  cases where ThreadLocal is still the right answer. Final in JDK 25 (JEP 506) after five
+  preview rounds, with callWhere and runWhere removed along the way. Use when a ThreadLocal
+  carries per-request context under virtual threads, when context is empty inside a forked
+  subtask or a pool thread, when a ThreadLocal is never removed and leaks across pooled
+  tasks, when code calls ScopedValue.get outside any binding and gets
+  NoSuchElementException, when callWhere or runWhere appears in an example, or when MDC or
+  SecurityContextHolder must keep working. Not the fan-out that inherits
+  (structured-concurrency), ThreadLocal-as-cache sizing (thread-sizing-and-virtual-threads),
+  deadlines (timeouts-and-deadlines), or context across CompletableFuture stages
+  (completablefuture-composition).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/scoped-values
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/scoped-values
+
+keywords:
+  - java
+  - concurrency
+  - scopedvalue
+  - threadlocal
+  - context-propagation
+  - virtual-threads
+  - jep-506
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: structured-concurrency
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Scoped Values
+      short_description: Immutable request context and ThreadLocal migration
+      default_prompt: Use Scoped Values to decide how this per-request context should be carried.

@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: patterns-and-modern-frameworks
+version: 1.0.0
+description: >-
+  Which classical enterprise patterns a modern Java and Spring stack already implements,
+  which it only partly implements, and which it does not implement at all — plus the modern
+  Java expression of each. Use when a repository interface is written over Spring Data, when
+  a unit of work or identity map is built over JPA, when a front controller is hand-rolled,
+  when a caching layer is written over the caching abstraction, when an entity is written as
+  a mutable bean because "JPA requires it", when a pattern's implementation is copied from
+  an old text, or when deciding whether a pattern is obsolete or merely invisible. Does not
+  cover choosing the pattern (pattern-selection-and-composition) or judging whether an
+  abstraction should exist (enterprise-architecture-smells).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/patterns-and-modern-frameworks
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/patterns-and-modern-frameworks
+
+keywords:
+  - spring
+  - jpa
+  - records
+  - sealed-types
+  - virtual-threads
+  - patterns
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: repository-pattern
+    version: ^1.0.0
+  - name: orm-behavioral-patterns
+    version: ^1.0.0
+  - name: mvc-and-request-handling
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Patterns and Modern Frameworks
+      short_description: What the framework already does, and what it does not
+      default_prompt: Use Patterns and Modern Frameworks to check whether this pattern needs implementing.

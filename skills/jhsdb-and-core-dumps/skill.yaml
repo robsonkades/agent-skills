@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: jhsdb-and-core-dumps
+version: 1.1.0
+description: >-
+  Post-mortem inspection of a dead or hung JVM: reading hs_err, producing a usable core
+  dump, the jhsdb modes (jstack, jmap, jinfo, clhsdb, hsdb) against a core or a live
+  process, and the build and symbol requirements that make a dump readable. Use when a
+  process died and left an hs_err_pid file, when jstack or jcmd hangs against a wedged JVM,
+  when a container disappeared with exit code 137 and no log, when a crash points at a J/V/C
+  frame, when jhsdb reports DebuggerException or nonsensical pointers, or when someone
+  proposes generating a core dump with `jcmd VM.native_memory summary`. Does not cover heap
+  dumps and retention analysis (heap-dump-analysis), why the process died at the host level
+  (linux-for-jvm), or which memory region the failure was in (jvm-memory-regions).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/jhsdb-and-core-dumps
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/jhsdb-and-core-dumps
+
+keywords:
+  - jhsdb
+  - core-dump
+  - hs-err
+  - crash
+  - post-mortem
+  - serviceability-agent
+  - jvm
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: heap-dump-analysis
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: jhsdb And Core Dumps
+      short_description: Post-mortem JVM inspection from a core dump
+      default_prompt: Use jhsdb And Core Dumps to investigate this crashed or hung JVM.

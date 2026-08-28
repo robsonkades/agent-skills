@@ -612,6 +612,35 @@ describe('validate', () => {
     assert.ok(report.errors.some((issue) => issue.rule === 'skill.description.missing'));
   });
 
+  it('warns on a description that disagrees with the manifest, because only the manifest ships', () => {
+    const pkg = buildPackage({ name: 'a-skill', version: '1.0.0' });
+    const report = validatePackage({
+      ...pkg,
+      document: {
+        ...pkg.document,
+        frontmatter: {
+          ...pkg.document.frontmatter,
+          description: 'A different description that no agent will ever read.',
+        },
+      },
+    });
+    assert.ok(report.warnings.some((issue) => issue.rule === 'skill.description.mismatch'));
+    assert.ok(!report.errors.some((issue) => issue.rule === 'skill.description.mismatch'));
+  });
+
+  it('does not report a description mismatch for whitespace alone', () => {
+    const pkg = buildPackage({ name: 'a-skill', version: '1.0.0' });
+    const folded = `\n  ${pkg.manifest.description.replace(/\s+/g, '\n  ')}\n`;
+    const report = validatePackage({
+      ...pkg,
+      document: {
+        ...pkg.document,
+        frontmatter: { ...pkg.document.frontmatter, description: folded },
+      },
+    });
+    assert.ok(!report.warnings.some((issue) => issue.rule === 'skill.description.mismatch'));
+  });
+
   it('rejects an override key the adapter does not accept', () => {
     const pkg = buildPackage({
       name: 'a-skill',

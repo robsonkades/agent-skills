@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: off-heap-memory
+version: 1.1.0
+description: >-
+  Memory outside the Java heap: direct `ByteBuffer` and its Cleaner-driven release,
+  `MemorySegment` and `Arena` in the FFM API, lifetime and thread confinement, when off-heap
+  actually pays, and diagnosing native growth no heap dump explains. Use when RSS grows
+  while the Java heap stays flat, on `OutOfMemoryError: Direct buffer memory` or an
+  OOMKilled container with no Java exception, when `-XX:MaxDirectMemorySize` is unset or
+  copied from another service, when `ByteBuffer.allocateDirect` sits on a per-request path,
+  when `Unsafe.allocateMemory` appears without a matching `freeMemory`, on a
+  `WrongThreadException` from a segment, or on a JEP 498 `sun.misc.Unsafe` runtime warning.
+  Does not cover the six-region container budget and which OOM means what
+  (jvm-memory-regions), calling into native code as opposed to holding native memory
+  (jni-and-ffm), or on-heap retention (heap-dump-analysis).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/off-heap-memory
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/off-heap-memory
+
+keywords:
+  - java
+  - jvm
+  - off-heap
+  - memorysegment
+  - arena
+  - directbytebuffer
+  - native-memory
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jvm-memory-regions
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Off Heap Memory
+      short_description: Direct buffers, MemorySegment, Arena, native leaks
+      default_prompt: Use Off Heap Memory to diagnose native memory growth or design an off-heap buffer.

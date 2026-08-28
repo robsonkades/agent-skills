@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: load-balancing-and-routing
+version: 1.0.0
+description: >-
+  Getting a request to a replica that can serve it: L4 versus L7 by capability rather than
+  layer number, why an L4 balancer in front of long-lived HTTP/2 or gRPC connections
+  balances connections instead of requests and pins a client to one replica, the balancing
+  algorithms and what each optimises, power-of-two-choices, health checking and outlier
+  ejection with the fleet-ejection hazard, and connection draining. Use when per-pod request
+  rate is skewed while connection counts look even, when one replica is hot after a
+  scale-up, when gRPC or HTTP/2 crosses a ClusterIP Service, when a dependency blip ejects
+  the whole upstream, or when choosing between an ingress proxy, a mesh and client-side
+  balancing. Does not cover why a replica is interchangeable (stateless-service-design), the
+  in-pod proxy form (ambassador-pattern), what to do when every replica is busy
+  (rate-limiting-and-load-shedding), readiness and drain mechanics
+  (kubernetes-service-lifecycle), or routing a key to its owner (sharding-and-partitioning).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/load-balancing-and-routing
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/load-balancing-and-routing
+
+keywords:
+  - load-balancing
+  - grpc
+  - http2
+  - routing
+  - kubernetes
+  - health-checks
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: stateless-service-design
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Load Balancing And Routing
+      short_description: L4 versus L7, connection pinning and ejection
+      default_prompt: Use Load Balancing And Routing to work out how requests reach replicas here and why the load is skewed.

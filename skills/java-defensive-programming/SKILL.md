@@ -2,14 +2,14 @@
 name: java-defensive-programming
 description: >
   Where to defend in Java and where defence becomes noise: trust boundaries as the
-  organising idea, preconditions with Objects.requireNonNull and explicit range and
-  state checks, fail-fast over limping on, input normalisation at the edge, and assert
-  for internal invariants only. Use when adding or reviewing validation, when the same
-  invariant is re-checked on every layer, when code silently "corrects" bad input or
-  wraps everything in catch-alls, or when hardening a public API. Does not cover
-  contract semantics and Javadoc documentation (java-design-by-contract), nullability
-  contracts and annotations (java-null-safety), defensive copy mechanics
-  (java-immutability), or the design of the exceptions thrown (java-exception-design).
+  organising idea, preconditions with Objects.requireNonNull and explicit range and state
+  checks, fail-fast over limping on, input normalisation at the edge, and assert for
+  internal invariants only. Use when adding or reviewing validation, when the same invariant
+  is re-checked on every layer, when code silently "corrects" bad input or wraps everything
+  in catch-alls, or when hardening a public API. Does not cover contract semantics and
+  Javadoc documentation (java-design-by-contract), nullability contracts and annotations
+  (java-null-safety), defensive copy mechanics (java-immutability), or the design of the
+  exceptions thrown (java-exception-design).
 ---
 
 # Java Defensive Programming

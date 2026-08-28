@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: java-streams
+version: 1.1.0
+description: >-
+  Stream pipelines as a design decision: when a stream is clearer than a loop and when it is
+  not, side-effect-free stages and mutable reduction with collectors, the toMap and
+  groupingBy traps, Collection versus Stream as a return type, streams that hold an open
+  resource, parallel streams and the shared common pool, and Gatherers for custom
+  intermediate operations. Use when a pipeline mutates state outside itself or uses forEach
+  to accumulate, when Collectors.toMap throws IllegalStateException or NullPointerException,
+  when a method returns a Stream that callers iterate twice, when a stream over Files.lines
+  or a JDBC cursor is never closed, when parallelStream() appears — especially with blocking
+  I/O — or when a loop is being rewritten as a stream for its own sake. Does not cover
+  lambda capture and functional interfaces (java-lambdas-and-functional-interfaces),
+  ForkJoinPool internals (forkjoinpool-and-work-stealing), or collection choice and
+  complexity.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-streams
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-streams
+
+keywords:
+  - java
+  - streams
+  - collectors
+  - parallel-streams
+  - gatherers
+  - forkjoinpool
+  - api-design
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Streams
+      short_description: Pipelines, collectors, parallel streams and gatherers

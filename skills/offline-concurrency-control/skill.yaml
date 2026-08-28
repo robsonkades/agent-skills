@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: offline-concurrency-control
+version: 1.0.0
+description: >-
+  Protecting data from concurrent edits that span more than one transaction: optimistic
+  offline lock, pessimistic offline lock, coarse-grained locking at the aggregate, and
+  implicit locking applied by the framework. Use when two users overwrite each other's
+  edits, when a version column is being added or removed, when OptimisticLockException
+  reaches the user as a stack trace, when a bulk update silently bypasses versioning, when a
+  lock is held across thinking time by a database transaction, when a lock table has no
+  expiry, or when retry is proposed as the answer to a conflict. Does not cover boundaries
+  and isolation within one transaction (enterprise-transactions), in-process thread locking
+  (java-memory-model), or repeat-safety of a request (idempotency).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/offline-concurrency-control
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/offline-concurrency-control
+
+keywords:
+  - optimistic-locking
+  - pessimistic-locking
+  - versioning
+  - concurrency
+  - lost-update
+  - jpa
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: enterprise-transactions
+    version: ^1.0.0
+  - name: idempotency
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Offline Concurrency Control
+      short_description: Conflicts across transactions, detected or prevented
+      default_prompt: Use Offline Concurrency Control to handle these concurrent edits.

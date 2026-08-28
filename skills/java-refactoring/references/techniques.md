@@ -30,17 +30,22 @@ extract below the level at which invariants live.
 The Feature Envy fix: behaviour moves to the class whose data it reads. Steps: extract
 the envious part if only part envies; recreate it on the target (taking former `this`
 data as parameters if needed); delegate from the source; retarget callers; delete the
-delegate. Moving _up_ an existing hierarchy is binary-compatible; moving to an unrelated
-class breaks every external caller — check `compatibility.md` at public boundaries.
+delegate. Moving _up_ an existing hierarchy is binary-compatible — unless the member is
+package-private and the superclass sits in another package, or something reflects on it
+via `getDeclaredMethod`/`getDeclaredField`; moving to an unrelated class breaks every
+external caller — check `compatibility.md` at public boundaries.
 Cost: the target class grows a dependency it may not want (e.g. domain type gaining a
 rendering method — sometimes the envy is the lesser evil).
 
 ## Rename
 
-Highest value per unit of risk — but only via tooling: an IDE rename finds reflective
-configs, overrides and Javadoc links that a text search misses. Renaming anything
-published is API evolution (java-api-design), not a refactoring. Naming itself — what a
-good name is — also lives there.
+Highest value per unit of risk — but only via tooling: an IDE rename finds overrides,
+overloads and Javadoc links that a text search misses. It does **not** find string-reached
+names — JPQL, `@Qualifier`, JSON properties, JPA discriminator values — and no tool does;
+closing that half of the caller set is `behaviour-preservation.md`'s, and the exhaustive
+list is refactoring-automation's. Renaming anything published is API evolution
+(java-api-design), not a refactoring. Naming itself — what a good name is — also lives
+there.
 
 ## Introduce Parameter Object
 
@@ -106,11 +111,15 @@ formats keep the raw code, so mapping stays at the edge — do not leak the enum
 ## Encapsulate Collection
 
 When a getter hands out the mutable collection that backs an invariant. Return a copy —
-`List.copyOf(stops)` is cheap-to-idempotent on already-immutable lists — and add
-mutators that enforce the invariant (`addStop` rejecting duplicates). Cost: copying on
-every read is allocation in proportion to size and call rate; on a measured hot path an
-unmodifiable view is the compromise (callers then see live changes — document it).
-Depth on immutability trade-offs is java-immutability's.
+`List.copyOf(stops)` returns the argument unchanged when it is already a
+`List.of`/`List.copyOf` instance, though it does copy a `Collections.unmodifiableList`
+wrapper, whose fast path it does not share. **Precondition: no element is null** —
+`List.copyOf` throws `NullPointerException`, so a getter that returned a list containing a
+null changes behaviour. The copy is shallow: mutable elements still leak the invariant.
+Add mutators that enforce it (`addStop` rejecting duplicates). Cost: copying on every read
+is allocation in proportion to size and call rate; on a measured hot path an unmodifiable
+view is the compromise (callers then see live changes — document it). Depth on
+immutability trade-offs is java-immutability's.
 
 ## Introduce Factory / Strategy
 
@@ -127,16 +136,15 @@ indirection; introduced speculatively they are the Speculative Generality smell.
 For Refused Bequest and fragile-base coupling. Steps: add a field of the (former) parent
 type; convert each inherited-member use to delegation, one commit at a time; remove the
 `extends`; expose only the methods callers actually used. The subtype relationship
-disappears — callers that used the subclass _as_ the parent break, so at public
-boundaries this is a staged migration behind a new type, not one step. When inheritance
-is genuinely right, and the sealed middle ground, is java-composition-over-inheritance's
-topic.
+disappears, with consequences at published and framework boundaries that
+`catalogue-inheritance.md` enumerates under Replace Superclass with Delegate — read it
+before the step. When inheritance is genuinely right, and the sealed middle ground, is
+java-composition-over-inheritance's topic.
 
 ## Decompose / Simplify Conditional
 
-Nested conditionals flatten by: guard clauses first (return early on the exceptional
-paths); extract each condition into a named predicate method when the expression does
-not read at the method's level; consolidate arms that duplicate fragments. A boolean
-expression that needs a comment becomes a method named by that comment. Cost: guard
-clauses multiply exit points — fine in short methods, a liability in 60-line ones (split
-first, java-clean-code owns that call).
+Nested conditionals flatten by guard clauses, named predicate methods and consolidated
+arms — and each of those has a precondition about short-circuit order, null, or
+side effects that makes it a behaviour change when skipped. The mechanics and those
+preconditions are `catalogue-conditionals.md`; the polymorphism-versus-switch decision
+above stays here because it is a design choice rather than a step.

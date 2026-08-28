@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: architecture-trade-off-analysis
+version: 1.0.0
+description: >-
+  The method for analysing an architectural decision, not the decision: entanglement and
+  coupling, MECE option sets, qualitative versus quantitative analysis, real domain cases,
+  and resisting evangelism — your own included. Use when a scorecard is being totalled to
+  pick a winner, when a comparison table would read identically at any company, when a case
+  study is cited as a general verdict, when a vendor presents no disadvantages, when the
+  candidates are not the same category of thing, when two advocates each hold an internally
+  consistent case and there is no agreed basis for choosing, when two architectures are
+  about to be benchmarked, or when a choice is defended by "best practice". Does not cover
+  record discipline or reversibility pricing (architecture-decision-making), pattern choice
+  once the forces are known (pattern-selection-and-composition), deliberate shortcuts
+  (technical-debt-decisions), uncertainty in numbers (estimation-under-uncertainty), or
+  structural smells (enterprise-architecture-smells).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/architecture-trade-off-analysis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/architecture-trade-off-analysis
+
+keywords:
+  - architecture
+  - trade-offs
+  - decision-analysis
+  - mece
+  - coupling
+  - bias
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Architecture Trade-off Analysis
+      short_description: The method, not the decision — entanglement, MECE, honest modes
+      default_prompt: Use Architecture Trade-off Analysis to choose the analysis mode and run it.

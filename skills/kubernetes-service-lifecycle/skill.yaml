@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: kubernetes-service-lifecycle
+version: 1.1.0
+description: >-
+  A Java service at the edges of its life under Kubernetes: liveness, readiness and startup
+  probes as three different questions, probe timing arithmetic, graceful shutdown as a
+  sequence where endpoint removal races SIGTERM, terminationGracePeriodSeconds as a budget,
+  draining non-HTTP work such as Kafka consumers and scheduled jobs, PodDisruptionBudgets,
+  and limits as availability decisions. Use when 502s appear only during a rolling update,
+  when a liveness probe checks a database and a blip restarts every healthy pod, when
+  initialDelaySeconds was guessed instead of a startupProbe, when a pod exits 137 or loops
+  in CrashLoopBackOff, when a node drain hangs, or when in-flight Kafka or scheduled work is
+  lost on redeploy. Does not cover what the JVM detects in a cgroup (container-awareness),
+  host kernel behaviour (linux-for-jvm), faster startup (startup-cds-crac-leyden), replica
+  disposability (stateless-service-design), routing (load-balancing-and-routing), or API
+  compatibility (rpc-and-api-contracts).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/kubernetes-service-lifecycle
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/kubernetes-service-lifecycle
+
+keywords:
+  - kubernetes
+  - probes
+  - graceful-shutdown
+  - rolling-update
+  - spring-boot
+  - availability
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Kubernetes Service Lifecycle
+      short_description: Probes, graceful shutdown and rollout safety
+      default_prompt: Use Kubernetes Service Lifecycle to review the probes and shutdown path of this service.

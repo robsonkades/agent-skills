@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: performance-methodology
+version: 1.1.0
+description: >-
+  The investigation process for performance work: defining an SLO, recording a baseline,
+  observing before hypothesising, falsifiability, Amdahl's Law as a go/no-go filter,
+  changing one variable at a time, and validating by mechanism rather than by coincidence.
+  Use when starting a performance investigation, when a fix is credited to a deploy that
+  also restarted the process, when an optimisation is proposed without a measurement, when a
+  benchmark result changes with the duration of the run, or when "it's fine in staging" is
+  the explanation. Does not cover which tool to run (jfr-and-async-profiler), the statistics
+  of the numbers (latency-statistics), or microbenchmark construction (jmh-microbenchmarks).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/performance-methodology
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/performance-methodology
+
+keywords:
+  - java
+  - performance
+  - methodology
+  - baseline
+  - amdahl
+  - slo
+  - diagnosis
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: latency-statistics
+    version: ^1.0.0
+  - name: littles-law-and-queueing
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Performance Methodology
+      short_description: SLO, baseline, hypothesis, measurement, validation
+      default_prompt: Use Performance Methodology to structure this performance investigation.

@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: layering-and-boundaries
+version: 1.1.0
+description: >-
+  Deciding where an enterprise application's boundaries go and which direction dependencies
+  cross them: the classical presentation / domain / data-source split, the styles that
+  reorganise it (hexagonal, clean, modular monolith, vertical slices), and how a boundary is
+  enforced rather than documented. Use when a package structure is argued about, when a
+  controller contains business rules, when an entity or DTO travels end to end, when a
+  service layer only forwards, when hexagonal is adopted without a driver, or when adding a
+  field requires editing seven files. Does not cover which layer business rules take
+  (domain-logic-organization), whether a boundary should be remote
+  (distribution-boundaries), the data-access patterns (data-source-patterns), or what the
+  application service around a use case owns (service-layer-design).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/layering-and-boundaries
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/layering-and-boundaries
+
+keywords:
+  - layering
+  - hexagonal
+  - clean-architecture
+  - modular-monolith
+  - archunit
+  - boundaries
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: architecture-decision-making
+    version: ^2.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Layering and Boundaries
+      short_description: Dependency direction, styles and enforcement
+      default_prompt: Use Layering and Boundaries to review or design this structure.

@@ -31,8 +31,19 @@ pattern-matches it, and which java-refactoring technique addresses it (named, no
 - **Detect:** a primitive with rules (validation, arithmetic constraints, formatting)
   enforced somewhere other than a type; two parameters that must agree (`amount`,
   `currency`) travelling separately.
-- **Not it when:** the primitive has no rules — a free-text note, a count used only
-  locally. Wrapping every `int` is ceremony, not modelling.
+- **Not it when:** the primitive has no rule _and_ cannot be confused with another concept
+  of the same type — a free-text note, a count used only locally. Wrapping every `int` is
+  ceremony, not modelling.
+- **Budget:** a wrapper earns its place if it passes one of two tests — _confusion_: could
+  this value be passed to a parameter expecting a different concept of the same primitive
+  (`String customerId` into a `String orderId` slot)? — or _rule_: does it carry validation,
+  arithmetic constraints or formatting? Neither, and the type is a rename with allocation.
+  Each wrapper costs a file, a serialiser or `@JsonValue`, an `AttributeConverter` and a
+  mapper entry, and its call sites drift towards `getValue()` at every use, which is the
+  wrapper undone. Forty one-line wrappers prevent nothing (Lazy Element, below).
+  When a reviewer disputes the confusion test, run `scripts/primitive-obsession/verify.sh`:
+  untyped, the transposed call runs and exits 0; typed, `javac --release 21` rejects it with
+  `incompatible types: CustomerId cannot be converted to AccountId`.
 - **Fix:** Replace Type Code (enum or sealed hierarchy); wrap in a record with a
   validating compact constructor.
 
@@ -110,3 +121,72 @@ zip` recurring together across signatures.
   second implementation genuinely exists on a roadmap with a date. The economics are
   java-dry-kiss-yagni's; detection is here.
 - **Fix:** Inline Class / Collapse the hierarchy; delete unused parameters and hooks.
+
+## Mysterious Name
+
+- **Looks like:** `data`, `info`, `process()`, `handle()`, `*Manager`, `*Helper`; a name
+  describing the implementation (`customerStringList`) or the pattern
+  (`OrderStrategyImpl`) instead of the role; a name that lies — `validate()` that also
+  saves.
+- **Detect:** you must read the body to know what it does; the name and its Javadoc
+  disagree; the name uses a word the domain glossary does not; two names exist in the
+  codebase for one concept.
+- **Not it when:** an established domain term that outsiders find opaque is exactly right
+  (`settlement`, `netting`, `dunning`). Short names in a two-line scope are fine.
+- **Fix:** Rename — the highest value per unit of risk in the catalogue. If no name fits,
+  that is the finding: the thing has more than one responsibility, so Extract first and
+  name the pieces.
+
+## Long Parameter List
+
+- **Looks like:** five or more parameters; the same three recurring across signatures;
+  booleans among them; a parameter only forwarded to another call.
+- **Detect:** the call site is unreadable without opening the signature; two adjacent
+  parameters share a type, so a swapped pair still compiles; a parameter the body never
+  reads on its own.
+- **Not it when:** a record's canonical constructor with eight components — that is the
+  data, not a parameter list. Nor a DI constructor with five collaborators: that is Large
+  Class, and counting parameters points at the wrong fix.
+- **Fix:** Introduce Parameter Object for the co-travelling group; Preserve Whole Object
+  where the caller already holds one; Remove Flag Argument for the booleans; Replace
+  Parameter with Query for the derivable ones.
+
+## Mutable Data
+
+- **Looks like:** setters on a domain type; a getter handing out the backing collection;
+  an object whose state changes far from where it was created; a long-lived object
+  written by several collaborators.
+- **Detect:** you cannot state the object's state at a given line without tracing every
+  holder; two threads reach it; a field participating in `equals`/`hashCode` is written
+  after the object entered a `Set` or a `Map` key.
+- **Not it when:** mutation contained inside one method, a builder, or an entity whose
+  lifecycle is mutation by design. Scope, not mutability, is the smell.
+- **Fix:** Encapsulate Variable to get one access point; then Encapsulate Collection,
+  Split Variable, Replace Derived Variable with Query, or Change Reference to Value. The
+  trade-offs are java-immutability's; visibility across threads is java-memory-model's.
+
+## Loops
+
+- **Looks like:** an index loop performing filter, map or reduce; nested loops building a
+  map; a loop carrying a `found` flag and a `break`.
+- **Detect:** the body matches one of the standard shapes, and the accumulator needs a
+  comment to explain its purpose.
+- **Not it when:** the loop exits early with side effects, needs the index, mutates the
+  source, or sits on a measured hot path. **This is the most over-applied entry in the
+  catalogue** — a `for` loop is not a defect, and a pipeline that needs three lambdas and
+  a custom collector is worse than the loop it replaced.
+- **Fix:** Split Loop first, so each half has one shape; then convert the halves that
+  genuinely read better as pipelines and leave the rest.
+
+## Lazy Element
+
+- **Looks like:** a method whose body is one delegating line, a subclass adding no
+  members, an interface with one implementation and an identical signature, a package
+  containing one class.
+- **Detect:** deleting it changes nothing except the diff; its name restates the thing it
+  delegates to.
+- **Not it when:** the seam is load-bearing for testing, module boundaries or API
+  stability — and, importantly, when a thin type makes an invariant checkable. A record
+  wrapping a `String` to make `CustomerId` a type is the Primitive Obsession fix, not this
+  smell; the difference is whether the wrapper carries a rule.
+- **Fix:** Inline Function, Inline Class, Collapse Hierarchy.

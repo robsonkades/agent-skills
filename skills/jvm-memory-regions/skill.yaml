@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: jvm-memory-regions
+version: 1.2.0
+description: >-
+  The six memory regions of a JVM process — heap, Metaspace, code cache, thread stacks,
+  direct/native memory and JVM-internal — and how to budget them against a container limit.
+  Use when a pod is OOMKilled with no Java exception, when an OutOfMemoryError names
+  something other than "Java heap space", when -Xmx is set equal to the container limit,
+  when RSS exceeds the heap by more than expected, when a heap above 32 GB is proposed, or
+  when sizing a JVM for Kubernetes. Does not cover collector choice and heap tuning
+  (jvm-gc-tuning), classloader leaks (jvm-class-loading), or kernel-side memory behaviour
+  such as page faults, swap and the OOM killer (linux-for-jvm). Metaspace internals are
+  metaspace-internals, memory outside the heap is off-heap-memory, and heap contents are
+  heap-dump-analysis.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/jvm-memory-regions
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/jvm-memory-regions
+
+keywords:
+  - java
+  - jvm
+  - memory
+  - metaspace
+  - code-cache
+  - container
+  - nmt
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: JVM Memory Regions
+      short_description: Heap, Metaspace, code cache and container budgeting
+      default_prompt: Use JVM Memory Regions to budget this JVM against its memory limit.

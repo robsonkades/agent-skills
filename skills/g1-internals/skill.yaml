@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: g1-internals
+version: 1.1.0
+description: >-
+  How G1 actually works: uniform regions and the ergonomic sizing formula, remembered sets
+  and the card table with its write barrier, SATB and the pre-write barrier, the phases of
+  an evacuation pause, humongous allocation and why it bypasses the young generation, and
+  how the collection set is chosen for a mixed collection. Use when a pause is longer than
+  the live-set size explains, when `Merge Heap Roots` or `Merge RS` dominates
+  `-Xlog:gc+phases`, when `To-space exhausted` appears, when the old generation grows
+  without the application retaining anything, when `Humongous regions` climbs in the log,
+  when someone sets `-Xmn` under G1, or when mixed GC is being described as a full GC. Does
+  not cover the introductory collector mental model and generational hypothesis
+  (gc-fundamentals), choosing values for the flags against a latency SLO
+  (g1-tuning-for-slo), or the concurrent marking cycle in depth (g1-concurrent-marking).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/g1-internals
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/g1-internals
+
+keywords:
+  - java
+  - jvm
+  - g1gc
+  - garbage-collection
+  - remembered-set
+  - humongous
+  - satb
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gc-fundamentals
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: G1 Internals
+      short_description: Regions, RSets, SATB and evacuation pauses
+      default_prompt: Use G1 Internals to explain a G1 pause from the mechanism that produced it.

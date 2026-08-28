@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-template-method
+version: 1.0.0
+description: >-
+  Template Method in modern Java: fixing an algorithm's skeleton while named steps vary, and the
+  inheritance coupling that makes composition the better default. Covers why the template method
+  must be final and the hook surface minimal, the constructor-calls-an-overridable-method trap,
+  protected hooks becoming an API you cannot change, when the pattern is genuinely right
+  (frameworks that instantiate your subclass, contract test base classes), and how to convert one
+  to a class taking its steps as collaborators. Use when an abstract base class with protected
+  hooks is proposed, when a base-class change broke subclasses, when a template has grown past a
+  handful of hooks, or when subclasses override the template method itself. Does not cover
+  choosing a whole algorithm (gof-strategy), creating the product a template needs
+  (gof-factory-method), the general inheritance decision (java-composition-over-inheritance), or
+  pipeline stages contributed independently (gof-chain-of-responsibility).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-template-method
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-template-method
+
+keywords:
+  - design-patterns
+  - gof
+  - behavioral
+  - template-method
+  - inheritance
+  - composition
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Template Method
+      short_description: A fixed sequence, at the price of inheritance
+      default_prompt: Use Template Method to review this base class and its hooks.

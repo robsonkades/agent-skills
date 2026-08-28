@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: circuit-breakers
+version: 1.1.0
+description: >-
+  The breaker as a state machine that stops calling a failing dependency: closed, open and
+  half-open; why the trip condition must be a failure rate over a minimum call count, not
+  consecutive failures; why half-open admits a bounded number of probes; the failure
+  predicate — which status codes count and why a 4xx must not; and the honest limit, that a
+  breaker converts a slow failure into a fast one and creates no availability unless the
+  caller has a fallback. Use when a breaker trips on consecutive failures, when it never
+  trips or trips on one client's bad requests, when half-open sends full traffic at a
+  recovering dependency, when a breaker sits on a call with no timeout under it, or when a
+  dependency is slow rather than failing. Does not cover bulkheads
+  (concurrency-limiting-and-bulkheads), retry policy (retries-and-backoff), the bound itself
+  (timeouts-and-deadlines), the system-wide loop (cascading-failures), shedding
+  (rate-limiting-and-load-shedding), or serving a cached fallback (caching-strategies).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/circuit-breakers
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/circuit-breakers
+
+keywords:
+  - distributed-systems
+  - resilience
+  - circuit-breaker
+  - fallback
+  - resilience4j
+  - java
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: retries-and-backoff
+    version: ^1.0.0
+  - name: timeouts-and-deadlines
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Circuit Breakers
+      short_description: Trip conditions, half-open probes and fallbacks
+      default_prompt: Use Circuit Breakers to review the breaker configuration and fallback on this call.

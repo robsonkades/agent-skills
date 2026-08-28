@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: numa-and-cpu-affinity
+version: 1.1.0
+description: >-
+  Placing a JVM on real hardware topology: reading the NUMA topology, numactl and taskset
+  pinning strategies, interpreting numastat, which collectors UseNUMA actually governs, how
+  CPU sets interact with the JVM's own NUMA logic, and deciding between pinning and
+  interleaving. Use when a large heap runs on a multi-socket or NPS2/NPS4 host with no
+  binding at all, when a command uses numactl --cpubind, when UseNUMA is set alongside ZGC
+  or Shenandoah and produced nothing, when perf is asked for a numa_miss event, when
+  numastat -p is being read for hit and miss counters, when taskset confines the whole JVM
+  to a couple of CPUs, or when a latency regression followed a hardware change. Does not
+  cover the introductory treatment of cache lines, false sharing and local versus remote
+  latency (cpu-cache-and-numa), what the JVM detects from cgroup limits
+  (container-awareness), or CFS throttling and the rest of the host layer (linux-for-jvm).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/numa-and-cpu-affinity
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/numa-and-cpu-affinity
+
+keywords:
+  - java
+  - jvm
+  - numa
+  - numactl
+  - affinity
+  - taskset
+  - topology
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: cpu-cache-and-numa
+    version: ^1.0.0
+  - name: linux-for-jvm
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: NUMA and CPU Affinity
+      short_description: Topology, pinning and memory placement for the JVM
+      default_prompt: Use NUMA and CPU Affinity to decide where this JVM's threads and pages should live.

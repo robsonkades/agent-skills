@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: opentelemetry-performance
+version: 1.1.0
+description: >-
+  OpenTelemetry as a performance instrument and as a performance cost: head-based versus
+  tail-based sampling and what each hides of the tail, span attributes versus Baggage and
+  what each costs, context propagation across executors, CompletableFuture and virtual
+  threads, and measuring the agent's own overhead. Use when a trace shows an orphan root
+  span, when a child span appears disconnected after `Thread.ofVirtual().start(...)` or
+  `CompletableFuture.runAsync`, when a backend shows `unknown_service:java`, when spans leak
+  because `end()` is not in a finally, when a slow trace was sampled away, when tail-based
+  sampling drops traces across Collector replicas, or when someone quotes a published
+  agent-overhead number. Does not cover the statistics of the numbers a trace produces
+  (latency-statistics), profiles as opposed to traces (continuous-profiling), or
+  interpreting the tail the traces reveal (tail-latency-analysis).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/opentelemetry-performance
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/opentelemetry-performance
+
+keywords:
+  - opentelemetry
+  - tracing
+  - sampling
+  - context-propagation
+  - baggage
+  - observability
+  - java
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: latency-statistics
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: OpenTelemetry Performance
+      short_description: Tracing cost, sampling and context propagation
+      default_prompt: Use OpenTelemetry Performance to review this instrumentation and its cost.

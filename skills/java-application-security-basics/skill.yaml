@@ -1,0 +1,63 @@
+schemaVersion: 1
+
+name: java-application-security-basics
+version: 1.1.0
+description: >-
+  Application-level security judgement in Java 21+ code: password storage with a memory-hard
+  KDF at current parameters, constant-time comparison, cryptographically secure randomness,
+  authorisation as a precondition of the domain operation rather than an annotation on the
+  controller, the adversarial half of input validation, and secrets that never reach source,
+  config, toString() or an error message. Use when a password, hash, salt, token, API key or
+  pepper appears in a diff; when MessageDigest, SecureRandom, Random, UUID or a
+  PasswordEncoder is called; when @PreAuthorize sits on a controller while a scheduler or
+  consumer calls the same service method; when the acting user's id is read from the path
+  not the principal; when a CryptoUtils wrapper is proposed "to swap algorithms later"; or
+  when reviewing "is this secure enough to ship". Code-level only — layered validation is
+  java-defensive-programming, redaction is structured-logging, ReDoS is
+  java-strings-and-text, deserialisation is java-serialization-hardening.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-application-security-basics
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-application-security-basics
+
+keywords:
+  - java
+  - security
+  - password-storage
+  - argon2
+  - bcrypt
+  - authorization
+  - secrets
+  - owasp
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: java-defensive-programming
+    version: ^1.0.0
+  - name: structured-logging
+    version: ^1.0.0
+  - name: java-strings-and-text
+    version: ^1.0.0
+  - name: java-serialization-hardening
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Application Security Basics
+      short_description: Password storage, authorisation and secret handling in Java code

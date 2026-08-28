@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: orm-behavioral-patterns
+version: 1.1.0
+description: >-
+  The three runtime behaviours that make object-relational mapping work and produce its most
+  confusing failures: Unit of Work, Identity Map and Lazy Load. Use when an entity was
+  modified but never saved and the change appeared anyway, when a change was expected to
+  persist and did not, when LazyInitializationException appears during serialisation or in a
+  job, when the query count scales with rows displayed, when a persistence context grows
+  until flush becomes slow, when a bulk update is invisible to loaded entities, or when Open
+  Session In View is being turned on to make an error disappear. Does not cover the mapping
+  itself (orm-structural-mapping), which data-access pattern to use (data-source-patterns),
+  transaction boundaries (enterprise-transactions), or whether to cache the read at all
+  (caching-strategies).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/orm-behavioral-patterns
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/orm-behavioral-patterns
+
+keywords:
+  - unit-of-work
+  - identity-map
+  - lazy-load
+  - hibernate
+  - jpa
+  - n-plus-one
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: data-source-patterns
+    version: ^1.0.0
+  - name: enterprise-transactions
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: ORM Behavioral Patterns
+      short_description: Unit of Work, Identity Map and Lazy Load in practice
+      default_prompt: Use ORM Behavioral Patterns to explain or fix this persistence behaviour.

@@ -1,14 +1,19 @@
 schemaVersion: 1
 
 name: java-code-smells
-version: 1.0.0
+version: 1.3.0
 description: >-
   The detection catalogue for Java code smells: Long Method, God Object, Feature Envy,
-  Primitive Obsession, Data Clumps, Shotgun Surgery, Divergent Change, Message Chains,
-  Speculative Generality, Refused Bequest, Duplicate and Dead Code, boolean blindness,
-  null-heavy APIs, Optional overuse, leaky abstraction, and how modern Java changes the
-  list — including a default branch on a switch over a sealed type. Detection and
-  severity only — refactoring mechanics are java-refactoring.
+  Primitive Obsession, Data Clumps, Shotgun Surgery, Divergent Change, Mysterious Name,
+  Mutable and Global Data, Data Class, Loops, Lazy Element, Refused Bequest, boolean
+  blindness, null-heavy APIs and leaky abstraction, plus how modern Java changes the list
+  and the routing table from a finding to the refactoring that fixes it. Use when auditing
+  code for structural problems, before planning a refactoring, when one change keeps fanning
+  out across many files, when several refactorings could address one finding, when a switch
+  over a sealed type carries a default branch, or when deciding whether a suspect pattern is
+  actually a problem. Detection and severity only — refactoring mechanics are
+  java-refactoring, navigation-chain depth is java-law-of-demeter, and the economics of
+  duplication and premature abstraction are java-dry-kiss-yagni.
 
 license: Apache-2.0
 
@@ -35,6 +40,7 @@ files:
   - SKILL.md
   - skill.yaml
   - references/
+  - scripts/
 
 dependencies:
   - name: java-refactoring

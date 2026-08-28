@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: io-uring-and-zero-copy
+version: 1.1.0
+description: >-
+  Reducing the cost of moving bytes through a JVM process: sendfile and
+  FileChannel.transferTo, mmap and MappedByteBuffer, direct versus heap buffers at the
+  syscall boundary, io_uring's submission and completion model and the three routes a JVM
+  can actually reach it by, and proving a copy was eliminated. Use when CPU saturates while
+  a service streams files or proxies bytes, when a loop reads into a ByteBuffer only to
+  write it straight back out, when someone claims java.nio uses io_uring underneath, when a
+  Netty io_uring bootstrap fails at runtime with NoSuchMethodError or
+  ClassNotFoundException, when SO_BACKLOG is set on IoUringChannelOption, or when JFR
+  reports no socket events from a service plainly doing network I/O. Does not cover owning
+  and managing native memory (off-heap-memory), the host layer generally (linux-for-jvm), or
+  network-stack tuning (tcp-tuning).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/io-uring-and-zero-copy
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/io-uring-and-zero-copy
+
+keywords:
+  - java
+  - io-uring
+  - zero-copy
+  - sendfile
+  - netty
+  - nio
+  - syscalls
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: linux-for-jvm
+    version: ^1.0.0
+  - name: off-heap-memory
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: io_uring and Zero-Copy
+      short_description: Cutting CPU copies and syscalls on the I/O path
+      default_prompt: Use io_uring and Zero-Copy to decide whether this I/O path is paying for copies or for syscalls.

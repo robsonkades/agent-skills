@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: metaspace-internals
+version: 1.1.0
+description: >-
+  Metaspace internals on JDK 16+: chunk and arena allocation per ClassLoaderData, the
+  compressed class space and its separate 1 GB ceiling, chunk waste and fragmentation, when
+  memory is actually returned to the OS, and reading `jcmd VM.metaspace` and the nested
+  `VM.native_memory` output. Use when `OutOfMemoryError: Metaspace` or `Compressed class
+  space` is thrown, when a container is OOMKilled with a healthy heap, when metaspace
+  committed grows monotonically, when `MaxMetaspaceSize` is unset or copied from another
+  service, when `waste` in the class space is climbing, or when proxies, hidden classes or a
+  scripting engine generate classes at runtime. Does not cover the introductory six-region
+  memory map and container budget (jvm-memory-regions), classloader identity, unloading and
+  the retainer hunt for a leak (jvm-class-loading), or anything about compiled code and the
+  code cache (code-cache-segments).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/metaspace-internals
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/metaspace-internals
+
+keywords:
+  - java
+  - jvm
+  - metaspace
+  - native-memory
+  - compressed-class-space
+  - jcmd
+  - classloader
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jvm-memory-regions
+    version: ^1.0.0
+  - name: jvm-class-loading
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Metaspace Internals
+      short_description: Metaspace chunks, class space and native growth
+      default_prompt: Use Metaspace Internals to diagnose metaspace growth and size its ceilings.

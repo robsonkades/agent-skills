@@ -1,13 +1,13 @@
 ---
 name: java-solid
 description: >
-  The five SOLID principles as decision tools for evidence-based Java review, with
-  depth on single responsibility, open-closed, Liskov substitution and interface
-  segregation. Use when reviewing a design or pull request against SOLID, when a
-  principle is being cited to justify a change, when deciding whether a class has too
-  many responsibilities, or when an override breaks substitutability. Dependency
-  inversion depth lives in java-dependency-inversion, contract formalism for LSP in
-  java-design-by-contract, and cohesion/coupling vocabulary in java-cohesion-coupling.
+  The five SOLID principles as decision tools for evidence-based Java review, with depth on
+  single responsibility, open-closed, Liskov substitution and interface segregation. Use
+  when reviewing a design or pull request against SOLID, when a principle is being cited to
+  justify a change, when deciding whether a class has too many responsibilities, or when an
+  override breaks substitutability. Dependency inversion depth lives in
+  java-dependency-inversion, contract formalism for LSP in java-design-by-contract, and
+  cohesion/coupling vocabulary in java-cohesion-coupling.
 ---
 
 # Java SOLID Review

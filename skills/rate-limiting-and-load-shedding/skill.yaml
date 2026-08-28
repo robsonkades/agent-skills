@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: rate-limiting-and-load-shedding
+version: 1.1.0
+description: >-
+  Two mechanisms kept apart: rate limiting as a fairness and quota policy enforced per
+  client whether or not you are busy, and load shedding as self-protection that refuses work
+  you cannot complete, from your own saturation. Covers token versus leaky bucket, fixed
+  versus sliding windows, burst capacity, distributed limits and local-plus-shared
+  reconciliation, the 429 and Retry-After contract, saturation signals, oldest-first
+  rejection. Use when a limit is enforced per replica and multiplies by replica count, when
+  a fixed window lets through double the rate intended, when a limiter returns 500 or omits
+  Retry-After, when a service collapses under traffic that broke no limit, or when shed rate
+  alerts as an error. Not queue arithmetic (littles-law-and-queueing), system-wide spread
+  (cascading-failures), the client-side complement (circuit-breakers), the retry side of a
+  429 (retries-and-backoff), replica spread (load-balancing-and-routing), error budgets
+  (slo-and-alerting), or load generation (load-testing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/rate-limiting-and-load-shedding
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/rate-limiting-and-load-shedding
+
+keywords:
+  - rate-limiting
+  - load-shedding
+  - token-bucket
+  - overload
+  - admission-control
+  - resilience
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: failure-models
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Rate Limiting And Load Shedding
+      short_description: Quota enforcement versus overload self-protection
+      default_prompt: Use Rate Limiting And Load Shedding to review how this service enforces quotas and how it behaves past capacity.

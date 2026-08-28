@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: continuous-profiling
+version: 1.1.0
+description: >-
+  Always-on profiling in production: collection architecture and its permanent overhead
+  budget, profile storage and retention, differential and time-windowed queries, business
+  labels, and correlating profiles with deploys and incidents. Use when an incident is
+  already over and nobody profiled it, when a regression must be attributed to a deploy,
+  when "which tenant is burning the CPU" cannot be answered from an aggregate, when
+  allocation profiling is enabled unconditionally in production, when two flame graphs from
+  incomparable load windows are being diffed, or when someone says continuous profiling
+  needs a third-party agent. Does not cover choosing and running a single profile
+  (jfr-and-async-profiler), JFR event configuration (jfr-advanced), profiler engines and
+  conversions (async-profiler-advanced), or reading the resulting graph
+  (flame-graph-analysis).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/continuous-profiling
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/continuous-profiling
+
+keywords:
+  - profiling
+  - continuous
+  - pyroscope
+  - parca
+  - jfr
+  - observability
+  - production
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jfr-advanced
+    version: ^1.0.0
+  - name: async-profiler-advanced
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Continuous Profiling
+      short_description: Always-on profiles, labels and retention
+      default_prompt: Use Continuous Profiling to set up or query always-on production profiles.

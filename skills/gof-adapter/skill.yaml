@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: gof-adapter
+version: 1.1.0
+description: >-
+  Adapter in modern Java: making an existing type usable through an interface it was not
+  written for, and keeping a foreign model, vocabulary and failure mode from leaking inward.
+  Covers object versus class adapters, why a lambda already adapts a single-method
+  interface, the error-translation duty most adapters omit, when an adapter has quietly
+  become a translator with business rules in it, and when a passthrough should be deleted.
+  Use when integrating a vendor SDK or legacy type behind your own port, when two libraries
+  must interoperate, when an adapter is proposed between types you own, when foreign
+  exceptions or DTOs appear in domain code, or when reviewing a wrapper that renames methods
+  and does nothing else. Does not cover the Kubernetes telemetry sidecar
+  (adapter-sidecar-pattern), simplifying a subsystem you own (gof-facade), adding behaviour
+  to the same interface (gof-decorator), controlling access to an object (gof-proxy), or
+  layering rules in general (layering-and-boundaries).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-adapter
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-adapter
+
+keywords:
+  - design-patterns
+  - gof
+  - structural
+  - adapter
+  - integration
+  - boundaries
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Adapter
+      short_description: Foreign models stop here
+      default_prompt: Use Adapter to review this wrapper around a foreign type.

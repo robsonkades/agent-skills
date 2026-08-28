@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: event-driven-architecture
+version: 1.1.0
+description: >-
+  When a system should publish facts instead of calling services: events versus commands and
+  the imperative name that turns publish/subscribe back into RPC, choreography versus
+  orchestration, temporal coupling traded for schema coupling with an unknown consumer set,
+  fat versus thin events and the read-back stampede, and FaaS versus a long-lived consumer.
+  Use when a broker is proposed between two services that need each other's answer, when an
+  event is named ShipOrder, when the flow exists in no single file, when services exchanging
+  only events must deploy together, when an event carries an id and every consumer calls
+  back, or when a publish sits inside a transaction that can roll back. Not delivery
+  guarantees (delivery-semantics), repeat-safe handlers (idempotency), ordering
+  (message-ordering-and-partitioning), the outbox (distributed-transactions-and-sagas), work
+  queues (task-queues-and-competing-consumers), stage topology
+  (streaming-pipeline-topologies), or schema rules (rpc-and-api-contracts).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/event-driven-architecture
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/event-driven-architecture
+
+keywords:
+  - distributed-systems
+  - events
+  - messaging
+  - choreography
+  - orchestration
+  - serverless
+  - architecture
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: delivery-semantics
+    version: ^1.0.0
+  - name: rpc-and-api-contracts
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Event Driven Architecture
+      short_description: Events vs commands, choreography vs orchestration
+      default_prompt: Use Event Driven Architecture to decide whether this interaction should publish a fact or make a call.

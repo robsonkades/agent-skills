@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: java-reference-types-and-leaks
+version: 1.1.0
+description: >-
+  Reachability-driven memory in Java: the strong/soft/weak/phantom levels and exactly when
+  each is cleared, WeakHashMap and its value-holds-key trap, Cleaner as a leak-reporting
+  safety net rather than a release mechanism, why finalizers are gone, and the leak
+  catalogue — obsolete references in self-managed structures, listener registries,
+  ThreadLocal on pooled threads, class-loader retention, non-static nested classes holding
+  their enclosing instance, and caches that only grow. Use when heap grows with traffic and
+  never returns after a full GC, when a redeploy raises Metaspace, when someone proposes a
+  WeakReference or SoftReference cache, when a Cleaner or finalize() appears, when a
+  ThreadLocal has no remove(), or when "restarting fixes it" is the operating procedure.
+  Does not cover deterministic release of open resources (java-resource-management), reading
+  a heap dump (heap-dump-analysis), finding allocation sites (allocation-profiling), or
+  off-heap and native memory (off-heap-memory).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-reference-types-and-leaks
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-reference-types-and-leaks
+
+keywords:
+  - java
+  - memory-leak
+  - weakreference
+  - softreference
+  - cleaner
+  - threadlocal
+  - classloader-leak
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Reference Types and Leaks
+      short_description: Reachability, Cleaner and the memory-leak catalogue

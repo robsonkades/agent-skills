@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: architecture-characteristics
+version: 1.0.0
+description: >-
+  Deriving and capping the architecture characteristics a system is built for: the three-part
+  test, explicit versus implicit sourcing, the ≤7 driving / top-3 cap and Others Considered,
+  and scoping each list to one quantum. Use when "must be scalable" is the entire list, when
+  a dozen -ilities are all driving, when two stakeholders both claim the top priority and
+  will not rank, when "reliability", "agility" or a home-grown -ility is claimed as one
+  characteristic, when scalability and elasticity are used interchangeably, when strong
+  consistency and high availability both hold a top-three slot, when an estate shares one
+  list, or when a quality model is offered as the list. Does not cover the trade-off method
+  (architecture-trade-off-analysis), turning a characteristic into a scenario and recording
+  the decision (architecture-decision-making), clarifying a requirement
+  (requirements-and-acceptance), operational targets and alerting (slo-and-alerting), or
+  uncertainty in numbers (estimation-under-uncertainty).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/architecture-characteristics
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/architecture-characteristics
+
+keywords:
+  - architecture
+  - quality-attributes
+  - nonfunctional-requirements
+  - architecture-quantum
+  - fitness-functions
+  - iso-25010
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Architecture Characteristics
+      short_description: Derive the list, cap it at three, scope it to one quantum
+      default_prompt: Use Architecture Characteristics to derive and cap this quantum's driving list.

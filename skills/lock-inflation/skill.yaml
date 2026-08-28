@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: lock-inflation
+version: 1.1.0
+description: >-
+  The lifecycle of a Java monitor under contention: the fast-locked and inflated mark word
+  states on the current baseline, the LockStack and the ANONYMOUS_OWNER inflation protocol,
+  adaptive spinning, the ObjectMonitor entry queues, measuring contention as a fraction of
+  wall time, and reducing or partitioning a hot critical section. Use when threads sit in
+  BLOCKED on a synchronized block, when jdk.JavaMonitorEnter dominates a recording, when
+  throughput stops scaling as threads are added, when -XX:LockingMode or
+  -XX:+UseBiasedLocking appears on a JVM command line, or when someone proposes swapping
+  synchronized for ReentrantLock to avoid virtual-thread pinning. Does not cover
+  happens-before and safe publication (java-memory-model), collecting the profile itself
+  (jfr-and-async-profiler), cache-line contention with no lock involved
+  (false-sharing-and-contended), or lock-free algorithm design (lock-free-patterns).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/lock-inflation
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/lock-inflation
+
+keywords:
+  - java
+  - concurrency
+  - synchronized
+  - objectmonitor
+  - contention
+  - jfr
+  - locking
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: java-memory-model
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Lock Inflation
+      short_description: Monitor contention, inflation and lock scope
+      default_prompt: Use Lock Inflation to decide whether this synchronized section is costing latency.

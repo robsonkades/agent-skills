@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-chain-of-responsibility
+version: 1.0.0
+description: >-
+  Chain of Responsibility in modern Java, and the pipeline it is usually confused with: the
+  classical form where exactly one handler handles and the rest pass, versus the middleware form
+  where every stage processes and forwards. Covers choosing between them, the unhandled-request
+  policy that silent chains get wrong, ordering discipline when handlers are contributed
+  independently, error propagation and partial state when a stage throws mid-chain, and why
+  servlet filters and interceptor chains are this pattern already implemented. Use when a request
+  must be offered to several possible handlers, when @Order values are tuned to make a chain work,
+  when a request falls off the end of a chain and nothing happens, or when a chain is proposed for
+  three fixed cases. Does not cover the security framework's own filter configuration, the retry
+  and timeout policies applied around a call (gof-decorator, circuit-breakers), or message
+  processing across services (streaming-pipeline-topologies).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-chain-of-responsibility
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-chain-of-responsibility
+
+keywords:
+  - design-patterns
+  - gof
+  - behavioral
+  - chain
+  - pipeline
+  - filters
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Chain of Responsibility
+      short_description: First match wins, or every stage runs — decide
+      default_prompt: Use Chain of Responsibility to review this handler chain.

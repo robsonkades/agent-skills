@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-flyweight
+version: 1.0.0
+description: >-
+  Flyweight in modern Java: sharing one immutable instance across many logical occurrences to
+  bound memory, and why the modern JVM makes that pay only for long-lived duplicates. Covers the
+  intrinsic/extrinsic split, why allocation of short-lived objects is nearly free so pooling them
+  loses, the memory arithmetic deciding whether a cache entry costs more than the object it saves,
+  string deduplication and boundary canonicalisation as cheaper alternatives, the unbounded intern
+  map as a leak, and the == trap. Use when object pooling or interning is proposed, when a heap
+  dump shows millions of duplicate values, when someone suggests caching small objects for speed,
+  when a shared instance is mutable, or when a flyweight cache is described as a distributed
+  cache. Does not cover application-level caching policy (caching-strategies), finding the
+  duplicates (heap-dump-analysis), allocation cost in general (allocation-profiling), or
+  one-instance-with-global-access (gof-singleton).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-flyweight
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-flyweight
+
+keywords:
+  - design-patterns
+  - gof
+  - structural
+  - flyweight
+  - memory
+  - interning
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Flyweight
+      short_description: Sharing pays only for long-lived duplicates
+      default_prompt: Use Flyweight to check whether this pooling is justified.

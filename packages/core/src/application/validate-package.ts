@@ -94,6 +94,21 @@ export function validatePackage(
         ? 'It is what search and info show for the workflow; it is required'
         : 'Both Claude Code and Codex route on the description; it is required',
     );
+  } else if (collapse(docDescription) !== collapse(manifest.description)) {
+    // Adapters project the *manifest* description into the installed entrypoint, and the
+    // registry index carries only the manifest description. A divergent frontmatter one is
+    // therefore text no agent ever reads — including any trigger or boundary clause an
+    // author added there, which is how routing degrades silently.
+    //
+    // A warning and not an error: the package installs and works, so refusing it would be
+    // disproportionate. A registry that wants the stronger guarantee enforces it at index
+    // build time, where it can see its own packages — this repository does exactly that.
+    issues.warn(
+      'skill.description.mismatch',
+      entrypoint,
+      `${capitalise(holder)} description does not match the manifest description`,
+      `Only the manifest description ships; make them identical, or edit ${MANIFEST_FILENAME} instead`,
+    );
   }
 
   // --- Body ---------------------------------------------------------------------------
@@ -204,6 +219,15 @@ export function validatePackage(
  */
 function capitalise(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+/**
+ * Normalises whitespace before comparing two descriptions. A folded YAML scalar (`>`) and a
+ * quoted one carry the same text with different line breaks, and that difference is not a
+ * mismatch anybody needs to hear about.
+ */
+function collapse(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
 }
 
 export function pathSafetyIssues(path: string): readonly ValidationIssue[] {

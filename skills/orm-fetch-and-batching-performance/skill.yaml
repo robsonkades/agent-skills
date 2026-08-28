@@ -1,0 +1,44 @@
+schemaVersion: 1
+
+name: orm-fetch-and-batching-performance
+version: 1.0.0
+description: >-
+  Making JPA and Hibernate stop issuing the statements you did not ask for, and making the ones
+  they do issue cheap: statement count as the primary number, N+1 from an association and from a
+  collection, join fetch versus entity graph versus batch fetching, the cartesian product two
+  join-fetched collections produce, DTO projections instead of entity graphs, and why write
+  batching silently does nothing under identity id generation. Use when the query count scales
+  with rows rendered, when a page issues hundreds of selects, when LAZY was changed to EAGER to
+  make an exception go away, when open-session-in-view is switched on, when a bulk write is one
+  INSERT per row, when a flush is slow, or when pagination over a join fetch warns about
+  in-memory paging. Not the plan for one statement (sql-query-performance), pool sizing
+  (connection-pool-sizing), the runtime patterns themselves (orm-behavioral-patterns), where the
+  mapping lives (metadata-mapping), or the second-level cache decision (caching-strategies).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/orm-fetch-and-batching-performance
+
+keywords:
+  - jpa
+  - hibernate
+  - orm
+  - n-plus-one
+  - batching
+  - performance
+  - java
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: sql-query-performance
+    version: ^1.0.0

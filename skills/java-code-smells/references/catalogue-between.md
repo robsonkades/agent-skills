@@ -123,3 +123,42 @@ live relative to the data they concern.
   the boundary isolates a volatile dependency.
 - **Fix:** Inline Class / collapse layers; for the leak, redesign the contract so
   callers depend only on it (boundary design is java-api-design's).
+
+## Global Data
+
+- **Looks like:** `public static` mutable fields, a singleton with setters,
+  `System.setProperty` in business code, a static mutable `Map` used as a cache, a
+  `ThreadLocal` carrying ambient request state.
+- **Detect:** the set of modification points is unbounded — search for writes and they are
+  everywhere. Corroborate from the tests: they need a reset between runs, or they pass
+  alone and fail together.
+- **Not it when:** immutable constants; a stateless container-managed singleton; a
+  request-scoped value carried deliberately (scoped-values). Static is not the smell;
+  static **and mutable and reachable from anywhere** is.
+- **Fix:** Encapsulate Variable first — one access point is the precondition for every
+  other move — then narrow the scope, or inject the value.
+
+## Alternative Classes with Different Interfaces
+
+- **Looks like:** two classes doing the same job with different method names and shapes;
+  two vendor adapters whose surfaces diverged; callers holding an `if/else` to pick
+  between them.
+- **Detect:** you can describe both in one sentence without an "and"; call sites are
+  copy-paste of each other differing only in method names.
+- **Not it when:** they genuinely do different things and only rhyme. Unifying those
+  produces a lowest-common-denominator interface that fits neither, which is the
+  wrong-abstraction failure — java-dry-kiss-yagni owns whether merging pays.
+- **Fix:** Change Function Declaration to align the signatures, Move Function to even out
+  what each side does, and only then Extract Superclass or a shared interface.
+
+## Data Class
+
+- **Looks like:** fields, getters, setters and nothing else, with every computation over
+  those fields living in services around it.
+- **Detect:** every method is an accessor, neighbours show Feature Envy toward it, and the
+  same derivation over its fields appears in three places.
+- **Not it when:** the type is data by design — a DTO at a boundary
+  (remote-facade-and-dto), an event payload, or a record modelling a value. The smell is a
+  _domain_ class with no behaviour, not any class without behaviour.
+- **Fix:** Move Function into it, Encapsulate Collection, Replace Derived Variable with
+  Query. If it should stay data, make it a record and stop treating it as a domain object.

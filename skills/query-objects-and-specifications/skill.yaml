@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: query-objects-and-specifications
+version: 1.1.0
+description: >-
+  Expressing queries as objects that can be composed, named and tested — Query Object,
+  Specification, criteria builders, derived repository methods and explicit SQL — and
+  choosing between them per query rather than adopting one style everywhere. Use when
+  repository interfaces have grown dozens of findByAAndBAndCOrderByD methods, when a search
+  screen with optional filters is being built by concatenating strings, when a Specification
+  chain has become unreadable or produces a query nobody can predict, when dynamic filtering
+  is needed across several entities, when a criteria query is being written for something a
+  single SQL statement would express, when reads are being forced through the aggregate, or
+  when a query object is being proposed as an abstraction over the database. Does not cover
+  the collection abstraction over aggregates (repository-pattern), fetch strategies and N+1
+  (orm-behavioral-patterns), where mapping metadata lives (metadata-mapping), or index
+  design and pagination at the database level.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/query-objects-and-specifications
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/query-objects-and-specifications
+
+keywords:
+  - query-object
+  - specification
+  - criteria
+  - projections
+  - pagination
+  - jpa
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: data-source-patterns
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Query Objects and Specifications
+      short_description: Composable queries, projections and their cost
+      default_prompt: Use Query Objects and Specifications to choose how this query should be expressed.

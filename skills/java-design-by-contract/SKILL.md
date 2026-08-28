@@ -3,14 +3,14 @@ name: java-design-by-contract
 description: >
   Contracts as the semantics of a Java API, without a contract framework: preconditions,
   postconditions and invariants defined precisely and mapped to Java 25 mechanisms —
-  constructor and compact-constructor validation, invariants as types that cannot
-  represent invalid states, postconditions via tests and assert, contracts documented in
-  Javadoc, behavioural subtyping (overrides may weaken preconditions and strengthen
-  postconditions, never the reverse), and contracts across sealed hierarchies. Use when
-  a class's invariants live in its callers' heads, when an override adds a requirement
-  its supertype never made, when deciding what @throws to promise, or when assert is
-  guarding public input. Does not cover where boundary validation belongs
-  (java-defensive-programming) or LSP in its five-principle context (java-solid).
+  constructor and compact-constructor validation, invariants as types that cannot represent
+  invalid states, postconditions via tests and assert, contracts documented in Javadoc,
+  behavioural subtyping (overrides may weaken preconditions and strengthen postconditions,
+  never the reverse), and contracts across sealed hierarchies. Use when a class's invariants
+  live in its callers' heads, when an override adds a requirement its supertype never made,
+  when deciding what @throws to promise, or when assert is guarding public input. Does not
+  cover where boundary validation belongs (java-defensive-programming) or LSP in its
+  five-principle context (java-solid).
 ---
 
 # Java Design by Contract

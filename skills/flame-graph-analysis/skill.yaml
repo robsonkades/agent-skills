@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: flame-graph-analysis
+version: 1.2.0
+description: >-
+  Reading a flame graph and turning it into a decision: width as responsibility versus
+  self-width as blame, the alphabetical X axis, sample counts, infrastructure frames as the
+  diagnosis, differential graphs and normalisation, and Amdahl's conversion from width to
+  time saved. Use when a flame graph is open and the next step is unclear, when the widest
+  frame is main, when someone reads horizontal position as chronology, when a narrow frame
+  is being optimised before a wide one, when a differential graph comes out in one colour,
+  when a frame disappeared after a change, or when a development-machine profile is being
+  extrapolated to production. Does not cover collecting the profile
+  (jfr-and-async-profiler), microbenchmarking the fix (jmh-microbenchmarks), or the
+  statistics of latency (latency-statistics). Engine selection and output conversion is
+  async-profiler-advanced.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/flame-graph-analysis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/flame-graph-analysis
+
+keywords:
+  - java
+  - profiling
+  - flame-graph
+  - amdahl
+  - differential
+  - async-profiler
+  - analysis
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jfr-and-async-profiler
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Flame Graph Analysis
+      short_description: Reading flame graphs and ranking what to fix
+      default_prompt: Use Flame Graph Analysis to turn this profile into a decision.

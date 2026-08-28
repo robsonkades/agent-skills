@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-prototype
+version: 1.0.0
+description: >-
+  Prototype in modern Java: producing a new object from an existing instance's state, when the
+  configuration is expensive or the concrete type is unknown to the caller. Covers why
+  Cloneable/clone() is a broken contract and what replaces it, the deep-versus-shallow decision on
+  graphs with identity and cycles, why immutability removes the need to copy at all, the torn-copy
+  hazard under concurrency, and the identity rules when copying persisted objects. Use when
+  clone() or Cloneable appears, when an object is duplicated by serialising and deserialising it,
+  when a configured template must be instantiated many times, when a JPA entity is copied with its
+  id still set, or when a "copy" turns out to share a mutable list with its original. Does not
+  cover constructing from parameters (gof-builder), selecting a type to create
+  (gof-factory-method), sharing rather than copying (gof-flyweight), or snapshot semantics for
+  undo (gof-memento).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-prototype
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-prototype
+
+keywords:
+  - design-patterns
+  - gof
+  - creational
+  - clone
+  - copying
+  - immutability
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Prototype
+      short_description: Copying, and why clone() is broken
+      default_prompt: Use Prototype to review how this object is copied.

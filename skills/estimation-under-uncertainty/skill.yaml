@@ -1,0 +1,51 @@
+schemaVersion: 1
+
+name: estimation-under-uncertainty
+version: 1.0.0
+description: >-
+  Producing a software estimate that carries its own uncertainty instead of hiding it: a range
+  with a confidence level rather than a single number, decomposition, PERT and why summing
+  most-likely cases understates and summing worst cases overstates, calibrating against what
+  this team has actually done, and keeping estimate, target and commitment as three separate
+  things. Use when asked how long something will take, when a single date is being requested
+  for work that has not been broken down, when an estimate is being treated as a promise, when
+  padding is being added silently, when a plan is slipping and the message has not gone out yet,
+  or when someone asks for a number before the requirement is clear. Does not cover clarifying
+  the requirement itself (requirements-and-acceptance), how to deliver bad news
+  (engineering-communication), or trading quality for time (technical-debt-decisions).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/estimation-under-uncertainty
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/estimation-under-uncertainty
+
+keywords:
+  - estimation
+  - uncertainty
+  - pert
+  - commitments
+  - planning
+  - forecasting
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities: []
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Estimation Under Uncertainty
+      short_description: Ranges with confidence, not single dates
+      default_prompt: Use Estimation Under Uncertainty to estimate this work.

@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: sidecar-pattern
+version: 1.1.0
+description: >-
+  Composing a second container into the same pod to add a capability to a container you
+  cannot or will not modify: the shared network namespace and volumes that make this
+  different from a library, native sidecar containers (an init container with restartPolicy
+  Always) and the startup and shutdown ordering they fix, per-container requests against
+  pod-level QoS, and the failure matrix of a two-container pod. Use when a proxy, TLS
+  terminator, config reloader or log shipper is added beside an application, when requests
+  fail in the first seconds after a pod starts because the app came up before its proxy,
+  when a Job's pod stays Running because the sidecar never exits, or when a sidecar is up
+  but broken and the app cannot tell. Does not cover probes and graceful shutdown
+  (kubernetes-service-lifecycle), mediating outbound traffic (ambassador-pattern),
+  normalising what the app emits (adapter-sidecar-pattern), or JVM cgroup detection
+  (container-awareness).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/sidecar-pattern
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/sidecar-pattern
+
+keywords:
+  - kubernetes
+  - sidecar
+  - pod
+  - composition
+  - containers
+  - daemonset
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: kubernetes-service-lifecycle
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Sidecar Pattern
+      short_description: Composing a second container into a pod
+      default_prompt: Use Sidecar Pattern to decide whether this capability belongs in a second container.
