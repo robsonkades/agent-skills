@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: remote-facade-and-dto
-version: 1.1.0
+version: 1.2.0
 description: >-
   Designing what crosses a remote boundary: a Remote Facade providing coarse,
   business-shaped operations, and DTOs carrying the data in one round trip — plus when a DTO
@@ -44,6 +44,16 @@ dependencies:
     version: ^1.0.0
   - name: rpc-and-api-contracts
     version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - enterprise-architecture-smells
+  - enterprise-transactions
+  - offline-concurrency-control
+  - orm-behavioral-patterns
+  - query-objects-and-specifications
+  - service-layer-design
+  - view-and-representation-patterns
 
 capabilities:
   - reads-source

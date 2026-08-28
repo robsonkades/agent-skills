@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-singleton
-version: 1.0.0
+version: 1.1.0
 description: >-
   Singleton in modern Java, treated as a high-risk pattern: it conflates "one instance" with
   "reachable from anywhere", and only the second is usually wanted. Covers why dependency
@@ -41,8 +41,23 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
+  - name: connection-pool-sizing
     version: ^1.0.0
+  - name: distributed-locks-and-leases
+    version: ^1.0.0
+  - name: leader-election
+    version: ^1.0.0
+  - name: rate-limiting-and-load-shedding
+    version: ^1.0.0
+
+suggests:
+  - caching-strategies
+  - distributed-failure-catalogue
+  - false-sharing-and-contended
+  - java-dependency-inversion
+  - java-memory-model
+  - java-test-design
+  - lock-inflation
 
 capabilities:
   - reads-source

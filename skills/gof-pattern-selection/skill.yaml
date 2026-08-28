@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-pattern-selection
-version: 1.1.0
+version: 1.2.0
 description: >-
   Getting from a stated design problem to a candidate pattern, or to no pattern, without
   choosing by familiarity. The second of two stages: it assumes the forces are named and the
@@ -44,6 +44,22 @@ files:
 dependencies:
   - name: gof-pattern-thinking
     version: ^1.0.0
+
+suggests:
+  - distributed-transactions-and-sagas
+  - event-driven-architecture
+  - gof-adapter
+  - gof-command
+  - gof-decorator
+  - gof-interpreter
+  - gof-memento
+  - gof-observer
+  - gof-pattern-confusion
+  - gof-proxy
+  - gof-state
+  - gof-strategy
+  - gof-template-method
+  - rpc-and-api-contracts
 
 capabilities:
   - reads-source

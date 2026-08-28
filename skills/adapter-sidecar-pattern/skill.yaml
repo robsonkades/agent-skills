@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: adapter-sidecar-pattern
-version: 2.0.0
+version: 2.1.0
 description: >-
   A Kubernetes sidecar that normalises what an application emits — metrics, logs, health —
   so a heterogeneous fleet presents one interface to the platform; not the Gang-of-Four
@@ -45,6 +45,12 @@ files:
 dependencies:
   - name: sidecar-pattern
     version: ^1.0.0
+
+suggests:
+  - distributed-tracing-design
+  - kubernetes-service-lifecycle
+  - metrics-and-cardinality
+  - structured-logging
 
 capabilities:
   - reads-source

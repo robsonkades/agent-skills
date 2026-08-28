@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: poison-messages-and-dlq
-version: 1.0.0
+version: 1.1.0
 description: >-
   What happens to a message that cannot succeed: separating the permanently poison message
   that fails on its own content from the transiently blocked one whose dependency is down,
@@ -45,6 +45,13 @@ files:
 dependencies:
   - name: task-queues-and-competing-consumers
     version: ^1.0.0
+
+suggests:
+  - distributed-tracing-design
+  - message-ordering-and-partitioning
+  - retries-and-backoff
+  - rpc-and-api-contracts
+  - slo-and-alerting
 
 capabilities:
   - reads-source

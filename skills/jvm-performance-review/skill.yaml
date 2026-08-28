@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jvm-performance-review
-version: 1.1.0
+version: 1.2.0
 description: >-
   Auditing a supplied JVM configuration artefact: a command line or JVM_OPTS, a Kubernetes
   manifest with resource limits, a GC log or JFR summary offered as evidence, or a bare
@@ -39,3 +39,9 @@ files:
   - SKILL.md
   - skill.yaml
   - references/
+
+suggests:
+  - container-awareness
+  - gc-log-analysis
+  - jvm-gc-tuning
+  - jvm-memory-regions

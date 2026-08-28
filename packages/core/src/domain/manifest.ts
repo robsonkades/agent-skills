@@ -75,6 +75,16 @@ export interface SkillManifest {
   readonly files: readonly string[];
   readonly dependencies: readonly SkillDependency[];
   readonly optionalDependencies: readonly SkillDependency[];
+  /**
+   * Skills this one hands the reader off to in its own prose, by name and without a range.
+   *
+   * Nothing resolves these and nothing installs them. They exist because a sentence like
+   * "`retries-and-backoff` owns the mechanism" is a routing promise the package cannot keep on
+   * its own, and declaring it as a dependency instead would drag most of the catalogue into
+   * every install. A range is deliberately absent: an unresolved range is a constraint nobody
+   * checks, and this file does not carry claims it cannot enforce.
+   */
+  readonly suggests: readonly string[];
   readonly capabilities: readonly string[];
   readonly integrity?: string;
   readonly signatures: readonly unknown[];
@@ -97,6 +107,7 @@ const KNOWN_TOP_LEVEL_KEYS = new Set([
   'files',
   'dependencies',
   'optionalDependencies',
+  'suggests',
   'capabilities',
   'integrity',
   'signatures',
@@ -172,6 +183,7 @@ export function parseManifest(text: string, options: ParseManifestOptions = {}):
   const files = readFiles(doc, kind, issues);
   const dependencies = readDependencies(doc, 'dependencies', name, source, issues);
   const optionalDependencies = readDependencies(doc, 'optionalDependencies', name, source, issues);
+  const suggests = readSuggests(doc, name, issues);
 
   for (const key of Object.keys(doc)) {
     if (KNOWN_TOP_LEVEL_KEYS.has(key)) continue;
@@ -199,6 +211,7 @@ export function parseManifest(text: string, options: ParseManifestOptions = {}):
     files,
     dependencies,
     optionalDependencies,
+    suggests,
     capabilities: readStringArray(doc, 'capabilities', issues),
     ...optionalString(doc, 'integrity'),
     signatures: Array.isArray(doc['signatures']) ? (doc['signatures'] as unknown[]) : [],
@@ -344,6 +357,50 @@ function readFiles(
   }
 
   return safe;
+}
+
+function readSuggests(
+  doc: Record<string, unknown>,
+  selfName: string,
+  issues: IssueCollector,
+): readonly string[] {
+  const value = doc['suggests'];
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    issues.error('manifest.suggests.type', 'suggests', '"suggests" must be a list of skill names');
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const entry of value) {
+    if (typeof entry !== 'string') {
+      issues.error(
+        'manifest.suggests.type',
+        'suggests',
+        '"suggests" entries must be skill names, not mappings — a suggestion carries no range',
+      );
+      continue;
+    }
+    for (const problem of validateSkillName(entry)) {
+      issues.error('manifest.suggests.name', `suggests.${entry}`, `Invalid skill name: ${problem}`);
+    }
+    if (entry === selfName) {
+      issues.error('manifest.suggests.self', `suggests.${entry}`, 'A skill cannot suggest itself');
+      continue;
+    }
+    if (seen.has(entry)) {
+      issues.error(
+        'manifest.suggests.duplicate',
+        `suggests.${entry}`,
+        `Duplicate suggestion "${entry}"`,
+      );
+      continue;
+    }
+    seen.add(entry);
+    result.push(entry);
+  }
+  return result;
 }
 
 function readDependencies(
@@ -579,6 +636,7 @@ export function stringifyManifest(manifest: SkillManifest): string {
   if (manifest.optionalDependencies.length > 0) {
     doc['optionalDependencies'] = manifest.optionalDependencies.map((dep) => ({ ...dep }));
   }
+  if (manifest.suggests.length > 0) doc['suggests'] = [...manifest.suggests];
   if (manifest.capabilities.length > 0) doc['capabilities'] = [...manifest.capabilities];
   if (manifest.integrity !== undefined) doc['integrity'] = manifest.integrity;
   if (Object.keys(manifest.agentOverrides).length > 0)

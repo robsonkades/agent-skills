@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: hot-partitions-and-rebalancing
-version: 1.1.0
+version: 1.2.0
 description: >-
   Repairing a partitioned system whose distribution has failed in production: a hash
   distributes keys uniformly and says nothing about traffic, so one celebrity key or one
@@ -44,6 +44,21 @@ files:
 dependencies:
   - name: consistent-hashing
     version: ^1.0.0
+  - name: caching-strategies
+    version: ^1.0.0
+  - name: consistency-models
+    version: ^1.0.0
+  - name: rate-limiting-and-load-shedding
+    version: ^1.0.0
+  - name: sharding-and-partitioning
+    version: ^1.0.0
+
+suggests:
+  - distributed-locks-and-leases
+  - latency-statistics
+  - retries-and-backoff
+  - tail-latency-analysis
+  - timeouts-and-deadlines
 
 capabilities:
   - reads-source

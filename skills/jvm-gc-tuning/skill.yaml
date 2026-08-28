@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jvm-gc-tuning
-version: 2.2.0
+version: 2.3.0
 description: >-
   Deciding whether GC is the actual bottleneck, then choosing a collector and sizing the
   heap. Use when GC pauses appear on the critical path of a latency profile, when full
@@ -44,3 +44,9 @@ dependencies:
     version: ^1.0.0
   - name: jvm-memory-regions
     version: ^1.0.0
+  - name: jvm-class-loading
+    version: ^1.0.0
+
+suggests:
+  - java-performance
+  - linux-for-jvm

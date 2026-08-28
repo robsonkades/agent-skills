@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-and-performance
-version: 1.1.0
+version: 1.2.0
 description: >-
   Reasoning about performance across the whole request path rather than pattern by pattern:
   budgeting latency from controller to database, counting round trips as the primary
@@ -47,6 +47,27 @@ dependencies:
     version: ^1.0.0
   - name: connection-pool-sizing
     version: ^1.0.0
+  - name: allocation-profiling
+    version: ^1.0.0
+  - name: java-performance
+    version: ^2.0.0
+
+suggests:
+  - architecture-testing
+  - caching-strategies
+  - coordinated-omission
+  - distribution-boundaries
+  - domain-logic-organization
+  - enterprise-architecture-smells
+  - enterprise-transactions
+  - inheritance-mapping-strategies
+  - latency-statistics
+  - layering-and-boundaries
+  - offline-concurrency-control
+  - query-objects-and-specifications
+  - serialization-performance
+  - tail-latency-analysis
+  - universal-scalability-law
 
 capabilities:
   - reads-source

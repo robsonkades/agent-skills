@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: inheritance-mapping-strategies
-version: 1.1.0
+version: 1.2.0
 description: >-
   Mapping a subtype hierarchy onto tables — single table, class table (joined), concrete
   table per class — and deciding whether the hierarchy should exist at all. Use when an
@@ -43,6 +43,14 @@ files:
 dependencies:
   - name: orm-structural-mapping
     version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - architecture-decision-making
+  - architecture-testing
+  - domain-logic-organization
+  - patterns-and-modern-frameworks
+  - query-objects-and-specifications
 
 capabilities:
   - reads-source

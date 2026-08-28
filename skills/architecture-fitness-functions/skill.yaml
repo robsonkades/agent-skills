@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-fitness-functions
-version: 1.0.0
+version: 1.1.0
 description: >-
   The governance decision for an architecture characteristic — what to govern, at what threshold, where,
   and what happens when it goes red — not how the test is written: the objectivity test, triaging an
@@ -41,7 +41,17 @@ files:
   - references/
   - scripts/
 
-dependencies: []
+dependencies:
+  - name: architecture-characteristics
+    version: ^1.0.0
+  - name: architecture-testing
+    version: ^1.0.0
+  - name: performance-regression-ci
+    version: ^1.0.0
+  - name: quality-gates
+    version: ^1.0.0
+  - name: slo-and-alerting
+    version: ^1.0.0
 
 capabilities:
   - reads-source

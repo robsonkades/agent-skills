@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: rate-limiting-and-load-shedding
-version: 1.1.0
+version: 1.2.0
 description: >-
   Two mechanisms kept apart: rate limiting as a fairness and quota policy enforced per
   client whether or not you are busy, and load shedding as self-protection that refuses work
@@ -44,6 +44,21 @@ files:
 dependencies:
   - name: failure-models
     version: ^1.0.0
+  - name: java-performance
+    version: ^2.0.0
+
+suggests:
+  - caching-strategies
+  - cascading-failures
+  - coordinated-omission
+  - littles-law-and-queueing
+  - load-testing
+  - retries-and-backoff
+  - rpc-and-api-contracts
+  - slo-and-alerting
+  - stateless-service-design
+  - thread-sizing-and-virtual-threads
+  - timeouts-and-deadlines
 
 capabilities:
   - reads-source

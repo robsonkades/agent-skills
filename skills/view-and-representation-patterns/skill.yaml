@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: view-and-representation-patterns
-version: 1.1.0
+version: 1.2.0
 description: >-
   Producing the response: Template View, Transform View and Two Step View as three ways to
   turn a model into output, and what each becomes in a JSON API, a server-rendered page or a
@@ -44,6 +44,15 @@ files:
 dependencies:
   - name: mvc-and-request-handling
     version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - orm-behavioral-patterns
+  - query-objects-and-specifications
+  - remote-facade-and-dto
+  - repository-pattern
+  - rpc-and-api-contracts
+  - service-layer-design
 
 capabilities:
   - reads-source

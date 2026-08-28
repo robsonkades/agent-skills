@@ -15,7 +15,8 @@ import {
   runRegistryRemove,
 } from './commands/system.ts';
 
-export const VERSION = '1.0.0';
+/** Kept equal to packages/cli/package.json by a test; the two ship as one artefact. */
+export const VERSION = '1.2.0';
 
 const DESCRIPTION = `Install, update and publish AI coding-agent skills.
 

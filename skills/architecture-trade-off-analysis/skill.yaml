@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-trade-off-analysis
-version: 1.0.0
+version: 1.1.0
 description: >-
   The method for analysing an architectural decision, not the decision: entanglement and
   coupling, MECE option sets, qualitative versus quantitative analysis, real domain cases,
@@ -41,6 +41,11 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - architecture-characteristics
+  - architecture-decision-making
+  - architecture-fitness-functions
 
 capabilities:
   - reads-source

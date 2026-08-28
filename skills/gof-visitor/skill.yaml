@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-visitor
-version: 1.0.0
+version: 1.1.0
 description: >-
   Visitor in modern Java: adding operations over a stable set of element types without editing
   them, and why a sealed hierarchy with an exhaustive switch now replaces the classical
@@ -41,8 +41,14 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
-    version: ^1.0.0
+
+suggests:
+  - allocation-profiling
+  - gof-composite
+  - java-composition-over-inheritance
+  - java-tell-dont-ask
+  - jit-inlining-and-escape-analysis
+  - rpc-and-api-contracts
 
 capabilities:
   - reads-source

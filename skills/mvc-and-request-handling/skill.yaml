@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: mvc-and-request-handling
-version: 1.1.0
+version: 1.2.0
 description: >-
   How a web request is routed and handled: MVC's actual division of responsibilities, Page
   Controller versus Front Controller, and Application Controller for flows whose next step
@@ -42,6 +42,20 @@ files:
 dependencies:
   - name: layering-and-boundaries
     version: ^1.0.0
+  - name: domain-logic-organization
+    version: ^1.0.0
+  - name: remote-facade-and-dto
+    version: ^1.0.0
+  - name: session-state-strategies
+    version: ^1.0.0
+
+suggests:
+  - architecture-testing
+  - delivery-semantics
+  - orm-behavioral-patterns
+  - query-objects-and-specifications
+  - rpc-and-api-contracts
+  - service-layer-design
 
 capabilities:
   - reads-source

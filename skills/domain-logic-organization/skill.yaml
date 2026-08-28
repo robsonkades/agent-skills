@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: domain-logic-organization
-version: 1.2.0
+version: 1.3.0
 description: >-
   Choosing where business rules live — Transaction Script, Domain Model or Table Module —
   from the shape of the logic rather than from convention, and recognising when the choice
@@ -44,6 +44,26 @@ files:
 dependencies:
   - name: architecture-decision-making
     version: ^2.0.0
+  - name: java-code-smells
+    version: ^1.0.0
+  - name: java-enums
+    version: ^1.0.0
+  - name: java-object-contracts
+    version: ^1.0.0
+  - name: orm-structural-mapping
+    version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - architecture-refactoring-paths
+  - data-source-patterns
+  - java-composition-over-inheritance
+  - java-immutability
+  - legacy-enterprise-modernization
+  - offline-concurrency-control
+  - orm-behavioral-patterns
+  - query-objects-and-specifications
+  - service-layer-design
 
 capabilities:
   - reads-source

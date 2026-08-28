@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: executors-and-task-lifecycle
-version: 1.1.0
+version: 1.2.0
 description: >-
   The lifecycle of a task inside an ExecutorService: submit versus execute and which one
   loses the exception, the enqueue-before-grow rule that makes maximumPoolSize dead
@@ -48,6 +48,9 @@ dependencies:
     version: ^1.0.0
   - name: thread-sizing-and-virtual-threads
     version: ^1.0.0
+
+suggests:
+  - kubernetes-service-lifecycle
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: scatter-gather
-version: 1.1.0
+version: 1.2.0
 description: >-
   Fanning one request out to N workers and combining the answers: the root's latency is the
   max over N leaves, not their mean, choosing N against tail exposure, the completion rule
@@ -47,6 +47,13 @@ dependencies:
     version: ^1.0.0
   - name: sharding-and-partitioning
     version: ^1.0.0
+
+suggests:
+  - concurrency-limiting-and-bulkheads
+  - retries-and-backoff
+  - rpc-and-api-contracts
+  - structured-concurrency
+  - tail-latency-analysis
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: event-driven-architecture
-version: 1.1.0
+version: 1.2.0
 description: >-
   When a system should publish facts instead of calling services: events versus commands and
   the imperative name that turns publish/subscribe back into RPC, choreography versus
@@ -47,6 +47,13 @@ dependencies:
     version: ^1.0.0
   - name: rpc-and-api-contracts
     version: ^1.0.0
+
+suggests:
+  - connection-pool-sizing
+  - distributed-transactions-and-sagas
+  - message-ordering-and-partitioning
+  - startup-cds-crac-leyden
+  - task-queues-and-competing-consumers
 
 capabilities:
   - reads-source

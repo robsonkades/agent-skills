@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-template-method
-version: 1.0.0
+version: 1.1.0
 description: >-
   Template Method in modern Java: fixing an algorithm's skeleton while named steps vary, and the
   inheritance coupling that makes composition the better default. Covers why the template method
@@ -41,8 +41,14 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
-    version: ^1.0.0
+
+suggests:
+  - gof-chain-of-responsibility
+  - gof-strategy
+  - java-memory-model
+  - java-test-design
+  - orm-behavioral-patterns
+  - retries-and-backoff
 
 capabilities:
   - reads-source

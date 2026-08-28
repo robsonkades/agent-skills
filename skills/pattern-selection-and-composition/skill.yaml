@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: pattern-selection-and-composition
-version: 1.1.0
+version: 1.2.0
 description: >-
   Choosing enterprise patterns from forces rather than familiarity, and combining them into
   an architecture whose parts reinforce rather than fight each other: the selection criteria
@@ -48,6 +48,14 @@ dependencies:
     version: ^1.0.0
   - name: service-layer-design
     version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - architecture-decision-making
+  - consistency-models
+  - distribution-boundaries
+  - enterprise-architecture-smells
+  - orm-behavioral-patterns
 
 capabilities:
   - reads-source

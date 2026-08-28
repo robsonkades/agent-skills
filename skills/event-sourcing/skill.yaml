@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: event-sourcing
-version: 1.0.0
+version: 1.1.0
 description: >-
   Storing a sequence of immutable events as the source of truth and deriving current state from
   it: deciding whether the system needs it, designing events and streams, concurrency through
@@ -46,6 +46,18 @@ dependencies:
     version: ^1.0.0
   - name: consistency-models
     version: ^1.0.0
+
+suggests:
+  - delivery-semantics
+  - distributed-tracing-design
+  - distributed-transactions-and-sagas
+  - enterprise-transactions
+  - humble-objects-and-functional-core
+  - message-ordering-and-partitioning
+  - offline-concurrency-control
+  - retries-and-backoff
+  - rpc-and-api-contracts
+  - serialization-performance
 
 agentOverrides:
   codex:

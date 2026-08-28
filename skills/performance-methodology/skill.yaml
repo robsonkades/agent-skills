@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: performance-methodology
-version: 1.1.0
+version: 1.2.0
 description: >-
   The investigation process for performance work: defining an SLO, recording a baseline,
   observing before hypothesising, falsifiability, Amdahl's Law as a go/no-go filter,
@@ -43,6 +43,13 @@ dependencies:
     version: ^1.0.0
   - name: littles-law-and-queueing
     version: ^1.0.0
+  - name: jvm-gc-tuning
+    version: ^2.0.0
+
+suggests:
+  - engineering-communication
+  - jdk-upgrade-impact
+  - jvm-performance-review
 
 capabilities:
   - reads-source

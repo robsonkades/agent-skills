@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-pattern-thinking
-version: 1.1.0
+version: 1.2.0
 description: >-
   Reasoning from a design problem to a design, where a Gang-of-Four pattern is one possible
   outcome and "no pattern" is an equally valid one: naming the forces, identifying what
@@ -41,7 +41,58 @@ files:
   - skill.yaml
   - references/
 
-dependencies: []
+dependencies:
+  - name: gof-abstract-factory
+    version: ^1.0.0
+  - name: gof-adapter
+    version: ^1.0.0
+  - name: gof-bridge
+    version: ^1.0.0
+  - name: gof-builder
+    version: ^1.0.0
+  - name: gof-chain-of-responsibility
+    version: ^1.0.0
+  - name: gof-command
+    version: ^1.0.0
+  - name: gof-composite
+    version: ^1.0.0
+  - name: gof-decorator
+    version: ^1.0.0
+  - name: gof-facade
+    version: ^1.0.0
+  - name: gof-factory-method
+    version: ^1.0.0
+  - name: gof-flyweight
+    version: ^1.0.0
+  - name: gof-interpreter
+    version: ^1.0.0
+  - name: gof-iterator
+    version: ^1.0.0
+  - name: gof-mediator
+    version: ^1.0.0
+  - name: gof-memento
+    version: ^1.0.0
+  - name: gof-observer
+    version: ^1.0.0
+  - name: gof-prototype
+    version: ^1.0.0
+  - name: gof-proxy
+    version: ^1.0.0
+  - name: gof-singleton
+    version: ^1.0.0
+  - name: gof-state
+    version: ^1.0.0
+  - name: gof-strategy
+    version: ^1.0.0
+  - name: gof-template-method
+    version: ^1.0.0
+  - name: gof-visitor
+    version: ^1.0.0
+
+suggests:
+  - gof-patterns-and-distribution
+  - java-dry-kiss-yagni
+  - java-test-doubles
 
 capabilities:
   - reads-source

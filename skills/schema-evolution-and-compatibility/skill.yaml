@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: schema-evolution-and-compatibility
-version: 1.1.0
+version: 1.2.0
 description: >-
   Whether a given schema change is safe, in which deploy order, and what breaks when it is
   not: the writer/reader pair, the compatibility levels and who upgrades first, the
@@ -43,6 +43,11 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - event-sourcing
+  - kafka-consumers-in-java
+  - message-ordering-and-partitioning
 
 capabilities:
   - reads-source

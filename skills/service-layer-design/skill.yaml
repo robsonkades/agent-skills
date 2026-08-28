@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: service-layer-design
-version: 1.0.0
+version: 1.1.0
 description: >-
   Designing the layer that fronts business logic: what an application service owns
   (transaction boundary, authorisation, orchestration, translation) and what it must not
@@ -39,10 +39,19 @@ files:
   - references/
 
 dependencies:
-  - name: domain-logic-organization
-    version: ^1.0.0
   - name: enterprise-transactions
     version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - architecture-decision-making
+  - architecture-refactoring-paths
+  - distribution-boundaries
+  - domain-logic-organization
+  - layering-and-boundaries
+  - offline-concurrency-control
+  - query-objects-and-specifications
+  - remote-facade-and-dto
 
 capabilities:
   - reads-source

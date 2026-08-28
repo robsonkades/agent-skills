@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: scoped-values
-version: 1.1.0
+version: 1.2.0
 description: >-
   ScopedValue as one-way, immutable, lexically bounded context: where/run/call, rebinding in
   a nested scope, inheritance by StructuredTaskScope subtasks and by nothing else, and the
@@ -45,6 +45,9 @@ files:
 dependencies:
   - name: structured-concurrency
     version: ^1.0.0
+
+suggests:
+  - timeouts-and-deadlines
 
 capabilities:
   - reads-source

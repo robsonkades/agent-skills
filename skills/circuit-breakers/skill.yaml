@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: circuit-breakers
-version: 1.1.0
+version: 1.2.0
 description: >-
   The breaker as a state machine that stops calling a failing dependency: closed, open and
   half-open; why the trip condition must be a failure rate over a minimum call count, not
@@ -46,6 +46,13 @@ dependencies:
     version: ^1.0.0
   - name: timeouts-and-deadlines
     version: ^1.0.0
+
+suggests:
+  - caching-strategies
+  - cascading-failures
+  - distributed-systems-testing
+  - load-testing
+  - rate-limiting-and-load-shedding
 
 capabilities:
   - reads-source

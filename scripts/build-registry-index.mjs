@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   computePackageIntegrity,
+  decodeText,
   loadPackageFromDirectory,
   satisfies,
   stringifyRegistryIndex,
@@ -29,10 +30,36 @@ const fs = new NodeFileSystem();
 const hasher = new NodeHasher();
 const check = process.argv.includes('--check');
 
+/**
+ * Every other skill a package names in its own Markdown, split by how it names them.
+ *
+ * `table` is a routing-table row — "symptom -> owning skill" — which is a promise that the named
+ * skill is where to go next. `prose` is the same promise written in a sentence: "`x` owns the
+ * mechanism", "see `y` first". Both leave the reader stranded if the target is not installed,
+ * but only the first can afford to be a dependency; see the two gates below.
+ */
+function mentionedNames(pkg) {
+  const table = new Set();
+  const prose = new Set();
+  for (const file of pkg.files) {
+    if (!file.path.endsWith('.md')) continue;
+    // The depth ladder is laid out as tables too, but it maps a family at three depths rather
+    // than sending the reader to one owner. Its rows are pointers, so they belong with prose.
+    const isLadder = file.path.endsWith('references/depth-ladder.md');
+    for (const line of decodeText(file.bytes).split('\n')) {
+      const target = !isLadder && line.trimStart().startsWith('|') ? table : prose;
+      for (const match of line.matchAll(/`([a-z0-9]+(?:-[a-z0-9]+)+)`/g)) target.add(match[1]);
+    }
+  }
+  for (const name of table) prose.delete(name);
+  return { table, prose };
+}
+
 const entries = await readdir(skillsDir, { withFileTypes: true });
 const skills = [];
 const dependencyRefs = [];
 const descriptionDrift = [];
+const routingTargets = [];
 
 for (const entry of entries
   .filter((item) => item.isDirectory())
@@ -60,6 +87,19 @@ for (const entry of entries
   ) {
     descriptionDrift.push(manifest.name);
   }
+
+  const { table, prose } = mentionedNames(pkg);
+  routingTargets.push({
+    from: manifest.name,
+    table,
+    prose,
+    installed: new Set(
+      [...(manifest.dependencies ?? []), ...(manifest.optionalDependencies ?? [])].map(
+        (ref) => ref.name,
+      ),
+    ),
+    suggested: new Set(manifest.suggests ?? []),
+  });
 
   dependencyRefs.push(
     ...[...(manifest.dependencies ?? []), ...(manifest.optionalDependencies ?? [])].map((ref) => ({
@@ -118,6 +158,72 @@ if (unresolvable.length > 0) {
   console.error(`error: ${unresolvable.length} dependency range(s) cannot be satisfied:`);
   for (const line of unresolvable) console.error(`  - ${line}`);
   console.error('Widen the range in the dependent manifest, or publish a matching version.');
+  process.exit(1);
+}
+
+// A routing table row is a promise: "this symptom is owned by that skill". The promise is only
+// kept if the target is installed alongside, and `dependencies` is the only thing that makes
+// that happen — nothing resolves a name found in a document. Both gates above look the other way
+// round (is a declared dependency real?), which is how a hub shipped a 29-row routing table with
+// three dependencies declared: every other row a dead end for anyone who installed it.
+//
+// The exception is a row the graph cannot express. Routing is mutual — a hub routes to its
+// specialists and they route back — while `dependencies` must stay acyclic, so one direction of
+// every cycle has to give way. Rather than keep a hand-written waiver list, this works out which
+// edges those are: if the target already reaches back to this package through declared
+// dependencies, declaring the row too would close a cycle, and `suggests` is the honest record.
+const installEdges = new Map(routingTargets.map((entry) => [entry.from, entry.installed]));
+const reaches = (from, to) => {
+  const seen = new Set([from]);
+  const queue = [from];
+  while (queue.length > 0) {
+    const current = queue.pop();
+    if (current === to) return true;
+    for (const next of installEdges.get(current) ?? []) {
+      if (!seen.has(next)) {
+        seen.add(next);
+        queue.push(next);
+      }
+    }
+  }
+  return false;
+};
+
+const undeclaredRouting = [];
+const unsuggestedProse = [];
+for (const { from, table, prose, installed, suggested } of routingTargets) {
+  for (const target of table) {
+    if (target === from || !published.has(target) || installed.has(target)) continue;
+    if (reaches(target, from)) {
+      // Declaring it would close a cycle. It still has to be written down somewhere.
+      if (!suggested.has(target))
+        undeclaredRouting.push(
+          `${from} routes to "${target}", which cannot be a dependency without a cycle — list it under suggests`,
+        );
+      continue;
+    }
+    undeclaredRouting.push(`${from} routes to "${target}" without declaring it`);
+  }
+  // A hand-off in prose gets the weaker guarantee on purpose. Making these dependencies would
+  // pull most of the catalogue into every install; `suggests` records the pointer without
+  // resolving it, so a reader who lacks the target is told what to install rather than nothing.
+  for (const target of prose) {
+    if (target === from || !published.has(target)) continue;
+    if (installed.has(target) || suggested.has(target)) continue;
+    unsuggestedProse.push(`${from} points at "${target}" without declaring or suggesting it`);
+  }
+}
+if (undeclaredRouting.length > 0) {
+  console.error(`error: ${undeclaredRouting.length} routing target(s) are not declared:`);
+  for (const line of undeclaredRouting) console.error(`  - ${line}`);
+  console.error('Add each to `dependencies` in the routing package, or stop routing to it.');
+  process.exit(1);
+}
+if (unsuggestedProse.length > 0) {
+  console.error(`error: ${unsuggestedProse.length} document reference(s) are not declared:`);
+  for (const line of unsuggestedProse.slice(0, 40)) console.error(`  - ${line}`);
+  if (unsuggestedProse.length > 40) console.error(`  … and ${unsuggestedProse.length - 40} more`);
+  console.error('Add each to `suggests`, or stop naming it.');
   process.exit(1);
 }
 

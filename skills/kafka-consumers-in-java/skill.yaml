@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: kafka-consumers-in-java
-version: 1.1.0
+version: 1.2.0
 description: >-
   Operating a Kafka consumer from Java: the log-not-a-queue model where consumption removes
   nothing and position is an offset; the rebalance as the central operational event, with
@@ -46,6 +46,13 @@ dependencies:
     version: ^1.0.0
   - name: delivery-semantics
     version: ^1.0.0
+
+suggests:
+  - concurrency-limiting-and-bulkheads
+  - kubernetes-service-lifecycle
+  - littles-law-and-queueing
+  - poison-messages-and-dlq
+  - serialization-performance
 
 capabilities:
   - reads-source

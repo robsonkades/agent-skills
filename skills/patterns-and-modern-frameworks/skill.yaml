@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: patterns-and-modern-frameworks
-version: 1.0.0
+version: 1.1.0
 description: >-
   Which classical enterprise patterns a modern Java and Spring stack already implements,
   which it only partly implements, and which it does not implement at all — plus the modern
@@ -45,6 +45,24 @@ dependencies:
     version: ^1.0.0
   - name: mvc-and-request-handling
     version: ^1.0.0
+  - name: domain-logic-organization
+    version: ^1.0.0
+  - name: offline-concurrency-control
+    version: ^1.0.0
+
+suggests:
+  - caching-strategies
+  - connection-pool-sizing
+  - data-source-patterns
+  - enterprise-architecture-smells
+  - enterprise-base-patterns
+  - enterprise-transactions
+  - metadata-mapping
+  - query-objects-and-specifications
+  - reactive-and-virtual-thread-selection
+  - structured-concurrency
+  - thread-sizing-and-virtual-threads
+  - virtual-threads-internals
 
 capabilities:
   - reads-source

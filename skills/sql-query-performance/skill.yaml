@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: sql-query-performance
-version: 1.0.0
+version: 1.1.0
 description: >-
   Making one SQL statement fast, from its execution plan rather than a guess: reading estimated
   against actual rows, finding the operation that actually costs, whether a scan is wrong at
@@ -39,3 +39,7 @@ files:
   - SKILL.md
   - skill.yaml
   - references/
+
+suggests:
+  - caching-strategies
+  - orm-fetch-and-batching-performance

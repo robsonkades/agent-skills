@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: query-objects-and-specifications
-version: 1.1.0
+version: 1.2.0
 description: >-
   Expressing queries as objects that can be composed, named and tested — Query Object,
   Specification, criteria builders, derived repository methods and explicit SQL — and
@@ -44,6 +44,15 @@ files:
 dependencies:
   - name: data-source-patterns
     version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - architecture-decision-making
+  - architecture-testing
+  - enterprise-architecture-smells
+  - metadata-mapping
+  - orm-behavioral-patterns
+  - repository-pattern
 
 capabilities:
   - reads-source

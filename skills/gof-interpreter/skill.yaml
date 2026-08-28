@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-interpreter
-version: 1.0.0
+version: 1.1.0
 description: >-
   Interpreter in modern Java: representing a small language as a typed tree and evaluating it,
   expressed today as a sealed AST with an exhaustive switch rather than an eval() method per node.
@@ -41,8 +41,18 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
-    version: ^1.0.0
+
+suggests:
+  - allocation-profiling
+  - gof-flyweight
+  - gof-visitor
+  - java-composition-over-inheritance
+  - java-exception-design
+  - java-immutability
+  - jfr-and-async-profiler
+  - jmh-microbenchmarks
+  - query-objects-and-specifications
+  - rpc-and-api-contracts
 
 capabilities:
   - reads-source

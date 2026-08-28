@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: sidecar-pattern
-version: 1.1.0
+version: 1.2.0
 description: >-
   Composing a second container into the same pod to add a capability to a container you
   cannot or will not modify: the shared network namespace and volumes that make this
@@ -44,6 +44,12 @@ files:
 dependencies:
   - name: kubernetes-service-lifecycle
     version: ^1.0.0
+
+suggests:
+  - adapter-sidecar-pattern
+  - connection-pool-sizing
+  - container-awareness
+  - latency-statistics
 
 capabilities:
   - reads-source

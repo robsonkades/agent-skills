@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: enterprise-architecture-smells
-version: 1.1.0
+version: 1.2.0
 description: >-
   Detecting structural problems in an enterprise application from evidence, and telling
   genuine harm apart from unfamiliar-but-fine: anaemic domain models, god services,
@@ -42,12 +42,25 @@ files:
   - references/
 
 dependencies:
-  - name: layering-and-boundaries
-    version: ^1.0.0
   - name: repository-pattern
     version: ^1.0.0
   - name: service-layer-design
     version: ^1.0.0
+  - name: layering-and-boundaries
+    version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - architecture-decision-making
+  - architecture-refactoring-paths
+  - data-source-patterns
+  - distribution-boundaries
+  - domain-logic-organization
+  - enterprise-base-patterns
+  - enterprise-transactions
+  - inheritance-mapping-strategies
+  - remote-facade-and-dto
+  - session-state-strategies
 
 capabilities:
   - reads-source

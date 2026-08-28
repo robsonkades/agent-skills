@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: slo-and-alerting
-version: 1.1.0
+version: 1.2.0
 description: >-
   Turning measurements into an on-call contract: SLI, SLO and SLA, choosing an indicator
   that reflects the user's experience and where it is measured, the availability definition
@@ -45,6 +45,13 @@ files:
 dependencies:
   - name: metrics-and-cardinality
     version: ^1.0.0
+  - name: rate-limiting-and-load-shedding
+    version: ^1.0.0
+
+suggests:
+  - cascading-failures
+  - distributed-failure-catalogue
+  - latency-statistics
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-mediator
-version: 1.0.0
+version: 1.1.0
 description: >-
   Mediator in modern Java, treated as high-risk: replacing many-to-many collaboration with a hub
   that owns the interaction protocol, and the god object that hub becomes when nothing bounds it.
@@ -41,8 +41,17 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
-    version: ^1.0.0
+
+suggests:
+  - distributed-transactions-and-sagas
+  - event-driven-architecture
+  - gof-command
+  - gof-facade
+  - gof-observer
+  - gof-state
+  - java-memory-model
+  - java-test-doubles
+  - littles-law-and-queueing
 
 capabilities:
   - reads-source

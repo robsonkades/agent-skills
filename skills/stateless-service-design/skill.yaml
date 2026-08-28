@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: stateless-service-design
-version: 1.0.0
+version: 1.1.0
 description: >-
   Making a service instance disposable so replicas are interchangeable: what stateless
   actually means — no state whose loss changes a correct outcome; the in-process state
@@ -44,6 +44,18 @@ files:
 dependencies:
   - name: kubernetes-service-lifecycle
     version: ^1.0.0
+  - name: failure-models
+    version: ^1.0.0
+  - name: leader-election
+    version: ^1.0.0
+  - name: rate-limiting-and-load-shedding
+    version: ^1.0.0
+
+suggests:
+  - caching-strategies
+  - connection-pool-sizing
+  - latency-statistics
+  - rpc-and-api-contracts
 
 capabilities:
   - reads-source

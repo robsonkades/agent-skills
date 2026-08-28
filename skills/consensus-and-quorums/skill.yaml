@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: consensus-and-quorums
-version: 1.0.0
+version: 1.1.0
 description: >-
   Agreement among processes that may crash, and the arithmetic that makes it work: FLP and
   why every failure detector is only a timeout; majority quorums, 2f+1, and the R + W > N
@@ -46,6 +46,13 @@ dependencies:
     version: ^1.0.0
   - name: consistency-models
     version: ^1.0.0
+
+suggests:
+  - distributed-locks-and-leases
+  - java-memory-model
+  - leader-election
+  - sharding-and-partitioning
+  - task-queues-and-competing-consumers
 
 capabilities:
   - reads-source

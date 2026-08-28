@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-reflection-and-method-handles
-version: 1.1.0
+version: 1.2.0
 description: >-
   Runtime access to code the compiler cannot check: what reflection costs beyond speed — no
   compile-time checking, invisible to refactoring and dead-code analysis, blocked by module
@@ -42,6 +42,9 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - varhandles-and-memory-ordering
 
 capabilities:
   - reads-source

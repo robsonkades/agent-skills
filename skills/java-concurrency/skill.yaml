@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-concurrency
-version: 1.0.0
+version: 1.1.0
 description: >-
   Entry point for modern Java concurrency: turn a requirement or a symptom into the one construct
   or investigation that fits it, and hand off to the skill that owns it. Covers the
@@ -43,6 +43,55 @@ files:
 dependencies:
   - name: littles-law-and-queueing
     version: ^1.0.0
+  - name: blocking-and-nonblocking-io
+    version: ^1.0.0
+  - name: cancellation-and-interruption
+    version: ^1.0.0
+  - name: completablefuture-composition
+    version: ^1.0.0
+  - name: concurrency-diagnostics
+    version: ^1.0.0
+  - name: concurrency-limiting-and-bulkheads
+    version: ^1.0.0
+  - name: concurrency-testing
+    version: ^1.0.0
+  - name: executors-and-task-lifecycle
+    version: ^1.0.0
+  - name: forkjoinpool-and-work-stealing
+    version: ^1.0.0
+  - name: java-memory-model
+    version: ^1.0.0
+  - name: jmh-microbenchmarks
+    version: ^1.0.0
+  - name: load-testing
+    version: ^1.0.0
+  - name: lock-free-patterns
+    version: ^1.0.0
+  - name: lock-inflation
+    version: ^1.0.0
+  - name: reactive-and-virtual-thread-selection
+    version: ^1.0.0
+  - name: reactive-backpressure
+    version: ^1.0.0
+  - name: scoped-values
+    version: ^1.0.0
+  - name: structured-concurrency
+    version: ^1.0.0
+  - name: thread-sizing-and-virtual-threads
+    version: ^1.0.0
+  - name: timeouts-and-deadlines
+    version: ^1.0.0
+  - name: universal-scalability-law
+    version: ^1.0.0
+  - name: virtual-thread-migration
+    version: ^1.0.0
+  - name: virtual-threads-internals
+    version: ^1.0.0
+
+suggests:
+  - container-awareness
+  - latency-statistics
+  - tail-latency-analysis
 
 capabilities:
   - reads-source

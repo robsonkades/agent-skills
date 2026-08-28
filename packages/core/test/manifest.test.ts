@@ -43,6 +43,50 @@ describe('manifest parsing', () => {
     assert.equal(issues.filter((issue) => issue.severity === 'error').length, 0);
   });
 
+  it('reads suggests as bare names, and defaults it to empty', () => {
+    assert.deepEqual(parseManifest(MINIMAL).manifest.suggests, []);
+
+    const { manifest, issues } = parseManifest(
+      `${MINIMAL}\nsuggests:\n  - retries-and-backoff\n  - circuit-breakers\n`,
+    );
+    assert.deepEqual(manifest.suggests, ['retries-and-backoff', 'circuit-breakers']);
+    assert.equal(issues.filter((issue) => issue.severity === 'error').length, 0);
+  });
+
+  it('rejects a suggestion carrying a version range', () => {
+    // Nothing resolves a suggestion, so a range on one would be a constraint no gate checks.
+    const { issues } = parseManifest(
+      `${MINIMAL}\nsuggests:\n  - name: retries-and-backoff\n    version: ^1.0.0\n`,
+    );
+    assert.equal(
+      issues.some((issue) => issue.severity === 'error' && issue.rule === 'manifest.suggests.type'),
+      true,
+    );
+  });
+
+  it('rejects a self-suggestion and a duplicate one', () => {
+    const self = parseManifest(`${MINIMAL}\nsuggests:\n  - java-performance\n`);
+    assert.equal(
+      self.issues.some((issue) => issue.rule === 'manifest.suggests.self'),
+      true,
+    );
+
+    const dupe = parseManifest(
+      `${MINIMAL}\nsuggests:\n  - circuit-breakers\n  - circuit-breakers\n`,
+    );
+    assert.equal(
+      dupe.issues.some((issue) => issue.rule === 'manifest.suggests.duplicate'),
+      true,
+    );
+  });
+
+  it('round-trips suggests through stringify', () => {
+    const text = `${MINIMAL}\nsuggests:\n  - circuit-breakers\n`;
+    const { manifest } = parseManifest(text);
+    const { manifest: again } = parseManifest(stringifyManifest(manifest));
+    assert.deepEqual(again.suggests, ['circuit-breakers']);
+  });
+
   it('requires name, version and description', () => {
     for (const field of ['name', 'version', 'description']) {
       const text = MINIMAL.split('\n')

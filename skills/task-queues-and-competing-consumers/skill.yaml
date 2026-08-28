@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: task-queues-and-competing-consumers
-version: 1.1.0
+version: 1.2.0
 description: >-
   Distributing work to a pool of interchangeable workers through a queue: the lease and
   visibility-timeout model, and why an expired lease duplicates work instead of failing it;
@@ -46,6 +46,18 @@ dependencies:
     version: ^1.0.0
   - name: idempotency
     version: ^1.0.0
+
+suggests:
+  - concurrency-limiting-and-bulkheads
+  - failure-models
+  - forkjoinpool-and-work-stealing
+  - kubernetes-service-lifecycle
+  - latency-statistics
+  - leader-election
+  - littles-law-and-queueing
+  - poison-messages-and-dlq
+  - rate-limiting-and-load-shedding
+  - thread-sizing-and-virtual-threads
 
 capabilities:
   - reads-source

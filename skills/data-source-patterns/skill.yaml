@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: data-source-patterns
-version: 1.1.0
+version: 1.2.0
 description: >-
   Choosing how code reaches the database — Table Data Gateway, Row Data Gateway, Active
   Record or Data Mapper — from the shape of the domain logic rather than from framework
@@ -44,6 +44,16 @@ files:
 dependencies:
   - name: domain-logic-organization
     version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - architecture-decision-making
+  - architecture-refactoring-paths
+  - enterprise-architecture-smells
+  - enterprise-transactions
+  - inheritance-mapping-strategies
+  - offline-concurrency-control
+  - remote-facade-and-dto
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jvm-memory-regions
-version: 1.2.0
+version: 1.3.0
 description: >-
   The six memory regions of a JVM process — heap, Metaspace, code cache, thread stacks,
   direct/native memory and JVM-internal — and how to budget them against a container limit.
@@ -41,6 +41,9 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - object-layout-and-footprint
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-characteristics
-version: 1.0.0
+version: 1.1.0
 description: >-
   Deriving and capping the architecture characteristics a system is built for: the three-part
   test, explicit versus implicit sourcing, the ≤7 driving / top-3 cap and Others Considered,
@@ -41,6 +41,12 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - architecture-decision-making
+  - architecture-trade-off-analysis
+  - requirements-and-acceptance
+  - slo-and-alerting
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-strategy
-version: 1.0.0
+version: 1.1.0
 description: >-
   Strategy in modern Java, separated into three things that are usually conflated: the design
   concept (an algorithm varies), the classical class hierarchy, and the lambda or functional
@@ -41,8 +41,25 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
+  - name: gof-bridge
     version: ^1.0.0
+  - name: gof-factory-method
+    version: ^1.0.0
+  - name: gof-state
+    version: ^1.0.0
+  - name: gof-template-method
+    version: ^1.0.0
+
+suggests:
+  - caching-strategies
+  - flame-graph-analysis
+  - gof-pattern-thinking
+  - java-composition-over-inheritance
+  - java-memory-model
+  - jit-inlining-and-escape-analysis
+  - load-balancing-and-routing
+  - retries-and-backoff
+  - sharding-and-partitioning
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: enterprise-transactions
-version: 1.1.0
+version: 1.2.0
 description: >-
   Transaction boundaries as an architectural decision: where a transaction starts and ends,
   what isolation level actually buys, how propagation and rollback rules behave in practice,
@@ -47,6 +47,13 @@ dependencies:
     version: ^1.0.0
   - name: idempotency
     version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - delivery-semantics
+  - distribution-boundaries
+  - offline-concurrency-control
+  - retries-and-backoff
 
 capabilities:
   - reads-source

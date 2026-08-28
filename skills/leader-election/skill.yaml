@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: leader-election
-version: 1.1.0
+version: 1.2.0
 description: >-
   Electing one active instance for work that must not run concurrently: the lease renewal
   model and the rule that a leader stops acting when renewal fails, not when it learns it
@@ -45,6 +45,15 @@ files:
 dependencies:
   - name: distributed-locks-and-leases
     version: ^1.0.0
+  - name: sharding-and-partitioning
+    version: ^1.0.0
+
+suggests:
+  - consensus-and-quorums
+  - java-memory-model
+  - kubernetes-service-lifecycle
+  - pause-attribution
+  - stateless-service-design
 
 capabilities:
   - reads-source

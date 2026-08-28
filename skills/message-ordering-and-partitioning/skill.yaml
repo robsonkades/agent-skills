@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: message-ordering-and-partitioning
-version: 1.1.0
+version: 1.2.0
 description: >-
   Ordering guarantees and the partition as the unit that provides them: ordering is
   per-partition, never global; per-key ordering holds only while the key-to-partition
@@ -45,6 +45,16 @@ files:
 dependencies:
   - name: delivery-semantics
     version: ^1.0.0
+
+suggests:
+  - consistency-models
+  - event-driven-architecture
+  - hot-partitions-and-rebalancing
+  - kafka-consumers-in-java
+  - poison-messages-and-dlq
+  - retries-and-backoff
+  - rpc-and-api-contracts
+  - sharding-and-partitioning
 
 capabilities:
   - reads-source

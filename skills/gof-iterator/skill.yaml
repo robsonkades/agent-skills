@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-iterator
-version: 1.0.0
+version: 1.1.0
 description: >-
   Iterator in modern Java: traversing an aggregate without exposing it, and choosing between
   Iterator, Stream and Spliterator — external pull versus internal lazy pipeline versus the
@@ -41,8 +41,12 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
-    version: ^1.0.0
+
+suggests:
+  - gof-proxy
+  - jit-inlining-and-escape-analysis
+  - repository-pattern
+  - rpc-and-api-contracts
 
 capabilities:
   - reads-source

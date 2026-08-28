@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: framework-coupling-and-independence
-version: 1.0.0
+version: 1.1.0
 description: >-
   Deciding how much of a system may depend on its framework, and pricing that dependency
   honestly: which couplings are cheap and correct, which are expensive and reversible, which are
@@ -48,6 +48,25 @@ dependencies:
     version: ^1.0.0
   - name: architecture-decision-making
     version: ^2.0.0
+
+suggests:
+  - architecture-testing
+  - blocking-and-nonblocking-io
+  - component-and-release-boundaries
+  - data-source-patterns
+  - distributed-systems-testing
+  - domain-logic-organization
+  - enterprise-architecture-smells
+  - enterprise-transactions
+  - humble-objects-and-functional-core
+  - java-composition-over-inheritance
+  - java-dependency-inversion
+  - orm-structural-mapping
+  - patterns-and-modern-frameworks
+  - reactive-and-virtual-thread-selection
+  - remote-facade-and-dto
+  - rpc-and-api-contracts
+  - service-layer-design
 
 agentOverrides:
   codex:
