@@ -1,6 +1,6 @@
 {
   "name": "agent-skills-monorepo",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "A cross-agent package manager for AI coding-agent skills",
@@ -29,10 +29,11 @@
     "format": "prettier --write \"**/*.{ts,js,mjs,json,md,yaml,yml}\"",
     "format:check": "prettier --check \"**/*.{ts,js,mjs,json,md,yaml,yml}\"",
     "check:boundaries": "node scripts/check-boundaries.mjs",
-    "verify": "npm run build && npm run check:boundaries && npm run lint && npm run format:check && npm run registry:check && npm run test:only",
+    "verify": "npm run build && npm run check:boundaries && npm run lint && npm run format:check && npm run registry:check && npm run check:versions && npm run test:only",
     "agent-skills": "node packages/cli/bin/agent-skills.mjs",
     "registry:build": "node scripts/build-registry-index.mjs",
-    "registry:check": "node scripts/build-registry-index.mjs --check"
+    "registry:check": "node scripts/build-registry-index.mjs --check",
+    "check:versions": "node scripts/check-version-bumps.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
