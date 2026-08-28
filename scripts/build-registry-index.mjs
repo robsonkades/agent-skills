@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import {
   computePackageIntegrity,
   loadPackageFromDirectory,
+  satisfies,
   stringifyRegistryIndex,
 } from '@jvm-expert/core';
 import { NodeFileSystem, NodeHasher } from '@jvm-expert/node';
@@ -30,6 +31,8 @@ const check = process.argv.includes('--check');
 
 const entries = await readdir(skillsDir, { withFileTypes: true });
 const skills = [];
+const dependencyRefs = [];
+const descriptionDrift = [];
 
 for (const entry of entries
   .filter((item) => item.isDirectory())
@@ -42,6 +45,30 @@ for (const entry of entries
     console.error(`error: ${directory} declares name "${manifest.name}"`);
     process.exit(1);
   }
+
+  // `validate` only warns about this, because a drifted description still installs and works.
+  // For our own packages it is a defect: the manifest description is the one that ships, so a
+  // divergent frontmatter one is text no agent reads — including any trigger clause in it.
+  const collapse = (value) =>
+    String(value ?? '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  const frontmatterDescription = pkg.document.frontmatter?.description;
+  if (
+    frontmatterDescription !== undefined &&
+    collapse(frontmatterDescription) !== collapse(manifest.description)
+  ) {
+    descriptionDrift.push(manifest.name);
+  }
+
+  dependencyRefs.push(
+    ...[...(manifest.dependencies ?? []), ...(manifest.optionalDependencies ?? [])].map((ref) => ({
+      from: manifest.name,
+      to: ref.name,
+      range: ref.version,
+      optional: !(manifest.dependencies ?? []).includes(ref),
+    })),
+  );
 
   skills.push({
     name: manifest.name,
@@ -57,6 +84,41 @@ for (const entry of entries
       },
     ],
   });
+}
+
+if (descriptionDrift.length > 0) {
+  console.error(
+    `error: ${descriptionDrift.length} package(s) whose SKILL.md description differs from the manifest:`,
+  );
+  for (const name of descriptionDrift) console.error(`  - ${name}`);
+  console.error('Only the manifest description ships. Make them identical.');
+  process.exit(1);
+}
+
+// `validate` checks a package in isolation and never resolves a semver range, so a dependency
+// pinned to a major that no longer exists reports "Valid" and only fails at install time. This
+// index is the one place that sees every published version at once, so the range check lives
+// here. It is how four skills stayed uninstallable without any check going red.
+const published = new Map(skills.map((skill) => [skill.name, skill.latest]));
+const unresolvable = [];
+for (const ref of dependencyRefs) {
+  const version = published.get(ref.to);
+  if (version === undefined) {
+    if (!ref.optional)
+      unresolvable.push(`${ref.from} depends on "${ref.to}", which is not published`);
+    continue;
+  }
+  if (!satisfies(version, ref.range)) {
+    unresolvable.push(
+      `${ref.from} requires ${ref.to}@${ref.range}, but the only published version is ${version}`,
+    );
+  }
+}
+if (unresolvable.length > 0) {
+  console.error(`error: ${unresolvable.length} dependency range(s) cannot be satisfied:`);
+  for (const line of unresolvable) console.error(`  - ${line}`);
+  console.error('Widen the range in the dependent manifest, or publish a matching version.');
+  process.exit(1);
 }
 
 const rendered = stringifyRegistryIndex({

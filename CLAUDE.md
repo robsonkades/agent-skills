@@ -179,6 +179,17 @@ npm run registry:build
 
 `npm run verify` fails if you forget.
 
+**And bump the skill's `version` whenever you change its contents.** A published version is
+immutable: leaving it alone means anyone holding a lockfile pinned to the old integrity hash fails
+verification, and anyone who already installed it never receives the change. `npm run
+check:versions` (part of `verify`) compares each package against the last committed
+`registry/skills.yaml` and refuses a changed package whose version stood still.
+
+Two further gates live in `registry:build`, because they need to see every package at once and
+`validate` only ever sees one: **dependency ranges must resolve** against the versions the index
+publishes, and **`SKILL.md`'s description must equal the manifest's** — only the manifest one
+ships, so a drifted frontmatter description is text no agent reads.
+
 ## Public contracts — changing these is a breaking change
 
 - **`ASK_*` error codes** (`core/src/domain/errors.ts`) appear in `--json` output and in
