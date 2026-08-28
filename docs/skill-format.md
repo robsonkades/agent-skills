@@ -30,7 +30,16 @@ hold the format hostage to whichever agent is strictest about unknown keys. Keep
 separate lets `skill.yaml` gain a field without any agent needing to tolerate it.
 
 Consistency is enforced by validation: `name` must match across the manifest, the frontmatter
-and the directory; `version` must match if the frontmatter declares one.
+and the directory; `version` must match if the frontmatter declares one; and `description` **should**
+match, because **only the manifest one ships**. Adapters project `manifest.description` into the
+installed entrypoint and the registry index carries the same value, so a frontmatter description
+that has drifted is text no agent will ever read — including any trigger or boundary clause an
+author added there. Edit the description in `skill.yaml` and mirror it, not the other way round.
+
+A mismatch is a **warning** rather than an error: the package installs and works, so refusing it
+would be disproportionate. A registry that wants the stronger guarantee enforces it when it builds
+its index, where it can see its own packages — this repository does exactly that, and
+`npm run registry:build` refuses to write an index containing one.
 
 ---
 
@@ -241,7 +250,7 @@ agentOverrides:
 | `repository`           | no       | string or object     | Object takes `url` (required), `type`, `directory`.                                                                                                                                           |
 | `compatibility.agents` | no       | (string \| object)[] | Agent ids, optionally with `minVersion`. **Omit the whole block to mean "every agent".** A non-empty list is an allowlist.                                                                    |
 | `files`                | no       | string[]             | Defaults to the kind's entrypoint plus `skill.yaml`, and must include that entrypoint. Directory entries end with `/` and are included recursively. Absolute and traversing paths are errors. |
-| `dependencies`         | no       | object[]             | `{ name, version }` where `version` is a semver range. A self-dependency or a duplicate is an error.                                                                                          |
+| `dependencies`         | no       | object[]             | `{ name, version }` where `version` is a semver range. A self-dependency or a duplicate is an error. See **What a dependency means** below.                                                   |
 | `optionalDependencies` | no       | object[]             | Same shape. Failure to resolve one is a warning, not an error.                                                                                                                                |
 | `capabilities`         | no       | string[]             | Informational tags. **Grants nothing.**                                                                                                                                                       |
 | `integrity`            | no       | string               | Written by `publish`. Verified by `install`.                                                                                                                                                  |
@@ -251,6 +260,32 @@ agentOverrides:
 Unknown top-level fields are a **warning** during `install` — so an older CLI can still install
 a package that only added optional fields — and an **error** under `validate --strict` and
 during `publish`.
+
+### What a dependency means
+
+A dependency is **"install this alongside, because this skill assumes it"** — a conceptual
+prerequisite or a routing target, not a code-level import.
+
+That definition has three consequences worth stating, because the alternative reading —
+"this skill cannot function without" — leads people to declare too few, and to be surprised by
+the ones that are declared:
+
+- **A dependency need not appear in the prose.** Twenty of the `gof-*` skills declare
+  `gof-pattern-thinking` and most never name it in their own text. That is correct: it is the
+  reasoning discipline they all assume, and a reader who has one without the other is missing
+  something the author relied on.
+- **A skill still works without its dependencies installed.** Nothing loads them at run time.
+  They are a packaging statement about what belongs together, which is why an unresolvable one
+  is an install-time error and never a run-time one.
+- **The range is a real constraint and is checked.** `npm run registry:build` resolves every
+  declared range against the versions the index publishes and refuses to write an index in which
+  one cannot be satisfied. `validate` cannot do this — it sees one package at a time — so a
+  dependency pinned to a major that no longer exists will pass `validate` and fail at install
+  unless the index build catches it first.
+
+Declare one when a reader arriving at this skill without the other would be misled, and leave it
+out when the other is merely adjacent. `optionalDependencies` is for the case where the pairing
+is useful but its absence is not a defect.
 
 ### `agentOverrides`
 
@@ -309,15 +344,16 @@ before it is computed.
 
 **Warnings** (installation proceeds):
 
-| Rule                          | Meaning                                            |
-| ----------------------------- | -------------------------------------------------- |
-| `manifest.license.missing`    | No licence declared                                |
-| `manifest.description.short`  | Description too short to route on                  |
-| `manifest.unknownField`       | Unknown manifest field (an error under `--strict`) |
-| `package.files.missing`       | A declared path is not present                     |
-| `skill.body.thin`             | The Markdown body is nearly empty                  |
-| `claude.description.long`     | Longer than Claude Code's picker shows             |
-| `codex.interface.missingIcon` | A referenced icon is not shipped                   |
+| Rule                          | Meaning                                             |
+| ----------------------------- | --------------------------------------------------- |
+| `manifest.license.missing`    | No licence declared                                 |
+| `manifest.description.short`  | Description too short to route on                   |
+| `manifest.unknownField`       | Unknown manifest field (an error under `--strict`)  |
+| `package.files.missing`       | A declared path is not present                      |
+| `skill.body.thin`             | The Markdown body is nearly empty                   |
+| `skill.description.mismatch`  | Frontmatter description disagrees with the manifest |
+| `claude.description.long`     | Longer than Claude Code's picker shows              |
+| `codex.interface.missingIcon` | A referenced icon is not shipped                    |
 
 ---
 
