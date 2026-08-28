@@ -1,0 +1,60 @@
+schemaVersion: 1
+
+name: pattern-selection-and-composition
+version: 1.1.0
+description: >-
+  Choosing enterprise patterns from forces rather than familiarity, and combining them into
+  an architecture whose parts reinforce rather than fight each other: the selection criteria
+  that discriminate, the compositions that work, the pairs that conflict, and the
+  relationship graph. Use when a design is starting and the patterns are about to be chosen
+  by habit, when a pattern name is proposed before the problem is stated, when two chosen
+  patterns produce friction, when a reference architecture is being copied wholesale, when
+  someone asks which enterprise patterns a new module should use, or when an architecture
+  must be explained as a set of decisions. Does not cover the individual patterns' guidance,
+  whether the framework provides one (patterns-and-modern-frameworks), or detecting overuse
+  (enterprise-architecture-smells).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/pattern-selection-and-composition
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/pattern-selection-and-composition
+
+keywords:
+  - pattern-selection
+  - composition
+  - reference-architecture
+  - trade-offs
+  - enterprise
+  - design
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: domain-logic-organization
+    version: ^1.0.0
+  - name: data-source-patterns
+    version: ^1.0.0
+  - name: repository-pattern
+    version: ^1.0.0
+  - name: service-layer-design
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Pattern Selection and Composition
+      short_description: Forces in, patterns out, checked for conflict
+      default_prompt: Use Pattern Selection and Composition to derive the patterns for this module.

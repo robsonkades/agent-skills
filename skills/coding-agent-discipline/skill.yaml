@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: coding-agent-discipline
+version: 1.0.0
+description: >-
+  The reporting and restraint rules for an AI agent changing someone's codebase: never claiming
+  a result that was not observed, saying which commands ran and what they printed, reporting
+  what could not be verified rather than omitting it, keeping the diff to what was asked,
+  preserving behaviour that was not in scope, checking APIs against the versions the project
+  actually depends on, and refusing to make a test pass by weakening it. Use before reporting
+  that work is complete, when about to write "this should work" or "tests pass", when a change
+  is growing beyond the request, when a test is failing and deleting or disabling it is
+  tempting, when an API is being used from memory rather than checked, or when two instructions
+  cannot both be satisfied. Does not cover the order of work (clean-delivery-workflow), which
+  checks to run (quality-gates), or how to phrase a message to a human
+  (engineering-communication).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/coding-agent-discipline
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/coding-agent-discipline
+
+keywords:
+  - agent
+  - verification
+  - scope
+  - reporting
+  - honesty
+  - restraint
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Coding Agent Discipline
+      short_description: Verify before claiming; keep the diff honest
+      default_prompt: Use Coding Agent Discipline before reporting this work.

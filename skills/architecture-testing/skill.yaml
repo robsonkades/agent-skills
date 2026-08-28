@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: architecture-testing
+version: 1.1.0
+description: >-
+  Testing what an enterprise architecture actually promises: that boundaries hold, that a
+  use case is atomic, that persistence mapping matches the schema, that concurrent edits are
+  detected, that a query budget is not exceeded, and that a contract stays compatible. Use
+  when every test needs the whole application context, when a test suite is slow enough that
+  people skip it, when an N+1 or a lost update reached production despite green tests, when
+  a mapping change broke a client, when concurrency is "tested" with a mocked repository,
+  when a layering rule exists only in a wiki, when an integration test uses an in-memory
+  database that behaves differently from production, or when deciding what belongs at which
+  test level. Does not cover general unit-testing practice, the architecture decisions
+  themselves (layering-and-boundaries, architecture-decision-making), load and performance
+  testing (load-testing), or contract versioning policy (rpc-and-api-contracts).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/architecture-testing
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/architecture-testing
+
+keywords:
+  - testing
+  - archunit
+  - testcontainers
+  - query-budget
+  - concurrency-tests
+  - contract-tests
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: layering-and-boundaries
+    version: ^1.0.0
+  - name: enterprise-transactions
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Architecture Testing
+      short_description: Testing boundaries, budgets and concurrency
+      default_prompt: Use Architecture Testing to verify what this architecture promises.

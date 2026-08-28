@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: jvm-bytecode
+version: 1.0.0
+description: >-
+  Reading and reasoning about JVM bytecode. javap -c -p -v, the operand stack and local
+  variable slots, the constant pool and lazy symbol resolution, descriptors versus the
+  Signature attribute, the invoke* family including invokedynamic and inline caching, class
+  file verification and the StackMapTable, and what bytecode does and does not tell you
+  about performance. Use when a VerifyError appears after instrumentation by an agent, proxy
+  or mock library, when UnsupportedClassVersionError names two class file versions, when
+  auditing what a lambda, record, sealed hierarchy or pattern switch actually compiled to,
+  when checking for hidden boxing in a hot method, or when someone quotes a
+  cycles-per-bytecode-instruction table. Does not cover the tiered compilation pipeline or
+  warm-up (jit-compilation), what the JIT actually did with the code
+  (compilation-and-inlining-logs), or loading, linking and initialisation
+  (jvm-class-loading).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/jvm-bytecode
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/jvm-bytecode
+
+keywords:
+  - java
+  - jvm
+  - bytecode
+  - javap
+  - invokedynamic
+  - verifier
+  - class-file
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: JVM Bytecode
+      short_description: Reading class files with javap
+      default_prompt: Use JVM Bytecode to read what this code actually compiled to.

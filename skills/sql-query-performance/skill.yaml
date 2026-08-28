@@ -1,0 +1,41 @@
+schemaVersion: 1
+
+name: sql-query-performance
+version: 1.0.0
+description: >-
+  Making one SQL statement fast, from its execution plan rather than a guess: reading estimated
+  against actual rows, finding the operation that actually costs, whether a scan is wrong at
+  all, index selectivity and composite column order, covering indexes, and the predicates that
+  quietly disable an index. Use when a query is slow and the plan has not been read, when "add
+  an index" is the proposed fix, when a predicate wraps the column in a function or compares
+  mismatched types, when OFFSET pagination degrades on later pages, when a query is fast for one
+  parameter and slow for another, when a plan changed with no deploy, or when an index is
+  proposed on a low-cardinality column.  Engine-neutral: concept and measurement, not one vendor.
+  Not the ORM issuing the statements (orm-fetch-and-batching-performance), pool
+  sizing (connection-pool-sizing), the request-path budget (architecture-and-performance),
+  caching the result (caching-strategies), or schema change safety
+  (schema-evolution-and-compatibility).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/sql-query-performance
+
+keywords:
+  - sql
+  - database
+  - execution-plan
+  - index
+  - query-tuning
+  - performance
+  - jdbc
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/

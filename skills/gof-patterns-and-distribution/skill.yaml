@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: gof-patterns-and-distribution
+version: 1.1.0
+description: >-
+  What happens to a Gang-of-Four pattern when the collaboration crosses a process boundary,
+  and which architectural pattern it becomes. Covers the classification into process-local,
+  boundary, interaction and algorithm patterns; the guarantees that evaporate at a boundary
+  — shared memory, a shared clock, atomic calls, ordering, exactly-once; the transformations
+  (Singleton to leader election, Observer to pub/sub, Iterator to pagination, Mediator to an
+  orchestrator); and the level confusion that treats a design pattern as a substitute for an
+  architectural one. Use when a local design is being distributed, when a pattern name is
+  applied to a network component, when a "singleton" or a cache is expected to hold across
+  replicas, or when a getter turns out to make a call. Does not cover the individual
+  patterns (the gof-\* skills), saga and outbox mechanics
+  (distributed-transactions-and-sagas, event-driven-architecture), service boundary
+  decisions (distribution-boundaries), or failure taxonomy (failure-models).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-patterns-and-distribution
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-patterns-and-distribution
+
+keywords:
+  - design-patterns
+  - gof
+  - distributed-systems
+  - boundaries
+  - architecture
+  - messaging
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Patterns and Distribution
+      short_description: What a boundary does to a local pattern
+      default_prompt: Use Patterns and Distribution to check this design across a process boundary.

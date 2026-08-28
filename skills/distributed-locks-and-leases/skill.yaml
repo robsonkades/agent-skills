@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: distributed-locks-and-leases
+version: 1.1.0
+description: >-
+  Mutual exclusion across processes, and why the naive version does not: a lock with a TTL
+  is a lease, and a lease alone does not exclude — the holder can stall past expiry and keep
+  writing while a second holder is admitted, with no error anywhere. Covers the fencing
+  token as the only correct fix and the resource's duty to enforce it, Redis locking with an
+  owner token, Redlock's contested status, database row and advisory locks, and the
+  alternatives that beat a lock. Use when SET NX appears with a TTL, when a lock is released
+  with a bare DEL, when watchdog renewal is treated as safety, when two workers processed
+  one record with no exception, or when a lock is proposed to make a non-idempotent write
+  safe. Not how a lock service is built (consensus-and-quorums), one long-lived owner of a
+  role (leader-election), surviving duplicates instead (idempotency), in-process locking
+  (java-memory-model), one-database boundaries (enterprise-transactions), or locks across
+  user think time (offline-concurrency-control).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/distributed-locks-and-leases
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/distributed-locks-and-leases
+
+keywords:
+  - distributed-systems
+  - locking
+  - lease
+  - fencing
+  - redis
+  - redlock
+  - concurrency
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: consensus-and-quorums
+    version: ^1.0.0
+  - name: failure-models
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Distributed Locks And Leases
+      short_description: Leases, fencing tokens and lock alternatives
+      default_prompt: Use Distributed Locks And Leases to check whether this lock actually excludes anything.

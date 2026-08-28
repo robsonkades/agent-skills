@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: message-ordering-and-partitioning
+version: 1.1.0
+description: >-
+  Ordering guarantees and the partition as the unit that provides them: ordering is
+  per-partition, never global; per-key ordering holds only while the key-to-partition
+  mapping is stable; why the partition count is nearly a one-way door; what silently breaks
+  order in a consumer or producer; and whether ordering is required at all — version guards,
+  commutative handlers, state-machine guards. Use when a design says messages are processed
+  in order with no scope, when global ordering is proposed, when partitions are added to a
+  live topic, when records are produced with no key, when the handler dispatches to an
+  executor in the poll loop, when a retry republishes to the topic's tail, or when an older
+  update overwrites a newer one. Not duplicates (delivery-semantics), repeat-safe handlers
+  (idempotency), consumer offsets (kafka-consumers-in-java), key choice
+  (sharding-and-partitioning), skew (hot-partitions-and-rebalancing), the failing record
+  (poison-messages-and-dlq), or what a reader observes (consistency-models).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/message-ordering-and-partitioning
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/message-ordering-and-partitioning
+
+keywords:
+  - distributed-systems
+  - messaging
+  - ordering
+  - partitioning
+  - kafka
+  - idempotency
+  - java
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: delivery-semantics
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Message Ordering And Partitioning
+      short_description: Per-partition ordering, keys and version guards
+      default_prompt: Use Message Ordering And Partitioning to state what ordering this pipeline actually has.

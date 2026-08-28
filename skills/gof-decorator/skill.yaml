@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-decorator
+version: 1.0.0
+description: >-
+  Decorator in modern Java: wrapping an object in something of its own interface to add behaviour,
+  stackably, at runtime — and the fact that the stacking order changes the semantics. Covers the
+  ordering of retry, timeout, circuit breaker, cache, metrics and logging and what each
+  arrangement means, retry amplification across layers, the identity loss that breaks ==,
+  instanceof and listener deregistration, when a framework interceptor is the same pattern already
+  provided, and the thread-safety a stateful decorator introduces. Use when resilience or
+  observability layers are added around a client, when a wrapper chain is reordered, when a
+  decorated object fails an instanceof check, when retries appear at two levels, or when a wrapper
+  is proposed that changes the interface. Does not cover changing an interface (gof-adapter),
+  controlling access to an object (gof-proxy), one entry point over a subsystem (gof-facade), or
+  the retry and timeout policies themselves (circuit-breakers, retries-and-backoff).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-decorator
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-decorator
+
+keywords:
+  - design-patterns
+  - gof
+  - structural
+  - decorator
+  - resilience
+  - ordering
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Decorator
+      short_description: Stacked behaviour, where order is meaning
+      default_prompt: Use Decorator to review this wrapper stack and its order.

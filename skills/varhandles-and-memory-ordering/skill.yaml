@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: varhandles-and-memory-ordering
+version: 1.1.0
+description: >-
+  VarHandle access modes and explicit memory ordering: plain, opaque, acquire/release and
+  volatile, choosing the weakest sufficient mode, compareAndSet versus weakCompareAndSet and
+  compareAndExchange, the four hardware barrier kinds, and what each mode costs on x86
+  versus aarch64. Use when replacing volatile with setRelease and getAcquire, when a field
+  is both declared volatile and accessed through a VarHandle, when the same field is written
+  plain on one path and release on another, when a concurrency bug appears only on Graviton
+  or Apple Silicon and never on x86, when compareAndExchange is assigned to a boolean, or
+  when someone proposes -XX:+StressGCM to expose an ordering race. Does not cover
+  happens-before, safe publication and the correctness contract (java-memory-model), the
+  algorithms built on these primitives (lock-free-patterns), or cache coherency and
+  cache-line effects (cpu-cache-and-numa).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/varhandles-and-memory-ordering
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/varhandles-and-memory-ordering
+
+keywords:
+  - java
+  - varhandle
+  - memory-ordering
+  - concurrency
+  - acquire-release
+  - jcstress
+  - aarch64
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: java-memory-model
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: VarHandles and Memory Ordering
+      short_description: Access modes, barriers and their real cost
+      default_prompt: Use VarHandles and Memory Ordering to pick and prove the right access mode here.

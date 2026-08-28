@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: distributed-failure-catalogue
+version: 1.1.0
+description: >-
+  A recognition index of named distributed failure patterns, each given as symptom,
+  mechanism, where it hides in code or config, and the skill that owns the fix: thundering
+  herd, retry storm, cascading failure, timeout stacking, unbounded queue growth, resource
+  exhaustion, gray failure, duplicate processing, split-brain, clock skew, version skew in a
+  rolling deploy, stale work past its deadline, destructive cleanup, input explosion, the
+  optional dependency that is really required, the second-system rewrite, expected errors
+  mixed with unexpected, and the absence of errors as an error. Use when an incident has a
+  shape you recognise but cannot name, when a postmortem needs the pattern's name, when a
+  design review needs failures to argue against, when a consumer stopped silently and no
+  alert fired, or when a cleanup job deleted more than intended. Does not contain the fixes:
+  every entry routes to its owner — cascading-failures, retries-and-backoff,
+  circuit-breakers, failure-models and the rest.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/distributed-failure-catalogue
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/distributed-failure-catalogue
+
+keywords:
+  - distributed-systems
+  - reliability
+  - failure-patterns
+  - incident-response
+  - catalogue
+  - troubleshooting
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: failure-models
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Distributed Failure Catalogue
+      short_description: Name the failure pattern, then route to its owner
+      default_prompt: Use the Distributed Failure Catalogue to name the pattern behind this symptom.

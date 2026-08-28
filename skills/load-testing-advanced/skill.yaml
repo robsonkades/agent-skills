@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: load-testing-advanced
+version: 1.1.0
+description: >-
+  Load-test designs beyond a steady rate: ramp, step, spike, soak and breakpoint profiles
+  and what each one can actually prove, multi-stage weighted scenarios, correlating
+  generator output with server-side telemetry, and characterising a saturation point instead
+  of reporting one load level. Use when a capacity number is quoted from a single run, when
+  a breakpoint and a stress result are being published interchangeably, when a threshold is
+  set against a synthetic distribution without checking its CDF, when a parser reads
+  percentiles out of k6 --out json, when summaryTrendStats is left at the default, when
+  maxVUs was sized from mean latency, when a soak lasts five minutes, or when a script calls
+  jcmd Thread.count. Does not cover open versus closed loop, warm-up, dataset or basic run
+  validity (load-testing), the omission mechanism itself (coordinated-omission), or deciding
+  whether two resulting numbers differ (latency-statistics).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/load-testing-advanced
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/load-testing-advanced
+
+keywords:
+  - java
+  - performance
+  - load-testing
+  - breakpoint
+  - k6
+  - gatling
+  - capacity
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: load-testing
+    version: ^1.0.0
+  - name: coordinated-omission
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Advanced Load Testing
+      short_description: Breakpoint, soak and spike profiles done right
+      default_prompt: Use Advanced Load Testing to design a run that answers the question being asked.

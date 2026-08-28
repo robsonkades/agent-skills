@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: java-enums
+version: 1.1.0
+description: >-
+  Enums as types rather than labelled integers: instance fields instead of ordinal,
+  constant-specific behaviour and strategy enums, extensibility through interfaces, EnumSet
+  and EnumMap instead of bit fields and ordinal-indexed arrays, exhaustive switch and what
+  separate compilation does to it, and what happens when an enum value crosses a database, a
+  JSON payload or a topic. Use when int or String constants stand in for a closed set, when
+  ordinal() appears anywhere outside a library, when @Enumerated is declared ORDINAL or left
+  at its default, when a switch over an enum has a default branch that hides new constants,
+  when adding a constant breaks a consumer during a rolling deploy, when values() is called
+  in a loop, or when a set of flags is packed into an int. Does not cover annotations
+  (java-annotations), sealed hierarchies and records as the open-data alternative
+  (java-composition-over-inheritance), or equality and ordering contracts in general
+  (java-object-contracts).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-enums
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-enums
+
+keywords:
+  - java
+  - enums
+  - enumset
+  - enummap
+  - switch-exhaustiveness
+  - schema-evolution
+  - jpa
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Enums
+      short_description: Enum design, EnumSet/EnumMap and enums across boundaries

@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: failure-models
+version: 1.1.0
+description: >-
+  Stating a system's fault model before designing against it: crash-stop, crash-recovery,
+  omission, timing and Byzantine faults; partial failure and the third outcome of every
+  remote call (unknown); gray failure and the slow node whose health check stays green; the
+  eight fallacies as a checklist; blast radius, correlated versus independent failure, and
+  the availability arithmetic of a dependency chain. Use when a design says "if the service
+  is down" without defining down, when a retry is added to a call whose outcome is unknown,
+  when a node is slow rather than dead, when replicas share a host, an AZ or a database, or
+  when an availability target is quoted for a service built on ten others. Does not cover
+  what the model implies about messages (delivery-semantics) or reads (consistency-models),
+  how a failure spreads (cascading-failures), the named shapes
+  (distributed-failure-catalogue), what an orchestrator does with a failed pod
+  (kubernetes-service-lifecycle), or failures as types (java-exception-design).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/failure-models
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/failure-models
+
+keywords:
+  - distributed-systems
+  - fault-model
+  - partial-failure
+  - availability
+  - reliability
+  - blast-radius
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Failure Models
+      short_description: Fault classes, partial failure and blast radius
+      default_prompt: Use Failure Models to state the fault model this design assumes before reviewing it.

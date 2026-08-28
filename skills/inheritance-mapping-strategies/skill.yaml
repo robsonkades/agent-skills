@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: inheritance-mapping-strategies
+version: 1.1.0
+description: >-
+  Mapping a subtype hierarchy onto tables — single table, class table (joined), concrete
+  table per class — and deciding whether the hierarchy should exist at all. Use when an
+  @Inheritance strategy is being chosen, when a single-table mapping is forcing every
+  subtype's columns to be nullable, when a joined mapping's polymorphic query joins six
+  tables to render a list, when adding a subtype requires a migration, when a discriminator
+  column has drifted from the class names, when polymorphic queries are slow or return the
+  wrong rows, when a hierarchy exists only to share three fields, or when composition would
+  serve better than subtyping. Does not cover associations, identity and value mapping
+  (orm-structural-mapping), where the mapping instructions live (metadata-mapping), the
+  runtime fetch behaviour (orm-behavioral-patterns), or the domain question of whether
+  subtypes model the business correctly (domain-logic-organization).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/inheritance-mapping-strategies
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/inheritance-mapping-strategies
+
+keywords:
+  - inheritance
+  - single-table
+  - joined
+  - discriminator
+  - jpa
+  - schema-evolution
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: orm-structural-mapping
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Inheritance Mapping Strategies
+      short_description: Single, joined or concrete table — and whether to subtype
+      default_prompt: Use Inheritance Mapping Strategies to choose or migrate this hierarchy's mapping.

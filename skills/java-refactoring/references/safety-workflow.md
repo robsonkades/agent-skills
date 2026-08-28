@@ -116,6 +116,26 @@ All eight rows green before and after every step; a deliberate mutation of the g
 refactoring, the characterisation rows were rewritten as named intent tests
 (`freeShippingRequiresNonExpress`, …) and SHIP-311 proceeded separately.
 
+## Pinning a dimension that is not the return value
+
+The method above pins a value. Several of the dimensions in `behaviour-preservation.md`
+need a different seam, and the catalogue steps that touch them most — Split Loop, Slide
+Statements, Move Method — are exactly the ones a returned-value assertion cannot see.
+
+- **Call count and order** — a recording double (Mockito `InOrder`, or a collaborator that
+  appends to a `List<String>`) asserted as one expected sequence. Assert the whole list: a
+  `verify` per call cannot see an extra call you did not think to forbid.
+- **Events emitted** — `@RecordApplicationEvents` and `ApplicationEvents`, or the outbox
+  rows. Assert count, order and payload; they are three separate dimensions.
+- **SQL emitted** — Hibernate `Statistics` for counts, a statement-capturing proxy
+  (`datasource-proxy`, `p6spy`) for the text, asserted as an ordered list. Statement
+  _count_ catches the fetch-strategy change that no returned value reveals.
+- **Iteration order** — an order-sensitive matcher (`containsExactly`), never
+  `containsExactlyInAnyOrder`, or the assertion itself unpins the dimension.
+
+Pin only the dimensions the step can touch. A full recording of every collaborator call is
+a change detector, and it will be deleted by the first person it annoys.
+
 ## When characterisation is not worth it
 
 - The code is about to be deleted or wholesale-replaced with an approved behaviour

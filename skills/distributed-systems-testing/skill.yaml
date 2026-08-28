@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: distributed-systems-testing
+version: 1.0.0
+description: >-
+  Testing the failure behaviour a distributed system claims: injecting latency, errors,
+  partitions and process death; verifying that timeouts, retries, breakers and fallbacks do what
+  their configuration says; proving idempotency against duplicate delivery; and running a
+  controlled experiment in production rather than a chaos tool. Use when resilience
+  configuration exists but has never been exercised, when a timeout or retry budget is being
+  chosen, when an incident was caused by a dependency being slow rather than down, when a
+  consumer is assumed idempotent, when a rollout is protected by a probe nobody has failed on
+  purpose, or when chaos engineering is proposed without a hypothesis. Does not cover the
+  in-process test pyramid and architecture rules (architecture-testing), thread-level race
+  testing (concurrency-testing), throughput and saturation measurement (load-testing), or the
+  remedies themselves (retries-and-backoff, circuit-breakers, timeouts-and-deadlines).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/distributed-systems-testing
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/distributed-systems-testing
+
+keywords:
+  - testing
+  - distributed-systems
+  - chaos-engineering
+  - fault-injection
+  - resilience
+  - reliability
+  - idempotency
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: architecture-testing
+    version: ^1.0.0
+  - name: failure-models
+    version: ^1.0.0
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Distributed Systems Testing
+      short_description: Exercise the failures your resilience config claims to handle

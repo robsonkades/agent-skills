@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-proxy
+version: 1.0.0
+description: >-
+  Proxy in modern Java: a stand-in that controls access to another object behind that object's own
+  interface — virtual (lazy), remote, protection and caching variants. Covers the central danger
+  of making a network call look like a method call, how a proxy differs from a decorator, the
+  self-invocation hole that silently disables @Transactional and @Cacheable, JPA lazy proxies and
+  LazyInitializationException, what CGLIB cannot proxy, and safe publication in a virtual proxy.
+  Use when a lazy-loading wrapper is proposed, when a remote call hides behind a plain interface,
+  when an annotation on a self-called method does nothing, when instanceof fails on an injected
+  bean or a JPA entity, or when authorisation is enforced by a wrapper the caller can bypass. Does
+  not cover adding stackable behaviour (gof-decorator), changing an interface (gof-adapter),
+  sharing instances to save memory (gof-flyweight), lazy loading strategy in JPA
+  (orm-behavioral-patterns), or client-side resilience policy (circuit-breakers).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-proxy
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-proxy
+
+keywords:
+  - design-patterns
+  - gof
+  - structural
+  - proxy
+  - lazy-loading
+  - aop
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Proxy
+      short_description: A lie told for a reason; price the lie
+      default_prompt: Use Proxy to review this stand-in and what it hides.

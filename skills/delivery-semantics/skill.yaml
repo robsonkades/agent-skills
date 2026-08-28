@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: delivery-semantics
+version: 1.0.0
+description: >-
+  Delivery guarantees stated precisely: at-most-once, at-least-once and effectively-once;
+  why exactly-once delivery is unachievable over a lossy channel; where the acknowledgement
+  sits relative to the side effect; the exact boundary a Kafka read-process-write
+  transaction holds within; and the duplicate causes that are not retries. Use when a design
+  says "exactly-once", when a consumer acknowledges before doing the work, when duplicates
+  land downstream although no retry exists in the code, when isolation.level or
+  transactional.id is being configured, or when a handler makes an HTTP call and then
+  commits. Does not cover making the handler safe to repeat (idempotency), retry policy
+  (retries-and-backoff), ordering (message-ordering-and-partitioning), the permanently
+  failing message (poison-messages-and-dlq), or the fault model (failure-models).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/delivery-semantics
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/delivery-semantics
+
+keywords:
+  - distributed-systems
+  - messaging
+  - kafka
+  - at-least-once
+  - exactly-once
+  - acknowledgement
+  - duplicates
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: failure-models
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Delivery Semantics
+      short_description: At-most-once, at-least-once, effectively-once
+      default_prompt: Use Delivery Semantics to state the delivery guarantee this path actually provides.

@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: java-serialization-hardening
+version: 1.1.0
+description: >-
+  Java built-in serialization as an attack surface and a permanent API commitment: why
+  readObject is an extra constructor that accepts arbitrary bytes, gadget chains and what
+  deserialization filters (JEP 290/415) can and cannot do, the cost of implementing
+  Serializable, serialVersionUID and the custom serialized form, validating and defensively
+  copying in readObject, the serialization proxy pattern, why records are different, and the
+  same risk in JSON polymorphic typing. Use when Serializable, readObject, readResolve or
+  Externalizable appears, when ObjectInputStream reads bytes from a cache, queue, session
+  store, RMI or JMX, when Jackson default typing is enabled, or when a mixed-version deploy
+  breaks a serialized cache. Format cost is serialization-performance, contract evolution is
+  rpc-and-api-contracts, and the reflective access underneath is
+  java-reflection-and-method-handles.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-serialization-hardening
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-serialization-hardening
+
+keywords:
+  - java
+  - serialization
+  - security
+  - deserialization
+  - objectinputfilter
+  - serialization-proxy
+  - records
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Serialization Hardening
+      short_description: Deserialization attacks, filters and Serializable design

@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: session-state-strategies
+version: 1.0.0
+description: >-
+  Placing the state that spans several requests of one conversation: client session state,
+  server session state and database session state, plus signed tokens and external stores.
+  Use when a multi-step wizard loses its data on the second replica, when HttpSession holds
+  an object graph, when sticky sessions are added to keep an application working, when a
+  rolling deploy logs everyone out, when a JWT carries mutable state or cannot be revoked,
+  when session data is pushed into Redis without deciding what happens if Redis is down, or
+  when "make it stateless" is proposed without saying where the state will go. Does not
+  cover making an instance disposable in general (stateless-service-design), cache design
+  (caching-strategies), or locks held across a conversation (offline-concurrency-control).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/session-state-strategies
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/session-state-strategies
+
+keywords:
+  - session-state
+  - tokens
+  - sticky-sessions
+  - redis
+  - stateless
+  - enterprise
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: stateless-service-design
+    version: ^1.0.0
+  - name: caching-strategies
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Session State Strategies
+      short_description: Client, server or database — placed per item
+      default_prompt: Use Session State Strategies to place this conversation state.

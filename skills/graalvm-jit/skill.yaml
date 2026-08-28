@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: graalvm-jit
+version: 1.1.0
+description: >-
+  Graal as a JIT compiler compared with C2: partial escape analysis, more aggressive
+  inlining and speculation, where Graal wins and where it loses, JVMCI and what JEP 410
+  actually removed, and how to evaluate the swap with a fair measurement. Use when someone
+  proposes switching to GraalVM for throughput, when a Graal-versus-C2 benchmark shows Graal
+  "slower" with no warm-up control, when `-XX:+UseJVMCICompiler` is set via `--module-path`
+  on a stock OpenJDK, when a percentage gain is quoted with no source or workload, when
+  GraalVM JIT is being confused with native image, or when picking a distribution and its
+  licence. Does not cover how C2 itself works (c2-sea-of-nodes), ahead-of-time compilation
+  as a separate product decision (graalvm-native-image), or running the comparison benchmark
+  correctly (jmh-advanced).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/graalvm-jit
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/graalvm-jit
+
+keywords:
+  - java
+  - jvm
+  - graalvm
+  - jit
+  - jvmci
+  - libgraal
+  - escape-analysis
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: c2-sea-of-nodes
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: GraalVM JIT
+      short_description: Graal versus C2, PEA, libgraal and migration
+      default_prompt: Use GraalVM JIT to decide whether swapping C2 for Graal pays off here.

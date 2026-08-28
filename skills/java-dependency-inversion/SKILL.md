@@ -1,14 +1,13 @@
 ---
 name: java-dependency-inversion
 description: >
-  Dependency direction in Java: policy versus mechanism, ports and adapters,
-  constructor injection as plain Java, factories, composition roots, and JPMS
-  module edges as physical enforcement. Use when deciding whether to introduce an
-  interface or port, when domain code imports a transport or vendor SDK, when code
-  is only testable with a mocking framework or a live external system, or when
-  reviewing a codebase where every class has a matching interface. Covers when
-  inversion pays and when it is pure indirection. For the wider five-principle
-  review context, use java-solid.
+  Dependency direction in Java: policy versus mechanism, ports and adapters, constructor
+  injection as plain Java, factories, composition roots, and JPMS module edges as physical
+  enforcement. Use when deciding whether to introduce an interface or port, when domain code
+  imports a transport or vendor SDK, when code is only testable with a mocking framework or
+  a live external system, or when reviewing a codebase where every class has a matching
+  interface. Covers when inversion pays and when it is pure indirection. For the wider
+  five-principle review context, use java-solid.
 ---
 
 # Java Dependency Inversion

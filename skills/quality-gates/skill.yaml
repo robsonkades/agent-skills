@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: quality-gates
+version: 1.0.0
+description: >-
+  Choosing which automated checks a change must pass, and making them cheap enough that they
+  stay switched on: matching the gate set to the change's risk rather than running everything
+  on everything, where each gate belongs (pre-commit, pull request, main, release), the Java
+  toolchain that enforces each class of defect, ratcheting a gate onto a codebase that already
+  violates it, and what to do when a gate goes red. Use when setting up or trimming a pipeline,
+  when the build is slow enough that people push without running it, when a check is routinely
+  bypassed or its failures ignored, when a defect class keeps reaching production, when a
+  coverage or static-analysis threshold is being proposed, or when deciding whether a small
+  change really needs the full pipeline. Does not cover writing the tests
+  (java-testing-strategy), architecture rules (architecture-testing), performance thresholds
+  (performance-regression-ci), or human review (code-review).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/quality-gates
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/quality-gates
+
+keywords:
+  - quality-gates
+  - ci
+  - static-analysis
+  - build
+  - java
+  - pipeline
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Quality Gates
+      short_description: Proportionate automated checks that stay on
+      default_prompt: Use Quality Gates to decide what this change must pass.

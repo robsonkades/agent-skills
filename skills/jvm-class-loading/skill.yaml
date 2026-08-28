@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: jvm-class-loading
+version: 1.2.0
+description: >-
+  Class loading, class identity and classloader leaks: parent-first delegation, {loader,
+  binary name} identity, loading versus linking versus initialisation, Metaspace retention,
+  and CDS/AOT cache for startup. Use when a ClassCastException reports identical type names
+  on both sides, when Metaspace grows monotonically across redeploys or plugin reloads, when
+  ClassNotFoundException and NoClassDefFoundError need to be told apart, when
+  IllegalAccessError mentions "does not export", when a static initialiser does I/O, or when
+  reducing cold start. Does not cover the Metaspace budget itself (jvm-memory-regions), JIT
+  warm-up (jit-compilation), or heap leak analysis (jvm-gc-tuning). Metaspace internals are
+  metaspace-internals and startup caching in depth is startup-cds-crac-leyden.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/jvm-class-loading
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/jvm-class-loading
+
+keywords:
+  - java
+  - jvm
+  - classloader
+  - metaspace
+  - class-loading
+  - cds
+  - aot
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jvm-memory-regions
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: JVM Class Loading
+      short_description: Class identity, classloader leaks and startup caching
+      default_prompt: Use JVM Class Loading to diagnose this class identity or Metaspace problem.

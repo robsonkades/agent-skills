@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: coordinated-omission
+version: 1.1.0
+description: >-
+  Coordinated omission in depth: the exact mechanism (missing samples, never wrong values),
+  the closed-loop ceiling lambda_max = N/R, detection by reconciling issued against planned
+  requests and by the MAX/p99 ratio, correction at recording time versus at generation time,
+  HdrHistogram's recordValueWithExpectedInterval semantics, what wrk2, k6, Gatling, JMeter
+  and Locust each actually do, and the effect on capacity numbers. Use when a load test's
+  p99 is far better than production's for the same endpoint, when a histogram holds fewer
+  samples than rate x duration, when MAX is 20x-100x the p99, when someone proposes applying
+  recordValueWithExpectedInterval to open-loop data, when a latency dashboard improves as a
+  system saturates, or when a benchmark's numbers are about to become an SLO. Does not cover
+  the introductory treatment or the general statistics of latency (latency-statistics), or
+  designing the load test as a whole (load-testing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/coordinated-omission
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/coordinated-omission
+
+keywords:
+  - performance
+  - latency
+  - load-testing
+  - hdrhistogram
+  - percentiles
+  - open-loop
+  - benchmarking
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: latency-statistics
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Coordinated Omission
+      short_description: Missing tail samples in load test results
+      default_prompt: Use Coordinated Omission to check whether these latency numbers are missing the samples that carry the tail.

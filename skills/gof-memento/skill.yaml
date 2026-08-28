@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: gof-memento
+version: 1.0.0
+description: >-
+  Memento in modern Java: capturing an object's state so it can be restored later, without
+  exposing that state to whoever holds the capture. Covers the encapsulation techniques Java
+  offers, why an immutable object is its own memento, the memory cost of an undo stack and the
+  alternatives (inverses, diffs, structural sharing), the torn capture when the source mutates
+  mid-copy, and the distinction from a durable snapshot and from event sourcing. Use when undo,
+  drafts, what-if branches or checkpoints are being designed, when a getState/setState pair is
+  proposed on a domain object, when an undo stack grows without bound, or when someone calls a
+  persisted snapshot a memento. Does not cover the operations being undone (gof-command), copying
+  an object for reuse (gof-prototype), event-sourced aggregates and projections (event-sourcing),
+  or distributed checkpoint barriers (distributed-aggregation-and-barriers).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-memento
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-memento
+
+keywords:
+  - design-patterns
+  - gof
+  - behavioral
+  - memento
+  - undo
+  - snapshot
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Memento
+      short_description: Capture, snapshot or event log
+      default_prompt: Use Memento to decide how this state should be captured.

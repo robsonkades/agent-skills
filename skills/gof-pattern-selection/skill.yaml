@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: gof-pattern-selection
+version: 1.1.0
+description: >-
+  Getting from a stated design problem to a candidate pattern, or to no pattern, without
+  choosing by familiarity. The second of two stages: it assumes the forces are named and the
+  alternatives ladder has already been walked (gof-pattern-thinking), and supplies the
+  mapping. Covers the discriminating questions that actually separate the twenty-three
+  patterns, a selection matrix mapping design problems to candidates with their simpler
+  alternatives, the relationship graph showing which patterns imply, replace or combine with
+  which, and the compositions that reinforce or fight each other. Use when someone asks
+  which pattern fits, when two candidate patterns both seem to fit, when patterns already
+  chosen are producing friction, or when an existing design must be explained as a set of
+  decisions. Does not cover telling lookalike patterns apart (gof-pattern-confusion), any
+  individual pattern's guidance (the gof-* skills), or enterprise and architectural pattern
+  selection (pattern-selection-and-composition).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-pattern-selection
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-pattern-selection
+
+keywords:
+  - design-patterns
+  - gof
+  - selection
+  - decision-tree
+  - trade-offs
+  - design
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Pattern Selection
+      short_description: From a problem to a shortlist, with alternatives
+      default_prompt: Use Pattern Selection to derive candidates for this design problem.

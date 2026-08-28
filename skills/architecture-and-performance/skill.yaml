@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: architecture-and-performance
+version: 1.1.0
+description: >-
+  Reasoning about performance across the whole request path rather than pattern by pattern:
+  budgeting latency from controller to database, counting round trips as the primary
+  currency, and knowing which architectural changes actually move a number. Use when a page
+  is slow and each layer looks fine in isolation, when a pattern is chosen or rejected on
+  performance grounds without a measurement, when adding a layer or a service is proposed as
+  a fix, when query counts scale with result size, when a remote interface is chatty, when a
+  transaction holds a connection across a network call, or when a load test passes and
+  production does not. Does not cover the investigation process (performance-methodology),
+  profiling tools (jfr-and-async-profiler), JVM behaviour (java-performance), queue
+  arithmetic (littles-law-and-queueing), collector and heap tuning (jvm-gc-tuning), or
+  designing and running the load test itself (load-testing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/architecture-and-performance
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/architecture-and-performance
+
+keywords:
+  - performance
+  - round-trips
+  - n-plus-one
+  - transaction-duration
+  - query-budget
+  - enterprise
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: performance-methodology
+    version: ^1.0.0
+  - name: littles-law-and-queueing
+    version: ^1.0.0
+  - name: connection-pool-sizing
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Architecture and Performance
+      short_description: Round trips, transaction duration and the whole path
+      default_prompt: Use Architecture and Performance to attribute this latency to the architecture.

@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: gof-pattern-thinking
+version: 1.1.0
+description: >-
+  Reasoning from a design problem to a design, where a Gang-of-Four pattern is one possible
+  outcome and "no pattern" is an equally valid one: naming the forces, identifying what
+  varies and along how many axes, walking the alternatives ladder from language feature up
+  to architecture, and pricing the indirection before adopting it. The first of two stages —
+  run this, then gof-pattern-selection maps the result to a shortlist. Use when a pattern
+  name is proposed before the problem is stated, when a review must judge whether an
+  abstraction earns its place, when factories and strategies have accumulated that trace to
+  no requirement, when an indirection needs pricing, or when a design is starting and the
+  vocabulary is about to be chosen by habit. Does not cover the individual patterns (the
+  gof-* skills), telling lookalike patterns apart (gof-pattern-confusion), the misuse
+  catalogue (gof-pattern-antipatterns), enterprise/PoEAA patterns
+  (pattern-selection-and-composition), or SOLID as a framing (java-solid).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-pattern-thinking
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-pattern-thinking
+
+keywords:
+  - design-patterns
+  - gof
+  - design
+  - trade-offs
+  - java
+  - abstraction
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Pattern Thinking
+      short_description: Forces first, pattern last, no pattern allowed
+      default_prompt: Use Pattern Thinking to decide whether this design needs a pattern at all.

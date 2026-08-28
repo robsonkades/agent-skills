@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: stateless-service-design
+version: 1.0.0
+description: >-
+  Making a service instance disposable so replicas are interchangeable: what stateless
+  actually means — no state whose loss changes a correct outcome; the in-process state
+  inventory; and session state as a placement decision between sticky routing, an external
+  store and a signed token. Use when replicas is raised above 1, when a @Scheduled job
+  suddenly runs N times, when a local cache disagrees between instances, when an in-memory
+  rate-limit counter or idempotency map is the source of truth, when HttpSession holds
+  anything a user would miss, when a service writes to java.io.tmpdir, or when a rolling
+  deploy loses sessions. Does not cover pod replacement and drain
+  (kubernetes-service-lifecycle), reaching a replica (load-balancing-and-routing), cache
+  design (caching-strategies), fleet-singleton work (leader-election), state split by key
+  (sharding-and-partitioning), pool arithmetic (connection-pool-sizing), or what replicas
+  may observe (consistency-models).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/stateless-service-design
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/stateless-service-design
+
+keywords:
+  - stateless
+  - horizontal-scaling
+  - session
+  - replicas
+  - spring-session
+  - distributed-systems
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: kubernetes-service-lifecycle
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Stateless Service Design
+      short_description: Making an instance disposable before scaling out
+      default_prompt: Use Stateless Service Design to audit what state this service keeps in process before raising replicas.

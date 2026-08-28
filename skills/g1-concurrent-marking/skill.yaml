@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: g1-concurrent-marking
+version: 1.1.0
+description: >-
+  G1's concurrent marking cycle: SATB and the pre-write barrier, the five phases and the
+  single mark bitmap with TAMS, adaptive IHOP triggering, mark stack overflow and its
+  consequences, humongous allocation and eager reclaim, and mixed-collection candidate
+  selection. Use when the log shows "Concurrent Mark Restart for Mark Stack Overflow", when
+  "Pause Full" follows incomplete marking cycles, when "Concurrent Mark From Roots" grows
+  longer cycle over cycle, when marking starts well away from 45% occupancy, when someone
+  proposes -XX:G1HeapOccupancyPercent or -XX:+G1SummarizeConcMark, or when humongous
+  allocations are frequent. Does not cover regions, remembered sets and the evacuation pause
+  itself (g1-internals), choosing flag values against an SLO (g1-tuning-for-slo), or
+  configuring and parsing the GC log (gc-log-analysis).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/g1-concurrent-marking
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/g1-concurrent-marking
+
+keywords:
+  - java
+  - jvm
+  - g1gc
+  - satb
+  - concurrent-marking
+  - ihop
+  - humongous
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: g1-internals
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: G1 Concurrent Marking
+      short_description: SATB, IHOP and marking failures in G1
+      default_prompt: Use G1 Concurrent Marking to diagnose this marking cycle.

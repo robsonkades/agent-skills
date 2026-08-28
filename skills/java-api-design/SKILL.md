@@ -5,10 +5,10 @@ description: >
   method and boolean naming conventions, arity and parameter objects, overload hazards,
   discoverability, public versus internal surface (package-private, JPMS exports), and API
   evolution — binary, source and behavioural compatibility, deprecation, semantic
-  versioning. Use when designing or reviewing a public type, when a signature has grown
-  past three parameters, when adding a method, overload or record component to a published
-  API, or when deciding what a module exports. Does not cover builder and fluent-chain
-  mechanics (java-fluent-apis) or exception contracts (java-exception-design).
+  versioning. Use when designing or reviewing a public type, when a signature has grown past
+  three parameters, when adding a method, overload or record component to a published API,
+  or when deciding what a module exports. Does not cover builder and fluent-chain mechanics
+  (java-fluent-apis) or exception contracts (java-exception-design).
 ---
 
 # Java API Design

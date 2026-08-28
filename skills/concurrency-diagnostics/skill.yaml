@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: concurrency-diagnostics
+version: 1.1.0
+description: >-
+  Collecting evidence for a concurrency problem and knowing each tool's blind spot: the two
+  thread-dump formats and why neither is a superset of the other, jstack not listing virtual
+  threads, ThreadMXBean not detecting virtual-thread deadlocks, the JFR events for parking,
+  monitors, pinning and submission failure, and reading a dump with a hundred thousand
+  threads. Use when nothing is progressing and the cause is unknown, when a dump comes back
+  suspiciously short, when a deadlock is suspected but no detector reports one, when threads
+  are BLOCKED or the CPU is idle while latency climbs, when work submitted to an executor
+  disappears, when a runbook still says jstack or -Djdk.tracePinnedThreads, or when a
+  symptom has to be classified before it can be routed to an owner. Not choosing and running
+  a profiler (jfr-and-async-profiler), reading a flame graph (flame-graph-analysis), monitor
+  internals (lock-inflation), pinning internals (virtual-threads-internals), or
+  happens-before (java-memory-model).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/concurrency-diagnostics
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/concurrency-diagnostics
+
+keywords:
+  - java
+  - concurrency
+  - thread-dump
+  - jcmd
+  - jfr
+  - deadlock
+  - diagnostics
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jfr-and-async-profiler
+    version: ^1.0.0
+  - name: thread-sizing-and-virtual-threads
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Concurrency Diagnostics
+      short_description: Thread dumps, JFR events and failure-mode triage
+      default_prompt: Use Concurrency Diagnostics to collect the evidence that identifies this concurrency failure.

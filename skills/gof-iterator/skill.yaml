@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-iterator
+version: 1.0.0
+description: >-
+  Iterator in modern Java: traversing an aggregate without exposing it, and choosing between
+  Iterator, Stream and Spliterator — external pull versus internal lazy pipeline versus the
+  parallel decomposition primitive. Covers why implementing Spliterator gives you both, what
+  fail-fast really promises and how weakly consistent iterators differ, streams that hold a
+  resource and must be closed, remote pagination as iteration with page drift, and the
+  characteristics that decide whether a stream can be sized or split. Use when exposing a
+  collection from a type, when a custom traversal is being written, when
+  ConcurrentModificationException appears, when a stream over a file or a result set leaks, when
+  paging through a remote API, or when a parallel stream is not faster. Does not cover stream
+  pipeline design and collectors in general, the tree being traversed (gof-composite), adding
+  operations over it (gof-visitor), or database paging strategy.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-iterator
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-iterator
+
+keywords:
+  - design-patterns
+  - gof
+  - behavioral
+  - iterator
+  - stream
+  - spliterator
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Iterator
+      short_description: Iterator, Stream or Spliterator
+      default_prompt: Use Iterator to decide what this type should expose.

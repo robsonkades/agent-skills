@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: sharding-and-partitioning
+version: 1.1.0
+description: >-
+  Whether to split data across owners at all, and on which key: what sharding buys — write
+  capacity, data volume, blast-radius isolation — against what it permanently costs: no
+  cross-shard atomicity or joins, fan-out for any keyless query, rebalancing as standing
+  work, and a shard map that is itself a distributed system; the alternatives that usually
+  win; the shard-key scorecard and classic wrong keys. Use when sharding is proposed for
+  future scale with no measured growth curve, when a table is called too big before
+  retention is checked, when a shard key is chosen or changed, when a query appears that
+  does not carry the key, or when cross-shard joins or unique constraints are discussed.
+  Does not cover the mapping function (consistent-hashing), a distribution already gone
+  wrong (hot-partitions-and-rebalancing), sharding a cache (cache-sharding-and-replication),
+  keyless-query fan-out (scatter-gather), replica interchangeability
+  (stateless-service-design), or what a cross-shard read observes (consistency-models).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/sharding-and-partitioning
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/sharding-and-partitioning
+
+keywords:
+  - sharding
+  - partitioning
+  - shard-key
+  - scalability
+  - distributed-systems
+  - migration
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: consistency-models
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Sharding And Partitioning
+      short_description: Whether to shard, and on which key
+      default_prompt: Use Sharding And Partitioning to decide whether this system should be sharded and on what key.

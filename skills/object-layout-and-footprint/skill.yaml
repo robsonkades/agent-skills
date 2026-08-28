@@ -1,0 +1,42 @@
+schemaVersion: 1
+
+name: object-layout-and-footprint
+version: 1.1.0
+description: >-
+  Sizing a data structure in bytes before it exists. Use when a shape is chosen for millions
+  of instances — record, class, primitive array, parallel arrays or boxed collection; when
+  an array is proposed to save the header; when HashMap<Integer,Integer> or List<Long> is on
+  a bulk path; when -XX:+UseCompactObjectHeaders is evaluated for footprint; or when smaller
+  objects are expected to buy shorter GC pauses — they do not, and the mechanism is here.
+  Answers in bytes per element; the record-versus-array answer reverses under the JDK 27
+  default (JEP 534, not yet GA). Sizing a replacement belongs here; measuring what exists is
+  heap-dump-analysis. Not flag lifecycle (jvm-performance-review), @Contended padding
+  (false-sharing-and-contended), cache hierarchy (cpu-cache-and-numa), allocation rate
+  (allocation-profiling), container budget (jvm-memory-regions), compressed class space
+  (metaspace-internals), off-heap memory (off-heap-memory), or sharing duplicates
+  (gof-flyweight).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/object-layout-and-footprint
+
+keywords:
+  - java
+  - jvm
+  - object-layout
+  - footprint
+  - memory
+  - jol
+  - compact-object-headers
+  - data-structures
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/

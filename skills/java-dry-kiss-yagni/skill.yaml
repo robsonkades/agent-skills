@@ -1,15 +1,16 @@
 schemaVersion: 1
 
 name: java-dry-kiss-yagni
-version: 1.0.0
+version: 1.1.0
 description: >-
   The economics of duplication and abstraction in Java: knowledge duplication versus
   incidental (textual) duplication, what a shared abstraction costs, the wrong-abstraction
   failure mode, premature abstraction and speculative generality, essential versus
-  accidental complexity. Use when deciding whether similar code should be merged, whether
-  a shared helper should be inlined back into its callers, or when a utility has grown
-  boolean parameters. Does not cover the smell catalogue (java-code-smells) or refactoring
-  mechanics (java-refactoring).
+  accidental complexity. Use when deciding whether two similar pieces of code should be
+  merged, whether a shared helper should be inlined back into its callers, when a utility
+  has grown boolean parameters, or when reviewing code generalised for requirements that do
+  not exist. Does not cover the smell catalogue (java-code-smells) or the mechanics of
+  extracting and inlining (java-refactoring).
 
 license: Apache-2.0
 

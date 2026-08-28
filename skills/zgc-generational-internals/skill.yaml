@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: zgc-generational-internals
+version: 1.1.0
+description: >-
+  Generational ZGC internals: coloured pointers without multi-mapping, the load and store
+  barriers, the young and old cycles and their three STW phases, the remembered-set bitmap
+  and its double buffering, relocation and page management, allocation stalls, and the
+  generational log and JFR event names. Use when a deploy script still carries
+  -XX:+ZGenerational, when jdk.ZAllocationStall events appear or allocation stalls cluster
+  in traffic peaks, when a pause script greps only "Pause Mark" and reports a suspiciously
+  good p99, when heap sizing was carried over unchanged from G1, when ZGC thread CPU is
+  being read out of a thread dump, or when barrier overhead needs to be attributed to reads
+  versus writes. Does not cover choosing between or operating the concurrent collectors
+  (zgc-and-shenandoah), the introductory collector model (gc-fundamentals), or attributing
+  an observed production pause across layers (pause-attribution).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/zgc-generational-internals
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/zgc-generational-internals
+
+keywords:
+  - java
+  - jvm
+  - zgc
+  - garbage-collection
+  - coloured-pointers
+  - load-barrier
+  - allocation-stall
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: zgc-and-shenandoah
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: ZGC Generational Internals
+      short_description: Barriers, cycles and stalls in generational ZGC
+      default_prompt: Use ZGC Generational Internals to explain or diagnose this generational ZGC behaviour.

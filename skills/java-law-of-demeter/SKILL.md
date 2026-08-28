@@ -1,14 +1,14 @@
 ---
 name: java-law-of-demeter
 description: >
-  Navigation coupling: what the Law of Demeter actually constrains — structure
-  exposure, not dot-counting — and how to tell a train wreck from a legitimate
-  chain. Use when reviewing chains like order.getCustomer().getAddress().getCity(),
-  when a change to one class's shape rippled through files that never mention it,
-  when deciding whether a chain couples the caller to structure or merely reads
-  data, or when a proposed fix would add forwarding methods to every intermediate
-  class. Does not cover designing fluent chains (java-fluent-apis) or where the
-  decision made on the navigated data should live (java-tell-dont-ask).
+  Navigation coupling: what the Law of Demeter actually constrains — structure exposure, not
+  dot-counting — and how to tell a train wreck from a legitimate chain. Use when reviewing
+  chains like order.getCustomer().getAddress().getCity(), when a change to one class's shape
+  rippled through files that never mention it, when deciding whether a chain couples the
+  caller to structure or merely reads data, or when a proposed fix would add forwarding
+  methods to every intermediate class. Does not cover designing fluent chains
+  (java-fluent-apis) or where the decision made on the navigated data should live
+  (java-tell-dont-ask).
 ---
 
 # Java Law of Demeter

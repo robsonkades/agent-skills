@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: ambassador-pattern
+version: 1.1.0
+description: >-
+  A sidecar that owns the outbound leg: the app connects to localhost and the ambassador
+  decides where the call goes — service discovery, shard-aware routing, canary and A/B
+  splits, mirrored traffic, TLS and the connection pool — so routing policy ships
+  independently of the application release. Use when every service reimplements discovery,
+  sharding or retry configuration in its own language, when changing a route means upgrading
+  a client library across a fleet, when a canary needs a percentage or header split without
+  an app release, when shadow traffic is being introduced, when the proxy's retries and the
+  app's retries multiply, or when a mesh is already deployed and a hand-rolled proxy would
+  put policy in two places. Does not cover pod-level container mechanics (sidecar-pattern),
+  load-balancing algorithms (load-balancing-and-routing), the resilience policies themselves
+  (retries-and-backoff, timeouts-and-deadlines, circuit-breakers), or the shard function
+  (consistent-hashing, sharding-and-partitioning).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/ambassador-pattern
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/ambassador-pattern
+
+keywords:
+  - kubernetes
+  - ambassador
+  - proxy
+  - sharding
+  - canary
+  - service-mesh
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: sidecar-pattern
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Ambassador Pattern
+      short_description: Outbound routing moved into a sidecar proxy
+      default_prompt: Use Ambassador Pattern to review how this service reaches its upstreams.

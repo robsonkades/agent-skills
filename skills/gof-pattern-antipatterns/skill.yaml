@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-pattern-antipatterns
+version: 1.0.0
+description: >-
+  Detecting and removing design-pattern misuse: abstractions that trace to no requirement,
+  patterns chosen because a name sounded right, and the specific failure each overused pattern
+  produces. Covers the detectable signals — an interface with one implementation, a class per
+  constant, a factory whose products are unrelated, a hub with twelve dependencies, a listener
+  never deregistered, a wrapper stack nobody can read, a getInstance() a test must reset — with
+  the cause, the concrete cost, and the removal procedure that does not break callers. Use when
+  reviewing a design that feels over-engineered, when a class name ends in Manager or Helper and
+  nobody can say what it does, when tests need many mocks to construct one object, or when
+  deleting an abstraction and the change must stay safe. Does not cover choosing a pattern
+  (gof-pattern-selection), telling lookalikes apart (gof-pattern-confusion), general code smells
+  (java-code-smells), or enterprise architecture smells (enterprise-architecture-smells).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-pattern-antipatterns
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-pattern-antipatterns
+
+keywords:
+  - design-patterns
+  - gof
+  - anti-patterns
+  - refactoring
+  - over-engineering
+  - review
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Pattern Anti-Patterns
+      short_description: Abstractions that cost more than they return
+      default_prompt: Use Pattern Anti-Patterns to review this design for overuse.

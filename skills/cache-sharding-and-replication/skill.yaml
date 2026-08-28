@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: cache-sharding-and-replication
+version: 1.1.0
+description: >-
+  Topology for a cache that no longer fits one node: client-side sharded, proxy-fronted,
+  clustered, and fully replicated, compared on failure behaviour, cost and client
+  complexity; and why a read after a write on a replicated cache is not read-your-writes.
+  Owns the arithmetic nobody does before an incident: removing one of N nodes remaps about
+  1/N of keys and every one of those misses hits the origin at once — mitigated by
+  replication, warming, coalescing and admission control. Use when choosing between client
+  sharding, a proxy and cluster mode, when a cache node loss or rolling restart took the
+  database with it, when replicas of a cache disagree, or when deciding between sharding the
+  cache and replicating all of it. Does not cover whether to cache, TTL, stampede or
+  invalidation (caching-strategies), the key-to-node mapping (consistent-hashing), a single
+  hot cache key (hot-partitions-and-rebalancing), entry serialisation cost
+  (serialization-performance), or what a replicated read observes (consistency-models).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/cache-sharding-and-replication
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/cache-sharding-and-replication
+
+keywords:
+  - cache
+  - sharding
+  - replication
+  - topology
+  - distributed-systems
+  - availability
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: consistent-hashing
+    version: ^1.0.0
+  - name: caching-strategies
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Cache Sharding And Replication
+      short_description: Cache topology, node loss and origin load
+      default_prompt: Use Cache Sharding And Replication to choose a cache topology and check what one node loss does to the origin.

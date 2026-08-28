@@ -1,0 +1,41 @@
+schemaVersion: 1
+
+name: jvm-performance-review
+version: 1.1.0
+description: >-
+  Auditing a supplied JVM configuration artefact: a command line or JVM_OPTS, a Kubernetes
+  manifest with resource limits, a GC log or JFR summary offered as evidence, or a bare
+  request for flags. Use when asked to review JVM flags, when inheriting forty accumulated
+  flags, when a JDK upgrade needs old flags checked, when approving a collector or heap
+  change, or when someone asks for "flags to fix p99" — where the answer is usually a
+  missing measurement. Returns prioritised findings, each with the measurement that confirms
+  or kills it. A bare request for flags belongs here even with no artefact: the deliverable
+  is the refusal and the measurement to take. A symptom for diagnosis starts at
+  java-performance. Not the process (performance-methodology), profiler choice
+  (jfr-and-async-profiler), GC log depth (gc-log-analysis), collector and heap sizing
+  (jvm-gc-tuning), container detection (container-awareness), -Xlog construction
+  (unified-logging), source review (code-review), or CI gating (performance-regression-ci).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/jvm-performance-review
+
+keywords:
+  - java
+  - jvm
+  - jvm-flags
+  - audit
+  - configuration-review
+  - performance
+  - container
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/

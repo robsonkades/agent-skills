@@ -1,0 +1,60 @@
+schemaVersion: 1
+
+name: enterprise-architecture-smells
+version: 1.1.0
+description: >-
+  Detecting structural problems in an enterprise application from evidence, and telling
+  genuine harm apart from unfamiliar-but-fine: anaemic domain models, god services,
+  transaction-script sprawl, generic repositories, excessive layering and DTO mapping, leaky
+  abstractions, distributed monoliths, persistence leakage, and abstractions that only move
+  complexity. Use when reviewing an architecture or a large pull request, when adding a
+  field touches seven files, when a "clean architecture" refactor is being proposed, when an
+  interface has one implementation, when a wrapper adds no behaviour, when a pattern is
+  being applied because it is a pattern, when a codebase feels wrong but nobody can say why,
+  or when deciding whether an abstraction is worth keeping. Does not cover the migration
+  once a smell is confirmed (architecture-refactoring-paths,
+  legacy-enterprise-modernization), performance diagnosis (architecture-and-performance), or
+  the individual patterns' own guidance.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/enterprise-architecture-smells
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/enterprise-architecture-smells
+
+keywords:
+  - code-smells
+  - over-engineering
+  - anaemic-model
+  - god-service
+  - review
+  - architecture
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: layering-and-boundaries
+    version: ^1.0.0
+  - name: repository-pattern
+    version: ^1.0.0
+  - name: service-layer-design
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Enterprise Architecture Smells
+      short_description: Evidence-based findings, not unfamiliarity
+      default_prompt: Use Enterprise Architecture Smells to review this architecture for real harm.

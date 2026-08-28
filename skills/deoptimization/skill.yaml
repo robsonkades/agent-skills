@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: deoptimization
+version: 1.0.0
+description: >-
+  Deoptimisation and recompilation on HotSpot: uncommon traps and their reason codes, the
+  reinterpret / make_not_entrant / make_not_compilable actions, jdk.Deoptimization in JFR,
+  -XX:+TraceDeoptimization, the per-method recompilation cutoffs, and diagnosing a method
+  that never stabilises. Use when a method repeatedly shows "made not entrant" in the
+  compilation log, when latency spikes correlate with class loading or a deploy, when a
+  feature flag or APM agent is suspected of invalidating compiled code, when someone proposes
+  raising PerMethodRecompilationCutoff, or when -Xlog:jit+deoptimization produced an empty
+  file. Does not cover the tiered pipeline and warm-up (jit-compilation), reading the
+  compilation log itself (compilation-and-inlining-logs), or C2's internal representation
+  (c2-sea-of-nodes).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/deoptimization
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/deoptimization
+
+keywords:
+  - java
+  - jvm
+  - jit
+  - deoptimization
+  - uncommon-trap
+  - c2
+  - jfr
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jit-compilation
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Deoptimization
+      short_description: Uncommon traps, recompilation and unstable methods
+      default_prompt: Use Deoptimization to tell a normal unwind from a method that never stabilises.

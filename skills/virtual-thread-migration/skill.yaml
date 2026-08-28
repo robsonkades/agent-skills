@@ -1,0 +1,61 @@
+schemaVersion: 1
+
+name: virtual-thread-migration
+version: 1.1.0
+description: >-
+  Migrating an existing service to virtual threads as a staged programme rather than a flag:
+  inventorying what each thread pool was implicitly limiting, auditing for pinning, file I/O
+  and ThreadLocal caches, declaring the replacement limits before the flip, canarying one
+  workload at a time, re-sizing the connection pool, and the rollback criteria. Use when a
+  team plans to enable virtual threads service-wide, when a single flag is about to be
+  flipped in production, when a migration made latency worse, when the database or a
+  downstream started failing after adoption, when newSingleThreadExecutor is about to be
+  replaced and it was providing ordering, when log correlation or metrics broke after the
+  change, or when a migration is proposed for a CPU-bound service. Not the sizing arithmetic
+  (thread-sizing-and-virtual-threads), continuation and pinning internals
+  (virtual-threads-internals), or choosing between reactive and thread-per-request, and the
+  framework flags for it (reactive-and-virtual-thread-selection).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/virtual-thread-migration
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/virtual-thread-migration
+
+keywords:
+  - java
+  - virtual-threads
+  - migration
+  - loom
+  - thread-pool
+  - capacity
+  - rollout
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: thread-sizing-and-virtual-threads
+    version: ^1.0.0
+  - name: concurrency-limiting-and-bulkheads
+    version: ^1.0.0
+  - name: connection-pool-sizing
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Virtual Thread Migration
+      short_description: Staged adoption, replacement limits and rollback
+      default_prompt: Use Virtual Thread Migration to plan or review this adoption one workload at a time.

@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: compilation-and-inlining-logs
+version: 1.1.0
+description: >-
+  Reading what the JIT actually did: the six columns of -XX:+PrintCompilation and its flag
+  characters, -XX:+PrintInlining and its refusal categories, -XX:+LogCompilation with
+  JITWatch, targeted compiler directives, and turning a refusal into a code change. Use when
+  a hot method is suspected of not reaching tier 4, when a call site shows "too large" or
+  another inlining refusal, when a method never appears in the compilation log at all, when
+  someone prescribes -XX:CompileThreshold or -Xlog:jit, when a script greps the compilation
+  log and returns nothing, or when raising FreqInlineSize globally is proposed to fix one
+  method. Does not cover the tiered pipeline, warm-up and the code cache as concepts
+  (jit-compilation), the design rules about inlining and escape
+  (jit-inlining-and-escape-analysis), recompilation and uncommon traps (deoptimization), or
+  C2's internal representation (c2-sea-of-nodes).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/compilation-and-inlining-logs
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/compilation-and-inlining-logs
+
+keywords:
+  - java
+  - jvm
+  - jit
+  - inlining
+  - printcompilation
+  - jitwatch
+  - c2
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jit-compilation
+    version: ^1.0.0
+  - name: jit-inlining-and-escape-analysis
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Compilation and Inlining Logs
+      short_description: Reading PrintCompilation and PrintInlining
+      default_prompt: Use Compilation and Inlining Logs to read what the JIT did with this method.

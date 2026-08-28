@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: data-source-patterns
+version: 1.1.0
+description: >-
+  Choosing how code reaches the database — Table Data Gateway, Row Data Gateway, Active
+  Record or Data Mapper — from the shape of the domain logic rather than from framework
+  habit, and knowing what each one couples together. Use when a new module's persistence
+  approach is being chosen, when entities carry both business rules and save() methods, when
+  JPA is being applied to a schema that fights it, when SQL is scattered through service
+  classes, when a "DAO" layer duplicates what the ORM already provides, when the domain
+  model's shape is visibly dictated by the tables, when bulk or reporting work is being
+  forced through an ORM, or when a team is arguing Active Record versus Data Mapper in the
+  abstract. Does not cover where business logic lives (domain-logic-organization), the ORM's
+  runtime behaviour — unit of work, identity map, lazy load (orm-behavioral-patterns), the
+  column-level mapping decisions (orm-structural-mapping), or the collection-shaped
+  abstraction over aggregates (repository-pattern).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/data-source-patterns
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/data-source-patterns
+
+keywords:
+  - data-mapper
+  - active-record
+  - table-data-gateway
+  - jdbc
+  - jpa
+  - persistence
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: domain-logic-organization
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Data Source Patterns
+      short_description: Gateway, Active Record or Data Mapper
+      default_prompt: Use Data Source Patterns to choose or review this data-access approach.

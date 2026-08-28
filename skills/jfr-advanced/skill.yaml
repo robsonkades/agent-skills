@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: jfr-advanced
+version: 1.1.0
+description: >-
+  JDK Flight Recorder beyond the stock profiles: authoring a custom `.jfc`, event thresholds
+  and periods, custom events extending `jdk.jfr.Event`, `RecordingStream` for live
+  consumption, and programmatic `Recording` control. Use when an event name was guessed
+  rather than checked (`jdk.GCPauseL3`, a `pause` field on `jdk.GarbageCollection`), when
+  `enable()` silently produced no data, when `settings=continuous` or `duration=0` stopped
+  the JVM from starting, when contention under 10 ms is invisible in a recording, when a
+  custom event is allocated in a hot path without `isEnabled()`, when `stackTrace` was
+  turned on for a high-frequency event, or when a `jfr print --json` parser returns an empty
+  table. Does not cover choosing which profile to take or the production baseline
+  configuration (jfr-and-async-profiler), the async-profiler engine
+  (async-profiler-advanced), or always-on fleet profiling infrastructure
+  (continuous-profiling).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/jfr-advanced
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/jfr-advanced
+
+keywords:
+  - jfr
+  - flight-recorder
+  - jfc
+  - custom-events
+  - recordingstream
+  - profiling
+  - jvm
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jfr-and-async-profiler
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: JFR Advanced
+      short_description: Custom jfc files, custom events and streaming
+      default_prompt: Use JFR Advanced to configure a recording that can prove what this investigation needs.

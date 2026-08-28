@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: poison-messages-and-dlq
+version: 1.0.0
+description: >-
+  What happens to a message that cannot succeed: separating the permanently poison message
+  that fails on its own content from the transiently blocked one whose dependency is down,
+  and why an attempt counter cannot tell them apart; the dead-letter queue as a design with
+  an owner, an alert and a redrive path; the record captured beside the payload; and the
+  head-of-line decision in a partitioned log, where skipping a record trades per-partition
+  ordering for progress. Use when a consumer retries the same record forever, when a DLQ has
+  grown and nobody owns it, when a DLQ record holds only the payload, when a deploy makes
+  every message fail, when a partition stops advancing behind one record, or when
+  dead-lettering is proposed for a dependency outage. Does not cover retry policy
+  (retries-and-backoff), safe replay (idempotency), ordering scope
+  (message-ordering-and-partitioning), the worker pool
+  (task-queues-and-competing-consumers), guarantees (delivery-semantics), or alert
+  thresholds (slo-and-alerting).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/poison-messages-and-dlq
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/poison-messages-and-dlq
+
+keywords:
+  - distributed-systems
+  - messaging
+  - dead-letter-queue
+  - poison-message
+  - redrive
+  - kafka
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: task-queues-and-competing-consumers
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Poison Messages And DLQ
+      short_description: Classifying failures and operating a dead-letter queue
+      default_prompt: Use Poison Messages And DLQ to decide where this failed message goes.

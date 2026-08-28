@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-singleton
+version: 1.0.0
+description: >-
+  Singleton in modern Java, treated as a high-risk pattern: it conflates "one instance" with
+  "reachable from anywhere", and only the second is usually wanted. Covers why dependency
+  injection gives uniqueness as a consequence of wiring, the scale ladder showing a Java singleton
+  is unique per class loader and never per cluster, the safe lazy-initialisation idioms and the
+  class-initialisation deadlock they invite, the static-state leakage that makes tests
+  order-dependent, and the distributed mechanisms that give system-wide singularity. Use when
+  getInstance() appears, when a scheduled job must run once across replicas, when someone says
+  "singleton" meaning Spring's singleton scope, when tests pass alone and fail together, or when a
+  cache or registry is being made global. Does not cover shared immutable instances for memory
+  (gof-flyweight), wiring in general (java-dependency-inversion), cluster-wide leadership
+  (leader-election), or once-only scheduling across replicas (distributed-locks-and-leases).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-singleton
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-singleton
+
+keywords:
+  - design-patterns
+  - gof
+  - creational
+  - singleton
+  - global-state
+  - concurrency
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Singleton
+      short_description: One per what? Usually not what you think
+      default_prompt: Use Singleton to check this uniqueness requirement.

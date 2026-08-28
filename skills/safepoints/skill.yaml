@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: safepoints
+version: 1.1.0
+description: >-
+  The HotSpot safepoint mechanism on JDK 25: polling pages and where the JIT emits polls,
+  loop strip mining, global safepoints versus thread-local handshakes, the VM operations
+  other than GC that stop the world, time-to-safepoint versus operation time, and reading
+  `-Xlog:safepoint`. Use when measured p99 or p99.9 is far worse than the GC log explains,
+  when GC logs look clean but latency does not match, when a stop-the-world pause has no GC
+  event behind it, when JNI or FFM code processes a batch without returning to Java, when a
+  profiler's hot path never responds to optimisation, or when someone proposes
+  `-XX:+UseCountedLoopSafepoints`, `UseThreadLocalHandshakes` or blames `RevokeBias` on a
+  modern JDK. Does not cover the introductory TTSP treatment or collector mechanics
+  (gc-fundamentals), attributing an observed production pause across GC phase, safepoint and
+  OS (pause-attribution), or host-side causes such as CPU throttling and page faults
+  (linux-for-jvm).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/safepoints
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/safepoints
+
+keywords:
+  - java
+  - jvm
+  - safepoint
+  - ttsp
+  - latency
+  - hotspot
+  - jni
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gc-fundamentals
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Safepoints
+      short_description: Sync time, TTSP and stop-the-world beyond GC
+      default_prompt: Use Safepoints to explain stop-the-world time the GC log does not account for.

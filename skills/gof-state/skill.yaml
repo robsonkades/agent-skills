@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-state
+version: 1.0.0
+description: >-
+  State in modern Java: making an object's behaviour depend on an explicit state, with the
+  transitions themselves modelled rather than implied by scattered flags. Covers the intent
+  difference from Strategy, where transitions should live — in the state classes, in a table, or
+  in one exhaustive switch — sealed records against enums, rejecting illegal transitions by
+  default, persisting a state safely (never by ordinal), atomic transitions under concurrency, and
+  timeouts as transitions in a durable workflow. Use when boolean flags multiply on an entity,
+  when a status field is checked in scattered ifs, when an illegal transition reaches production,
+  when a workflow must survive a restart, or when two requests transition the same entity
+  concurrently. Does not cover interchangeable algorithms chosen by a caller (gof-strategy), saga
+  orchestration across services (distributed-transactions-and-sagas, gof-mediator), or optimistic
+  locking mechanics (offline-concurrency-control).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-state
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-state
+
+keywords:
+  - design-patterns
+  - gof
+  - behavioral
+  - state
+  - state-machine
+  - transitions
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: State
+      short_description: Transitions modelled, not implied by flags
+      default_prompt: Use State to review this status handling.

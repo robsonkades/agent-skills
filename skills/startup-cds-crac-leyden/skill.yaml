@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: startup-cds-crac-leyden
+version: 1.0.0
+description: >-
+  Cutting JVM startup and warm-up while staying on the JVM: CDS and AppCDS, the Leyden AOT
+  cache (JEP 483/514/515), CRaC checkpoint and restore and its constraints, what each mechanism
+  actually accelerates, verifying the cache is really in use, and measuring
+  time-to-first-good-response instead of time-to-port-open. Use when cold start hurts a
+  serverless or autoscaled deployment, when a CI pipeline pays for hundreds of JVM launches,
+  when a CRaC flag fails with Unrecognized VM option, when an AppCDS archive is silently
+  ignored after a JAR changes, when -XX:AOTCacheOutput is in the production start command, when
+  spring-boot:build-image is expected to yield a CRaC image, or when a startup speedup
+  percentage is quoted without a source. Does not cover the warm-up curve and traffic gating
+  (jit-compilation), loading, linking and initialisation (jvm-class-loading), or leaving the JVM
+  behind (graalvm-native-image).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/startup-cds-crac-leyden
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/startup-cds-crac-leyden
+
+keywords:
+  - java
+  - startup
+  - cds
+  - appcds
+  - crac
+  - leyden
+  - cold-start
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jit-compilation
+    version: ^1.0.0
+  - name: jvm-class-loading
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Startup, CDS, CRaC and Leyden
+      short_description: Cutting JVM startup without leaving the JVM
+      default_prompt: Use Startup, CDS, CRaC and Leyden to pick the startup mechanism that matches this constraint.

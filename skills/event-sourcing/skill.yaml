@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: event-sourcing
+version: 1.0.0
+description: >-
+  Storing a sequence of immutable events as the source of truth and deriving current state from
+  it: deciding whether the system needs it, designing events and streams, concurrency through
+  expected stream version, building and rebuilding projections, and the problems that have no
+  clean answer — event schema change, personal-data erasure, and read-your-own-write. Use when
+  event sourcing is proposed or already in place, when auditability is the stated driver, when a
+  projection has drifted from its stream, when an event needs a field it never had, or when a
+  user reports data that "disappeared" after saving. Does not cover event-driven integration
+  between services (event-driven-architecture), broker delivery guarantees (delivery-semantics),
+  cross-service workflow compensation (distributed-transactions-and-sagas), optimistic locking
+  over a mutable row (offline-concurrency-control), or what a client may observe across replicas
+  (consistency-models).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/event-sourcing
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/event-sourcing
+
+keywords:
+  - event-sourcing
+  - architecture
+  - projections
+  - cqrs
+  - event-store
+  - distributed-systems
+  - eventual-consistency
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: event-driven-architecture
+    version: ^1.0.0
+  - name: consistency-models
+    version: ^1.0.0
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Event Sourcing
+      short_description: Events as the source of truth, and what it costs

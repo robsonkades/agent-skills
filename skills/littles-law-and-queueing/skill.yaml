@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: littles-law-and-queueing
+version: 1.2.0
+description: >-
+  Sizing and capacity from Little's Law (N = λ × R) and queueing theory: separating service
+  time from queue time, why latency explodes above ~80% utilisation, thread pool and
+  executor sizing, bounded queues and rejection policy. Use when choosing a pool size, when
+  latency is high while CPU is low, when latency grows over the duration of a run, when
+  someone proposes adding threads to a CPU-bound path, or when a ThreadPoolExecutor is not
+  growing past its core size. Does not cover the statistics of the latency numbers
+  themselves (latency-statistics), database pool specifics (connection-pool-sizing), or
+  virtual-thread mechanics (thread-sizing-and-virtual-threads). Model selection and fitting
+  is queueing-models, the scalability model is universal-scalability-law, and forecasting is
+  capacity-planning.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/littles-law-and-queueing
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/littles-law-and-queueing
+
+keywords:
+  - java
+  - performance
+  - littles-law
+  - queueing
+  - capacity
+  - thread-pool
+  - utilisation
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: latency-statistics
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Little's Law and Queueing
+      short_description: Pool sizing, utilisation and queue diagnosis
+      default_prompt: Use Little's Law and Queueing to size this pool or diagnose this queue.

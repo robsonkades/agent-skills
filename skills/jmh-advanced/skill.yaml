@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: jmh-advanced
+version: 1.0.0
+description: >-
+  JMH beyond the basics: the built-in profilers (`perfasm`, `xperfasm`, `perfnorm`, `gc`,
+  `stack`, `jfr`, `async`), `@State` scope and asymmetric benchmarks with
+  `@Group`/`@GroupThreads`, `@Param` combinatorics, `@Setup` levels, the real `@Fork`
+  attributes, `@CompilerControl`, and diagnosing a benchmark whose variance will not settle.
+  Use when `Error` exceeds roughly 10% of `Score`, when `@Fork(1)` is still in place before
+  publishing a number, when someone writes `@Fork(jvmVersion = ...)`, when a concurrent
+  structure is benchmarked under `Scope.Thread`, when `@Setup(Level.Invocation)` sits on a
+  high-frequency benchmark, when `-prof xperfasm` is attempted on Linux, or when `perfasm`
+  produces no assembly. Does not cover the introductory rules — forks, `Blackhole`,
+  benchmark boundaries and reading `Score` and `Error` (jmh-microbenchmarks) — turning
+  results into a build gate (performance-regression-ci), or interpreting the emitted
+  assembly in depth (reading-jit-assembly).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/jmh-advanced
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/jmh-advanced
+
+keywords:
+  - jmh
+  - microbenchmark
+  - perfasm
+  - hsdis
+  - benchmark-variance
+  - jvm
+  - performance
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jmh-microbenchmarks
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: JMH Advanced
+      short_description: Profilers, state scope and benchmark variance
+      default_prompt: Use JMH Advanced to make this benchmark measure the right scenario and settle its variance.

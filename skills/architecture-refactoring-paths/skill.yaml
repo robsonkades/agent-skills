@@ -1,0 +1,60 @@
+schemaVersion: 1
+
+name: architecture-refactoring-paths
+version: 1.1.0
+description: >-
+  Moving an enterprise application from one architectural choice to another without a
+  rewrite: transaction script to domain model, Active Record to Data Mapper, in-process call
+  to remote boundary, server session to stateless, pessimistic to optimistic locking, and
+  entity-as-payload to a boundary contract. Use when a pattern choice has been outgrown and
+  someone proposes a rewrite, when a refactor has stalled halfway with two designs
+  coexisting badly, when a migration needs to survive being paused for a quarter, when a
+  data migration and a code change must ship in the same release, when a change would break
+  API consumers, when an intermediate state has no defined behaviour, or when nobody can say
+  how the refactor would be rolled back. Does not cover recognising that a change is needed
+  (enterprise-architecture-smells), the programme-level approach to a legacy system
+  (legacy-enterprise-modernization), the target patterns themselves, or database migration
+  tooling.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/architecture-refactoring-paths
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/architecture-refactoring-paths
+
+keywords:
+  - refactoring
+  - migration
+  - expand-contract
+  - incremental
+  - architecture
+  - enterprise
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: domain-logic-organization
+    version: ^1.0.0
+  - name: data-source-patterns
+    version: ^1.0.0
+  - name: offline-concurrency-control
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Architecture Refactoring Paths
+      short_description: Pattern-to-pattern moves that ship in steps
+      default_prompt: Use Architecture Refactoring Paths to sequence this architectural change.

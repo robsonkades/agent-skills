@@ -2,15 +2,16 @@
 name: java-code-smells
 description: >
   The detection catalogue for Java code smells: Long Method, God Object, Feature Envy,
-  Primitive Obsession, Data Clumps, Shotgun Surgery, Divergent Change, Message Chains,
-  Speculative Generality, Refused Bequest, Duplicate and Dead Code, boolean blindness,
-  null-heavy APIs, Optional overuse, leaky abstraction, and how modern Java changes the
-  list. Use when auditing code for structural problems, before planning a refactoring,
-  when one change keeps fanning out across many files, when a switch over a sealed
-  type carries a default branch, or when deciding whether a suspect pattern is
-  actually a problem. Detection and severity only — refactoring
-  mechanics are java-refactoring, navigation-chain depth is java-law-of-demeter, and
-  the economics of duplication and premature abstraction are java-dry-kiss-yagni.
+  Primitive Obsession, Data Clumps, Shotgun Surgery, Divergent Change, Mysterious Name,
+  Mutable and Global Data, Data Class, Loops, Lazy Element, Refused Bequest, boolean
+  blindness, null-heavy APIs and leaky abstraction, plus how modern Java changes the list
+  and the routing table from a finding to the refactoring that fixes it. Use when auditing
+  code for structural problems, before planning a refactoring, when one change keeps fanning
+  out across many files, when several refactorings could address one finding, when a switch
+  over a sealed type carries a default branch, or when deciding whether a suspect pattern is
+  actually a problem. Detection and severity only — refactoring mechanics are
+  java-refactoring, navigation-chain depth is java-law-of-demeter, and the economics of
+  duplication and premature abstraction are java-dry-kiss-yagni.
 ---
 
 # Java Code Smells
@@ -36,7 +37,9 @@ ignores), and rewriting code during what was supposed to be a diagnosis.
    every second PR outranks a monstrous one nobody has edited in two years. Use the
    repository history as evidence, not aesthetics.
 4. **Record findings, do not fix them.** Each finding: smell name, location, evidence,
-   severity argument, the named java-refactoring technique. Fixing happens in a
+   severity argument, the named java-refactoring technique — routed through
+   `references/smell-to-refactoring.md`, which also says what decides between competing
+   techniques and when the honest recommendation is no refactoring. Fixing happens in a
    separate pass under that skill's safety workflow.
 
 ## Rules
@@ -59,10 +62,17 @@ ignores), and rewriting code during what was supposed to be a diagnosis.
 
 - [Catalogue: within a class](references/catalogue-within.md) — Long Method, Large
   Class, Primitive Obsession, Data Clumps, Temporary Field, Duplicate Code, Dead Code,
-  comments-as-deodorant, boolean blindness, Speculative Generality.
+  comments-as-deodorant, boolean blindness, Speculative Generality, Mysterious Name,
+  Long Parameter List, Mutable Data, Loops, Lazy Element.
 - [Catalogue: between classes](references/catalogue-between.md) — Feature Envy,
   Shotgun Surgery, Divergent Change, Message Chains, Middle Man, Refused Bequest,
-  Inappropriate Intimacy, Switch Statements, null-heavy APIs, leaky abstraction.
+  Inappropriate Intimacy, Switch Statements, null-heavy APIs, leaky abstraction, Global
+  Data, Alternative Classes with Different Interfaces, Data Class.
+- [Smell → refactoring](references/smell-to-refactoring.md) — the routing table from a
+  recorded finding to the java-refactoring techniques that address it, what decides
+  between competing techniques, the sequences that must run in order, and when the
+  correct output is no refactoring at all. Read at step 4, when turning findings into
+  recommendations.
 - [Modern Java: dissolved and created smells](references/modern-java.md) — what
   records, sealed types and Optional removed from the classic catalogue and what they
   added. Read before flagging switches, records, or Optional chains.

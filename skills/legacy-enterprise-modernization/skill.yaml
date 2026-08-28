@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: legacy-enterprise-modernization
+version: 1.0.0
+description: >-
+  Modernising an enterprise application that is in production and cannot stop: understanding
+  a system nobody fully knows, pinning behaviour before changing it, strangling
+  functionality out incrementally, and defending a new model with an anti-corruption layer.
+  Use when a rewrite is proposed for a system that still earns money, when a shared database
+  has several writers, when business rules live in stored procedures and triggers, when
+  there are no tests and no specification, when a strangler migration has stalled with both
+  systems running, or when a modernisation has run for a year with nothing decommissioned.
+  Does not cover the specific pattern-to-pattern migrations
+  (architecture-refactoring-paths), recognising the problems
+  (enterprise-architecture-smells), whether a boundary should be remote
+  (distribution-boundaries), or class-level seams and dependency breaking
+  (java-legacy-code-testing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/legacy-enterprise-modernization
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/legacy-enterprise-modernization
+
+keywords:
+  - legacy
+  - strangler
+  - anti-corruption-layer
+  - modernization
+  - characterisation-tests
+  - migration
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: architecture-refactoring-paths
+    version: ^1.0.0
+  - name: architecture-testing
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Legacy Enterprise Modernization
+      short_description: Strangle, translate, decommission
+      default_prompt: Use Legacy Enterprise Modernization to plan this system's modernisation.

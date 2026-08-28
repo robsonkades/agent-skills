@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-composite
+version: 1.0.0
+description: >-
+  Composite in modern Java: treating a leaf and a tree of leaves through one interface, and the
+  hazards that come with a recursive structure. Covers the transparent-versus-safe trade-off and
+  why a sealed interface with exhaustive pattern matching now beats both, unbounded depth and
+  StackOverflowError, cycles introduced by parent pointers and the infinite recursion they cause
+  in equals, hashCode and toString, mutation during traversal, and why a tree whose children live
+  in other services is not this pattern. Use when a part-whole hierarchy is being modelled, when a
+  leaf class is forced to implement add() and throw, when a recursive walk overflows the stack on
+  production data, when nested structures arrive from untrusted input, or when someone proposes
+  Composite for a flat group of items. Does not cover adding operations over a tree (gof-visitor),
+  traversal protocols (gof-iterator), adding behaviour to one object (gof-decorator), or aggregate
+  boundaries in a domain model (domain-logic-organization).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-composite
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-composite
+
+keywords:
+  - design-patterns
+  - gof
+  - structural
+  - composite
+  - trees
+  - recursion
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Composite
+      short_description: Trees, and what breaks in them
+      default_prompt: Use Composite to review this recursive structure.

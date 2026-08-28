@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: consensus-and-quorums
+version: 1.0.0
+description: >-
+  Agreement among processes that may crash, and the arithmetic that makes it work: FLP and
+  why every failure detector is only a timeout; majority quorums, 2f+1, and the R + W > N
+  intersection property with what it does and does not buy; why an even node count adds
+  nothing and why quorum latency rises with cluster size; Raft's leader, term and log, with
+  the term number as a fencing token; and what etcd, ZooKeeper and Consul actually are. Use
+  when a cluster size is being chosen, when nodes are spread across AZs or regions, when
+  application data or a queue is being put in etcd or ZooKeeper, when a coordination store
+  sits on the request path, when a watch is treated as a delivery guarantee, or when a
+  fourth node is proposed for redundancy. Does not cover CAP and the model ladder
+  (consistency-models), mutual exclusion built on top (distributed-locks-and-leases),
+  electing a singleton worker (leader-election), or the fault model itself (failure-models).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/consensus-and-quorums
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/consensus-and-quorums
+
+keywords:
+  - distributed-systems
+  - consensus
+  - quorum
+  - raft
+  - etcd
+  - zookeeper
+  - availability
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: failure-models
+    version: ^1.0.0
+  - name: consistency-models
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Consensus And Quorums
+      short_description: Quorum arithmetic and coordination stores
+      default_prompt: Use Consensus And Quorums to size this cluster and check what the coordination store is being asked to do.

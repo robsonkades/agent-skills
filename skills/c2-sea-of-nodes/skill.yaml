@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: c2-sea-of-nodes
+version: 1.1.0
+description: >-
+  How HotSpot actually executes and compiles: the runtime-generated template interpreter,
+  C2's sea-of-nodes IR, the seven compilation phases and their order, and why a given
+  transformation fired or did not. Use when a method is believed to be "not optimised", when
+  an allocation that looks eliminable still shows up in allocation profiling, when a hot
+  call site reports `too large` or stays non-inlined, when `made not entrant` repeats on the
+  same method, when someone prescribes `-XX:CompileThreshold` under tiered compilation, or
+  when explaining why the JIT did not fix an O(n^2) loop. Does not cover the tiered
+  pipeline, warm-up and code cache sizing (jit-compilation), reading the compiler's own
+  decision logs end to end (compilation-and-inlining-logs), the emitted machine code
+  (reading-jit-assembly), or the bytecode the compiler consumes (jvm-bytecode).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/c2-sea-of-nodes
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/c2-sea-of-nodes
+
+keywords:
+  - java
+  - jvm
+  - c2
+  - jit
+  - sea-of-nodes
+  - escape-analysis
+  - inlining
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: compilation-and-inlining-logs
+    version: ^1.0.0
+  - name: jvm-bytecode
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: C2 Sea Of Nodes
+      short_description: C2 IR, phases, inlining and escape analysis
+      default_prompt: Use C2 Sea Of Nodes to explain why this method compiled the way it did.

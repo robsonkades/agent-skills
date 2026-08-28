@@ -1,15 +1,16 @@
 schemaVersion: 1
 
 name: java-api-design
-version: 1.0.0
+version: 1.1.0
 description: >-
   Naming and API design for Java code that others call: names carrying domain vocabulary,
   method and boolean naming conventions, arity and parameter objects, overload hazards,
   discoverability, public versus internal surface (package-private, JPMS exports), and API
   evolution — binary, source and behavioural compatibility, deprecation, semantic
-  versioning. Use when designing or reviewing a public type, adding a method, overload or
-  record component to a published API, or deciding what a module exports. Does not cover
-  builder mechanics (java-fluent-apis) or exception contracts (java-exception-design).
+  versioning. Use when designing or reviewing a public type, when a signature has grown past
+  three parameters, when adding a method, overload or record component to a published API,
+  or when deciding what a module exports. Does not cover builder and fluent-chain mechanics
+  (java-fluent-apis) or exception contracts (java-exception-design).
 
 license: Apache-2.0
 

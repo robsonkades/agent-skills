@@ -1,0 +1,60 @@
+schemaVersion: 1
+
+name: executors-and-task-lifecycle
+version: 1.1.0
+description: >-
+  The lifecycle of a task inside an ExecutorService: submit versus execute and which one
+  loses the exception, the enqueue-before-grow rule that makes maximumPoolSize dead
+  configuration, rejection policies as a deliberate choice, ScheduledExecutorService
+  cancelling a periodic task forever on its first throw, and shutdown versus shutdownNow
+  versus close. Use when a submitted task appears never to have run, when a periodic job
+  stopped silently after an incident, when Executors.newFixedThreadPool or
+  newCachedThreadPool is chosen by habit, when a pool is shared between a fast and a slow
+  workload, when shutdownNow is expected to stop work, or when a virtual-thread executor
+  replaced a pool and the concurrency limit went with it. Not deriving the pool size
+  (littles-law-and-queueing), platform versus virtual threads
+  (thread-sizing-and-virtual-threads), the work-stealing pool
+  (forkjoinpool-and-work-stealing), composing stages (completablefuture-composition), or
+  stopping a running task (cancellation-and-interruption).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/executors-and-task-lifecycle
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/executors-and-task-lifecycle
+
+keywords:
+  - java
+  - concurrency
+  - executorservice
+  - threadpoolexecutor
+  - scheduled
+  - shutdown
+  - rejection
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: littles-law-and-queueing
+    version: ^1.0.0
+  - name: thread-sizing-and-virtual-threads
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Executors and Task Lifecycle
+      short_description: Task submission, rejection and shutdown
+      default_prompt: Use Executors and Task Lifecycle to check how this executor fails, queues and shuts down.

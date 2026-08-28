@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: tcp-tuning
+version: 1.1.0
+description: >-
+  The network stack under a JVM service: listen backlog and accept queues, Nagle and delayed
+  ACK, socket buffer sizing against bandwidth-delay product, congestion control choice,
+  keepalive and timeout alignment along the path, and diagnosing retransmissions and queue
+  drops. Use when a small request/response protocol shows a stable ~40 ms latency floor,
+  when a client throws BindException or EADDRNOTAVAIL under burst, when SYNs are dropped at
+  peak, when one core saturates while the others idle on a multi-core server, when
+  throughput plateaus far below a high bandwidth-delay link, when somaxconn was raised and
+  nothing changed, when TIME_WAIT sockets accumulate, or when someone proposes switching to
+  BBR or DCTCP. Does not cover host memory, CPU and signals (linux-for-jvm), the
+  data-movement path itself (io-uring-and-zero-copy), or application-level connection reuse
+  (connection-pool-sizing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/tcp-tuning
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/tcp-tuning
+
+keywords:
+  - java
+  - tcp
+  - networking
+  - sysctl
+  - latency
+  - sockets
+  - linux
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: linux-for-jvm
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: TCP Tuning
+      short_description: Backlog, Nagle, buffers and congestion control
+      default_prompt: Use TCP Tuning to find which layer of the network stack this symptom lives in.

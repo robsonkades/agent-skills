@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: schema-evolution-and-compatibility
+version: 1.1.0
+description: >-
+  Whether a given schema change is safe, in which deploy order, and what breaks when it is
+  not: the writer/reader pair, the compatibility levels and who upgrades first, the
+  per-format rules for Avro, Protobuf and JSON Schema, registry configuration, and catching
+  a break in CI. Use when AvroTypeException reports a missing required field, when "Can't
+  get the number of an unknown enum value" is thrown, when UnrecognizedPropertyException
+  comes from a hand-built new ObjectMapper(), when auto.register.schemas or
+  specific.avro.reader is left at its default, when a proto field is deleted without
+  reserved or its number reused, when BACKWARD is set on a compacted topic, when a consumer
+  group reset to earliest dies on old records, when an .avsc gains a field with no default,
+  or when a JSON schema ships with additionalProperties left at true. Not wire size
+  (serialization-performance), HTTP API versioning (rpc-and-api-contracts), offsets
+  (kafka-consumers-in-java), or upcasters (event-sourcing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/schema-evolution-and-compatibility
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/schema-evolution-and-compatibility
+
+keywords:
+  - avro
+  - protobuf
+  - json-schema
+  - schema-registry
+  - compatibility
+  - kafka
+  - versioning
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Schema Evolution and Compatibility
+      short_description: Which schema changes are safe, and in which deploy order
+      default_prompt: Use Schema Evolution and Compatibility to check this schema change.

@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: java-test-design
+version: 1.0.0
+description: >-
+  Writing a Java test that survives refactoring and says why it failed: naming the behaviour
+  rather than the method, one reason to fail, test data builders over shared mutable setup,
+  choosing the assertion that produces a readable failure, parameterised and nested tests,
+  and removing every input the test does not control — clock, ordering, locale, randomness.
+  Use when a test name does not say what broke, when a failure message has to be decoded by
+  reading the test, when setup is shared across unrelated tests, when a test sleeps, when
+  tests pass alone and fail together, when a flaky test is about to be retried or disabled,
+  or when the same assertions are being copied across cases. Does not cover which level to
+  test at (java-testing-strategy), stubs and mocks (java-test-doubles), the
+  red-green-refactor loop (tdd), or threading (concurrency-testing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-test-design
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-test-design
+
+keywords:
+  - java
+  - junit
+  - test-design
+  - assertj
+  - flaky-tests
+  - determinism
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: java-testing-strategy
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Test Design
+      short_description: Readable, deterministic, refactoring-proof tests
+      default_prompt: Use Java Test Design to review or write this test.

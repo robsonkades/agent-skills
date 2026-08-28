@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: distributed-tracing-design
+version: 1.0.0
+description: >-
+  Span modelling as a design decision: what earns a span and what does not, span names as
+  low-cardinality operation names with the detail in attributes, recording errors so a
+  failed trace is findable, and span links versus parent-child for asynchronous and batch
+  work. Use when a trace carries hundreds of spans per request, when a span name contains an
+  order id or a raw path, when a queue consumer is made a child of a producer span from an
+  hour ago, when one poll returns records from many traces and the batch is parented to
+  whichever arrived first, when a background job stretches its caller's trace, or when a
+  failed request shows a green root span. Does not cover sampling, context propagation
+  mechanics, Baggage or agent overhead (opentelemetry-performance), the log event itself
+  (structured-logging), label counting (metrics-and-cardinality), percentile correctness
+  (latency-statistics), the messaging architecture (event-driven-architecture,
+  kafka-consumers-in-java), or alerting (slo-and-alerting).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/distributed-tracing-design
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/distributed-tracing-design
+
+keywords:
+  - tracing
+  - observability
+  - spans
+  - span-links
+  - opentelemetry
+  - messaging
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: structured-logging
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Distributed Tracing Design
+      short_description: What earns a span, and links versus parents
+      default_prompt: Use Distributed Tracing Design to review how this flow is modelled as spans.

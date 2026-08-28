@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: cancellation-and-interruption
+version: 1.0.0
+description: >-
+  Cancellation in Java as a cooperative protocol: interruption as a request rather than a stop,
+  the two legal responses to InterruptedException, the blocking operations that ignore
+  interruption and what stops them instead, why Future.cancel(false) and CompletableFuture.cancel
+  never stop running work, and why a timeout is not a cancellation. Use when a catch block logs
+  InterruptedException and continues, when Thread.interrupted() is called and its result
+  discarded, when a timed-out request leaves work running, when cancel is expected to free a
+  connection, when shutdownNow leaves threads alive, when a task blocks on a plain Socket or a
+  native call, when Thread.stop is proposed, or when a StructuredTaskScope takes far longer to
+  close than to fail. Does not cover choosing the bound itself (timeouts-and-deadlines), what to
+  do after it fires (retries-and-backoff), executor shutdown mechanics
+  (executors-and-task-lifecycle), or scope join policies (structured-concurrency).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/cancellation-and-interruption
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/cancellation-and-interruption
+
+keywords:
+  - java
+  - concurrency
+  - interrupt
+  - cancellation
+  - interruptedexception
+  - future
+  - timeout
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: timeouts-and-deadlines
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Cancellation and Interruption
+      short_description: Interrupt protocol, cancel semantics, uncancellable work
+      default_prompt: Use Cancellation and Interruption to check whether this work can actually be stopped.

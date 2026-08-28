@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gc-fundamentals
+version: 1.2.0
+description: >-
+  How JVM garbage collectors work, as the mental model behind every GC diagnosis: the
+  generational hypothesis and where it fails, mark-sweep versus mark-compact versus copying,
+  why collection cost tracks survivors rather than allocation, write barriers, safepoints
+  and Time-To-SafePoint, and the JDK 25 collector landscape. Use when explaining why a
+  collection is expensive, when the reported pause does not match the latency the client
+  feels, when a cache or pool breaks the generational assumption, when humongous allocations
+  appear, or when comparing collectors written before JDK 23. Does not cover choosing a
+  collector or sizing the heap (jvm-gc-tuning), parsing the log (gc-log-analysis), or the
+  non-heap regions (jvm-memory-regions). Per-collector internals are g1-internals and
+  zgc-and-shenandoah, and the safepoint mechanism is safepoints.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gc-fundamentals
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gc-fundamentals
+
+keywords:
+  - java
+  - jvm
+  - gc
+  - garbage-collection
+  - safepoint
+  - generational
+  - barriers
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jvm-memory-regions
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: GC Fundamentals
+      short_description: Generations, barriers and safepoints
+      default_prompt: Use GC Fundamentals to explain the mechanism behind this GC behaviour.

@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: allocation-profiling
+version: 1.1.0
+description: >-
+  Finding which code allocates and how many bytes: TLAB fast path and slow path, JFR
+  jdk.ObjectAllocationSample versus the legacy TLAB events, async-profiler alloc mode,
+  deriving allocation rate from the GC log, and validating a fix by reprofiling. Use when GC
+  overhead is above 10-15% of CPU, when collector tuning has stopped moving the number, when
+  a p99 spike is being blamed on TLAB refill, when a JFR recording of
+  jdk.ObjectAllocationInNewTLAB came back empty, when someone proposes pooling small objects
+  or -XX:+TraceTLAB, or when a stream pipeline in a hot path is assumed free because "the
+  JIT eliminates it". Does not cover choosing and running a profile in general
+  (jfr-and-async-profiler), why an allocation survives or is scalar-replaced
+  (jit-inlining-and-escape-analysis), or reading the resulting collection behaviour
+  (gc-log-analysis).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/allocation-profiling
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/allocation-profiling
+
+keywords:
+  - java
+  - jvm
+  - allocation
+  - tlab
+  - profiling
+  - jfr
+  - async-profiler
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jfr-and-async-profiler
+    version: ^1.0.0
+  - name: jit-inlining-and-escape-analysis
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Allocation Profiling
+      short_description: Attributing allocated bytes to source lines
+      default_prompt: Use Allocation Profiling to find which code is producing the allocation pressure.

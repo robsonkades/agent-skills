@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: java-test-doubles
+version: 1.0.0
+description: >-
+  Choosing and using test doubles in Java: the stub/mock/fake distinction that actually
+  changes what a test proves, preferring the real collaborator or a hand-written fake over a
+  mock, verifying interactions only when the interaction is the outcome, Mockito's strict
+  stubs, and the rule against mocking types you do not own. Use when a test mocks every
+  collaborator the class touches, when verify is asserted on a query, when a refactoring
+  broke tests that still describe correct behaviour, when deep stubs or static mocking are
+  proposed, when a stubbed repository is hiding a query that does not work, when
+  UnnecessaryStubbingException appears, or when migrating from @MockBean. Does not cover
+  which level to test at (java-testing-strategy), how the test is written (java-test-design),
+  deterministic executors for threading (concurrency-testing), or breaking a dependency so the
+  class can be constructed at all (java-legacy-code-testing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-test-doubles
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-test-doubles
+
+keywords:
+  - java
+  - mockito
+  - test-doubles
+  - fakes
+  - mocking
+  - spring-boot
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: java-testing-strategy
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Test Doubles
+      short_description: Fakes over mocks, and Mockito hazards
+      default_prompt: Use Java Test Doubles to review the substitution in this test.

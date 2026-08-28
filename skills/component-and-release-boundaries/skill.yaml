@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: component-and-release-boundaries
+version: 1.0.0
+description: >-
+  Deciding what becomes an independently releasable component — a Maven module, a JPMS module, a
+  published library — and what that costs: the tension between reusing code and being able to
+  release it, why a shared jar couples every service depending on it, breaking cycles between
+  components, and judging whether a component is stable enough to depend on. Use when a `common`
+  or `shared` module is proposed or has grown, when extracting code into a library so two
+  services can reuse it, when a dependency cycle appears between Maven modules, when upgrading
+  one library forces a coordinated release of several services, or when services are
+  independently deployable in theory but always ship together. Does not cover cohesion and
+  coupling at class and package level (java-cohesion-coupling), whether a component should
+  become a separate process (distribution-boundaries), the API compatibility of a published type
+  (java-api-design), or wire contract versioning (rpc-and-api-contracts).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/component-and-release-boundaries
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/component-and-release-boundaries
+
+keywords:
+  - architecture
+  - components
+  - modularity
+  - maven
+  - jpms
+  - versioning
+  - dependency-management
+  - monorepo
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: java-cohesion-coupling
+    version: ^1.0.0
+  - name: java-dependency-inversion
+    version: ^1.0.0
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Component and Release Boundaries
+      short_description: Decide what becomes an independently releasable component

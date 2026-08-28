@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: jfr-and-async-profiler
+version: 1.2.0
+description: >-
+  Choosing and running the right JVM profiler: JFR as a continuous event bus versus
+  async-profiler for targeted sampling, CPU clock versus wall clock, allocation and lock
+  profiles, sampling adequacy, and the container permissions each engine needs. Use when
+  deciding which profile to take, when a CPU profile "shows nothing" for a latency problem,
+  when JFR is not enabled in production, when a blocking event returns zero results, when
+  async-profiler fails under seccomp, when a profile was taken before warm-up, or when
+  jstack is being run in a loop. Does not cover reading the resulting flame graph
+  (flame-graph-analysis), microbenchmarking (jmh-microbenchmarks), or the investigation
+  process around it (performance-methodology). Event configuration is jfr-advanced, engine
+  selection is async-profiler-advanced, and always-on collection is continuous-profiling.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/jfr-and-async-profiler
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/jfr-and-async-profiler
+
+keywords:
+  - java
+  - jvm
+  - profiling
+  - jfr
+  - async-profiler
+  - sampling
+  - observability
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: performance-methodology
+    version: ^1.0.0
+  - name: latency-statistics
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: JFR and async-profiler
+      short_description: Choosing and running the right JVM profile
+      default_prompt: Use JFR and async-profiler to choose and take the right profile here.

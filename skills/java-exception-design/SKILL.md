@@ -3,13 +3,13 @@ name: java-exception-design
 description: >
   Exceptions as API design in Java: checked versus unchecked as a deliberate decision,
   hierarchy sizing, translation at layer boundaries with cause preservation, retryable
-  versus non-retryable as an explicit property, and when a sealed result type beats an
-  exception. Use when designing the exception surface of a service or library, when a
-  catch block swallows a failure or rewraps one without its cause, when a codebase has
-  dozens of exception types nobody catches separately, or when retry logic parses
-  exception messages. Does not cover input validation at trust boundaries
-  (java-defensive-programming) or precondition and postcondition semantics
-  (java-design-by-contract).
+  versus non-retryable as an explicit property, failure atomicity when a method throws
+  partway through, and when a sealed result type beats an exception. Use when designing the
+  exception surface of a service or library, when a catch block swallows a failure or
+  rewraps one without its cause, when a codebase has dozens of exception types nobody
+  catches separately, or when retry logic parses exception messages. Does not cover input
+  validation at trust boundaries (java-defensive-programming) or precondition and
+  postcondition semantics (java-design-by-contract).
 ---
 
 # Java Exception Design
@@ -64,6 +64,10 @@ text, and failures silently converted into false success.
   normal return converts a failure into a false success. Handle, translate, or let fly.
 - In manual cleanup, attach a secondary failure with `addSuppressed` instead of losing
   it; prefer try-with-resources, which does this automatically.
+- A method that throws leaves its receiver as it found it: validate before mutating, order the
+  unfailable mutation last, or build the new state and install it with one assignment. Where
+  that is deliberately not true — a batch that keeps partial progress — say so in the Javadoc.
+  In-memory atomicity is not transactional atomicity and neither is atomicity across a network.
 
 ## References
 
@@ -74,3 +78,6 @@ text, and failures silently converted into false success.
 - [Worked example: a payment gateway's exception surface](references/payment-surface.md)
   — read when designing or overhauling failure handling for a service that crosses a
   process boundary.
+- [Failure atomicity](references/failure-atomicity.md) — read when a method mutates state and
+  can throw partway through, when a caller retries after catching, or when in-memory state and
+  a transaction or a remote call can disagree after a failure.

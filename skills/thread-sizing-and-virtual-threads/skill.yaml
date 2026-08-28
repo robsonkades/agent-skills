@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: thread-sizing-and-virtual-threads
+version: 1.2.0
+description: >-
+  Platform threads versus virtual threads in production: what a thread actually costs, the
+  mount/unmount model, why virtual threads solve I/O and not CPU, residual pinning after JEP
+  491, ThreadLocal as cache versus as context, thread naming, and what migrating to virtual
+  threads exposes downstream. Use when choosing or reviewing a pool size, when a thread pool
+  uses an unbounded queue, when ThreadLocal caches an expensive resource, when virtual
+  threads are proposed for CPU-bound work, when a thread dump comes back suspiciously short,
+  when someone repeats the pre-JDK-24 advice to replace synchronized with ReentrantLock, or
+  when latency got worse after adopting virtual threads. Does not cover happens-before and
+  correctness (java-memory-model), the queueing arithmetic (littles-law-and-queueing), or
+  database pool specifics (connection-pool-sizing). Virtual thread internals are
+  virtual-threads-internals and the work-stealing scheduler is
+  forkjoinpool-and-work-stealing.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/thread-sizing-and-virtual-threads
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/thread-sizing-and-virtual-threads
+
+keywords:
+  - java
+  - threads
+  - virtual-threads
+  - loom
+  - thread-pool
+  - pinning
+  - sizing
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: littles-law-and-queueing
+    version: ^1.0.0
+  - name: java-memory-model
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Thread Sizing and Virtual Threads
+      short_description: Pool sizing, virtual threads and pinning
+      default_prompt: Use Thread Sizing and Virtual Threads to size this concurrency or triage this thread problem.

@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: hot-partitions-and-rebalancing
+version: 1.1.0
+description: >-
+  Repairing a partitioned system whose distribution has failed in production: a hash
+  distributes keys uniformly and says nothing about traffic, so one celebrity key or one
+  large tenant saturates a shard while the map is correct. Covers detection — per-shard
+  rate, latency and storage, and the max-to-mean ratio, because an aggregate dashboard hides
+  skew; naming the key by top-K sampling; the read-hot, write-hot, storage-hot and
+  overloaded-fleet signatures; the repairs and their prices; and the rebalance, with its
+  double-ownership window and versioned map. Use when one shard runs far above the others
+  while the fleet average looks fine, when a shard is hot before and after a rehash, when
+  one tenant dominates a shard, or when a rebalance is planned or is itself the incident.
+  Not the mapping function (consistent-hashing), the key choice (sharding-and-partitioning),
+  caching (caching-strategies), capping the caller (rate-limiting-and-load-shedding), the
+  tail (tail-latency-analysis), or the numbers (latency-statistics).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/hot-partitions-and-rebalancing
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/hot-partitions-and-rebalancing
+
+keywords:
+  - hot-partition
+  - skew
+  - rebalancing
+  - sharding
+  - distributed-systems
+  - observability
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: consistent-hashing
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Hot Partitions And Rebalancing
+      short_description: Diagnosing shard skew and moving partitions
+      default_prompt: Use Hot Partitions And Rebalancing to work out why one shard is saturated and how to repair it.

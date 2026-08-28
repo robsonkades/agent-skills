@@ -1,0 +1,52 @@
+schemaVersion: 1
+
+name: latency-statistics
+version: 1.2.0
+description: >-
+  The statistics of latency measurement: percentiles versus averages, histogram aggregation,
+  sample-size adequacy, distribution shape, and coordinated omission. Use when an SLO or
+  dashboard reports mean latency, when p99 values are averaged across instances or time
+  windows, when a percentile is quoted without its sample count, when Prometheus buckets are
+  the default set, or when deciding whether two measurements actually differ. Does not cover
+  generating the load (load-testing), sizing systems from throughput
+  (littles-law-and-queueing), or the investigation process itself (performance-methodology).
+  The deep treatment of coordinated omission is coordinated-omission, and tail decomposition
+  is tail-latency-analysis.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/latency-statistics
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/latency-statistics
+
+keywords:
+  - java
+  - performance
+  - latency
+  - percentiles
+  - histogram
+  - hdrhistogram
+  - statistics
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Latency Statistics
+      short_description: Percentiles, histograms and sample adequacy
+      default_prompt: Use Latency Statistics to check whether this latency number means what it claims.

@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: jit-compilation
+version: 1.2.0
+description: >-
+  HotSpot JIT compilation and warm-up: the tiered pipeline 0→3→4 and why tier 1 is terminal,
+  profiling cost at tier 3, deoptimisation, code cache exhaustion, and warm-up as a function
+  of invocation rate rather than clock time. Use when p99 is bad for the first minutes after
+  a deploy, when performance degrades permanently until a restart, when "CodeCache is full"
+  appears, when a startup probe or traffic gate needs a warm-up criterion, when
+  -XX:-TieredCompilation or -Xcomp is proposed, or when scaling out a low-traffic service
+  makes latency worse. Does not cover inlining and escape analysis
+  (jit-inlining-and-escape-analysis), microbenchmark construction (jmh-microbenchmarks), or
+  the code cache's share of the memory budget (jvm-memory-regions). Reading the compiler
+  output is compilation-and-inlining-logs, recompilation is deoptimization, and per-segment
+  exhaustion is code-cache-segments.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/jit-compilation
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/jit-compilation
+
+keywords:
+  - java
+  - jvm
+  - jit
+  - c1
+  - c2
+  - warmup
+  - code-cache
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jvm-memory-regions
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: JIT Compilation
+      short_description: Tiered compilation, warm-up and code cache
+      default_prompt: Use JIT Compilation to diagnose this warm-up or code cache problem.

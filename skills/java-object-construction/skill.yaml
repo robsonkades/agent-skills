@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: java-object-construction
+version: 1.1.0
+description: >-
+  Choosing how an object comes into existence in Java: static factory versus public
+  constructor, the of/from/valueOf/getInstance naming conventions, instance control
+  (caching, canonicalisation, value-based classes), enum and holder singletons,
+  noninstantiable utility classes, and passing collaborators in rather than hardwiring them
+  with new. Use when a class has several constructors distinguished only by parameter types,
+  when a constructor does work beyond assigning fields, when a singleton or a static mutable
+  field is proposed, when new appears inside domain logic for something the code can never
+  substitute in a test, or when a factory hands back a type its callers should not be able
+  to name. Does not cover builders and fluent chains (java-fluent-apis), which dependency
+  edge should exist at all (java-dependency-inversion), defensive copying of components
+  (java-immutability), or releasing what construction acquires (java-resource-management).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-object-construction
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-object-construction
+
+keywords:
+  - java
+  - static-factory
+  - constructor
+  - singleton
+  - instance-control
+  - static-state
+  - api-design
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Object Construction
+      short_description: Factories, constructors, singletons and static state

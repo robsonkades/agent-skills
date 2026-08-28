@@ -9,9 +9,11 @@ Three distinct contracts break independently:
   hardest to see and the one tests exist for.
 
 Inside one codebase compiled and deployed as a whole, only behavioural compatibility
-matters — the compiler re-checks the other two on every build, which is why refactoring
-is cheap there. The moment compiled artefacts you do not rebuild (other services'
-clients, plugins, anything on Maven Central) consume the code, all three bind.
+matters **for Java linkage** — the compiler re-checks the other two on every build, which
+is why refactoring is cheap there. Two things end that: compiled artefacts you do not
+rebuild (other services' clients, plugins, anything on Maven Central), and a rolling
+deploy, which runs two versions of that same deployable at once — so anything on the wire,
+in a topic, in a distributed cache or in an outbox still binds in both directions.
 
 ## What breaks what
 
@@ -58,10 +60,13 @@ Classify the symbol before the first step:
    it is API evolution: introduce the new shape alongside, `@Deprecated(since = …)` the
    old, migrate, remove in a major release. The policy (semver, deprecation windows)
    is java-api-design's; the stop-line is this file's.
-4. **Serialised, reflected, or wire-mapped:** frameworks reach names at runtime —
-   JSON field names, JPA entity mappings, reflective config. A rename tool will not
-   save you; grep for the string form and treat the mapping boundary like a published
-   API.
+4. **Serialised, reflected, or wire-mapped:** frameworks reach names at runtime — JSON
+   field names, JPA entity mappings, JPQL, discriminator values, reflective config, and
+   anything already persisted in a cache or a queue in the old shape. A rename tool will
+   not save you; search for the string form and treat the mapping boundary like a
+   published API. Java-signature evolution from here is java-api-design's; a **wire or
+   event** shape is not — that is rpc-and-api-contracts' expand → migrate → contract,
+   over a window equal to the data's retention rather than the deploy's length.
 
 When in doubt, run the check that cannot lie: compile the _old_ clients (or a
 representative one) against the _new_ artefact, and run them without recompiling. A

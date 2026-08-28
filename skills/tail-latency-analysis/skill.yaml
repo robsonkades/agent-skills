@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: tail-latency-analysis
+version: 1.1.0
+description: >-
+  Where tail latency comes from and how to attack it: decomposing p99.9 into its
+  contributors, tail amplification across fan-out and chained calls, hedged requests and
+  their load cost, tail-tolerant design, and telling a systematic tail from a rare event.
+  Use when p99 is fine but p99.9 is not, when each service meets its own SLO yet the
+  user-facing request misses it, when a p99 spike needs to be attributed to GC, safepoint,
+  cold start or throttling, when someone proposes hedging or an aggressive timeout-plus-
+  retry, when a p50 optimisation made the tail worse, or when latency degrades for the first
+  minutes after every deploy. Does not cover percentiles, histogram aggregation or sample
+  adequacy (latency-statistics), the queueing contribution to the tail (queueing-models), or
+  turning the analysis into a capacity decision (capacity-planning).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/tail-latency-analysis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/tail-latency-analysis
+
+keywords:
+  - java
+  - performance
+  - latency
+  - tail-latency
+  - hedging
+  - fan-out
+  - slo
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: latency-statistics
+    version: ^1.0.0
+  - name: queueing-models
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Tail Latency Analysis
+      short_description: Finding and attacking the p99.9 tail
+      default_prompt: Use Tail Latency Analysis to find what produces this tail and what will shrink it.

@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: java-numeric-types
+version: 1.1.0
+description: >-
+  Choosing and using Java's numeric types correctly: why float and double cannot represent
+  decimal amounts, BigDecimal construction, scale, rounding and the equals/compareTo split,
+  integer overflow and the exact-arithmetic methods, primitives versus boxed types, the
+  Integer cache that makes == work for small values and fail for large ones, unboxing NPEs,
+  boxing cost in bulk paths, and what happens to a numeric value when it crosses JSON, a
+  database column or a JavaScript client. Use when money or any exact quantity is held in
+  double or float, when new BigDecimal(double) appears, when divide() has no rounding mode,
+  when BigDecimal values are compared with equals, when boxed types are compared with ==,
+  when a nullable Integer is unboxed, when arithmetic on ids, timestamps or sizes could
+  overflow, or when large longs are serialised to a browser. Does not cover date and time
+  types, string formatting and parsing (java-strings-and-text), or measuring allocation
+  (allocation-profiling).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-numeric-types
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-numeric-types
+
+keywords:
+  - java
+  - bigdecimal
+  - money
+  - rounding
+  - overflow
+  - autoboxing
+  - primitives
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Numeric Types
+      short_description: BigDecimal, money, overflow and boxing

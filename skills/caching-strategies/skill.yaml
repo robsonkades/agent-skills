@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: caching-strategies
+version: 1.1.0
+description: >-
+  Deciding whether to cache, then doing it safely: the h × T_source criterion, bounded size
+  or weight, TTL and jitter, stampede and its four distinct scopes, cache-aside versus
+  refreshAfterWrite, immutable DTOs rather than JPA entities, invalidation across instances,
+  Redis serialisation, and why hit rate alone is a misleading metric. Use when a cache is
+  being added or reviewed, when @Cacheable is called from within the same bean, when a cache
+  has no size limit or no TTL, when entries are preloaded in bulk with one TTL, when hit
+  rate is the only metric on the dashboard, when Old Gen keeps growing, when FLUSHALL
+  appears in a deploy pipeline, or when instances disagree about a value. Does not cover the
+  pool the cache protects (connection-pool-sizing), the queueing arithmetic
+  (littles-law-and-queueing), or GC tuning for the resulting heap (jvm-gc-tuning).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/caching-strategies
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/caching-strategies
+
+keywords:
+  - java
+  - cache
+  - caffeine
+  - redis
+  - stampede
+  - invalidation
+  - spring-cache
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: littles-law-and-queueing
+    version: ^1.0.0
+
+optionalDependencies:
+  - name: connection-pool-sizing
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Caching Strategies
+      short_description: When to cache, bounds, TTL, stampede and invalidation
+      default_prompt: Use Caching Strategies to decide or review this cache.

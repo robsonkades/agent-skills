@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-interpreter
+version: 1.0.0
+description: >-
+  Interpreter in modern Java: representing a small language as a typed tree and evaluating it,
+  expressed today as a sealed AST with an exhaustive switch rather than an eval() method per node.
+  Covers parsing as a separate problem the pattern does not solve, when an existing expression
+  language beats writing one, why evaluating user-supplied SpEL or OGNL is remote code execution,
+  the resource bounds an interpreter over untrusted input needs, and closure compilation when tree
+  walking is too slow. Use when a filter, rule or formula language is designed, when configuration
+  has grown conditionals, when someone proposes embedding an expression evaluator, or when an
+  expression from a request is passed to a template or EL engine. Does not cover adding operations
+  over an existing tree (gof-visitor), the tree structure itself (gof-composite), query
+  specifications over a database (query-objects-and-specifications), or JIT compilation of Java
+  (jit-compilation).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-interpreter
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-interpreter
+
+keywords:
+  - design-patterns
+  - gof
+  - behavioral
+  - interpreter
+  - dsl
+  - ast
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Interpreter
+      short_description: A small language, safely evaluated
+      default_prompt: Use Interpreter to review this expression language.

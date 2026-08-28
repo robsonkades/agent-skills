@@ -1,15 +1,14 @@
 ---
 name: java-tell-dont-ask
 description: >
-  Decision ownership: the object that has the data makes the decision. Use when a
-  service reads state with getters, decides, and writes state back (if
-  (acct.getBalance() > x) acct.setBalance(...)), when the same rule is re-derived
-  from the same getters in several places, when an invariant exists but no type
-  enforces it, when a domain model is all getters and setters with the logic in
-  services, or when a getter has side effects. Covers command–query separation and
-  when asking is correct: boundaries, reporting, cross-aggregate orchestration.
-  Does not cover the navigation chains that often carry the asking — that is
-  java-law-of-demeter.
+  Decision ownership: the object that has the data makes the decision. Use when a service
+  reads state with getters, decides, and writes state back (if (acct.getBalance() > x)
+  acct.setBalance(...)), when the same rule is re-derived from the same getters in several
+  places, when an invariant exists but no type enforces it, when a domain model is all
+  getters and setters with the logic in services, or when a getter has side effects. Covers
+  command–query separation and when asking is correct: boundaries, reporting,
+  cross-aggregate orchestration. Does not cover the navigation chains that often carry the
+  asking — that is java-law-of-demeter.
 ---
 
 # Java Tell, Don't Ask

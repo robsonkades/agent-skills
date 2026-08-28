@@ -1,0 +1,60 @@
+schemaVersion: 1
+
+name: distributed-systems
+version: 1.1.0
+description: >-
+  Triage and routing entry point for distributed systems in Java: turn a design question or
+  a production symptom into the one skill that owns it. Use when work crosses a process
+  boundary and the next step is unclear — a new service or integration is being designed, a
+  review must decide whether an operation is safe to retry or duplicate, a request fans out
+  or a queue backs up, replicas disagree, an incident is spreading across services, or
+  someone proposes sharding, a distributed lock, a leader or an event-driven rewrite. Routes
+  to failure-models for the fault model, delivery-semantics and idempotency for duplicates,
+  consistency-models for what a reader observes, and the rest of the family for each
+  specific decision. Does not itself cover any of those topics; JVM performance is
+  java-performance and in-process concurrency is the Java concurrency family.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/distributed-systems
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/distributed-systems
+
+keywords:
+  - distributed-systems
+  - triage
+  - routing
+  - architecture
+  - reliability
+  - java
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: failure-models
+    version: ^1.0.0
+  - name: delivery-semantics
+    version: ^1.0.0
+  - name: idempotency
+    version: ^1.0.0
+  - name: consistency-models
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Distributed Systems
+      short_description: Symptom and design triage for distributed systems
+      default_prompt: Use Distributed Systems to triage this problem and route it to the owner.

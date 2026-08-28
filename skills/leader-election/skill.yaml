@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: leader-election
+version: 1.1.0
+description: >-
+  Electing one active instance for work that must not run concurrently: the lease renewal
+  model and the rule that a leader stops acting when renewal fails, not when it learns it
+  lost; split-brain as the window between those, and the two designs that survive it — fence
+  every write, or make the work idempotent; failover time as detection, election and
+  warm-up; coordination-store leases, Kubernetes Lease objects and ShedLock rows, and what
+  each is adequate for; and when not to elect. Use when a @Scheduled job runs once per
+  replica after scaling out, when two instances both believe they lead, when a leader keeps
+  working after its lease expired, when failover takes a minute nobody budgeted, or when
+  ShedLock is described as leader election. Not lease and fencing mechanics
+  (distributed-locks-and-leases), how the election is decided (consensus-and-quorums), why a
+  scheduled job duplicates (stateless-service-design), splitting work by key
+  (sharding-and-partitioning), or pod termination (kubernetes-service-lifecycle).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/leader-election
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/leader-election
+
+keywords:
+  - distributed-systems
+  - leader-election
+  - lease
+  - split-brain
+  - failover
+  - shedlock
+  - scheduling
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: distributed-locks-and-leases
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Leader Election
+      short_description: Leases, split-brain and failover budgets
+      default_prompt: Use Leader Election to check whether this singleton is safe when its lease expires.

@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: distributed-transactions-and-sagas
+version: 1.1.0
+description: >-
+  Ending a multi-service operation consistently when no transaction spans it: the dual-write
+  defect and why @Transactional does not cover a broker publish; two-phase commit stated
+  fairly — the blocking window that rules it out between services, and where XA is still
+  correct; sagas, whose defining property is atomicity but not isolation; compensation
+  design, pivot ordering and the persisted saga log. Use when a method saves a row then
+  publishes or calls another service, when @Transactional is expected to span two services,
+  when a rollback is proposed for work another service committed, when a saga's state lives
+  in memory, or when nobody can say which step a process reached. Not the outbox
+  (delivery-semantics), repeat-safe steps (idempotency), what readers observe
+  (consistency-models), choreography versus orchestration (event-driven-architecture), retry
+  policy (retries-and-backoff), one owner of a role (leader-election,
+  distributed-locks-and-leases), or one-database boundaries (enterprise-transactions).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/distributed-transactions-and-sagas
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/distributed-transactions-and-sagas
+
+keywords:
+  - saga
+  - compensation
+  - two-phase-commit
+  - dual-write
+  - distributed-transactions
+  - orchestration
+  - java
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: idempotency
+    version: ^1.0.0
+  - name: delivery-semantics
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Distributed Transactions And Sagas
+      short_description: Sagas, compensation and when XA still fits
+      default_prompt: Use Distributed Transactions And Sagas to decide how this multi-service operation ends consistently.

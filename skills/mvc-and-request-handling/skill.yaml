@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: mvc-and-request-handling
+version: 1.1.0
+description: >-
+  How a web request is routed and handled: MVC's actual division of responsibilities, Page
+  Controller versus Front Controller, and Application Controller for flows whose next step
+  is a decision. Use when controllers contain business rules or persistence calls, when the
+  same cross-cutting concern is copied into every handler, when a wizard's navigation logic
+  is spread across handlers as if-chains, when a filter, interceptor and handler contend for
+  one concern, when a controller is tested by starting the whole application, or when
+  classical web patterns are mapped onto a REST API. Does not cover how the response is
+  rendered (view-and-representation-patterns), the remote operation and its payload
+  (remote-facade-and-dto), the use-case layer (service-layer-design), or where conversation
+  state lives across requests (session-state-strategies).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/mvc-and-request-handling
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/mvc-and-request-handling
+
+keywords:
+  - mvc
+  - front-controller
+  - page-controller
+  - application-controller
+  - spring-mvc
+  - filters
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: layering-and-boundaries
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: MVC and Request Handling
+      short_description: Controllers, chains and flow logic
+      default_prompt: Use MVC and Request Handling to place this request-handling concern.

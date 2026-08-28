@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: universal-scalability-law
+version: 1.1.0
+description: >-
+  The Universal Scalability Law: the contention coefficient (sigma, Gunther's alpha), the
+  coherency coefficient (kappa, Gunther's beta), fitting the model to measured throughput,
+  N_max as the throughput peak, and why throughput falls beyond it. Use when adding pods or
+  threads stopped increasing throughput or made it worse, when a scale-out is being proposed
+  without evidence it will help, when a benchmark shows throughput peaking and then
+  declining, when someone extrapolates scalability from N = 1, 2, 4 only, or when deciding
+  between attacking a lock and eliminating shared state. Does not cover the N = lambda x R
+  law, utilisation rules of thumb or pool sizing (littles-law-and-queueing), choosing and
+  fitting a queueing model (queueing-models), or turning a model into an infrastructure
+  decision (capacity-planning).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/universal-scalability-law
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/universal-scalability-law
+
+keywords:
+  - performance
+  - scalability
+  - usl
+  - throughput
+  - contention
+  - coherency
+  - capacity
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: littles-law-and-queueing
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Universal Scalability Law
+      short_description: Contention, coherency and the throughput peak
+      default_prompt: Use Universal Scalability Law to decide whether adding capacity will actually raise throughput.

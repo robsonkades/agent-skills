@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: reading-jit-assembly
+version: 1.1.0
+description: >-
+  Reading the machine code HotSpot actually emitted: installing hsdis, driving
+  -XX:+PrintAssembly and JMH perfasm, telling the verified entry point and prologue from the
+  method body, and confirming or refuting a hypothesis about an optimisation from the
+  instructions themselves. Use when a claim about an optimisation needs proof at the
+  instruction level, when PrintAssembly prints hex bytes instead of mnemonics, when a
+  command fails because UnlockDiagnosticVMOptions is missing, when a load has no cmp/test
+  before it and someone concludes the null check was eliminated, when an assembly excerpt
+  from a blog is in the other operand order, or when unexplained runtime calls appear
+  between the expected logic. Does not cover the compiler phases that produced the code
+  (c2-sea-of-nodes), what the compiler decided to inline or compile
+  (compilation-and-inlining-logs), vectorisation as a subject (simd-and-vector-api), or
+  benchmark construction (jmh-advanced).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/reading-jit-assembly
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/reading-jit-assembly
+
+keywords:
+  - java
+  - jvm
+  - hsdis
+  - printassembly
+  - assembly
+  - perfasm
+  - hotspot
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: c2-sea-of-nodes
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Reading JIT Assembly
+      short_description: hsdis, PrintAssembly and perfasm output
+      default_prompt: Use Reading JIT Assembly to confirm from the emitted code what the JIT actually did.

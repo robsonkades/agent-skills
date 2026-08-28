@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: linux-for-jvm
+version: 1.2.0
+description: >-
+  The Linux side of a JVM incident: RSS versus virtual memory, page faults and swap,
+  AlwaysPreTouch, transparent huge pages, cgroup CPU throttling, the two OOM killers,
+  file-descriptor and process limits, signals and graceful shutdown, and PSI as the earliest
+  saturation signal. Use when a process dies with exit code 137 or no log at all, when a GC
+  pause in the log does not match the pause the client felt, when "too many open files" or
+  "unable to create native thread" appears, when THP or swappiness is being changed by
+  reflex, when kill -9 is the first response, or when container CPU limits may be throttling
+  the JVM. Does not cover the JVM-side memory budget (jvm-memory-regions), collector
+  behaviour (gc-fundamentals), or CPU cache and NUMA topology (cpu-cache-and-numa). What the
+  JVM detects inside a cgroup is container-awareness, kernel-side tracing is ebpf-for-jvm,
+  and the network stack is tcp-tuning.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/linux-for-jvm
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/linux-for-jvm
+
+keywords:
+  - java
+  - jvm
+  - linux
+  - cgroups
+  - oom-killer
+  - kubernetes
+  - throttling
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jvm-memory-regions
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Linux for the JVM
+      short_description: Cgroups, OOM kills, page faults and throttling
+      default_prompt: Use Linux for the JVM to investigate this host or container level problem.

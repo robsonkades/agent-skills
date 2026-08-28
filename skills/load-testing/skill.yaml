@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: load-testing
+version: 1.2.0
+description: >-
+  Designing a load test whose numbers describe the system rather than the generator:
+  open-loop versus closed-loop injection, the N/mu latency ceiling of closed loops, warm-up
+  phases, representative datasets, generator placement, analytic prediction before
+  execution, and the validity conditions that make a run reportable. Use when a load test is
+  being designed or reviewed, when a k6/Gatling/JMeter script uses a fixed number of virtual
+  users, when throughput plateaus while latency doubles as VUs are added, when the generator
+  runs on the application host, when a single run is treated as a measurement, or when a
+  soak test needs a plan. Does not cover the statistics of the resulting numbers
+  (latency-statistics), microbenchmarking (jmh-microbenchmarks), or capacity arithmetic
+  (littles-law-and-queueing). Profiles beyond a steady rate are load-testing-advanced and
+  the omission mechanism is coordinated-omission.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/load-testing
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/load-testing
+
+keywords:
+  - java
+  - load-testing
+  - k6
+  - gatling
+  - open-loop
+  - capacity
+  - soak
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: littles-law-and-queueing
+    version: ^1.0.0
+  - name: latency-statistics
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Load Testing
+      short_description: Open-loop design and run validity
+      default_prompt: Use Load Testing to design or review this load test.

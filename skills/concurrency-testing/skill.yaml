@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: concurrency-testing
+version: 1.0.0
+description: >-
+  Testing concurrent Java so failures appear in CI rather than in an incident: what a passing
+  concurrency test does and does not prove, replacing sleeps with latches and deterministic
+  executors, explicitly exercising cancellation, interruption and timeout, stress tests that
+  assert invariants, and soak tests that catch permit and connection leaks. Use when a test uses
+  Thread.sleep to wait for another thread, when a concurrency test is flaky and a retry is
+  proposed, when cancellation or timeout paths have no test at all, when tests assert on thread
+  names or pool sizes and broke after a virtual-thread change, when a race was found in
+  production and nobody can reproduce it, or when a concurrency limit or fallback has never been
+  exercised under failure. Does not cover proving memory-model claims (java-memory-model,
+  varhandles-and-memory-ordering), benchmark methodology (jmh-microbenchmarks), load generation
+  and rates (load-testing), or diagnosing a live system (concurrency-diagnostics).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/concurrency-testing
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/concurrency-testing
+
+keywords:
+  - java
+  - concurrency
+  - testing
+  - jcstress
+  - stress-test
+  - soak
+  - fault-injection
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: cancellation-and-interruption
+    version: ^1.0.0
+  - name: java-memory-model
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Concurrency Testing
+      short_description: Deterministic tests, stress, soak and fault injection
+      default_prompt: Use Concurrency Testing to make this concurrency defect fail a build instead of an incident.

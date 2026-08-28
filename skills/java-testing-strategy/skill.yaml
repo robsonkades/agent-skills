@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: java-testing-strategy
+version: 1.0.0
+description: >-
+  Choosing which test level earns its cost for a given change: what a unit, integration,
+  contract or end-to-end test can and cannot prove, pushing each test to the narrowest scope
+  where the risk is actually real, what every mocked boundary obliges you to verify
+  elsewhere, and coverage as a diagnostic rather than a target. Use when deciding where to
+  test a change, when a suite is slow or nobody trusts it, when a bug escaped a green suite,
+  when mocks make a test pass while production fails, when a coverage gate is proposed, or
+  when a fix needs a regression test. Does not cover how an individual test is written
+  (java-test-design), doubles and Mockito (java-test-doubles), the red-green-refactor loop
+  (tdd), concurrency (concurrency-testing), distributed behaviour
+  (distributed-systems-testing), architecture rules (architecture-testing), load and
+  benchmarks (load-testing, jmh-microbenchmarks), or getting untestable legacy code into a
+  harness (java-legacy-code-testing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-testing-strategy
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-testing-strategy
+
+keywords:
+  - java
+  - testing
+  - test-strategy
+  - integration-testing
+  - testcontainers
+  - coverage
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Testing Strategy
+      short_description: Which test level earns its cost
+      default_prompt: Use Java Testing Strategy to decide where to test this change.

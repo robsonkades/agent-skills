@@ -1,12 +1,18 @@
 schemaVersion: 1
 
 name: jvm-gc-tuning
-version: 1.0.0
+version: 2.2.0
 description: >-
-  JVM garbage collection: choosing between G1, ZGC, Parallel and Serial, sizing the
-  heap, reading GC logs, and deciding whether a problem is actually a GC problem.
-  Start from java-performance instead when the symptom is latency or CPU and GC has
-  not yet been confirmed.
+  Deciding whether GC is the actual bottleneck, then choosing a collector and sizing the
+  heap. Use when GC pauses appear on the critical path of a latency profile, when full
+  collections show up, when the heap grows toward its limit, when sizing a JVM for a
+  container, or when a collector change is being proposed. Start from java-performance
+  instead when the symptom is latency or CPU and GC has not been confirmed as the cause.
+  Does not cover how collectors work internally (gc-fundamentals), configuring and reading
+  the GC log (gc-log-analysis), the non-heap memory budget (jvm-memory-regions), or
+  allocation profiling and leak hunting (jit-inlining-and-escape-analysis). Deriving G1 flag
+  values from an SLO is g1-tuning-for-slo and operating the concurrent collectors is
+  zgc-and-shenandoah.
 
 license: Apache-2.0
 
@@ -24,10 +30,17 @@ keywords:
   - gc
   - garbage-collection
   - tuning
+  - heap-sizing
 
 files:
   - SKILL.md
   - skill.yaml
   - references/
 
-dependencies: []
+dependencies:
+  - name: gc-fundamentals
+    version: ^1.0.0
+  - name: gc-log-analysis
+    version: ^1.0.0
+  - name: jvm-memory-regions
+    version: ^1.0.0

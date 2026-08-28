@@ -1,15 +1,16 @@
 schemaVersion: 1
 
 name: java-fluent-apis
-version: 1.0.0
+version: 1.1.0
 description: >-
-  Fluent interfaces and builders as API decisions: when a builder pays for itself
-  versus a record, constructor or static factory; staged builders and their
-  compatibility cost; immutable wither-style APIs; and the debugging and binary
-  compatibility consequences of method chaining. Use when designing or reviewing
-  a type with four or more constructor parameters, several optional ones, or a
-  proposed builder, staged builder or DSL. Navigation chains are covered by
-  java-law-of-demeter.
+  Fluent interfaces and builders as API decisions: when a builder pays for itself versus a
+  record, constructor or static factory; staged builders and their compatibility cost;
+  immutable wither-style APIs; and the debugging and binary compatibility consequences of
+  method chaining. Use when designing or reviewing a type with four or more constructor
+  parameters, several optional ones, or adjacent parameters of the same type; when someone
+  proposes a builder, staged builder or DSL; or when a long chain has become hard to read,
+  debug or evolve. Does not cover navigation chains through other objects' structure
+  (java-law-of-demeter) or general naming and parameter design (java-api-design).
 
 license: Apache-2.0
 

@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: concurrent-collections-and-synchronizers
+version: 1.1.0
+description: >-
+  Choosing between the members of java.util.concurrent once the family is settled, and the
+  parameter that makes it correct: which BlockingQueue and which of its four insert and
+  remove forms, which ConcurrentHashMap atomic replaces a compound action, copy-on-write's
+  cost, latch versus barrier versus phaser versus semaphore, the Condition await loop, and
+  ReentrantLock versus ReentrantReadWriteLock versus StampedLock. Use when computeIfAbsent
+  loads from a database, when IllegalStateException "Recursive update" is thrown, when new
+  LinkedBlockingQueue<>() appears in a producer, when a thread parks in CountDownLatch$Sync
+  or every worker sits in CyclicBarrier.dowait, when await() sits under an if, or when a
+  read lock is upgraded to a write lock. Not the thread-safety contract
+  (java-thread-safety-contracts), executor lifecycle (executors-and-task-lifecycle), limit
+  sizing (concurrency-limiting-and-bulkheads), CAS loops (lock-free-patterns), monitor
+  contention (lock-inflation), or happens-before (java-memory-model).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/concurrent-collections-and-synchronizers
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/concurrent-collections-and-synchronizers
+
+keywords:
+  - java
+  - concurrency
+  - blockingqueue
+  - concurrenthashmap
+  - semaphore
+  - locks
+  - synchronizers
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Concurrent Collections and Synchronizers
+      short_description: Choosing the java.util.concurrent member and its parameters
+      default_prompt: Use Concurrent Collections and Synchronizers to check this choice.

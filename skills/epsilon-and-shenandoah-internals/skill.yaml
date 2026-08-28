@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: epsilon-and-shenandoah-internals
+version: 1.1.0
+description: >-
+  Epsilon as a measurement instrument (isolating allocation cost, failing fast against an
+  allocation budget, sizing from time-to-OOM) and Shenandoah internals (the load reference
+  barrier, the concurrent phase sequence, generational mode and its card-table remembered
+  set, the heuristics and their thresholds, and the degenerated-versus-full fallbacks). Use
+  when a hot path is claimed to be allocation-free, when a benchmark's numbers are polluted
+  by collection, when "Degenerated GC" appears in a Shenandoah log, when a Shenandoah
+  comparison does not state its ShenandoahGCMode, when someone calls the LRB a read barrier
+  or searches a flame graph for the wrong symbol, or when an Epsilon example omits
+  -XX:+UnlockExperimentalVMOptions. Does not cover choosing between or operating the
+  concurrent collectors (zgc-and-shenandoah), finding which code allocates
+  (allocation-profiling), or establishing whether GC is the bottleneck at all
+  (jvm-gc-tuning).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/epsilon-and-shenandoah-internals
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/epsilon-and-shenandoah-internals
+
+keywords:
+  - java
+  - jvm
+  - epsilon
+  - shenandoah
+  - garbage-collection
+  - load-reference-barrier
+  - allocation
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: zgc-and-shenandoah
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Epsilon and Shenandoah Internals
+      short_description: Epsilon as instrument, Shenandoah mechanism
+      default_prompt: Use Epsilon and Shenandoah Internals to reason about this collector behaviour.

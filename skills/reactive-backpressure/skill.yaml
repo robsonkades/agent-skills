@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: reactive-backpressure
+version: 1.0.0
+description: >-
+  Backpressure in reactive and asynchronous pipelines: Reactive Streams request semantics,
+  the operators that break the protocol, bounded buffers and overflow strategies, blocking
+  inside a non-blocking pipeline, and measuring where demand is actually being throttled.
+  Use when memory grows in proportion to time under load, when a sequence terminates with an
+  unexpected overflow error, when onBackpressureBuffer is used with no size or no
+  BufferOverflowStrategy, when a refactor replaced a Reactor pipeline with unbounded task
+  submission and the concurrency limit vanished, when block() or a JDBC call sits inside a
+  pipeline, or when a dashboard queries a Reactor metric name that returns no series. Does
+  not cover the queueing arithmetic behind a bounded buffer (littles-law-and-queueing), the
+  thread-per-request alternative (thread-sizing-and-virtual-threads), or the scheduler
+  underneath parallel operators (forkjoinpool-and-work-stealing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/reactive-backpressure
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/reactive-backpressure
+
+keywords:
+  - java
+  - reactive
+  - backpressure
+  - reactor
+  - reactive-streams
+  - flow-control
+  - blockhound
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: littles-law-and-queueing
+    version: ^1.0.0
+  - name: thread-sizing-and-virtual-threads
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Reactive Backpressure
+      short_description: Flow control, overflow policy and demand
+      default_prompt: Use Reactive Backpressure to find where this pipeline stops bounding pending work.

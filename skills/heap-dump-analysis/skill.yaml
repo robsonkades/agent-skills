@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: heap-dump-analysis
+version: 1.1.0
+description: >-
+  Taking and analysing a JVM heap dump: capturing without making the incident worse,
+  dominator tree versus shallow and retained size, path to GC roots excluding weak
+  references, Eclipse MAT and OQL, comparing two dumps, and separating a leak from a large
+  working set. Use when heap grows monotonically with uptime, after an `OutOfMemoryError` or
+  a `-XX:+HeapDumpOnOutOfMemoryError` file appears, when a histogram is being read by
+  shallow size, when `jcmd` or `jmap` hangs against a stuck JVM, when a `WeakHashMap` or
+  `ThreadLocal` cache never empties, when `StackChunk` or `Continuation` tops a dominator
+  tree, or when writing OQL. Does not cover the region budget and which OOM message means
+  what (jvm-memory-regions), why a live set costs what it costs (gc-fundamentals),
+  classloader leaks specifically (jvm-class-loading), or core-dump and Serviceability Agent
+  workflows (jhsdb-and-core-dumps).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/heap-dump-analysis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/heap-dump-analysis
+
+keywords:
+  - heap-dump
+  - hprof
+  - memory-leak
+  - eclipse-mat
+  - oql
+  - retained-heap
+  - jvm
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: jvm-memory-regions
+    version: ^1.0.0
+  - name: gc-fundamentals
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Heap Dump Analysis
+      short_description: Retained size, dominator tree and GC roots
+      default_prompt: Use Heap Dump Analysis to find what is retaining this heap and whether it is a leak.

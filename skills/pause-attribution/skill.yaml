@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: pause-attribution
+version: 1.1.0
+description: >-
+  Attributing an observed production pause to a layer: decomposing it across
+  time-to-safepoint, safepoint operation, cleanup and host effects, correlating the GC log,
+  the safepoint log, JFR and OS signals by timestamp, and proving which layer owns the
+  missing milliseconds. Use when application p99 far exceeds what the GC log accounts for,
+  when "Reaching safepoint" is large while "At safepoint" is small, when two profilers
+  disagree about hot paths, when a safepoint-log analyser reports zero events, when someone
+  sums "Reaching + At" by hand, or when a fix copied from an old war story does not
+  reproduce. Does not cover the safepoint mechanism itself (safepoints), configuring and
+  parsing the GC log (gc-log-analysis), or host-side causes such as CPU throttling, swap and
+  page faults (linux-for-jvm).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/pause-attribution
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/pause-attribution
+
+keywords:
+  - java
+  - jvm
+  - safepoint
+  - ttsp
+  - latency
+  - jfr
+  - pause
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: safepoints
+    version: ^1.0.0
+  - name: gc-log-analysis
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Pause Attribution
+      short_description: Which layer owns the missing milliseconds
+      default_prompt: Use Pause Attribution to work out which layer this pause belongs to.

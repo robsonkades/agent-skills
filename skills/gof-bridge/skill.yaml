@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: gof-bridge
+version: 1.0.0
+description: >-
+  Bridge in modern Java: separating an abstraction hierarchy from an implementation hierarchy so
+  the two vary independently instead of multiplying into N×M classes. Covers the two-axis test
+  that distinguishes it from Strategy, what to do when the matrix has illegal combinations, why
+  the implementor interface must be designed for its slowest and least reliable implementation,
+  and the thread-safety contract that belongs to the interface rather than to each implementation.
+  Use when class names start combining two adjectives, when adding either a variant or a backend
+  requires editing the other side, when a transport or storage backend must be swappable, when one
+  backend is remote and the others are local, or when someone proposes Bridge for a single axis of
+  variation. Does not cover retrofitting an incompatible existing type (gof-adapter), one varying
+  algorithm (gof-strategy), families of matched products (gof-abstract-factory), or choosing a
+  hierarchy shape in general (java-composition-over-inheritance).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/gof-bridge
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/gof-bridge
+
+keywords:
+  - design-patterns
+  - gof
+  - structural
+  - bridge
+  - composition
+  - backends
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: gof-pattern-thinking
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Bridge
+      short_description: Two axes, sum instead of product
+      default_prompt: Use Bridge to check whether this hierarchy is multiplying.

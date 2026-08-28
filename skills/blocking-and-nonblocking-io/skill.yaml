@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: blocking-and-nonblocking-io
+version: 1.1.0
+description: >-
+  Four things routinely conflated into one: a blocking API, a blocked OS thread,
+  non-blocking I/O at the syscall, and an asynchronous programming model. Covers which JDK
+  operations unmount a virtual thread and which capture the carrier, the difference between
+  capture-with-compensation and pinning, the socket poller behind blocking socket calls,
+  file I/O as the case Loom does not fix, and what blocking an event loop costs. Use when
+  someone says virtual threads make I/O non-blocking, when a file-heavy workload on virtual
+  threads grows the carrier pool, when a blocking call sits inside a Netty or Reactor
+  pipeline, when jdk.virtualThreadScheduler.maxPoolSize is raised to fix a symptom, or when
+  an argument turns on whether the model or the syscall is the bottleneck. Not choosing
+  between the two models (reactive-and-virtual-thread-selection), continuation mechanics and
+  pinning diagnosis (virtual-threads-internals), demand signalling (reactive-backpressure),
+  or copy avoidance (io-uring-and-zero-copy).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/blocking-and-nonblocking-io
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/blocking-and-nonblocking-io
+
+keywords:
+  - java
+  - io
+  - virtual-threads
+  - nio
+  - event-loop
+  - netty
+  - pinning
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: thread-sizing-and-virtual-threads
+    version: ^1.0.0
+  - name: virtual-threads-internals
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Blocking and Non-Blocking I/O
+      short_description: Unmount, capture, pin and the event-loop model
+      default_prompt: Use Blocking and Non-Blocking I/O to classify what this call does to the thread underneath it.

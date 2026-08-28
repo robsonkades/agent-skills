@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: tdd
+version: 1.0.0
+description: >-
+  Test-driven development as a judgement call rather than a doctrine: the red-green-refactor
+  loop and what each step is actually for, the discipline of watching a test fail for the
+  stated reason, step size, and an explicit account of where TDD pays and where test-after or
+  characterisation is the better choice. Use when deciding whether to drive a change with
+  tests, when starting a bug fix, when a design is hard to test and the cause is not obvious,
+  when tests are being written after the fact to satisfy a rule, when the refactor step keeps
+  getting skipped, or when someone claims TDD is mandatory or useless. Does not cover which
+  level to test at (java-testing-strategy), how a test is written (java-test-design), doubles
+  (java-test-doubles), refactoring mechanics and safety (java-refactoring), or breaking a
+  dependency to get untestable code into a harness (java-legacy-code-testing).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/tdd
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/tdd
+
+keywords:
+  - tdd
+  - red-green-refactor
+  - java
+  - testing
+  - bug-fixes
+  - design-feedback
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: java-testing-strategy
+    version: ^1.0.0
+  - name: java-test-design
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: TDD
+      short_description: Red-green-refactor, and when it pays
+      default_prompt: Use TDD to decide how to drive this change.
