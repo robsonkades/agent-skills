@@ -1,6 +1,6 @@
 {
   "name": "@jvm-expert/adapter-codex",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "OpenAI Codex agent adapter for agent-skills",
   "license": "Apache-2.0",
   "repository": {
@@ -28,7 +28,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@jvm-expert/core": "1.1.0",
+    "@jvm-expert/core": "1.2.0",
     "yaml": "^2.6.1"
   }
 }
