@@ -13,6 +13,19 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, '..', '..', '..');
 const bin = join(repoRoot, 'packages', 'cli', 'bin', 'agent-skills.mjs');
 
+describe('CLI version', () => {
+  it('reports the version its package.json publishes', async () => {
+    // The constant is hand-written and was last bumped at 1.0.0, so `--version` would have
+    // announced 1.0.0 from a 1.2.0 release. Releases move every package together; this keeps
+    // the one number a user actually sees moving with them.
+    const pkg = JSON.parse(
+      await readFile(join(repoRoot, 'packages', 'cli', 'package.json'), 'utf8'),
+    ) as { version: string };
+    const { stdout } = await run(process.execPath, [bin, '--version']);
+    assert.equal(stdout.trim(), pkg.version);
+  });
+});
+
 interface CliResult {
   readonly code: number;
   readonly stdout: string;
