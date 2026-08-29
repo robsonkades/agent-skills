@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: orm-structural-mapping
-version: 1.1.0
+version: 1.2.0
 description: >-
   Mapping the structure of an object model onto tables: Identity Field, Foreign Key Mapping,
   Association Table Mapping, Dependent Mapping, Embedded Value and Serialized LOB. Use when
@@ -40,8 +40,15 @@ files:
   - references/
 
 dependencies:
-  - name: data-source-patterns
-    version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - architecture-decision-making
+  - architecture-refactoring-paths
+  - domain-logic-organization
+  - offline-concurrency-control
+  - orm-behavioral-patterns
+  - repository-pattern
 
 capabilities:
   - reads-source

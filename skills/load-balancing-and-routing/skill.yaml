@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: load-balancing-and-routing
-version: 1.0.0
+version: 1.1.0
 description: >-
   Getting a request to a replica that can serve it: L4 versus L7 by capability rather than
   layer number, why an L4 balancer in front of long-lived HTTP/2 or gRPC connections
@@ -44,6 +44,15 @@ files:
 dependencies:
   - name: stateless-service-design
     version: ^1.0.0
+  - name: sharding-and-partitioning
+    version: ^1.0.0
+
+suggests:
+  - ambassador-pattern
+  - coordinated-omission
+  - failure-models
+  - kubernetes-service-lifecycle
+  - rate-limiting-and-load-shedding
 
 capabilities:
   - reads-source

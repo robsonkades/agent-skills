@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-facade
-version: 1.0.0
+version: 1.1.0
 description: >-
   Facade in modern Java: one coherent entry point over a subsystem of collaborators, so callers
   depend on an intention rather than on a sequence. Covers the difference between a facade
@@ -41,8 +41,24 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
+  - name: gof-adapter
     version: ^1.0.0
+  - name: gof-decorator
+    version: ^1.0.0
+
+suggests:
+  - connection-pool-sizing
+  - domain-logic-organization
+  - enterprise-transactions
+  - event-driven-architecture
+  - failure-models
+  - gof-mediator
+  - java-composition-over-inheritance
+  - java-testing-strategy
+  - query-objects-and-specifications
+  - remote-facade-and-dto
+  - scatter-gather
+  - structured-concurrency
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: component-and-release-boundaries
-version: 1.0.0
+version: 1.1.0
 description: >-
   Deciding what becomes an independently releasable component — a Maven module, a JPMS module, a
   published library — and what that costs: the tension between reusing code and being able to
@@ -47,6 +47,17 @@ dependencies:
     version: ^1.0.0
   - name: java-dependency-inversion
     version: ^1.0.0
+
+suggests:
+  - distributed-tracing-design
+  - distribution-boundaries
+  - enterprise-architecture-smells
+  - java-api-design
+  - metadata-mapping
+  - metrics-and-cardinality
+  - retries-and-backoff
+  - rpc-and-api-contracts
+  - structured-logging
 
 agentOverrides:
   codex:

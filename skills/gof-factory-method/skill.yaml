@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-factory-method
-version: 1.0.0
+version: 1.1.0
 description: >-
   Factory Method in modern Java, and the three different things that share its name: the GoF
   pattern (a creation hook a subclass overrides inside an inherited algorithm), Effective Java's
@@ -41,8 +41,14 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
-    version: ^1.0.0
+
+suggests:
+  - gof-abstract-factory
+  - gof-prototype
+  - gof-template-method
+  - java-composition-over-inheritance
+  - java-test-doubles
+  - jit-inlining-and-escape-analysis
 
 capabilities:
   - reads-source

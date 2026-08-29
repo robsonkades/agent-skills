@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: consistency-models
-version: 1.1.0
+version: 1.2.0
 description: >-
   Choosing a consistency model as an engineering decision: the ladder from linearizable
   through sequential, causal and the session guarantees (read-your-writes, monotonic reads)
@@ -45,6 +45,13 @@ files:
 dependencies:
   - name: failure-models
     version: ^1.0.0
+
+suggests:
+  - cache-sharding-and-replication
+  - caching-strategies
+  - delivery-semantics
+  - distributed-transactions-and-sagas
+  - java-memory-model
 
 capabilities:
   - reads-source

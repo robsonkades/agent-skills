@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: littles-law-and-queueing
-version: 1.2.0
+version: 1.3.0
 description: >-
   Sizing and capacity from Little's Law (N = λ × R) and queueing theory: separating service
   time from queue time, why latency explodes above ~80% utilisation, thread pool and
@@ -43,6 +43,9 @@ files:
 dependencies:
   - name: latency-statistics
     version: ^1.0.0
+
+suggests:
+  - cpu-cache-and-numa
 
 capabilities:
   - reads-source

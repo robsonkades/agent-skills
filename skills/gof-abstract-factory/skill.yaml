@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-abstract-factory
-version: 1.0.0
+version: 1.1.0
 description: >-
   Abstract Factory in modern Java: the pattern exists to keep a _family_ of related objects
   mutually consistent when the family varies, not to centralise construction. Covers the family
@@ -41,8 +41,12 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
-    version: ^1.0.0
+
+suggests:
+  - gof-flyweight
+  - gof-pattern-antipatterns
+  - gof-proxy
+  - jit-inlining-and-escape-analysis
 
 capabilities:
   - reads-source

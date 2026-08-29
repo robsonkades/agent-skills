@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-pattern-antipatterns
-version: 1.0.0
+version: 1.1.0
 description: >-
   Detecting and removing design-pattern misuse: abstractions that trace to no requirement,
   patterns chosen because a name sounded right, and the specific failure each overused pattern
@@ -43,6 +43,25 @@ files:
 dependencies:
   - name: gof-pattern-thinking
     version: ^1.0.0
+
+suggests:
+  - architecture-decision-making
+  - gof-abstract-factory
+  - gof-adapter
+  - gof-builder
+  - gof-decorator
+  - gof-factory-method
+  - gof-flyweight
+  - gof-mediator
+  - gof-observer
+  - gof-prototype
+  - gof-proxy
+  - gof-singleton
+  - gof-strategy
+  - gof-template-method
+  - gof-visitor
+  - java-dry-kiss-yagni
+  - rpc-and-api-contracts
 
 capabilities:
   - reads-source

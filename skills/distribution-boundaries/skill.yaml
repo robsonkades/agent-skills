@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: distribution-boundaries
-version: 1.1.0
+version: 1.2.0
 description: >-
   Deciding whether a boundary should be a process boundary, and designing it when it must
   be: what distribution actually costs (latency, serialisation, partial failure, lost
@@ -42,12 +42,25 @@ files:
   - references/
 
 dependencies:
-  - name: layering-and-boundaries
-    version: ^1.0.0
   - name: rpc-and-api-contracts
     version: ^1.0.0
   - name: failure-models
     version: ^1.0.0
+  - name: layering-and-boundaries
+    version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - architecture-decision-making
+  - concurrency-limiting-and-bulkheads
+  - consistency-models
+  - delivery-semantics
+  - enterprise-transactions
+  - legacy-enterprise-modernization
+  - remote-facade-and-dto
+  - retries-and-backoff
+  - structured-concurrency
+  - timeouts-and-deadlines
 
 capabilities:
   - reads-source

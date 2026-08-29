@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-adapter
-version: 1.1.0
+version: 1.2.0
 description: >-
   Adapter in modern Java: making an existing type usable through an interface it was not
   written for, and keeping a foreign model, vocabulary and failure mode from leaking inward.
@@ -42,8 +42,21 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
-    version: ^1.0.0
+
+suggests:
+  - circuit-breakers
+  - gof-decorator
+  - gof-facade
+  - gof-pattern-thinking
+  - java-exception-design
+  - java-test-doubles
+  - java-testing-strategy
+  - layering-and-boundaries
+  - orm-behavioral-patterns
+  - retries-and-backoff
+  - rpc-and-api-contracts
+  - structured-logging
+  - timeouts-and-deadlines
 
 capabilities:
   - reads-source

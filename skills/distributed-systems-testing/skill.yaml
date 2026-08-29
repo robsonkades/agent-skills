@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: distributed-systems-testing
-version: 1.0.0
+version: 1.1.0
 description: >-
   Testing the failure behaviour a distributed system claims: injecting latency, errors,
   partitions and process death; verifying that timeouts, retries, breakers and fallbacks do what
@@ -46,6 +46,30 @@ dependencies:
     version: ^1.0.0
   - name: failure-models
     version: ^1.0.0
+
+suggests:
+  - capacity-planning
+  - cascading-failures
+  - circuit-breakers
+  - concurrency-limiting-and-bulkheads
+  - concurrency-testing
+  - consistency-models
+  - delivery-semantics
+  - distributed-locks-and-leases
+  - distributed-tracing-design
+  - distributed-transactions-and-sagas
+  - framework-coupling-and-independence
+  - kubernetes-service-lifecycle
+  - leader-election
+  - littles-law-and-queueing
+  - load-testing
+  - message-ordering-and-partitioning
+  - metrics-and-cardinality
+  - rate-limiting-and-load-shedding
+  - retries-and-backoff
+  - rpc-and-api-contracts
+  - slo-and-alerting
+  - timeouts-and-deadlines
 
 agentOverrides:
   codex:

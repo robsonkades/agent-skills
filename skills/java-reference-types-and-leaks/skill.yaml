@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-reference-types-and-leaks
-version: 1.1.0
+version: 1.2.0
 description: >-
   Reachability-driven memory in Java: the strong/soft/weak/phantom levels and exactly when
   each is cleared, WeakHashMap and its value-holds-key trap, Cleaner as a leak-reporting
@@ -43,6 +43,9 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - gc-log-analysis
 
 capabilities:
   - reads-source

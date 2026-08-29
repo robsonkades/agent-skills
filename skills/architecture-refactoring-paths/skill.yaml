@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-refactoring-paths
-version: 1.1.0
+version: 1.2.0
 description: >-
   Moving an enterprise application from one architectural choice to another without a
   rewrite: transaction script to domain model, Active Record to Data Mapper, in-process call
@@ -48,6 +48,15 @@ dependencies:
     version: ^1.0.0
   - name: offline-concurrency-control
     version: ^1.0.0
+
+suggests:
+  - distribution-boundaries
+  - enterprise-architecture-smells
+  - enterprise-transactions
+  - inheritance-mapping-strategies
+  - remote-facade-and-dto
+  - repository-pattern
+  - session-state-strategies
 
 capabilities:
   - reads-source

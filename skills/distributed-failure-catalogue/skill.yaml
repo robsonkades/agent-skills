@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: distributed-failure-catalogue
-version: 1.1.0
+version: 1.2.0
 description: >-
   A recognition index of named distributed failure patterns, each given as symptom,
   mechanism, where it hides in code or config, and the skill that owns the fix: thundering
@@ -44,6 +44,39 @@ files:
 dependencies:
   - name: failure-models
     version: ^1.0.0
+  - name: architecture-decision-making
+    version: ^2.0.0
+  - name: cascading-failures
+    version: ^1.0.0
+  - name: concurrency-limiting-and-bulkheads
+    version: ^1.0.0
+  - name: delivery-semantics
+    version: ^1.0.0
+  - name: distributed-locks-and-leases
+    version: ^1.0.0
+  - name: rate-limiting-and-load-shedding
+    version: ^1.0.0
+  - name: retries-and-backoff
+    version: ^1.0.0
+  - name: rpc-and-api-contracts
+    version: ^1.0.0
+  - name: slo-and-alerting
+    version: ^1.0.0
+  - name: task-queues-and-competing-consumers
+    version: ^1.0.0
+  - name: timeouts-and-deadlines
+    version: ^1.0.0
+
+suggests:
+  - caching-strategies
+  - connection-pool-sizing
+  - consensus-and-quorums
+  - distribution-boundaries
+  - hot-partitions-and-rebalancing
+  - kubernetes-service-lifecycle
+  - littles-law-and-queueing
+  - load-balancing-and-routing
+  - poison-messages-and-dlq
 
 capabilities:
   - reads-source

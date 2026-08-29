@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: delivery-semantics
-version: 1.0.0
+version: 1.1.0
 description: >-
   Delivery guarantees stated precisely: at-most-once, at-least-once and effectively-once;
   why exactly-once delivery is unachievable over a lossy channel; where the acknowledgement
@@ -43,6 +43,10 @@ files:
 dependencies:
   - name: failure-models
     version: ^1.0.0
+
+suggests:
+  - message-ordering-and-partitioning
+  - poison-messages-and-dlq
 
 capabilities:
   - reads-source

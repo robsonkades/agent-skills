@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: cascading-failures
-version: 1.1.0
+version: 1.2.0
 description: >-
   How one slow dependency becomes a total outage: the amplification loop and the four points
   that close it — retry storms, unbounded queues, thread and connection exhaustion, an inner
@@ -46,6 +46,24 @@ dependencies:
     version: ^1.0.0
   - name: retries-and-backoff
     version: ^1.0.0
+  - name: concurrency-limiting-and-bulkheads
+    version: ^1.0.0
+  - name: rate-limiting-and-load-shedding
+    version: ^1.0.0
+  - name: timeouts-and-deadlines
+    version: ^1.0.0
+
+suggests:
+  - caching-strategies
+  - circuit-breakers
+  - distributed-failure-catalogue
+  - distributed-systems-testing
+  - kubernetes-service-lifecycle
+  - littles-law-and-queueing
+  - load-balancing-and-routing
+  - load-testing
+  - slo-and-alerting
+  - task-queues-and-competing-consumers
 
 capabilities:
   - reads-source

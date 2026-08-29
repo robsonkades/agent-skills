@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-decision-making
-version: 2.0.0
+version: 2.1.0
 description: >-
   Writing an architecture decision down so it can be re-opened on evidence: what earns an ADR,
   reversibility pricing how much record it earns, superseding rather than editing in place, and
@@ -40,7 +40,22 @@ files:
   - skill.yaml
   - references/
 
-dependencies: []
+dependencies:
+  - name: architecture-coupling-and-quanta
+    version: ^1.0.0
+  - name: architecture-trade-off-analysis
+    version: ^1.0.0
+  - name: technical-debt-decisions
+    version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - architecture-characteristics
+  - architecture-fitness-functions
+  - distribution-boundaries
+  - engineering-communication
+  - estimation-under-uncertainty
+  - littles-law-and-queueing
 
 capabilities:
   - reads-source

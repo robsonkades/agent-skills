@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: distributed-transactions-and-sagas
-version: 1.1.0
+version: 1.2.0
 description: >-
   Ending a multi-service operation consistently when no transaction spans it: the dual-write
   defect and why @Transactional does not cover a broker publish; two-phase commit stated
@@ -47,6 +47,14 @@ dependencies:
     version: ^1.0.0
   - name: delivery-semantics
     version: ^1.0.0
+
+suggests:
+  - consistency-models
+  - distributed-locks-and-leases
+  - event-driven-architecture
+  - failure-models
+  - leader-election
+  - retries-and-backoff
 
 capabilities:
   - reads-source

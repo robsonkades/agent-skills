@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: reactive-and-virtual-thread-selection
-version: 1.1.0
+version: 1.2.0
 description: >-
   Choosing between a reactive pipeline and thread-per-request on virtual threads, and
   deciding where they legitimately coexist: what each model actually gives you, where
@@ -49,6 +49,10 @@ dependencies:
     version: ^1.0.0
   - name: blocking-and-nonblocking-io
     version: ^1.0.0
+
+suggests:
+  - concurrency-limiting-and-bulkheads
+  - virtual-threads-internals
 
 capabilities:
   - reads-source

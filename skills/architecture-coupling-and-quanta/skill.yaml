@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-coupling-and-quanta
-version: 1.0.0
+version: 1.1.0
 description: >-
   Naming the unit that actually ships and the coupling crossing its edge: static and synchronous
   dynamic coupling, connascence, and the architecture quantum as the maximal region closed under
@@ -40,7 +40,21 @@ files:
   - skill.yaml
   - references/
 
-dependencies: []
+dependencies:
+  - name: distribution-boundaries
+    version: ^1.0.0
+  - name: enterprise-architecture-smells
+    version: ^1.0.0
+
+suggests:
+  - architecture-characteristics
+  - architecture-decision-making
+  - architecture-fitness-functions
+  - architecture-testing
+  - architecture-trade-off-analysis
+  - component-and-release-boundaries
+  - java-cohesion-coupling
+  - layering-and-boundaries
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-proxy
-version: 1.0.0
+version: 1.1.0
 description: >-
   Proxy in modern Java: a stand-in that controls access to another object behind that object's own
   interface — virtual (lazy), remote, protection and caching variants. Covers the central danger
@@ -41,8 +41,23 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
-    version: ^1.0.0
+
+suggests:
+  - architecture-testing
+  - failure-models
+  - gof-adapter
+  - gof-decorator
+  - gof-patterns-and-distribution
+  - inheritance-mapping-strategies
+  - java-memory-model
+  - java-testing-strategy
+  - jit-inlining-and-escape-analysis
+  - kubernetes-service-lifecycle
+  - orm-behavioral-patterns
+  - orm-structural-mapping
+  - query-objects-and-specifications
+  - rpc-and-api-contracts
+  - timeouts-and-deadlines
 
 capabilities:
   - reads-source

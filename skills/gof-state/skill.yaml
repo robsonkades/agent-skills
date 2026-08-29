@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-state
-version: 1.0.0
+version: 1.1.0
 description: >-
   State in modern Java: making an object's behaviour depend on an explicit state, with the
   transitions themselves modelled rather than implied by scattered flags. Covers the intent
@@ -41,8 +41,15 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
-    version: ^1.0.0
+
+suggests:
+  - distributed-locks-and-leases
+  - distributed-transactions-and-sagas
+  - event-driven-architecture
+  - gof-strategy
+  - java-composition-over-inheritance
+  - java-memory-model
+  - offline-concurrency-control
 
 capabilities:
   - reads-source

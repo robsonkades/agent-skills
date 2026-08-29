@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: incident-evidence-capture
-version: 1.0.0
+version: 1.1.0
 description: >-
   What to collect from a degrading JVM before someone restarts it, in what order, and what the
   restart destroys: the artefacts that already exist and survive, three spaced thread dumps
@@ -46,3 +46,24 @@ dependencies:
     version: ^1.0.0
   - name: jfr-and-async-profiler
     version: ^1.0.0
+  - name: distributed-tracing-design
+    version: ^1.0.0
+  - name: gc-log-analysis
+    version: ^1.0.0
+  - name: jhsdb-and-core-dumps
+    version: ^1.0.0
+  - name: jvm-memory-regions
+    version: ^1.0.0
+  - name: jvm-performance-review
+    version: ^1.0.0
+  - name: linux-for-jvm
+    version: ^1.0.0
+  - name: metaspace-internals
+    version: ^1.0.0
+  - name: metrics-and-cardinality
+    version: ^1.0.0
+
+suggests:
+  - continuous-profiling
+  - slo-and-alerting
+  - unified-logging

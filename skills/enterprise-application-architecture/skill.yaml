@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: enterprise-application-architecture
-version: 1.1.0
+version: 1.2.0
 description: >-
   The entry point for reasoning about an enterprise application's architecture: what makes
   these systems distinctive (data that outlives the code, concurrent users, integration,
@@ -46,6 +46,74 @@ dependencies:
     version: ^1.0.0
   - name: architecture-decision-making
     version: ^2.0.0
+  - name: architecture-and-performance
+    version: ^1.0.0
+  - name: architecture-refactoring-paths
+    version: ^1.0.0
+  - name: architecture-testing
+    version: ^1.0.0
+  - name: data-source-patterns
+    version: ^1.0.0
+  - name: distribution-boundaries
+    version: ^1.0.0
+  - name: domain-logic-organization
+    version: ^1.0.0
+  - name: enterprise-architecture-smells
+    version: ^1.0.0
+  - name: enterprise-base-patterns
+    version: ^1.0.0
+  - name: enterprise-transactions
+    version: ^1.0.0
+  - name: inheritance-mapping-strategies
+    version: ^1.0.0
+  - name: legacy-enterprise-modernization
+    version: ^1.0.0
+  - name: metadata-mapping
+    version: ^1.0.0
+  - name: mvc-and-request-handling
+    version: ^1.0.0
+  - name: offline-concurrency-control
+    version: ^1.0.0
+  - name: orm-behavioral-patterns
+    version: ^1.0.0
+  - name: orm-structural-mapping
+    version: ^1.0.0
+  - name: patterns-and-modern-frameworks
+    version: ^1.0.0
+  - name: performance-methodology
+    version: ^1.0.0
+  - name: query-objects-and-specifications
+    version: ^1.0.0
+  - name: remote-facade-and-dto
+    version: ^1.0.0
+  - name: repository-pattern
+    version: ^1.0.0
+  - name: rpc-and-api-contracts
+    version: ^1.0.0
+  - name: service-layer-design
+    version: ^1.0.0
+  - name: session-state-strategies
+    version: ^1.0.0
+  - name: view-and-representation-patterns
+    version: ^1.0.0
+
+suggests:
+  - caching-strategies
+  - concurrency-limiting-and-bulkheads
+  - connection-pool-sizing
+  - consistency-models
+  - delivery-semantics
+  - failure-models
+  - java-performance
+  - jvm-gc-tuning
+  - latency-statistics
+  - littles-law-and-queueing
+  - retries-and-backoff
+  - sharding-and-partitioning
+  - skill-engineering
+  - stateless-service-design
+  - timeouts-and-deadlines
+  - universal-scalability-law
 
 capabilities:
   - reads-source

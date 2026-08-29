@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: distributed-aggregation-and-barriers
-version: 1.1.0
+version: 1.2.0
 description: >-
   Computing one answer from data spread across many workers, and its synchronisation cost:
   the barrier, which runs at the speed of the slowest participant; reduce correctness, where
@@ -45,6 +45,12 @@ files:
 dependencies:
   - name: failure-models
     version: ^1.0.0
+
+suggests:
+  - hot-partitions-and-rebalancing
+  - latency-statistics
+  - message-ordering-and-partitioning
+  - scatter-gather
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: blocking-and-nonblocking-io
-version: 1.1.0
+version: 1.2.0
 description: >-
   Four things routinely conflated into one: a blocking API, a blocked OS thread,
   non-blocking I/O at the syscall, and an asynchronous programming model. Covers which JDK
@@ -47,6 +47,9 @@ dependencies:
     version: ^1.0.0
   - name: virtual-threads-internals
     version: ^1.0.0
+
+suggests:
+  - io-uring-and-zero-copy
 
 capabilities:
   - reads-source

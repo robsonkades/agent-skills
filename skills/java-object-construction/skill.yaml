@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-object-construction
-version: 1.1.0
+version: 1.2.0
 description: >-
   Choosing how an object comes into existence in Java: static factory versus public
   constructor, the of/from/valueOf/getInstance naming conventions, instance control
@@ -42,6 +42,9 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - java-fluent-apis
 
 capabilities:
   - reads-source

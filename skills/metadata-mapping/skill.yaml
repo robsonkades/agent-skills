@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: metadata-mapping
-version: 1.1.0
+version: 1.2.0
 description: >-
   Expressing the object-to-schema mapping as metadata rather than hand-written code: where
   the mapping lives (annotations, external XML, programmatic), what reflection costs versus
@@ -42,6 +42,15 @@ files:
 dependencies:
   - name: orm-structural-mapping
     version: ^1.0.0
+  - name: caching-strategies
+    version: ^1.0.0
+
+suggests:
+  - architecture-testing
+  - data-source-patterns
+  - enterprise-architecture-smells
+  - layering-and-boundaries
+  - startup-cds-crac-leyden
 
 capabilities:
   - reads-source

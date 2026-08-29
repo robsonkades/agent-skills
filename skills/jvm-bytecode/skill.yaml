@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jvm-bytecode
-version: 1.0.0
+version: 1.1.0
 description: >-
   Reading and reasoning about JVM bytecode. javap -c -p -v, the operand stack and local
   variable slots, the constant pool and lazy symbol resolution, descriptors versus the
@@ -43,6 +43,10 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - compilation-and-inlining-logs
+  - jit-compilation
 
 capabilities:
   - reads-source

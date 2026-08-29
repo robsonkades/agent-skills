@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: concurrency-diagnostics
-version: 1.1.0
+version: 1.2.0
 description: >-
   Collecting evidence for a concurrency problem and knowing each tool's blind spot: the two
   thread-dump formats and why neither is a superset of the other, jstack not listing virtual
@@ -47,6 +47,39 @@ dependencies:
     version: ^1.0.0
   - name: thread-sizing-and-virtual-threads
     version: ^1.0.0
+  - name: blocking-and-nonblocking-io
+    version: ^1.0.0
+  - name: cancellation-and-interruption
+    version: ^1.0.0
+  - name: concurrency-limiting-and-bulkheads
+    version: ^1.0.0
+  - name: connection-pool-sizing
+    version: ^1.0.0
+  - name: executors-and-task-lifecycle
+    version: ^1.0.0
+  - name: flame-graph-analysis
+    version: ^1.0.0
+  - name: java-memory-model
+    version: ^1.0.0
+  - name: littles-law-and-queueing
+    version: ^1.0.0
+  - name: lock-free-patterns
+    version: ^1.0.0
+  - name: lock-inflation
+    version: ^1.0.0
+  - name: reactive-backpressure
+    version: ^1.0.0
+  - name: retries-and-backoff
+    version: ^1.0.0
+  - name: timeouts-and-deadlines
+    version: ^1.0.0
+  - name: universal-scalability-law
+    version: ^1.0.0
+  - name: virtual-threads-internals
+    version: ^1.0.0
+
+suggests:
+  - concurrency-testing
 
 capabilities:
   - reads-source

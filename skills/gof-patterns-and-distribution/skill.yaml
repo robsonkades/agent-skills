@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-patterns-and-distribution
-version: 1.1.0
+version: 1.2.0
 description: >-
   What happens to a Gang-of-Four pattern when the collaboration crosses a process boundary,
   and which architectural pattern it becomes. Covers the classification into process-local,
@@ -44,6 +44,29 @@ files:
 dependencies:
   - name: gof-pattern-thinking
     version: ^1.0.0
+
+suggests:
+  - architecture-testing
+  - caching-strategies
+  - cancellation-and-interruption
+  - connection-pool-sizing
+  - distribution-boundaries
+  - event-driven-architecture
+  - gof-adapter
+  - gof-bridge
+  - gof-command
+  - gof-mediator
+  - gof-memento
+  - gof-observer
+  - gof-proxy
+  - gof-singleton
+  - gof-visitor
+  - layering-and-boundaries
+  - message-ordering-and-partitioning
+  - poison-messages-and-dlq
+  - rpc-and-api-contracts
+  - scatter-gather
+  - structured-concurrency
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: failure-models
-version: 1.1.0
+version: 1.2.0
 description: >-
   Stating a system's fault model before designing against it: crash-stop, crash-recovery,
   omission, timing and Byzantine faults; partial failure and the third outcome of every
@@ -42,6 +42,11 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - cascading-failures
+  - java-exception-design
+  - retries-and-backoff
 
 capabilities:
   - reads-source

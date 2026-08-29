@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gc-log-analysis
-version: 1.1.0
+version: 1.2.0
 description: >-
   Configuring and reading JVM unified GC logs: the -Xlog:gc* baseline with decorators and
   rotation, the cause field, the before->after->capacity triple and headroom, pause
@@ -45,6 +45,8 @@ dependencies:
   - name: gc-fundamentals
     version: ^1.0.0
   - name: latency-statistics
+    version: ^1.0.0
+  - name: jvm-class-loading
     version: ^1.0.0
 
 capabilities:

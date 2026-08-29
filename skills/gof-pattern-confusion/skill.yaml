@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-pattern-confusion
-version: 1.0.0
+version: 1.1.0
 description: >-
   Telling apart the patterns that look alike, so a design is not chosen because a name sounded
   right. Covers the four wrappers (Adapter, Decorator, Proxy, Facade) and the two questions that
@@ -43,6 +43,23 @@ files:
 dependencies:
   - name: gof-pattern-thinking
     version: ^1.0.0
+
+suggests:
+  - gof-adapter
+  - gof-bridge
+  - gof-chain-of-responsibility
+  - gof-command
+  - gof-decorator
+  - gof-factory-method
+  - gof-flyweight
+  - gof-mediator
+  - gof-memento
+  - gof-patterns-and-distribution
+  - gof-proxy
+  - gof-singleton
+  - gof-state
+  - gof-template-method
+  - gof-visitor
 
 capabilities:
   - reads-source

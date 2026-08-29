@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-application-security-basics
-version: 1.1.0
+version: 1.2.0
 description: >-
   Application-level security judgement in Java 21+ code: password storage with a memory-hard
   KDF at current parameters, constant-time comparison, cryptographically secure randomness,
@@ -52,6 +52,10 @@ dependencies:
     version: ^1.0.0
   - name: java-serialization-hardening
     version: ^1.0.0
+
+suggests:
+  - java-exception-design
+  - rpc-and-api-contracts
 
 capabilities:
   - reads-source

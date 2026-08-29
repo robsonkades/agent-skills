@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: humble-objects-and-functional-core
-version: 1.0.0
+version: 1.1.0
 description: >-
   Splitting a component into the part that decides and the part that acts, so the decision is
   pure, deterministic and cheap to test while the effectful part stays too thin to be worth
@@ -47,6 +47,30 @@ dependencies:
     version: ^1.0.0
   - name: architecture-testing
     version: ^1.0.0
+  - name: architecture-and-performance
+    version: ^1.0.0
+  - name: enterprise-transactions
+    version: ^1.0.0
+
+suggests:
+  - allocation-profiling
+  - caching-strategies
+  - cascading-failures
+  - circuit-breakers
+  - delivery-semantics
+  - distributed-locks-and-leases
+  - distributed-systems-testing
+  - enterprise-architecture-smells
+  - java-composition-over-inheritance
+  - java-dependency-inversion
+  - java-exception-design
+  - java-memory-model
+  - jit-inlining-and-escape-analysis
+  - layering-and-boundaries
+  - patterns-and-modern-frameworks
+  - poison-messages-and-dlq
+  - structured-concurrency
+  - thread-sizing-and-virtual-threads
 
 agentOverrides:
   codex:

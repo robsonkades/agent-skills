@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: sharding-and-partitioning
-version: 1.1.0
+version: 1.2.0
 description: >-
   Whether to split data across owners at all, and on which key: what sharding buys — write
   capacity, data volume, blast-radius isolation — against what it permanently costs: no
@@ -44,6 +44,17 @@ files:
 dependencies:
   - name: consistency-models
     version: ^1.0.0
+  - name: caching-strategies
+    version: ^1.0.0
+
+suggests:
+  - consistent-hashing
+  - distributed-transactions-and-sagas
+  - failure-models
+  - hot-partitions-and-rebalancing
+  - latency-statistics
+  - scatter-gather
+  - tail-latency-analysis
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: session-state-strategies
-version: 1.0.0
+version: 1.1.0
 description: >-
   Placing the state that spans several requests of one conversation: client session state,
   server session state and database session state, plus signed tokens and external stores.
@@ -43,6 +43,15 @@ dependencies:
     version: ^1.0.0
   - name: caching-strategies
     version: ^1.0.0
+  - name: orm-behavioral-patterns
+    version: ^1.0.0
+
+suggests:
+  - architecture-refactoring-paths
+  - enterprise-transactions
+  - heap-dump-analysis
+  - offline-concurrency-control
+  - timeouts-and-deadlines
 
 capabilities:
   - reads-source

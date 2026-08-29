@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: offline-concurrency-control
-version: 1.0.0
+version: 1.1.0
 description: >-
   Protecting data from concurrent edits that span more than one transaction: optimistic
   offline lock, pessimistic offline lock, coarse-grained locking at the aggregate, and
@@ -43,6 +43,14 @@ dependencies:
     version: ^1.0.0
   - name: idempotency
     version: ^1.0.0
+
+suggests:
+  - architecture-decision-making
+  - architecture-testing
+  - domain-logic-organization
+  - orm-behavioral-patterns
+  - remote-facade-and-dto
+  - retries-and-backoff
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: enterprise-base-patterns
-version: 1.1.0
+version: 1.2.0
 description: >-
   The small structural patterns that hold an enterprise application together — Gateway,
   Mapper, Layer Supertype, Separated Interface, Registry, Special Case, Plugin and Service
@@ -44,6 +44,21 @@ files:
 dependencies:
   - name: layering-and-boundaries
     version: ^1.0.0
+
+suggests:
+  - architecture-testing
+  - concurrency-limiting-and-bulkheads
+  - data-source-patterns
+  - domain-logic-organization
+  - enterprise-architecture-smells
+  - enterprise-transactions
+  - metadata-mapping
+  - orm-behavioral-patterns
+  - orm-structural-mapping
+  - patterns-and-modern-frameworks
+  - remote-facade-and-dto
+  - retries-and-backoff
+  - timeouts-and-deadlines
 
 capabilities:
   - reads-source

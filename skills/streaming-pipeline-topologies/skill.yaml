@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: streaming-pipeline-topologies
-version: 1.1.0
+version: 1.2.0
 description: >-
   Composable stage shapes for event-driven pipelines — copier, filter, splitter, sharder,
   merger — each with the ordering it preserves or destroys, whether it is safe above
@@ -44,6 +44,12 @@ files:
 dependencies:
   - name: message-ordering-and-partitioning
     version: ^1.0.0
+
+suggests:
+  - delivery-semantics
+  - hot-partitions-and-rebalancing
+  - reactive-backpressure
+  - serialization-performance
 
 capabilities:
   - reads-source

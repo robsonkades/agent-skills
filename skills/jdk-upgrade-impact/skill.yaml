@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jdk-upgrade-impact
-version: 1.0.0
+version: 1.1.0
 description: >-
   Moving a service from one JDK to another and knowing what breaks, in what order to find it, and
   what should get faster: running unchanged on the new runtime first with warnings made visible,
@@ -42,3 +42,19 @@ files:
 dependencies:
   - name: jvm-performance-review
     version: ^1.0.0
+  - name: gc-log-analysis
+    version: ^1.0.0
+  - name: jvm-memory-regions
+    version: ^1.0.0
+  - name: load-testing
+    version: ^1.0.0
+  - name: startup-cds-crac-leyden
+    version: ^1.0.0
+
+suggests:
+  - architecture-refactoring-paths
+  - legacy-enterprise-modernization
+  - performance-methodology
+  - refactoring-automation
+  - rpc-and-api-contracts
+  - schema-evolution-and-compatibility

@@ -204,6 +204,16 @@ function renderInfo(skill: SkillInfo): void {
     );
   }
 
+  if (manifest.suggests.length > 0) {
+    out();
+    out(style.bold('  Suggests'));
+    out(`    ${style.dim('named in this skill; not installed with it')}`);
+    table(
+      manifest.suggests.map((name) => [name]),
+      '    ',
+    );
+  }
+
   out();
   out(style.bold('  Versions'));
   const shown = skill.versions.slice(0, 10);

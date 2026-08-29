@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: distributed-systems
-version: 1.1.0
+version: 1.2.0
 description: >-
   Triage and routing entry point for distributed systems in Java: turn a design question or
   a production symptom into the one skill that owns it. Use when work crosses a process
@@ -48,6 +48,78 @@ dependencies:
     version: ^1.0.0
   - name: consistency-models
     version: ^1.0.0
+  - name: adapter-sidecar-pattern
+    version: ^2.0.0
+  - name: ambassador-pattern
+    version: ^1.0.0
+  - name: cache-sharding-and-replication
+    version: ^1.0.0
+  - name: cascading-failures
+    version: ^1.0.0
+  - name: circuit-breakers
+    version: ^1.0.0
+  - name: consensus-and-quorums
+    version: ^1.0.0
+  - name: consistent-hashing
+    version: ^1.0.0
+  - name: distributed-aggregation-and-barriers
+    version: ^1.0.0
+  - name: distributed-failure-catalogue
+    version: ^1.0.0
+  - name: distributed-locks-and-leases
+    version: ^1.0.0
+  - name: distributed-systems-testing
+    version: ^1.0.0
+  - name: distributed-tracing-design
+    version: ^1.0.0
+  - name: distributed-transactions-and-sagas
+    version: ^1.0.0
+  - name: event-driven-architecture
+    version: ^1.0.0
+  - name: hot-partitions-and-rebalancing
+    version: ^1.0.0
+  - name: kafka-consumers-in-java
+    version: ^1.0.0
+  - name: kubernetes-service-lifecycle
+    version: ^1.0.0
+  - name: leader-election
+    version: ^1.0.0
+  - name: load-balancing-and-routing
+    version: ^1.0.0
+  - name: message-ordering-and-partitioning
+    version: ^1.0.0
+  - name: metrics-and-cardinality
+    version: ^1.0.0
+  - name: poison-messages-and-dlq
+    version: ^1.0.0
+  - name: rate-limiting-and-load-shedding
+    version: ^1.0.0
+  - name: retries-and-backoff
+    version: ^1.0.0
+  - name: rpc-and-api-contracts
+    version: ^1.0.0
+  - name: scatter-gather
+    version: ^1.0.0
+  - name: sharding-and-partitioning
+    version: ^1.0.0
+  - name: sidecar-pattern
+    version: ^1.0.0
+  - name: slo-and-alerting
+    version: ^1.0.0
+  - name: stateless-service-design
+    version: ^1.0.0
+  - name: streaming-pipeline-topologies
+    version: ^1.0.0
+  - name: structured-logging
+    version: ^1.0.0
+  - name: task-queues-and-competing-consumers
+    version: ^1.0.0
+  - name: timeouts-and-deadlines
+    version: ^1.0.0
+
+suggests:
+  - java-performance
+  - littles-law-and-queueing
 
 capabilities:
   - reads-source

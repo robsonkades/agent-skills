@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: virtual-thread-migration
-version: 1.1.0
+version: 1.2.0
 description: >-
   Migrating an existing service to virtual threads as a staged programme rather than a flag:
   inventorying what each thread pool was implicitly limiting, auditing for pinning, file I/O
@@ -49,6 +49,10 @@ dependencies:
     version: ^1.0.0
   - name: connection-pool-sizing
     version: ^1.0.0
+
+suggests:
+  - concurrency-testing
+  - reactive-and-virtual-thread-selection
 
 capabilities:
   - reads-source

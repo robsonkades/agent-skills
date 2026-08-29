@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: idempotency
-version: 1.0.0
+version: 1.1.0
 description: >-
   Making an operation safe to apply more than once: natural idempotency versus an
   idempotency key plus a dedup store; choosing and scoping the key, and why a broker message
@@ -42,6 +42,13 @@ files:
 dependencies:
   - name: delivery-semantics
     version: ^1.0.0
+
+suggests:
+  - caching-strategies
+  - consistency-models
+  - message-ordering-and-partitioning
+  - poison-messages-and-dlq
+  - retries-and-backoff
 
 capabilities:
   - reads-source

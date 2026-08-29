@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-bridge
-version: 1.0.0
+version: 1.1.0
 description: >-
   Bridge in modern Java: separating an abstraction hierarchy from an implementation hierarchy so
   the two vary independently instead of multiplying into N×M classes. Covers the two-axis test
@@ -41,8 +41,18 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
+  - name: gof-adapter
     version: ^1.0.0
+
+suggests:
+  - gof-pattern-thinking
+  - gof-proxy
+  - gof-strategy
+  - java-exception-design
+  - java-test-design
+  - jit-inlining-and-escape-analysis
+  - rpc-and-api-contracts
+  - timeouts-and-deadlines
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: distributed-locks-and-leases
-version: 1.1.0
+version: 1.2.0
 description: >-
   Mutual exclusion across processes, and why the naive version does not: a lock with a TTL
   is a lease, and a lease alone does not exclude — the holder can stall past expiry and keep
@@ -47,6 +47,15 @@ dependencies:
     version: ^1.0.0
   - name: failure-models
     version: ^1.0.0
+  - name: sharding-and-partitioning
+    version: ^1.0.0
+
+suggests:
+  - connection-pool-sizing
+  - java-memory-model
+  - leader-election
+  - pause-attribution
+  - timeouts-and-deadlines
 
 capabilities:
   - reads-source

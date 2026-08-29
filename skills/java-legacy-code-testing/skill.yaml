@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-legacy-code-testing
-version: 1.0.0
+version: 1.1.0
 description: >-
   Getting Java code under test before you change it, when you cannot construct the class or
   reach the method at all: seams and their enabling points, the dependency-breaking
@@ -43,7 +43,19 @@ files:
   - references/
   - scripts/
 
-dependencies: []
+dependencies:
+  - name: architecture-testing
+    version: ^1.0.0
+  - name: java-test-doubles
+    version: ^1.0.0
+
+suggests:
+  - java-dependency-inversion
+  - java-refactoring
+  - java-test-design
+  - java-testing-strategy
+  - legacy-enterprise-modernization
+  - technical-debt-decisions
 
 capabilities:
   - reads-source

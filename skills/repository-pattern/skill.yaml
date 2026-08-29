@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: repository-pattern
-version: 1.1.0
+version: 1.2.0
 description: >-
   The repository as a collection-like boundary over aggregates: what belongs behind it, why
   there is one per aggregate root and not one per table, where queries and read models sit
@@ -42,10 +42,22 @@ files:
   - references/
 
 dependencies:
-  - name: domain-logic-organization
-    version: ^1.0.0
-  - name: query-objects-and-specifications
-    version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - architecture-decision-making
+  - architecture-refactoring-paths
+  - architecture-testing
+  - data-source-patterns
+  - domain-logic-organization
+  - enterprise-architecture-smells
+  - enterprise-transactions
+  - layering-and-boundaries
+  - offline-concurrency-control
+  - orm-behavioral-patterns
+  - query-objects-and-specifications
+  - remote-facade-and-dto
+  - service-layer-design
 
 capabilities:
   - reads-source

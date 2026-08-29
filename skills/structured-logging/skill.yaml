@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: structured-logging
-version: 1.1.0
+version: 1.2.0
 description: >-
   Logs as queryable events rather than prose: named fields instead of a sentence with values
   interpolated in, the correlation ids every event must carry and the MDC lifecycle behind
@@ -42,6 +42,13 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - distributed-tracing-design
+  - java-exception-design
+  - metrics-and-cardinality
+  - scoped-values
+  - thread-sizing-and-virtual-threads
 
 capabilities:
   - reads-source

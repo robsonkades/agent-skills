@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-testing
-version: 1.1.0
+version: 1.2.0
 description: >-
   Testing what an enterprise architecture actually promises: that boundaries hold, that a
   use case is atomic, that persistence mapping matches the schema, that concurrent edits are
@@ -45,6 +45,19 @@ dependencies:
     version: ^1.0.0
   - name: enterprise-transactions
     version: ^1.0.0
+  - name: load-testing
+    version: ^1.0.0
+  - name: metadata-mapping
+    version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - distribution-boundaries
+  - enterprise-base-patterns
+  - offline-concurrency-control
+  - orm-behavioral-patterns
+  - remote-facade-and-dto
+  - rpc-and-api-contracts
 
 capabilities:
   - reads-source

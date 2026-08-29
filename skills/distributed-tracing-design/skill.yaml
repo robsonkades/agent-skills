@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: distributed-tracing-design
-version: 1.0.0
+version: 1.1.0
 description: >-
   Span modelling as a design decision: what earns a span and what does not, span names as
   low-cardinality operation names with the detail in attributes, recording errors so a
@@ -44,6 +44,14 @@ files:
 dependencies:
   - name: structured-logging
     version: ^1.0.0
+  - name: continuous-profiling
+    version: ^1.0.0
+  - name: latency-statistics
+    version: ^1.0.0
+
+suggests:
+  - metrics-and-cardinality
+  - opentelemetry-performance
 
 capabilities:
   - reads-source

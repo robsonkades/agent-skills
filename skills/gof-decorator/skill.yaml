@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-decorator
-version: 1.0.0
+version: 1.1.0
 description: >-
   Decorator in modern Java: wrapping an object in something of its own interface to add behaviour,
   stackably, at runtime — and the fact that the stacking order changes the semantics. Covers the
@@ -41,8 +41,21 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
-    version: ^1.0.0
+
+suggests:
+  - caching-strategies
+  - cascading-failures
+  - concurrency-limiting-and-bulkheads
+  - distributed-tracing-design
+  - gof-adapter
+  - gof-proxy
+  - gof-state
+  - java-memory-model
+  - jit-inlining-and-escape-analysis
+  - retries-and-backoff
+  - rpc-and-api-contracts
+  - structured-logging
+  - timeouts-and-deadlines
 
 capabilities:
   - reads-source

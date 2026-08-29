@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: consistent-hashing
-version: 1.0.0
+version: 1.1.0
 description: >-
   The function that maps a key to an owner, and what happens when membership changes: why
   hash(key) % N remaps almost every key when N changes; the ring, where a key belongs to the
@@ -42,6 +42,11 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - hot-partitions-and-rebalancing
+  - java-memory-model
+  - load-balancing-and-routing
 
 capabilities:
   - reads-source

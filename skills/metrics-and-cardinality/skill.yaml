@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: metrics-and-cardinality
-version: 1.0.0
+version: 1.1.0
 description: >-
   What to count and what not to label: RED for request-driven services and USE for
   resources, counter versus gauge versus histogram and the failure each mis-selection
@@ -43,6 +43,13 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - distributed-tracing-design
+  - latency-statistics
+  - rate-limiting-and-load-shedding
+  - slo-and-alerting
+  - structured-logging
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: layering-and-boundaries
-version: 1.1.0
+version: 1.2.0
 description: >-
   Deciding where an enterprise application's boundaries go and which direction dependencies
   cross them: the classical presentation / domain / data-source split, the styles that
@@ -40,8 +40,20 @@ files:
   - references/
 
 dependencies:
-  - name: architecture-decision-making
-    version: ^2.0.0
+  - name: enterprise-transactions
+    version: ^1.0.0
+
+suggests:
+  - architecture-and-performance
+  - architecture-decision-making
+  - distribution-boundaries
+  - domain-logic-organization
+  - enterprise-architecture-smells
+  - enterprise-base-patterns
+  - pattern-selection-and-composition
+  - query-objects-and-specifications
+  - remote-facade-and-dto
+  - service-layer-design
 
 capabilities:
   - reads-source

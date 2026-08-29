@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-chain-of-responsibility
-version: 1.0.0
+version: 1.1.0
 description: >-
   Chain of Responsibility in modern Java, and the pipeline it is usually confused with: the
   classical form where exactly one handler handles and the rest pass, versus the middleware form
@@ -41,8 +41,19 @@ files:
   - references/
 
 dependencies:
-  - name: gof-pattern-thinking
-    version: ^1.0.0
+
+suggests:
+  - cancellation-and-interruption
+  - delivery-semantics
+  - distributed-transactions-and-sagas
+  - enterprise-transactions
+  - event-driven-architecture
+  - gof-mediator
+  - java-composition-over-inheritance
+  - jit-inlining-and-escape-analysis
+  - poison-messages-and-dlq
+  - scoped-values
+  - thread-sizing-and-virtual-threads
 
 capabilities:
   - reads-source
