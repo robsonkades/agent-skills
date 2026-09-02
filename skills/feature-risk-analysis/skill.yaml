@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: feature-risk-analysis
+version: 1.0.0
+description: >-
+  Naming what could go wrong with a specific feature in a form that can be acted on: the failure
+  stated as an event rather than a worry, how anyone would find out it happened, what reduces its
+  probability or its cost, and what is done if it happens anyway. Use before implementation on
+  anything touching data, integrations, concurrency or a released contract, when a plan has a risk
+  section containing only adjectives, when a HIGH risk has no detection signal, when a migration
+  or a breaking change is about to ship, or when a review asks what happens if this fails and
+  there is no answer. Does not catalogue distributed failure modes in general
+  (distributed-failure-catalogue, failure-models), does not decide whether a deliberate shortcut
+  is acceptable (technical-debt-decisions), and does not design the resilience mechanism
+  (resilience-patterns).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-risk-analysis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-risk-analysis
+
+keywords:
+  - feature
+  - risk
+  - detection
+  - mitigation
+  - failure-modes
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: failure-models
+    version: ^1.0.0
+  - name: technical-debt-decisions
+    version: ^1.0.0
+
+suggests:
+  - distributed-failure-catalogue
+  - feature-architecture-analysis
+  - feature-engineering
+  - resilience-patterns
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Risk Analysis
+      short_description: A risk without a detection is a worry
+      default_prompt: Use Feature Risk Analysis to build the risk register for this feature.

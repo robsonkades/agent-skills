@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: feature-implementation-plan
+version: 1.0.0
+description: >-
+  Assembling everything established about a feature into one document another engineer could
+  execute without re-deriving the architecture: the resources in dependency order, the schema,
+  contract, configuration and security changes named individually, the test strategy per resource,
+  the migration, deployment and rollback story, and acceptance criteria a test can be written
+  from. Use once the decisions are taken and before implementation starts, when a plan is a list
+  of file names, when the plan and the code have drifted apart, when a feature is being handed to
+  someone else or resumed after a break, or when the rollback story is discovered during the
+  rollback. Does not produce the breakdown it orders (feature-decomposition), does not execute it
+  (feature-execution), does not track status against it (feature-progress-tracking), and contains
+  no dates or sizes (estimation-under-uncertainty).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-implementation-plan
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-implementation-plan
+
+keywords:
+  - feature
+  - plan
+  - migration
+  - rollback
+  - acceptance-criteria
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - estimation-under-uncertainty
+  - feature-decomposition
+  - feature-engineering
+  - feature-execution
+  - java-testing-strategy
+  - schema-evolution-and-compatibility
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Implementation Plan
+      short_description: A plan another engineer could execute cold
+      default_prompt: Use Feature Implementation Plan to assemble the executable plan for this feature.

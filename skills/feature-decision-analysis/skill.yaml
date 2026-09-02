@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: feature-decision-analysis
+version: 1.0.0
+description: >-
+  Keeping the decision log for a feature and, before each entry, answering the two questions that
+  make it trustworthy: where the decision came from — the user, the repository, an organisational
+  standard or the agent — and whose it was to take. Use when a technology is about to be chosen
+  for a feature, when "the project already uses X" is being treated as a reason to use X, when a
+  corporate standard is being asserted without a source, when an agent is about to commit to a
+  database, a broker, a contract or a security model on its own judgement, when a decision taken
+  during implementation contradicts one taken during planning, or when nobody can say who decided
+  something. Does not evaluate the options (feature-solution-analysis) and does not own the
+  decision-record format, reversibility pricing or supersession discipline
+  (architecture-decision-making).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-decision-analysis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-decision-analysis
+
+keywords:
+  - feature
+  - decisions
+  - provenance
+  - authority
+  - technology-selection
+  - adr
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: architecture-decision-making
+    version: ^2.0.0
+
+suggests:
+  - architecture-trade-off-analysis
+  - feature-engineering
+  - feature-solution-analysis
+  - technical-debt-decisions
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Decision Analysis
+      short_description: Every decision carries provenance and authority
+      default_prompt: Use Feature Decision Analysis to record this decision with its provenance and authority.

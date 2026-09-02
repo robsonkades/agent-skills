@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: feature-requirement-clarification
+version: 1.0.0
+description: >-
+  Deciding what to ask the user about a feature, when to ask it, and what stops work until it is
+  answered: proving the repository cannot answer it first, pricing each question by what changes
+  if the answer is the other one, batching questions into rounds instead of interrogating, and
+  marking the few that are genuinely blocking. Use when a feature request is ambiguous and the
+  choice is between asking and assuming, when a long list of questions is about to be sent at
+  once, when work is stalled on a question that has no consequence, when implementation is about
+  to start on a guessed answer, or when a question is being asked that a grep would have answered.
+  Does not investigate the repository itself (feature-context-analysis), does not classify what is
+  known from what is guessed (feature-discovery), and does not own the ambiguity catalogue or
+  acceptance-criteria format (requirements-and-acceptance).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-requirement-clarification
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-requirement-clarification
+
+keywords:
+  - feature
+  - clarification
+  - questions
+  - ambiguity
+  - blocking
+  - requirements
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: requirements-and-acceptance
+    version: ^1.0.0
+
+suggests:
+  - engineering-communication
+  - feature-context-analysis
+  - feature-discovery
+  - feature-engineering
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Requirement Clarification
+      short_description: Ask only what the repository cannot answer
+      default_prompt: Use Feature Requirement Clarification to decide what to ask and what blocks.

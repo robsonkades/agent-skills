@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: feature-decomposition
+version: 1.0.0
+description: >-
+  Deciding whether a feature should be split at all and, when it should, into what: stories only
+  where they carry value someone can state, technical stories for work that is real but not
+  user-visible, and below both a flat list of implementation resources with identifiers,
+  dependencies and their own validation. Use when a feature is about to be implemented as one
+  undifferentiated lump, when a small change is being ceremonially split into stories nobody
+  needs, when work has to be ordered because parts depend on each other, when two people or two
+  sessions will share the work, or when progress cannot be reported because there is nothing to
+  report progress against. Does not write the plan around the breakdown
+  (feature-implementation-plan), does not track the resulting statuses
+  (feature-progress-tracking), and does not estimate any of it (estimation-under-uncertainty).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-decomposition
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-decomposition
+
+keywords:
+  - feature
+  - decomposition
+  - stories
+  - resources
+  - breakdown
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - estimation-under-uncertainty
+  - feature-engineering
+  - feature-implementation-plan
+  - feature-progress-tracking
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Decomposition
+      short_description: Split only when the split buys something
+      default_prompt: Use Feature Decomposition to decide whether to split this feature, and into what.

@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: feature-architecture-analysis
+version: 1.0.0
+description: >-
+  Enumerating what a feature actually touches, with paths: which modules, layers, contracts,
+  schemas, message topics, configuration and cross-cutting concerns change, which of those changes
+  are visible outside the component, and where the change crosses a boundary that raises who must
+  approve it. Use before writing an implementation plan, when a feature is assumed to be local and
+  might not be, when a change is about to alter a published contract or a stored schema, when the
+  file list in a plan was written from memory, or when nobody can say what breaks if this feature
+  is wrong. Does not choose which layer a responsibility belongs to (layering-and-boundaries),
+  does not decide where a deployable boundary should fall (architecture-coupling-and-quanta), and
+  does not evaluate competing designs (feature-solution-analysis).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-architecture-analysis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-architecture-analysis
+
+keywords:
+  - feature
+  - impact-map
+  - architecture
+  - boundaries
+  - compatibility
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: architecture-coupling-and-quanta
+    version: ^1.0.0
+  - name: layering-and-boundaries
+    version: ^1.0.0
+
+suggests:
+  - feature-context-analysis
+  - feature-engineering
+  - feature-risk-analysis
+  - schema-evolution-and-compatibility
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Architecture Analysis
+      short_description: Enumerate what the change actually touches
+      default_prompt: Use Feature Architecture Analysis to build the impact map for this feature.

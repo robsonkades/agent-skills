@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: feature-solution-analysis
+version: 1.0.0
+description: >-
+  Producing the option set for a feature-level choice and the block that recommends one: always
+  including the simplest thing that satisfies the constraints, keeping the options the same
+  category of thing, evaluating only the axes this feature is actually sensitive to, and saying
+  what would have to be true for a rejected option to win. Use when a feature has a real choice in
+  it — a mechanism, a storage strategy, a place to put the work — when one approach has already
+  been assumed and nobody wrote down what else was possible, when a design is justified by what a
+  previous system did, or when a decision is about to be taken without an alternative. Does not
+  own the analysis method itself — MECE option sets, qualitative versus quantitative comparison,
+  resisting evangelism (architecture-trade-off-analysis) — does not write the resulting record
+  (architecture-decision-making), and does not choose among design patterns once the forces are
+  fixed (pattern-selection-and-composition).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-solution-analysis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-solution-analysis
+
+keywords:
+  - feature
+  - options
+  - trade-offs
+  - design
+  - recommendation
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: architecture-decision-making
+    version: ^2.0.0
+  - name: architecture-trade-off-analysis
+    version: ^1.0.0
+
+suggests:
+  - feature-decision-analysis
+  - feature-engineering
+  - pattern-selection-and-composition
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Solution Analysis
+      short_description: Price the options, including the simplest one
+      default_prompt: Use Feature Solution Analysis to generate and evaluate the options for this choice.

@@ -1,0 +1,61 @@
+schemaVersion: 1
+
+name: feature-readiness-review
+version: 1.0.0
+description: >-
+  The two gates around implementing a feature: before, checking that nothing implementation
+  depends on is still unresolved, and after, checking that what was built is what was agreed and
+  that the claim of completion is supported. Use before the first line of a planned feature is
+  written, when implementation is about to start with an open blocking question, when a feature is
+  about to be declared done, when "done" is being claimed on a green build, when a feature shipped
+  and the decisions were never written down, or when a reviewer cannot tell which parts of a diff
+  were requested. Does not review the code itself for defects or design (code-review), does not
+  choose the automated checks (quality-gates), and does not own the rules about what an agent may
+  claim (coding-agent-discipline).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-readiness-review
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-readiness-review
+
+keywords:
+  - feature
+  - readiness
+  - review
+  - completion
+  - gates
+  - checklist
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: code-review
+    version: ^1.0.0
+  - name: coding-agent-discipline
+    version: ^1.0.0
+  - name: quality-gates
+    version: ^1.0.0
+
+suggests:
+  - feature-engineering
+  - feature-progress-tracking
+  - feature-scope-analysis
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Readiness Review
+      short_description: The gate before, and the review after
+      default_prompt: Use Feature Readiness Review to gate this feature before implementing or before completing.

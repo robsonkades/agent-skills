@@ -1,0 +1,62 @@
+schemaVersion: 1
+
+name: feature-context-analysis
+version: 1.0.0
+description: >-
+  Reading the repository for one specific feature: which technologies and patterns are actually
+  present, which components the feature can reuse, which questions the code has already answered,
+  and — stated as findings rather than silence — which it has not. Use before asking the user
+  anything, before proposing a technology, when a feature is about to be built in a style the
+  codebase does not use, when "the project uses X" is being asserted without a path, when an
+  abstraction is about to be created that already exists, or when picking up a codebase you have
+  not read. Does not decide whether a found technology may be used for this feature
+  (feature-decision-analysis), does not enumerate what the change will touch
+  (feature-architecture-analysis), and is not a general method for reading an unfamiliar
+  enterprise codebase (enterprise-application-architecture) or auditing it for defects
+  (java-code-smells).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-context-analysis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-context-analysis
+
+keywords:
+  - feature
+  - codebase
+  - investigation
+  - patterns
+  - reuse
+  - context
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: enterprise-application-architecture
+    version: ^1.0.0
+
+suggests:
+  - feature-architecture-analysis
+  - feature-decision-analysis
+  - feature-engineering
+  - feature-requirement-clarification
+  - java-code-smells
+  - layering-and-boundaries
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Context Analysis
+      short_description: Read the repository before proposing anything
+      default_prompt: Use Feature Context Analysis to establish what this repository already answers.

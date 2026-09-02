@@ -1,0 +1,60 @@
+schemaVersion: 1
+
+name: feature-discovery
+version: 1.0.0
+description: >-
+  Separating what is actually established about a feature request from what has been filled in: a
+  ledger in which every fact carries its source, every assumption carries what would falsify it,
+  and every unknown carries the impact of getting it wrong. Use at the start of a feature, when a
+  request is one sentence long and the work is not, when a plan or an estimate is being built on
+  statements nobody has checked, when two people describe the same feature differently, when
+  picking up a feature someone else analysed, or when an answer is about to be written as fact
+  because it is probably true. Does not decide which unknowns to ask about or how
+  (feature-requirement-clarification), does not investigate the repository to close them
+  (feature-context-analysis), and does not restate the requirement without its solution or write
+  acceptance criteria (requirements-and-acceptance).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-discovery
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-discovery
+
+keywords:
+  - feature
+  - discovery
+  - assumptions
+  - unknowns
+  - requirements
+  - ledger
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: requirements-and-acceptance
+    version: ^1.0.0
+
+suggests:
+  - engineering-communication
+  - feature-context-analysis
+  - feature-decision-analysis
+  - feature-engineering
+  - feature-requirement-clarification
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Discovery
+      short_description: Separate what is known from what was assumed
+      default_prompt: Use Feature Discovery to build the fact, assumption and unknown ledger for this request.

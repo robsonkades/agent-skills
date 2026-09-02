@@ -1,0 +1,64 @@
+schemaVersion: 1
+
+name: feature-execution
+version: 1.0.0
+description: >-
+  Implementing a planned feature one resource at a time: taking a single resource to done,
+  choosing the validation that resource actually warrants, running it and reading the output, and
+  handling the two things that always happen — the plan turning out to be wrong, and a resource
+  turning out to be blocked. Use when a plan exists and implementation is starting, when several
+  resources are half-finished at once, when implementation has diverged from the plan without
+  anyone recording it, when a resource is blocked and the work has quietly stopped, or when a
+  change is about to be reported as done on the strength of it compiling. Does not choose which
+  automated gates a change must pass (quality-gates), does not decide the test level or write the
+  tests (java-testing-strategy, tdd), does not own the status artefacts
+  (feature-progress-tracking), and does not own what may be claimed about the result
+  (coding-agent-discipline).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-execution
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-execution
+
+keywords:
+  - feature
+  - implementation
+  - validation
+  - blockers
+  - resources
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: coding-agent-discipline
+    version: ^1.0.0
+  - name: java-testing-strategy
+    version: ^1.0.0
+  - name: quality-gates
+    version: ^1.0.0
+
+suggests:
+  - feature-engineering
+  - feature-implementation-plan
+  - feature-progress-tracking
+  - java-refactoring
+  - tdd
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Execution
+      short_description: One resource at a time, validated before done
+      default_prompt: Use Feature Execution to implement the next resource and validate it.

@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: feature-scope-analysis
+version: 1.0.0
+description: >-
+  Fixing what a feature includes and, more usefully, what it deliberately excludes: sorting every
+  candidate item into required, recommended, optional, out of scope or future work, tracing each
+  included item back to a requirement or a constraint, and catching the additions that arrived
+  because they seemed like a good idea. Use when a feature is being planned and its edges are
+  undefined, when a plan has grown a dashboard, a refactor or an abstraction nobody asked for,
+  when "while we are in there" appears, when an estimate keeps moving without the requirement
+  changing, or when a reviewer cannot tell which parts of a change were requested. Does not keep
+  an already-written diff honest (coding-agent-discipline), does not decide whether a duplication
+  justifies an abstraction (java-dry-kiss-yagni), and does not decide whether a deliberate
+  shortcut is acceptable (technical-debt-decisions).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-scope-analysis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-scope-analysis
+
+keywords:
+  - feature
+  - scope
+  - scope-creep
+  - boundaries
+  - planning
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: coding-agent-discipline
+    version: ^1.0.0
+
+suggests:
+  - feature-architecture-analysis
+  - feature-decomposition
+  - feature-engineering
+  - java-dry-kiss-yagni
+  - technical-debt-decisions
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Scope Analysis
+      short_description: Fix what is in, and what is deliberately out
+      default_prompt: Use Feature Scope Analysis to fix the boundary of this feature.

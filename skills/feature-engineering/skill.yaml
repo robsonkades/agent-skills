@@ -1,0 +1,95 @@
+schemaVersion: 1
+
+name: feature-engineering
+version: 1.0.0
+description: >-
+  Owning a feature request from first reading to completion review: choosing how much of the
+  lifecycle the change actually warrants, running the phases in order, holding the gates that stop
+  implementation beginning on unresolved assumptions, and keeping a dossier that lets another
+  agent resume the work. Use when a feature request arrives and the order of work is not obvious,
+  when implementation is about to start on a request whose technology or scope was never agreed,
+  when a half-finished feature has to be picked up from someone else, when the same feature is
+  being re-analysed because nobody wrote down what was decided, or when a change is being declared
+  done because it compiles. Does not own any phase in depth — it routes to the thirteen
+  specialised feature-* skills — and it is not the general order of work for an arbitrary change
+  (clean-delivery-workflow), nor the record format for a decision (architecture-decision-making).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-engineering
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-engineering
+
+keywords:
+  - feature
+  - lifecycle
+  - orchestration
+  - process
+  - delivery
+  - routing
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: architecture-decision-making
+    version: ^2.0.0
+  - name: clean-delivery-workflow
+    version: ^1.0.0
+  - name: code-review
+    version: ^1.0.0
+  - name: coding-agent-discipline
+    version: ^1.0.0
+  - name: debugging
+    version: ^1.0.0
+  - name: feature-architecture-analysis
+    version: ^1.0.0
+  - name: feature-context-analysis
+    version: ^1.0.0
+  - name: feature-decision-analysis
+    version: ^1.0.0
+  - name: feature-decomposition
+    version: ^1.0.0
+  - name: feature-discovery
+    version: ^1.0.0
+  - name: feature-execution
+    version: ^1.0.0
+  - name: feature-implementation-plan
+    version: ^1.0.0
+  - name: feature-progress-tracking
+    version: ^1.0.0
+  - name: feature-readiness-review
+    version: ^1.0.0
+  - name: feature-requirement-clarification
+    version: ^1.0.0
+  - name: feature-risk-analysis
+    version: ^1.0.0
+  - name: feature-scope-analysis
+    version: ^1.0.0
+  - name: feature-solution-analysis
+    version: ^1.0.0
+  - name: quality-gates
+    version: ^1.0.0
+  - name: requirements-and-acceptance
+    version: ^1.0.0
+
+suggests:
+  - engineering-communication
+  - estimation-under-uncertainty
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Engineering
+      short_description: Own a feature from request to completion review
+      default_prompt: Use Feature Engineering to take this feature request through the lifecycle it warrants.

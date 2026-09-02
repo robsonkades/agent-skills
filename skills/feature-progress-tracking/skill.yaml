@@ -1,0 +1,51 @@
+schemaVersion: 1
+
+name: feature-progress-tracking
+version: 1.0.0
+description: >-
+  Keeping a feature's state true while it is being built: one status per resource with defined
+  transitions, a validation line required before anything reaches done, and a persisted record
+  current enough that another agent or another session can resume from it without asking. Use when
+  a feature spans more than one sitting, when someone else may pick the work up, when the answer
+  to "where are we" is a summary of the conversation, when resources are marked done because code
+  was written for them, when a blocker has been open long enough that nobody remembers what it
+  needs, or when a plan and the code have silently diverged. Does not implement the resources
+  (feature-execution), does not decide what counts as a resource (feature-decomposition), and does
+  not perform the final review (feature-readiness-review).
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-progress-tracking
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-progress-tracking
+
+keywords:
+  - feature
+  - progress
+  - status
+  - resumption
+  - execution-log
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - feature-engineering
+  - feature-execution
+  - feature-readiness-review
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Progress Tracking
+      short_description: State true enough to resume from
+      default_prompt: Use Feature Progress Tracking to record where this feature stands.
