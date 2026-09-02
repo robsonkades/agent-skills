@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jvm-gc-tuning
-version: 2.3.0
+version: 2.4.0
 description: >-
   Deciding whether GC is the actual bottleneck, then choosing a collector and sizing the
   heap. Use when GC pauses appear on the critical path of a latency profile, when full
@@ -10,7 +10,8 @@ description: >-
   instead when the symptom is latency or CPU and GC has not been confirmed as the cause.
   Does not cover how collectors work internally (gc-fundamentals), configuring and reading
   the GC log (gc-log-analysis), the non-heap memory budget (jvm-memory-regions), or
-  allocation profiling and leak hunting (jit-inlining-and-escape-analysis). Deriving G1 flag
+  allocation profiling (allocation-profiling) or leak hunting
+  (java-reference-types-and-leaks). Deriving G1 flag
   values from an SLO is g1-tuning-for-slo and operating the concurrent collectors is
   zgc-and-shenandoah.
 

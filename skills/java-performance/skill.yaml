@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-performance
-version: 2.3.0
+version: 2.4.0
 description: >-
   Triage entry point for JVM performance problems: turn a reported symptom into the one
   investigation that can resolve it, and hand off to the specialist skill that owns it. Use
@@ -73,7 +73,7 @@ dependencies:
   - name: jit-compilation
     version: ^1.0.0
   - name: jit-inlining-and-escape-analysis
-    version: ^1.0.0
+    version: ^2.0.0
   - name: jmh-microbenchmarks
     version: ^1.0.0
   - name: jvm-class-loading
@@ -100,6 +100,30 @@ dependencies:
     version: ^1.0.0
   - name: unified-logging
     version: ^1.0.0
+  - name: startup-cds-crac-leyden
+    version: ^2.0.0
+  - name: off-heap-memory
+    version: ^1.0.0
+  - name: ebpf-for-jvm
+    version: ^2.0.0
+  - name: tail-latency-analysis
+    version: ^1.0.0
+  - name: container-awareness
+    version: ^1.0.0
+  - name: coordinated-omission
+    version: ^1.0.0
+  - name: serialization-performance
+    version: ^1.0.0
+  - name: opentelemetry-performance
+    version: ^1.0.0
+  - name: performance-regression-ci
+    version: ^1.0.0
+  - name: numa-and-cpu-affinity
+    version: ^1.0.0
+  - name: virtual-thread-migration
+    version: ^1.0.0
+  - name: virtual-threads-internals
+    version: ^1.0.0
 
 suggests:
   - allocation-profiling
@@ -113,10 +137,7 @@ suggests:
   - completablefuture-composition
   - concurrency-limiting-and-bulkheads
   - concurrency-testing
-  - container-awareness
   - continuous-profiling
-  - coordinated-omission
-  - ebpf-for-jvm
   - epsilon-and-shenandoah-internals
   - escape-analysis-internals
   - executors-and-task-lifecycle
@@ -128,37 +149,30 @@ suggests:
   - graalvm-jit
   - graalvm-native-image
   - heap-dump-analysis
+  - hot-partitions-and-rebalancing
   - io-uring-and-zero-copy
   - jfr-advanced
   - jhsdb-and-core-dumps
   - jmh-advanced
   - jni-and-ffm
   - jvm-bytecode
+  - load-balancing-and-routing
   - load-testing-advanced
   - lock-free-patterns
   - lock-inflation
   - metaspace-internals
-  - numa-and-cpu-affinity
-  - off-heap-memory
-  - opentelemetry-performance
   - pause-attribution
-  - performance-regression-ci
   - queueing-models
   - reactive-and-virtual-thread-selection
   - reactive-backpressure
   - reading-jit-assembly
   - scoped-values
-  - serialization-performance
   - simd-and-vector-api
-  - startup-cds-crac-leyden
   - structured-concurrency
-  - tail-latency-analysis
   - tcp-tuning
   - timeouts-and-deadlines
   - universal-scalability-law
   - varhandles-and-memory-ordering
-  - virtual-thread-migration
-  - virtual-threads-internals
   - zgc-and-shenandoah
   - zgc-generational-internals
 

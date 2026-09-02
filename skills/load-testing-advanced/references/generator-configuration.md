@@ -169,6 +169,11 @@ jcmd <pid> Thread.dump_to_file -format=json threads.json
 
 watch -n 1 'jcmd <pid> GC.heap_info'
 tail -f gc.log | grep -E "Pause (Young|Full)"
+
+# JDK 25: the virtual-thread scheduler itself — parallelism, active carriers, steals,
+# and `delayed` (parked virtual threads with a timeout)
+jcmd <pid> Thread.vthread_scheduler
+jcmd <pid> Thread.vthread_pollers          # I/O poller threads and registrations
 ```
 
 `jcmd <pid> Thread.count` has never existed in any JDK. It fails with `Unknown diagnostic

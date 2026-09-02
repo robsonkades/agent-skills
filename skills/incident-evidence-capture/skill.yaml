@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: incident-evidence-capture
-version: 1.1.0
+version: 1.2.0
 description: >-
   What to collect from a degrading JVM before someone restarts it, in what order, and what the
   restart destroys: the artefacts that already exist and survive, three spaced thread dumps
@@ -65,5 +65,6 @@ dependencies:
 
 suggests:
   - continuous-profiling
+  - kubernetes-service-lifecycle
   - slo-and-alerting
   - unified-logging

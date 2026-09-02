@@ -40,9 +40,12 @@ either.
    deployment allows it. A pod removed from the load balancer but not killed preserves everything
    and costs nothing further. This is the single highest-value move available and it is
    frequently possible.
-3. **Collect what already exists first.** GC log, JFR recording, `hs_err` file, exported metrics
-   and traces cost nothing to preserve and are lost only if the container is replaced. Copy them
-   off before anything else. See `references/what-a-restart-destroys.md`.
+3. **Collect what already exists first.** GC log, `hs_err` file, exported metrics and traces
+   cost nothing to preserve and are lost only if the container is replaced. A continuous JFR
+   recording is _not yet a file_: its chunks sit in a repository under the temp directory and
+   are deleted when the JVM exits, so `jcmd <pid> JFR.dump filename=<volume>/x.jfr` is the
+   first command, not a later one. Copy everything off before anything else. See
+   `references/what-a-restart-destroys.md`.
 4. **Take three thread dumps, five to ten seconds apart.** One dump cannot distinguish a thread
    stuck from a thread busy; three make it obvious. Seconds of cost, and the highest information
    per second of any volatile capture.
@@ -65,6 +68,10 @@ either.
 - **A heap dump is not a free action.** It triggers a full collection and writes the live set to
   disk while the application is stopped. Budget for it, write it somewhere with room, and never
   take one on every replica.
+- **A stopped JVM fails its liveness probe.** Taking a pod out of the Service does not stop the
+  kubelet probing it; a heap dump longer than `failureThreshold × periodSeconds` gets the
+  container killed mid-write and leaves a truncated file. Check that arithmetic before the
+  dump, or fall back to two `GC.class_histogram` snapshots, which pause but write no file.
 - **If `jcmd` or `jmap` hangs, stop trying.** The JVM cannot reach a safepoint, which is itself a
   finding. The evidence is then a core dump or the OS's view — `jhsdb-and-core-dumps`.
 - **Write to a path that outlives the process.** A dump written to a container's own filesystem

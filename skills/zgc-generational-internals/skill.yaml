@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: zgc-generational-internals
-version: 1.1.0
+version: 1.2.0
 description: >-
   Generational ZGC internals: coloured pointers without multi-mapping, the load and store
   barriers, the young and old cycles and their three STW phases, the remembered-set bitmap

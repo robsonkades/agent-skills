@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: pause-attribution
-version: 1.1.0
+version: 1.2.0
 description: >-
   Attributing an observed production pause to a layer: decomposing it across
   time-to-safepoint, safepoint operation, cleanup and host effects, correlating the GC log,

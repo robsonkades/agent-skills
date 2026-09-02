@@ -36,8 +36,9 @@ Latency is a distribution. Every rule here follows from that one fact.
    HdrHistogram `.add()`, or `sum(rate(..._bucket)) by (le)` before `histogram_quantile`.
 5. **Check for coordinated omission** whenever the number came from a load generator or
    a fixed-rate producer. See `references/coordinated-omission.md`.
-6. **Decide whether the difference is real.** Overlapping intervals mean the experiment
-   did not decide — not that the two are equal.
+6. **Decide whether the difference is real.** A p99 from one run has no error bar; repeat
+   the run or bootstrap within it, and read overlapping intervals as "the experiment did
+   not decide", never as "equal". See `references/comparing-two-measurements.md`.
 
 ## Rules
 
@@ -51,7 +52,11 @@ Latency is a distribution. Every rule here follows from that one fact.
 - Drop standard deviation from latency dashboards. It presumes a Gaussian distribution
   that latency does not have.
 - Always publish the sample count next to the percentile. Without it the percentile is
-  unfalsifiable.
+  unfalsifiable. The number that matters is `n × (1 − p)`, the samples above the
+  percentile: below 10 the "percentile" is one of the slowest few requests.
+- Never run a t-test on raw latency samples to decide whether a percentile moved. It
+  compares means of a heavy-tailed, autocorrelated series; the result says nothing about
+  the tail and its p-value is too small by construction.
 - Investigate the **temporal pattern** before the amplitude: a p99.9 spike every 30
   minutes points at a cache TTL, every hour at a scheduled job, at deploy time at a
   regression. The period names a constant in the code.
@@ -64,6 +69,10 @@ Latency is a distribution. Every rule here follows from that one fact.
   sizing and thread safety, Micrometer and Prometheus bucket configuration, and the
   correct aggregation query. Read when configuring metrics or when a dashboard's
   percentile is suspect.
+- [Comparing two measurements](references/comparing-two-measurements.md) — minimum
+  samples for a tail percentile, why t-tests and Mann–Whitney on raw samples answer the
+  wrong question, replicated runs versus a block bootstrap, and how to report the
+  difference. Read at step 6, whenever two p99s are about to be called different or equal.
 - [Coordinated omission](references/coordinated-omission.md) — what it is, why it
   misleads in two directions at once, and how to detect and correct it. Read when the
   number came from a load generator or a fixed-rate producer.

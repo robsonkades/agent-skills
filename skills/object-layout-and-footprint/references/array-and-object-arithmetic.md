@@ -41,10 +41,27 @@ Instance size: 16 bytes
 So: instance header **12 → 8**, and the array length field stays 4 bytes and simply moves.
 
 `-XX:-UseCompressedClassPointers` widens the klass word to 8 bytes: header 16, array base
-offsets **20** for ≤4-byte elements and **24** for 8-byte elements. It also emits a JDK 25
-deprecation warning and disables CDS. It is not a configuration to design for; it is a
-configuration to recognise in someone else's artefact. The flag's lifecycle is
-`jvm-performance-review`'s.
+offsets **20** for ≤4-byte elements and **24** for 8-byte elements. It also emits
+`Option UseCompressedClassPointers was deprecated in version 25.0` and
+`CDS will be disabled` `[executed]`, and it forces compact headers off (see
+`compact-object-headers.md` §4). It is not a configuration to design for; it is a
+configuration to recognise in someone else's artefact — by these sizes, all `[executed]` on
+25.0.3, JOL and `Instrumentation.getObjectSize` agreeing:
+
+| Object         | Default | `-UseCompressedClassPointers` |
+| -------------- | ------- | ----------------------------- |
+| `new Object()` | 16      | 16                            |
+| `Integer`      | 16      | **24**                        |
+| `record Point` | 24      | 24                            |
+| `byte[0]`      | 16      | **24**                        |
+| `byte[1..4]`   | 24      | 24                            |
+| `int[1]`       | 24      | 24                            |
+| `long[1]`      | 24      | **32**                        |
+| `Object[1]`    | 24      | 24                            |
+| `AllTypes`     | 48      | **56**                        |
+
+The tell is an empty array at 24 and `Integer` at 24 with compressed oops still on. The
+flag's lifecycle is `jvm-performance-review`'s.
 
 ## 2. The base offsets, read off the VM rather than assumed
 
@@ -160,6 +177,16 @@ So you can compute a **size** from source, and you cannot compute an **offset** 
 If an offset matters — it does for cache-line contention, which is
 `false-sharing-and-contended` — it must be read from a JOL listing.
 
+The algorithm producing these offsets is `FieldLayoutBuilder`
+(`hotspot/share/classfile/fieldLayoutBuilder.cpp`), introduced by JDK-8237767 "Field layout
+computation overhaul", fix version 15 (JBS, confirmed). Everything measured here — descending
+size groups, references last, the 4-byte field hoisted into the classic header gap, subclass
+fields filling superclass holes (§5) — is that builder's output; layouts from a pre-15 JDK
+follow a different algorithm and must not be carried forward (not verified here — no pre-15
+build available). The offsets above were reproduced this pass with
+`Unsafe.objectFieldOffset` on 25.0.3, JOL-free: `int i @ 12` under classic headers,
+`long l @ 8` under compact ones.
+
 ## 5. Superclass gap filling
 
 `[executed]`, 25.0.3, both modes:
@@ -212,6 +239,16 @@ flag to anyone; a population of `Rec4` pays nothing, a population of `Point` pay
 `-XX:ObjectAlignmentInBytes=16` together with `-XX:+UseCompactObjectHeaders` is accepted
 silently on 25.0.3 and both take effect `[executed]` — note `Point` at 16 bytes in the last
 column, which is smaller than either flag achieves alone.
+
+What alignment 16 does to the small arrays and boxes that dominate a real heap, `[executed]`
+25.0.3, agent and JOL agreeing: `Long` 24 → **32**, `byte[1..8]` 24 → **32**, `int[1]`
+24 → **32**, `long[1]` 24 → **32**, `String` object 24 → **32**, `ArrayList` 24 → **32**;
+`Integer`, `Object`, `HashMap$Node` and `Rec4` unchanged. Every object whose default size is
+`≡ 8 (mod 16)` pays 8 bytes; roughly half a typical heap does. The accepted range is
+`[8 … 256]` and a power of two — 4 and 512 are refused at start-up `[executed]`; the
+compressed-oops boundary it buys is `4 GB × alignment`, measured at 16 as `-Xmx60g` on and
+`-Xmx64g` off (`production-footprint-checks.md` §2). Under compact headers the narrow klass
+shift drops from 10 to 9 with alignment 16 `[executed]`, which changes nothing on this page.
 
 ## 7. The worked method, end to end
 

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jmh-advanced
-version: 1.0.0
+version: 1.1.0
 description: >-
   JMH beyond the basics: the built-in profilers (`perfasm`, `xperfasm`, `perfnorm`, `gc`,
   `stack`, `jfr`, `async`), `@State` scope and asymmetric benchmarks with
@@ -45,6 +45,10 @@ files:
 dependencies:
   - name: jmh-microbenchmarks
     version: ^1.0.0
+
+suggests:
+  - coordinated-omission
+  - load-testing
 
 capabilities:
   - reads-source

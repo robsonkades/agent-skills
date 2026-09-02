@@ -1,16 +1,17 @@
 schemaVersion: 1
 
 name: performance-methodology
-version: 1.2.0
+version: 1.3.0
 description: >-
   The investigation process for performance work: defining an SLO, recording a baseline,
   observing before hypothesising, falsifiability, Amdahl's Law as a go/no-go filter,
   changing one variable at a time, and validating by mechanism rather than by coincidence.
   Use when starting a performance investigation, when a fix is credited to a deploy that
   also restarted the process, when an optimisation is proposed without a measurement, when a
-  benchmark result changes with the duration of the run, or when "it's fine in staging" is
-  the explanation. Does not cover which tool to run (jfr-and-async-profiler), the statistics
-  of the numbers (latency-statistics), or microbenchmark construction (jmh-microbenchmarks).
+  benchmark result changes with the duration of the run, when an investigation has run for
+  days without refuting a hypothesis, or when "it's fine in staging" is the explanation.
+  Does not cover which tool to run (jfr-and-async-profiler), the statistics of the numbers
+  (latency-statistics), or microbenchmark construction (jmh-microbenchmarks).
 
 license: Apache-2.0
 
@@ -47,9 +48,15 @@ dependencies:
     version: ^2.0.0
 
 suggests:
+  - capacity-planning
   - engineering-communication
+  - incident-evidence-capture
   - jdk-upgrade-impact
+  - jmh-microbenchmarks
   - jvm-performance-review
+  - load-testing
+  - slo-and-alerting
+  - universal-scalability-law
 
 capabilities:
   - reads-source

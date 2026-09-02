@@ -5,16 +5,23 @@
 Every event, from every service, carries these. A field that is present on only some events
 cannot be used as a filter, because "absent" and "not applicable" are indistinguishable.
 
-| Field                       | Source                         | Why it is mandatory                                       |
-| --------------------------- | ------------------------------ | --------------------------------------------------------- |
-| `timestamp`                 | Appender, ISO-8601 with offset | Local time without an offset is unsortable across regions |
-| `level`                     | Logger                         | The routing key for alerting                              |
-| `logger` / `thread`         | Logger                         | Locates the emitting code; thread names the pool          |
-| `service`, `version`, `env` | Resource / deployment config   | Answers "which build" without a deploy timeline lookup    |
-| `trace_id`, `span_id`       | Tracing context                | The join to `distributed-tracing-design`                  |
-| `request_id`                | Ingress filter                 | Survives when the trace was sampled away                  |
-| `message`                   | Call site, **constant**        | The event type; a variable message cannot be counted      |
-| `error.type`, `error.stack` | Encoder, from the throwable    | Grouping failures by type rather than by message wording  |
+| Field                                              | Source                         | Why it is mandatory                                                                        |
+| -------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------ |
+| `timestamp`                                        | Appender, ISO-8601 with offset | Local time without an offset is unsortable across regions                                  |
+| `level`                                            | Logger                         | The routing key for alerting                                                               |
+| `logger` / `thread`                                | Logger                         | Locates the emitting code; thread names the pool                                           |
+| `service`, `version`, `env`                        | Resource / deployment config   | Answers "which build" without a deploy timeline lookup                                     |
+| `trace_id`, `span_id`                              | Tracing context                | The join to the trace and its spans                                                        |
+| `request_id`                                       | Ingress filter                 | Survives when the trace was sampled away                                                   |
+| `message`                                          | Call site, **constant**        | The event type; a variable message cannot be counted                                       |
+| `error.type`, `error.message`, `error.stack_trace` | Encoder, from the throwable    | Grouping failures by type rather than by message wording; a trace hash groups by call path |
+
+The names above follow ECS where ECS has a name (`@timestamp`, `log.level`, `log.logger`,
+`process.thread.name`, `service.name`, `service.version`, `service.environment`,
+`trace.id`, `span.id`, `error.*`), which is the schema Log4j2's default template and Spring
+Boot's `ecs` format emit. Adopting it is cheaper than inventing one; but the trace id key
+the MDC actually holds is set by the tracing instrumentation, not by the schema — see
+`references/java-logging-mechanics.md` before assuming `trace.id` is populated.
 
 Then per-domain keys — `order_id`, `tenant_id`, `payment_id`. Two rules make them usable:
 
@@ -72,6 +79,12 @@ bytes/s  = events/s × average event bytes
 At 2,000 req/s, three INFO events per request at 600 bytes is ~3.6 MB/s, ~300 GB/day. That
 is usually the largest line item in an observability budget, and hitting a collector's
 ingestion rate limit drops events indiscriminately — the errors included.
+
+Use the JSON size, not the pattern-line size, and budget the exceptional path separately:
+an ERROR event with a full stack trace is tens of kilobytes, so a dependency outage that
+turns 5% of requests into exceptions multiplies the byte rate by more than the event rate
+does. Bounding the trace at the encoder is what keeps that multiplier finite — the levers
+are in `references/appenders-and-cost.md`.
 
 Sampling rules:
 

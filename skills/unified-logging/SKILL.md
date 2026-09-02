@@ -7,12 +7,12 @@ description: >
   tag-set has to be chosen for a subsystem, when a log is missing or truncated after a
   restart, when a pre-JDK-9 flag such as -XX:+PrintGCDetails or -XX:+TraceClassLoading sits
   in a startup script, when a JVM refuses to start on an -Xlog option, when logging must be
-  toggled without a restart, or when asked what -Xlog costs. Produces a log that exists and
-  holds what was meant; does not interpret it — a GC log is gc-log-analysis, safepoints and
-  time-to-safepoint are safepoints and pause-attribution, compilation output is
-  compilation-and-inlining-logs and deoptimization, code cache is code-cache-segments, class
-  loading is jvm-class-loading, CDS and AOT are startup-cds-crac-leyden, and application
-  logging is structured-logging.
+  toggled without a restart, when asked what -Xlog costs, or where a container's log should
+  go. Produces a log that exists and holds what was meant; does not interpret it — a GC log
+  is gc-log-analysis, safepoints and time-to-safepoint are safepoints and pause-attribution,
+  compilation output is compilation-and-inlining-logs and deoptimization, code cache is
+  code-cache-segments, class loading is jvm-class-loading, CDS and AOT are
+  startup-cds-crac-leyden, and application logging is structured-logging.
 ---
 
 # Unified Logging
@@ -51,7 +51,9 @@ this skill's work — see the neighbours named in the description.
    `java -Xlog:<selection> -version`, watching **stdout**. This is the only step that
    surfaces `No tag set matches selection: …` and its up-to-five suggestions. Adding
    `file=` moves the log into the file and leaves this diagnostic on stdout, which a
-   container log pipeline usually discards.
+   container log pipeline usually discards. A refused start is split the same way: stderr
+   carries only `Invalid -Xlog option '…', see error log for details.`; the reason is the
+   `[error][logging]` line on stdout.
 5. **Prove it on a representative workload, with the file attached**, and assert the
    content, not the exit code: the file is non-empty **and** contains the tag-set. Match
    the tag-set with a trailing-space tolerance, `grep -E '\[gc,age[ ]*\]' gc.log`, never
@@ -91,14 +93,17 @@ debug, info, warning, error`.
 
 ## The three failure modes
 
-| Input                                                           | JVM              | Exit | Diagnostic                                                                                                                       |
-| --------------------------------------------------------------- | ---------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Unknown tag, level or decorator (`gcc`, `=verbose`, `::foobar`) | refuses to start | 1    | `[error][logging] Invalid tag/level/decorator …` **on stdout**; stderr gets only the launcher's generic `Invalid -Xlog option …` |
-| Valid tags, no matching tag-set (`gc+jit`)                      | starts           | 0    | `[warning][logging] No tag set matches selection` **on stdout only**                                                             |
-| Valid tag-set, nothing fires at that level (`gc+age` at info)   | starts           | 0    | **none at all** — empty file, no warning                                                                                         |
+| Input                                                                                       | JVM              | Exit | Diagnostic                                                                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------- | ---------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unknown tag, level or decorator (`gcc`, `=verbose`, `::foobar`), or the `gc+*` spelling     | refuses to start | 1    | **on stdout**: `[error][logging] Invalid tag 'gcc' in log selection.` / `Invalid level 'verbose' in log selection.` / `Invalid decorator 'foobar'.` / `Invalid tag '' in log selection.`; stderr gets only `Invalid -Xlog option '…', see error log for details.` |
+| Output cannot be initialised (directory missing, `filecount` on `stdout`, `filecount=1001`) | refuses to start | 1    | **on stdout**: `Error opening log file '…': No such file or directory` / `Invalid option 'filecount' for log output (stdout).` / `filecount must be in range [0, 1000]`, then `Initialization of output '…' … failed.`                                            |
+| Valid tags, no matching tag-set (`gc+jit`)                                                  | starts           | 0    | `[warning][logging] No tag set matches selection` **on stdout only**                                                                                                                                                                                              |
+| Valid tag-set, nothing fires at that level (`gc+age` at info)                               | starts           | 0    | **none at all** — empty file, no warning                                                                                                                                                                                                                          |
 
 Verified by execution on Temurin 25.0.3; the wording of the diagnostics on JDK 21 is not
-verified, but the three-way split is structural.
+verified, but the split is structural. The two loud rows share one shape: stderr names the
+option, stdout names the reason. The symptom-to-cause table is in
+`references/production-and-troubleshooting.md`.
 
 ## Rules
 
@@ -107,12 +112,20 @@ verified, but the three-way split is structural.
   same decorators. Your `-Xlog` is added alongside the warning baseline, not instead of it.
 - **`-Xlog:disable` clears the warning/error baseline too.** After it, JVM warnings and
   errors are silent unless explicitly re-enabled. Use it only when that is the intent.
-- **Never log to stdout in a service.** UL lines interleave with the application's own
-  writes; JEP 158 guarantees only that individual log lines are not split. Anything
-  parsing application stdout is corrupted. Use `file=`; accept that configuration
-  diagnostics still go to stdout regardless.
+- **The output destination is a decision, not a rule.** `file=` on a mounted volume when
+  one exists; `stderr` when the application's stdout is a parsed stream and the collector
+  labels lines by stream; `stdout` only when nothing parses it line by line. UL writes
+  each line whole (JEP 158) and nothing more; `exceptions` events span three lines unless
+  `foldmultilines=true`; `file=/dev/stdout` with rotation on refuses to start; and the
+  `all=warning` baseline stays on stdout whatever the file says. The table is in
+  `references/production-and-troubleshooting.md`.
+- **A baseline exists that costs nothing measurable at `info`**: `gc*`, `safepoint`, and
+  the startup-only tags `os`, `pagesize`, `arguments`. Everything at `debug` or `trace` is
+  a time-boxed capture, not configuration — `gc*=trace` took a quarter of throughput on the
+  one machine measured. Per-tag rates and the proven flag are in the same reference.
 - **Rotation is not optional, and its defaults are not "keep everything":**
-  `filecount=5, filesize=20M`, so 100 MB of history. `filecount=0` means no rotation
+  `filecount=5, filesize=20M`, so `(filecount + 1) × filesize` = 120 MB on disk per output
+  once the slots fill. `filecount=0` means no rotation
   **and truncate the existing file at startup** — it destroys the previous run's log and
   also disables manual rotation. To keep a file until an operator asks for a rotation, use
   `filesize=0` with `filecount>0`.
@@ -124,11 +137,20 @@ verified, but the three-way split is structural.
   silently. Decorator order is fixed by the framework, so `pid,uptime` and `uptime,pid`
   produce byte-identical output.
 - **`-Xlog:async` is a restart-only decision.** `jcmd VM.log async=true` is rejected as an
-  unknown argument. Everything else about an output can be changed at runtime.
+  unknown argument, and `async=true` as an output option is `Invalid option 'async'` on the
+  command line and in `jcmd`. Everything else about an output can be changed at runtime —
+  but **always pass `what=` to `VM.log`**: `output=… decorators=…` alone re-selects
+  `all=info` on that output, silently replacing whatever it logged.
+- **Three environment variables inject `-Xlog`, on different sides of the command line.**
+  `JDK_JAVA_OPTIONS` and `JAVA_TOOL_OPTIONS` lose to the command line on an overlapping
+  tag-set; `_JAVA_OPTIONS` beats it. The `Picked up …` notices are on stderr.
+  `jcmd <pid> VM.log list` is the only statement of what is in effect.
 - **Do not quote an overhead percentage.** No citable published benchmark of UL overhead
-  exists. The cost is dominated by message rate and by the selection, and at production
-  info-level selections it is not measurable by the methods usually applied. If a number
-  is needed, measure it on the target and report the method.
+  exists. The cost is dominated by message rate and by the selection: on one machine,
+  `gc*` and `gc*=debug` sat inside run-to-run noise, `all=info` cost 7% and `gc*=trace`
+  25% of throughput, and async recovered most of the latter. Those are observations with a
+  method attached (`references/async-and-cost.md`), not figures to repeat. If a number is
+  needed, measure it on the target and report the method.
 - **Pre-JDK-9 flags split three ways**, unchanged across JDK 21, 25 and 26. `-XX:+PrintGC`,
   `-XX:+PrintGCDetails` and `-Xloggc:` still work as deprecated aliases with a warning.
   Most of the rest (`PrintGCTimeStamps`, `PrintTenuringDistribution`, `PrintReferenceGC`,
@@ -162,3 +184,10 @@ verified, but the three-way split is structural.
   classification and the official mapping tables from GC and runtime flags to `-Xlog`.
   Read when a pre-JDK-9 flag appears in a startup script or a JVM fails to start on an
   unrecognised `-XX:+Print…` or `-XX:+Trace…` option.
+- [Production, containers and troubleshooting](references/production-and-troubleshooting.md)
+  — what to log always with the per-tag rate and cost class, the `exceptions` undercount
+  under the JIT, the file / `stderr` / `stdout` decision for a container, the
+  `JDK_JAVA_OPTIONS` / `JAVA_TOOL_OPTIONS` / `_JAVA_OPTIONS` precedence, and the
+  symptom-to-cause table. Read when writing the permanent configuration for a service,
+  when the log that ran is not the one that was written, or when a log is missing, empty
+  or unparseable and the cause is not yet known.

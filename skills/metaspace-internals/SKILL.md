@@ -85,6 +85,11 @@ dump, just a process that disappears.
   **capacity**, not usage, and its counters update on internal GC accounting events — a
   freshly started process can report `MC = 0.0` while `VM.metaspace` already shows
   committed memory. Prefer `jcmd VM.metaspace` for a guaranteed-current reading.
+- Every non-strong hidden class is its own `ClassLoaderData` with its own chunks —
+  3 KB committed for the smallest one on 25.0.3 (`VM.metaspace show-loaders`). Growth from
+  runtime generation is classified by the generator's cache key: lambdas and `Proxy`
+  classes are keyed by code and plateau; scripts, expressions and per-instance proxies
+  keyed by data grow with traffic, and no ceiling holds them.
 - CDS and AppCDS reduce metaspace pressure: classes mapped from the shared archive appear
   under `Shared class space` in `VM.native_memory`, not as newly committed metaspace.
 - None of this applies to a GraalVM `native-image` binary, where classes are frozen at
@@ -100,3 +105,9 @@ dump, just a process that disappears.
   OpenJDK 25 defaults for every metaspace flag and the step-by-step sizing and
   validation procedure. Read when choosing a value for `MaxMetaspaceSize` or
   `CompressedClassSpaceSize`, or when validating that a change worked.
+- [Runtime class generation](references/runtime-class-generation.md) — what a generated
+  class costs, which generators are bounded by code and which grow with data (lambdas,
+  proxies, method handles, mocks, scripting and expression engines), the naming patterns
+  that attribute them in `show-loaders`, and the fix per finding. Read when metaspace grows
+  in a process that never redeploys, or when `classloader_stats` shows many one-class
+  loaders or `+ hidden classes` rows.

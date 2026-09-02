@@ -8,7 +8,8 @@ description: >
   instead when the symptom is latency or CPU and GC has not been confirmed as the cause.
   Does not cover how collectors work internally (gc-fundamentals), configuring and reading
   the GC log (gc-log-analysis), the non-heap memory budget (jvm-memory-regions), or
-  allocation profiling and leak hunting (jit-inlining-and-escape-analysis). Deriving G1 flag
+  allocation profiling (allocation-profiling) or leak hunting
+  (java-reference-types-and-leaks). Deriving G1 flag
   values from an SLO is g1-tuning-for-slo and operating the concurrent collectors is
   zgc-and-shenandoah.
 ---
@@ -49,9 +50,17 @@ decision is the one that saves the most time.
   allocation rate. Try them in that reverse order.
 - `-Xmx` is not the container limit. Metaspace, code cache, thread stacks and direct
   buffers live outside it and still count against the cgroup.
-- Never run a variable heap in production. A heap that grows pauses while it grows, GC
-  behaviour changes as it grows, and in a fixed-size container there is nothing to hand the
-  memory back to.
+- In a container with a fixed memory limit, set `-Xms` equal to `-Xmx`: a heap that grows
+  pauses while it grows, GC behaviour changes as it grows, and there is nothing to hand
+  the memory back to. Add `-XX:+AlwaysPreTouch` when the limit is what you are sizing
+  against, so the cgroup sees the whole heap resident from start-up rather than at the
+  first peak. A variable heap is the right choice only where the memory is genuinely shared
+  and returned — a developer machine, or a collector configured to uncommit on idle.
+- Through JDK 26 the JVM picks **Serial** when it sees a single CPU (executed on 25.0.3:
+  `-XX:ActiveProcessorCount=1` yields `UseSerialGC = true {ergonomic}`); JEP 523 makes G1
+  unconditional only from 27. A one-CPU pod with a latency SLO is therefore running a
+  stop-the-world collector unless the collector is named — check `jcmd <pid> VM.flags`
+  before reading its pauses as a G1 problem.
 - `MaxGCPauseMillis` is a target, not a guarantee — and lowering it shrinks the young
   generation, raising collection frequency and premature promotion. For throughput under
   G1, the adjustment is usually to **raise** the target.
@@ -69,5 +78,7 @@ decision is the one that saves the most time.
 ## References
 
 - [Collector selection and heap sizing](references/collector-and-heap.md) — the choice
-  table, sizing rules, and the container headroom calculation. Read once step 1 has
-  confirmed GC is on the critical path.
+  table by heap size, CPU count, latency requirement and throughput, the GC-thread
+  ergonomics measured on JDK 25, sizing the heap from a measured live set, and the
+  container headroom calculation. Read once step 1 has confirmed GC is on the critical
+  path, or when a heap size is being chosen for a new service.

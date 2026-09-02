@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: zgc-and-shenandoah
-version: 1.1.0
+version: 1.2.0
 description: >-
   Operating ZGC and Shenandoah in production: concurrent relocation via coloured pointers
   and load barriers, the CPU the concurrent phases actually take, allocation stalls, and

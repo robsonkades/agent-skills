@@ -42,6 +42,30 @@ Every synthetic value is strictly smaller than `value`, so the correction can ne
 histogram's MAX above the largest raw sample already collected. That is a second, independent
 route to the same conclusion: MAX is not what this correction exists to fix.
 
+## Applying it to an existing HdrHistogram
+
+When the raw data is already an HdrHistogram — an `.hlog` from `HistogramLogWriter`, a
+serialised `Histogram` — do not re-derive the loop. The library ships the post-hoc form:
+
+```java
+Histogram raw = HistogramLogReader.read(...);          // or the in-memory histogram
+long expectedIntervalNs = 1_000_000_000L / targetRatePerSecond;
+
+Histogram corrected = raw.copyCorrectedForCoordinatedOmission(expectedIntervalNs);
+
+// Or fold several raw histograms into one corrected aggregate:
+Histogram aggregate = new Histogram(raw.getNumberOfSignificantValueDigits());
+aggregate.addWhileCorrectingForCoordinatedOmission(raw, expectedIntervalNs);
+```
+
+The javadoc states the rule that matters: the at-recording method
+(`recordValueWithExpectedInterval`) and the post-hoc methods "are mutually exclusive, and
+only one of the two should be used on a given data set". A histogram recorded by wrk2 or
+by any harness that already corrected at recording time must not be passed through
+`copyCorrectedForCoordinatedOmission` — the synthetic samples would be synthesised again,
+and the tail density overestimated. Keep the raw histogram and label which correction was
+applied, once.
+
 ## Applying it to a legacy log
 
 ```python

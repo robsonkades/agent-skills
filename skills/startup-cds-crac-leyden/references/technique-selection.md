@@ -47,7 +47,8 @@ Is slow startup a real, measured problem?
 | 483         | AOT class loading and linking; three-step `record`/`create` flow  | **Delivered, JDK 24**, not preview |
 | 514         | One-command AOT ergonomics: `-XX:AOTCacheOutput`                  | Delivered, JDK 25                  |
 | 515         | AOT method profiling persisted into the cache                     | Delivered, JDK 25                  |
-| 516         | AOT cache with any collector, generational ZGC included           | **Candidate** — do not assume      |
+| 516         | AOT cache with any collector, ZGC included                        | Delivered, JDK 26 (not on 25)      |
+| JDK-8377932 | AOT cache accepts a modified JAR (affects 25 and 26)              | Fixed in 27; no backport (2026-09) |
 
 ## Numbers: what is sourced and what is not
 

@@ -1,8 +1,8 @@
 # C2 phases, tiers and the ideal graph
 
-Every table here is a default on the JDK 25 baseline. Confirm any number against
-`-XX:+PrintFlagsFinal -version` on the runtime you are reasoning about before it becomes a
-production decision — patch releases can move values without changing the structure.
+Every table here is a default on the JDK 25 baseline (Temurin 25.0.3, `-XX:+PrintFlagsFinal`).
+Confirm any number against the runtime you are reasoning about before it becomes a production
+decision — patch releases can move values without changing the structure.
 
 ## The five tiers
 
@@ -10,7 +10,7 @@ production decision — patch releases can move values without changing the stru
 | ---- | --------------------- | ------------------------------------------ | --------------------------------------------------------- |
 | 0    | Interpreter           | Invocation/backedge counters, type profile | Entry point for every method; feeds the compile decision  |
 | 1    | C1, no profiling      | none                                       | **Terminal** for trivial methods — never reprofiled       |
-| 2    | C1, limited profiling | invocation/backedge only                   | Fast transition state used when the C1 queue is congested |
+| 2    | C1, limited profiling | invocation/backedge only                   | Fast transition state used when the C2 queue is congested |
 | 3    | C1, full profiling    | branch and type profile                    | Stepping stone — produces the data C2 needs for tier 4    |
 | 4    | C2                    | —                                          | Peak code, all C2 optimisations applied                   |
 
@@ -20,13 +20,29 @@ Threshold flags governing the transitions:
 -XX:Tier3InvocationThreshold=200      # eligibility for tier 3
 -XX:Tier3MinInvocationThreshold=100
 -XX:Tier3CompileThreshold=2000        # invocation + backedge combined
+-XX:Tier3BackEdgeThreshold=60000      # OSR into tier 3
 -XX:Tier4InvocationThreshold=5000     # eligibility for tier 4
 -XX:Tier4MinInvocationThreshold=600
 -XX:Tier4CompileThreshold=15000
+-XX:Tier4BackEdgeThreshold=40000      # OSR into tier 4
+-XX:TieredStopAtLevel=4               # 1 = C1 only: no profiling, no C2, one code heap
 ```
 
 `-XX:Tier0InvokeNotifyFreqLog` is a base-2 logarithmic exponent, not a direct invocation
 count. Do not restate it as "every N calls"; read its meaning from `PrintFlagsFinal`.
+
+### Back-off under load
+
+The thresholds are not constants at runtime (`compilationPolicy.cpp`). Each is multiplied by
+`1 + queue_length / (TierNLoadFeedback × compiler_thread_count)` — `Tier3LoadFeedback=5`,
+`Tier4LoadFeedback=3` — so a congested compile queue raises the bar instead of growing the
+queue without bound. Separately, when the C2 queue holds more than `Tier3DelayOn=5` tasks per
+C2 thread, new compilations are sent to tier 2 (C1, counters only) rather than tier 3, and
+return to tier 3 once it drops below `Tier3DelayOff=2`. That is the only reason tier 2 appears
+in a log, and it is why a start-up burst shows methods "stuck" at tier 2 or 3 with counters
+that look sufficient: the thresholds were temporarily higher. Read the queue with
+`jcmd <pid> Compiler.queue` or the JFR `jdk.CompilerQueueUtilization` event
+(`queueSize`, `peakQueueSize`, `compilerThreadCount`).
 
 ## Where the template interpreter fits
 
@@ -74,16 +90,31 @@ analysis.
 
 ## Inlining limits
 
-| Flag                      | Default   | Effect                                                         |
-| ------------------------- | --------- | -------------------------------------------------------------- |
-| `MaxInlineSize`           | 35 bytes  | Bytecode up to this size: inlined unconditionally              |
-| `FreqInlineSize`          | 325 bytes | Bytecode up to this size: inlined only if the call site is hot |
-| `MaxInlineLevel`          | 9         | Maximum nested inlining depth                                  |
-| `MaxRecursiveInlineLevel` | 1         | Recursion: only one level is inlined                           |
+The refusal text is the limit's name in disguise. These are the exact strings C2 prints under
+`-XX:+PrintInlining` (`bytecodeInfo.cpp`, confirmed on Temurin 25.0.3):
 
-A `too large` verdict is uninterpretable until you know which of the first two applied, and
-that depends on whether the call site was hot. A hot call site rejected at 40 bytes is not a
-size problem; it is a depth problem (`MaxInlineLevel`) or a polymorphism problem.
+| Flag                      | Default                        | Effect                                                               | Refusal printed                       |
+| ------------------------- | ------------------------------ | -------------------------------------------------------------------- | ------------------------------------- |
+| `MaxInlineSize`           | 35 bytecode bytes              | Larger callees are inlined only at a hot site                        | `too big`                             |
+| `FreqInlineSize`          | 325 bytecode bytes             | Ceiling even at a hot site                                           | `hot method too big`                  |
+| `InlineSmallCode`         | 2500 bytes of **machine code** | A callee that already has an nmethod larger than this is not inlined | `already compiled into a big method`  |
+| `MaxInlineLevel`          | 15 (C1: `C1MaxInlineLevel` 9)  | Maximum nested inlining depth                                        | `inlining too deep`                   |
+| `MaxRecursiveInlineLevel` | 1                              | Recursion: only one level is inlined                                 | `recursive inlining is too deep`      |
+| —                         | —                              | Megamorphic or unprofiled receiver: size never considered            | `virtual call`, `no static binding`   |
+| —                         | —                              | Callee class not yet loaded or resolved at compile time              | `not inlineable` after `(not loaded)` |
+| `C1MaxInlineSize`         | 35 (C1 only)                   | C1's own limit, printed in **tier 2/3** trees, not a C2 verdict      | `callee is too large`                 |
+
+A verdict is uninterpretable until you know which compiler printed it. `PrintInlining` emits
+a tree for every compilation, and a tier-3 tree says `callee is too large` for anything over
+35 bytes regardless of hotness; the C2 tree for the same caller, a few lines later, says
+`inline (hot)` for the same callee. Read the tier column of the compilation line the tree hangs
+from before reading the tree. A hot 40-byte callee refused with `inlining too deep` or
+`virtual call` is a depth or polymorphism problem, not a size problem.
+
+`InlineSmallCode` is the limit people forget: it is measured in machine-code bytes of the
+callee's existing nmethod, so a callee that was compiled first and grew large (unrolling,
+vectorisation) blocks its own inlining later, and with it every escape-analysis result that
+depended on the call boundary disappearing.
 
 ## The three escape states
 
@@ -110,10 +141,15 @@ before the thread actually reaches a requested global safepoint.
 
 ## nmethod lifecycle states in PrintCompilation
 
-- **`made not entrant`** — no new call enters this code; threads already inside finish
-  normally. Happens on tier promotion (recompilation) and on deoptimisation.
-- **`made zombie`** — no live activation remains on any stack; the sweeper may reclaim it from
-  the code cache.
+- **`made not entrant: <reason>`** — no new call enters this code; threads already inside
+  finish normally. JDK 25 prints the reason. `not used` is the normal 0 → 3 → 4 promotion
+  retiring the tier-3 code; `OSR invalidation of lower level` is the same for OSR code;
+  `uncommon trap` is a deoptimisation; `marked for deoptimization` is a dependency — class
+  loading, `RedefineClasses` — invalidated from outside. Only the last two are worth a second
+  look.
+- **`made zombie` no longer exists.** The sweeper thread and the zombie state were removed in
+  JDK 20 (JDK-8290025). A not-entrant nmethod is unloaded by the GC once no frame references
+  it, so reclaiming code cache is a GC event — `code-cache-segments` covers what that changed.
 
-Every `made zombie` was `made not entrant` first. The reverse is not prompt: a thread stuck in
-a long loop with no internal safepoint keeps the old code alive.
+A thread stuck in a long loop with no internal safepoint keeps the old code alive; that is the
+reverse direction that is not prompt.

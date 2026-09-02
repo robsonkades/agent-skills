@@ -27,8 +27,10 @@ real arrival pattern shows up".
 
 1. **State the SLO** with metric, threshold and evaluation window.
 2. **Choose the injection model.** Open-loop (`constant-arrival-rate`,
-   `constantUsersPerSec`, wrk2) for any service with external clients. Closed-loop only
-   when the real client genuinely is a fixed set of workers.
+   `constantUsersPerSec`, wrk2 `-R`, JMeter's Open Model Thread Group) for any service
+   with external clients. Closed-loop only when the real client genuinely is a fixed set
+   of workers. The construct table in `references/test-plan.md` names both kinds per tool,
+   because a script review has to recognise the closed-loop ones.
 3. **Predict the result analytically before running.** If the observed result violates the
    lower bound the experiment's own mechanics impose, the experiment is wrong — and the
    only way to discover that is to have computed the bound beforehand.
@@ -65,8 +67,10 @@ real arrival pattern shows up".
   is optimistic twice.
 - Warm-up is a rate, not a clock. "Two minutes of warm-up" is a clock rule for a phenomenon
   governed by invocation count; at low load, two minutes may not be enough.
-- `-XX:+FlightRecorder` has not existed since JDK 15 and makes the JVM abort on the current
-  baseline. Use `-XX:StartFlightRecording` or `jcmd JFR.start`.
+- `-XX:+FlightRecorder` does not start a recording. On JDK 25 it is accepted with a
+  "deprecated in version 13.0" warning and does nothing else (executed, Temurin 25.0.3), so
+  a plan that lists it believes it is recording and is not. Use `-XX:StartFlightRecording`
+  or `jcmd <pid> JFR.start`.
 - GC pause and safepoint pause are not the same thing. Record `-Xlog:gc*,safepoint` and
   correlate by timestamp instead of estimating durations — fixed pause-duration numbers are
   folklore, since they depend on collector, sizing, allocation rate and hardware.

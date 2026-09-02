@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: load-testing
-version: 1.2.0
+version: 1.3.0
 description: >-
   Designing a load test whose numbers describe the system rather than the generator:
   open-loop versus closed-loop injection, the N/mu latency ceiling of closed loops, warm-up
@@ -45,6 +45,8 @@ dependencies:
   - name: littles-law-and-queueing
     version: ^1.0.0
   - name: latency-statistics
+    version: ^1.0.0
+  - name: coordinated-omission
     version: ^1.0.0
 
 capabilities:

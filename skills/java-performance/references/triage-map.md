@@ -17,6 +17,21 @@ Evidence: `gc.log` around the deploy timestamp, plus `jfr summary` on the contin
 recording. A deploy carries a process restart, cache invalidation, connection reset and pod
 rotation with it; any of those alone can explain a change.
 
+## "High CPU"
+
+| Question                                                             | Answer | Route                                                                 |
+| -------------------------------------------------------------------- | ------ | --------------------------------------------------------------------- |
+| Is it mostly **system** time (`top`: sy ≫ us)?                       | yes    | `linux-for-jvm` — page faults, THP, futex storms, syscalls            |
+| Is it GC threads (`jfr view thread-cpu-load`, `G1 Conc`, `ZWorker`)? | yes    | allocation → `jit-inlining-and-escape-analysis`, then `jvm-gc-tuning` |
+| Is it compiler threads, right after a deploy?                        | yes    | `jit-compilation` — warm-up                                           |
+| Is it application threads, throughput also up?                       | yes    | `flame-graph-analysis` (CPU profile) — it may be fine                 |
+| Is it application threads, throughput flat or down?                  | yes    | `flame-graph-analysis`, then `cpu-cache-and-numa` if it spins         |
+
+Evidence: `top -H -p <pid>` for the split by thread, `jfr view thread-cpu-load` on the
+continuous recording for the same split with names. CPU that rises with no change in load is a
+code-cache or deoptimisation question (`code-cache-segments`, `deoptimization`) before it is a
+profiling one.
+
 ## "High latency"
 
 | Question                                               | Answer | Route                                                                                       |
@@ -32,12 +47,13 @@ bottleneck", which closes the investigation on a false negative.
 
 ## "Memory keeps growing"
 
-| Question                                        | Answer | Route                                         |
-| ----------------------------------------------- | ------ | --------------------------------------------- |
-| Does the heap floor rise after full collection? | yes    | retention → `gc-log-analysis`, then heap dump |
-| Is it Metaspace or classloader count?           | yes    | `jvm-class-loading`                           |
-| Is RSS above heap by more than expected?        | yes    | `jvm-memory-regions`                          |
-| Was the process killed with no Java exception?  | yes    | `linux-for-jvm`                               |
+| Question                                        | Answer | Route                                                 |
+| ----------------------------------------------- | ------ | ----------------------------------------------------- |
+| Does the heap floor rise after full collection? | yes    | retention → `gc-log-analysis`, then heap dump         |
+| Is it Metaspace or classloader count?           | yes    | `jvm-class-loading`                                   |
+| Is RSS above heap by more than expected?        | yes    | `jvm-memory-regions`                                  |
+| Does RSS keep rising while the heap is flat?    | yes    | `off-heap-memory` — direct buffers, native leaks, NMT |
+| Was the process killed with no Java exception?  | yes    | `linux-for-jvm`                                       |
 
 Evidence: `jcmd <pid> VM.native_memory summary` (needs NMT at start) and
 `jcmd <pid> VM.classloader_stats` before/after N cycles.
@@ -53,6 +69,44 @@ Evidence: `jcmd <pid> VM.native_memory summary` (needs NMT at start) and
 
 Evidence: scaling efficiency `(thr_N / thr_1) / N` across two thread counts.
 
+## "Only one instance is slow"
+
+| Question                                                                           | Answer | Route                                                                                    |
+| ---------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------- |
+| Does it receive more requests, or longer-lived connections?                        | yes    | `load-balancing-and-routing` — pinning, skew                                             |
+| Is its CPU throttled or its node oversubscribed (`container-cpu-throttling`, PSI)? | yes    | `container-awareness`, then `linux-for-jvm`                                              |
+| Different hardware, socket count or NUMA layout from the others?                   | yes    | `numa-and-cpu-affinity`                                                                  |
+| Same traffic, same node class, still slow after a restart?                         | yes    | data skew — `sql-query-performance` for the hot key, or `hot-partitions-and-rebalancing` |
+
+Evidence: per-pod request rate and connection count side by side; `jfr view
+container-cpu-throttling` on the slow pod versus a healthy one. A control instance is what
+makes this fork cheap — compare, do not profile in isolation.
+
+## "Worse since virtual threads were switched on"
+
+| Question                                                                      | Answer | Route                                                                    |
+| ----------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------ |
+| Did a pool that was implicitly limiting concurrency disappear?                | yes    | `virtual-thread-migration` — the database or downstream is now the limit |
+| Do `jdk.VirtualThreadPinned` events appear with the threshold lowered?        | yes    | `thread-sizing-and-virtual-threads`, then `virtual-threads-internals`    |
+| Is the work CPU-bound?                                                        | yes    | `thread-sizing-and-virtual-threads` — wrong tool for it                  |
+| Did carrier threads grow past parallelism, or a `ThreadLocal` cache multiply? | yes    | `virtual-threads-internals`                                              |
+
+Evidence: `jfr view pinned-threads`, `jdk.VirtualThreadSubmitFailed`, and the connection-pool
+wait metric before and after the flip. The stock `.jfc` threshold for pinning is 20 ms, so
+"no pinned events" proves nothing until it is lowered (`jfr-advanced`).
+
+## "Slower after the JDK upgrade"
+
+| Question                                                                         | Answer | Route                                                                |
+| -------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------- |
+| Did a flag stop applying (`-XX:+IgnoreUnrecognizedVMOptions`, a removed option)? | yes    | `jdk-upgrade-impact`, then `jvm-performance-review`                  |
+| Did the default collector or a GC default change for this machine class?         | yes    | `jvm-gc-tuning`                                                      |
+| Only the first minutes are worse?                                                | yes    | `jit-compilation`, `startup-cds-crac-leyden` (AOT cache invalidated) |
+| Does an agent or instrumentation library sit in the dependency tree?             | yes    | `jdk-upgrade-impact` — retransformation cost changed                 |
+
+Evidence: `jcmd <pid> VM.flags` on both versions, diffed; the GC log's first line names the
+collector and the heap sizing it derived.
+
 ## "The measurement itself looks wrong"
 
 | Question                                                      | Answer | Route                                         |
@@ -67,8 +121,10 @@ Evidence: scaling efficiency `(thr_N / thr_1) / N` across two thread counts.
 Collect in this order, because each is cheap and eliminates a whole branch:
 
 1. `gc.log` for the incident window — rules GC in or out.
-2. Two minutes of JFR at `settings=profile` — names the class of bottleneck.
-3. Three thread dumps 15 s apart (`jcmd Thread.dump_to_file -format=json`) — separates
-   stuck from busy.
+2. Two minutes of JFR at `settings=profile` — names the class of bottleneck. If a
+   continuous recording is on, `jcmd <pid> JFR.view hot-methods` and `latencies-by-type`
+   answer this from the last ten minutes with no file at all.
+3. Three thread dumps 5–10 s apart (`jcmd Thread.dump_to_file -format=json`) — separates
+   stuck from busy, and the per-thread `cpu=` field separates spinning from waiting.
 
 Only then choose. Guessing between two candidates costs more than these three commands.

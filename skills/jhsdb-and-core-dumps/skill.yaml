@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jhsdb-and-core-dumps
-version: 1.1.0
+version: 1.2.0
 description: >-
   Post-mortem inspection of a dead or hung JVM: reading hs_err, producing a usable core
   dump, the jhsdb modes (jstack, jmap, jinfo, clhsdb, hsdb) against a core or a live

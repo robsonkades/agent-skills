@@ -31,7 +31,8 @@ and at what rate" before anyone proposes new instrumentation.
 | I/O                | `jdk.FileWrite`, `jdk.SocketRead`, `jdk.SocketWrite`                                                                                     |
 | Allocation         | `jdk.ObjectAllocationInNewTLAB`, `jdk.ObjectAllocationOutsideTLAB`                                                                       |
 | Classes            | `jdk.ClassLoad`, `jdk.ClassDefine`                                                                                                       |
-| CPU                | `jdk.CPULoad` (fields include `jvmUser`), `jdk.ExecutionSample`                                                                          |
+| CPU                | `jdk.CPULoad` (fields include `jvmUser`), `jdk.ExecutionSample`, `jdk.CPUTimeSample`                                                     |
+| Virtual threads    | `jdk.VirtualThreadPinned` (`pinnedReason`, `blockingOperation`, `carrierThread`), `jdk.VirtualThreadSubmitFailed`                        |
 
 Names that have circulated in real technical material and do not exist:
 
@@ -44,6 +45,29 @@ Names that have circulated in real technical material and do not exist:
 The G1 pause hierarchy is `GCPhasePause` → `GCPhasePauseLevel1` → `Level2` → `Level3`,
 each level decomposing the pause into progressively more specific sub-phases (object
 copy, root set scan).
+
+## The three samplers
+
+| Event                    | Counts                                                                                            | Stock setting                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `jdk.ExecutionSample`    | a thread executing Java code; waiting and native threads excluded                                 | `period` 20 ms (`default`), 10 ms (`profile`) |
+| `jdk.NativeMethodSample` | a thread in native code, **executing or waiting**                                                 | `period` 20 ms in both                        |
+| `jdk.CPUTimeSample`      | a thread after consuming `throttle` of CPU, native attributed to its Java caller (JEP 509, Linux) | disabled in both; `throttle` 500/s or 10ms    |
+
+The first two are what `hot-methods` and JMC's method profiling aggregate, which is why a
+thread parked in `epoll_wait` shows up as hot there. `jdk.ExecutionSample` does not ask the
+OS whether the thread was scheduled: on a box with more runnable Java threads than cores it
+drifts towards a wall-clock profile of those threads. `jdk.CPUTimeSample` is the only
+CPU-proportional one, at the price of being experimental and Linux-only.
+
+`jdk.ObjectAllocationSample` carries a `weight` in bytes — the allocation it stands for —
+throttled to 150/s (`default`) or 300/s (`profile`). Sum `weight`, never count events, to
+rank allocation sites. `jdk.ObjectAllocationInNewTLAB` / `OutsideTLAB` are off in both
+files and record every TLAB event when enabled: they are the expensive exact form.
+
+`jdk.VirtualThreadPinned` has a `threshold` of **20 ms in both files**. A pinning audit
+after JEP 491 lowers it (`jdk.VirtualThreadPinned#threshold=0ms`) and reads
+`pinnedReason`; what the event measures is `virtual-threads-internals`.
 
 ## The three contention channels
 
@@ -64,6 +88,26 @@ overlapping in time with a `jdk.GarbageCollection` whose `longestPause` was abno
 means the GC pause delayed connection returns and starved the pool. Searching for a
 `synchronized` that does not exist is what happens when every wait is assumed to be
 `JavaMonitorEnter`.
+
+## What pushes a recording past its budget
+
+The stock files carry their own numbers — `default.jfc` "typically less than 1 % overhead",
+`profile.jfc` "typically around 2 %" — and `jfr help configure` names the options that
+move them. Ordered by how often they turn a 2 % recording into an incident:
+
+| Option / setting                                  | Why it costs                                                    | Safer form                                             |
+| ------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------ |
+| `stackTrace=true` on an event above ~10³/s        | stack walking dominates every commit                            | `threshold`, or `stackTrace=false`                     |
+| `-XX:FlightRecorderOptions:stackdepth=` above 64  | every stack trace walks and stores more frames                  | raise only for the investigation that needs the roots  |
+| `allocation-profiling=maximum`                    | enables the per-TLAB events instead of the throttled sample     | `high` keeps `ObjectAllocationSample` at a higher rate |
+| `method-trace=<broad filter>`                     | an event with stack trace on every invocation, `threshold` 0 ms | `method-timing=` for the same methods                  |
+| `memory-leaks=gc-roots` / `path-to-gc-roots=true` | a heap walk at dump time pauses the application                 | `stack-traces`; take `gc-roots` on one instance        |
+| `exceptions=all`                                  | records every throw with a stack trace                          | `throttled`                                            |
+| `class-loading=true`                              | an event per loaded class, noisy at startup and redeploy        | leave off outside a class-loading investigation        |
+| `jdk.CPUTimeSample#throttle` at a short period    | more signals and stack walks per CPU second                     | a rate (`500/s`) bounds it independently of load       |
+
+`jcmd JFR.start` prints the same caveat: "if the default event settings are modified,
+overhead may exceed 1%".
 
 ## Reading duration correctly
 

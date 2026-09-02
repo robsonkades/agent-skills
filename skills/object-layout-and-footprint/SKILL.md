@@ -72,7 +72,12 @@ and the one that changes without a flag. Ergonomics turns them off **at 32 GB an
 the boundary is off-by-one from how it is usually quoted, exactly like the 8191 GB bound
 above: measured on 25.0.3, `-Xmx32736m` still gives `UseCompressedOops = true {ergonomic}` and
 `-Xmx32740m` already gives `false {default}` — so `-Xmx32g` is **off**, not the last value on.
-`-Xmx31g` on / `-Xmx32g` off reproduces on 26.0.2 `[executed]`. Past that boundary recompute
+`-Xmx31g` on / `-Xmx32g` off reproduces on 26.0.2 `[executed]`. The margin is the heap
+alignment, so it moves with collector and page size; the boundary itself scales with
+`ObjectAlignmentInBytes` — at 16, `-Xmx60g` is on and `-Xmx64g` off `[executed]`. Past it,
+`UseCompressedOops` reads `false {default}`, not `{ergonomic}`, so read the value and not
+the origin; `-Xlog:gc+init` prints `Compressed Oops: Enabled (32-bit)` or `Disabled`
+(`references/production-footprint-checks.md` §2). Past that boundary recompute
 `p` with
 `ref` = 8; **the rule is unchanged but its answers move, including which classes save.** Five
 of the fourteen rows in `compact-object-headers.md` §2 reverse, and `Object[]` becomes an
@@ -82,7 +87,10 @@ threshold. _Where_ the threshold is as a heap-sizing decision is `jvm-performanc
 
 Which header column is in force: classic on JDK 21, 25 and 26 `[executed]`; compact on JDK 27
 `[source-only: JEP 534, Closed / Delivered, Release 27]` — JDK 27 is not GA and nothing in
-this skill was run on it. The flag itself, its per-release default and its cost belong to
+this skill was run on it. The flag is experimental on 24 and needs
+`-XX:+UnlockExperimentalVMOptions` there (JEP 450); a product flag on 25 (JEP 519, executed:
+no unlock needed); default on 27 (JEP 534). A JDK 24 command line pasted onto 25 works; a 25
+line pasted onto 24 does not. The rest of the flag's lifecycle and its cost belong to
 `jvm-performance-review`.
 
 Three things the arithmetic gets wrong if you stop before the `alignUp`:
@@ -130,7 +138,10 @@ Three things the arithmetic gets wrong if you stop before the `alignUp`:
 5. **Measure to confirm the prediction.** Read `references/jol-operating-procedure.md` for
    the invocation that works on JDK 25/26, the four ways JOL fails — one of which throws on
    the first record you try — and the `Instrumentation.getObjectSize` cross-check. Read it
-   before the first JOL run, not after the first stack trace.
+   before the first JOL run, not after the first stack trace. When the population already
+   lives in a JVM you cannot attach JOL to, `jcmd <pid> GC.class_histogram` reports shallow
+   sizes computed by that JVM in its own header mode — `Point` 24 → 16 `[executed]` — and
+   `references/production-footprint-checks.md` §1 says what a heap dump cannot tell you.
 6. **Report with the gate satisfied.** Build, tool, header mode, and shallow versus deep
    stated explicitly. If the number came from a source rather than a run, label it as
    source-derived; JDK 27 is not GA and nothing about it here was executed.
@@ -204,6 +215,21 @@ it is the point of that reference.
 - **Do not reach for `-XX:+PrintFieldLayout`.** It is a `develop` flag: on every shipping
   JDK the JVM refuses to start with it (executed, 25.0.3), there is no `-Xlog` equivalent,
   and JOL is the only way to read a field layout on a production build.
+- **Compact object headers buy heap bytes with class-space bytes.** The 22-bit class
+  pointer puts every `Klass` on a 1 KB boundary: **537 → 1,024 bytes per class** of
+  compressed class space (executed, 25.0.3, 100,000 strong hidden classes), so the 1 GB
+  default holds ~1.06 M classes instead of ~2 M. On a proxy- or lambda-heavy service read
+  `jcmd <pid> VM.metaspace` before switching, and quote both sides.
+  `references/production-footprint-checks.md` §3.
+- **Under G1, an array at or above half a region costs whole regions.** `byte[600000]`
+  occupies 1,046,076 bytes in a 2 GB G1 heap (1 MB regions), 74% over its payload;
+  `byte[1100000]` occupies two regions; Parallel charges the payload (executed, 25.0.3).
+  The per-object arithmetic is exact and the heap cost is still wrong by up to a region per
+  array — size chunks against `G1HeapRegionSize`.
+  `references/production-footprint-checks.md` §4.
+- **Hashing and locking never grow an object on 25**, in either header mode (executed):
+  the identity hash and the monitor state live in the mark word or beside the object. Do
+  not carry "hashed objects get bigger" from Lilliput's 32-bit-header plans into a sizing.
 
 ## References
 
@@ -224,3 +250,10 @@ it is the point of that reference.
   for JDK 25/26, the four failure modes with their verbatim messages and fixes, and the
   two-file `Instrumentation.getObjectSize` agent that cross-checks JOL rather than trusting
   it. Read at step 5, before the first run.
+- [Production footprint checks](references/production-footprint-checks.md) — sizes the
+  running JVM reports without JOL (`GC.class_histogram`, `jdk.ObjectCount`) and why a heap
+  dump is not one of them; the compressed-oops boundary by alignment and the origin-tag
+  trap; the 1 KB-per-`Klass` class-space cost of compact headers; G1 humongous rounding
+  for large arrays; what never changes an object's size; and the symptom-to-cause table for
+  a prediction that disagrees with an observation. Read at step 5 when JOL cannot be
+  attached, and at step 6 whenever the numbers disagree.

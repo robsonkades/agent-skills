@@ -63,7 +63,11 @@ Three outcomes that people hesitate to write down and should:
 - **A microbenchmark presented as a system result.** A JMH number is a statement about a method,
   and the conversion to a system prediction is arithmetic that must be shown, not assumed.
 - **A percentage with no baseline.** "30% faster" needs the two absolute numbers and the load
-  they were taken at, or it cannot be checked or reused.
+  they were taken at, or it cannot be checked or reused. A mean of ratios across several
+  workloads depends on which side is the base and can be made to favour either — Jain's
+  "ratio game" (_The Art of Computer Systems Performance Analysis_, 1991, ch. 11).
+- **The best run.** If runs were discarded as noisy, the report is the best of `k`, not a
+  measurement. Report every run, or the number fixed in advance.
 - **Numbers carried across a JDK, a machine or a load shape.** They are numbers about the
   configuration that produced them; `jdk-upgrade-impact` covers the version case.
 

@@ -9,11 +9,11 @@ The complete JEP index contains exactly two logging JEPs: 158 (Unified JVM Loggi
 JDK 9) and 271 (Unified GC Logging, JDK 9). Asynchronous UL shipped as plain RFEs. Cite
 these, and do not attribute a JEP number to it:
 
-| Issue                                                      | What                                   | Fix version |
-| ---------------------------------------------------------- | -------------------------------------- | ----------- |
-| [JDK-8229517](https://bugs.openjdk.org/browse/JDK-8229517) | optional asynchronous/buffered logging | **JDK 17**  |
-| [JDK-8323807](https://bugs.openjdk.org/browse/JDK-8323807) | a stalling mode for async UL           | **JDK 25**  |
-| [JDK-8377827](https://bugs.openjdk.org/browse/JDK-8377827) | release note for `-Xlog:async:stall`   | **JDK 25**  |
+| Issue                                                      | What                                                                                                        | Fix version |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------- |
+| [JDK-8229517](https://bugs.openjdk.org/browse/JDK-8229517) | optional asynchronous/buffered logging                                                                      | **JDK 17**  |
+| [JDK-8323807](https://bugs.openjdk.org/browse/JDK-8323807) | a stalling mode for async UL — [PR 22770](https://github.com/openjdk/jdk/pull/22770), integrated 2025-02-26 | **JDK 25**  |
+| [JDK-8377827](https://bugs.openjdk.org/browse/JDK-8377827) | release note for `-Xlog:async:stall`                                                                        | **JDK 25**  |
 
 ## Spelling by JDK version
 
@@ -51,21 +51,34 @@ A `{product}` flag. Default **2097152 (2 MiB)**, allowed range **102400 to 52428
 (100 KiB to 50 MiB) — confirmed by `-XX:+PrintFlagsFinal` and by the range error on a
 below-minimum value, on Temurin 25.0.3.
 
-The budget is **split in half between two alternating buffers**, so effective in-flight
-capacity is half the number set.
+The budget is **split in half between two alternating buffers** — `size_t size =
+AsyncLogBufferSize / 2;` feeding `_buffer` and `_buffer_staging` in `logAsyncWriter.cpp`
+at `jdk-25+36` — so effective in-flight capacity is half the number set. The whole budget
+is malloc'ed up front: with `-XX:NativeMemoryTracking=summary` the `Logging` category
+reads `reserved=2048KB, committed=2048KB` at the default, and does not appear at all
+without `-Xlog:async` (executed). The flusher is the thread named `AsyncLog Thread`
+(executed, `-Xlog:os+thread`).
 
 ## Dropped messages are reported in band
 
-On overflow in `drop` mode the writer emits, into the affected output, at `warning` level:
+On overflow in `drop` mode the writer counts per output (`_stats`, one `uint32_t` per
+output) and emits, into the affected output, at `warning` level with the format
+`"%6u messages dropped due to async logging"`:
 
 ```
-[0.047s][warning][                     ]    130 messages dropped due to async logging
+[0.053s][warning][                     ]     76 messages dropped due to async logging
 ```
 
-Note the empty tags decoration: a parser keying on the tag field will not attribute the
-line to anything, but `grep "messages dropped"` finds it. **Always check for this string
-before deriving any count from an async log, and before handing that log to an analysis
-skill.** A log missing a third of its content while looking complete is worse than no log.
+Note the empty tags decoration (`__NO_TAG` in the source): a parser keying on the tag
+field will not attribute the line to anything, but `grep "messages dropped"` finds it.
+The notice is emitted at each flush that found drops, so the total is the sum over every
+occurrence — 77 notices in one 2-second run at the minimum buffer (executed). **Always
+check for this string before deriving any count from an async log, and before handing
+that log to an analysis skill.** A log missing a third of its content while looking
+complete is worse than no log.
+
+`stall` mode has no notice to check: the same run wrote every message and zero notices,
+at the cost of blocking the logging thread each time the buffer was full.
 
 ## One measurement, and how to read it
 
@@ -104,6 +117,28 @@ Overflow behaviour, same environment, buffer squeezed to the legal minimum
 
 That is 32% of messages silently lost in `drop` mode, reported only by those 21 in-band
 lines.
+
+## Cost by level, same caveats
+
+Same machine and JDK, a second workload: 3 seconds of 64 KB allocations with an exception
+every thousandth iteration, driving about 80 young pauses; iterations completed in the 3
+seconds, three runs each, synchronous file output unless stated.
+
+| Configuration                 | Run 1   | Run 2   | Run 3   | vs no logging | Written in 3 s |
+| ----------------------------- | ------- | ------- | ------- | ------------- | -------------- |
+| no logging                    | 789,652 | 792,376 | 780,154 | —             | —              |
+| `-Xlog:gc*`                   | 760,464 | 773,221 | 802,413 | noise         | 95 KB          |
+| `-Xlog:gc*=debug`             | 773,203 | 765,939 | 766,357 | −2%           | 1.3 MB         |
+| `-Xlog:exceptions`            | 798,453 | 796,169 | 762,443 | noise         | 43 KB          |
+| `-Xlog:all=info`              | 729,667 | 728,351 | 732,833 | −7%           | 1.0 MB         |
+| `-Xlog:gc*=trace`             | 599,947 | 591,630 | 587,366 | −25%          | 10.3 MB        |
+| `-Xlog:async -Xlog:gc*=trace` | 748,544 | 757,141 | 754,266 | −4%           | 10.3 MB        |
+
+What it establishes: at production selections the cost is inside run-to-run noise on this
+method, `all=info` is measurable because it turns on per-class, per-compilation and
+per-thread lines, and `trace` on a hot subsystem is a quarter of throughput before it is a
+disk problem. The volume column is the number that scales: 10 MB per 3 seconds is 300 GB
+a day, and the default rotation keeps 120 MB of it.
 
 ## Mechanism, not measured
 

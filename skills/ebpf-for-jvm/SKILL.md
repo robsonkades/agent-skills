@@ -58,21 +58,42 @@ raw tracepoint field was treated as a process id. Neither produces an error mess
   TID equals the PID — typically the main thread — and discards the pool. Populate a map
   from `/proc/$PID/task` in `BEGIN` and filter against it.
 - The bpftrace builtins are already translated: `pid` is the kernel `tgid` (the user-space
-  PID), `tid` is the kernel `pid`. The trap is in raw `args->` fields only.
+  PID), `tid` is the kernel `pid`. The trap is in raw `args.` fields only (`args->` is
+  the legacy alias of `args.`; both are accepted).
 - Never apply `ksym()` to a syscall number. It resolves kernel memory addresses; for
   `args->id` on `raw_syscalls:sys_enter`, aggregate the raw number and decode offline
   (`ausyscall x86_64 202`).
-- A probe appearing in `tplist -l libjvm.so` is not a probe that fires. Without
-  `-XX:+ExtendedDTraceProbes` only `gc__begin`/`gc__end` emit; `monitor__contended__enter`,
-  `monitor__wait`, `method__entry` and `object__alloc` stay dormant.
-- USDT availability is a property of the **build** (`--enable-dtrace`) plus that flag —
-  not of the JDK version. Verify it on the production binary, not the dev one.
+- A probe appearing in `tplist -l libjvm.so` is not a probe that fires. Lifecycle probes
+  (`vm__init__*`, `thread__start`/`stop`, `class__loaded`, `gc__begin`/`end`,
+  `compiled__method__load`) emit unconditionally; `monitor__*`, `method__entry`/`return`
+  and `object__alloc` are gated by `-XX:+DTraceMonitorProbes`, `-XX:+DTraceMethodProbes`
+  and `-XX:+DTraceAllocProbes` (product flags, JDK 25). **`-XX:+ExtendedDTraceProbes` no
+  longer exists** — deprecated in JDK 19 (JDK-8279629), obsoleted in JDK 20
+  (JDK-8279913); JDK 25 refuses to start with it (`Unrecognized VM option`).
+- `DTraceMethodProbes` routes every method entry and exit through a runtime call and
+  `DTraceAllocProbes` every allocation; neither is a production flag. Scope them to a
+  reproduction JVM.
+- USDT availability is a property of the **build** (`--enable-dtrace`, which needs
+  `sys/sdt.h` at build time) — not of the JDK version. `readelf -n libjvm.so | grep -c
+stapsdt` on the production binary is the test; zero means no `usdt:` probe will ever
+  attach.
 - Use `asprof` (and `jfrconv` for format conversion). `profiler.sh` was removed in
   async-profiler 3.0; a command copied from older material will simply not exist.
-- `-XX:+PreserveFramePointer` pairs with `--call-graph fp`. `--call-graph dwarf` needs
-  unwind tables the application build may not emit and costs more CPU.
-- `jcmd <pid> JVMTI.agent_load <path> unfoldall` attaches to a **running** process;
-  `java -agentpath:...` starts a new JVM and leaves the original without a perf map.
+- `perf` cannot unwind through JIT frames with DWARF: compiled Java code carries no
+  `.eh_frame`, so `--call-graph dwarf` stops at the first Java frame regardless of what
+  the native libraries emit. Through JIT code only `--call-graph fp` works, and only with
+  `-XX:+PreserveFramePointer` at JVM start (it costs C2 one allocatable register —
+  measure the throughput cost before enabling it fleet-wide). `asprof --cstack vm` walks
+  JIT frames from the JVM's own frame layout and needs neither.
+- The perf map is in the JDK: `jcmd <pid> Compiler.perfmap` (JDK 17+, Linux only) writes
+  `/tmp/perf-<pid>.map`; `-XX:+DumpPerfMapAtExit` (diagnostic, Linux) writes it at exit.
+  The map is a snapshot — dump it immediately before `perf script`, or methods recompiled
+  after the dump show as hex addresses. `perf-map-agent` is no longer needed.
+- A run-queue histogram that records only `sched_wakeup → sched_switch` misses
+  preemption: a thread switched out while still `TASK_RUNNING` re-enters the queue
+  without a wakeup. Under CPU saturation or CFS throttling that is most of the latency.
+  Handle `prev_state == TASK_RUNNING` and `sched_wakeup_new` as bpftrace's own
+  `runqlat.bt` does.
 - Never add a kernel-side duration to a JVM-side one. A 5 ms `jdk.SocketRead` decomposes
   into syscall overhead, TCP stack, scheduler wait and `memcpy`; bpftrace, JFR, `ss` and
   `perf stat` measure different quantities.
@@ -86,10 +107,11 @@ raw tracepoint field was treated as a process id. Neither produces an error mess
 ## References
 
 - [bpftrace recipes](references/bpftrace-recipes.md) — runnable, correctly filtered
-  scripts for syscall counts, read/write latency, futex contention, run queue latency,
-  block I/O and page faults, plus mixed kernel+JIT flame graphs. Read before writing any
+  scripts for syscall counts, read/write latency, futex contention, run queue latency
+  including preemption, block I/O and page faults, the USDT flags that exist on JDK 25,
+  and mixed kernel+JIT flame graphs with the JDK's own perf map. Read before writing any
   script, and copy from here rather than from memory.
 - [Signal interpretation](references/signal-interpretation.md) — the PID/TID and futex
-  bitmask tables, the USDT activation table, environment prerequisites, and a signal to
-  probable-cause to next-step table. Read when a script is ready to run against a real
-  PID, or when reading its output.
+  bitmask tables, the USDT activation table, environment and container prerequisites
+  (capabilities, tracefs, BTF), and a signal to probable-cause to next-step table. Read
+  when a script is ready to run against a real PID, or when reading its output.

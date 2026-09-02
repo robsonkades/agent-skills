@@ -63,34 +63,46 @@ number from memory:
 
 ## Per-request labels in Spring Boot
 
+The label API is `io.pyroscope.labels.v2`: `LabelsSet` (key/value pairs),
+`ScopedContext` (`AutoCloseable`; the constructor pushes the labels onto the **current
+thread's** async-profiler context id, `close()` restores the previous one) and
+`Pyroscope.LabelsWrapper.run(LabelsSet, Runnable | Callable)` which wraps the two. There
+is no `Labels.Builder`, no `Scope` and no `LabelsWrapper.of(...)`.
+
 ```java
+import io.pyroscope.labels.v2.LabelsSet;
+import io.pyroscope.labels.v2.ScopedContext;
+
 @Component
 public class PyroscopeRequestInterceptor implements HandlerInterceptor {
 
-    private static final ThreadLocal<Scope> SCOPE = new ThreadLocal<>();
+    private static final String ATTR = ScopedContext.class.getName();
 
     @Override
     public boolean preHandle(HttpServletRequest req, HttpServletResponse res, Object handler) {
         String tenant = req.getHeader("X-Tenant-Id");
-        Scope scope = LabelsWrapper.of(new Labels.Builder()
-            .add("tenant", tenant != null ? tenant : "unknown")
-            .add("endpoint", req.getMethod() + " " + req.getRequestURI())
-            .build());
-        SCOPE.set(scope);
+        String route = (String) req.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+        req.setAttribute(ATTR, new ScopedContext(new LabelsSet(
+            "tenant", tenant != null ? tenant : "unknown",
+            "endpoint", req.getMethod() + " " + (route != null ? route : "unmatched"))));
         return true;
     }
 
     @Override
     public void afterCompletion(HttpServletRequest req, HttpServletResponse res,
                                 Object handler, Exception ex) {
-        Scope scope = SCOPE.get();
-        if (scope != null) {
-            scope.close();
-            SCOPE.remove();
-        }
+        ScopedContext ctx = (ScopedContext) req.getAttribute(ATTR);
+        if (ctx != null) ctx.close();
     }
 }
 ```
+
+Two things the interceptor shape gets wrong unless you handle them. The label is bound to
+the thread, so a servlet async dispatch or a hand-off to another executor runs the rest of
+the request unlabelled — wrap that work in `LabelsWrapper.run(...)` on the worker. And the
+`endpoint` label must be the **route template**, not `getRequestURI()`: a URI with an id
+in it is one label value per request, which is the cardinality failure
+`metrics-and-cardinality` describes, paid here in the profile store.
 
 Every sample taken inside the scope carries those labels; filtering the UI by
 `tenant="acme"` then isolates that tenant's flame graph.
@@ -101,14 +113,28 @@ Recording that never stops, retained on disk:
 
 ```bash
 # No duration= — this is the continuous form. maxsize/maxage supply retention.
-jcmd <pid> JFR.start name=continuous settings=profile \
+# settings=default is the configuration the JDK documents for continuous use;
+# profile.jfc is "for short periods of time". Override single events on top of it
+# with <event>#<setting>=<value> (jcmd help JFR.start shows the syntax).
+jcmd <pid> JFR.start name=continuous settings=default \
+  jdk.ExecutionSample#period=10ms \
   maxsize=512m maxage=24h filename=/var/log/jfr/continuous.jfr
 
-# Read the accumulated history without stopping the recording:
-jcmd <pid> JFR.dump name=continuous filename=/var/log/jfr/snapshot-$(date +%s).jfr
+# JDK 25, Linux, experimental: per-thread CPU-time samples with an explicit budget.
+jcmd <pid> JFR.start name=cputime settings=default \
+  jdk.CPUTimeSample#enabled=true jdk.CPUTimeSample#throttle=500/s maxage=6h
+
+# Read the accumulated history without stopping the recording; -30m limits the dump:
+jcmd <pid> JFR.dump name=continuous begin=-30m filename=/var/log/jfr/snapshot-%t.jfr
+
+# Look before you download: top frames of the last 10 minutes, in the JVM.
+jcmd <pid> JFR.view hot-methods maxage=10m
 
 jcmd <pid> JFR.stop name=continuous
 ```
+
+`maxage`/`maxsize` bound what stays on disk; `JFR.dump begin=`/`end=` bound what one
+snapshot carries. A dump without either copies the whole retained window every time.
 
 Consuming events live instead, with nothing written to disk:
 

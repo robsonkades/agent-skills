@@ -27,6 +27,48 @@ the system under test — log rotation, cache expiry, periodic full GC. An eight
 has revealed a thread count climbing from 200 to 4,000 in a system that looked stable in
 one-hour runs.
 
+## Soak design for leaks
+
+A soak answers "does anything grow without bound at constant load". Every design choice
+follows from needing growth to be attributable to time and not to traffic or queueing:
+
+- **Constant open-loop rate, well below the knee** (ρ ≤ 0.6 on the critical resource). Above
+  it, queue growth and retry amplification produce rising memory and thread counts that are
+  load effects, not leaks.
+- **Duration ≥ 3× the slowest cycle**, so at least two full cycles fall inside the window
+  you fit a trend to. Discard the first cycle: caches fill, pools reach their size, the JIT
+  finishes — all of it looks like growth.
+- **Record the after-collection floor, not the sawtooth.** Heap usage between collections is
+  meaningless; the series that carries the signal is occupancy _after_ a collection that
+  reclaimed the old generation. With G1 that is old-region occupancy after each mixed cycle
+  (`jdk.G1HeapSummary`, or `jdk.GCHeapSummary` with `when = "After GC"` filtered to those
+  collections); a periodic `jcmd <pid> GC.run` every 10–15 minutes gives comparable full-GC
+  points at the cost of a pause the latency series must be annotated with.
+- The other series that leak, each with its instrument: metaspace after class unloading
+  (`jdk.MetaspaceSummary`), platform thread count (`jfr view thread-count`, or
+  `jdk.JavaThreadStatistics`), virtual threads (`jcmd <pid> Thread.dump_to_file
+-format=json`, count the entries), direct buffers (`jdk.DirectBufferStatistics`), native
+  memory by category (`jdk.NativeMemoryUsage`, or NMT `summary.diff` against a baseline
+  taken after the first cycle), RSS (`jdk.ResidentSetSize`), file descriptors
+  (`ls /proc/<pid>/fd | wc -l`), and every pool's in-use count.
+
+Decision rule, applied to the after-collection floor over the last two thirds of the run:
+
+```text
+fit  floor(t) = a + b·t  by least squares over N collections
+leak      : b > 0 and the interval on b excludes 0 across two cycles, and no plateau
+cache fill: growth that flattens before the run ends and stays flat — bounded by design
+load      : growth that tracks the request-rate series — the rate was not constant
+time-to-limit = (limit − floor_now) / b        → the number that decides urgency
+```
+
+A slope that is positive but flattening is a cache reaching its bound; report the bound and
+whether it fits inside the heap, not a leak. A slope that is positive and straight over two
+cycles is a leak, and the next step is a heap dump taken at the end of the run and one from
+mid-run, compared by dominator — that analysis is `heap-dump-analysis`. Attribution by
+allocation site with `jdk.OldObjectSample` needs `settings=profile` or
+`jdk.OldObjectSample#stackTrace=true`, and is empty under ZGC on 25.0.4+ regardless.
+
 ## Phase order
 
 The usual sequence is smoke → warm-up → load → stress → soak. The breakpoint test slots in
@@ -41,6 +83,30 @@ Breakpoint phase (variable duration per step, typically 30-60s each)
 ```
 
 ## Incremental breakpoint search
+
+The construct is a stepped open-loop schedule, not a stepped VU count:
+
+```javascript
+// k6 — each stage holds a rate; the ramp between steps is a separate short stage
+scenarios: {
+  breakpoint: {
+    executor: 'ramping-arrival-rate',
+    startRate: 100, timeUnit: '1s',
+    preAllocatedVUs: 200, maxVUs: 3000,     // from λ_max × W_worst, not from the mean
+    stages: [
+      { target: 100, duration: '60s' },  { target: 150, duration: '10s' },
+      { target: 150, duration: '60s' },  { target: 225, duration: '10s' },
+      { target: 225, duration: '60s' },  { target: 340, duration: '10s' },
+      { target: 340, duration: '60s' },  { target: 100, duration: '60s' },  // recovery
+    ],
+  },
+},
+```
+
+The last stage ramps back down on purpose: a system whose p99 does not return to its
+pre-overload value within a step of the overload ending has a recovery problem — queue
+drainage, a saturated pool, a circuit breaker stuck open — which is a stress finding reported
+alongside the breakpoint, not instead of it.
 
 1. Compute the analytical prediction before running anything.
 2. Start well below it — around 25% of nominal capacity.

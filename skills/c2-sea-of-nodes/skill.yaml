@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: c2-sea-of-nodes
-version: 1.2.0
+version: 1.3.0
 description: >-
   How HotSpot actually executes and compiles: the runtime-generated template interpreter,
   C2's sea-of-nodes IR, the seven compilation phases and their order, and why a given
@@ -42,11 +42,12 @@ files:
 
 dependencies:
   - name: compilation-and-inlining-logs
-    version: ^1.0.0
+    version: ^2.0.0
   - name: jvm-bytecode
-    version: ^1.0.0
+    version: ^2.0.0
 
 suggests:
+  - code-cache-segments
   - escape-analysis-internals
 
 capabilities:

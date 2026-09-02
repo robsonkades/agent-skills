@@ -37,9 +37,11 @@ assembly reading will show you the allocation that was removed.
    and C2 has never seen it.
 2. **If it is stuck in tier 3, compare real counters against the tier-4 thresholds**
    (`Tier4InvocationThreshold`, `Tier4CompileThreshold`) rather than assuming a compiler bug.
-3. **If it reached tier 4, check inlining on the hot call site** with `-XX:+PrintInlining`.
-   A `too large` verdict means checking which limit actually applied — `MaxInlineSize` for
-   unconditional inlining, `FreqInlineSize` for hot call sites, or `MaxInlineLevel` for depth.
+3. **If it reached tier 4, check inlining on the hot call site** with `-XX:+PrintInlining`,
+   reading the **tier-4** tree, not the tier-3 one above it. C2 names the limit it applied:
+   `too big` is `MaxInlineSize` at a cold site, `hot method too big` is `FreqInlineSize`,
+   `already compiled into a big method` is `InlineSmallCode`, `inlining too deep` is
+   `MaxInlineLevel`. `callee is too large` is C1's verdict and says nothing about C2.
 4. **If an allocation survives, get the escape state before theorising.** On a **debug
    build**, `-XX:+PrintEscapeAnalysis` with `-XX:+PrintEliminateAllocations` answers two
    different questions; both are `develop` flags, so a product JVM refuses to start on
@@ -47,9 +49,10 @@ assembly reading will show you the allocation that was removed.
    does not appear in allocation profiling at all. `ArgEscape` — passed to a call that was
    not inlined — still allocates on the heap even when the callee never stores the
    reference.
-5. **If `made not entrant` recurs on the same method, treat it as deoptimisation**, not as
-   a threshold to tune. Investigate with `-XX:+TraceDeoptimization` or the JFR
-   `jdk.Deoptimization` event first.
+5. **If `made not entrant: uncommon trap` recurs on the same method, treat it as
+   deoptimisation**, not as a threshold to tune. `made not entrant: not used` is the tier-3
+   code being retired by the tier-4 version and is normal. Investigate with
+   `-Xlog:deoptimization=debug` or the JFR `jdk.Deoptimization` event first.
 6. **Isolate one factor at a time** before attributing a cost: `-XX:-DoEscapeAnalysis`,
    `-XX:-EliminateAllocations`, `-XX:-Inline`, `-XX:TieredStopAtLevel=1`. See
    `references/jit-diagnosis-recipes.md`.
@@ -64,7 +67,10 @@ assembly reading will show you the allocation that was removed.
   it; use `Tier3InvocationThreshold`, `Tier4InvocationThreshold`, or `CompileThresholdScaling`
   as the safer whole-ladder adjustment.
 - There are five tiers (0-4), not three blocks. The normal path for a hot method is
-  0 → 3 → 4. Tier 2 appears when the C1 queue is congested; tier 1 is terminal.
+  0 → 3 → 4. Tier 2 appears when the **C2** queue is congested (`Tier3DelayOn`); tier 1 is
+  terminal. Thresholds scale up with queue length (`Tier3LoadFeedback`, `Tier4LoadFeedback`),
+  so under a start-up burst a method can sit below a threshold that its counters would have
+  cleared on an idle JVM.
 - The JIT does inlining, constant folding, escape analysis and vectorisation. It does **not**
   change algorithms (O(n²) stays O(n²)), does not swap a `List` for a `Map`, and does not
   remove I/O or a query. `result += "item" + i` in a loop is never rewritten into a

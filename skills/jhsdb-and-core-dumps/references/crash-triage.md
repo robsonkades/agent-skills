@@ -18,14 +18,33 @@ Java process died
 
 ```
 #  SIGSEGV (0xb) at pc=0x00007f1234567890, pid=12345, tid=12346
-# JRE version: OpenJDK Runtime Environment Temurin-25.0.1+9 (build 25.0.1+9)
+# JRE version: OpenJDK Runtime Environment Temurin-25.0.3+9 (build 25.0.3+9-LTS)
 # Problematic frame:
-# J 1234 C2 com.example.HotMethod.compute(I)I (42 bytes)
+# J 1234 c2 com.example.HotMethod.compute(I)I (42 bytes)
 ```
 
-Sections, in the order they repay reading: the problematic frame, thread state, Java stack
-trace, heap summary, VM arguments, OS information and rlimits, then the crash instruction
-disassembly.
+A crash forced by `-XX:+CrashOnOutOfMemoryError` has a different header — no signal,
+`Internal Error (debug.cpp:…)` and `fatal error: OutOfMemory encountered: Java heap space`
+(or `Metaspace`); everything below it is the same report.
+
+The file is written in the order the JVM can still produce it, which is not the order
+that repays reading. The sections as JDK 25.0.3 writes them, with the reading order in
+the left column:
+
+| Read | Block                  | Sections                                                                                                                                                                                                                                                                                     | What it settles                                                                                                                                     |
+| ---- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Header                 | signal or `fatal error:` line, `Problematic frame`, whether a core was written                                                                                                                                                                                                               | Native crash, JVM assertion, or a forced OOM crash; the frame letter                                                                                |
+| 2    | `S U M M A R Y`        | `Command Line`, `Host` (cores, memory, OS), `Time` with `elapsed time`                                                                                                                                                                                                                       | Flags actually in effect; a crash at `elapsed time: 0.0…` is a start-up problem, not load                                                           |
+| 3    | `T H R E A D`          | `Current thread` (state, stack bounds), `Stack`, `Native frames`, `Java frames`, `Lock stack`; for a signal also `siginfo`, `Registers`, `Top of Stack`, `Instructions`                                                                                                                      | Where it was and what it held. Native frames on a `V`/`C` crash are the whole story                                                                 |
+| 4    | `P R O C E S S` heap   | `Heap:` (per-generation occupancy), `Metaspace:` with `Usage`, `Virtual space`, `Chunk freelists`, the `CodeHeap` lines                                                                                                                                                                      | Whether memory was exhausted at the moment of death; code cache full                                                                                |
+| 5    | `P R O C E S S` events | `Compilation events`, `Deoptimization events`, `Classes loaded`/`unloaded`, `Internal exceptions`, `VM Operations`, `Events`, and `GC Heap History` when present                                                                                                                             | What happened in the seconds before: a deopt storm, an `OutOfMemoryError` already thrown internally, a safepoint operation in flight                |
+| 6    | `P R O C E S S` tail   | `Java Threads` and `Other Threads` (every thread, state and stack bounds), `Threads with active compile tasks`, `VM state`, `VM Mutex/Monitor`, `Dynamic libraries`, `VM Arguments`, `Logging`, `Environment Variables`, `Native Memory Tracking` (only with NMT on), `Periodic native trim` | Thread count against `ulimit -u`; a native library nobody expected; the last NMT decomposition                                                      |
+| 7    | `S Y S T E M`          | `OS`, `CPU`, `Memory` (physical, free, swap), `vm_info`, and on Linux the `rlimit` line and a `container (cgroup) information` block                                                                                                                                                         | `CORE 0` explains a missing core; the cgroup block shows the limit the JVM saw — compare with `Memory:` and with the pod spec (container-awareness) |
+
+The table was taken from a report generated on Windows; the `rlimit` and cgroup lines are
+written by the Linux port and should be confirmed on a report from the target host.
+Reading it in that order settles in minutes whether the artefact is a native crash, an
+exhausted region, or a start-up misconfiguration — before any core is opened.
 
 ### Problematic frame letters
 
@@ -71,33 +90,24 @@ SIGKILL cannot be intercepted by any handler. The JVM's handlers are registered 
 SIGSEGV/SIGBUS/SIGILL/SIGFPE — signals that permit a handler — so an OOM kill terminates the
 process before any JVM code runs. Absence of every artefact is the evidence.
 
-## JVM memory decomposition, for container sizing
+## Before blaming the container limit
 
-Example with `-Xmx4g`:
-
-| Component           | Order of magnitude | Note                                                                                        |
-| ------------------- | ------------------ | ------------------------------------------------------------------------------------------- |
-| Heap (`-Xmx`)       | 4 GB, fixed        | What you configured                                                                         |
-| Metaspace           | ~0.5 GB            | Without `-XX:MaxMetaspaceSize` it grows with classes loaded — monitor, do not assume        |
-| Direct Memory       | ~0.5 GB            | Capped at `-Xmx` by default, but real use depends on actual `ByteBuffer.allocateDirect`/NIO |
-| Code Cache          | ~0.3 GB            | Grows with the diversity of hot methods                                                     |
-| JVM overhead        | ~0.1 GB            | Native thread stacks, GC bookkeeping, JNI                                                   |
-| **Beyond the heap** | **≈ 1.4 GB**       | The sum of the four above                                                                   |
-
-Measure each component on your own application with `-XX:NativeMemoryTracking=summary`
-(`jcmd <pid> VM.native_memory summary`), then add a safety margin — 10–20% is a starting
-point, not a law — to absorb transient peaks such as a full GC that has not yet returned
-pages to the OS.
-
-Measuring once at idle is the trap: Metaspace and Code Cache grow with process lifetime
-until they settle. Measure under representative load, after the process has run long enough.
+An OOM kill is a sizing conclusion only after the process's real footprint is known. Take
+`jcmd <pid> VM.native_memory summary` from a surviving replica under representative load —
+not once, at idle: Metaspace and code cache grow with process lifetime until they settle —
+and compare its committed total, plus whatever NMT does not see, against the limit.
+The per-region budget, the arithmetic and the RSS-versus-NMT gap are jvm-memory-regions.
+When NMT was on, the `Native Memory Tracking:` section of an hs_err is that same reading
+at the moment of death.
 
 ## Checklist
 
 ### Pre-crash, configured before any incident
 
 - [ ] `-XX:ErrorFile=` points at a writable, persistent path — not an ephemeral container
-      working directory
+      working directory — or `-XX:+ErrorFileToStderr` is set so the report reaches the log
+      pipeline; `-XX:+ExtensiveErrorReports` where the extra sections are wanted and the
+      slower report is acceptable
 - [ ] `-XX:+CreateCoredumpOnCrash` enabled (default `true` since JDK 9 — confirm with
       `-XX:+PrintFlagsFinal`)
 - [ ] `ulimit -c` set to `unlimited` or a sufficient value for the service process

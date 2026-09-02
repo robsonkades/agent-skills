@@ -7,25 +7,29 @@ java -Xlog:safepoint=info:file=safepoint.log:time,uptime -jar app.jar
 ```
 
 Both `time` and `uptime` decorators, plus rotation, are required for correlation with an
-incident window. A representative line:
+incident window. Real lines from 25.0.3 (executed; one line each, wrapped here):
 
 ```
-[2.341s][info][safepoint] Safepoint "G1CollectForAllocation", Time since last: 1234560 ns,
-  Reaching safepoint: 234 ns, At safepoint: 15678901 ns, Total: 15913461 ns
-[5.892s][info][safepoint] Safepoint "Deoptimize", Time since last: 3551000 ns,
-  Reaching safepoint: 8934000 ns, At safepoint: 456000 ns, Total: 9390000 ns
+[1.363s][info][safepoint] Safepoint "G1CollectFull", Time since last: 155500 ns,
+  Reaching safepoint: 10700 ns, At safepoint: 2808000 ns, Leaving safepoint: 4500 ns,
+  Total: 2823200 ns, Threads: 1 runnable, 12 total
+[0.711s][info][safepoint] Safepoint "ThreadDump", Time since last: 9513200 ns,
+  Reaching safepoint: 22800 ns, At safepoint: 34500 ns, Leaving safepoint: 3500 ns,
+  Total: 60800 ns, Threads: 1 runnable, 12 total
 ```
 
-| Field                | Meaning                                                             |
-| -------------------- | ------------------------------------------------------------------- |
-| `Safepoint "<name>"` | The VM operation. Not every one is a GC — `Deoptimize` above is not |
-| `Time since last`    | Interval since the previous safepoint; shows periodic patterns      |
-| `Reaching safepoint` | **Sync time** — TTSP of the slowest thread. Absent from the GC log  |
-| `At safepoint`       | Operation time. This is the number the GC log also reports          |
-| `Total`              | What the application actually felt                                  |
+| Field                | Meaning                                                                     |
+| -------------------- | --------------------------------------------------------------------------- |
+| `Safepoint "<name>"` | The VM operation. Not every one is a GC — `ThreadDump` above is not         |
+| `Time since last`    | Interval since the previous safepoint; shows periodic patterns              |
+| `Reaching safepoint` | **Sync time** — TTSP of the slowest thread. Absent from the GC log          |
+| `At safepoint`       | Operation time. This is the number the GC log also reports                  |
+| `Leaving safepoint`  | Disarm and wake-up; the third term that a hand-summed `Reaching + At` omits |
+| `Total`              | What the application felt. `Reaching + At + Leaving` — exact on 1,169 lines |
+| `Threads`            | Threads that had to be brought to the safepoint versus all Java threads     |
 
-In the second line the operation cost 0.46 ms and the wait cost 8.9 ms. A GC log for the
-same window would show neither.
+Older JDKs printed no `Leaving safepoint` field; a parser written for them still matches
+on 25 but attributes the third term to nothing. Capture `Total` from the line.
 
 More detail when the `info` level is not enough:
 
@@ -46,10 +50,25 @@ moved into `-Xlog:safepoint+stats=debug`, which emits the same per-operation tab
 java -XX:+SafepointTimeout -XX:SafepointTimeoutDelay=500 -jar app.jar
 ```
 
-Logs the stack trace of any thread that takes longer than 500 ms to reach the safepoint.
-Use it once `-Xlog:safepoint` has already shown that sync time is high but not which thread
-is responsible. The stack usually shows JNI, a native monitor, or a loop C2 failed to
-recognise as counted.
+For any thread that takes longer than 500 ms (default `SafepointTimeoutDelay` is 10000) to
+reach the safepoint, the VM thread logs at `-Xlog:safepoint` **warning** level — visible on
+stdout with no `-Xlog` configuration at all (executed, 25.0.3):
+
+```
+[0.080s][warning][safepoint] # SafepointSynchronize::begin: Timeout detected:
+[0.080s][warning][safepoint] # SafepointSynchronize::begin: Timed out while spinning to reach a safepoint.
+[0.080s][warning][safepoint] # SafepointSynchronize::begin: Threads which did not reach the safepoint:
+[0.080s][warning][safepoint] # "worker" #35 [42160] daemon prio=5 os_prio=0 cpu=46.88ms elapsed=0.06s tid=0x... nid=42160 runnable  [0x...]
+[0.080s][warning][safepoint]    java.lang.Thread.State: RUNNABLE
+[0.080s][warning][safepoint] # SafepointSynchronize::begin: (End of list)
+```
+
+That is the thread's **name and state, not its stack**. It answers "which thread" once
+`-Xlog:safepoint` has shown that sync time is high; "what was it doing" needs a second
+source over the same window — an async-profiler wall-clock profile filtered to that thread,
+or in a test environment `-XX:+UnlockDiagnosticVMOptions -XX:+AbortVMOnSafepointTimeout`,
+which aborts the JVM on the first timeout and writes an `hs_err` with every stack. The
+stack usually shows JNI or FFM code, a native monitor, or a loop C2 did not strip-mine.
 
 ## JFR
 
@@ -57,15 +76,20 @@ recognise as counted.
 jcmd <pid> JFR.start duration=60s filename=safepoints.jfr settings=profile
 ```
 
-The events the JVM actually emits — and where each field really lives:
+The events the JVM actually emits on 25.0.3 (`jfr metadata`, executed) — and where each
+field really lives:
 
-| Event                               | Carries                                                                                                                     |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `jdk.SafepointBegin`                | Start of the safepoint                                                                                                      |
-| `jdk.SafepointStateSynchronization` | `safepointId`, `initialThreadCount`, `runningThreadCount`, `iterations` — emitted per wait iteration during synchronisation |
-| `jdk.SafepointCleanup`              | The cleanup phase                                                                                                           |
-| `jdk.SafepointEnd`                  | End of the safepoint                                                                                                        |
-| `jdk.ExecuteVMOperation`            | **`operation`** — the operation name lives here, not in `SafepointStateSynchronization`                                     |
+| Event                               | Fields beyond `startTime`/`duration`/`eventThread`                                                |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `jdk.SafepointBegin`                | `safepointId`, `totalThreadCount`, `jniCriticalThreadCount`                                       |
+| `jdk.SafepointStateSynchronization` | `safepointId`, `initialThreadCount`, `runningThreadCount`, `iterations` — the sync phase          |
+| `jdk.SafepointEnd`                  | `safepointId`                                                                                     |
+| `jdk.ExecuteVMOperation`            | **`operation`**, `safepoint`, `blocking`, `caller`, `safepointId` — the operation name lives here |
+| `jdk.SafepointLatency`              | `stackTrace`, `threadState` — one **sampler** interrupt-to-poll delay (JEP 518); no `safepointId` |
+
+There is **no `jdk.SafepointCleanup` event** on 25; the cleanup phase is the `Leaving
+safepoint` term of the log line and the gap between `ExecuteVMOperation` and
+`SafepointEnd` in JFR. A parser that requests it gets nothing, silently.
 
 Reading the recording programmatically:
 
@@ -99,6 +123,34 @@ java -XX:+PrintFlagsFinal -version | grep -iE \
 
 This is the step that catches "the flag I am about to recommend is already on" before the
 recommendation reaches anyone.
+
+## Handshake or global safepoint
+
+A handshake (JEP 312, JDK 10; asynchronous variants since JDK 16) runs a closure on one
+thread, or on each thread in turn, at that thread's next poll — the same poll a safepoint
+uses — while every other thread keeps running. It costs the _target_ its TTSP, not the
+process. `-Xlog:handshake=info` prints one line per operation (executed, 25.0.3, for
+`Thread.getStackTrace()` on another thread):
+
+```
+[0.702s][info][handshake] Handshake "GetStackTraceClosure", Targeted threads: 1, Executed by requesting thread: 0, Total completion time: 23700 ns
+```
+
+| Operation on JDK 25                                                   | Mechanism                      | Evidence                                                   |
+| --------------------------------------------------------------------- | ------------------------------ | ---------------------------------------------------------- |
+| `Thread.getStackTrace()` on one thread; JVMTI single-thread stack ops | Handshake                      | `Handshake "GetStackTraceClosure"` (executed)              |
+| JFR method sampler (JEP 518) and CPU-time sampler (JEP 509)           | Async handshake to the sample  | `jdk.SafepointLatency` per sample                          |
+| Deoptimising one thread's frames; nmethod invalidation                | Handshake                      | `-Xlog:deoptimization=debug`, `jdk.Deoptimization`         |
+| ZGC/Shenandoah thread-root scanning; stack watermarks (JEP 376)       | Handshake                      | Concurrent phases in the GC log, no safepoint              |
+| `Arena.ofShared().close()`                                            | Handshake with **all** threads | `ScopedMemoryAccess.closeScope` (off-heap-memory)          |
+| `ThreadMXBean.dumpAllThreads`, `jstack`, `jcmd Thread.print`          | Global safepoint               | `Safepoint "ThreadDump"` / `"PrintThreads"`                |
+| Heap dump, `GC.class_histogram`, JVMTI `RedefineClasses`              | Global safepoint               | `"HeapDumper"`, `"GC_HeapInspection"`, `"RedefineClasses"` |
+| JVMTI operations on all threads (agents, some APMs)                   | Global safepoint               | `Safepoint "HandshakeAllThreads"`                          |
+| Every GC pause                                                        | Global safepoint               | `"G1*"`, `"ZMark*"`/`"ZRelocate*"`, `"Shenandoah*"`        |
+
+Operation names are the strings HotSpot compiles in (`vmOperation.hpp`; the set above was
+read out of the 25.0.3 `jvm.dll`). A name in the safepoint log that is not a collector's is
+the entry point for the non-GC investigation in pause-attribution.
 
 ## Profiling without safepoint bias
 

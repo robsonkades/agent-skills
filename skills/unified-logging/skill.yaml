@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: unified-logging
-version: 1.0.0
+version: 1.1.0
 description: >-
   Constructing and verifying a HotSpot -Xlog configuration: tag-set versus wildcard
   selection, levels, decorators, outputs, rotation, async logging, `jcmd VM.log`, and
@@ -9,12 +9,12 @@ description: >-
   tag-set has to be chosen for a subsystem, when a log is missing or truncated after a
   restart, when a pre-JDK-9 flag such as -XX:+PrintGCDetails or -XX:+TraceClassLoading sits
   in a startup script, when a JVM refuses to start on an -Xlog option, when logging must be
-  toggled without a restart, or when asked what -Xlog costs. Produces a log that exists and
-  holds what was meant; does not interpret it — a GC log is gc-log-analysis, safepoints and
-  time-to-safepoint are safepoints and pause-attribution, compilation output is
-  compilation-and-inlining-logs and deoptimization, code cache is code-cache-segments, class
-  loading is jvm-class-loading, CDS and AOT are startup-cds-crac-leyden, and application
-  logging is structured-logging.
+  toggled without a restart, when asked what -Xlog costs, or where a container's log should
+  go. Produces a log that exists and holds what was meant; does not interpret it — a GC log
+  is gc-log-analysis, safepoints and time-to-safepoint are safepoints and pause-attribution,
+  compilation output is compilation-and-inlining-logs and deoptimization, code cache is
+  code-cache-segments, class loading is jvm-class-loading, CDS and AOT are
+  startup-cds-crac-leyden, and application logging is structured-logging.
 
 license: Apache-2.0
 
@@ -42,6 +42,12 @@ files:
   - SKILL.md
   - skill.yaml
   - references/
+
+suggests:
+  - container-awareness
+  - gc-log-analysis
+  - incident-evidence-capture
+  - structured-logging
 
 capabilities:
   - reads-source

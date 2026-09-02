@@ -9,9 +9,10 @@ description: >
   security boundary around resolving a name that came from outside. Use when reflection
   appears in application code, when setAccessible needs --add-opens, when a framework works
   on the JVM and fails under native image, when a class name arrives from configuration or a
-  payload, or when Method.invoke sits on a hot path. FFM and JNI mechanics are jni-and-ffm,
-  the annotations reflection reads are java-annotations, and deserialisation attack surface
-  is java-serialization-hardening.
+  payload, when Method.invoke or invokeWithArguments sits on a hot path, or when a runbook
+  still sets sun.reflect.inflationThreshold or noInflation. FFM and JNI mechanics are
+  jni-and-ffm, the annotations reflection reads are java-annotations, and deserialisation
+  attack surface is java-serialization-hardening.
 ---
 
 # Java Reflection and Method Handles
@@ -36,7 +37,9 @@ which is a code-execution primitive rather than a lookup.
    payload is resolved only against an allow-list, and `asSubclass` narrows it to the expected
    supertype.
 4. **Choose the mechanism by frequency.** A one-off at startup: `Class`/`Method` reflection is
-   fine. Repeated on a hot path: a `MethodHandle` in a `static final` field, or generated code.
+   fine — but resolve the `Method` once and keep it, because every `getMethod` call returns a
+   fresh copy and `setAccessible(true)` applies only to the copy held. Repeated on a hot path:
+   a `MethodHandle` in a `static final` field, or generated code.
 5. **Register what the runtime cannot see** — module `opens`, native-image reflection
    configuration, AOT metadata — and test on the target runtime, because a JVM run proves
    nothing about a native image.
@@ -72,8 +75,12 @@ which is a code-execution primitive rather than a lookup.
 - For repeated dynamic invocation, use a `MethodHandle` (or `VarHandle` for fields) resolved
   once and stored in a `private static final` field. The JIT can constant-fold and inline
   through a static-final handle, giving performance close to a direct call; a handle looked up
-  per call, or held in a non-final field, gets none of that. `Method.invoke` also boxes every
-  argument into an `Object[]`.
+  per call, or held in a non-final field, gets none of that, and `invokeWithArguments` builds
+  an argument array on every call — no better than `Method.invoke`, which boxes every argument
+  into an `Object[]` and re-checks access. Since JDK 18 (JEP 416) `Method.invoke` runs on
+  method handles itself: the inflation flags (`-Dsun.reflect.inflationThreshold`,
+  `-Dsun.reflect.noInflation`) are ignored, and a runbook that sets them describes a JVM that
+  no longer exists. See `references/reflection-cost-model.md`.
 - Use `VarHandle` rather than `sun.misc.Unsafe` or reflection for low-level field access with
   memory-ordering semantics; `varhandles-and-memory-ordering` covers the access modes.
 - Do not use reflection to bypass a design you control. Reaching into a private field to test a
@@ -101,3 +108,9 @@ which is a code-execution primitive rather than a lookup.
   — read when dynamic access is unavoidable: choosing between `Method`, `MethodHandle` and
   generated accessors, resolving handles correctly, and dealing with `opens`, `--add-opens` and
   native-image configuration.
+- [What reflection and handles cost on the current runtime](references/reflection-cost-model.md)
+  — JEP 416's method-handle implementation of core reflection, the per-operation cost table
+  from `Class.forName` to `invokeWithArguments`, and how to verify inlining and boxing rather
+  than assume them; read when a hot path invokes reflectively, when a runbook still tunes the
+  `sun.reflect.*` inflation flags, or when choosing between `Method.invoke`, `invoke`,
+  `invokeExact` and `invokeWithArguments`.

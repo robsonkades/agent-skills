@@ -4,65 +4,101 @@
 
 ```
 Young GC allocates in Eden
-  |  old occupancy crosses IHOP (static floor, or the adaptive prediction)
+  |  old occupancy crosses the effective IHOP (static floor, or the adaptive prediction),
+  |  or a humongous allocation requests a cycle (cause: G1 Humongous Allocation)
   v
 Pause Young (Concurrent Start)     STW, piggybacked on a young GC —
                                    marks roots, arms the SATB write barrier
-Root Region Scan                   concurrent — scans survivor regions
-Concurrent Mark From Roots         concurrent — walks the graph using the
-                                   mark bitmap and TAMS; local SATB buffers
-                                   flush into the global queue as they fill
-Pause Remark                       STW — drains the global SATB queue,
-                                   finalises the cycle's bitmap
+Concurrent Mark Cycle              wrapper line; "Concurrent Undo Cycle" instead means
+                                   eager reclaim already resolved the trigger (JDK 17+)
+Concurrent Scan Root Regions       concurrent — scans survivor regions
+Concurrent Mark                    concurrent — contains:
+  Concurrent Mark From Roots         walks the graph using the mark bitmap and TAMS;
+                                     local SATB buffers flush into the global queue
+  Concurrent Preclean                processes discovered references early
+Pause Remark                       STW — drains the global SATB queue, finalises the
+                                   bitmap, unloads classes
 Concurrent Rebuild Remembered Sets
-  and Scrub Regions                concurrent — since JDK 20 (JDK-8210708)
-Pause Cleanup                      STW — sums live percentage per region,
-                                   recycles wholly empty regions
-Concurrent Cleanup                 concurrent — returns free regions to the pool
+  and Scrub Regions                concurrent — builds RSets for the regions selected as
+                                   collection candidates (JDK 20, JDK-8210708)
+Pause Cleanup                      STW — finalises the candidate list
+Concurrent Clear Claimed Marks     concurrent — bookkeeping
+Concurrent Cleanup for Next Mark   concurrent — resets the bitmap for the next cycle
   |
   v
-Mixed GC                           several later STW pauses; selects regions
-                                   using the mark bitmap's liveness data
+Pause Young (Prepare Mixed)        one more young GC
+Pause Young (Mixed) × N            selects candidates using the bitmap's liveness data
 ```
 
-`Pause Cleanup` is sub-millisecond to a few milliseconds — it only sums liveness percentages
-the bitmap already established. `Concurrent Cleanup` can run milliseconds to tens of
-milliseconds and is, by definition, not a pause.
+`Pause Cleanup` is sub-millisecond to a few milliseconds. `Concurrent Cleanup for Next Mark`
+is, by definition, not a pause; a report calling it a short STW pause is self-contradictory.
+`Concurrent Cleanup` without a suffix is a pre-JDK-20 name.
 
-## An annotated complete cycle
+## A complete cycle, captured on JDK 25
+
+Written with `-Xlog:gc*,gc+marking=debug:file=gc.log:uptime,level,tags` (`time` omitted
+here for width). The marking phases sit under the `gc,marking` tag at `info`; `gc*` alone
+already includes them.
 
 ```
-# ordinary young GC
-[0.512s][info][gc] GC(5) Pause Young (Normal) (G1 Evacuation Pause)
-                   512M->256M(1024M) 8.234ms
-
-# mixed GC
-[1.024s][info][gc] GC(12) Pause Young (Mixed) (G1 Evacuation Pause)
-                   768M->512M(1024M) 12.456ms
-
-# the marking cycle, phases in order
-[1.500s][info][gc]         GC(15) Concurrent Mark Cycle
-[1.500s][info][gc]         GC(15) Pause Young (Concurrent Start) (G1 Evacuation Pause)
-                            768M->520M(1024M) 9.812ms          # STW
-[1.502s][info][gc,marking] GC(15) Concurrent Mark From Roots
-[1.549s][info][gc,marking] GC(15) Concurrent Mark From Roots 47.234ms
-[1.549s][info][gc]         GC(15) Pause Remark 1.456ms          # STW
-[1.551s][info][gc]         GC(15) Pause Cleanup 0.234ms         # STW
-[1.551s][info][gc]         GC(15) Concurrent Cleanup 2.345ms    # concurrent
-[1.553s][info][gc]         GC(15) Concurrent Mark Cycle 52.891ms
-
-# humongous allocation
-[2.000s][info][gc,humongous] GC(20) Humongous allocation for object
-                              size 2097152B, new region starting at 0x...
-
-# full GC
-[5.000s][info][gc] GC(50) Pause Full (Allocation Failure)
-                   1024M->512M(1024M) 892.341ms
+[10.255s][info ][gc,start   ] GC(2625) Pause Young (Concurrent Start) (G1 Evacuation Pause)
+[10.255s][info ][gc,heap    ] GC(2625) Old regions: 209->223
+[10.255s][info ][gc         ] GC(2625) Pause Young (Concurrent Start) (G1 Evacuation Pause) 224M->224M(256M) 1.254ms
+[10.255s][info ][gc         ] GC(2626) Concurrent Mark Cycle
+[10.255s][info ][gc,marking ] GC(2626) Concurrent Scan Root Regions
+[10.255s][info ][gc,marking ] GC(2626) Concurrent Scan Root Regions 0.045ms
+[10.255s][info ][gc,marking ] GC(2626) Concurrent Mark
+[10.255s][info ][gc,marking ] GC(2626) Concurrent Mark From Roots
+[10.256s][info ][gc,marking ] GC(2626) Concurrent Mark From Roots 0.891ms
+[10.256s][info ][gc,marking ] GC(2626) Concurrent Preclean
+[10.256s][info ][gc,marking ] GC(2626) Concurrent Preclean 0.007ms
+[10.256s][info ][gc,start   ] GC(2626) Pause Remark
+[10.257s][info ][gc         ] GC(2626) Pause Remark 234M->166M(256M) 0.460ms
+[10.257s][info ][gc,marking ] GC(2626) Concurrent Mark 1.470ms
+[10.257s][info ][gc,marking ] GC(2626) Concurrent Rebuild Remembered Sets and Scrub Regions
+[10.257s][info ][gc,marking ] GC(2626) Concurrent Rebuild Remembered Sets and Scrub Regions 0.369ms
+[10.257s][info ][gc,start   ] GC(2626) Pause Cleanup
+[10.257s][info ][gc         ] GC(2626) Pause Cleanup 166M->166M(256M) 0.026ms
+[10.257s][info ][gc,marking ] GC(2626) Concurrent Clear Claimed Marks
+[10.257s][info ][gc,marking ] GC(2626) Concurrent Clear Claimed Marks 0.008ms
+[10.257s][info ][gc,marking ] GC(2626) Concurrent Cleanup for Next Mark
+[10.258s][info ][gc,marking ] GC(2626) Concurrent Cleanup for Next Mark 0.061ms
+[10.258s][info ][gc         ] GC(2626) Concurrent Mark Cycle 2.086ms
+[10.258s][info ][gc         ] GC(2627) Pause Young (Prepare Mixed) (G1 Evacuation Pause) 139M->135M(256M) 1.359ms
+[10.279s][info ][gc         ] GC(2628) Pause Young (Mixed) (G1 Evacuation Pause) 172M->170M(256M) 2.126ms
 ```
 
-The occupancy in each `Pause Young (Concurrent Start)` line is the datum to trend. Rising
-occupancy at trigger time across successive cycles means the trigger is falling behind the
-real promotion rate.
+Three things to read off it:
+
+- The cycle has its **own GC id** (`GC(2626)`), one higher than the concurrent-start pause.
+  A parser that groups by id must not expect the marking lines under the pause's id.
+- `Pause Remark 234M->166M` drops occupancy: Remark reclaims wholly empty regions. The
+  occupancy at each `Pause Young (Concurrent Start)` is the datum to trend — rising across
+  cycles means the trigger is falling behind the promotion rate.
+- With `-Xlog:gc+ergo+ihop=debug` every pause also logs the effective threshold:
+
+```
+[gc,ergo,ihop] GC(2625) Request concurrent cycle initiation (occupancy higher than threshold) occupancy: 234881024B allocation request: 0B threshold: 120795955B (45.00) source: end of GC
+[gc,ergo,ihop] GC(2640) Do not request concurrent cycle initiation (still doing mixed collections) occupancy: ... threshold: ... source: end of GC
+[gc,ergo,ihop] Request concurrent cycle initiation (occupancy higher than threshold) ... source: concurrent humongous allocation
+```
+
+The number in parentheses after `threshold:` is the effective IHOP as a percentage — the
+adaptive value once the predictor has samples, the static floor before.
+
+## Humongous allocation in the log
+
+There is no `Humongous allocation …` info line on JDK 25. A humongous allocation shows up
+as the **cause** of a concurrent-start pause and, per region, at `gc+humongous=debug`:
+
+```
+[gc         ] GC(2633) Pause Young (Concurrent Start) (G1 Humongous Allocation) 180M->176M(256M) 1.1ms
+[gc,humongous] GC(2634) Humongous region 221 (object size 3145744 @ 0x...) remset 0 code roots 0 marked 0 pinned count 0 reclaim candidate 1 type array 1
+[gc,humongous] GC(2634) Reclaimed humongous region 221 (object size 3145744 @ 0x...)
+```
+
+`reclaim candidate 0` with a non-zero `remset`, or `marked 1`, is the object that will wait
+for a complete cycle.
 
 ## Logging flags
 
@@ -70,11 +106,14 @@ real promotion rate.
 # base, needed for everything else to be interpretable
 -Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=5,filesize=20m
 
-# marking mechanics, including mark stack overflow
+# marking mechanics, including mark stack expansion and overflow
 -Xlog:gc+marking=debug:file=gc_mark.log
 
-# humongous allocation events
--Xlog:gc+humongous=info:file=gc_hum.log
+# effective IHOP per pause
+-Xlog:gc+ergo+ihop=debug:file=gc_ihop.log
+
+# humongous regions, per young pause
+-Xlog:gc+humongous=debug:file=gc_hum.log
 
 # remembered set, to correlate RSet cost with marking duration
 -Xlog:gc+remset=trace:file=gc_remset.log
@@ -106,17 +145,24 @@ from starting.
 
 ## Tuning and diagnostic flags
 
-| Flag                                 | Default                                         | Controls                                                                                         |
-| ------------------------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `-XX:InitiatingHeapOccupancyPercent` | 45                                              | Initial floor for the marking trigger; the only value used when the adaptive predictor is off    |
-| `-XX:+G1UseAdaptiveIHOP`             | `true`                                          | Enables adaptive prediction of the trigger point                                                 |
-| `-XX:G1EagerReclaimRemSetThreshold`  | experimental, ergonomic — 16 on 17–24, 32 on 25 | Remembered-set entry count above which a humongous region stops being eligible for eager reclaim |
-| `-XX:ConcGCThreads`                  | derived from `ParallelGCThreads`                | Threads dedicated to concurrent marking; verify the derivation on the runtime in use             |
-| `-XX:G1HeapRegionSize`               | ergonomic (heap/2048, clamped 1–32 MB)          | Sets the humongous threshold (`> size/2`); settable up to 512 MB since JDK 18                    |
+Defaults below were read with `-XX:+PrintFlagsFinal` on Temurin 25.0.3 (24 CPUs, 32 GB);
+ergonomic values change with the machine.
+
+| Flag                                                              | Default (JDK 25)                                | Controls                                                                                         |
+| ----------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `-XX:InitiatingHeapOccupancyPercent`                              | 45, product                                     | Initial floor for the marking trigger; the only value used when the adaptive predictor is off    |
+| `-XX:+G1UseAdaptiveIHOP`                                          | `true`, product                                 | Enables adaptive prediction of the trigger point                                                 |
+| `-XX:G1AdaptiveIHOPNumInitialSamples`                             | 3, experimental                                 | Cycles that run on the static floor before the predictor takes over                              |
+| `-XX:G1EagerReclaimRemSetThreshold`                               | experimental, ergonomic — 16 on 17–24, 32 on 25 | Remembered-set entry count above which a humongous region stops being eligible for eager reclaim |
+| `-XX:ConcGCThreads`                                               | `(ParallelGCThreads + 2) / 4`, ergonomic        | Threads dedicated to concurrent marking; 5 with `ParallelGCThreads=18` here                      |
+| `-XX:G1ConcMarkStepDurationMillis`                                | 10, product                                     | How long a marking thread works before checking for a pending pause                              |
+| `-XX:MarkStackSize` / `-XX:MarkStackSizeMax`                      | 4 MB / 512 MB, ergonomic                        | Initial and maximum mark stack; the restart happens only when the maximum cannot be expanded     |
+| `-XX:G1SATBBufferSize` / `G1SATBBufferEnqueueingThresholdPercent` | 1024 / 60, product                              | Per-thread SATB buffer capacity and the fill level at which it is handed to the marking threads  |
+| `-XX:G1HeapRegionSize`                                            | ergonomic (heap/2048, clamped 1–32 MB)          | Sets the humongous threshold (`> size/2`); settable up to 512 MB since JDK 18                    |
 
 ```bash
-java -XX:+PrintFlagsFinal -version | grep -E "InitiatingHeapOccupancyPercent|G1UseAdaptiveIHOP|ConcGCThreads"
-java -XX:+UnlockExperimentalVMOptions -XX:+PrintFlagsFinal -version | grep G1EagerReclaim
+java -XX:+PrintFlagsFinal -version | grep -E "InitiatingHeapOccupancyPercent|G1UseAdaptiveIHOP|ConcGCThreads|MarkStackSize"
+java -XX:+UnlockExperimentalVMOptions -XX:+PrintFlagsFinal -version | grep -E "G1EagerReclaim|G1AdaptiveIHOP"
 java -XX:+PrintFlagsFinal -version | grep -i ihop
 java -XX:+PrintFlagsFinal -version | grep SATB
 ```
@@ -124,10 +170,6 @@ java -XX:+PrintFlagsFinal -version | grep SATB
 On JDK 27 `-XX:InitiatingHeapOccupancyPercent` is deprecated and aliased to `-XX:G1IHOP`
 (obsolete in 28, expired in 29). The `grep -i ihop` recipe above finds it under either
 name, which is why it is the one to keep in a runbook.
-
-`G1SATBBufferSize` and `G1SATBBufferEnqueueingThresholdPercent` are diagnostic flags, not
-routine tuning; their defaults are not stable across releases, so read them off the runtime
-rather than quoting the figures that circulate (roughly 1024 entries and 60%).
 
 ## How the adaptive predictor decides
 
@@ -147,9 +189,9 @@ Consequences worth predicting correctly:
   value is defensible — worse on average, but predictable, against a predictor that is
   chronically one regime behind.
 
-The exact prediction formula (moving average, percentile, safety margin) and the default of
-`G1AdaptiveIHOPNumInitialSamples` are not stable across releases. Confirm on the runtime
-before deciding to disable the predictor.
+The exact prediction formula (moving average, percentile, safety margin) is not stable across
+releases. Read the effective threshold from `gc+ergo+ihop=debug` on the runtime before
+deciding to disable the predictor.
 
 ## JFR
 
@@ -173,8 +215,9 @@ jfr summary g1.jfr | grep -i g1
 ```
 src/hotspot/share/gc/g1/
   g1CollectedHeap.cpp              main cycle, orchestration
-  g1ConcurrentMark.cpp             concurrent marking, mark bitmap, TAMS
+  g1ConcurrentMark.cpp             concurrent marking, mark bitmap, TAMS, mark stack
   g1ConcurrentRebuildAndScrub.cpp  rebuild remembered sets and scrub (JDK 20, JDK-8210708)
+  g1IHOPControl.cpp                static and adaptive IHOP
   heapRegion.cpp                   region management
   g1SATBMarkQueueSet.cpp           G1's specialisation of the SATB queue set
 

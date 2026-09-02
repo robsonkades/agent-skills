@@ -1,17 +1,18 @@
 ---
 name: jni-and-ffm
 description: >
-  Crossing into native code: JNI call overhead and its pitfalls, critical sections and what
-  they block, the FFM downcall and upcall path, `Linker` and method handles, why a native
-  frame pins a virtual thread, and measuring the boundary cost. Use when a native call sits
-  inside a tight loop, when someone proposes migrating JNI to Panama to fix pinning, when
+  Crossing into native code: JNI call overhead, critical sections and what they block, the
+  FFM downcall and upcall path, `Linker` and method handles, why a native frame pins a
+  virtual thread, and measuring the boundary cost. Use when a native call sits inside a
+  tight loop, when someone proposes migrating JNI to Panama to fix pinning, when
   `Linker.Option.critical()` is applied without a measured duration, when
   `jdk.VirtualThreadPinned` events point at a `native` method or `MethodHandle.invokeExact`,
   when `WARNING: A restricted method ... has been called` appears after a JDK upgrade, when
-  a runbook still references `-Djdk.tracePinnedThreads` or `--enable-preview` for FFM, or
-  when `jextract` is assumed to ship with the JDK. Does not cover holding native memory
-  without calling into it (off-heap-memory), pinning as a scheduling phenomenon
-  (virtual-threads-internals), or the native memory budget (jvm-memory-regions).
+  a runbook still references `-Djdk.tracePinnedThreads` or `--enable-preview` for FFM, when
+  `jextract` is assumed to ship with the JDK, when a downcall fails with
+  `WrongThreadException` on a confined arena, or when `GCLocker Initiated GC` appears as a
+  cause in the GC log. Does not cover holding native memory (off-heap-memory), pinning as
+  scheduling (virtual-threads-internals), or the native memory budget (jvm-memory-regions).
 ---
 
 # JNI and the FFM Boundary
@@ -44,7 +45,10 @@ native call under virtual threads is isolating it on a dedicated platform-thread
    default hides short frequent pinning.
 5. **Mitigate blocking native calls structurally:** dispatch them to a dedicated fixed
    platform-thread pool sized by Little's Law, and let the virtual thread await the `Future`.
-   Waiting on a `Future` is ordinary Java and unmounts normally.
+   Waiting on a `Future` is ordinary Java and unmounts normally. Allocate the call's
+   segments on the pool thread, inside the task: a confined-arena segment created on the
+   caller's thread fails the first downcall with `WrongThreadException`. See
+   `references/arenas-upcalls-and-gc.md`.
 6. **Declare native access explicitly in production.** `--enable-native-access=<module>` or
    `ALL-UNNAMED`, per module, rather than relying on the current warn-only default.
 7. **Measure the boundary, do not estimate it.** JMH comparing JNI, a plain FFM downcall and
@@ -66,7 +70,14 @@ native call under virtual threads is isolating it on a dedicated platform-thread
   misreading is the most common error with this API.
 - `critical(true)` is the FFM equivalent of JNI's `GetPrimitiveArrayCritical`: it permits
   passing a heap-backed array straight through via `MemorySegment.ofArray`, with no prior copy
-  to off-heap memory.
+  to off-heap memory. What holds the array still differs: the FFM call blocks safepoints
+  for the whole JVM, while a JNI critical region on a 17 or 21 fleet defers collection
+  through the GC locker — `GCLocker Initiated GC` in the GC log and allocation stalls no
+  pause explains; G1 since JDK 22, ZGC and Shenandoah pin instead. See
+  `references/arenas-upcalls-and-gc.md`.
+- An exception escaping an upcall target terminates the JVM, per the `Linker` contract.
+  Every upcall target catches `Throwable` and translates it into a return code, and no
+  upcall may run from a `critical` downcall. See `references/arenas-upcalls-and-gc.md`.
 - The only structural mitigation for a blocking native call under virtual threads is a
   dedicated platform-thread pool sized by Little's Law. Not a different interop API, not
   `critical()`.
@@ -103,6 +114,13 @@ native call under virtual threads is isolating it on a dedicated platform-thread
   the overhead components per call type, the thread-state and safepoint table, the measurable
   eligibility criteria for `critical()`, and the JNI/Panama/jextract/JNA decision matrix. Read
   before choosing an interop API or approving a `critical()` call.
+- [Arenas, upcalls and the collector](references/arenas-upcalls-and-gc.md) — arena kinds at
+  the interop boundary (confined handoff, shared close, stub lifetime, automatic arenas),
+  the upcall contracts and cost order, `captureCallState` for `errno` and
+  `firstVariadicArg`, what a critical region does to each collector, and the testing
+  levers. Read when a downcall fails with `WrongThreadException` or `Already closed`,
+  when designing a callback API, when a native function sets `errno` or is variadic, or
+  when `GCLocker Initiated GC` appears in a GC log.
 - [Detecting and mitigating native pinning](references/pinning-and-native-access.md) — the JFR
   and async-profiler recipes for pinning of native origin, the dedicated-pool mitigation
   pattern, the JEP 472 warning surface, `jextract` usage, and the operational checklists. Read

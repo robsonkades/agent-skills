@@ -76,8 +76,24 @@ running with and without the event enabled.
 
 ## A custom `.jfc`
 
-There is no flag that reduces JFR overhead below `profile.jfc`. Copy the file, edit it,
-and pass it as `settings=`.
+There is no flag that reduces JFR overhead below `profile.jfc`. Derive a file from a stock
+one with `jfr configure` (JDK 17+); hand-edit XML only for an option the tool does not
+expose.
+
+```bash
+# named options are listed by `jfr help configure`; event settings use <event>#<setting>
+jfr configure --input profile.jfc locking-threshold=1ms method-profiling=max \
+    jdk.VirtualThreadPinned#threshold=0ms --output custom-profile.jfc
+
+# the same settings inline, without a file — later settings and later files win
+jcmd <pid> JFR.start settings=profile jdk.JavaMonitorEnter#threshold=1ms
+
+# a partial file layered on a stock one: only what it names changes
+java -XX:StartFlightRecording:settings=profile,settings=partial.jfc,filename=app.jfr App
+```
+
+A file passed alone is the whole configuration: the partial file below, used as the only
+`settings=`, records nothing but its four events.
 
 ```xml
 <!-- custom-profile.jfc — copied from $JAVA_HOME/lib/jfr/profile.jfc -->
@@ -105,12 +121,17 @@ and pass it as `settings=`.
 ```
 
 ```bash
-java -XX:StartFlightRecording=filename=app.jfr,settings=custom-profile.jfc App
+java -XX:FlightRecorderOptions:stackdepth=128 \
+     -XX:StartFlightRecording=filename=app.jfr,settings=custom-profile.jfc App
 
-jcmd <pid> JFR.configure stackdepth=128
 jcmd <pid> JFR.start settings=custom-profile.jfc duration=60s filename=app.jfr
 jcmd <pid> JFR.check                # confirm the recording actually started
+jcmd <pid> JFR.view active-settings # confirm the thresholds that are actually in force
 ```
+
+`jcmd <pid> JFR.configure stackdepth=128` only works before the first recording starts —
+the help text says the value "cannot be changed once JFR has been initialized" — so on a
+JVM with a continuous recording it is a startup flag or nothing.
 
 Rejected startup line, tested against OpenJDK 25.0.3:
 
@@ -188,9 +209,22 @@ recording.dump(Path.of("incident-" + Instant.now() + ".jfr"));
   walking its own stack at a point it controls. No new event; the effect is fewer
   rejected or corrupted samples and a lower crash risk when profiling continuously.
 - **520** inserts bytecode entry/exit probes on methods selected by class/method pattern,
-  driven from a `.jfc` or `jcmd JFR.configure`, emitting `jdk.MethodTrace` (per
-  invocation) and `jdk.MethodTiming` (aggregated). Cost scales with call frequency: this
-  is short-duration triage, not a permanent broad setting.
+  emitting `jdk.MethodTrace` (per invocation, with stack trace) and `jdk.MethodTiming`
+  (aggregated `invocations`, `minimum`, `average`, `maximum`, emitted at chunk end). Cost
+  scales with call frequency: this is short-duration triage, not a permanent broad
+  setting.
 
-Confirm the exact event names and configuration keys of 509 and 520 against
-`jfr metadata` on the target build before relying on them.
+Configuration keys, verified on JDK 25.0.3 (`jfr help configure`, `jfr metadata`):
+
+| Purpose              | Key                                                              | Notes                                                                               |
+| -------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| CPU-time sampling on | `jdk.CPUTimeSample#enabled=true`                                 | off in `default.jfc` and `profile.jfc`; no `UnlockExperimentalVMOptions` needed     |
+| Sampling budget      | `jdk.CPUTimeSample#throttle=10ms` or `=500/s`                    | period of CPU time per thread, or an overall rate spread over threads (JEP 509)     |
+| Lost samples         | `jdk.CPUTimeSamplesLost` (`lostSamples`)                         | on whenever the sampler is; a non-zero count means the profile under-reports        |
+| Per-sample quality   | fields `failed`, `biased` on `jdk.CPUTimeSample`                 | discard `failed`; count `biased` before claiming the profile is bias-free           |
+| Trace named methods  | `method-trace=<filter>` or `jdk.MethodTrace#filter=`             | filter such as `com.example.Foo::bar`; `#threshold` defaults to `0 ms` — every call |
+| Time named methods   | `method-timing=<filter>` or `jdk.MethodTiming#filter=`           | aggregate only; the cheap choice for a hot method                                   |
+| Read the results     | `jfr view method-timing`, `method-calls`, `cpu-time-hot-methods` | live via `jcmd <pid> JFR.view <view>` (JDK 21+)                                     |
+
+On a platform without the sampler the JVM prints `CPU time method sampling not supported
+in JFR on your platform` at startup and the recording proceeds without the event.

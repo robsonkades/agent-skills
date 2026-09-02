@@ -49,7 +49,8 @@ silently returns a number with no annotation.
    reports what this environment can actually load, which is where a missing hsdis or
    async-profiler shows up cheaply.
 6. **Check the number against an analytical expectation** — complexity, cost per
-   operation — before accepting it, then read `Error` as a fraction of `Score`.
+   operation — before accepting it, then read `Error` as a fraction of `Score` and the
+   per-fork scores for agreement (jmh-microbenchmarks covers why `Cnt` overstates them).
 7. **Restore `@Fork` to 5 (or the default) before comparing or publishing**, with the same
    JDK, same flags and same hardware on both sides of the comparison.
 
@@ -81,8 +82,14 @@ silently returns a number with no annotation.
 - `@Param` values are run as a full cartesian product, one reported row per combination —
   never averaged. Two parameters of four values each with `@Fork(5)` is 20 complete
   warmup-plus-measurement runs.
-- `-prof xperfasm` is the **Windows** profiler, collecting through ETW/Xperf. It is not a
-  more detailed `perfasm`; on Linux it fails for lack of Xperf.
+- `-prof perfasm` is **Linux-only** — it drives `perf record` — and `-prof xperfasm` is the
+  **Windows** profiler, collecting through ETW/Xperf. Neither is a more detailed version of
+  the other; on macOS the equivalent is `-prof dtraceasm`, which needs root for `dtrace`.
+- `Mode.SampleTime` is a closed loop that times a _subset_ of invocations; its own javadoc
+  says it "may omit some pauses which missed the sampling measurement". Its percentiles
+  are service-time percentiles of an isolated operation, not latency under load, and they
+  are not immune to omission. A p99 that must hold under a request rate is `load-testing`
+  with `coordinated-omission` in mind.
 - `perfasm`, `xperfasm` and `-XX:+PrintAssembly` all need hsdis, which does not ship with
   the JDK. Its source is `src/utils/hsdis` in `openjdk/jdk` — **not** in
   `AdoptOpenJDK/jitwatch`. A mismatched build loads and produces unreadable or absent

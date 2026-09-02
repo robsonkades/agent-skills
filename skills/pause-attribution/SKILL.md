@@ -31,13 +31,15 @@ the default, and tuning the pause that was logged — leave the real cause untou
 ## Workflow
 
 1. **Write down the decomposition before collecting anything.** Application-visible STW =
-   time to reach the safepoint + operation time + cleanup. The GC log publishes only the
-   operation. Anything left over after those three is a host effect, not a JVM one.
+   time to reach the safepoint + operation time + leaving (disarm and wake-up). The GC log
+   publishes only the operation. Anything left over after those three is not a safepoint
+   at all — a per-thread stall (deoptimisation, class loading, allocation stall, monitor)
+   or a host effect — and `references/layer-decision-table.md` is how it gets a layer.
 2. **Enable the safepoint log with decorators the analyser expects.**
    `-Xlog:safepoint=info:file=safepoint.log:time,uptime,level,tags`, and validate any parser
    against a small sample of the real log before trusting an aggregate report.
-3. **Read `Total`, never `Reaching + At`.** The manual sum omits cleanup and understates the
-   real STW event after event.
+3. **Read `Total`, never `Reaching + At`.** The manual sum omits `Leaving safepoint` and
+   understates the real STW event after event.
 4. **Split the pause at the sync/operation boundary.** Large `Reaching safepoint` with small
    `At safepoint` is a time-to-safepoint problem — a specific thread, not the collector. The
    reverse is a collector problem and belongs to the GC skills.
@@ -45,9 +47,10 @@ the default, and tuning the pause that was logged — leave the real cause untou
    `jdk.SafepointEnd` on `safepointId`. Two independent instrumentations converging is the
    criterion for trusting the number; a large systematic divergence means one capture is
    wrong. See `references/correlating-the-evidence.md`.
-6. **Name the thread and the operation together.** `-XX:+SafepointTimeout` prints the stack of
-   the slow thread; `jdk.ExecuteVMOperation` says what was waiting on it. One without the
-   other does not close the attribution.
+6. **Name the thread and the operation together.** `-XX:+SafepointTimeout` logs the name and
+   state of the slow thread (not its stack — that needs a wall-clock profile of that thread
+   over the same window); `jdk.ExecuteVMOperation` says what was waiting on it. One without
+   the other does not close the attribution.
 7. **Classify the cause before proposing a flag**, using
    `references/attributing-time-to-safepoint.md`, and confirm every flag's effective value
    with `-XX:+PrintFlagsFinal -version` on the target runtime before prescribing or removing
@@ -57,8 +60,10 @@ the default, and tuning the pause that was logged — leave the real cause untou
 
 - Never present a GC-log pause duration as the pause the application experienced. It is the
   operation term only.
-- Capture the `Total` field directly. Any analyser that recomputes it by summing
-  `Reaching + At` is systematically optimistic, and the error compounds with safepoint
+- Capture the `Total` field directly. On JDK 25 the line carries three terms —
+  `Reaching safepoint`, `At safepoint`, `Leaving safepoint` — and `Total` is exactly their
+  sum (executed, 25.0.3, zero mismatches over 1,169 lines). An analyser that sums the first
+  two is systematically optimistic by the third, and the error compounds with safepoint
   frequency — negligible at a few safepoints per second, not negligible at thousands.
 - A safepoint-log parser written for one decorator set silently matches nothing against
   another. A report of "0 events found" is a parser bug until proven otherwise; so is a
@@ -66,26 +71,31 @@ the default, and tuning the pause that was logged — leave the real cause untou
 - High TTSP in a counted loop never means "the poll was removed". The poll moved to the back
   edge of the strip-mining outer loop. The three real causes are an expensive loop body per
   strip, a loop C2 does not recognise as counted, or JNI/FFM code outside strip mining's reach.
-- Never prescribe `-XX:+UseCountedLoopSafepoints` as a fix — default `true` since JDK 10. The
-  real tuning parameter is `-XX:LoopStripMiningIter` (default 1000), and reducing it trades
-  vectorisation and throughput for a lower TTSP ceiling; measure the trade-off rather than
-  assuming it.
+- `-XX:+UseCountedLoopSafepoints` is a fix only under Parallel or Serial, where it is `false`
+  by default and counted loops carry **no poll** (executed, 25.0.3). Under G1, ZGC and
+  Shenandoah it is already `true` with `-XX:LoopStripMiningIter=1000`, and prescribing it
+  changes nothing. There the real tuning parameter is `LoopStripMiningIter`, and reducing it
+  trades vectorisation and throughput for a lower TTSP ceiling; measure the trade-off rather
+  than assuming it.
 - The opposite error is equally real: a `-XX:-UseCountedLoopSafepoints` left in a config from
   an old throughput benchmark disables strip mining entirely. Check the effective value in the
   running process before concluding anything about TTSP.
 - `RevokeBias` cannot appear in any log on this baseline and `-XX:-UseBiasedLocking` has
   nothing left to disable — biased locking was off by default in JDK 15 (JEP 374) and removed
   in JDK 18 (JDK-8256425). Virtual-thread pinning is a scheduling problem and is unrelated.
-- `jdk.SafepointLatency` is not a TTSP measurement. It carries only `threadState`, has no
-  `safepointId`, and measures the interrupt-to-poll delay of one profiling sample — JEP 518's
-  own instrumentation of its residual sampling bias. Never correlate it by `safepointId`.
+- `jdk.SafepointLatency` is not a TTSP measurement. It carries `stackTrace` and
+  `threadState`, has no `safepointId` (executed, `jfr metadata`, 25.0.3), and measures the
+  interrupt-to-poll delay of one profiling sample — JEP 518's own instrumentation of its
+  residual sampling bias. Never correlate it by `safepointId`.
 - JEP 518 (Cooperative Sampling) is not something to activate: it is the JFR method sampler's
   default behaviour on JDK 25. JEP 509 (CPU-Time Profiling) is the experimental, Linux-only,
   opt-in one. They address different problems — where a sample may be taken versus what
   triggers it.
-- `-XX:GuaranteedSafepointInterval=0` has been the default since JDK 23. Its effect on the
-  safepoint log is cadence, not correctness: gaps are the real absence of safepoints. Setting
-  it back to `1000` is a diagnostic-window tool, never permanent configuration.
+- `-XX:GuaranteedSafepointInterval=0` has been the default since JDK 23, and the flag is
+  **diagnostic** on 25 — it needs `-XX:+UnlockDiagnosticVMOptions` or the JVM refuses to
+  start (executed). Its effect on the safepoint log is cadence, not correctness: gaps are the
+  real absence of safepoints. Setting it back to `1000` is a diagnostic-window tool, never
+  permanent configuration.
 - Confirm every event's field names on the build in use — `jfr metadata --events
 jdk.SafepointBegin,jdk.SafepointEnd,jdk.SafepointLatency` — before depending on one. Field
   names have changed between JDK versions.
@@ -96,6 +106,12 @@ jdk.SafepointBegin,jdk.SafepointEnd,jdk.SafepointLatency` — before depending o
   format and its fields, the real JFR safepoint events with their scopes, the `safepointId`
   cross-check that reconstructs `Total` from JFR, and the parser pitfalls. Read when setting up
   the instrumentation or when two sources disagree about the same pause.
+- [Layer decision table](references/layer-decision-table.md) — symptom and evidence to
+  layer: GC operation, non-GC VM operation (named from the 25.0.3 binary), TTSP, JIT
+  deoptimisation, class loading, concurrent-collector stalls, monitors, virtual-thread
+  pinning and host, each with the artefact that proves it and the skill that owns the fix.
+  Read once `Total` is trusted and the pause must be handed to an owner, or when the
+  safepoint log is clean and the latency is still there.
 - [Attributing time to safepoint](references/attributing-time-to-safepoint.md) — the three real
   causes of high TTSP with the arithmetic that discriminates between them, the
   `LoopStripMiningIter` trade-off, and the sampling-mechanism comparison for when the profiler

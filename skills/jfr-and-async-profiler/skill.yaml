@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jfr-and-async-profiler
-version: 1.2.0
+version: 1.3.0
 description: >-
   Choosing and running the right JVM profiler: JFR as a continuous event bus versus
   async-profiler for targeted sampling, CPU clock versus wall clock, allocation and lock
@@ -45,6 +45,10 @@ dependencies:
     version: ^1.0.0
   - name: latency-statistics
     version: ^1.0.0
+
+suggests:
+  - incident-evidence-capture
+  - jfr-advanced
 
 capabilities:
   - reads-source

@@ -38,9 +38,10 @@ table. All three look like "no problem found".
 2. **Verify every event and field name against `jfr metadata` for this build.** Not from
    memory, not from documentation. Do it before writing the analysis code, not after it
    "does not work".
-3. **Set the thresholds the question needs.** Copy `profile.jfc`, lower `threshold` on
-   the contention events if sub-10 ms waits matter, disable `stackTrace` on high-frequency
-   events, then pass the file as `settings=<file>.jfc`.
+3. **Set the thresholds the question needs.** Derive the file with `jfr configure` rather
+   than hand-editing XML — `jfr configure --input profile.jfc locking-threshold=1ms
+--output locks.jfc` — or pass the setting inline: `jcmd <pid> JFR.start
+jdk.JavaMonitorEnter#threshold=1ms`. Disable `stackTrace` on high-frequency events.
 4. **Map each wait to its own event.** Blocked on `synchronized` → `jdk.JavaMonitorEnter`;
    `Object.wait()` → `jdk.JavaMonitorWait`; anything `j.u.c.` including connection pools →
    `jdk.ThreadPark`. Treating them as interchangeable is the most expensive diagnostic
@@ -65,10 +66,26 @@ table. All three look like "no problem found".
   `jdk.GCPauseL3`. TLAB allocation is `jdk.ObjectAllocationInNewTLAB` and
   `jdk.ObjectAllocationOutsideTLAB`.
 - There is no settings profile called `continuous`. The JDK ships exactly `default.jfc`
-  and `profile.jfc` in `$JAVA_HOME/lib/jfr/`. `settings=continuous` and `duration=0` both
-  abort JVM startup with `Error occurred during initialization of VM`.
+  and `profile.jfc` in `$JAVA_HOME/lib/jfr/`. `settings=continuous` (`Could not find file
+'continuous'`) and `duration=0` (`duration must be at least 1 second`) both abort JVM
+  startup with `Error occurred during initialization of VM`.
 - Continuous recording is expressed by **omitting `duration`** and bounding retention:
   `-XX:StartFlightRecording=filename=x.jfr,maxsize=512m,maxage=1h,settings=profile.jfc`.
+- `settings=` may be repeated and the **later file wins** for any setting both define; a
+  partial `.jfc` layered on `profile` overrides only what it names. With `settings=none`,
+  a setting for an event the file does not mention needs the `+` prefix
+  (`+jdk.ExecutionSample#period=1ms`) or the JVM warns `doesn't exist` and ignores it.
+  Confirm the result with `jfr view active-settings`.
+- Stack traces are cut at 64 frames from the **leaf** end — the root frames are dropped and
+  the trace is flagged `truncated`. `stackdepth` cannot change once JFR is initialised, so
+  `jcmd JFR.configure stackdepth=` fails against a JVM already recording; set
+  `-XX:FlightRecorderOptions:stackdepth=256` at startup for deep framework stacks.
+- On JDK 25 the CPU-proportional sampler is `jdk.CPUTimeSample` (JEP 509, experimental,
+  Linux only, off in both stock files): `jdk.CPUTimeSample#enabled=true` plus `#throttle=`
+  as a period (`10ms` of CPU per thread) or a rate (`500/s` across threads). No unlock flag
+  is needed; on another platform the JVM warns `CPU time method sampling not supported`
+  and records nothing. Method tracing (JEP 520) is `method-trace=<filter>` and
+  `method-timing=<filter>`, with `jdk.MethodTrace#threshold` at `0 ms` by default.
 - The three contention events default to a `threshold` of 10 ms in `profile.jfc` and
   20 ms in `default.jfc`. Contention finer than that is invisible until the `.jfc` lowers
   it explicitly.
@@ -90,10 +107,12 @@ table. All three look like "no problem found".
 ## References
 
 - [JFR event catalogue and CLI recipes](references/event-catalogue.md) — the verified
-  event and field names by category, the three contention channels and their thresholds,
+  event and field names by category, the three samplers and what each counts, the three
+  contention channels and their thresholds, the overhead knobs beyond the stock profiles,
   and the `jfr metadata` / `summary` / `print` commands. Read before naming any event in
-  code or writing an extraction pipeline.
+  code, writing an extraction pipeline, or raising a recording above `profile.jfc`.
 - [Custom events, settings files and streaming](references/custom-events-and-streaming.md)
-  — the annotated event class, the enabled/disabled cost table, a custom `.jfc`, the
-  circular in-memory recording with dump-on-alert, and what JDK 25's JEPs 509, 518 and
-  520 change. Read when adding instrumentation or building a live consumer.
+  — the annotated event class, the enabled/disabled cost table, deriving a `.jfc` with
+  `jfr configure`, the circular in-memory recording with dump-on-alert, and the verified
+  configuration keys of JDK 25's JEPs 509, 518 and 520. Read when adding instrumentation
+  or building a live consumer.

@@ -18,6 +18,16 @@ answers `Unrecognized VM option 'MetaspaceExpansionSize=5m'. Did you mean
 'MinMetaspaceExpansion=<value>'?`. Material that quotes it as a single expansion-increment
 flag is wrong; there are two flags, both listed above.
 
+**`-XX:MetaspaceReclaimPolicy` is gone on 25.** The JEP 387 flag (`balanced` / `aggressive` /
+`none`) is absent from `-XX:+PrintFlagsFinal` on 25.0.3; guides written for JDK 16–21 still
+quote it. Metaspace commits and uncommits in 64 KB granules (`commit_granule_bytes: 65536`
+in `VM.metaspace basic`), which is the unit `committed` moves in.
+
+**`CompressedClassSpaceSize` has a floor.** `-XX:CompressedClassSpaceSize=1m` starts with
+`CompressedClassSpaceSize adjusted from user input 1048576 bytes to 16777216 bytes`, so a
+value under 16 MB is silently raised — a "tiny class space" experiment is not testing what it
+claims.
+
 ## Which ceiling does the error name?
 
 | `OutOfMemoryError` text       | Ceiling reached    | Flag to change                 |

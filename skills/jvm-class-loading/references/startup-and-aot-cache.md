@@ -25,11 +25,15 @@ dominated by static initialisers doing I/O.
 
 ## Verify it is being used
 
-The cache is invalidated **silently** by a classpath change or a JDK change. A build that
-quietly stopped using it looks exactly like a build that never had it.
+The cache is rejected **silently** by a JDK change, a flag change or a classpath change. A
+build that quietly stopped using it looks exactly like a build that never had it. The
+opposite failure also exists on JDK 25: a rebuilt JAR at the same path is _accepted_ and
+old classes run from the cache (JDK-8377932) — the validation rules per artefact are in
+startup-cds-crac-leyden.
 
 ```bash
-java -Xlog:aot -jar app.jar        # confirm the cache is loaded, not silently skipped
+java -Xlog:aot,class+path=info -XX:AOTCache=app.aot -jar app.jar   # rejection reason per entry
+java -Xlog:class+load -XX:AOTCache=app.aot -jar app.jar | grep "com.example" | grep -c "shared objects file"
 ```
 
 Make this a startup assertion, not a one-off check: the failure mode is a deploy that

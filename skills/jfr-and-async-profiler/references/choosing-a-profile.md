@@ -28,14 +28,14 @@ and allocation affects the **frequency** of young pauses, not the duration of ea
 
 ## The JFR blocking-event map
 
-| Waiting on                    | Event                     |
-| ----------------------------- | ------------------------- |
-| `synchronized` contention     | `jdk.JavaMonitorEnter`    |
-| `Object.wait()`               | `jdk.JavaMonitorWait`     |
-| `java.util.concurrent`, pools | `jdk.ThreadPark`          |
-| `Thread.sleep`                | `jdk.ThreadSleep`         |
-| network                       | `jdk.SocketRead`          |
-| virtual thread pinned         | `jdk.VirtualThreadPinned` |
+| Waiting on                    | Event                                                               |
+| ----------------------------- | ------------------------------------------------------------------- |
+| `synchronized` contention     | `jdk.JavaMonitorEnter`                                              |
+| `Object.wait()`               | `jdk.JavaMonitorWait`                                               |
+| `java.util.concurrent`, pools | `jdk.ThreadPark`                                                    |
+| `Thread.sleep`                | `jdk.ThreadSleep`                                                   |
+| network                       | `jdk.SocketRead`                                                    |
+| virtual thread pinned         | `jdk.VirtualThreadPinned` (threshold **20 ms** in both stock files) |
 
 Two mistakes this table prevents: looking for `synchronized` contention in
 `jdk.JavaMonitorWait` (that is `wait`/`notify`), and looking for connection-pool waiting in

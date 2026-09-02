@@ -55,7 +55,17 @@ new selection does not mention keeps whatever level it already had for that outp
 rewritten.
 
 Excess options past the fourth colon-separated field are dropped with
-`Ignoring excess -Xlog options`. Read stdout for it.
+`[warning][logging] Ignoring excess -Xlog options: "extra"`. Read stdout for it.
+
+**`gc+*` is not a spelling of `gc*`.** The wildcard suffixes a tag combination; `+`
+expects a tag on both sides, so `-Xlog:gc+*` is `[error][logging] Invalid tag '' in log
+selection.` and the JVM does not start (executed). The two real forms are `gc` (exactly
+`{gc}`) and `gc*` (any tag-set containing `gc`).
+
+**The empty selection is `all=info`, everywhere.** Bare `-Xlog`, `-Xlog::stdout`, and a
+`jcmd VM.log output=…` call without `what=` all select every tag-set at `info` on that
+output. The command-line case is documented; the `jcmd` case is the trap
+(`references/runtime-reconfiguration.md`).
 
 ## The `jit` versus `compilation` case
 

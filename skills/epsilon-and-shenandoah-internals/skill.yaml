@@ -1,20 +1,20 @@
 schemaVersion: 1
 
 name: epsilon-and-shenandoah-internals
-version: 1.1.0
+version: 2.0.0
 description: >-
   Epsilon as a measurement instrument (isolating allocation cost, failing fast against an
   allocation budget, sizing from time-to-OOM) and Shenandoah internals (the load reference
   barrier, the concurrent phase sequence, generational mode and its card-table remembered
-  set, the heuristics and their thresholds, and the degenerated-versus-full fallbacks). Use
-  when a hot path is claimed to be allocation-free, when a benchmark's numbers are polluted
-  by collection, when "Degenerated GC" appears in a Shenandoah log, when a Shenandoah
-  comparison does not state its ShenandoahGCMode, when someone calls the LRB a read barrier
-  or searches a flame graph for the wrong symbol, or when an Epsilon example omits
+  set, the heuristics and their thresholds, pacing, and the degenerated-versus-full
+  fallbacks). Use when a hot path is claimed to be allocation-free, when benchmark numbers
+  are polluted by collection, when an Epsilon catch block never runs, when "Degenerated GC"
+  appears in a Shenandoah log, when Shenandoah latency rises with no pause in the log, when a
+  Shenandoah comparison does not state its ShenandoahGCMode, when the LRB is called a read
+  barrier or charged 8 bytes per object, or when an Epsilon example omits
   -XX:+UnlockExperimentalVMOptions. Does not cover choosing between or operating the
   concurrent collectors (zgc-and-shenandoah), finding which code allocates
-  (allocation-profiling), or establishing whether GC is the bottleneck at all
-  (jvm-gc-tuning).
+  (allocation-profiling), or establishing whether GC is the bottleneck (jvm-gc-tuning).
 
 license: Apache-2.0
 
@@ -45,6 +45,14 @@ files:
 dependencies:
   - name: zgc-and-shenandoah
     version: ^1.0.0
+
+suggests:
+  - allocation-profiling
+  - heap-dump-analysis
+  - jvm-gc-tuning
+  - object-layout-and-footprint
+  - pause-attribution
+  - zgc-generational-internals
 
 capabilities:
   - reads-source

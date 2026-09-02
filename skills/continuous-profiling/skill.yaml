@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: continuous-profiling
-version: 1.1.0
+version: 1.2.0
 description: >-
   Always-on profiling in production: collection architecture and its permanent overhead
   budget, profile storage and retention, differential and time-windowed queries, business
@@ -46,6 +46,9 @@ dependencies:
     version: ^1.0.0
   - name: async-profiler-advanced
     version: ^1.0.0
+
+suggests:
+  - metrics-and-cardinality
 
 capabilities:
   - reads-source

@@ -2,13 +2,16 @@
 
 ## Environment prerequisites
 
-| Requirement                                    | Why it matters                                                          |
-| ---------------------------------------------- | ----------------------------------------------------------------------- |
-| Linux kernel 5.8+                              | `CAP_BPF` / `CAP_PERFMON` exist as separate capabilities from full root |
-| root, or `CAP_BPF` + `CAP_PERFMON`             | Loading and attaching a BPF program                                     |
-| debugfs at `/sys/kernel/debug/tracing/`        | Tracepoint discovery                                                    |
-| `bpftrace`, `linux-tools-common`, `linux-perf` | `apt-get` on Ubuntu 20.04+; `dnf install bpftrace` on Fedora 32+        |
-| JVM built with DTrace/SDT support              | Prerequisite for any `usdt:` probe, independent of the JDK version      |
+| Requirement                                                  | Why it matters                                                                                                             |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| Linux kernel 5.8+                                            | `CAP_BPF` / `CAP_PERFMON` exist as separate capabilities from full root; older kernels need `CAP_SYS_ADMIN`                |
+| root, or `CAP_BPF` + `CAP_PERFMON`                           | Loading and attaching a BPF program; `kernel.unprivileged_bpf_disabled` is irrelevant once the capability is held          |
+| tracefs at `/sys/kernel/tracing` (or the debugfs path)       | Tracepoint discovery and the `args` struct layout for `tracepoint:` probes                                                 |
+| BTF at `/sys/kernel/btf/vmlinux`                             | Kernel struct types for `kprobe:` arguments without headers (CO-RE); not needed for `tracepoint:` or `usdt:`               |
+| Host PID namespace, when run from a pod                      | `pid`, `/proc/<pid>/task` and `-p` all refer to host PIDs; a pod in its own PID namespace sees none of the JVM's           |
+| Docker seccomp: `bpf`/`perf_event_open` need `CAP_SYS_ADMIN` | The default profile has no `CAP_BPF`/`CAP_PERFMON` rule; `--cap-add BPF` alone still fails with `EPERM`                    |
+| `bpftrace`, `linux-tools-common`, `linux-perf`               | `apt-get` on Ubuntu 20.04+; `dnf install bpftrace` on Fedora 32+                                                           |
+| JVM built with DTrace/SDT support                            | Prerequisite for any `usdt:` probe, independent of the JDK version — `readelf -n libjvm.so \| grep -c stapsdt` is the test |
 
 ## PID versus TID
 
@@ -42,25 +45,28 @@ main thread.
 
 ## USDT probe activation
 
-| Probe                                        | Fires by default | Needs `-XX:+ExtendedDTraceProbes` |
-| -------------------------------------------- | ---------------- | --------------------------------- |
-| `gc__begin`, `gc__end`                       | Yes              | No                                |
-| `monitor__contended__enter`, `monitor__wait` | No — dormant     | Yes                               |
-| `method__entry`, `method__return`            | No — dormant     | Yes                               |
-| `object__alloc`                              | No — dormant     | Yes                               |
+| Probe                                                                                                                                       | Fires by default | Flag that enables it (JDK 25 product flag) | Cost of the flag                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------------------------------ | ------------------------------------------------------------- |
+| `vm__init__begin/end`, `thread__start/stop`, `class__loaded/unloaded`, `gc__begin/end`, `mem__pool__gc__*`, `compiled__method__load/unload` | Yes              | —                                          | None beyond the probe itself                                  |
+| `monitor__contended__enter/entered/exit`, `monitor__wait/waited`, `monitor__notify`                                                         | No — dormant     | `-XX:+DTraceMonitorProbes`                 | A check per monitor event; tolerable for a reproduction run   |
+| `method__entry`, `method__return`                                                                                                           | No — dormant     | `-XX:+DTraceMethodProbes`                  | Runtime call on every method entry/exit — never in production |
+| `object__alloc`                                                                                                                             | No — dormant     | `-XX:+DTraceAllocProbes`                   | Runtime call per allocation — never in production             |
 
-`tplist` lists what exists in the binary, not what emits. A dormant probe produces no events
-and no error.
+`-XX:+ExtendedDTraceProbes`, the umbrella that used to switch all three on, was deprecated
+in JDK 19 (JDK-8279629) and obsoleted in JDK 20 (JDK-8279913); JDK 25 exits with
+`Unrecognized VM option 'ExtendedDTraceProbes'`. `tplist` lists what exists in the binary,
+not what emits. A dormant probe produces no events and no error.
 
 ## Signal to next step
 
-| Signal                                             | Probable cause                                  | Next step                                                        |
-| -------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------- |
-| Futex latency above 1 ms                           | `synchronized` / `ReentrantLock` contention     | Correlate with `asprof -e lock`                                  |
-| Run queue latency above 5 ms                       | Saturated CPU, CFS throttling, or poor affinity | Check `top` / `mpstat`; review cgroup limits or `taskset`        |
-| Rising major page faults                           | Heap being paged out                            | Check `free -h` / `vmstat`; compare `-Xmx` with available memory |
-| High context switches leaving the process          | Threads blocking on I/O or locks frequently     | Resize the pool, or reconsider virtual threads                   |
-| Disk latency above the JFR `jdk.FileRead` duration | Kernel buffering, scheduler and copy overhead   | Candidate for Direct I/O or io_uring                             |
+| Signal                                             | Probable cause                                                                                  | Next step                                                                                                                                    |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Futex latency above 1 ms                           | `synchronized` / `ReentrantLock` contention                                                     | Correlate with `asprof -e lock`                                                                                                              |
+| Run queue latency above 5 ms                       | Saturated CPU, CFS throttling, or poor affinity                                                 | `cpu.stat` `nr_throttled`/`throttled_usec` first — the quota is the cause when they rise with the histogram; then `mpstat -P ALL`, `taskset` |
+| Run queue histogram flat while p99 is bad          | Only `sched_wakeup` recorded — preemption re-queues (`prev_state == TASK_RUNNING`) were dropped | Use recipe 4's three-event form; compare `nr_throttled` again                                                                                |
+| Rising major page faults                           | Heap being paged out                                                                            | Check `free -h` / `vmstat`; compare `-Xmx` with available memory                                                                             |
+| High context switches leaving the process          | Threads blocking on I/O or locks frequently                                                     | Resize the pool, or reconsider virtual threads                                                                                               |
+| Disk latency above the JFR `jdk.FileRead` duration | Kernel buffering, scheduler and copy overhead                                                   | Candidate for Direct I/O or io_uring                                                                                                         |
 
 ## Checklist before a production PID
 
@@ -70,8 +76,10 @@ Before running:
       and is that what the probe's fields actually give you?
 - [ ] Did `bpftrace -lv` confirm each `args->` field on this kernel build?
 - [ ] If futex is involved, is `& 0x7f` applied to `args->op`?
-- [ ] Does the production JVM binary have the DTrace/SDT support and the flag any `usdt:`
-      probe needs — not just the development one?
+- [ ] Does the production JVM binary have the DTrace/SDT support (`readelf -n … | grep -c
+stapsdt`) and the `DTrace*Probes` flag any `usdt:` probe needs — not just the
+      development one?
+- [ ] If the pod is not in the host PID namespace, is the PID you are filtering the host's?
 
 While developing:
 

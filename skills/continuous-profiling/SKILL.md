@@ -59,8 +59,25 @@ rather than of code, because the two compared windows were not comparable.
 - Allocation overhead scales with the inverse of the byte threshold — it is not a fixed
   cost of "being enabled". A low threshold captures a stack trace every few objects, and
   the stack capture is the expensive part.
-- Treat "~1–2%, typically under 2%" for CPU profiling as a lab estimate. Do not put it in
-  a capacity budget without measuring the same workload with and without the profiler.
+- Budget overhead as `samples per second × cost per sample`, never as a quoted percentage.
+  `cpu`/`ctimer` samples are bounded by cores × rate; `wall` samples **every thread** at
+  the interval, so 2,000 threads at 10 ms is 200,000 stack walks a second — `wall` is the
+  channel that breaks a budget, and `--wall 100ms` or `--filter` is how it stays inside
+  one. The arithmetic per channel is in `references/architecture-choice.md`.
+- A continuous JFR recording uses `settings=default`: the JDK documents `default.jfc` as
+  the low-overhead configuration "for recordings that run continuously" and `profile.jfc`
+  as "for short periods of time", and `jcmd help JFR.start` warns that modified defaults
+  "may exceed 1%". Override single events on top of `default` instead of switching to
+  `profile`.
+- `jdk.ExecutionSample` samples at most **5 Java threads and 1 native thread per period**
+  (`MAX_NR_OF_JAVA_SAMPLES` / `MAX_NR_OF_NATIVE_SAMPLES`, `jfrThreadSampler.cpp`,
+  JDK 25). Halving the period from 20 ms to 10 ms doubles that cap; it does not make the
+  sampler cover every thread. On a 200-thread service a thread is visited about every
+  0.8 s at 20 ms, so a rare hot path needs a long window, not a short period.
+- `jdk.CPUTimeSample` (JEP 509, JDK 25, experimental, Linux) samples per thread by
+  consumed CPU time and is the JFR channel with an explicit budget: `throttle=500/s` is
+  a rate cap, `throttle=10ms` a CPU-time period, and `jdk.CPUTimeSamplesLost` says when
+  the cap was hit. It is disabled in both shipped `.jfc` files; enable it deliberately.
 - Never state a per-frame conclusion without its sample count, and never diff two windows
   whose load differs structurally — peak weekday traffic against Sunday at 03:00 changes
   the composition of the flame graph on volume alone.
@@ -97,9 +114,11 @@ rather than of code, because the two compared windows were not comparable.
 ## References
 
 - [Architecture choice](references/architecture-choice.md) — the four-architecture
-  comparison, the decision tree, per-channel overhead, the `EventType`-to-engine mapping,
-  and the JDK 25 sampling-machine changes that matter for a recording that never stops.
-  Read before committing to a collection architecture or an overhead budget.
+  comparison, the decision tree, the per-channel overhead arithmetic with a worked
+  budget, the `EventType`-to-engine mapping, and the JDK 25 sampling-machine changes
+  (`jdk.ExecutionSample`'s per-period cap, `jdk.CPUTimeSample`'s throttle) that matter
+  for a recording that never stops. Read before committing to a collection architecture
+  or an overhead budget.
 - [Setup and queries](references/setup-and-queries.md) — working Pyroscope SDK
   configuration against the real API, per-request labels in Spring Boot, a
   `RecordingStream` exporter skeleton, continuous `jcmd` recording with retention, and a

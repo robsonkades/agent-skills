@@ -1,19 +1,20 @@
 schemaVersion: 1
 
 name: gc-log-analysis
-version: 1.2.0
+version: 1.3.0
 description: >-
   Configuring and reading JVM unified GC logs: the -Xlog:gc* baseline with decorators and
   rotation, the cause field, the before->after->capacity triple and headroom, pause
-  distribution, premature promotion via gc+age, and correlating with -Xlog:safepoint. Use
-  when a GC log needs to be interpreted, when GC logging is not enabled and the right GC
-  tag-sets have to be chosen, when full collections or Metadata GC Threshold appear, when
-  the heap floor rises after each complete collection, or when an analysis script reports
-  zero pauses. Does not cover collector mechanics (gc-fundamentals), collector choice and
-  heap sizing (jvm-gc-tuning), or allocation profiling (jfr-and-async-profiler). The -Xlog
-  syntax itself — proving a selection emits anything, rotation, async logging and migrating
-  pre-JDK-9 flags — is unified-logging. Attributing an observed pause across layers is
-  pause-attribution.
+  distribution, allocation and promotion rate derived from the region lines, premature
+  promotion via gc+age, and correlating with -Xlog:safepoint. Use when a GC log needs to be
+  interpreted, when GC logging is not enabled and the right GC tag-sets have to be chosen,
+  when full collections or Metadata GC Threshold appear, when the heap floor rises after
+  each complete collection, when an allocation or promotion rate has to come out of the log
+  rather than a profiler, when a log starts at an uptime well above zero, or when an
+  analysis script reports zero pauses. Does not cover collector mechanics (gc-fundamentals),
+  collector choice and heap sizing (jvm-gc-tuning), or allocation profiling
+  (jfr-and-async-profiler). The -Xlog syntax itself is unified-logging. Attributing an
+  observed pause across layers is pause-attribution.
 
 license: Apache-2.0
 

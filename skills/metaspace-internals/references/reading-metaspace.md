@@ -20,9 +20,10 @@ never per class. That is why the only lever on committed metaspace is loader lif
 
 ## `jcmd <pid> VM.metaspace`
 
-The right command when NMT is off (it usually is in production — it costs 5–10% CPU and must
-be enabled at start) or when the question is specifically about chunk fragmentation. It
-reports, separately for `Non-Class`, `Class` and `Both`:
+The right command when NMT is off (it usually is in production — the JDK Troubleshooting
+Guide puts NMT at a 5–10% performance cost, and it must be enabled at start) or when the
+question is specifically about chunk fragmentation. It reports, separately for `Non-Class`,
+`Class` and `Both`:
 
 - chunk counts, capacity, `committed`, `used`, `free` and `waste`
 - `Virtual space` — what was actually reserved from the OS
@@ -30,6 +31,15 @@ reports, separately for `Non-Class`, `Class` and `Both`:
 
 Growing `Chunk freelists` with flat `used` means loaders are being collected and space is
 being recycled. Growing `committed` with flat freelists means loaders are not dying.
+
+Options on 25 (`jcmd <pid> help VM.metaspace`): `basic` prints the summary **without a
+safepoint** — the one to poll on a loaded production JVM; `show-loaders` lists every CLD
+with its chunks, and each non-strong hidden class appears there as its own
+`<hidden class>` CLD; `show-classes` adds the class names under each loader;
+`by-chunktype`, `by-spacetype`, `vslist` and `chunkfreelist` break the numbers down. The
+`Internal statistics` block of `basic` includes `num_arena_births` / `num_arena_deaths` —
+loaders created versus collected since start — which is the fastest confirmation that
+loaders are, or are not, dying.
 
 ## `jcmd <pid> VM.native_memory summary`
 
@@ -77,12 +87,16 @@ show `MC = 0.0` while `VM.metaspace` reports committed memory at the same instan
 ## Per-loader counts
 
 ```bash
-jcmd <pid> VM.classloader_stats   # loader, parent, classes, ChunkSz, BlockSz
+jcmd <pid> VM.classloader_stats   # loader, parent, CLD, classes, ChunkSz, BlockSz, type
 jcmd <pid> VM.classloaders        # the hierarchy as a tree
 ```
 
-Many rows of the _same_ loader type with similar class counts is the leak shape. Confirming
-that and finding the retainer belongs to `jvm-class-loading`.
+On 25 the `classloader_stats` table adds a `+ hidden classes` sub-row under a loader when it
+has any, with their own count and chunk sizes — the JDK's own lambdas (`java.lang.reflect.Proxy$$Lambda/0x…`) and method-handle `LambdaForm` classes show up
+this way under the boot loader even in a trivial program. Many rows of the _same_ loader
+type with similar class counts is the leak shape. Confirming that and finding the retainer
+belongs to `jvm-class-loading`; deciding which generator minted the classes is
+`runtime-class-generation.md`.
 
 ## JFR events (confirmed against `jfr metadata`, JDK 25)
 

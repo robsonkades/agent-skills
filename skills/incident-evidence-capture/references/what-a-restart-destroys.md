@@ -2,24 +2,38 @@
 
 ## The survival matrix
 
-| Evidence                               | Survives a JVM restart? | Survives pod replacement?    |
-| -------------------------------------- | ----------------------- | ---------------------------- |
-| Thread state, stacks, lock ownership   | **no**                  | no                           |
-| Heap contents                          | **no**                  | no                           |
-| Compiled code, JIT profile, tier state | **no**                  | no                           |
-| Native memory state, NMT baselines     | **no**                  | no                           |
-| In-flight requests                     | **no**                  | no                           |
-| JVM counters, JFR in-memory buffer     | **no**                  | no                           |
-| GC log on disk                         | yes                     | **only on a mounted volume** |
-| `hs_err_pid*.log`                      | yes                     | **only on a mounted volume** |
-| JFR files already written              | yes                     | **only on a mounted volume** |
-| Heap dump already written              | yes                     | **only on a mounted volume** |
-| Metrics and traces already exported    | yes                     | yes — they left the process  |
-| Application logs already shipped       | yes                     | yes                          |
+| Evidence                               | Survives a JVM restart?  | Survives pod replacement?    |
+| -------------------------------------- | ------------------------ | ---------------------------- |
+| Thread state, stacks, lock ownership   | **no**                   | no                           |
+| Heap contents                          | **no**                   | no                           |
+| Compiled code, JIT profile, tier state | **no**                   | no                           |
+| Native memory state, NMT baselines     | **no**                   | no                           |
+| In-flight requests                     | **no**                   | no                           |
+| JVM counters, JFR in-memory buffer     | **no**                   | no                           |
+| JFR repository chunks (`disk=true`)    | **no** — deleted on exit | no                           |
+| GC log on disk                         | yes                      | **only on a mounted volume** |
+| `hs_err_pid*.log`                      | yes                      | **only on a mounted volume** |
+| JFR files already written              | yes                      | **only on a mounted volume** |
+| Heap dump already written              | yes                      | **only on a mounted volume** |
+| Metrics and traces already exported    | yes                      | yes — they left the process  |
+| Application logs already shipped       | yes                      | yes                          |
 
 The middle column is the one people reason about. **The right-hand column is the one that
 actually bites**: an artefact written correctly, to the container's own filesystem, is destroyed
 by the pod replacement it was collected to survive.
+
+The JFR row surprises people. A continuous recording with `disk=true` writes ~12 MB chunks
+(`maxchunksize`) into a repository under the temp directory, prunes them by `maxage`/`maxsize`,
+and **deletes the directory on normal exit** — SIGTERM included. Verified on JDK 25.0.3:
+
+- `jcmd <pid> JFR.dump filename=…` turns the retained window into a file at any time; it is
+  the incident command.
+- `-XX:StartFlightRecording:…,dumponexit=true,filename=<volume>/exit.jfr` writes on orderly
+  shutdown; it does nothing on SIGKILL or a kernel OOM kill.
+- `-XX:FlightRecorderOptions:repository=<volume>,preserve-repository=true` keeps the chunks
+  after exit; `jfr assemble <repository>/<dated-dir> out.jfr` rebuilds a recording from
+  completed chunks after a kill. The chunk being written at the moment of the kill was not
+  readable in that test — only chunks that had rotated survived.
 
 ## Everything volatile, in one sentence
 
@@ -77,8 +91,8 @@ Constructing and _verifying_ the `-Xlog` selections is `unified-logging` — it 
 because an `-Xlog` line that produces an empty file fails silently, and the incident is when you
 find out.
 
-A continuous JFR recording belongs on this list too; `jfr-and-async-profiler` owns the settings
-and the overhead budget.
+A continuous JFR recording belongs on this list too, with its repository on the same volume
+(above); `jfr-and-async-profiler` owns the settings and the overhead budget.
 
 ## The cost of not having done it
 

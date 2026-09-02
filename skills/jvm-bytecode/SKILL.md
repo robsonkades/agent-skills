@@ -1,18 +1,18 @@
 ---
 name: jvm-bytecode
 description: >
-  Reading and reasoning about JVM bytecode. javap -c -p -v, the operand stack and local
-  variable slots, the constant pool and lazy symbol resolution, descriptors versus the
-  Signature attribute, the invoke* family including invokedynamic and inline caching, class
-  file verification and the StackMapTable, and what bytecode does and does not tell you
-  about performance. Use when a VerifyError appears after instrumentation by an agent, proxy
-  or mock library, when UnsupportedClassVersionError names two class file versions, when
-  auditing what a lambda, record, sealed hierarchy or pattern switch actually compiled to,
-  when checking for hidden boxing in a hot method, or when someone quotes a
-  cycles-per-bytecode-instruction table. Does not cover the tiered compilation pipeline or
-  warm-up (jit-compilation), what the JIT actually did with the code
-  (compilation-and-inlining-logs), or loading, linking and initialisation
-  (jvm-class-loading).
+  Reading and reasoning about JVM bytecode: javap -c -p -v, operand stack and local slots, the
+  constant pool and lazy resolution, descriptors versus Signature, the invoke* family with
+  invokedynamic and inline caching, verification and the StackMapTable, the class-file limits,
+  what javac desugars, and what bytecode does and does not say about performance. Use when a
+  VerifyError appears after instrumentation by an agent, proxy or mock library, when
+  UnsupportedClassVersionError names two class file versions, when javac reports "code too
+  large", when a coverage or mocking agent fails with "Unsupported class file major version"
+  after a JDK upgrade, when auditing what a lambda, record, sealed switch or synchronized block
+  compiled to, when checking for hidden boxing in a hot method, or when a cycles-per-bytecode
+  table is quoted. Does not cover tiered compilation or warm-up (jit-compilation),
+  what the JIT did with the code (compilation-and-inlining-logs), or loading, linking and
+  initialisation (jvm-class-loading).
 ---
 
 # JVM Bytecode
@@ -20,11 +20,13 @@ description: >
 ## Purpose
 
 Read what was actually compiled, rather than what the source appears to say. The failures
-this skill prevents are the two that only bytecode can settle: an intermittent `VerifyError`
-from instrumentation that rewrote a method without recomputing its stack map, and a
-performance argument built on the _shape_ of source code when the shape that runs is
-different — string concatenation that is now `invokedynamic`, a `switch` that is a
-`SwitchBootstraps` type switch, boxing that nobody wrote.
+this skill prevents are the ones that only bytecode can settle: an intermittent `VerifyError`
+from instrumentation that rewrote a method without recomputing its stack map, a coverage
+agent that silently instruments nothing after a JDK upgrade, a build that stops on
+`code too large`, and a performance argument built on the _shape_ of source code when the
+shape that runs is different — string concatenation that is now `invokedynamic`, a `switch`
+that is a `SwitchBootstraps` type switch, a one-line try-with-resources that is 38 bytes of
+bytecode, boxing that nobody wrote.
 
 Bytecode is a typed stack machine plus a symbol table. Its instructions never name a class or
 a method — they carry constant pool indices, resolved lazily on first execution. That single
@@ -34,26 +36,34 @@ here.
 
 ## Workflow
 
-1. **Compile with `-g` and disassemble at the level the question needs.** `javap` for
-   signatures, `javap -c` for the code, `javap -c -p` to include private members, `javap -v`
-   for the constant pool, the attributes and the `StackMapTable`.
+1. **Compile with `-g -parameters` and disassemble at the level the question needs.** `javap`
+   for signatures, `javap -c` for the code, `javap -c -p` to include private members,
+   `javap -v` for the constant pool, the attributes and the `StackMapTable` (`-v` does not
+   imply `-p`).
 2. **Read the header before the instructions.** `major_version`, the access flags and
    `this_class` answer most version questions on their own — see
    `references/javap-and-class-file-anatomy.md`.
-3. **Establish the local variable slots before tracing the opcodes.** Read the
+3. **Classify a `LinkageError` by its message before forming a hypothesis.** `VerifyError`,
+   `ClassFormatError`, `UnsupportedClassVersionError` and a late `NoSuchMethodError` each name
+   a different producer, and the JDK 25 texts are tabulated in
+   `references/limits-and-failure-catalogue.md`.
+4. **Establish the local variable slots before tracing the opcodes.** Read the
    `LocalVariableTable` rather than counting from memory; slot 0 is `this` in an instance
-   method and the first parameter in a `static` one.
-4. **Classify every call site by its invoke instruction.** `invokestatic` and
-   `invokespecial` resolve to one concrete target at link time; `invokevirtual` and
-   `invokeinterface` depend on the receiver type at runtime; `invokedynamic` delegates to a
-   bootstrap method. See `references/dispatch-and-abstraction-cost.md`.
-5. **Separate what bytecode can and cannot answer.** It shows the instruction that will be
-   executed and the allocation that was written down. It does not show what the JIT inlined,
-   which speculation held, or how long anything took — hand those to
+   method and the first parameter in a `static` one; `long` and `double` take two.
+5. **Classify every call site by its invoke instruction.** `invokestatic` and
+   `invokespecial` resolve to one concrete target; `invokevirtual` and `invokeinterface`
+   depend on the receiver type at runtime — and on javac 11+ a private method call is
+   `invokevirtual` too; `invokedynamic` delegates to a bootstrap method. See
+   `references/dispatch-and-abstraction-cost.md`.
+6. **Separate what bytecode can and cannot answer.** It shows the instruction that will be
+   executed, the allocation that was written down, and the method size the JIT's inlining
+   and huge-method limits are measured against. It does not show what the JIT inlined, which
+   speculation held, or how long anything took — hand those to
    `compilation-and-inlining-logs` and `jit-compilation`.
-6. **For runtime-generated bytecode, dump it and disassemble the dump** — the generated class
-   is the one the verifier rejected, not the original source.
-7. **Answer any cost question with a measurement**, on the hardware and JDK in question, with
+7. **For runtime-generated bytecode, dump it and disassemble the dump** — the generated class
+   is the one the verifier rejected, not the original source. On JDK 25 the lambda dump is
+   `-Djdk.invoke.LambdaMetafactory.dumpProxyClassFiles=true`; the older property is silent.
+8. **Answer any cost question with a measurement**, on the hardware and JDK in question, with
    the flags declared alongside the number.
 
 ## Rules
@@ -62,20 +72,39 @@ here.
   reconstruct a readable approximation and re-sugar exactly the details that matter — implicit
   boxing, the real form of the dispatch.
 - Never assume the same source produces the same bytecode across JDK versions. String
-  concatenation has been `invokedynamic` since JDK 9 (JEP 280), pattern `switch` can use
-  `SwitchBootstraps` since JDK 21, and none of that exists in JDK 8 output.
+  concatenation has been `invokedynamic` since JDK 9 (JEP 280), private calls have been
+  `invokevirtual` since JDK 11 (JEP 181), pattern `switch` uses `SwitchBootstraps` since
+  JDK 21, and none of that exists in JDK 8 output. `grep StringBuilder` finds nothing in a
+  modern class file; the loop-concatenation smell is `makeConcatWithConstants` inside a loop.
+- javac does not optimise beyond constant folding and `if (false)`. What it does is desugar,
+  and the desugared size is what the JIT measures: a one-line try-with-resources is 38
+  bytecode bytes, over the 35-byte `MaxInlineSize`, and a method above 8000 bytes is never
+  compiled at all (`DontCompileHugeMethods`). The 64 KB limit that stops the build is a
+  different number from the 8000 that stops the JIT — see the desugaring table in
+  `references/dispatch-and-abstraction-cost.md`.
 - `major_version = JDK version + 44`; JDK 25 is 69. A newer class file never runs on an older
   runtime, and `UnsupportedClassVersionError` prints both numbers, which is the whole
   diagnosis. Check that the build image and the runtime image agree — a `--release 25` build
   deployed onto a `21-jre` image surfaces as "the application will not start".
 - Any tool that rewrites a method body must recompute the `StackMapTable`. In ASM that is
-  `new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS)`. Omitting it is the
-  most common cause of an intermittent `VerifyError` that appears only for certain method
-  shapes or certain JDKs.
+  `new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS)`; the JDK's own
+  `java.lang.classfile` (JEP 484, final in JDK 24) regenerates frames by default and supports
+  every class file version the running JDK does. Omitting the recomputation is the most
+  common cause of an intermittent `VerifyError` that appears only for certain method shapes or
+  certain JDKs.
+- A bytecode library's version is coupled to the class file version, and it is usually shaded
+  inside something else. `Unsupported class file major version 69` from
+  `org.objectweb.asm.ClassReader` means the agent, coverage tool or mocking library bundles
+  an ASM older than the runtime — upgrade that tool. A `ClassFileTransformer` that throws is
+  **ignored** by the JVM: the class loads uninstrumented, the process exits 0, and coverage is
+  silently zero. Gate on the report, not on the exit code.
 - Test instrumentation against the **same** JDK major version that runs in production, not
   only the development one.
-- `-XX:-UseSplitVerifier` is a dead flag — support was removed in JDK 8 (JDK-8009595). It
-  survives only in stale material; the JVM ignores it and warns.
+- Never disable verification to make a `VerifyError` go away. `-Xverify:none` and `-noverify`
+  have warned since JDK 13 (JDK-8214719) and `BytecodeVerificationRemote` is a diagnostic
+  flag on 25; both make the broken class run and remove the only check between a bad
+  transformer and miscompiled code. `-XX:-UseSplitVerifier` is not ignored — it is
+  `Unrecognized VM option` and the JVM does not start (removed in JDK 8, JDK-8009595).
 - `invokedynamic` is not inherently slow. The bootstrap runs once and the result is cached in
   the `CallSite`; every later execution of that site reuses the linked handle.
 - Lambda proxy classes have been **hidden classes** since JDK 15 (JEP 371), defined through
@@ -85,6 +114,13 @@ here.
 - Non-capturing lambdas _tend_ to be a single reused instance and capturing ones _tend_ to
   allocate per invocation. That is `LambdaMetafactory` behaviour, not a JVMS guarantee.
   Confirm it with JMH `-prof gc`; never assert it from the source shape.
+- A `synchronized` block is `monitorenter`/`monitorexit` plus an `any` exception handler that
+  releases the monitor on the throwing path — two `Exception table` rows; a `synchronized`
+  method is only `ACC_SYNCHRONIZED` in `javap -v` and shows no monitor instruction. Both lock
+  the same way at runtime; only the bytecode size differs.
+- An exhaustive pattern `switch` over a sealed type still carries a synthetic `default` that
+  throws `MatchException`. Seeing one in production means a permitted subclass was compiled
+  separately from the switch — a build-consistency problem, not a logic error.
 - Treat a megamorphic `invokevirtual` as a property of the **call site**, not of the language.
   Once profiling shows that site is hot, the fix is to reduce the number of concrete types
   reaching it — not to avoid polymorphic dispatch generally.
@@ -94,23 +130,35 @@ here.
   the JDK and the flags.
 - Use JMH for any instruction- or abstraction-level cost, never `System.nanoTime()` around a
   loop, and add `-prof gc` whenever the question is allocation rather than time.
-- Prefer `instanceof` pattern matching over `instanceof` followed by a cast — the latter emits
-  a second, redundant `checkcast`.
+- `obj instanceof String s` and `instanceof` followed by a cast compile to the **same**
+  `instanceof`/`checkcast` pair on javac 25. Prefer the pattern for its scoping, not for a
+  saved instruction that does not exist.
 - A class file with `minor_version = 0xFFFF` depends on preview features and loads only on
   exactly that feature release, with `--enable-preview` at runtime as well as at compile time.
-  Depending on a preview **API** is enough to set it; preview syntax is not required.
+  Depending on a preview **API** is enough to set it; passing `--enable-preview` to a class
+  that uses nothing preview is not.
 - Verify any suspicious VM flag with `java -XX:+PrintFlagsFinal -version | grep -i <term>`
-  before it goes into a runbook.
+  before it goes into a runbook; a `develop` flag such as `HugeMethodLimit` is absent from that
+  list on a product build and refuses to start the JVM.
 
 ## References
 
 - [javap and class file anatomy](references/javap-and-class-file-anatomy.md) — the `javap`
-  invocations, an annotated JDK 25 disassembly, the `major_version` table, the descriptor
-  grammar and how it differs from the `Signature` attribute, what the verifier checks, and how
-  to dump classes generated at runtime by `LambdaMetafactory` or ByteBuddy. Read when
-  disassembling anything, or when diagnosing a `VerifyError` or a version error.
+  invocations, an annotated JDK 25 disassembly, `LocalVariableTable` versus
+  `MethodParameters`, the `major_version` table and the preview marker, the constant pool
+  entry kinds including `MethodHandle`/`MethodType`/`Dynamic`, descriptors versus `Signature`,
+  what the verifier checks with the exact `VerifyError` texts, the JDK 25 lambda dump property,
+  and the Class-File API next to ASM. Read when disassembling anything, when diagnosing a
+  `VerifyError`, or when writing or fixing a class transformer.
 - [Dispatch and abstraction cost](references/dispatch-and-abstraction-cost.md) — the invoke
-  family, the four stages of inline caching, how lambdas, records, sealed types and pattern
-  switches appear in bytecode, the comparison table for reflection, `MethodHandle` and
-  `VarHandle`, and grep recipes for finding boxing and `StringBuilder` allocation. Read when
-  the question is what a call site costs or which abstraction to choose.
+  family, the four stages of inline caching, the table of what javac desugars each construct
+  to and how large it gets (`synchronized`, `finally`, try-with-resources, the three `switch`
+  shapes, records, `assert`, boxing), lambdas and hidden classes, the abstraction comparison
+  table, and grep recipes that work on modern class files. Read when the question is what a
+  call site costs, which abstraction to choose, or why a small method was not inlined.
+- [Limits and the failure catalogue](references/limits-and-failure-catalogue.md) — the
+  symptom-to-cause table with JDK 25 message texts for `VerifyError`, `ClassFormatError`,
+  `UnsupportedClassVersionError`, `code too large`, late `NoSuchMethodError`, and ASM,
+  Byte Buddy and JaCoCo breakage after a JDK upgrade; the JVMS limits; the verification flags
+  and why not to touch them. Read when a `LinkageError` or a javac limit error arrives, or
+  when a hot method never appears in `PrintCompilation`.

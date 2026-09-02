@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jfr-advanced
-version: 1.1.0
+version: 1.2.0
 description: >-
   JDK Flight Recorder beyond the stock profiles: authoring a custom `.jfc`, event thresholds
   and periods, custom events extending `jdk.jfr.Event`, `RecordingStream` for live
@@ -45,6 +45,9 @@ files:
 dependencies:
   - name: jfr-and-async-profiler
     version: ^1.0.0
+
+suggests:
+  - virtual-threads-internals
 
 capabilities:
   - reads-source

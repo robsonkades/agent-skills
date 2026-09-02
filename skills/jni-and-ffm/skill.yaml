@@ -1,19 +1,20 @@
 schemaVersion: 1
 
 name: jni-and-ffm
-version: 1.1.0
+version: 1.2.0
 description: >-
-  Crossing into native code: JNI call overhead and its pitfalls, critical sections and what
-  they block, the FFM downcall and upcall path, `Linker` and method handles, why a native
-  frame pins a virtual thread, and measuring the boundary cost. Use when a native call sits
-  inside a tight loop, when someone proposes migrating JNI to Panama to fix pinning, when
+  Crossing into native code: JNI call overhead, critical sections and what they block, the
+  FFM downcall and upcall path, `Linker` and method handles, why a native frame pins a
+  virtual thread, and measuring the boundary cost. Use when a native call sits inside a
+  tight loop, when someone proposes migrating JNI to Panama to fix pinning, when
   `Linker.Option.critical()` is applied without a measured duration, when
   `jdk.VirtualThreadPinned` events point at a `native` method or `MethodHandle.invokeExact`,
   when `WARNING: A restricted method ... has been called` appears after a JDK upgrade, when
-  a runbook still references `-Djdk.tracePinnedThreads` or `--enable-preview` for FFM, or
-  when `jextract` is assumed to ship with the JDK. Does not cover holding native memory
-  without calling into it (off-heap-memory), pinning as a scheduling phenomenon
-  (virtual-threads-internals), or the native memory budget (jvm-memory-regions).
+  a runbook still references `-Djdk.tracePinnedThreads` or `--enable-preview` for FFM, when
+  `jextract` is assumed to ship with the JDK, when a downcall fails with
+  `WrongThreadException` on a confined arena, or when `GCLocker Initiated GC` appears as a
+  cause in the GC log. Does not cover holding native memory (off-heap-memory), pinning as
+  scheduling (virtual-threads-internals), or the native memory budget (jvm-memory-regions).
 
 license: Apache-2.0
 

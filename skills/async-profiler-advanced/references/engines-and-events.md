@@ -16,16 +16,17 @@ layer error — the real distinction is signal fairness, which is a different pr
 
 ## The three CPU engines
 
-| Attribute                                | `cpu` (perf_events)                                      | `itimer`                                                   | `ctimer`                                  |
-| ---------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------- |
-| Kernel mechanism                         | `perf_event_open`, one fd per thread                     | `setitimer(ITIMER_PROF)`, one per process                  | `timer_create()`, one timer per thread    |
-| Kernel stack traces                      | Yes                                                      | No                                                         | No                                        |
-| Resolution                               | High (CPU nanoseconds)                                   | Jiffy-limited (~4–10 ms)                                   | Jiffy-limited (~4–10 ms)                  |
-| Fair distribution across threads         | Yes — signal goes to the thread whose counter overflowed | No — one process-wide signal, uneven across active threads | Better than `itimer`, still jiffy-limited |
-| Works under restrictive seccomp/paranoid | No, by default                                           | Yes                                                        | Yes                                       |
-| Consumes file descriptors                | Yes (one per thread)                                     | No                                                         | No                                        |
-| Works on macOS                           | No                                                       | Yes (with limits)                                          | No (Linux-specific)                       |
-| Automatic fallback                       | Falls back to `ctimer` when `perf_events` is unavailable | —                                                          | —                                         |
+| Attribute                                | `cpu` (perf_events)                                                  | `itimer`                                                                              | `ctimer`                                  |
+| ---------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Kernel mechanism                         | `perf_event_open`, one fd per thread                                 | `setitimer(ITIMER_PROF)`, one per process                                             | `timer_create()`, one timer per thread    |
+| Kernel stack traces                      | Yes                                                                  | No                                                                                    | No                                        |
+| Resolution                               | High (CPU nanoseconds)                                               | Tick-limited (`1/HZ`, 1–10 ms) — POSIX CPU timers are expired from the scheduler tick | Tick-limited, same mechanism              |
+| Fair distribution across threads         | Yes — signal goes to the thread whose counter overflowed             | No — one process-wide signal, uneven across active threads                            | Better than `itimer`, still jiffy-limited |
+| Works under restrictive seccomp/paranoid | No, by default                                                       | Yes                                                                                   | Yes                                       |
+| Consumes file descriptors                | Yes (one per thread)                                                 | No                                                                                    | No                                        |
+| Works on macOS                           | No                                                                   | Yes (with limits)                                                                     | No (Linux-specific)                       |
+| Automatic fallback                       | Falls back to `ctimer`, then `wall`, silently                        | —                                                                                     | —                                         |
+| Native (C) stack                         | Yes — `--cstack vm` default since 4.2, `fp`/`dwarf`/`vmx` selectable | Yes, same walker                                                                      | Yes, same walker                          |
 
 Practical reading: on an unrestricted Linux host use `-e cpu`. In a container with the
 default seccomp profile, or when only Java/JIT frames are wanted, `-e ctimer` is
@@ -60,25 +61,45 @@ keeping a promise it never made.
 
 ## What blocks `perf_events` in a container
 
-Three independent layers, and they fail differently:
+Four independent layers, checked in this order by the kernel, and each fails with the
+same `Perf events unavailable` message. Diagnose from the outside in.
 
-1. **seccomp.** Docker's default profile does not list `perf_event_open`. Incidental, not
-   a policy against profiling.
-2. **`kernel.perf_event_paranoid`.** A **host** sysctl; in restricted mode (≥ 2) access is
-   denied regardless of capability.
-3. **Capabilities.** Kernel-visibility events need `CAP_SYS_ADMIN`, or the narrower
-   `CAP_PERFMON` on kernels 5.8+.
+| Layer                                          | What it does                                                                                                                                                                                                  | Check                                                                     | Fix                                                                                                                                                                 |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| seccomp                                        | Docker's default profile allows `perf_event_open` (and `bpf`) **only when the container holds `CAP_SYS_ADMIN`**; there is no `CAP_PERFMON` rule, so `--cap-add PERFMON` alone still gets `EPERM` from seccomp | `grep Seccomp /proc/<pid>/status` (`2` = filter active)                   | `--security-opt seccomp=unconfined` or a custom profile, then the capability below. Kubernetes pods are `Unconfined` unless `seccompProfile: RuntimeDefault` is set |
+| capability                                     | `CAP_PERFMON` (5.8+) or `CAP_SYS_ADMIN` makes the process privileged for `perf_events` and **bypasses `perf_event_paranoid`** (kernel `perf-security.rst`). Root inside a container has neither by default    | `grep CapEff /proc/<pid>/status`, decode with `capsh --decode`            | `--cap-add PERFMON` (with the seccomp fix) or `securityContext.capabilities.add: [PERFMON]`; `SYS_ADMIN` is the wide hammer                                         |
+| `kernel.perf_event_paranoid`                   | Host sysctl, not namespaced. Unprivileged: ≤ 1 allows kernel stacks, 2 (upstream default) user-space only, 3 (Debian/Ubuntu patch) nothing                                                                    | `cat /proc/sys/kernel/perf_event_paranoid`                                | At 2: `--all-user` (async-profiler does not retry user-only by itself). At 3: `--fdtransfer`, a capability, or `-e ctimer`                                          |
+| `kernel.kptr_restrict` + `perf_event_mlock_kb` | `kptr_restrict ≠ 0` zeroes `/proc/kallsyms` for the unprivileged, so kernel frames stay as addresses; the mmap limit caps the 8 kB per-thread buffers                                                         | `kernel symbols are unavailable` / `perf_event mmap failed` in the output | `sysctl kernel.kptr_restrict=0`; raise `ulimit -l` or `kernel.perf_event_mlock_kb`                                                                                  |
 
-Attach is a separate mechanism: HotSpot's dynamic attach protocol over a Unix socket at
-`/tmp/.java_pid<PID>`. Under a restrictive Yama `ptrace_scope`, attaching across UIDs or
-outside a direct ancestry relation may need `CAP_SYS_PTRACE` — even for `wall` or
-`ctimer`, which never touch `perf_events`. This is why "I added the recommended
-capability and it still does not work" is so common: `SYS_PTRACE` was granted for a
-`perf_events` problem.
+`--fdtransfer` sidesteps seccomp, capability and paranoid at once: a privileged helper
+opens the descriptor and passes it to the unprivileged target over a Unix socket
+(`SCM_RIGHTS`). The kernel only ever sees the privileged process calling
+`perf_event_open`. It needs one privileged process somewhere — on the host or in a
+sidecar sharing the PID namespace.
 
-`--fdtransfer` sidesteps the whole question: a privileged helper opens the descriptor and
-passes it to the unprivileged target over a Unix socket (`SCM_RIGHTS`). The kernel only
-ever sees the privileged process calling `perf_event_open`.
+## Attach is a different mechanism
+
+HotSpot's dynamic attach is a Unix socket at `/tmp/.java_pid<PID>` that the JVM creates
+on `SIGQUIT` when it finds `.attach_pid<PID>`. The JVM accepts a peer only with its own
+effective uid and gid; `asprof` switches credentials to match when it runs as root, and
+fails with `Failed to change credentials to match the target process` otherwise. Nothing
+here touches `perf_events`, and nothing in `perf_events` touches this — which is why
+"I added the recommended capability and it still does not work" is so common: a
+capability was granted for the wrong mechanism. From a sidecar, share the PID namespace
+(`shareProcessNamespace: true`) and run as the JVM's uid; from the host, run as root.
+
+## Error message to cause
+
+| `asprof` output                                               | Cause                                                                                                               | Remedy                                                                                                 |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `Perf events unavailable`                                     | One of the four layers above; also WSL and hypervisors without PMU virtualisation                                   | Walk the table top-down; `--fdtransfer` or `-e ctimer` when the host cannot be changed                 |
+| `perf_event mmap failed: Operation not permitted`             | 8 kB × threads exceeds the locked-memory limit                                                                      | `ulimit -l`, `kernel.perf_event_mlock_kb`, or fewer threads in `--filter`                              |
+| `Could not start attach mechanism: No such file or directory` | `/tmp/.java_pid*` deleted by a tmp cleaner, `-XX:+DisableAttachMechanism`, or a different `/tmp` (chroot/container) | `lsof -p <pid> \| grep java_pid`; `kill -3 <pid>` to confirm the JVM responds; use the target's `/tmp` |
+| `Failed to change credentials to match the target process`    | Profiler uid/gid differs from the JVM's and the profiler is not root                                                | Run as the JVM's user, or as root                                                                      |
+| `Target JVM failed to load libasyncProfiler.so`               | The **JVM**, not `asprof`, opens the library and the output file                                                    | Absolute path readable by the JVM's uid; `-f` path writable by the JVM                                 |
+| `VMStructs unavailable. Unsupported JVM?`                     | No `gHotSpotVMStructs` symbols — non-HotSpot, stripped, or missing debug symbols                                    | Install the JDK's debug symbols; `--cstack fp` as a fallback                                           |
+| Kernel frames as raw addresses                                | `kptr_restrict ≠ 0`, or paranoid 2 without a capability                                                             | `sysctl kernel.kptr_restrict=0 kernel.perf_event_paranoid=1`                                           |
+| Java stacks missing, native only                              | `-XX:MaxJavaStackTraceDepth=0`, or attach after JIT without `DebugNonSafepoints` (inlined frames only)              | `--cstack vm` ignores `MaxJavaStackTraceDepth`; restart with the diagnostic flags                      |
 
 ## Thread state to JFR event
 

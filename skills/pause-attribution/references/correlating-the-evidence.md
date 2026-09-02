@@ -3,33 +3,38 @@
 ## The decomposition
 
 ```
-Application-visible STW = Reaching safepoint (sync) + At safepoint (operation) + cleanup
-                          \___________________/       \__________________/       \_____/
-                           thread-side problem          collector or VM-op        small,
-                           (TTSP)                       problem                   real
+Application-visible STW = Reaching safepoint (sync) + At safepoint (operation) + Leaving safepoint
+                          \___________________/       \__________________/       \_______________/
+                           thread-side problem          collector or VM-op        disarm + wake-up,
+                           (TTSP)                       problem                   small, real
 ```
 
 The GC log publishes the middle term only. Whatever remains after all three are accounted for
-is a host effect, not a JVM one.
+is not a safepoint: a per-thread stall or a host effect — `layer-decision-table.md`.
 
 | Log field            | What it measures                                            | Answers "how long did the application stop"?   |
 | -------------------- | ----------------------------------------------------------- | ---------------------------------------------- |
 | `Time since last`    | Interval since the previous safepoint — frequency, not cost | No                                             |
 | `Reaching safepoint` | Sync time; the slowest thread's TTSP                        | Partly                                         |
-| `At safepoint`       | Duration of the operation (GC, deopt, …)                    | Partly — this is what the GC log already shows |
-| `Total`              | Sync + operation + cleanup                                  | **Yes, directly**                              |
+| `At safepoint`       | Duration of the operation (GC, dump, …)                     | Partly — this is what the GC log already shows |
+| `Leaving safepoint`  | Disarming the polls and waking the threads                  | Partly — the term a two-field sum drops        |
+| `Total`              | Sync + operation + leaving                                  | **Yes, directly**                              |
+| `Threads`            | `N runnable, M total` — how many had to be stopped          | No, but it scales the sync term                |
 
-Worked example of why the manual sum is not the metric:
+Worked example of why the manual sum is not the metric — a real `G1CollectFull` line from
+25.0.3 (executed):
 
 ```
-Reaching safepoint: 3000000 ns
-At safepoint:       9000000 ns
-Reaching + At    = 12000000 ns
-Total:             12300000 ns     <- 300000 ns of cleanup in neither summed field
+Reaching safepoint:   10700 ns
+At safepoint:       2808000 ns
+Reaching + At     = 2818700 ns
+Leaving safepoint:     4500 ns
+Total:              2823200 ns     <- Reaching + At + Leaving, exact on 1,169 lines
 ```
 
-0.3 ms per event is noise at a few safepoints per second. At thousands per second — frequent
-GC, heavy deoptimisation — the accumulated omission stops being noise. Measure the cleanup in
+A few microseconds per event is noise at a few safepoints per second. At thousands per
+second — frequent GC, heavy deoptimisation — the accumulated omission stops being noise, and
+a JDK ≤ 24 log, which prints no `Leaving` field, hides it entirely. Measure the term in
 your own log before deciding whether it matters to your SLO; it has no universal magnitude.
 
 ## Enabling the safepoint log
@@ -38,11 +43,12 @@ your own log before deciding whether it matters to your SLO; it has no universal
 java -Xlog:safepoint=info:file=safepoint.log:time,uptime,level,tags -jar app.jar
 ```
 
-Real output shape on JDK 25:
+Real output on 25.0.3 (executed; one line, wrapped):
 
 ```
-[2026-08-14T10:00:02.341+0000][2.341s][info][safepoint] Safepoint "G1CollectForAllocation", \
-Time since last: 1234560 ns, Reaching safepoint: 234 ns, At safepoint: 15678901 ns, Total: 15913461 ns
+[2026-09-02T02:43:47.726-0300][0.029s][info][safepoint] Safepoint "G1CollectForAllocation", \
+Time since last: 14164000 ns, Reaching safepoint: 5400 ns, At safepoint: 1239400 ns, \
+Leaving safepoint: 3200 ns, Total: 1248000 ns, Threads: 1 runnable, 12 total
 ```
 
 The decorator set matters to every downstream parser: `time,uptime,level,tags` emits **four**
@@ -82,8 +88,8 @@ event count against a manual `grep -c Safepoint`.
 | `jdk.SafepointBegin`                | Start of the cycle              | `safepointId`                                                           | Marks the start; correlate with `SafepointEnd` on the same id                                    |
 | `jdk.SafepointEnd`                  | End of the cycle                | `safepointId`                                                           | `SafepointEnd.startTime − SafepointBegin.startTime` is the cycle's Total                         |
 | `jdk.SafepointStateSynchronization` | Each wait iteration during sync | `safepointId`, `initialThreadCount`, `runningThreadCount`, `iterations` | Watch sync progress and how many threads are still outstanding                                   |
-| `jdk.ExecuteVMOperation`            | The operation itself            | `operation`, duration                                                   | Says **what** ran at that safepoint                                                              |
-| `jdk.SafepointLatency`              | One profiling sample (JEP 518)  | `threadState`, duration                                                 | Interrupt-to-poll delay of a sampled thread — residual sampling bias, **not** a safepoint's TTSP |
+| `jdk.ExecuteVMOperation`            | The operation itself            | `operation`, `safepoint`, `blocking`, `caller`, `safepointId`, duration | Says **what** ran at that safepoint, and joins to Begin/End on `safepointId`                     |
+| `jdk.SafepointLatency`              | One profiling sample (JEP 518)  | `stackTrace`, `threadState`, duration                                   | Interrupt-to-poll delay of a sampled thread — residual sampling bias, **not** a safepoint's TTSP |
 
 ```bash
 jcmd <pid> JFR.start duration=60s filename=safepoints.jfr settings=profile

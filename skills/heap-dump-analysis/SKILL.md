@@ -60,8 +60,22 @@ size, which names the leaf array instead of the static map holding it.
   `VM_HeapDumper`, which requires a safepoint and stops every Java thread. Neither is the
   "low-pause" option. The cost difference is the preceding full GC, not the tool.
 - `jcmd <pid> GC.heap_dump <file>` runs a full GC unless `-all` is passed;
-  `jmap -dump:live,...` forces one, `jmap -dump:format=b,...` does not. Confirm the
-  behaviour of the installed build with `jcmd <pid> help GC.heap_dump`.
+  `jmap -dump:live,...` forces one, `jmap -dump:format=b,...` does not. On JDK 25 the
+  command also takes `-gz=<1-9>`, `-parallel=<n>` and `-overwrite`, and a relative
+  `<file>` is opened by the target JVM in _its_ working directory. Confirm the installed
+  build with `jcmd <pid> help GC.heap_dump`.
+- The file is roughly the size of the live set — every object's fields and array payload
+  are written raw — and it is written while every Java thread is stopped. In a cgroup the
+  dirty page cache of that file is charged to the container, so a heap-sized dump written
+  to the container's own filesystem can OOMKill the pod it was meant to diagnose. Budget
+  the destination before capturing: see the cost table in the capture reference.
+- `-XX:+HeapDumpOnOutOfMemoryError` fires **once per process** — a second
+  `OutOfMemoryError` after the first was caught writes nothing (executed on 25.0.3) — and
+  only for errors the VM itself raises (`Java heap space`, `Metaspace`, `Requested array
+size exceeds VM limit`). An error constructed in Java code, such as `Cannot reserve N
+bytes of direct buffer memory`, produces no dump. The flag, `HeapDumpPath` and
+  `HeapDumpGzipLevel` are `manageable`: `jcmd <pid> VM.set_flag HeapDumpOnOutOfMemoryError
+true` arms a running JVM that started without it.
 - A dump written by `-XX:+HeapDumpOnOutOfMemoryError` is unfiltered by construction —
   the JVM has already failed to allocate. Treat its raw instance counts with suspicion
   and go to the Dominator Tree.
@@ -98,9 +112,10 @@ size, which names the leaf array instead of the static map holding it.
 ## References
 
 - [Capturing a dump and triaging it](references/capture-recipes.md) — the four capture
-  methods and their trade-offs, container extraction, the size-against-`-Xmx` triage
-  table, two-dump comparison, and options for dumps too large for a local MAT. Read
-  before capturing, and when deciding whether a dump shows a leak at all.
+  methods and their trade-offs, the production cost table (safepoint, disk, page cache,
+  compression, once-only auto-dump), container extraction, the size-against-`-Xmx`
+  triage table, two-dump comparison, and options for dumps too large for a local MAT.
+  Read before capturing, and when deciding whether a dump shows a leak at all.
 - [MAT workflow, OQL and leak patterns](references/mat-workflow-and-oql.md) — the MAT
   navigation sequence, working OQL queries with the syntax traps, and the recurring leak
   shapes (interned keys, `ThreadLocal` values, classloader reloads, `StackChunk`). Read

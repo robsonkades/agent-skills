@@ -54,11 +54,19 @@ waiting.
 | I have a GC log to read                           | `gc-log-analysis`                    |
 | `-Xlog` is set but the file is empty or missing   | `unified-logging`                    |
 | Bad only for the first minutes after deploy       | `jit-compilation`                    |
+| Slow to become ready, not slow once warm          | `startup-cds-crac-leyden`            |
 | Degraded permanently until restart                | `jit-compilation` (code cache)       |
+| Spikes coincide with class loading or a flag flip | `deoptimization`                     |
 | High allocation rate on a hot path                | `jit-inlining-and-escape-analysis`   |
 | OOMKilled, or an OOM naming a non-heap region     | `jvm-memory-regions`                 |
+| RSS grows for days while the heap stays flat      | `off-heap-memory`                    |
 | Metaspace grows across redeploys                  | `jvm-class-loading`                  |
 | Exit code 137, throttling, page faults, swap      | `linux-for-jvm`                      |
+| CPU is high but mostly **system** time            | `linux-for-jvm`, then `ebpf-for-jvm` |
+| Clients feel a pause the GC log does not show     | `safepoints`                         |
+| p99 is fine; p99.9 or max is not                  | `tail-latency-analysis`              |
+| One pod is slow, the rest are fine                | `container-awareness`                |
+| Worse since virtual threads were switched on      | `thread-sizing-and-virtual-threads`  |
 | Throughput gets **worse** as threads are added    | `cpu-cache-and-numa`                 |
 | Intermittent wrong results under concurrency      | `java-memory-model`                  |
 | Pool sizing, virtual threads, pinning             | `thread-sizing-and-virtual-threads`  |
@@ -69,7 +77,11 @@ waiting.
 | The query count scales with rows rendered         | `orm-fetch-and-batching-performance` |
 | Should we cache this, and how?                    | `caching-strategies`                 |
 | The load test's numbers look like the generator's | `load-testing`                       |
+| The load test's p99 beats production's            | `coordinated-omission`               |
+| The profile is mostly (de)serialisation           | `serialization-performance`          |
+| The tracing agent is suspected of being the cost  | `opentelemetry-performance`          |
 | Is this micro-optimisation worth anything?        | `jmh-microbenchmarks`                |
+| The regression must be caught before merge        | `performance-regression-ci`          |
 | What will N of these cost in bytes?               | `object-layout-and-footprint`        |
 | It changed after a JDK upgrade                    | `jdk-upgrade-impact`                 |
 | It is degrading now and about to be restarted     | `incident-evidence-capture`          |
@@ -87,9 +99,11 @@ waiting.
   point of hand-off, and the specialist skill carries the depth.
 - Two symptoms that look alike but route differently: bad-after-deploy that recovers is
   warm-up; bad-after-deploy that never recovers is the code cache or a genuine regression.
-- The table above routes to the **introductory** owner of each area. Every area also has an
-  advanced and often an expert skill behind it; go down that ladder only when the
-  introductory skill has been applied and the question survives.
+- The table above routes to the **introductory** owner of each area, except where the
+  symptom already names the mechanism (safepoints, off-heap growth, deoptimisation, the
+  tail, coordinated omission) and the introductory skill would only forward it. Every area
+  also has an advanced and often an expert skill behind it; go down that ladder only when
+  the shallower skill has been applied and the question survives.
 
 ## References
 

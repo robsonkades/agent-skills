@@ -6,6 +6,14 @@
 R_total = S / (1 − ρ)        W_queue = R_total − S
 ```
 
+Where it comes from, in three lines, so the "80% cliff" is a derivation and not a slogan:
+the mean number in an M/M/1 system is `L = ρ / (1 − ρ)`; Little gives `R = L / λ`; and
+`ρ = λ × S`, so `R = S / (1 − ρ)`. The slope is `dR/dρ = S / (1 − ρ)²`: at ρ = 0.5 each
+extra point of utilisation costs `0.04 S`, at 0.8 it costs `0.25 S`, at 0.9 it costs
+`1.0 S`. The cliff is the square in the denominator. With `c` servers sharing one queue
+the knee moves right — a 32-thread pool tolerates a higher ρ than a 2-thread one — and
+choosing between M/M/1, M/M/c and M/D/1 for a real system is `queueing-models`.
+
 | ρ    | R_total | Reading                                |
 | ---- | ------- | -------------------------------------- |
 | 0.50 | 2.0 × S | queue wait already equals service time |

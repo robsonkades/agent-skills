@@ -45,9 +45,17 @@ when it is really a threshold.
 
 - Keep JFR running continuously in production:
   `-XX:StartFlightRecording:name=continuous,maxsize=512m,maxage=4h,settings=default,disk=true`.
-  Cost is a fraction of a percent; `maxage` must exceed human response time, including
-  overnight. Turning it on during the incident captures a system that has already
-  recovered.
+  The stock files state their own budget — `default.jfc` "typically less than 1 %",
+  `profile.jfc` "typically around 2 %" — and `maxage` must exceed human response time,
+  including overnight. Turning it on during the incident captures a system that has
+  already recovered.
+- "JFR is not enabled" is never a blocker on JDK 11+: no startup flag is required, and
+  `jcmd <pid> JFR.start` attaches to any running JVM. Only `-XX:FlightRecorderOptions`
+  (`stackdepth`, `repository`, `memorysize`) is fixed at startup.
+- `disk=true` keeps the retained window as chunk files in a repository under the temp
+  directory, not as a `.jfr`; it becomes a file on `JFR.dump`, and the repository is
+  deleted when the JVM exits. Put `-XX:FlightRecorderOptions:repository=` on a volume;
+  the capture order is `incident-evidence-capture`.
 - `settings=default` is **not** suitable for method profiling — a 20 ms sampler barely
   sustains claims about a 10% frame in a minute. Use `settings=profile`.
 - **Zero events is not zero contention** until the threshold is checked: 20 ms in
@@ -71,7 +79,11 @@ when it is really a threshold.
   appear in the profile; inlining decisions are investigated with `PrintInlining`.
 - On the JDK 25 baseline, "JFR has safepoint bias" needs a qualifier: JEP 518 made sampling
   cooperative with bias correction, and JEP 509 added `jdk.CPUTimeSample` (experimental,
-  Linux), which samples by CPU consumed and covers native frames.
+  Linux), which samples by CPU consumed and attributes native time to the Java caller. It
+  is off in both stock files — `jdk.ExecutionSample` counts threads _running Java code_
+  whether or not the OS scheduled them, so it is a CPU profile only when runnable threads
+  are fewer than cores. Enable the CPU-time sampler with `jdk.CPUTimeSample#enabled=true`
+  and convert with `jfrconv --cpu-time`; the settings are in `jfr-advanced`.
 - When two tools disagree, the disagreement is the finding — not a reason to pick the
   convenient one.
 

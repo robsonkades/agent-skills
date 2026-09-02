@@ -97,6 +97,17 @@ Prefer a log event instead when:
   the root to ERROR too.
 - Record the exception **and** set the status. A span carrying only a message is not matched by
   any "show me failed traces" query; the API mechanics are `opentelemetry-performance`.
+  Status follows the semantic conventions, not intuition: a `SERVER` span leaves 4xx
+  `Unset` and a `CLIENT` span sets 4xx to `Error`, and `Ok` is reserved for application
+  code — instrumentation libraries "SHOULD NOT" set it.
+- **`SpanKind` is data, not decoration.** The service map is built from `CLIENT`→`SERVER`
+  and `PRODUCER`→`CONSUMER` pairs and RED metrics from `SERVER`/`CONSUMER` spans; an
+  outbound call spanned `INTERNAL` is a missing edge, and an in-process stage spanned
+  `SERVER` doubles the request rate. Set the kind from the table in
+  `references/semantic-conventions.md`.
+- Links added after span creation are invisible to head sampling. Extract the producer's
+  context first and pass the link to the span builder; `addLink()` later keeps the
+  relationship in the data and loses it in the sampling decision.
 - **A consumer is not a child of its producer.** Parent-child asserts the parent's duration
   encloses the child's; a message consumed an hour after publication makes the root span an
   hour long, distorts every duration aggregate over that operation, and arrives after the
@@ -127,6 +138,13 @@ Prefer a log event instead when:
   and the asynchronous model: links versus parent-child, batch consumption worked through, and
   long-running or fire-and-forget work. Read when instrumenting a new flow, reviewing a
   noisy trace, or modelling a consumer.
+- [Semantic conventions as design constraints](references/semantic-conventions.md) — the
+  stable/development status per domain, span-name forms by kind (HTTP, database,
+  messaging, in-process), the `SpanKind` table and what each kind lets the backend
+  compute, the status rules per kind, the messaging operation types and the batch model in
+  the conventions' own terms, link timing under head sampling, and a symptom-to-cause
+  table. Read when naming a span, choosing its kind or status, or when an aggregate view
+  in the backend is empty or wrong.
 - [Traces in an incident](references/traces-in-incidents.md) — the three-signal correlation
   shape, the attribute set that makes a trace findable, what a trace cannot answer and which
   signal to use instead, and a test that asserts context survives an async boundary. Read when

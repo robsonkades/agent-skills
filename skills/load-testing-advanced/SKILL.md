@@ -75,7 +75,9 @@ W_worst`. Under-sizing `maxVUs` reintroduces omission underneath an open-loop ex
 - Derive traffic-mix weights from access logs. A heavy endpoint at 10% of request count can
   contribute half the load on a shared resource.
 - Set soak duration from the slowest cycle in the system under test — log rotation, cache
-  expiry, periodic full GC — never a fixed convention. Five minutes finds no leak.
+  expiry, periodic full GC — never a fixed convention. Five minutes finds no leak, and a
+  leak is a positive slope on the **after-collection** floor across two cycles at constant
+  load — not a rising heap-used line.
 - Always instrument GC during the run: `-Xlog:gc*,safepoint:file=gc.log:time`, correlated to
   the generator's latency series by synchronised timestamps.
 - `jcmd <pid> Thread.count` does not exist in any JDK. Count platform threads with `jcmd
@@ -90,9 +92,10 @@ Thread.dump_to_file -format=json`.
 ## References
 
 - [Test profiles and the breakpoint procedure](references/test-profiles.md) — what each
-  profile proves, the stress/breakpoint/capacity distinctions, the incremental search
-  procedure with an analytical prediction, and the pre-publication checklist. Read when
-  choosing a profile or running a breakpoint search.
+  profile proves, the stress/breakpoint/capacity distinctions, the soak design that can
+  tell a leak from a cache filling, the stepped `ramping-arrival-rate` search with its
+  recovery stage and analytical prediction, and the pre-publication checklist. Read when
+  choosing a profile, planning a soak, or running a breakpoint search.
 - [Generator configuration and output formats](references/generator-configuration.md) — k6,
   Gatling and wrk2 open-loop syntax, generator sizing by Little's Law, the output-format
   traps, and the JVM-side commands to correlate during a run. Read before writing or

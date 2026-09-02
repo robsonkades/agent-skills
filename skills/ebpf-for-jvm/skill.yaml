@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: ebpf-for-jvm
-version: 1.1.0
+version: 2.0.0
 description: >-
   Observing a JVM from the kernel with eBPF and bpftrace: syscall and futex latency, block
   I/O, run queue latency, page faults, JVM USDT probes, and correlating kernel-side evidence
@@ -42,6 +42,9 @@ files:
 dependencies:
   - name: linux-for-jvm
     version: ^1.0.0
+
+suggests:
+  - async-profiler-advanced
 
 capabilities:
   - reads-source

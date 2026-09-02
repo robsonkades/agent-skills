@@ -15,16 +15,30 @@ if deficit_pct > 2:
 
 Where to read both numbers:
 
-| Tool          | "issued"                                                 | "planned"                                                             |
-| ------------- | -------------------------------------------------------- | --------------------------------------------------------------------- |
-| wrk2          | total count in the summary, or `Requests/sec` x duration | `-R <rate>` x `-d <duration>`                                         |
-| k6            | `http_reqs` in the final summary                         | executor `rate` x `duration`                                          |
-| Gatling       | requests generated, in the simulation log / HTML report  | the injection profile (`constantUsersPerSec(x).during(y)`)            |
-| JMeter        | sample count in the results listener                     | `Threads x Loop Count`, or the configured `Constant Throughput Timer` |
-| Custom script | a counter incremented on every _send_                    | `target_rate x duration`                                              |
+| Tool          | "issued"                                                 | "planned"                                                                                                       |
+| ------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| wrk2          | total count in the summary, or `Requests/sec` x duration | `-R <rate>` x `-d <duration>`                                                                                   |
+| k6            | `http_reqs`; the deficit itself is `dropped_iterations`  | executor `rate` x `duration` (per `timeUnit`)                                                                   |
+| Gatling       | requests generated, in the simulation log / HTML report  | the injection profile (`constantUsersPerSec(x).during(y)`)                                                      |
+| JMeter        | sample count in the results listener                     | the Open Model schedule (`rate(x/sec) random_arrivals(y)`), or `Threads x Loop Count` for a closed Thread Group |
+| Custom script | a counter incremented on every _send_                    | `target_rate x duration`                                                                                        |
 
 Print this reconciliation in every load-test report. Percentiles published without it cannot
 be audited.
+
+### The closed-loop ceiling, worked
+
+`lambda_max = N / R`: a closed loop with `N` workers can never issue faster than one request
+per worker per response time.
+
+```
+N = 50 workers, R_worst = 2 s during a GC pause   ->  lambda_max = 25 req/s
+target lambda = 200 req/s                         ->  N >= 200 x 2 = 400 workers
+```
+
+With 50 workers, the 2 s window that should have carried 400 requests carries 50 — an
+87.5% deficit, concentrated exactly in the samples that define the tail. Size `N` from the
+worst response time you intend to _measure_, not from the median.
 
 ## Signal 2 — the MAX/p99 ratio
 
@@ -53,13 +67,13 @@ between sends _is_ the previous latency, which is what this correlation measures
 
 ## Correct configuration, per generator
 
-| Tool        | Open-loop?                           | Built-in correction              | Correct configuration                                                 |
-| ----------- | ------------------------------------ | -------------------------------- | --------------------------------------------------------------------- |
-| **wrk2**    | Yes — it is the reason it exists     | Yes (HdrHistogram built in)      | `-R <rate>` sets arrivals independent of responses                    |
-| **k6**      | Yes                                  | Not needed when configured right | `executor: 'constant-arrival-rate'`                                   |
-| **Gatling** | Yes, with the caveat below           | Partial                          | `.disablePauses()` on the injection                                   |
-| **JMeter**  | No, by default                       | No                               | Closed-loop by default; `Constant Throughput Timer` only approximates |
-| **Locust**  | Approximate, with enough concurrency | No                               | `constant_pacing(interval)`                                           |
+| Tool        | Open-loop?                                   | Built-in correction              | Correct configuration                                                                                                |
+| ----------- | -------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **wrk2**    | Yes — it is the reason it exists             | Yes (HdrHistogram built in)      | `-R <rate>` sets arrivals independent of responses                                                                   |
+| **k6**      | Yes                                          | Not needed when configured right | `executor: 'constant-arrival-rate'` with `maxVUs >= rate x R_worst`; `dropped_iterations` must be 0                  |
+| **Gatling** | Yes, with the caveat below                   | Partial                          | `.disablePauses()` on an open injection (`constantUsersPerSec`); `constantConcurrentUsers` is the closed form        |
+| **JMeter**  | Only with the Open Model Thread Group (5.5+) | No                               | `rate(<n>/sec) random_arrivals(<duration>)`; a plain Thread Group with `Constant Throughput Timer` stays closed-loop |
+| **Locust**  | Approximate, with enough concurrency         | No                               | `constant_pacing(interval)`                                                                                          |
 
 JMH belongs to a different paradigm and does not appear in this table: it measures direct
 invocation cost under saturation, with no simulated arrival process to omit from.
@@ -97,12 +111,27 @@ independent users this aggregates into approximately independent arrivals.
 before sending again, which is a closed loop running flat out. That measures serial pipeline
 throughput, not latency at a target rate.
 
-### JMeter
+### JMeter — Open Model Thread Group, not a timer
 
-Closed-loop with means on the main screen. To reduce (not remove) the problem: add the
-`jp@gc - Response Times Over Time` listener, use a correct percentile plugin, and configure a
-`Constant Throughput Timer` — while knowing that none of this gives the mathematical guarantee
-of an independent timer like wrk2's.
+```text
+rate(0) random_arrivals(1 min) rate(200/sec) random_arrivals(10 min) rate(200/sec)
+```
+
+The Open Model Thread Group (JMeter 5.5, marked experimental) schedules arrivals from the
+rate expression and creates threads on demand, so a slow response does not delay the next
+arrival. A classic Thread Group is closed-loop by construction: each thread waits for its
+response before looping, and a `Constant Throughput Timer` or `Precise Throughput Timer`
+only paces the threads that exist — JMeter's own reference now points to the Open Model
+group as the better choice for a load profile. Whichever is used, the reconciliation in
+signal 1 is what shows whether the schedule was honoured.
+
+### k6 — the deficit is a metric
+
+`constant-arrival-rate` starts iterations on its own clock. When every VU up to `maxVUs`
+is busy, k6 **drops** the iteration and counts it in `dropped_iterations` instead of
+queueing it — which is coordinated omission made explicit. A run with `dropped_iterations
+
+> 0`under-sampled its tail exactly as a closed loop would; size`maxVUs`from`rate x R_worst` and treat a non-zero count as a failed run, not a footnote.
 
 ## Measurement protocol for a clean run
 

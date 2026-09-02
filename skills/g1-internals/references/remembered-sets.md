@@ -7,8 +7,8 @@ had: is an object in region R referenced from outside R, without scanning the wh
 Without an auxiliary structure, collecting N regions would cost O(whole heap) per region —
 the opposite of what an incremental design promises.
 
-Each region therefore keeps a remembered set: a record of where, in the rest of the heap,
-references pointing **into** it live.
+Each region that G1 may collect therefore keeps a remembered set: a record of where, in the
+rest of the heap, references pointing **into** it live.
 
 ```
 Object X in region A, at offset 1024, has a field pointing at object Y in region B
@@ -22,95 +22,124 @@ Collecting B, G1:
 ```
 
 The cost of collecting a region becomes proportional to the number of references pointing at
-it, not to the size of the heap. Think of it as a library's reverse index: rather than
-searching every shelf for citations of one book, each book keeps a slip of who cited it. The
-price is keeping the slip current on every new citation — which is what the write barrier
-does.
+it, not to the size of the heap. The price is keeping the record current on every new
+cross-region reference — which is what the write barrier and the refinement threads do.
 
-## The write path
+## Not every region has one
+
+G1 maintains remembered sets only for regions it may put in a collection set: every young
+region, and the old regions that marking selected as candidates. The rest of the old
+generation carries no RSet at all. After `Pause Remark`, the `Concurrent Rebuild Remembered
+Sets and Scrub Regions` phase builds RSets for the candidates only; `-Xlog:gc+ergo=debug`
+logs it as `Update Region Liveness and Select For Rebuild`. Two consequences:
+
+- Old-generation growth is free in RSet memory until a region becomes a candidate.
+- `Merge Heap Roots` can step up right after a marking cycle, because the collection set now
+  includes old regions whose RSets did not exist before the rebuild. That is the mechanism,
+  not a leak.
+
+## The write path on JDK 25
 
 ```java
 obj.field = newValue;
-// plus the instruction the JIT inserts:
-card_table[address(obj) >> 9] = DIRTY;   // >> 9 divides by 512
+// plus what the JIT inserts after the store (post-write barrier):
+//   1. same region?            (addr(obj) XOR addr(newValue)) >> log2(region) == 0 -> done
+//   2. newValue == null?                                                          -> done
+//   3. card already dirty?     card_table[addr(obj) >> 9] == DIRTY                -> done
+//   4. mark the card dirty, StoreLoad fence, enqueue the card on the thread's
+//      dirty-card queue (G1UpdateBufferSize entries per buffer)
 ```
 
-The barrier does not touch the RSet. It marks the 512-byte card dirty and enqueues it on a
-per-thread dirty card queue. Concurrent refinement threads
-(`-XX:G1ConcRefinementThreads`) drain those queues in parallel with the application and turn
-dirty cards into RSet entries in the target regions — which is why young GC does not pay for
-that conversion synchronously.
+`>> 9` is the default 512-byte card (`GCCardSizeInBytes`, product flag; 128 and 1024 are
+accepted on JDK 25 and show up as `CardTable entry size: N` under `-Xlog:gc+init`).
 
-The literature puts the per-reference-store cost at a few machine instructions. The aggregate
-overhead depends entirely on how much of your hot path writes references: a single-digit
-fraction in most services, considerably more in workloads dominated by mutable graphs
-(caches, in-memory index structures). Confirm it with a JMH `-prof gc` run on your own
-workload rather than quoting a percentage.
+The barrier does not touch the RSet. Refinement threads drain the queues concurrently and
+turn dirty cards into RSet entries in the target regions; whatever is still queued when a
+pause starts is processed inside the pause, under `Merge Heap Roots` as `Log Buffers` /
+`Dirty Cards` in `-Xlog:gc+phases=debug`. A rising `Dirty Cards` count per pause means
+refinement is falling behind the mutator's write rate.
 
-## The hot card cache
+The aggregate barrier overhead depends entirely on how much of the hot path writes
+references: filters 1–3 make most stores cheap, and step 4 — the fence plus the enqueue — is
+what a reference-heavy workload pays. Confirm the number with a JMH `-prof gc` run on your
+own code rather than quoting a percentage.
 
-Some cards are rewritten repeatedly in short windows — a counter field, a ring-buffer head.
-Refining such a card now, only for it to be dirtied again a millisecond later, spends
-concurrent work for no net benefit. Cards identified as hot have their refinement **deferred**
-to the next young GC, so they are scanned once, in the stop-the-world pause, in whatever
-state they are then in.
+**JEP 522 (JDK 26)** removes step 4's fence and queue. The mutator only marks the card; a
+second card table is swapped in by the refinement threads, which sweep the swapped-out table
+(`G1BarrierSet::swap_global_card_table`, and the `SwapGlobalCT` / `SwapJavaThreadsCT` /
+`Sweep Refinement table` states in `g1ConcurrentRefine.hpp` on the `jdk-26-ga` tag). The JEP
+reports 5–15% throughput on reference-heavy workloads for about 2 MB of extra memory per GB
+of heap, with no new flag. A barrier-cost measurement taken on JDK 25 does not carry to 26.
 
-There is no stable public flag for inspecting this directly. The practical observation is to
-compare `Merge Heap Roots` / `Merge RS` cost against the workload's reference write rate: if
-merge cost is disproportionately low for a high write rate, hot cards are being filtered
-effectively.
+## Refinement control (JDK 20+)
 
-The default refinement thread count is derived from `ParallelGCThreads`. Confirm the value in
-your own runtime before tuning it:
+The refinement thread pool is sized from `ParallelGCThreads` (`G1ConcRefinementThreads`,
+ergonomic — equal to `ParallelGCThreads` on the runtime measured here). How many are
+_active_ is decided against a pause-time budget: refinement aims to leave at most as many
+pending dirty cards as the next pause can merge within `G1RSetUpdatingPauseTimePercent`
+(default 10) of `MaxGCPauseMillis`. A control thread recomputes the wanted count
+periodically; `-Xlog:gc+ergo+refine=debug` prints the target and the actual
+(`GC refinement: goal: N + N / Nms, actual: N / Nms`).
+
+The green/yellow/red zone model and its flags (`G1ConcRefinementGreenZone`,
+`G1ConcRefinementYellowZone`, `G1ConcRefinementRedZone`, `G1ConcRefinementThresholdStep`,
+`G1ConcRefinementServiceIntervalMillis`, `G1UseAdaptiveConcRefinement`) are gone: each is
+`Unrecognized VM option` on JDK 25 and stops the JVM. So is the hot card cache
+(`G1ConcRSHotCardLimit`, `G1ConcRSLogCacheSize`). A tuning post that mentions any of them
+predates JDK 20 and will not start a modern JVM.
+
+## The G1CardSet containers (JDK 18+)
+
+The remembered set is a `G1CardSet`: per target region, a hash table keyed by source region
+whose entries hold one of five container types, chosen by density and coarsened in a fixed
+order (`g1CardSet.hpp`, `jdk-25-ga`):
+
+| Container      | Holds                                                                                    | Coarsens to    | Flag                                                           |
+| -------------- | ---------------------------------------------------------------------------------------- | -------------- | -------------------------------------------------------------- |
+| `Inline`       | A handful of card indexes packed into the pointer itself — no allocation                 | `ArrayOfCards` | —                                                              |
+| `ArrayOfCards` | A contiguous array of card indexes                                                       | `Howl`         | `G1RemSetArrayOfCardsEntries` (ergonomic; 32 here)             |
+| `Howl`         | An array of `G1RemSetHowlNumBuckets` buckets, each Inline → ArrayOfCards → BitMap → Full | `Full`         | `G1RemSetHowlNumBuckets`, `G1RemSetHowlMaxNumBuckets` (8 here) |
+| `BitMap`       | One bit per card, inside a Howl bucket                                                   | bucket `Full`  | `G1RemSetCoarsenHowlBitmapToHowlFullPercent` (90)              |
+| `Full`         | "Every card of this source region" — no card granularity                                 | —              | `G1RemSetCoarsenHowlToFullPercent` (90)                        |
+
+All of those flags are experimental. What matters operationally is the last row: a `Full`
+entry forces the merge phase to scan the **entire** source region rather than its dirty
+cards, which is where high `Merge Heap Roots` with no explanation in allocation or promotion
+rate comes from. The old sparse / fine-grained / coarse vocabulary describes the pre-JDK-18
+structure; its flag names do not exist on JDK 25.
+
+Two logs show the transitions directly:
+
+```
+# -Xlog:gc+remset=debug — per pause, recent and cumulative coarsenings
+Coarsening (all): Inline->AoC 1064 (0) AoC->Howl 576 (0) Howl->Full 0 (0) Inline->AoC 621 (0) AoC->BitMap 549 (0) BitMap->Full 0 (0)
+
+# -Xlog:gc+phases=debug — what Merge Heap Roots actually merged
+Merged Inline: ...  Merged ArrayOfCards: ...  Merged Howl: ...  Merged Full: ...
+Merged Howl Inline: ...  Merged Howl ArrayOfCards: ...  Merged Howl BitMap: ...  Merged Howl Full: ...
+Merged Cards: ...   Dirty Cards: ...   Skipped Cards: ...
+```
+
+A non-zero `Howl->Full` or `BitMap->Full` counter that keeps rising, together with `Merged
+Full` above zero, is the evidence for "RSet coarsening is the cost". Densely connected object
+graphs — caches with many cross references, shared index structures — are the workload shape
+that produces it; raising `G1HeapRegionSize` lowers the region count and the fan-in per
+region, and reducing cross-region references in the design attacks the cause.
+
+## Measuring RSet memory
 
 ```bash
-java -XX:+PrintFlagsFinal -version | grep -i ConcRefinementThreads
+-Xlog:gc+remset=debug    # Visited cards / Total dirty / Coarsening per pause
+-Xlog:gc+remset=trace -XX:+UnlockDiagnosticVMOptions -XX:G1SummarizeRSetStatsPeriod=<n>
 ```
 
-## The three representations
+The periodic summary (`Current rem set statistics`) reports `Total per region rem sets
+sizes`, the split by region type, the `Free Pool` and per-container segment counts (`Node`,
+`Array`, `Howl`, `Bitmap`), and the collection-set candidate group with the largest card
+set. Because only candidates carry an RSet, the figure moves with each marking cycle; compare
+snapshots taken at the same point of the cycle.
 
-Each region keeps, per source region pointing at it, one of three representations, chosen
-dynamically by reference density:
-
-| Representation   | Used when                                                 | Structure                                       | Trade-off                                                                                      |
-| ---------------- | --------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| **Sparse**       | Few cross references from one specific source region      | Compact table of (region, cards) pairs          | Minimal memory; degrades once entries per source exceed a fixed capacity                       |
-| **Fine-grained** | One source region exceeds the sparse capacity             | Bitmap, one bit per card of that source         | O(1) scan per card; memory proportional to the whole source region's card count                |
-| **Coarse**       | The number of distinct source regions exceeds a threshold | One bit per source region — no card granularity | Bounded memory under high fan-in, but scanning requires sweeping each **entire** source region |
-
-```
-Sparse: {(regionA, cards:[12,340])}                  ← few entries, precise
-Fine:   regionA → bitmap of 8192 bits (4 MB region)  ← one source, dense
-Coarse: bit(regionA)=1, bit(regionB)=1, ...          ← many sources, precision lost
-```
-
-Promotion to the coarse representation is silent and has a concrete effect on pause time:
-collecting a region whose RSet is coarse for several sources forces G1 to scan each of those
-source regions in full. That is exactly the cause that shows up as high `Merge RS` with no
-explanation in allocation or promotion rate. Densely connected object graphs — caches with
-many cross references, shared index structures — are the workload shape that pushes RSets
-coarse.
-
-The exact transition thresholds are internal and their flag names are not guaranteed stable
-across releases. Check `-XX:+PrintFlagsFinal` on your build before putting any of them in a
-runbook. What is stable is the principle: under high fan-in the cost moves from memory to
-scan time.
-
-## Sizing the overhead, with the arithmetic shown
-
-An 8 GB heap with 4 MB regions has 2048 regions. Assuming — for this calculation only — 200
-RSet entries per region at roughly 8 bytes each, typical of a compact fine-grained
-representation:
-
-```
-2048 regions × 200 entries × 8 bytes ≈ 3,276,800 bytes ≈ 3.2 MB
-```
-
-Small against 8 GB — but the assumption is **low fan-in**. In dense graphs the entry count
-per region grows and the representation is promoted, at which point neither the memory figure
-nor the scan cost follows this arithmetic any more. Never present the result without the
-assumption that produced it.
-
-```bash
--Xlog:gc+remset=debug   # "Remembered Set sizes:" reports size by region type
-```
+The arithmetic is only as good as its assumption: an 8 GB heap with 2048 regions and a few
+hundred `ArrayOfCards` entries per candidate is single-digit megabytes; one `Full` entry per
+source region across a dense graph is a different regime in both memory and scan time. Never
+present a total without the container mix that produced it.

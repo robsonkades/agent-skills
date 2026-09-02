@@ -8,15 +8,21 @@ below assumes that.
 Available since JDK 9; one binary for what used to be separate tools.
 
 ```bash
+# modes and options as printed by `jhsdb --help` / `jhsdb <mode> --help` on JDK 25.0.3
 jhsdb clhsdb  [--pid <pid> | --exe <exe> --core <core>]   # interactive command-line debugger
 jhsdb hsdb    [--pid <pid> | --exe <exe> --core <core>]   # GUI equivalent of clhsdb
 jhsdb jstack  [--pid <pid> | --exe <exe> --core <core>] [--mixed] [--locks]
-jhsdb jmap    [--pid <pid> | --exe <exe> --core <core>] [--heap | --histo |
-                                                        --binaryheap --dumpfile <f>]
+jhsdb jmap    [--pid <pid> | --exe <exe> --core <core>] [--heap | --histo | --clstats |
+                --finalizerinfo | --binaryheap --dumpfile <f> [--gz <1-9>]]
 jhsdb jinfo   [--pid <pid> | --exe <exe> --core <core>]
-jhsdb debugd  [--pid <pid> | --exe <exe> --core <core>]   # remote debug server over RMI;
-                                                          # check `jhsdb --help` on your build
+jhsdb jsnap   [--pid <pid> | --exe <exe> --core <core>]   # performance counters (what jstat reads)
+jhsdb debugd  ...                                         # remote debug server — deprecated on 25,
+                                                          # as is --connect; do not build a runbook on it
 ```
+
+`--binaryheap` against a core is the way to get an HPROF out of a process that no longer
+exists; `--gz` compresses it inline. The result opens in MAT like any other dump
+(heap-dump-analysis).
 
 `hsdb` gives the same navigation as `clhsdb` in a window — worth it when the exploration is
 visual rather than scriptable.
@@ -91,6 +97,15 @@ ulimit -c unlimited
 echo "/tmp/core.%p" | sudo tee /proc/sys/kernel/core_pattern
 # plus -XX:+CreateCoredumpOnCrash on the JVM
 ```
+
+In Kubernetes, `kernel.core_pattern` is a host-wide setting, not a per-container one: it
+cannot be written from inside a pod, and a pipe pattern (`|/usr/lib/systemd/systemd-coredump …`)
+runs its handler in the node's own namespace (`core(5)`), so the core lands in the node's
+store — `coredumpctl` on the node — and not in any path the pod can see. Check before an
+incident, from inside the container: `cat /proc/sys/kernel/core_pattern` for where cores go,
+and `grep core /proc/self/limits` for whether the container's soft limit is `0`. A plain path
+pattern is resolved in the crashing process's own mount namespace, so `/tmp/core.%p` inside
+the container works only if that `/tmp` is a volume with room for the whole heap.
 
 ## Inspecting a core
 

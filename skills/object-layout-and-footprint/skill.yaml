@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: object-layout-and-footprint
-version: 1.2.0
+version: 1.3.0
 description: >-
   Sizing a data structure in bytes before it exists. Use when a shape is chosen for millions
   of instances — record, class, primitive array, parallel arrays or boxed collection; when
@@ -43,9 +43,12 @@ files:
 
 suggests:
   - false-sharing-and-contended
+  - g1-internals
   - gof-flyweight
   - heap-dump-analysis
   - java-performance
   - jvm-memory-regions
   - jvm-performance-review
+  - lock-inflation
+  - metaspace-internals
   - off-heap-memory

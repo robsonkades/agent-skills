@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: metaspace-internals
-version: 1.1.0
+version: 1.2.0
 description: >-
   Metaspace internals on JDK 16+: chunk and arena allocation per ClassLoaderData, the
   compressed class space and its separate 1 GB ceiling, chunk waste and fragmentation, when

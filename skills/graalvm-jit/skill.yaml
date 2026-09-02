@@ -1,17 +1,19 @@
 schemaVersion: 1
 
 name: graalvm-jit
-version: 1.1.0
+version: 2.0.0
 description: >-
-  Graal as a JIT compiler compared with C2: partial escape analysis, more aggressive
-  inlining and speculation, where Graal wins and where it loses, JVMCI and what JEP 410
-  actually removed, and how to evaluate the swap with a fair measurement. Use when someone
+  Graal as a JIT compiler compared with C2: partial escape analysis, graph-size inlining and
+  speculation, where Graal wins and where it loses, JVMCI and what JEP 410 removed, libgraal
+  versus jargraal, and how to evaluate the swap with a fair measurement. Use when someone
   proposes switching to GraalVM for throughput, when a Graal-versus-C2 benchmark shows Graal
-  "slower" with no warm-up control, when `-XX:+UseJVMCICompiler` is set via `--module-path`
-  on a stock OpenJDK, when a percentage gain is quoted with no source or workload, when
-  GraalVM JIT is being confused with native image, or when picking a distribution and its
-  licence. Does not cover how C2 itself works (c2-sea-of-nodes), ahead-of-time compilation
-  as a separate product decision (graalvm-native-image), or running the comparison benchmark
+  "slower" with no warm-up control, when `-XX:+UseJVMCICompiler` or `-XX:+UseGraalJIT` is set
+  on a stock OpenJDK, when a `-Dgraal.*` flag is copied from old material, when an Oracle JDK
+  24 deployment relied on its bundled Graal JIT, when a Truffle language warns about a
+  fallback runtime, when a percentage gain is quoted with no source or workload, when GraalVM
+  JIT is being confused with native image, or when picking a distribution and its licence.
+  Does not cover how C2 itself works (c2-sea-of-nodes), ahead-of-time compilation as a
+  separate product decision (graalvm-native-image), or running the comparison benchmark
   correctly (jmh-advanced).
 
 license: Apache-2.0
@@ -43,6 +45,14 @@ files:
 dependencies:
   - name: c2-sea-of-nodes
     version: ^1.0.0
+
+suggests:
+  - code-cache-segments
+  - graalvm-native-image
+  - jit-compilation
+  - jmh-advanced
+  - simd-and-vector-api
+  - startup-cds-crac-leyden
 
 capabilities:
   - reads-source

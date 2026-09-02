@@ -32,8 +32,12 @@ wrong binary offsets and fails in ways that do not name their own cause.
 1. **Triage the artefacts before touching a tool.** hs_err present? Core present?
    `OutOfMemoryError` in the application log? Nothing at all? Each combination points
    somewhere different, and the empty case is itself evidence.
-2. **Read hs_err first.** Problematic frame letter, thread state, heap summary, VM
-   arguments, rlimits. It is the cheapest artefact and it usually names the direction.
+2. **Read hs_err first, in this order.** Header (signal or `fatal error:` text and the
+   problematic frame letter), `Current thread` state, `Native frames` / `Java frames`,
+   `Heap:` and `Metaspace:`, then the `Events` sections (`Internal exceptions`,
+   `Deoptimization events`, `GC Heap History`), `VM Arguments`, and the `S Y S T E M`
+   block with rlimits and — on Linux — the cgroup limits. It is the cheapest artefact
+   and it usually names the direction.
 3. **If nothing exists, check the kernel.** `dmesg` and `journalctl -k` for an OOM kill
    before assuming an application bug.
 4. **Capture a core with a real method** — `gcore`, GDB `generate-core-file`, or
@@ -42,8 +46,9 @@ wrong binary offsets and fails in ways that do not name their own cause.
    produced the process or the core, then GDB for native registers and memory.
 6. **Name the gaps in the evidence.** Unmounted virtual threads appear in neither
    `jstack` nor `jhsdb jstack`; say so rather than concluding from their absence.
-7. **Size from measurement, not a rule of thumb.** Recompute expected JVM memory from the
-   NMT decomposition before any conclusion about container limits.
+7. **Size from measurement, not a rule of thumb.** Before concluding "the container was
+   too small", recompute expected JVM memory from an NMT reading under load —
+   jvm-memory-regions owns that budget.
 
 ## Rules
 
@@ -68,7 +73,14 @@ wrong binary offsets and fails in ways that do not name their own cause.
 - Size the core-dump destination for the whole heap plus native memory, not for a log file.
 - Set `-XX:ErrorFile=` to a writable, persistent path — not a container's ephemeral working
   directory — and exclude `hs_err_pid*.log` from log rotation. It is the most valuable
-  artefact of a crash and the most commonly deleted.
+  artefact of a crash and the most commonly deleted. Where no persistent path exists,
+  `-XX:+ErrorFileToStderr` (or `ErrorFileToStdout`) writes the whole report to the
+  stream the log pipeline already captures, so a pod that is replaced seconds after the
+  crash still leaves its hs_err in the log store.
+- A `-XX:+CrashOnOutOfMemoryError` crash is an hs_err whose header reads
+  `fatal error: OutOfMemory encountered: <region>` with an `Internal Error (debug.cpp…)`
+  line, not a signal — do not hunt for a native bug in it. Which of `Exit…`/`Crash…` to
+  run is decided in jvm-memory-regions.
 - Read the problematic-frame letter: `J` is JIT-compiled (the tier is on the same line),
   `j` interpreted, `V` a JVM internal, `v` a JVM-generated stub, `C` native code. A crash
   in `V` with a pattern that varies randomly between crashes is a reason to check hardware
@@ -87,19 +99,20 @@ wrong binary offsets and fails in ways that do not name their own cause.
 - `-XX:+AlwaysPreTouch` is not an anti-swap flag. It trades slower startup — every heap page
   touched at once — for the absence of page-fault jitter at runtime. It does nothing about
   swapping.
-- Total JVM memory is `-Xmx` plus Metaspace, Direct Memory, Code Cache and JVM overhead.
-  Measure each with `-XX:NativeMemoryTracking=summary` under representative load and after
-  the process has run long enough for Metaspace and Code Cache to settle — not once, at
-  idle, and not with a generic "+500 MB to 1 GB".
+- Total JVM memory is `-Xmx` plus every non-heap region. Measure it with NMT under
+  representative load — not once, at idle, and not with a generic "+500 MB to 1 GB". The
+  per-region budget and the NMT reading are jvm-memory-regions; with NMT on, the hs_err
+  itself carries a `Native Memory Tracking:` section with the last known decomposition.
 - Record the time, approximate load and process uptime alongside the artefacts. A dump
   without that context supports far fewer conclusions.
 
 ## References
 
-- [Crash triage](references/crash-triage.md) — the artefact decision tree, hs_err anatomy
-  with frame letters and thread states, the Java `OutOfMemoryError` versus Linux OOM Killer
-  comparison, the JVM memory decomposition table, and the pre-crash / capture / analysis
-  checklist. Read when a process has died and you are deciding what happened.
+- [Crash triage](references/crash-triage.md) — the artefact decision tree, the hs_err
+  section map as JDK 25 writes it with the reading order, frame letters and thread states,
+  the Java `OutOfMemoryError` versus Linux OOM Killer comparison, and the pre-crash /
+  capture / analysis checklist. Read when a process has died and you are deciding what
+  happened.
 - [jhsdb and core dump commands](references/jhsdb-commands.md) — every `jhsdb` mode and its
   arguments, CLHSDB interactive commands, core generation with `gcore`, GDB and
   `kill -ABRT`, GDB inspection of a core, and a production JVM configured for crash

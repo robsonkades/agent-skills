@@ -1,20 +1,20 @@
 schemaVersion: 1
 
 name: jvm-bytecode
-version: 1.1.0
+version: 2.0.0
 description: >-
-  Reading and reasoning about JVM bytecode. javap -c -p -v, the operand stack and local
-  variable slots, the constant pool and lazy symbol resolution, descriptors versus the
-  Signature attribute, the invoke* family including invokedynamic and inline caching, class
-  file verification and the StackMapTable, and what bytecode does and does not tell you
-  about performance. Use when a VerifyError appears after instrumentation by an agent, proxy
-  or mock library, when UnsupportedClassVersionError names two class file versions, when
-  auditing what a lambda, record, sealed hierarchy or pattern switch actually compiled to,
-  when checking for hidden boxing in a hot method, or when someone quotes a
-  cycles-per-bytecode-instruction table. Does not cover the tiered compilation pipeline or
-  warm-up (jit-compilation), what the JIT actually did with the code
-  (compilation-and-inlining-logs), or loading, linking and initialisation
-  (jvm-class-loading).
+  Reading and reasoning about JVM bytecode: javap -c -p -v, operand stack and local slots, the
+  constant pool and lazy resolution, descriptors versus Signature, the invoke* family with
+  invokedynamic and inline caching, verification and the StackMapTable, the class-file limits,
+  what javac desugars, and what bytecode does and does not say about performance. Use when a
+  VerifyError appears after instrumentation by an agent, proxy or mock library, when
+  UnsupportedClassVersionError names two class file versions, when javac reports "code too
+  large", when a coverage or mocking agent fails with "Unsupported class file major version"
+  after a JDK upgrade, when auditing what a lambda, record, sealed switch or synchronized block
+  compiled to, when checking for hidden boxing in a hot method, or when a cycles-per-bytecode
+  table is quoted. Does not cover tiered compilation or warm-up (jit-compilation),
+  what the JIT did with the code (compilation-and-inlining-logs), or loading, linking and
+  initialisation (jvm-class-loading).
 
 license: Apache-2.0
 
@@ -42,11 +42,15 @@ files:
   - skill.yaml
   - references/
 
-dependencies: []
+dependencies:
+  - name: jvm-class-loading
+    version: ^1.0.0
 
 suggests:
   - compilation-and-inlining-logs
+  - java-reflection-and-method-handles
   - jit-compilation
+  - jvm-class-loading
 
 capabilities:
   - reads-source

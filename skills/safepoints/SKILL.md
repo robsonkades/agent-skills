@@ -41,8 +41,12 @@ Confirm the default in the target runtime before proposing a flag.
    `At safepoint` is the operation. High operation time is not a safepoint problem — it
    is the operation, and belongs to the collector or the deoptimisation investigation.
 4. **Name the slow thread** when sync time dominates:
-   `-XX:+SafepointTimeout -XX:SafepointTimeoutDelay=<low ms>` prints the stack of the
-   thread that took too long to arrive.
+   `-XX:+SafepointTimeout -XX:SafepointTimeoutDelay=<ms>` (default 10000) logs
+   `Threads which did not reach the safepoint:` with each late thread's name and state,
+   at `-Xlog:safepoint` warning level — **no stack** (executed, 25.0.3). Get the stack
+   from an async-profiler wall-clock profile over the same window, or, in a test
+   environment only, `-XX:+UnlockDiagnosticVMOptions -XX:+AbortVMOnSafepointTimeout`,
+   whose `hs_err` carries every thread's stack.
 5. **Classify the cause from that stack** — native code that has not returned, a loop C2
    did not recognise as counted, or a counted loop with an expensive body per strip.
    Each has a different fix and a different trade-off.
@@ -52,33 +56,43 @@ Confirm the default in the target runtime before proposing a flag.
 
 ## Rules
 
-- A poll is a read from the polling page. When a safepoint is requested the JVM protects
-  that page, the read faults, and the signal handler diverts the thread. Cost when no
-  safepoint is pending is one L1-resident read; the cost only appears when a safepoint is
-  actually active.
+- A poll is a load of the thread's own polling word (`JavaThread::_poll_data`) followed
+  by a bit test — or, at method return, a compare against the stack pointer — and a
+  conditional branch to a stub. Arming a safepoint or handshake sets that word; nothing
+  is page-protected and no signal is involved on x86-64 or AArch64 since JDK 16
+  (JDK-8253180, JEP 376; `MacroAssembler::safepoint_poll` in `macroAssembler_x86.cpp`
+  `[source-only]`). The "protected polling page plus SIGSEGV" description is the JDK ≤ 15
+  mechanism. Cost when nothing is pending is one L1-resident load and a predicted branch.
 - C2 emits polls at loop back-edges and at method returns. A thread that is blocked
   (sleep, wait, park, I/O) is already in a safe state and costs approximately zero.
-- **Counted loops do have polls.** Loop strip mining splits a counted loop into an outer
-  loop advancing in strips of `-XX:LoopStripMiningIter` (default 1000) and an inner loop
-  that runs a whole strip without a poll; the poll sits on the outer back-edge. TTSP is
-  bounded by one strip, not by the whole loop.
-- `-XX:+UseCountedLoopSafepoints` has been default `true` since JDK 10. Prescribing it
-  changes nothing and is accepted silently — the worst kind of non-fix.
-  `-XX:LoopStripMiningIterShortLoop` (default 10) is the threshold below which C2 skips
-  the transformation entirely.
+- **Counted loops have polls only where strip mining is on.** Loop strip mining splits a
+  counted loop into an outer loop advancing in strips of `-XX:LoopStripMiningIter` and an
+  inner loop that runs a whole strip without a poll; the poll sits on the outer back-edge.
+  TTSP is bounded by one strip, not by the whole loop.
+- `-XX:+UseCountedLoopSafepoints` is **collector-dependent, not a JDK-wide default**
+  (executed, 25.0.3, `-XX:+PrintFlagsFinal` per collector): G1, ZGC and Shenandoah set it
+  `true` with `LoopStripMiningIter=1000`; **Parallel and Serial leave it `false` with
+  `LoopStripMiningIter=0`**. Under Parallel or Serial a counted loop has **no poll at all**
+  and TTSP is bounded by the whole loop — there, prescribing the flag is a real fix. Under
+  the other three it is accepted silently and changes nothing.
+  `-XX:LoopStripMiningIterShortLoop` (default 100, i.e. `LoopStripMiningIter/10`) is the
+  trip count below which C2 skips the transformation.
 - `-XX:+UseThreadLocalHandshakes` was removed in JDK 15. Passing it produces
-  `Unrecognized VM option` and the JVM does not start.
+  `Unrecognized VM option` and the JVM does not start (executed, 25.0.3).
 - `RevokeBias` does not exist on a JDK 18+ runtime. Biased locking was disabled by
   default in JDK 15 (JEP 374) and the code removed in JDK 18 (JDK-8256425) — two
   different dates, routinely conflated. `RevokeBias` in a log means the log came from an
   older JVM.
-- `-XX:GuaranteedSafepointInterval` changed from a 1000 ms default to `0` in JDK 23.
-  A service migrated from an older JDK will show a different periodic safepoint pattern;
-  that alone is not a regression.
-- Global safepoint versus handshake: GC, mass deoptimisation, heap dump, thread dump
-  (`jstack`, `jcmd Thread.print`) and JVMTI class redefinition stop every thread.
-  Single-frame deoptimisation and single-thread stack sampling use a handshake and leave
-  the other threads running.
+- `-XX:GuaranteedSafepointInterval` changed from a 1000 ms default to `0` in JDK 23 and
+  is a **diagnostic** flag on 25 — setting it without `-XX:+UnlockDiagnosticVMOptions`
+  refuses to start (executed). A service migrated from an older JDK will show a
+  different periodic safepoint pattern; that alone is not a regression.
+- Global safepoint versus handshake: GC pauses, heap dump, thread dump
+  (`jstack`, `jcmd Thread.print`, `ThreadMXBean.dumpAllThreads`) and JVMTI class
+  redefinition stop every thread. Single-thread stack sampling (`Thread.getStackTrace()`,
+  the JFR sampler), per-thread deoptimisation, concurrent-collector thread-root scanning
+  and `Arena.ofShared().close()` use a handshake and leave the other threads running.
+  `-Xlog:handshake=info` names each one; the table is in `references/instrumentation.md`.
 - A thread in JNI or FFM cannot be polled and is only counted when it **returns** to
   Java. A single long native batch sets the worst-case TTSP for the whole process,
   regardless of any Java-side safepoint flag. Mini-batching trades transition overhead
@@ -97,10 +111,12 @@ Confirm the default in the target runtime before proposing a flag.
 
 ## References
 
-- [Instrumentation and log fields](references/instrumentation.md) — the exact
-  `-Xlog:safepoint` line format and what each field means, `SafepointTimeout` usage, and
-  the JFR safepoint events with their real field names. Read before enabling logging or
-  writing an analysis over a JFR recording.
+- [Instrumentation and log fields](references/instrumentation.md) — the exact JDK 25
+  `-Xlog:safepoint` line format and what each field means, what `SafepointTimeout` does
+  and does not print, the JFR safepoint events with their real field names, and the
+  handshake-versus-safepoint table with `-Xlog:handshake`. Read before enabling logging,
+  writing an analysis over a JFR recording, or deciding whether an operation stops the
+  world.
 - [TTSP triage](references/ttsp-triage.md) — the triage tree from "latency exceeds the
   GC log" to a named cause, the TTSP-by-thread-state table, and the cause-to-strategy
   table with each trade-off. Read once sync time is confirmed to dominate and the cause

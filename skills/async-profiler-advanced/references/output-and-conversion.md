@@ -51,6 +51,31 @@ jfrconv --wall prof.jfr wall.html
 JFR is the only format that supports multiple event types in a single recording; HTML and
 collapsed need one session per event, or a filtered conversion as above.
 
+```bash
+# Profiler samples plus the JDK's own JFR events (GC, safepoints, socket I/O, monitors)
+# in ONE file on one timeline. --jfrsync implies -o jfr; the argument is a .jfc name
+# or path exactly as JFR.start settings= takes it.
+asprof -e cpu --jfrsync default -d 60 -f synced.jfr <pid>
+jfr summary synced.jfr | grep -E 'ExecutionSample|GCPhasePause|SafepointBegin'
+```
+
+`--jfrsync` is the right shape for "the flame graph is flat but p99 is bad": the pause
+and I/O events that explain a gap are in the same recording as the stacks that do not.
+
+## Native stack walking
+
+```bash
+asprof -e cpu --cstack vmx -d 30 -f vmx.html <pid>   # native frames BEFORE Java frames too
+asprof -e cpu --cstack dwarf -d 30 -f dwarf.html <pid> # native code built without frame pointers
+asprof -e cpu --cstack no -d 30 -f java.html <pid>     # Java frames only, cheapest
+```
+
+`vm` (default since 4.2 where `gHotSpotVMStructs` is exported) walks through JIT frames
+using the JVM's own frame layout, so it does not need `-XX:+PreserveFramePointer`. `vmx`
+additionally recovers the native frames that `AsyncGetCallTrace` cannot see above the
+first Java frame — the `[unknown_Java]`/truncated-prefix case. `fp` needs frame pointers
+in every native library on the path; `dwarf` reads `.eh_frame` and costs more per sample.
+
 ## Lock, native lock, native memory, method tracing
 
 ```bash

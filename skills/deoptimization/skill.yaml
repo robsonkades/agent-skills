@@ -1,18 +1,20 @@
 schemaVersion: 1
 
 name: deoptimization
-version: 1.0.0
+version: 2.0.0
 description: >-
   Deoptimisation and recompilation on HotSpot: uncommon traps and their reason codes, the
-  reinterpret / make_not_entrant / make_not_compilable actions, jdk.Deoptimization in JFR,
-  -XX:+TraceDeoptimization, the per-method recompilation cutoffs, and diagnosing a method
-  that never stabilises. Use when a method repeatedly shows "made not entrant" in the
-  compilation log, when latency spikes correlate with class loading or a deploy, when a
-  feature flag or APM agent is suspected of invalidating compiled code, when someone proposes
-  raising PerMethodRecompilationCutoff, or when -Xlog:jit+deoptimization produced an empty
-  file. Does not cover the tiered pipeline and warm-up (jit-compilation), reading the
-  compilation log itself (compilation-and-inlining-logs), or C2's internal representation
-  (c2-sea-of-nodes).
+  none / maybe_recompile / reinterpret / make_not_entrant / make_not_compilable actions,
+  jdk.Deoptimization in JFR, -XX:+TraceDeoptimization, the per-method trap limits and
+  recompilation cutoffs, and diagnosing a method that never stabilises. Use when a method
+  repeatedly shows "made not entrant" in the compilation log, when latency spikes correlate
+  with class loading or a deploy, when a burst of "marked for deoptimization" follows a deploy
+  or a plugin load, when a feature flag or APM agent is suspected of invalidating compiled
+  code, when "made not compilable" or a flood of action "none" appears for a hot method, when
+  someone proposes raising PerMethodRecompilationCutoff, or when -Xlog:jit+deoptimization
+  produced an empty file. Does not cover the tiered pipeline and warm-up (jit-compilation),
+  reading the compilation log itself (compilation-and-inlining-logs), or C2's internal
+  representation (c2-sea-of-nodes).
 
 license: Apache-2.0
 
@@ -43,6 +45,11 @@ files:
 dependencies:
   - name: jit-compilation
     version: ^1.0.0
+
+suggests:
+  - jit-inlining-and-escape-analysis
+  - jvm-class-loading
+  - safepoints
 
 capabilities:
   - reads-source

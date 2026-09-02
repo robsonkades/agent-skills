@@ -1,18 +1,18 @@
 ---
 name: metrics-and-cardinality
 description: >
-  What to count and what not to label: RED for request-driven services and USE for
-  resources, counter versus gauge versus histogram and the failure each mis-selection
-  produces, label cardinality as a computed budget, path templating, and business outcomes
-  as the metrics that detect an incident a health check misses. Use when a label carries a
-  user id, a request id, a raw URL path or an exception message, when the metrics backend's
-  series count grows without a matching traffic increase, when a scrape fails after a deploy
-  that added a tag, when a dashboard averages per-instance quantiles, when a gauge reports
-  NaN or misses everything between scrapes, when a counter is read as a value rather than a
-  rate, or when saturation has no metric at all. Does not cover percentiles and histogram
-  aggregation (latency-statistics), decomposing the tail (tail-latency-analysis), exporter
-  cost (opentelemetry-performance), turning metrics into pages (slo-and-alerting), or the
-  individual event (structured-logging).
+  What to count and what not to label: RED for services and USE for resources, counter
+  versus gauge versus histogram and each mis-selection's failure, label cardinality as a
+  computed budget, path templating, and business outcomes that detect what a health check
+  misses. Use when a label carries a user id, a request id, a raw URL path or an exception
+  message, when series count grows without matching traffic, when a scrape fails after a
+  deploy that added a tag, when a dashboard averages per-instance quantiles, when a gauge
+  reports NaN or misses everything between scrapes, when histogram_quantile returns NaN
+  because a Timer exports no buckets, when a label must be capped with a MeterFilter because
+  its source cannot be fixed, when a counter is read as a value rather than a rate, or when
+  saturation has no metric at all. Does not cover percentiles (latency-statistics), the tail
+  (tail-latency-analysis), exporter cost (opentelemetry-performance), alerting
+  (slo-and-alerting), or single events (structured-logging).
 ---
 
 # Metrics And Cardinality
@@ -89,13 +89,20 @@ Prefer a precomputed quantile only when:
   the concrete path. Spring Boot's `http.server.requests` already uses the matched pattern
   for its `uri` tag, and deliberately collapses unmatched requests to a placeholder rather
   than emitting the raw path — a hand-rolled filter that tags the raw path reintroduces the
-  explosion the framework avoided.
+  explosion the framework avoided. `http.client.requests` can only do the same when the
+  client is given the template: `uri("/orders/{id}", id)` yields `uri="/orders/{id}"`, while
+  `uri("/orders/" + id)` yields one series per order. See
+  `references/micrometer-and-prometheus.md`.
 - **An error label must be a bounded class, not a message.** `error="timeout"`,
   `error="upstream_5xx"`, `error="validation"`. An exception message contains ids, values
   and, once, someone's whole request body.
 - Compute the budget **before** shipping: `series = Π(label cardinalities) × instances ×
 (buckets + 2 for a histogram)`. Write it into the change. A change that adds a tag is a
-  change to the series count, and it should be reviewed as one.
+  change to the series count, and it should be reviewed as one. When the label's source
+  cannot be fixed — a library's tag, a gateway's code — cap it at registration with a
+  `MeterFilter` (`maximumAllowableTags`, `maximumAllowableMetrics`), added before any meter
+  is created; it is a backstop for the budget, not a substitute, since the first `max`
+  values are already series. See `references/micrometer-and-prometheus.md`.
 - **A counter is read as a rate, never as a value.** It resets to zero on restart, so a
   dashboard panel that subtracts two raw samples reports a large negative number on every
   deploy. Use the backend's rate/increase function, which is reset-aware.
@@ -107,7 +114,11 @@ Prefer a precomputed quantile only when:
 - **Export histogram buckets, not precomputed quantiles.** A `Timer` publishing percentiles
   computes them per instance, and per-instance quantiles cannot be combined afterwards —
   `latency-statistics` owns why. Buckets sum across instances before the quantile is taken,
-  which is the only correct order.
+  which is the only correct order. Without `publishPercentileHistogram()` or
+  `serviceLevelObjectives(...)` a `Timer` exports no buckets and `histogram_quantile`
+  returns NaN; with them, `minimumExpectedValue`/`maximumExpectedValue` set the bucket count
+  (the 1 ms–30 s default is 66 buckets, 10 ms–2 s is 34), and SLO buckets alone answer
+  "within SLO or not" in 3–6 series. See `references/micrometer-and-prometheus.md`.
 - **Saturation is the leading indicator; utilisation is the lagging one.** A pool at 100%
   utilisation with an empty wait queue is fully used, not failing; a pool at 70% with a
   growing queue is already failing. If only utilisation is instrumented, every incident is
@@ -132,3 +143,10 @@ Prefer a precomputed quantile only when:
   precomputed quantile rule and its aggregation consequence, the standard RED and USE sets
   for a JVM HTTP service, and business metrics. Read when instrumenting a new service or
   reviewing an existing metric set.
+- [Micrometer and Prometheus specifics](references/micrometer-and-prometheus.md) — `Timer`
+  versus `DistributionSummary` versus `LongTaskTimer`, what each distribution option exports
+  and its measured bucket count, the expected-range and SLO-bucket levers, the client-side
+  `uri` template, `MeterFilter` semantics for capping cardinality at runtime, and exemplars.
+  Read when the instrumentation is Micrometer exported to Prometheus, when
+  `histogram_quantile` returns NaN, or when a label must be capped in code you do not
+  control.

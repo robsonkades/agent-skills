@@ -77,7 +77,19 @@ why every reliable detection method counts samples rather than inspecting values
   this makes every other correction cosmetic.
 - Gatling: use `.disablePauses()` — `pauses(none)` does not exist in the DSL. Locust: use
   `constant_pacing(interval)` — `wait_time = constant(0)` only removes think-time and leaves
-  emission coupled to the response.
+  emission coupled to the response. JMeter: the **Open Model Thread Group** (5.5+,
+  experimental) with `rate(200/sec) random_arrivals(10 min)` is the open-loop form; a
+  Thread Group plus `Constant Throughput Timer` remains closed-loop. k6: read
+  `dropped_iterations` — `constant-arrival-rate` drops an iteration rather than delaying it
+  when `maxVUs` is exhausted, so the planned/issued deficit is already a metric.
+- A JVM-based generator (Gatling, JMeter, a custom harness) omits on its own pauses too:
+  a 300 ms GC in the generator stalls its scheduler, and the requests planned during it are
+  either sent late (measured from the planned instant, the wait shows) or never sent (they
+  do not). Keep the generator's GC log next to the result; wrk2's C timer has no such stall.
+- HdrHistogram has one correction for at-recording time (`recordValueWithExpectedInterval`)
+  and one for after (`copyCorrectedForCoordinatedOmission`,
+  `addWhileCorrectingForCoordinatedOmission`). Its javadoc calls them mutually exclusive
+  on the same data: applying both counts the omission twice.
 - A benchmark whose "slow" requests merely sleep on their own thread does not reproduce this
   at all. The canonical slow event is a **shared-resource** stall — an STW GC pause, where
   every thread stops at a safepoint — and only a shared stall builds the queue behind it.
@@ -99,7 +111,8 @@ why every reliable detection method counts samples rather than inspecting values
   each tool including the two DSL corrections. Read when auditing an existing result set or
   configuring a run.
 - [Post-hoc correction](references/post-hoc-correction.md) — the
-  `recordValueWithExpectedInterval` algorithm with a worked example, the decision table for
-  when closed-loop is legitimately fine, the historical-versus-production comparison, and where
-  the uniform-spacing assumption breaks. Read only when the data is genuinely closed-loop and
-  the test cannot be re-run.
+  `recordValueWithExpectedInterval` algorithm with a worked example, HdrHistogram's own
+  post-hoc API (`copyCorrectedForCoordinatedOmission`) and the double-correction rule, the
+  decision table for when closed-loop is legitimately fine, the historical-versus-production
+  comparison, and where the uniform-spacing assumption breaks. Read only when the data is
+  genuinely closed-loop and the test cannot be re-run.

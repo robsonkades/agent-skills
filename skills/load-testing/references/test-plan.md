@@ -29,8 +29,19 @@ export const options = {
 };
 ```
 
-Gatling's equivalent is `constantUsersPerSec`; `wrk2` uses `-R`. What matters is that the
-generator issues by schedule and does not wait for the previous response.
+What matters is that the generator issues by schedule and does not wait for the previous
+response. The constructs that decide which model a script is running, per tool:
+
+| Tool    | Closed-loop — flag in review                                                                                                                                                     | Open-loop                                                                                                                                                                                           |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| k6      | `shared-iterations`, `per-vu-iterations`, `constant-vus`, `ramping-vus` — a VU count, iterations "as many as possible"                                                           | `constant-arrival-rate`, `ramping-arrival-rate` (`startRate`, `stages: [{target, duration}]`, `preAllocatedVUs`, `maxVUs`)                                                                          |
+| Gatling | `constantConcurrentUsers`, `rampConcurrentUsers`, `incrementConcurrentUsers`; also any open-model user whose scenario loops (`forever`, `repeat`) — inside the loop it is closed | `atOnceUsers`, `rampUsers`, `constantUsersPerSec`, `rampUsersPerSec`, `stressPeakUsers`, `incrementUsersPerSec`, one pass of the scenario per user                                                  |
+| JMeter  | Thread Group (N threads looping); a Constant Throughput Timer only caps that loop's rate — it still cannot exceed `N/R`                                                          | Open Model Thread Group (JMeter 5.5+): a schedule such as `rate(100/sec) random_arrivals(10 min)`, with `even_arrivals`, `pause` and `/sec`, `/min`, `/hour` units; threads are created per arrival |
+| wrk     | `wrk` — every connection sends as soon as the previous response arrives                                                                                                          | `wrk2 -R <rate>`, which also reconstructs omitted samples                                                                                                                                           |
+| Locust  | The default `HttpUser` loop, including `wait_time = constant(0)`                                                                                                                 | Approximate only — `constant_pacing`; see `coordinated-omission`                                                                                                                                    |
+
+Detection when the model is not obvious from the script, correction of data already
+collected, and the Gatling and Locust caveats are `coordinated-omission`.
 
 Size `maxVUs` from Little's Law using the **worst** predicted latency. If the run hits
 `maxVUs`, the generator silently became a closed loop and the run is void.
@@ -58,8 +69,10 @@ without the prior calculation.
 -XX:NativeMemoryTracking=summary
 ```
 
-`-XX:+FlightRecorder` has not existed since JDK 15 (deprecated in 13, obsolete in 14,
-expired in 15) and aborts the JVM on the current baseline.
+`-XX:+FlightRecorder` is not a way to record. Deprecated since JDK 13, it is still accepted
+on JDK 25 with a warning and starts no recording (executed, Temurin 25.0.3): the JVM boots,
+the plan says "JFR on", and the file never appears. `-XX:StartFlightRecording` is the flag
+that records.
 
 ## Before the run
 

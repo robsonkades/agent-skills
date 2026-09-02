@@ -5,8 +5,27 @@ way of being measured wrong.
 
 ## lambda — arrival rate
 
-Count completed requests over a **stable** window. Exclude ramp-up periods; a load ramp makes
-the rate a moving target and the model assumes it is not.
+Count **arrivals at the server** over a **stable** window — not completions, and not the
+client's request count. The two differ by exactly the retries, health checks and internal
+fan-out that the client never sees and the model must; a 20% retry share is a 20% larger
+`lambda`. Exclude ramp-up periods; a load ramp makes the rate a moving target and the model
+assumes it is not. Record `lambda` at 1 s or 10 s resolution as well as the window mean, so
+that the p95 of `rho` is available — the mean alone hides the bursts that set the tail (see
+`references/production-behaviour.md`).
+
+## c_a — coefficient of variation of inter-arrival time
+
+Take the arrival timestamps, difference them, and compute `std/mean` of the gaps. Poisson
+arrivals give `c_a = 1`; paced or round-robin-split arrivals give `c_a < 1`; retries, cron
+fan-out and batches give `c_a > 1`. When only per-interval counts are available (a counter
+scraped every 10 s), use the index of dispersion `I = Var(N)/E[N]` over the interval counts
+— `1` for Poisson, and for long intervals `I ≈ c_a²` (Cox & Lewis, _The Statistical Analysis
+of Series of Events_, 1966 — not verified here). A scrape interval much longer than the burst
+length averages `I` towards 1 and hides the burstiness the model needs; check at the finest
+resolution the counter allows.
+
+Batch arrivals need the batch size, not `c_a`: log how many requests arrive within one
+service time of each other, and use the bulk-arrival formula when that number is stable.
 
 ## mu — service rate
 
@@ -62,6 +81,19 @@ c_s = np.std(service_times_ms) / np.mean(service_times_ms)
 # c_s ~ 1.0  : exponential              -> M/M/1 or M/M/c fits well
 # c_s > 1.5  : heavy tail               -> M/* badly understates high percentiles
 ```
+
+For P-K use `E[S²]` directly — `mean(service_times_ms ** 2)` — rather than reconstructing it
+from `c_s`; the mean of squares is what the formula wants. Look at the histogram as well as
+the number: a `c_s` of 3 from a bimodal distribution (99% at 10 ms, 1% at 500 ms) and a
+`c_s` of 3 from a smooth heavy tail give the same mean wait and very different p99 waits,
+and only the first is fixed by a separate pool.
+
+Two contaminations of `c_s` are common. Measuring service time with the queue wait included
+(residence time rather than service time) inflates `c_s` with the queue's own variance,
+which is circular. And a request timeout that fires while the request is queued or running
+truncates the distribution: the slowest requests never complete, are counted as errors, and
+leave a `c_s` that is optimistic exactly in the tail — record timeouts alongside the samples
+and treat them as censored observations at the timeout value, not as absent.
 
 Common JVM causes of `c_s > 1`: GC pauses landing inside request processing, intermittent L3
 or database cache misses, sporadic lock contention, JIT deoptimisation on a hot path.
@@ -129,5 +161,7 @@ error = |Wq_predicted - Wq_measured| / Wq_measured
 ```
 
 Under 30%: the model applies as chosen. Over 30%: the assumptions are wrong, not the
-arithmetic — measure `c_a` and `c_s` and redo the prediction with Kingman. Declare the
-environment and the tolerance alongside the comparison, or the validation is not reproducible.
+arithmetic — note the **direction** of the miss and take the matching row of the
+disagreement table in `references/production-behaviour.md`; a measured wait above the
+prediction and one below it name different failed assumptions. Declare the environment and
+the tolerance alongside the comparison, or the validation is not reproducible.

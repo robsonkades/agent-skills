@@ -1,17 +1,18 @@
 ---
 name: jdk-upgrade-impact
 description: >
-  Moving a service from one JDK to another and knowing what breaks, in what order to find it, and
-  what should get faster: running unchanged on the new runtime first with warnings made visible,
-  classifying each failure as a retired flag, strong encapsulation, a removed API, a changed
-  default or a third-party agent, and measuring the gain the upgrade was justified by. Use when
-  an LTS-to-LTS move is planned, when a build passes and the service will not start on the new
-  JDK, when --add-opens is being added to make something work, when -Djava.security.manager=allow
-  is on the command line, when sun.misc.Unsafe or an instrumentation agent is in the dependency
-  tree, when a mocking or proxy library fails on a new class file version, or when an upgrade is
-  credited with a speedup nobody measured. Not the flag lifecycle in detail
-  (jvm-performance-review), collector changes (jvm-gc-tuning), or automating the source edits
-  (refactoring-automation).
+  Moving a service between JDKs: what breaks, in what order to find it, and what should get
+  faster — running unchanged on the new runtime with warnings visible, classifying each
+  failure as a retired flag, strong encapsulation, a removed API, a changed default or a
+  third-party agent, and measuring the gain claimed for the upgrade. Use when an LTS-to-LTS
+  move is planned, when a build passes and the service will not start on the new JDK, when
+  --add-opens is being added to make something work, when -Djava.security.manager=allow is
+  on the command line, when sun.misc.Unsafe or an instrumentation agent is in the dependency
+  tree, when a mocking or proxy library fails on a new class file version, when generated
+  code goes missing after the move to JDK 23 or later, when a formatted time stopped
+  matching a literal, or when an upgrade is credited with a speedup nobody measured. Not the
+  flag lifecycle in detail (jvm-performance-review), collector changes (jvm-gc-tuning), or
+  automating source edits (refactoring-automation).
 ---
 
 # JDK Upgrade Impact
@@ -53,10 +54,17 @@ mistaken for cause.
 
 - **Compiling is not the test.** `--release` targets a bytecode level; it says nothing about what
   the runtime encapsulates, removes or refuses at startup. A green build on the new JDK proves
-  very little.
+  very little — and a _degraded_ API proves nothing at all: `Thread.stop()` (JDK 20),
+  `Subject.getSubject` (23) and `System.setSecurityManager` (24) still compile and throw
+  `UnsupportedOperationException` when reached, so the test suite is the only detector. The
+  release-by-release list is in `references/removed-and-degraded-apis.md`.
 - **A JVM that refuses to start is the good case.** It is loud, immediate and unambiguous. The
   expensive failures are the ones that start: an ignored flag whose value silently no longer
-  applies, and a changed default that only shows under load.
+  applies, and a changed default that only shows under load. Two changed defaults produce no
+  message at all: from JDK 23 `javac` runs no annotation processor found only on the classpath
+  (exit 0, generated code missing, seen later as unrelated compile errors or a
+  `NoSuchMethodError`), and from JDK 20 CLDR 42 puts a NARROW NO-BREAK SPACE before `AM`/`PM`
+  in `en_US`, breaking any assertion or parser written for a plain space.
 - **`-Djava.security.manager=allow` stops the JVM from starting on JDK 24 and later.** Executed on
   Temurin 25.0.3: `java.lang.Error: A command line option has attempted to allow or enable the
 Security Manager` during VM initialisation. It became permanently disabled in JEP 486 (JDK 24).
@@ -80,6 +88,11 @@ Security Manager` during VM initialisation. It became permanently disabled in JE
 - **Retired flags are their own subject.** The three states — deprecated, obsolete, expired — and
   which release each flag entered them in belong to `jvm-performance-review`; that skill's
   lifecycle matrix is the reference to run the command line against.
+- **The command line you audit is not the whole command line.** `JDK_JAVA_OPTIONS`,
+  `JAVA_TOOL_OPTIONS`, `@argfile`s, `-XX:VMOptionsFile` and the executable-jar manifest
+  (`Add-Opens`, `Enable-Native-Access`, honoured only under `java -jar`) all contribute.
+  `jcmd <pid> VM.flags` and `VM.system_properties` show what took effect, whichever source it
+  came from — see `references/removed-and-degraded-apis.md`.
 - **Do not carry a performance claim across the boundary.** Any number measured on the old JDK is
   a number about the old JDK, including your own baselines and any threshold in CI.
 - **Class-data and AOT archives do not survive the move.** They are tied to the runtime that
@@ -91,6 +104,12 @@ Security Manager` during VM initialisation. It became permanently disabled in JE
 - [Breakage classes](references/breakage-classes.md) — the five kinds of failure, the diagnostic
   that identifies each, and the fix with its reversibility. Read once something fails on the new
   runtime.
+- [Removed and degraded APIs](references/removed-and-degraded-apis.md) — the release-by-release
+  table from JDK 17 to 25 of what was removed, degraded to `UnsupportedOperationException`,
+  deprecated or changed by default, with the message each produces; the class-file major
+  version per JDK; where flags hide outside the visible command line; and multi-release jars.
+  Read when placing a failure in a release, when a tool reports an unsupported class file
+  version, or when behaviour changed with "no dependency changed".
 - [Verification and rollout](references/verification-and-rollout.md) — the compatibility pass,
   making warnings visible, what to measure and against what baseline, and staging the rollout.
   Read before the first run on the new JDK.

@@ -1,19 +1,20 @@
 schemaVersion: 1
 
 name: jit-inlining-and-escape-analysis
-version: 1.2.0
+version: 2.0.0
 description: >-
-  Inlining and escape analysis in C2: why inlining is the multiplier that enables every
-  other optimisation, scalar replacement versus "stack allocation", flow-insensitivity as
-  the central limitation, megamorphic call sites, and measuring the result with
-  gc.alloc.rate.norm. Use when allocation rate is high on a hot path, when someone proposes
-  an object pool for small objects, when an interface gains a third implementation on a
-  critical path, when "the JIT will handle it" or "allocation is expensive" is asserted
-  without a measurement, when a rare branch makes an object escape, or when reflection or a
-  lambda capture sits on a hot path. Does not cover the tiered pipeline and warm-up
-  (jit-compilation), benchmark construction (jmh-microbenchmarks), or GC cost itself
-  (gc-fundamentals). The analysis algorithm itself is escape-analysis-internals and byte
-  attribution is allocation-profiling.
+  Inlining and escape analysis in C2: inlining as the multiplier, scalar replacement versus
+  "stack allocation", flow-insensitivity, turning a PrintInlining verdict into a code
+  change, and measuring with gc.alloc.rate.norm. Use when allocation rate is high on a hot
+  path, when a hot call is refused inlining and the fix is unclear, when an object pool for
+  small objects, @ForceInline on application code or a higher FreqInlineSize is proposed,
+  when an interface gains a third implementation on a critical path, when "the JIT will
+  handle it" or "allocation is expensive" is asserted without a measurement, when a rare
+  branch makes an object escape, when Optional, a stream or a lambda capture is blamed or
+  excused for allocation, or when a hot method never appears in PrintCompilation. Does not
+  cover warm-up and the tiered pipeline (jit-compilation), benchmark construction
+  (jmh-microbenchmarks) or GC cost (gc-fundamentals). The algorithm itself is
+  escape-analysis-internals; byte attribution is allocation-profiling.
 
 license: Apache-2.0
 
@@ -44,6 +45,15 @@ files:
 dependencies:
   - name: jit-compilation
     version: ^1.0.0
+
+suggests:
+  - allocation-profiling
+  - c2-sea-of-nodes
+  - compilation-and-inlining-logs
+  - escape-analysis-internals
+  - gc-fundamentals
+  - graalvm-jit
+  - jmh-microbenchmarks
 
 capabilities:
   - reads-source

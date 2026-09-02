@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: load-testing-advanced
-version: 1.1.0
+version: 1.2.0
 description: >-
   Load-test designs beyond a steady rate: ramp, step, spike, soak and breakpoint profiles
   and what each one can actually prove, multi-stage weighted scenarios, correlating
@@ -46,6 +46,9 @@ dependencies:
     version: ^1.0.0
   - name: coordinated-omission
     version: ^1.0.0
+
+suggests:
+  - heap-dump-analysis
 
 capabilities:
   - reads-source

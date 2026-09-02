@@ -71,9 +71,20 @@ message.
   window; `-prof comp` is what distinguishes that from a GC pause.
 - `gc.alloc.rate.norm` is the most reliable number JMH produces. Bytes per operation is
   deterministic for the same code; time is not. For a CI gate it is the best signal
-  available.
+  available. `0 B/op` from code that visibly allocates means escape analysis removed the
+  object _in this inlining context_ — a real result for the benchmark, not a promise for a
+  caller the JIT does not inline.
+- `Cnt` is forks × iterations and the `Error` interval treats them as independent samples,
+  which they are not when forks disagree. Read the per-fork scores in the raw output: forks
+  clustering into two modes is JIT non-determinism, and the interval understates it.
 - `SampleTime` is the only mode that shows the tail. `Throughput` and `AverageTime` report a
-  central value and cannot see a p99 regression.
+  central value and cannot see a p99 regression. It is still a closed loop of an isolated
+  operation — service time, not latency under load — and it samples a subset of
+  invocations (jmh-advanced).
+- A loop inside the benchmark body needs `@OperationsPerInvocation(N)` so the score is per
+  element, but the annotation only fixes the arithmetic: the loop is still exposed to
+  unrolling, hoisting and partial elimination. Prefer one element per invocation, or a
+  `@Param`-sized batch that passes the proportionality test.
 - On the baseline, `Blackhole` is a compiler intrinsic (JMH 1.34+ on JDK 17+) with
   effectively zero cost. The `Blackhole mode` line in the output states which mechanism is
   active — material written before 2022 describes only the old one.

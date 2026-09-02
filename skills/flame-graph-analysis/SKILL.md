@@ -47,6 +47,20 @@ forgetting that one sentence.
   makes differential graphs possible. For temporal analysis use the JFR timeline in JMC,
   `jfrconv --from/--to` to cut a window, or heatmap mode.
 - Width is responsibility; **self-width is blame**.
+- Know which sampler fed the graph before reading a width as CPU. JFR's
+  `jdk.ExecutionSample` counts only threads executing Java code and `jdk.NativeMethodSample`
+  counts threads in native code _executing or waiting_ — so a JMC or `jfr view hot-methods`
+  graph shows a blocked `SocketRead` as hot and is neither a CPU nor a wall profile. The
+  CPU-proportional JFR source is `jdk.CPUTimeSample` (JEP 509, JDK 25, Linux, experimental,
+  off in both stock profiles); async-profiler `cpu`/`ctimer`/`itimer` are CPU, `wall` is wall.
+- In a wall-clock graph every thread contributes one sample per tick whether it works or
+  idles, so twenty idle pool workers make `LockSupport.park` the widest frame. That width
+  is not a finding: split by thread (`-t`), filter to request threads (`-I`), or read only the
+  `-s sleeping` graph of the threads that carried requests.
+- A reversed graph (`asprof -r`, `jfrconv -r`, `flamegraph.pl --reverse`) merges stacks from
+  the leaf, so it answers "which leaf method is hot across all callers" — the sum that step 4
+  otherwise does by search. Icicle is only the reversed graph drawn top-down; it changes no
+  number.
 - Infrastructure frames _are_ the diagnosis and what matters is directly below them:
   `Object.wait` → who called wait and on what condition; `LockSupport.park` → which
   resource is scarce; `SocketRead` → which host, which timeout; `Arrays.copyOf` → which
@@ -57,12 +71,16 @@ forgetting that one sentence.
 - An allocation graph is mandatory for GC cost. Allocation cost does not appear where it
   happens; it reappears later as a pause attributed to another thread, and it affects pause
   **frequency**, not duration.
-- Differential graphs require `difffolded.pl -n`. Without normalisation, profiles with
-  different totals render as a single colour — that is arithmetic, not regression.
-  Normalisation fixes the total; it does not fix different load or different warm-up, and
-  no flag does.
+- Differential graphs require normalised totals: `difffolded.pl -n`, or async-profiler's
+  `jfrconv --diff base.jfr new.jfr`. Without normalisation, profiles with different totals
+  render as a single colour — that is arithmetic, not regression. Normalisation fixes the
+  total; it does not fix different load or different warm-up, and no flag does.
 - A frame that disappeared may have been inlined. `--cstack` is about native stacks and
   does not undo Java inlining.
+- A graph whose base is many unrelated frames instead of a few thread roots is truncation,
+  not structure: JFR keeps the leaf-most 64 frames (`stackdepth`) and drops the root end,
+  so deep framework stacks stop merging under `main`. Raise the depth at startup
+  (jfr-advanced) rather than reading the fragments.
 - Development profiles do not extrapolate: assertions and `TieredStopAtLevel=1` mean the
   measured code is not the executed code; small datasets hide quadratic complexity; without
   concurrency, contention does not exist; and x86 and aarch64 have different barrier costs.
@@ -74,3 +92,8 @@ forgetting that one sentence.
 - [Reading and comparing graphs](references/reading-and-comparing.md) — the graph-type
   table, self-width worked through, the differential recipe, and the post-fix validation
   checklist. Read with a graph open.
+- [Sources, orientations and broken graphs](references/sources-and-orientations.md) — what
+  each sampler counts and therefore what a width means, standard versus reversed versus
+  icicle, reading an off-CPU graph, and the symptom table for a graph that is itself
+  suspect (all `park`, no thread roots, `[unknown_Java]`, `Interpreter`). Read when the
+  graph came from JFR, from a wall-clock run, or looks wrong before any analysis.

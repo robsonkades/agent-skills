@@ -21,9 +21,16 @@ jcmd <pid> JFR.check           # active recordings
 jcmd <pid> JFR.stop name=diag  # stop a named recording
 ```
 
-`default.jfc`: 20 ms sampler, 20 ms blocking thresholds, 150 allocation samples/s.
-`profile.jfc`: 10 ms sampler, 10 ms thresholds, 300/s. Both leave `jdk.CPUTimeSample`
-**off**.
+`default.jfc`: 20 ms sampler, 20 ms blocking thresholds, 150 allocation samples/s, "typically
+less than 1 % overhead" by its own description. `profile.jfc`: 10 ms sampler, 10 ms
+thresholds, 300/s, "typically around 2 %". Both leave `jdk.CPUTimeSample` **off**; enable it
+with `jdk.CPUTimeSample#enabled=true` on the command line (Linux only).
+
+The retained window lives in the repository as chunk files (default `maxchunksize` 12 MB),
+pruned by `maxage`/`maxsize`; `JFR.dump` assembles them into the `.jfr`. Put it on a
+volume — `-XX:FlightRecorderOptions:repository=/mnt/diagnostics` — because the directory is
+removed when the JVM exits. For a batch job that should print its own summary,
+`report-on-exit=hot-methods` (repeatable) writes a view to stdout at shutdown.
 
 ## JFR analysis without a GUI
 
@@ -33,11 +40,19 @@ Servers and containers rarely have a GUI, which is exactly where incidents happe
 jfr summary recording.jfr          # event counts — always the first command
 jfr metadata recording.jfr         # fields available per event
 
-jfr view hot-methods recording.jfr          # top methods by samples
+jfr view hot-methods recording.jfr          # top methods by ExecutionSample + NativeMethodSample
+jfr view cpu-time-hot-methods recording.jfr # the same from jdk.CPUTimeSample, if it was on
 jfr view contention-by-site recording.jfr   # contention by call site
-jfr view gc-pause-tree recording.jfr        # GC pauses by phase
-jfr view socket-io-by-host recording.jfr    # network I/O aggregated by host
-jfr view --help recording.jfr               # list all views
+jfr view latencies-by-type recording.jfr    # every duration event, ranked — the first look
+jfr view gc-pauses recording.jfr            # pauses; gc-pause-phases for the breakdown
+jfr view socket-reads-by-host recording.jfr # network reads by host; socket-writes-by-host
+jfr view pinned-threads recording.jfr       # jdk.VirtualThreadPinned, threshold permitting
+jfr view container-cpu-throttling recording.jfr
+jfr help view                               # the full list; `jfr view all-views <file>` runs them all
+
+# the same views against a running JVM with a recording on — no dump, no file (JDK 21+)
+jcmd <pid> JFR.view hot-methods             # last 10 minutes by default (maxage=10m, maxsize=32MB)
+jcmd <pid> JFR.view maxage=1h latencies-by-type
 
 jfr print --events jdk.JavaMonitorEnter --stack-depth 32 recording.jfr
 jfr print --events jdk.ThreadPark --json recording.jfr | jq '.recording.events[0]'
@@ -86,6 +101,7 @@ asprof -e cpu --wall 100ms -d 60 -o jfr -f prof.jfr <pid>
 jfrconv -o flamegraph -s runnable prof.jfr oncpu.html
 jfrconv -o flamegraph -s sleeping prof.jfr offcpu.html
 jfrconv -o flamegraph --lock     prof.jfr lock.html
+jfrconv -o flamegraph --cpu-time jfr-recording.jfr cpu.html   # from JFR jdk.CPUTimeSample (JEP 509)
 
 asprof -d 60 <pid> | head -30                          # flat text profile to stdout
 asprof -d 60 -o collapsed -f stacks.collapsed <pid>     # for differential tooling
@@ -123,7 +139,8 @@ kernel stacks.
 ## Production readiness checklist
 
 - [ ] Continuous JFR configured, `maxage` longer than overnight human response time
-- [ ] `disk=true` with `repository` on a volume that has guaranteed space
+- [ ] `disk=true` with `-XX:FlightRecorderOptions:repository=` on a volume that has guaranteed
+      space, so `JFR.dump` and a post-mortem `jfr assemble` have something to read
 - [ ] `jcmd` available inside the container or host where the JVM runs
 - [ ] `JFR.dump` runbook written **and tested outside an incident**
 - [ ] Analysis tooling available to whoever is on call (JMC, or `jfr view` in a terminal)

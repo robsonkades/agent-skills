@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: g1-tuning-for-slo
-version: 1.1.0
+version: 2.0.0
 description: >-
   Deriving G1 flag values from a latency SLO and proving they helped: what
   `MaxGCPauseMillis` actually controls, the young size bounds, IHOP and adaptive IHOP with
@@ -10,11 +10,11 @@ description: >-
   measure-derive-predict-validate loop. Use when GC flags were copied from another service,
   when `-Xms` differs from `-Xmx` in production, when mixed GC violates the SLO while young
   GC is healthy, when GC overhead exceeds 5 to 10 percent, when a full GC follows a marking
-  cycle that finished too late, when an IHOP was set to the theoretical ceiling, or when a
-  parser reports a promotion rate of zero. Does not cover deciding whether GC is the
-  bottleneck at all or which collector to use (jvm-gc-tuning), why the mechanism responds
-  the way it does (g1-internals), or configuring and parsing the GC log itself
-  (gc-log-analysis).
+  cycle that finished too late, when an IHOP was set to the theoretical ceiling, when a G1
+  flag makes the JVM refuse to start, or when a parser reports a promotion rate of zero.
+  Does not cover deciding whether GC is the bottleneck at all or which collector to use
+  (jvm-gc-tuning), why the mechanism responds the way it does (g1-internals), or
+  configuring and parsing the GC log itself (gc-log-analysis).
 
 license: Apache-2.0
 
@@ -43,12 +43,26 @@ files:
   - references/
 
 dependencies:
+  - name: allocation-profiling
+    version: ^2.0.0
+  - name: g1-concurrent-marking
+    version: ^1.0.0
   - name: g1-internals
     version: ^1.0.0
   - name: gc-log-analysis
     version: ^1.0.0
+  - name: jdk-upgrade-impact
+    version: ^1.0.0
+  - name: pause-attribution
+    version: ^1.0.0
   - name: jvm-gc-tuning
     version: ^2.0.0
+
+suggests:
+  - allocation-profiling
+  - g1-concurrent-marking
+  - jdk-upgrade-impact
+  - pause-attribution
 
 capabilities:
   - reads-source

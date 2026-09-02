@@ -33,9 +33,14 @@ flags, its own limit and its own kind of `OutOfMemoryError`.
 thread` are three unrelated problems, and none of them is fixed by raising `-Xmx`.
 2. **Measure non-heap with NMT under your own load**, never estimate it:
    `-XX:NativeMemoryTracking=summary` at start, then
-   `jcmd <pid> VM.native_memory summary`. NMT cannot be enabled on a running process.
-3. **Budget every region** and keep the total at or below ~75% of the container limit.
-   See `references/container-budget.md`.
+   `jcmd <pid> VM.native_memory summary`; `baseline` followed later by `summary.diff`
+   attributes growth to a region, and the periodic JFR events `jdk.NativeMemoryUsage`
+   and `jdk.ResidentSetSize` give the same numbers as a time series. NMT cannot be
+   enabled on a running process.
+3. **Budget every region**: heap = limit − measured non-heap − a margin for what the
+   cgroup charges and NMT does not see. Then express it as `-Xmx` or `MaxRAMPercentage`;
+   the arithmetic and the RSS-versus-NMT gap table are in
+   `references/container-budget.md`.
 4. **Distinguish reserved, committed and used.** The cgroup sees resident, `ps` shows
    reserved (`VSZ`), the dashboard shows used. Half of all wrong memory diagnoses come
    from comparing the wrong number with the wrong limit.
@@ -72,9 +77,12 @@ thread` are three unrelated problems, and none of them is fixed by raising `-Xmx
 
 ## References
 
-- [Container budget](references/container-budget.md) — the per-region budget, the
-  Kubernetes checklist, and reading `VM.native_memory summary` output. Read when sizing a
-  JVM for a memory limit or when RSS does not match the heap.
+- [Container budget](references/container-budget.md) — the per-region budget with the
+  worked `MaxRAMPercentage` arithmetic, reading `VM.native_memory summary` and `diff`,
+  the RSS-versus-NMT gap table, and the Kubernetes checklist. Read when sizing a JVM for
+  a memory limit or when RSS does not match the heap.
 - [OOM triage by region](references/oom-triage.md) — which message means which region,
-  the `jcmd` command that confirms each, and what does _not_ fix it. Read when an
-  `OutOfMemoryError` or an OOMKill has already happened.
+  the `jcmd` command that confirms each, what does _not_ fix it, and the
+  `ExitOnOutOfMemoryError` / `CrashOnOutOfMemoryError` decision. Read when an
+  `OutOfMemoryError` or an OOMKill has already happened, or when configuring what the JVM
+  does on the next one.

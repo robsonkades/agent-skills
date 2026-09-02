@@ -1,18 +1,18 @@
 ---
 name: structured-logging
 description: >
-  Logs as queryable events rather than prose: named fields instead of a sentence with values
-  interpolated in, the correlation ids every event must carry and the MDC lifecycle behind
-  them, log levels as a contract with the on-call, redaction at the encoder, and volume as a
-  cost. Use when finding something in the logs needs a regex, when MDC is empty on a
-  handed-off thread or stale on a pooled one, when a handled-and-retried failure is logged
-  at ERROR, when e.getMessage() is concatenated into a message and the stack trace is gone,
-  when one failure is logged at every layer it passes through, or when a request body or a
-  token reaches an appender. Not aggregate counting and label cardinality
-  (metrics-and-cardinality), causality across services (distributed-tracing-design), trace
-  propagation cost (opentelemetry-performance), the exception hierarchy
-  (java-exception-design), context mechanics (scoped-values), thread cost
-  (thread-sizing-and-virtual-threads), or alerting policy (slo-and-alerting).
+  Logs as queryable events rather than prose: named fields instead of interpolated
+  sentences, the correlation ids every event carries and the MDC lifecycle behind them, the
+  encoder and sync-versus-async appender choice and what each loses, levels as a contract
+  with the on-call, redaction at the encoder, and volume as a cost. Use when finding
+  something in the logs needs a regex, when MDC is empty on a handed-off thread or stale on
+  a pooled one, when INFO events vanish under load while WARN survives, when the trace id
+  key is traceId in one service and trace_id in another, when a handled-and-retried failure
+  is logged at ERROR, when e.getMessage() is concatenated and the stack trace is gone, or
+  when a request body or a token reaches an appender. Not label cardinality
+  (metrics-and-cardinality), span design (distributed-tracing-design), trace propagation
+  cost (opentelemetry-performance), the exception hierarchy (java-exception-design), context
+  mechanics (scoped-values), or alerting policy (slo-and-alerting).
 ---
 
 # Structured Logging
@@ -43,11 +43,17 @@ without paying for prose.
    fluent API (`atInfo().addKeyValue(...)`) keeps fields typed in the call, a JSON encoder
    on the appender decides the wire format. They are complementary — key-value pairs only
    become fields if the encoder renders them; a plain pattern encoder appends them to the
-   message and you are back to regex.
+   message and you are back to regex. Pick the encoder from the table in
+   `references/appenders-and-cost.md` — Logback's `JsonEncoder`, logstash-logback-encoder,
+   Log4j2's `JsonTemplateLayout` and Spring Boot's `logging.structured.format.*` differ in
+   field names, masking and stack-trace control — and decide synchronous versus
+   asynchronous there too, explicitly choosing block or drop when the queue is full.
 3. **Establish correlation at the edge and carry it deliberately.** Accept or mint a
    request id at the ingress filter, bind the trace id from the tracing context, and put
    both on every event. MDC is a `ThreadLocal`: it does not cross an executor hand-off and
-   it outlives a task on a pooled thread. See `references/java-logging-mechanics.md`.
+   it outlives a task on a pooled thread. Check which key the instrumentation actually
+   writes — `trace_id` (OpenTelemetry agent), `traceId` (Micrometer Tracing) or `trace.id`
+   (ECS) — before any pattern or query names it. See `references/java-logging-mechanics.md`.
 4. **Assign levels against the on-call contract, not against how bad it felt.** ERROR means
    a human should look. Walk every existing ERROR call site and demote the ones that are
    already handled.
@@ -104,7 +110,19 @@ Do not log at all when:
   and restore it inside the task, or carry the context as a value. The mechanism choice is
   `scoped-values` and `thread-sizing-and-virtual-threads`; the logging consequence is that
   an un-carried context produces events with the correlation fields simply absent, which
-  looks like a gap in traffic rather than a defect.
+  looks like a gap in traffic rather than a defect. Inheritance
+  (`log4j2.isThreadContextMapInheritable`, any `InheritableThreadLocal`) is not the fix: it
+  is a snapshot taken when a thread is created, so it is stale on every pooled thread and
+  leaks a request's context into every per-task virtual thread created from it.
+- **An async appender drops INFO by default.** Logback's `AsyncAppender` discards TRACE,
+  DEBUG and INFO once the 256-slot queue is 80% full (`discardingThreshold`), and Log4j2's
+  `Discard` policy drops at or below `INFO`; both lose the whole queue on SIGKILL and on a
+  context nobody stopped. Choose block or drop per appender and make a drop observable.
+- Caller data (`%line`, `%method`, `includeLocation`) is a stack walk per event; the
+  logger name already locates the code. A stack trace is tens of kilobytes per event —
+  bound its depth and length at the encoder, root cause first.
+- A pattern layout writes user text verbatim, so an embedded newline forges an event. A
+  JSON encoder escapes it; where a pattern stays, `%replace` or Log4j2's `%enc{}{CRLF}`.
 - Never log a full request or response body. It is unbounded in size, it is the most common
   route for credentials and personal data into a log store, and the useful part is a handful
   of fields you can name.
@@ -124,9 +142,21 @@ Do not log at all when:
 
 - [Java logging mechanics](references/java-logging-mechanics.md) — the fluent key-value API
   and what an encoder must do with it, the MDC lifecycle with the executor and pooled-thread
-  traps and the clear-in-finally shape, exception logging done correctly, redaction at the
-  encoder, and a test that asserts the required fields on every event at a boundary. Read
-  when writing or reviewing logging code, or when correlation fields are missing.
+  traps and the clear-in-finally shape, what `InheritableThreadLocal` inheritance really
+  does across virtual threads, per-task executors and pools (measured), the three trace id
+  key conventions and how to reconcile them, exception logging done correctly, redaction at
+  the encoder with the concrete mechanism per stack, newline injection, and a test that
+  asserts the required fields on every event at a boundary. Read when writing or reviewing
+  logging code, or when correlation fields are missing or under the wrong name.
+- [Appenders, encoders and cost](references/appenders-and-cost.md) — the encoder table
+  (Logback `JsonEncoder`, logstash-logback-encoder, Log4j2 `JsonTemplateLayout`, Spring
+  Boot `logging.structured.*`) with field names, MDC handling and masking per stack;
+  synchronous versus asynchronous with Logback `AsyncAppender` and Log4j2 async-logger
+  defaults and what each loses on a full queue and on a crash; the per-event cost model
+  (parameterised messages, caller data, stack-trace bytes, the JUL bridge); backpressure
+  from stdout, files, TCP and OTLP sinks; and a symptom-to-cause table. Read when choosing
+  or reviewing the logging configuration, when events go missing, duplicate or arrive late,
+  or when logging shows up in a latency profile.
 - [Fields, levels and volume](references/fields-and-levels.md) — the standard field set,
   naming consistency as a queryability requirement, level semantics as a contract with the
   on-call, what must never be logged, sampling strategy, and a review checklist. Read when

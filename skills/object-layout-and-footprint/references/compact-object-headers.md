@@ -231,7 +231,20 @@ All executed on 25.0.3:
 | Same heap on a **non-moving** collector                        | **No warning.** Ends `true {command line}`                                                                                                                             |
 
 The bound is off-by-one from how it reads: `-Xmx8191g` is fine and `-Xmx8192g` warns
-`[executed]`.
+`[executed]`. Both rows reproduced on 25.0.3+9 in this pass.
+
+Two conditions that read as if they should disable the flag and do **not**, also 25.0.3:
+
+| Condition                                         | Result                                                                                                                                                                                                    |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-XX:LockingMode=1` (legacy stack locking)        | JEP 450 says compact headers are disabled; the shipping JVM does the reverse — `LockingMode = 2 {command line}`, `UseCompactObjectHeaders = true`, only the generic deprecation warning for `LockingMode` |
+| JDK 24 without `-XX:+UnlockExperimentalVMOptions` | Not a silent disable but a refusal: the flag is experimental on 24 (JEP 450) and product on 25 (JEP 519) — on 25 no unlock is needed `[executed]`                                                         |
+
+The first is the case to know about when a legacy command line is being carried forward:
+the locking flag loses, silently, and the header flag wins. The diagnostic
+`UseObjectMonitorTable` reads `true {default}` under compact headers and `false` without
+`[executed]` — inflated monitors move into a side table, which is lock-inflation's cost to
+describe, not a change in bytes per object.
 
 **Read it as a forwarding-pointer bound, not as a list of collector names.** That is what
 JEP 450 says it is, verbatim: _"we use a simple encoding of the forwarding pointer which can
@@ -303,3 +316,13 @@ Do not carry the class names across the threshold. Under compressed oops the nea
 `Integer`, `Boolean`, `String`, `ArrayList`; above it, `String` and `ArrayList` leave that set
 and `HashMap$Node` joins it (§2). `Integer` and `Boolean` hold either way — they contain no
 reference.
+
+**The footprint side has a debit column.** The 22-bit class pointer (`Narrow klass pointer
+bits 22, Max shift 10` in `-Xlog:gc+metaspace`) puts every `Klass` on a 1 KB boundary, and
+the compressed class space pays for it: **537 → 1,024 bytes per class** measured over
+100,000 strong hidden classes, with the 1 GB default `CompressedClassSpaceSize` holding
+~1.06 M classes instead of ~2 M `[executed]`. A heap of 20 M small objects and 30 k classes
+nets tens of megabytes; a heap of 2 M objects and 300 k generated classes can net nothing
+and gain an `OutOfMemoryError: Compressed class space`. The figures and the `VM.metaspace`
+check are in `production-footprint-checks.md` §3; the class space itself is
+metaspace-internals'. Quote the class count next to the object count, always.

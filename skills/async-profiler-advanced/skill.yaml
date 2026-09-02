@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: async-profiler-advanced
-version: 1.1.0
+version: 1.2.0
 description: >-
   async-profiler beyond `-e cpu`: the perf_events, ctimer and itimer engines and what each
   can and cannot see, the wall engine's thread coverage, hardware PMU counters, multi-event

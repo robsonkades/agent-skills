@@ -17,10 +17,15 @@ cumulative traffic. Three observations settle it before any dump is taken:
 
 Then get the retaining path. In a heap dump, that is the dominator tree plus "path to GC
 roots" excluding weak/soft references — heap-dump-analysis. On a live process,
-`jdk.OldObjectSample` (in JFR's `profile` settings, or `-XX:StartFlightRecording:settings=profile`)
-samples objects that survived long enough to be old and records their allocation stack and
-the field path holding them; it is cheap enough to leave enabled and answers the same
-question without a multi-gigabyte dump. **Under ZGC it is disabled from 25.0.4, 26.0.2 and
+`jdk.OldObjectSample` samples objects that survived long enough to be old. On JDK 25 it is
+enabled in both shipped settings files, but `default.jfc` records **no stack trace** for
+it and `profile.jfc` does (`old-objects-stack-trace`), so a recording started with the
+defaults names the object and not the allocation site. The reference chain to a GC root is
+computed only when the recording is written with `path-to-gc-roots=true`
+(`jcmd <pid> JFR.dump filename=leaks.jfr path-to-gc-roots=true`, or the same option on
+`JFR.start`); that walk is itself a stop-the-world heap traversal, so ask for it once at
+dump time, not on a continuous recording. With those two settings the event answers the
+same question as a dump without a multi-gigabyte file. **Under ZGC it is disabled from 25.0.4, 26.0.2 and
 27** — the event's weak-handle implementation costs too much in generational ZGC
 (JDK-8382740, fixVersion 27, backported to 26.0.2 and 25.0.4; release note JDK-8386620).
 26.0.0 and 26.0.1 are unaffected. Note the update-release scoping: a JDK 25 baseline is

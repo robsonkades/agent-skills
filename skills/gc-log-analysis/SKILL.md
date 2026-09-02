@@ -3,15 +3,16 @@ name: gc-log-analysis
 description: >
   Configuring and reading JVM unified GC logs: the -Xlog:gc* baseline with decorators and
   rotation, the cause field, the before->after->capacity triple and headroom, pause
-  distribution, premature promotion via gc+age, and correlating with -Xlog:safepoint. Use
-  when a GC log needs to be interpreted, when GC logging is not enabled and the right GC
-  tag-sets have to be chosen, when full collections or Metadata GC Threshold appear, when
-  the heap floor rises after each complete collection, or when an analysis script reports
-  zero pauses. Does not cover collector mechanics (gc-fundamentals), collector choice and
-  heap sizing (jvm-gc-tuning), or allocation profiling (jfr-and-async-profiler). The -Xlog
-  syntax itself — proving a selection emits anything, rotation, async logging and migrating
-  pre-JDK-9 flags — is unified-logging. Attributing an observed pause across layers is
-  pause-attribution.
+  distribution, allocation and promotion rate derived from the region lines, premature
+  promotion via gc+age, and correlating with -Xlog:safepoint. Use when a GC log needs to be
+  interpreted, when GC logging is not enabled and the right GC tag-sets have to be chosen,
+  when full collections or Metadata GC Threshold appear, when the heap floor rises after
+  each complete collection, when an allocation or promotion rate has to come out of the log
+  rather than a profiler, when a log starts at an uptime well above zero, or when an
+  analysis script reports zero pauses. Does not cover collector mechanics (gc-fundamentals),
+  collector choice and heap sizing (jvm-gc-tuning), or allocation profiling
+  (jfr-and-async-profiler). The -Xlog syntax itself is unified-logging. Attributing an
+  observed pause across layers is pause-attribution.
 ---
 
 # GC Log Analysis
@@ -38,7 +39,10 @@ a diagnostic step.
 5. **Check headroom** after each collection — capacity minus `after`.
 6. **Reconcile with the observed pause.** If they disagree, go to the safepoint log; the
    reported pause excludes Time-To-SafePoint.
-7. **If you need to know who allocated**, the GC log cannot tell you — take JFR with
+7. **If you need to know how much is allocated and how much survives**, the log can
+   tell you: allocation and promotion rate come from the `Eden regions` and `Old regions`
+   lines and the region size in `gc,init` — see `references/rates-from-the-log.md`. **If
+   you need to know who allocated**, it cannot — take JFR with
    `jdk.ObjectAllocationSample`.
 
 ## Rules
@@ -63,7 +67,12 @@ a diagnostic step.
   the intuitive intervention, lowering the pause target, makes it worse.
 - Raising the heap is not the first response to frequent short pauses. That is almost
   always allocation pressure; a bigger heap defers the symptom and **lengthens** the pause
-  when it finally arrives.
+  when it finally arrives. Confirm it: derive the allocation rate from the log and compare
+  it with the Eden target `(N)` — a tiny target with a modest rate is the pause target
+  sizing young down, not the workload. See `references/rates-from-the-log.md`.
+- A log whose first uptime is well above zero has rotated, not restarted. The `gc,init`
+  block — region size, `Using N workers` — lives in the oldest file, and any rate must
+  span the first to the last pause in the file, not the process lifetime.
 - A production GC log reveals load pattern, installed capacity and deploy cadence.
   Uploading it to a third-party analysis service is a security decision, not a convenience
   one. Prefer local tools by default.
@@ -75,6 +84,12 @@ a diagnostic step.
 - [Log analysis recipes](references/log-analysis-recipes.md) — POSIX awk scripts for pause
   distribution, cause counts and headroom, plus the JFR commands for allocation sources.
   Read when you have a log in hand and need numbers out of it.
+- [Rates from the log](references/rates-from-the-log.md) — the anatomy of a G1 line, the
+  arithmetic for allocation rate, promotion rate, survival ratio and GC overhead with the
+  caveats that change the number (humongous, mixed collections, rotation), a validated
+  POSIX awk recipe, and a symptom-to-cause table. Read when an allocation or promotion rate
+  has to come out of the log, when a young pause grows without changing frequency, or when
+  a log starts at an uptime well above zero.
 - [Cause field reference](references/cause-field.md) — what each cause means and what to
   investigate next, including the ZGC log format change. Read when the cause in
   parentheses is unfamiliar or the log format does not match the examples you know.

@@ -1,19 +1,20 @@
 schemaVersion: 1
 
 name: jdk-upgrade-impact
-version: 1.1.0
+version: 1.2.0
 description: >-
-  Moving a service from one JDK to another and knowing what breaks, in what order to find it, and
-  what should get faster: running unchanged on the new runtime first with warnings made visible,
-  classifying each failure as a retired flag, strong encapsulation, a removed API, a changed
-  default or a third-party agent, and measuring the gain the upgrade was justified by. Use when
-  an LTS-to-LTS move is planned, when a build passes and the service will not start on the new
-  JDK, when --add-opens is being added to make something work, when -Djava.security.manager=allow
-  is on the command line, when sun.misc.Unsafe or an instrumentation agent is in the dependency
-  tree, when a mocking or proxy library fails on a new class file version, or when an upgrade is
-  credited with a speedup nobody measured. Not the flag lifecycle in detail
-  (jvm-performance-review), collector changes (jvm-gc-tuning), or automating the source edits
-  (refactoring-automation).
+  Moving a service between JDKs: what breaks, in what order to find it, and what should get
+  faster — running unchanged on the new runtime with warnings visible, classifying each
+  failure as a retired flag, strong encapsulation, a removed API, a changed default or a
+  third-party agent, and measuring the gain claimed for the upgrade. Use when an LTS-to-LTS
+  move is planned, when a build passes and the service will not start on the new JDK, when
+  --add-opens is being added to make something work, when -Djava.security.manager=allow is
+  on the command line, when sun.misc.Unsafe or an instrumentation agent is in the dependency
+  tree, when a mocking or proxy library fails on a new class file version, when generated
+  code goes missing after the move to JDK 23 or later, when a formatted time stopped
+  matching a literal, or when an upgrade is credited with a speedup nobody measured. Not the
+  flag lifecycle in detail (jvm-performance-review), collector changes (jvm-gc-tuning), or
+  automating source edits (refactoring-automation).
 
 license: Apache-2.0
 
@@ -49,7 +50,7 @@ dependencies:
   - name: load-testing
     version: ^1.0.0
   - name: startup-cds-crac-leyden
-    version: ^1.0.0
+    version: ^2.0.0
 
 suggests:
   - architecture-refactoring-paths

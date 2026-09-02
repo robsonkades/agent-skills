@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: coordinated-omission
-version: 1.1.0
+version: 1.2.0
 description: >-
   Coordinated omission in depth: the exact mechanism (missing samples, never wrong values),
   the closed-loop ceiling lambda_max = N/R, detection by reconciling issued against planned

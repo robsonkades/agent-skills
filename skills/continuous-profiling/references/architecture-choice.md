@@ -38,19 +38,33 @@ Parca's structural cost: eBPF sees memory addresses only, so JIT-compiled Java f
 an externally generated perf-map to become method names — a dependency Pyroscope avoids by
 running inside the process.
 
-## Overhead by channel
+## Overhead by channel — the arithmetic
 
-Lab estimates. Measure your own workload before treating any of these as a capacity budget.
+Overhead is `samples/s × cost per sample`, and the cost per sample is dominated by the
+stack walk, which scales with depth (`setJavaStackDepthMax`, `asprof -j`). Percentages
+quoted by vendors are one workload's value of that product. Derive yours:
 
-| Channel                                    | Typical overhead                               | Note                                                                                   |
-| ------------------------------------------ | ---------------------------------------------- | -------------------------------------------------------------------------------------- |
-| CPU (`cpu` / `itimer` / `ctimer` / `wall`) | ~1–2%, typically under 2%                      | Same order as a one-off profile; the difference is running 24/7, not the sampling rate |
-| Allocation (`alloc`)                       | ~1–5%, depending on the byte threshold         | Lower threshold means more samples means more overhead — not a fixed cost              |
-| Lock (`lock`)                              | Typically low, proportional to real contention | An uncontended application pays almost nothing; heavy contention generates more events |
+| Channel                     | Samples per second                                            | What bounds it                                                                                 |
+| --------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `cpu` / `ctimer` / `itimer` | `running threads × (1 / interval)` ≤ `cores × (1 / interval)` | Cores. 8 cores at 10 ms = 800/s whatever the thread count                                      |
+| `wall`                      | `all threads × (1 / interval)`                                | **Nothing.** 2,000 threads at 10 ms = 200,000/s; use `--wall 100ms` and `--filter`             |
+| `alloc`                     | `allocation rate / byte threshold`                            | The threshold. 2 GB/s ÷ 512 kB ≈ 4,000/s; ÷ 1 kB ≈ 2,000,000/s — why `1k` is the anti-pattern  |
+| `lock`                      | contended acquisitions whose wait exceeded the threshold      | Real contention. An uncontended service pays a check per contended entry and nothing else      |
+| JFR `jdk.ExecutionSample`   | ≤ `(5 Java + 1 native) / period`                              | The sampler itself: at most 5 Java threads per round (`jfrThreadSampler.cpp`); 20 ms → ≤ 250/s |
+| JFR `jdk.CPUTimeSample`     | `throttle` — a rate cap (`500/s`) or a CPU-time period        | Explicit; `jdk.CPUTimeSamplesLost` reports when the cap dropped samples                        |
+
+Worked budget: a 16-core service, 300 platform threads, 1.5 GB/s allocation.
+`cpu` at 10 ms is at most 1,600 samples/s; `alloc` at `512k` adds ~3,000/s; `wall` at
+10 ms would add 30,000/s — twenty times the CPU channel — and at 100 ms adds 3,000/s.
+With a measured 5 µs per sample (measure it: run the agent against the service under load
+and compare CPU seconds per request with and without) that is 0.8% + 1.5% + 1.5% of one
+core-second per second. Whether that is "2%" depends on the core count; the per-channel
+numbers are what to defend.
 
 Continuous profiling has to sample statistically rather than instrument exhaustively,
 precisely because any overhead becomes permanent infrastructure cost multiplied by every
-instance, every day.
+instance, every day. JEP 520's method tracing is the exception that proves it — bytecode
+instrumentation of a named method for a bounded window, not a channel.
 
 ## Pyroscope `EventType` to async-profiler engine
 
@@ -67,14 +81,19 @@ channels each with a `String` threshold, in the same spirit as `asprof`'s `--all
 
 ## What the JDK 25 sampling machinery changes here
 
-- **JEP 509 — JFR CPU-Time Profiling (experimental, Linux).** A native sampler driven by
-  real per-thread CPU time (`CLOCK_THREAD_CPUTIME_ID`) rather than wall clock. Under a
-  shared host or a throttled CFS quota, the profile reflects what the thread actually
-  consumed — accuracy that matters more the longer the recording runs.
-- **JEP 518 — JFR Cooperative Sampling (delivered).** Replaces asynchronous unwinding from a
-  signal handler with a stack walk the thread performs at a point it controls. For a
-  recording that never stops, that means fewer corrupted or discarded samples and less
-  accumulated risk from keeping sampling permanently on.
+- **JEP 509 — JFR CPU-Time Profiling (JDK 25, experimental, Linux).** `jdk.CPUTimeSample`
+  is driven by per-thread CPU time rather than by a wall-clock sampler visiting threads, so
+  under a shared host or a throttled CFS quota the profile reflects what each thread
+  actually consumed. Both shipped `.jfc` files carry it **disabled**: `default.jfc` with
+  `throttle=500/s`, `profile.jfc` with `throttle=10ms` (`jfr metadata`, Temurin 25.0.3).
+  Enable it with `jdk.CPUTimeSample#enabled=true` on `JFR.start` and watch
+  `jdk.CPUTimeSamplesLost`.
+- **JEP 518 — JFR Cooperative Sampling (JDK 25).** The sampler thread no longer walks a
+  suspended thread's stack; it arms the thread's poll page and the thread walks its own
+  stack at its next safepoint poll. For a recording that never stops, that means fewer
+  corrupted or discarded samples. It did not lift the per-round cap: `jdk.ExecutionSample`
+  still samples at most 5 Java and 1 native thread per period, so on a many-threaded
+  service each thread is visited every `threads × period / 5`.
 - **JEP 520 — JFR Method Timing and Tracing (delivered).** Configuration-driven bytecode
   instrumentation for specific methods. It is the opposite of a cheap continuous channel —
   a narrow, temporary lens. Its value here is operational: a broad continuous profile plus

@@ -1,17 +1,18 @@
 ---
 name: graalvm-native-image
 description: >
-  Ahead-of-time compilation with GraalVM Native Image: the closed-world assumption and
-  points-to reachability analysis, reflection, proxy, serialisation and resource metadata,
-  build-time versus run-time class initialisation and heap snapshotting, the peak-throughput
-  trade against the JIT, profile-guided optimisation, and measuring the real startup and
-  memory win. Use when deciding whether a service should be a native binary, when a build
-  succeeds but ClassNotFoundException or NoSuchMethodException appears at run time, when a
-  static initializer captured a build-environment value, when --pgo or --gc=G1 fails on the
-  installed distribution, when a copied -H: option does nothing, when a "5-10x less memory"
-  claim needs checking, or when JFR events are missing from a native binary. Does not cover
-  Graal as a JIT inside the JVM (graalvm-jit), the JVM-preserving startup strategies
-  (startup-cds-crac-leyden), or warm-up on the JVM (jit-compilation).
+  GraalVM Native Image: the closed-world assumption and reachability analysis, reflection
+  and resource metadata, build-time versus run-time initialisation and heap snapshotting,
+  the peak-throughput trade against the JIT, PGO, and measuring the real startup and memory
+  win. Use when deciding whether a service should be a native binary, when a build succeeds
+  but ClassNotFoundException or NoSuchMethodException appears at run time, when a static
+  initializer captured a build-environment value, when --pgo or --gc=G1 fails on the
+  installed distribution, when a copied -H: option does nothing, when the binary exits at
+  startup naming CPU features the host lacks, when the CI build step dies with exit 137,
+  when native RSS grows for hours with no leak, when a "5-10x less memory" claim needs
+  checking, or when JFR events are missing from a native binary. Does not cover Graal as a
+  JIT inside the JVM (graalvm-jit), the JVM-preserving startup strategies
+  (startup-cds-crac-leyden), or JVM warm-up (jit-compilation).
 ---
 
 # GraalVM Native Image
@@ -61,8 +62,11 @@ into the image heap with no build error at all.
   Image exists to remove.
 - A reflection, proxy, serialisation, resource or JNI path not exercised during agent
   collection is not in the binary. The symptom is `ClassNotFoundException` or
-  `NoSuchMethodException` at run time, in production, on a path that was never tested. Keep
-  a rollback plan to the JVM.
+  `NoSuchMethodException` at run time, in production, on a path that was never tested.
+  Rebuild with `--exact-reachability-metadata` before hunting: a registration gap then
+  surfaces as `MissingReflectionRegistrationError` naming the type, instead of a lookup
+  failure indistinguishable from a genuinely missing class. Keep a rollback plan to the
+  JVM. See `references/troubleshooting.md`.
 - Static initializers run at build time by default. An environment variable read there is
   either empty (build failure) or the build environment's value silently snapshotted into
   the binary. Fix with lazy initialisation via DI (most portable),
@@ -77,6 +81,10 @@ into the image heap with no build error at all.
   neither is what the person copying it expected.
 - Real binary size reduction is `--strip-debug` (a genuine flag) plus a post-build `upx`
   pass, not a compression option on `native-image`.
+- Build for the deployment CPU, not the build host. The default `-march=x86-64-v3`, or
+  `-march=native` on a newer build machine, yields a binary that exits at startup naming
+  the CPU features the host lacks; `-march=compatibility` is the portable choice. See
+  `references/troubleshooting.md`.
 - G1 (`--gc=G1`) and PGO (`--pgo`, `--pgo-instrument`) require Oracle GraalVM. Both
   distributions have been free since the for-JDK-17 line — CE under GPLv2+CE, Oracle GraalVM
   under the GFTC — so material calling these features "enterprise only" in the sense of
@@ -86,7 +94,9 @@ into the image heap with no build error at all.
   of magnitude from GraalVM's own material, not a measured constant.
 - Never quote "5-10x less memory" as intrinsic to AOT. It depends on heap sizing on both
   sides. Fix `-Xmx`/`-Xms` explicitly on the JVM and the SubstrateVM heap flags on the
-  binary, then compare stabilised RSS under the same load.
+  binary, then compare stabilised RSS under the same load. Without an explicit ceiling the
+  Serial GC grows the heap towards 80% of physical memory, so a native RSS that climbs for
+  hours is filling, not leaking.
 - Do not compare a native binary's immediate peak against a JVM still warming up. Sustain
   the load until the JVM reaches its own steady state, then compare steady state to steady
   state.
@@ -110,3 +120,7 @@ into the image heap with no build error at all.
   phases, points-to analysis and heap snapshotting, the legacy versus unified metadata
   formats, the three initialisation fixes, the distribution feature matrix, and the JFR
   support matrix. Read when explaining a reachability failure or choosing a distribution.
+- [Troubleshooting](references/troubleshooting.md) — symptom tables for the build, a binary
+  that will not start, run-time failures the JVM never showed, and measurements that look
+  wrong, each with the check that distinguishes look-alike causes and the remediation. Read
+  when a build or binary fails and the stack trace alone does not identify the cause.

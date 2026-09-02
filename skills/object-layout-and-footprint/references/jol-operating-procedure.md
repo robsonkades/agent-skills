@@ -136,7 +136,13 @@ without a single flag being touched. Always capture the heap size alongside the 
 java -version                                        -> the build, verbatim
 java -XX:+PrintFlagsFinal -version | grep -E \
   'UseCompactObjectHeaders|UseCompressedOops|UseCompressedClassPointers|ObjectAlignmentInBytes|MaxHeapSize'
+java <same flags> -Xlog:gc+init -version | grep 'Compressed Oops'   -> Enabled (32-bit) / Disabled
 ```
+
+Read `UseCompressedOops` by value, not by origin: past the 32 GB boundary it prints
+`false {default}` — ergonomics turned it off and left no `{ergonomic}` tag `[executed]`,
+25.0.3. The `gc+init` line is unambiguous and is the one to paste
+(`production-footprint-checks.md` §2).
 
 JOL prints its own VM report, which is the cheapest self-documenting form — paste it above
 any listing you hand to someone else:
@@ -205,3 +211,6 @@ shallow layouter has.
   double-counts nothing but shares everything — two roots holding the same object each report
   it.
 - **Anything about time.** No number produced by JOL is a throughput or latency measurement.
+- **A JVM you cannot attach to.** For a population already running in production,
+  `jcmd <pid> GC.class_histogram` gives the JVM's own shallow sizes in the JVM's own header
+  mode, and `production-footprint-checks.md` §1 covers it and what a heap dump cannot say.

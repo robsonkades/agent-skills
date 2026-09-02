@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: queueing-models
-version: 1.1.0
+version: 1.2.0
 description: >-
   Choosing a queueing model and reading what it says: M/M/1 versus M/M/c versus M/G/1 versus
   M/D/1, the Erlang C and Erlang B formulas, Kingman's G/G/1 approximation, the service-time
@@ -9,7 +9,8 @@ description: >-
   Use when a predicted wait time disagrees with the measured one, when latency is far worse
   than utilisation suggests, when service times are bimodal or GC-spiked, when arrivals are
   retries or cron bursts rather than independent users, when Erlang C must be computed for a
-  large number of servers, or when deciding whether a measured p99 is even reachable by an
+  large number of servers, when a load balancer or partition layout turns one pool of c into
+  c queues of one, or when deciding whether a measured p99 is even reachable by an
   M/* model. Does not cover the N = lambda x R law, the utilisation cliff as a rule of
   thumb, or thread and connection pool sizing (littles-law-and-queueing), the alpha/beta
   scalability model (universal-scalability-law), or the statistics of the measured numbers
@@ -44,6 +45,17 @@ files:
 dependencies:
   - name: littles-law-and-queueing
     version: ^1.0.0
+  - name: universal-scalability-law
+    version: ^1.0.0
+
+suggests:
+  - capacity-planning
+  - coordinated-omission
+  - kafka-consumers-in-java
+  - kubernetes-service-lifecycle
+  - load-testing
+  - retries-and-backoff
+  - universal-scalability-law
 
 capabilities:
   - reads-source
