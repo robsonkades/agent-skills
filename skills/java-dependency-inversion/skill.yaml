@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-dependency-inversion
-version: 1.1.0
+version: 1.2.0
 description: >-
   Dependency direction in Java: policy versus mechanism, ports and adapters, constructor
   injection as plain Java, factories, composition roots, and JPMS module edges as physical

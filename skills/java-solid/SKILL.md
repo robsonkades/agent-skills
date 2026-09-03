@@ -18,13 +18,13 @@ Turn the five principles from slogans into review findings a staff engineer woul
 sign. The failure mode this skill exists to prevent is the slogan review: "violates
 SRP" pinned to a class because it is long, "needs an interface for OCP" pinned to
 code with no variation in sight. A principle names a finding only when there is
-evidence of concrete harm; otherwise there is no finding.
+evidence of concrete harm or a credible committed constraint; otherwise there is no finding.
 
 ## Workflow
 
-1. **Read the change and its history.** Principles predict future change, and the
-   change log is the best available evidence of it — `git log --follow` on the
-   files in question, looking for unrelated pressures landing on one type.
+1. **Read the change, requirements, ownership and history.** For mature code, `git log --follow`
+   exposes independent pressures. For new code, use accepted requirements, extension contracts,
+   team/release boundaries and known failure modes; invented future variation is not evidence.
 2. **Generate candidates with the per-principle heuristics** in the references.
    Heuristics produce suspicions, never findings.
 3. **Find the harm for each candidate.** Name the future change that becomes
@@ -52,20 +52,19 @@ Observation → impact → evidence → recommendation → what to avoid. One fi
 
 ## Rules
 
-- A responsibility is a _reason to change_, evidenced by change actually arriving
-  independently. Method count, line count and import count are prompts to look at
-  the history, never evidence by themselves.
-- Never recommend an extension point for variation that does not exist yet. OCP is
-  a response to observed variation — the same conditional edited by successive
-  features — not a default posture.
-- A sealed hierarchy with exhaustive switches deliberately trades OCP for
-  compile-checked exhaustiveness: adding a variant is _meant_ to break every
-  switch. That trade is a feature; a `default` branch there would silently absorb
-  future variants. Not a finding.
-- LSP: an override may weaken preconditions and strengthen postconditions, never
-  the reverse. Hunt three concrete shapes: a precondition check added in an
-  override, a new exception thrown from an override, and asymmetric `equals`
-  across a subclass.
+- A responsibility is a _reason to change_ owned by an actor/authority. Independent history is
+  strongest evidence in existing code; accepted requirements and ownership boundaries are valid
+  evidence before the first commit. Counts are only search signals.
+- Do not recommend an extension point for imagined variation. OCP responds to observed variants
+  or an explicit published/plugin requirement with committed consumers and compatibility needs.
+- A sealed hierarchy with exhaustive switches trades open variant extension for source
+  exhaustiveness: recompiling after adding a variant identifies missing cases. Independently
+  deployed old binaries can instead fail with `MatchException`; an explicit `default` chooses
+  fallback semantics and may be legitimate only when that policy is intentional.
+- LSP: an override may weaken preconditions and strengthen postconditions, never the reverse.
+  Investigate checks or failures added for inputs the supertype accepts, weakened effects,
+  thread-safety/nullness guarantees, and equality policies that become asymmetric across
+  subclasses. A more specific exception for the same documented failure is not a violation.
 - ISP: judge an interface by its clients, not its method count. The evidence is a
   client depending on methods it never calls, or an implementor forced to throw
   `UnsupportedOperationException`.

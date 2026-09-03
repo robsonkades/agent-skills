@@ -1,144 +1,107 @@
-# Lock scope, alien calls and deadlock
+# Lock scope, callbacks and deadlock
 
-## The alien method rule
+## Invariant ledger
 
-An **alien method** is any method whose implementation you do not control from inside the
-lock: an overridable method of your own class, a listener or callback supplied by a caller, a
-`Comparator`/`Function`/`Consumer` passed in, a method on an object you were handed, or
-anything reached through an interface. Calling one while holding a lock is the standard
-deadlock and liveness bug, because the alien code may:
+For each lock:
 
-- acquire another lock, creating a cycle with a thread that holds them in the other order;
-- call back into your object, re-entering a `synchronized` method while your invariant is
-  broken — re-entrancy makes this compile, run, and corrupt state silently;
-- block on I/O, a queue, or a future, holding your lock for the duration;
-- throw, leaving the lock released but the state partially updated (see failure atomicity in
-  java-exception-design);
-- run for an unbounded time, turning your critical section into a throughput ceiling.
-
-```java
-// Broken: notifies while holding the lock
-public void add(Session s) {
-    synchronized (lock) {
-        sessions.put(s.id(), s);
-        for (Listener l : listeners) l.onAdded(s);      // alien: may block, deadlock, re-enter
-    }
-}
-
-// Correct: mutate under the lock, publish outside it
-public void add(Session s) {
-    synchronized (lock) {
-        sessions.put(s.id(), s);
-    }
-    for (Listener l : listeners) l.onAdded(s);          // listeners is a CopyOnWriteArrayList
-}
+```text
+identity and visibility:
+guarded fields/invariant:
+operations/condition predicates:
+maximum expected hold/wait and fairness:
+nested acquisitions and global order:
+callbacks/I/O/logging/allocations inside:
+interrupt/timeout/error rollback:
+metrics/profile evidence:
 ```
 
-The general shape is _snapshot inside, act outside_: copy the little you need while holding the
-lock, release, then do the work. `CopyOnWriteArrayList` for listener lists exists because it
-makes the iteration safe with no lock at all.
+Critical sections must be large enough to preserve the transition and small enough to avoid
+unrelated work. “Minimize every lock” can split check from act or expose half-applied state.
 
-Also on this list: **`Object.wait`/`await` inside a lock is fine and intended**; a `sleep`
-inside one never is; and logging inside a critical section is an alien call whenever the
-appender can block (a network appender, a full async queue).
+## Callback choices
 
-## Sizing the critical section
+### Callback outside lock
 
-Two failure directions, and they are not symmetric:
-
-- **Too large** — I/O, remote calls, alien methods, whole request handlers under one lock.
-  Costs throughput, invites deadlock, and hides which invariant is actually being protected.
-- **Too small** — splitting one invariant across two critical sections. `synchronized` on each
-  of two setters does not make "these two fields always agree" true; a reader can observe the
-  state between them.
-
-The rule that resolves both: **the critical section is exactly the invariant**. Everything that
-must be observed together is updated together, and nothing else is inside.
+Prefer when notification can observe a committed snapshot and failure does not roll back mutation:
 
 ```java
+Event event;
 synchronized (lock) {
-    if (balance.isLessThan(amount)) throw new InsufficientFunds(id);
-    balance = balance.minus(amount);          // check and mutation are one invariant:
-    entries.add(Entry.debit(amount));         // they belong in one section
+    event = mutateAndCreateEvent();
 }
-publisher.publish(new Debited(id, amount));   // outside: I/O, alien, and not part of the invariant
+notifyListeners(event);
 ```
 
-## Deadlock by design review
+Specify whether another mutation may overtake callback delivery. If order matters, serialize events
+through an owned dispatcher/outbox rather than holding the state lock across arbitrary code.
 
-Deadlock needs a cycle in the lock-acquisition graph. Two prevention strategies, in order:
+### Callback inside lock
 
-1. **Hold one lock at a time.** Restructure so a method never acquires a second lock while
-   holding the first. This is almost always possible and removes the class of bug.
-2. **Impose a global order** when two locks genuinely must be held, and document it. The order
-   must be derivable without knowing the runtime values — a class-level ordering, or the
-   comparison of a stable id, never "whichever came first".
+Use only when contract requires atomic callback participation and the callback set is controlled,
+bounded and reviewed. Analyze reentrancy, lock ordering, blocking, exception rollback and latency.
+External/user callbacks generally make those assumptions untenable.
 
-```java
-// Two accounts, ordered by a stable id so every thread acquires in the same sequence
-private static void transfer(Account from, Account to, Money amount) {
-    Account first  = from.id().compareTo(to.id()) < 0 ? from : to;
-    Account second = first == from ? to : from;
-    synchronized (first.lock()) {
-        synchronized (second.lock()) { ... }
-    }
-}
+`CopyOnWriteArrayList` gives snapshot-like traversal and is useful when mutations are rare; each
+mutation copies the array and listener bodies can still block/throw. It does not solve callback
+semantics automatically.
+
+## Wait-for graph
+
+Include more than monitors:
+
+```text
+thread -> monitor/Lock/condition
+thread -> Future/task whose executor is saturated
+thread -> queue permit/item/space
+thread -> connection/buffer semaphore
+class -> class-initialization owner
+callback -> caller lock/resource
 ```
 
-Note the residual case that ordering does not fix: equal ids (the same account twice) — check
-for it explicitly.
+Thread-starvation and resource deadlocks may not be reported by JVM monitor-cycle detection.
 
-Other shapes that produce cycles without two visible `synchronized` blocks:
+## Multiple locks
 
-- **A lock plus a bounded queue.** Holding a lock while putting into a full queue whose consumer
-  needs the same lock.
-- **A lock plus a thread pool.** Submitting to a pool and waiting for the result while holding a
-  lock the pool's tasks also need — a thread-starvation deadlock, which is not detected by JVM
-  deadlock detection because no monitor cycle exists (concurrency-diagnostics).
-- **Class initialisation.** Two classes whose static initialisers reference each other from
-  different threads deadlock on class-init locks, and the thread dump is unusually cryptic.
-- **Re-entrant callbacks** as described above: one thread, one lock, and an invariant observed
-  mid-update — a correctness bug rather than a hang, which makes it harder to find.
+Prefer no nested acquisition. If unavoidable:
 
-`ReentrantLock.tryLock(timeout)` is a mitigation for lock ordering that cannot be imposed —
-acquire what you can, back off and retry — and it belongs in code that can genuinely retry the
-whole operation, not as a way to avoid thinking about the order.
+- assign a stable total order independent of mutable/runtime timing;
+- handle equal keys/same object explicitly;
+- do not call code that violates the order;
+- include class-init and external locks in review;
+- test reverse traffic and failure while holding the first resource.
 
-## Choosing the mechanism
+Identity-hash ordering needs a tie lock/collision strategy; business IDs require uniqueness/stability
+and same-object handling.
 
-| Situation                                         | Use                                                                     |
-| ------------------------------------------------- | ----------------------------------------------------------------------- |
-| State used by one thread/request                  | confinement — no synchronisation                                        |
-| Shared, never changes after construction          | immutability + final fields                                             |
-| One variable, simple updates                      | `AtomicLong`/`AtomicReference` with `compareAndSet`/`updateAndGet`      |
-| Hot counter, reads rare                           | `LongAdder`                                                             |
-| Map with compound operations                      | `ConcurrentHashMap` + `compute`/`merge`/`putIfAbsent`                   |
-| Read-dominated list (listeners)                   | `CopyOnWriteArrayList`                                                  |
-| Producer/consumer hand-off                        | `BlockingQueue` (bounded)                                               |
-| Coordination between phases                       | `CountDownLatch`, `CyclicBarrier`, `Phaser`                             |
-| Bounding concurrent access to a resource          | `Semaphore` (concurrency-limiting-and-bulkheads)                        |
-| An invariant spanning several fields              | a private lock (`synchronized` or `ReentrantLock`)                      |
-| Needs timed/interruptible acquisition or fairness | `ReentrantLock` explicitly                                              |
-| Read-mostly with expensive reads                  | `StampedLock` optimistic read — advanced, non-reentrant, easy to misuse |
-| Cross-JVM exclusion                               | a lease or an election — not any of the above                           |
+## Mechanism selection caveats
 
-Two notes on the tail of that table: `StampedLock` is not reentrant and its optimistic mode
-requires validating the stamp and retrying, so it is a measured optimisation rather than a
-default; and `ReadWriteLock` only pays off when reads genuinely dominate and are long — for
-short reads its bookkeeping costs more than a plain lock.
+- `ConcurrentHashMap.compute*` offers atomic map operations but mapping callbacks must follow its API
+  restrictions and can serialize/contention-amplify hot keys.
+- `LongAdder` scales updates but `sum` is not an atomic snapshot.
+- `CopyOnWriteArrayList` suits rare writes/small lists; write amplification and retained old arrays
+  can matter.
+- `ReadWriteLock`/`StampedLock` require measured read duration/concurrency; optimistic reads need
+  validation and retry, and `StampedLock` is non-reentrant.
+- fair locks/semaphores may reduce starvation at throughput/latency-distribution cost; fairness is
+  not a scheduler/SLO guarantee.
+- lock-free structures trade blocking for retry/coherence/reclamation complexity; route to their
+  owning skill.
 
-## Contention, and what to do about it
+## Troubleshooting
 
-A correct lock can still be the bottleneck. In order:
+```text
+BLOCKED threads and long monitor events
+  -> owner/hold path, callback/I/O, hot key, convoy; correlate repeated evidence
+WAITING/PARKED with no monitor cycle
+  -> future/pool/queue/permit/condition predicate and producer health
+CPU high, throughput flat
+  -> spin/CAS retry/coherence or lock churn; CPU profile + progress counters
+timeouts but no deadlock
+  -> long hold/queue, unfairness, downstream call under lock, cancellation not reaching owner
+```
 
-1. **Reduce the scope** — is anything inside that does not need to be?
-2. **Reduce the duration** — precompute outside, keep allocation and formatting out.
-3. **Split the lock** — separate locks for independent invariants (lock splitting), or per-bucket
-   locks for a keyed structure (lock striping, which is what `ConcurrentHashMap` does).
-4. **Remove the sharing** — per-thread or per-request accumulation, combined at the end
-   (`LongAdder` is this idea packaged).
-5. **Only then** consider lock-free structures (lock-free-patterns), which trade contention for
-   retry loops and much harder correctness arguments.
+## Authoritative references
 
-Measure first: lock-inflation covers what a contended monitor actually costs, and
-jfr-and-async-profiler shows which monitor is contended rather than which one you suspect.
+- [`java.util.concurrent.locks`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/package-summary.html)
+- [`ConcurrentHashMap`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html)
+- [`StampedLock`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/StampedLock.html)

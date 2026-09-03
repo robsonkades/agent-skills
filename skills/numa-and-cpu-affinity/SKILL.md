@@ -19,9 +19,9 @@ description: >
 ## Purpose
 
 Decide where a JVM's threads run and where its pages live, and prove the decision worked.
-CPU affinity and memory affinity are independent axes: binding one without the other
-isolates nothing, and the JVM's own `-XX:+UseNUMA` covers only fresh allocation — not
-promoted objects, not migrating threads, not GC workers.
+CPU affinity and memory policy are independent axes. Changing one can be useful, but the
+combination determines locality; document both. The exact scope of `-XX:+UseNUMA` is
+collector- and JDK-specific, so do not reduce it to a timeless "fresh allocation only" rule.
 
 The failure this prevents is the unfalsifiable NUMA conclusion: a flag accepted in silence
 by a collector that does not implement it, a `perf` event name that does not exist, or a
@@ -39,16 +39,17 @@ evidence and is not.
 3. **Identify the collector and confirm what `UseNUMA` does on it** before crediting or
    dismissing the flag. `java -XX:+PrintFlagsFinal -version | grep UseNUMA` in the target
    environment — the default is `false`, so verify rather than assume.
-4. **Take a baseline on both `numastat` modes plus latency and GC pause percentiles.**
-   Systemic `numastat` for the hit/miss ratio, `numastat -p <pid>` for this process's heap
-   distribution across nodes. They are not interchangeable.
+4. **Take a placement and performance baseline.** Systemic `numastat` reports kernel page
+   allocation/fallback counters; `numastat -p <pid>` reports this process's page residence.
+   Neither measures the JVM's remote-load ratio. Add CPU placement, supported PMU evidence,
+   throughput/latency and GC percentiles.
 5. **Choose a placement strategy** from the heap-versus-node-size decision, in
    `references/placement-decisions.md`. Set both axes together, or neither.
 6. **Change one variable at a time.** Do not combine `UseNUMA`, `--interleave` and a heap
    resize in the same deploy.
-7. **Re-measure and require both signals.** The miss ratio must fall _and_ the business
-   metric — latency, GC pause p99 — must fall with it. A ratio that improves alone means
-   NUMA was not the dominant bottleneck.
+7. **Re-measure the mechanism and outcome.** Page residence/CPU placement must move as
+   predicted and the business metric must improve within experimental uncertainty. A global
+   allocator counter moving alone cannot validate a JVM-local NUMA change.
 
 ## Rules
 
@@ -56,8 +57,10 @@ evidence and is not.
   whole nodes, `--physcpubind` (`-C`) for specific CPUs. The failure is noisy — unless a
   script swallows it with `|| true`, in which case the JVM starts unbound and nobody
   notices.
-- Never set a memory policy without a CPU policy, or the reverse. `numactl
---cpunodebind=0 --membind=0` is the confining pair.
+- Evaluate CPU and memory policies together, but one-sided changes can be deliberate:
+  interleaving memory while CPUs roam, or binding CPUs while allowing memory fallback. For
+  strict single-node confinement, `--cpunodebind=0 --membind=0` is the pair; it also creates
+  an allocation-failure risk when node 0 cannot satisfy demand.
 - `-XX:+UseNUMA` is implemented by Parallel GC and by G1 (since JDK 14, JEP 345, Linux
   only). Serial accepts it with no effect. On ZGC and Shenandoah it is accepted silently
   and does not govern the collector's NUMA behaviour. Setting `-XX:+UseZGC -XX:+UseNUMA`
@@ -65,30 +68,29 @@ evidence and is not.
 - `numa_miss` is not a `perf` event. The valid PMU events are `node-loads`,
   `node-load-misses`, `node-stores`, `node-store-misses` — and their availability varies by
   SoC, so check `perf list | grep node` first. A missing event is not zero misses.
-- `numastat` without `-p` gives kernel `numa_hit`/`numa_miss`/`numa_foreign` counters per
-  node. `numastat -p <pid>` gives one process's memory distribution across nodes and
-  produces no hit/miss counters at all. Sustained miss ratio above roughly 20–30% is strong
-  evidence of a heap with no affinity.
+- `numastat` without `-p` gives system-wide kernel page-allocation counters such as
+  `numa_hit`/`numa_miss`/`numa_foreign`; these are not hardware remote-access counts and are
+  not process-specific. `numastat -p <pid>` gives page residence by node and no hit/miss
+  counters. Neither supports a universal 20–30% "remote heap" threshold.
 - async-profiler has no NUMA event. `mem:<address>` is a hardware watchpoint on a specific
   address, used for false sharing, not a NUMA facility. Attribute node misses to methods
   with `perf record -e node-load-misses -g` and correlate against an allocation profile
   over the same window.
-- Never `taskset` the whole JVM onto a handful of CPUs. Available CPUs must cover GC
-  threads plus JIT threads plus concurrently active application threads; otherwise GC
-  pauses get longer, not shorter. `--cpunodebind` restricts to a whole node;
-  `--physcpubind`/`taskset -c` on a few CPUs is for fine isolation of a critical thread,
-  not for the process.
-- A large heap on a multi-node host with neither `UseNUMA` nor `numactl` is the worst case,
-  not the neutral one: first-touch scatters pages with no relation to the later access
-  pattern — neither localised nor evenly interleaved.
+- Binding a whole JVM to few CPUs is sometimes the intended tenancy/isolation policy. The
+  required set is determined by measured runnable demand, GC/JIT pause goals and quota — not
+  by summing thread counts, because threads time-share and are not all runnable together.
+  Use `ActiveProcessorCount` when affinity/container detection does not yield the ergonomics
+  you intend, then validate GC and compiler parallelism.
+- An unbound JVM uses Linux first-touch placement and may also be affected by automatic NUMA
+  balancing. That can be good when allocating/accessing threads remain local or poor when
+  they migrate. It is the neutral baseline to measure, not automatically the worst case.
 - `-Xlog:gc+init=debug` reports how many GC workers exist and whether NUMA support is on.
   It never reports which node a worker is on; no unified-logging tag does. Read
   `/proc/<pid>/task/*/stat` field 39 and cross it with `numactl --hardware`.
 - Watch for the `--membind` regression: a bind too restrictive for the configured heap
   produces `OutOfMemoryError`. Monitor failed allocation, not only latency.
-- Export the systemic miss ratio continuously. A heap that starts well distributed degrades
-  over days as GC promotes and threads migrate, and the drift is invisible until it becomes
-  a latency regression.
+- Export page residence, CPU placement, node bandwidth/PMU signals where supported, and SLO
+  outcomes. Do not label the systemic allocator miss ratio as remote heap access.
 
 ## References
 

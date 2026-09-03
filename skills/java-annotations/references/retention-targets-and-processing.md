@@ -48,9 +48,9 @@ consequences:
   helpful case.
 - `RECORD_COMPONENT` is its own target, readable via `RecordComponent.getAnnotation`.
 
-For a constraint that must always apply, declare
-`@Target({FIELD, METHOD, PARAMETER, RECORD_COMPONENT})` and write a test asserting the
-constraint fires for a record, not only for a class.
+Choose targets from the declarations the actual consumer inspects. Adding all four does not make a
+constraint universally enforced and can cause duplicate validation when a framework inspects more
+than one location. Write a record-specific test for the selected access strategy.
 
 ## Inheritance is narrower than it looks
 
@@ -87,25 +87,30 @@ framework feature.
 
 ## Three ways to act on an annotation
 
-| Mechanism                                       | When it runs         | Cost                                                   | Fails when                                                                                                     |
-| ----------------------------------------------- | -------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| Compiler check (`SOURCE`, javac plugin, linter) | build                | none at runtime                                        | never — the strongest option when it fits                                                                      |
-| Annotation processor (JSR 269)                  | build                | build time; generates code you can read                | requires the processor on the annotation path                                                                  |
-| Runtime reflection / scanning                   | startup, or per call | classpath scan at startup; reflective dispatch per use | the annotation is not `RUNTIME`; the module does not open the package; native image has no reflection metadata |
+| Mechanism                                       | When it runs         | Cost                                               | Fails when                                                                                                |
+| ----------------------------------------------- | -------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Compiler check (`SOURCE`, javac plugin, linter) | build                | build/IDE integration; none at runtime             | plugin/tool not configured, version drift, generated-source or incremental-build gaps                     |
+| Annotation processor (JSR 269)                  | build                | build time; generates code you can read            | requires the processor on the annotation path                                                             |
+| Runtime reflection / scanning                   | startup, or per call | scope/index/cache-dependent discovery and dispatch | retention/access mismatch; JPMS access denial; AOT reachability metadata or framework integration missing |
 
 Prefer the highest row that can do the job. Concretely, this is why modern frameworks moved
 validation, mapping and dependency metadata towards processors and build-time transformation:
 
-- **Startup cost.** Scanning a large classpath for annotated types is proportional to the
-  number of classes, and it happens on every process start — multiplied by every replica and
-  every restart in an autoscaling deployment.
-- **Ahead-of-time and native image.** Reflection over an annotation is invisible to static
-  analysis, so every reflectively accessed type must be registered in native image
-  configuration; anything missed fails at runtime, in production, on a path that a JVM run
-  never exercises. See graalvm-native-image.
-- **Module boundaries.** With JPMS, reflective access to a package requires it to be `open`
-  (or `opens ... to`). A framework that cannot open the package silently finds no annotated
-  members.
+- **Startup cost.** Full classpath scanning grows with candidate resources/classes, but indexes,
+  bounded packages and cached metadata change the cost. Measure discovery separately from class
+  loading, verification and framework initialization.
+- **Ahead-of-time and native image.** Dynamic reflective reachability may require framework-
+  generated or supplied metadata; build-time analysis can discover other paths. Test native
+  artifacts against reflection-heavy features rather than assuming every type needs manual
+  registration. See graalvm-native-image.
+- **Module boundaries.** Deep reflection into non-public members generally requires the package
+  to be `open` (or qualified `opens`); exported public API has different access rules. Failures may
+  throw access exceptions rather than silently omit metadata, so test the modular runtime.
+
+Since JDK 24, command-line `javac` does not implicitly run processors discovered only from the
+ordinary class path: configure processing explicitly (`--processor-path`, module path,
+`-processor`, `-proc:full`/`only`, or the build tool's processor dependency mechanism). This both
+stabilizes builds and limits execution of processor code during compilation.
 
 ## Making an annotation observable
 

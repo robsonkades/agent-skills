@@ -4,17 +4,17 @@
 
 For two similar fragments, answer three questions:
 
-1. **Same reason to change?** Enumerate the plausible changes (rate change, new field, new
-   channel, new regulation). For each: would both copies change? Knowledge duplication
-   changes together for _every_ item on the list, not just some.
+1. **Same reason to change?** Enumerate plausible changes (rate, field, channel, regulation).
+   Mark which statements must co-change. A stable shared nucleus may exist even when the full
+   fragments also contain independently varying policy.
 2. **Same owner?** If different teams, aggregates or bounded contexts own the copies, they
    will diverge legitimately. Merging them makes one owner's release depend on another's.
 3. **Is the sameness in the rule or in the shape?** Two methods that both "loop, filter,
    map to `BigDecimal`, sum" share shape. Shape is free to duplicate; the standard library
    already abstracts it. Only the domain rule inside the shape can be knowledge.
 
-Only merge when all three answers point the same way. One "no" means the resemblance is
-incidental.
+Merge only the knowledge for which authority, change reason and ownership align. A "no" narrows
+the extraction boundary; it does not automatically classify every common statement as incidental.
 
 ## Detection heuristics
 
@@ -28,7 +28,8 @@ incidental.
 
 **The wrong abstraction, worth inlining:**
 
-- The shared method takes boolean or enum parameters that callers use to select behaviour.
+- The shared method takes flags whose meaning is caller identity or unrelated behavior, rather
+  than an explicit input/policy of one operation.
 - Callers pass `null`, empty collections or dummy values for parameters that exist only
   for other callers.
 - Each new requirement adds a conditional inside the shared code rather than code at a
@@ -55,17 +56,17 @@ An abstraction is a dependency arrow from every caller. Its price:
 - **Indirection.** Readers must leave the call site to learn what happens — acceptable
   when the name fully summarises the behaviour, costly when it does not.
 
-Duplication's price is the risk of divergence: a fix applied N−1 times. The comparison is
-asymmetric in one way that decides close calls: duplication fails visibly (a missed copy
-shows up as a wrong result in one place), while a wrong abstraction fails structurally
-(every caller slowly bends around it). Prefer the failure you can see.
+Duplication's price is divergent decisions: a fix applied N−1 times. That failure may be silent
+(authorization, rounding, protocol skew), while a wrong abstraction may fail through coupled
+releases and caller-specific branches. Compare detectability, impact and rollback for this
+system rather than assuming either failure is visible.
 
 ## False positives — looks like a violation, is correct
 
-- **Test code.** Tests optimise for being readable in isolation and failing independently.
-  Repeating three lines of arrangement in ten tests is usually better than a shared
-  fixture that couples them; when a scenario needs a paragraph of setup, share a _builder_
-  (which names data), not an _assertion helper_ (which hides the behaviour under test).
+- **Test code.** Tests optimise for local readability and independent diagnosis. Repeated setup
+  can remain local; builders can name complex data. Domain-specific assertion helpers are useful
+  when they improve failure messages and keep the asserted contract visible — avoid helpers that
+  hide which behavior the test establishes.
 - **Two bounded contexts with similar types.** `Customer` in billing and `Customer` in
   shipping sharing a class is not DRY — it is coupling two models that must evolve
   separately. The duplication is the architectural boundary working.
@@ -81,7 +82,8 @@ shows up as a wrong result in one place), while a wrong abstraction fails struct
 
 ## When not to apply the tolerance for duplication
 
-Some knowledge must never have two homes, whatever the rule of three says: monetary
-rounding, tax and fee rules, security checks (authorisation, input sanitisation),
-protocol and format constants. A divergent copy of these is an incident, not a code
-smell. Merge on the second occurrence and pin the single home with a test.
+Some decisions need one authoritative definition from the first repetition: monetary rounding,
+tax/fee policy, authorization policy, protocol/schema constants. Enforcement may still occur at
+multiple trust boundaries and should share conformance/contract tests. Input validation and
+output encoding are not one generic rule: canonical domain constraints can be authoritative,
+while sink-specific controls remain deliberately local. Merge the authority, not every guard.

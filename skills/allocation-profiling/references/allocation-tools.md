@@ -5,17 +5,17 @@ otherwise; the HotSpot file names are from the JDK 25 GA sources.
 
 ## Pick the tool from the question
 
-| Question                                                        | Tool                                                                     | Granularity                                      |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------ |
-| Where do the allocated bytes come from, by source line?         | `asprof -e alloc`                                                        | Full stack, aggregated by bytes                  |
-| Same question, no agent deployable                              | `jcmd <pid> JFR.view allocation-by-site` (JDK 21+)                       | Top frame per sample, from the running recording |
-| What is the sustained allocation rate in continuous production? | JFR `jdk.ObjectAllocationSample`                                         | Sampled, fixed throttle, always on               |
-| Exactly how many bytes did this thread or request allocate?     | `ThreadMXBean.getThreadAllocatedBytes`, `jdk.ThreadAllocationStatistics` | Exact per-thread counter, no stack, no overhead  |
-| Which of the allocated objects are still alive?                 | `asprof -e alloc --live`, `jdk.OldObjectSample`                          | Survivors at session end / at recording end      |
-| How much did _this thread_ waste on TLAB refills?               | `-Xlog:gc+tlab=trace`, `jfr view tlabs` (legacy events)                  | Per thread, per refill; short window             |
-| What is retained in the heap right now?                         | `jcmd GC.class_histogram`                                                | Point-in-time snapshot, not a rate               |
-| How does Eden allocated relate to the interval between GCs?     | GC log                                                                   | Aggregate, correlates to alloc rate              |
-| Bytes per operation of one method                               | JMH `-prof gc`, `gc.alloc.rate.norm`                                     | Exact B/op, isolated from the system             |
+| Question                                                               | Tool                                                                                        | Granularity                                                    |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Where do the allocated bytes come from, by source line?                | `asprof -e alloc`                                                                           | Full stack, aggregated by bytes                                |
+| Same question, no agent deployable                                     | `jcmd <pid> JFR.view allocation-by-site` (JDK 21+)                                          | Top frame per sample, from the running recording               |
+| What is the sustained allocation rate in continuous production?        | JFR `jdk.ObjectAllocationSample`                                                            | Sampled, fixed throttle, always on                             |
+| How many cumulative bytes did this supported platform thread allocate? | `com.sun.management.ThreadMXBean.getThreadAllocatedBytes`, `jdk.ThreadAllocationStatistics` | Counter, no stack; query/recording overhead is low but nonzero |
+| Which of the allocated objects are still alive?                        | `asprof -e alloc --live`, `jdk.OldObjectSample`                                             | Survivors at session end / at recording end                    |
+| How much did _this thread_ waste on TLAB refills?                      | `-Xlog:gc+tlab=trace`, `jfr view tlabs` (legacy events)                                     | Per thread, per refill; short window                           |
+| What is retained in the heap right now?                                | `jcmd GC.class_histogram`                                                                   | Point-in-time snapshot, not a rate                             |
+| How does Eden allocated relate to the interval between GCs?            | GC log                                                                                      | Aggregate, correlates to alloc rate                            |
+| Bytes per operation of one method                                      | JMH `-prof gc`, `gc.alloc.rate.norm`                                                        | Exact B/op, isolated from the system                           |
 
 ## async-profiler alloc mode
 
@@ -56,7 +56,8 @@ not apply, per `ProfilerOptions.md`), and the sampler does not disable escape an
 allocation C2 eliminated never reaches it, which is the property that makes the profile
 trustworthy for "did scalar replacement happen".
 
-Reading the flame graph: box width is **bytes**, not object count. `byte[]` or `char[]` at the
+Reading the flame graph: box width is sampled/weighted **bytes**, not object count; do not present
+it as an exact allocator ledger without reconciling against independent counters. `byte[]` or `char[]` at the
 top usually means `String` — compact strings (JEP 254) store content in those arrays. With
 the TLAB hooks, aqua frames are in-TLAB samples and brown frames outside-TLAB.
 

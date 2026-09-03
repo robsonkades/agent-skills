@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: data-source-patterns
-version: 1.2.0
+version: 1.3.0
 description: >-
   Choosing how code reaches the database — Table Data Gateway, Row Data Gateway, Active
   Record or Data Mapper — from the shape of the domain logic rather than from framework

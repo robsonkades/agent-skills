@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-refactoring
-version: 1.3.0
+version: 1.4.0
 description: >-
   Refactoring mechanics for Java: characterisation tests, small reversible steps, what
   behaviour preservation actually covers, risk classification, and the catalogue —

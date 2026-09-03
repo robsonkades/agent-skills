@@ -1,129 +1,172 @@
-# Sampling engines, coverage and events
+# Sampling engines, events, and access
 
-## Why none of them has safepoint bias
+## Engine semantics
 
-Safepoint-based profilers (JVisualVM, some IDE defaults, historical `hprof`) can only ask
-"where are you?" when a thread has already stopped for another reason. Tight loops with
-no calls — fully inlined and vectorised — go a long time between safepoints, so they are
-under-represented or invisible while consuming most of the CPU; code with frequent
-safepoints is over-represented. The profiler then names the wrong method.
+Do not reduce engine choice to “works/does not work.” The selection mechanism determines the
+population and weight of observations.
 
-`AsyncGetCallTrace` is asynchronous: it can be called from a Unix signal handler
-delivered at any point of execution, including inside C2-compiled code. `cpu`, `itimer`,
-`ctimer` and `wall` all build on that (or the equivalent broad sweep), so none of them
-depends on a safepoint. Attributing a difference between engines to safepoint bias is a
-layer error — the real distinction is signal fairness, which is a different property.
+| Mechanism                                        | Selects                                                      | Useful for                                           | Costs and omissions                                                                  |
+| ------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Linux perf-events CPU                            | thread after configured CPU/event count                      | on-CPU Java/native/kernel attribution; PMU events    | perf access, per-thread resources, PMU/skid/multiplexing, kernel-symbol policy       |
+| Per-thread CPU timer (`ctimer`, where supported) | CPU time consumed by each thread                             | on-CPU attribution without perf-event access         | no perf kernel call chain; timer/platform resolution; signal overhead                |
+| Process CPU timer (`itimer`)                     | process CPU timer expiration delivered to an eligible thread | fallback/portable compatibility                      | uneven thread selection; no perf kernel chain; timer resolution                      |
+| Wall-clock                                       | eligible thread set on elapsed-time schedule                 | running plus off-CPU residency                       | volume/overhead scales with thread population; sampled state is not causal wait time |
+| JVMTI/JVM allocation event                       | sampled allocation activity                                  | allocation sites/estimated volume                    | sampling/threshold semantics; does not establish retention                           |
+| Lock event                                       | thresholded/sampled contended waits                          | monitor/park contention supported by release         | omits uncontended cost and non-lock queues                                           |
+| Instrumentation/hooking                          | selected calls/allocations                                   | exact selected call count/latency or native lifetime | perturbation scales with event frequency; semantic coverage depends on hooks         |
 
-## The three CPU engines
+All stack-sampling modes aim to avoid classic safepoint-only observation, but that does not
+make them unbiased. Signal coalescing, unsafe points, unwinder failure, eligibility, timer
+resolution, skid, event thresholds, rate limiting, lost events, and thread-state transitions
+still shape the sample.
 
-| Attribute                                | `cpu` (perf_events)                                                  | `itimer`                                                                              | `ctimer`                                  |
-| ---------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------- |
-| Kernel mechanism                         | `perf_event_open`, one fd per thread                                 | `setitimer(ITIMER_PROF)`, one per process                                             | `timer_create()`, one timer per thread    |
-| Kernel stack traces                      | Yes                                                                  | No                                                                                    | No                                        |
-| Resolution                               | High (CPU nanoseconds)                                               | Tick-limited (`1/HZ`, 1–10 ms) — POSIX CPU timers are expired from the scheduler tick | Tick-limited, same mechanism              |
-| Fair distribution across threads         | Yes — signal goes to the thread whose counter overflowed             | No — one process-wide signal, uneven across active threads                            | Better than `itimer`, still jiffy-limited |
-| Works under restrictive seccomp/paranoid | No, by default                                                       | Yes                                                                                   | Yes                                       |
-| Consumes file descriptors                | Yes (one per thread)                                                 | No                                                                                    | No                                        |
-| Works on macOS                           | No                                                                   | Yes (with limits)                                                                     | No (Linux-specific)                       |
-| Automatic fallback                       | Falls back to `ctimer`, then `wall`, silently                        | —                                                                                     | —                                         |
-| Native (C) stack                         | Yes — `--cstack vm` default since 4.2, `fp`/`dwarf`/`vmx` selectable | Yes, same walker                                                                      | Yes, same walker                          |
+## Proving the engine
 
-Practical reading: on an unrestricted Linux host use `-e cpu`. In a container with the
-default seccomp profile, or when only Java/JIT frames are wanted, `-e ctimer` is
-equivalent for Java-frame attribution and needs no capability. `itimer` is reserved for
-platforms where `ctimer` does not exist, notably macOS.
+For every recording retain:
 
-## The wall engine
+```text
+asprof version and package checksum
+target JVM version/build and PID namespace
+`asprof list <pid>` output
+exact start/stop command and profiler log
+requested event and interval/threshold
+reported status/metrics
+output event classes, counts, weights, lost/dropped indicators
+```
 
-`-e wall` does not wait for a signal. A dedicated collector wakes on the configured
-interval and iterates the JVM's internal list of Java threads, taking a sample from each
-one regardless of its state. A thread in `Thread.sleep()`, blocked on `synchronized`, or
-parked in `LockSupport.park()` still has an observable stack; it merely is not on a CPU.
+A generic `cpu` request can map/fall back differently by release and platform. If the precise
+engine is part of the experiment, request it explicitly where the pinned version permits and
+fail or label the recording when unavailable. Kernel-frame absence alone is not definitive:
+user-only mode and symbol restrictions can produce the same appearance.
 
-Total coverage is inherent to the design, not an option. `-t` (`--threads`) appends a
-thread-identifying frame to the end of each collected stack — output labelling, not
-sample selection.
+## CPU, wall, and wait interpretation
 
-## Expected sample counts per 60 s
+CPU sampling probability is approximately proportional to CPU/event consumption, so idle
+threads contribute little or nothing. Wall sampling visits eligible threads by elapsed time,
+so a large idle pool can dominate counts. A wall stack at `park` means the thread resided
+there when sampled; it does not say whether the cause was healthy idleness, a saturated
+connection pool, rate limiting, or downstream delay.
 
-Order of magnitude for one thread at 100% CPU — measure it in the target environment.
+Thread grouping and filtering are distinct:
 
-| Engine            | Default interval            | Samples in 60 s                                   |
-| ----------------- | --------------------------- | ------------------------------------------------- |
-| `cpu`             | 10 ms (100 Hz)              | ~6,000                                            |
-| `ctimer`/`itimer` | jiffy-limited (≥ 4 ms)      | ~6,000–15,000 depending on kernel `HZ`            |
-| `wall`            | 10 ms, configurable by `-i` | ~6,000 **per visited thread**, idle ones included |
+- `--threads` retains/group-labels thread identity in supported non-JFR outputs;
+- JFR output carries event thread metadata under its own schema;
+- `--filter` restricts collection to supported thread IDs/modes;
+- include/exclude frame filters change retained output, not necessarily collection overhead.
 
-Different engines produce different sample counts for the same duration, so the relative
-error of a narrow frame differs between them. Read the sample count before treating a
-0.3% frame as signal — optimising it and seeing no throughput change is the profiler
-keeping a promise it never made.
+Validate behavior on the pinned release, especially for batched wall events and virtual
+threads. An application thread name can be reused; keep thread ID, lifecycle, state, and
+request/task context when correlation matters.
 
-## What blocks `perf_events` in a container
+## Linux perf access: independent layers
 
-Four independent layers, checked in this order by the kernel, and each fails with the
-same `Perf events unavailable` message. Diagnose from the outside in.
+`perf_event_open` can fail at several layers. The exact order and errno depend on kernel,
+container runtime, LSM, and profile, so inspect the deployed configuration rather than using
+a universal container table.
 
-| Layer                                          | What it does                                                                                                                                                                                                  | Check                                                                     | Fix                                                                                                                                                                 |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| seccomp                                        | Docker's default profile allows `perf_event_open` (and `bpf`) **only when the container holds `CAP_SYS_ADMIN`**; there is no `CAP_PERFMON` rule, so `--cap-add PERFMON` alone still gets `EPERM` from seccomp | `grep Seccomp /proc/<pid>/status` (`2` = filter active)                   | `--security-opt seccomp=unconfined` or a custom profile, then the capability below. Kubernetes pods are `Unconfined` unless `seccompProfile: RuntimeDefault` is set |
-| capability                                     | `CAP_PERFMON` (5.8+) or `CAP_SYS_ADMIN` makes the process privileged for `perf_events` and **bypasses `perf_event_paranoid`** (kernel `perf-security.rst`). Root inside a container has neither by default    | `grep CapEff /proc/<pid>/status`, decode with `capsh --decode`            | `--cap-add PERFMON` (with the seccomp fix) or `securityContext.capabilities.add: [PERFMON]`; `SYS_ADMIN` is the wide hammer                                         |
-| `kernel.perf_event_paranoid`                   | Host sysctl, not namespaced. Unprivileged: ≤ 1 allows kernel stacks, 2 (upstream default) user-space only, 3 (Debian/Ubuntu patch) nothing                                                                    | `cat /proc/sys/kernel/perf_event_paranoid`                                | At 2: `--all-user` (async-profiler does not retry user-only by itself). At 3: `--fdtransfer`, a capability, or `-e ctimer`                                          |
-| `kernel.kptr_restrict` + `perf_event_mlock_kb` | `kptr_restrict ≠ 0` zeroes `/proc/kallsyms` for the unprivileged, so kernel frames stay as addresses; the mmap limit caps the 8 kB per-thread buffers                                                         | `kernel symbols are unavailable` / `perf_event mmap failed` in the output | `sysctl kernel.kptr_restrict=0`; raise `ulimit -l` or `kernel.perf_event_mlock_kb`                                                                                  |
+| Layer                     | Inspect                                                                   | Engineering choice                                                                |
+| ------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Kernel/PMU support        | kernel logs, virtualization PMU exposure, a minimal `perf`/profiler probe | enable PMU or use supported software/timer event                                  |
+| `perf_event_paranoid`     | host `/proc/sys/kernel/perf_event_paranoid`; distro kernel docs           | user-only event, lower policy, or privileged helper according to threat model     |
+| Capabilities              | actual effective/bounding/ambient sets                                    | narrow `CAP_PERFMON` where kernel/runtime support it; avoid broad `CAP_SYS_ADMIN` |
+| Seccomp/LSM               | effective seccomp profile, audit/AppArmor/SELinux logs                    | allow the exact syscall/access or choose another engine                           |
+| Limits/resources          | file-descriptor and locked-memory limits, thread count                    | raise scoped limit, reduce population, or use timer engine                        |
+| PID/filesystem namespaces | target visibility and shared `/tmp`/library/output paths                  | align namespaces or use approved host/sidecar/startup route                       |
+| Symbols                   | kernel restrictions, build IDs, debug packages, map files                 | collect matching symbols or explicitly report unresolved frames                   |
 
-`--fdtransfer` sidesteps seccomp, capability and paranoid at once: a privileged helper
-opens the descriptor and passes it to the unprivileged target over a Unix socket
-(`SCM_RIGHTS`). The kernel only ever sees the privileged process calling
-`perf_event_open`. It needs one privileged process somewhere — on the host or in a
-sidecar sharing the PID namespace.
+`--all-user` excludes kernel events/call-chain contribution where supported; it is a
+fidelity/security trade, not a capability. An fd-transfer helper moves privileged descriptor
+creation outside the target, but the helper itself is a privileged component with socket,
+namespace, lifecycle, and authorization obligations.
 
-## Attach is a different mechanism
+Never change a host-wide sysctl merely to obtain one profile without evaluating all tenants.
+Document the previous value and rollback if a policy exception is approved.
 
-HotSpot's dynamic attach is a Unix socket at `/tmp/.java_pid<PID>` that the JVM creates
-on `SIGQUIT` when it finds `.attach_pid<PID>`. The JVM accepts a peer only with its own
-effective uid and gid; `asprof` switches credentials to match when it runs as root, and
-fails with `Failed to change credentials to match the target process` otherwise. Nothing
-here touches `perf_events`, and nothing in `perf_events` touches this — which is why
-"I added the recommended capability and it still does not work" is so common: a
-capability was granted for the wrong mechanism. From a sidecar, share the PID namespace
-(`shareProcessNamespace: true`) and run as the JVM's uid; from the host, run as root.
+## Dynamic attach
 
-## Error message to cause
+Attach failures and perf failures are orthogonal. Diagnose:
 
-| `asprof` output                                               | Cause                                                                                                               | Remedy                                                                                                 |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `Perf events unavailable`                                     | One of the four layers above; also WSL and hypervisors without PMU virtualisation                                   | Walk the table top-down; `--fdtransfer` or `-e ctimer` when the host cannot be changed                 |
-| `perf_event mmap failed: Operation not permitted`             | 8 kB × threads exceeds the locked-memory limit                                                                      | `ulimit -l`, `kernel.perf_event_mlock_kb`, or fewer threads in `--filter`                              |
-| `Could not start attach mechanism: No such file or directory` | `/tmp/.java_pid*` deleted by a tmp cleaner, `-XX:+DisableAttachMechanism`, or a different `/tmp` (chroot/container) | `lsof -p <pid> \| grep java_pid`; `kill -3 <pid>` to confirm the JVM responds; use the target's `/tmp` |
-| `Failed to change credentials to match the target process`    | Profiler uid/gid differs from the JVM's and the profiler is not root                                                | Run as the JVM's user, or as root                                                                      |
-| `Target JVM failed to load libasyncProfiler.so`               | The **JVM**, not `asprof`, opens the library and the output file                                                    | Absolute path readable by the JVM's uid; `-f` path writable by the JVM                                 |
-| `VMStructs unavailable. Unsupported JVM?`                     | No `gHotSpotVMStructs` symbols — non-HotSpot, stripped, or missing debug symbols                                    | Install the JDK's debug symbols; `--cstack fp` as a fallback                                           |
-| Kernel frames as raw addresses                                | `kptr_restrict ≠ 0`, or paranoid 2 without a capability                                                             | `sysctl kernel.kptr_restrict=0 kernel.perf_event_paranoid=1`                                           |
-| Java stacks missing, native only                              | `-XX:MaxJavaStackTraceDepth=0`, or attach after JIT without `DebugNonSafepoints` (inlined frames only)              | `--cstack vm` ignores `MaxJavaStackTraceDepth`; restart with the diagnostic flags                      |
+1. Is the target PID visible in the profiler's namespace?
+2. Do profiler and target see the same attach rendezvous filesystem (commonly `/tmp`)?
+3. Is HotSpot attach enabled and responsive on this runtime?
+4. Are credentials accepted by the OS/HotSpot attach implementation?
+5. Can the target process—not merely the `asprof` client—read and load the library and write
+   the output path?
+6. Do container policies permit the signals, socket, ptrace-like observation, and filesystem
+   access involved in this deployment?
 
-## Thread state to JFR event
+Do not send diagnostic signals blindly: JVM signal use, process supervisors, and application
+handlers can differ. Prefer official `asprof` diagnostics and the target runtime's attach
+documentation.
 
-| State seen in `wall`                | Cause in code                                  | JFR equivalent                      | In `-e lock`? |
-| ----------------------------------- | ---------------------------------------------- | ----------------------------------- | ------------- |
-| `java.lang.Thread.sleep`            | explicit `Thread.sleep()`                      | `jdk.ThreadSleep`                   | No            |
-| `sun.nio.ch.EPollSelectorImpl.wait` | async socket/NIO I/O                           | `jdk.SocketRead`/`SocketWrite`      | No            |
-| `java.lang.Object.wait`             | `wait()`/`notify()`                            | `jdk.JavaMonitorWait`               | No            |
-| entering `synchronized`             | contended Java monitor                         | `jdk.JavaMonitorEnter`              | **Yes**       |
-| `j.u.c.locks.LockSupport.park`      | `ReentrantLock`, `Semaphore`, pools (HikariCP) | `jdk.ThreadPark`                    | **Yes**       |
-| `ForkJoinPool.awaitWork`/`.scan`    | FJP worker with no work                        | no dedicated event — idle in `wall` | No            |
+## Native and kernel stacks
 
-`-e lock` with JFR output emits both `jdk.JavaMonitorEnter` and `jdk.ThreadPark` under
-the same event category. One session covers `synchronized` and `j.u.c.locks` contention
-together — broader than the naive reading of "lock means synchronized", and it is what
-stops connection-pool waiting being misattributed to monitor contention.
+Native stack quality depends on every frame in the chain. Frame-pointer walking is fast but
+breaks when any relevant binary omits/repurposes frame pointers. Unwind metadata may be more
+complete but costlier and has platform/tool support constraints. VM-aware walkers understand
+HotSpot transitions but are coupled to exported VM metadata and tested JVM layouts.
 
-## Hardware PMU counters
+Keep these separate:
 
-`-e <counter>` (`cache-misses`, `branch-misses`, `cycles`, …) configures
-`perf_event_open` for that counter. A core has only 4–8 general-purpose performance
-registers depending on microarchitecture; asking for more simultaneous events than that
-forces the kernel to time-multiplex the counters and extrapolate each total from the
-fraction of time it was actually counting. async-profiler applies the scale correction
-automatically, but the variance of each individual estimate rises with every extra event.
-For a high-confidence cache- or branch-miss investigation, run one hardware event at a
-time.
+- **collection:** was the instruction pointer/call chain captured?
+- **unwinding:** could frames be reconstructed?
+- **symbolization:** could addresses be mapped to names/lines?
+- **semantic attribution:** does that stack represent application ownership?
+
+Unknown names are not zero cost, and symbols do not prove causality. Store module maps,
+build IDs, container image digest, debug-symbol source, and ASLR-relevant metadata with the
+recording where offline symbolization is required.
+
+## PMU events
+
+Hardware counter names and meanings are microarchitecture-specific. Generic events can map
+imperfectly; virtualized and heterogeneous cores complicate interpretation. Counter overflow
+samples have skid, and simultaneous events may be multiplexed when physical counters are
+insufficient. Scaling corrects counts for time enabled/running but does not restore lost
+temporal precision or remove variance.
+
+Protocol:
+
+1. identify CPU model/topology and event encoding;
+2. state whether the metric is sampled location or counted rate;
+3. record time-enabled/time-running or equivalent multiplexing evidence;
+4. collect cycles/instructions/context when interpreting misses or branches;
+5. repeat on pinned cores/host class when the claim depends on hardware;
+6. corroborate with end-to-end throughput/latency and a causal experiment.
+
+“This method has many cache-miss samples” is not the same as “optimizing it reduces cache
+miss rate or latency.”
+
+## Java allocation, live objects, native memory, and locks
+
+- Allocation mode attributes creation; it does not identify retained dominators. Sampling
+  intervals and TLAB/outside-TLAB mechanisms affect coverage.
+- Live allocation filtering at recording end is window- and GC-dependent. Surviving a short
+  recording does not prove a leak; dying before the end does not prove harmlessness.
+- Native-memory hooks cover the allocator APIs/interposition paths the profiler implements.
+  Custom arenas, direct syscalls, device memory, other processes, and ownership transfers may
+  be absent.
+- Lock thresholds weight supported contended waits, not all latency. Queueing before a lock,
+  I/O, condition protocols, and scheduler delay require other evidence.
+
+## Version-sensitive checks
+
+Before adopting a command from this repository, check the pinned tag's release notes and
+help for:
+
+- supported platforms/architectures and JDKs;
+- default and available stack walkers (`dwarf` may be an alias in newer releases);
+- virtual-thread reconstruction limitations;
+- event-combination syntax and `--all` behavior;
+- batching, rate-limit categories, memory/chunk limits;
+- converter package/options and OTLP/JFR schema behavior;
+- removed commands and renamed options.
+
+## Authoritative references
+
+- [async-profiler README](https://github.com/async-profiler/async-profiler/blob/master/README.md)
+- [Profiler options](https://github.com/async-profiler/async-profiler/blob/master/docs/ProfilerOptions.md)
+- [Release changelog](https://github.com/async-profiler/async-profiler/blob/master/CHANGELOG.md)
+- [Linux kernel perf security](https://docs.kernel.org/admin-guide/perf-security.html)
+- [`perf_event_open(2)`](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) — Linux
+  man-pages project documentation for event attributes, permissions, and errors.

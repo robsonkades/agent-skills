@@ -1,20 +1,15 @@
 schemaVersion: 1
 
 name: jvm-performance-review
-version: 1.2.0
+version: 1.3.0
 description: >-
-  Auditing a supplied JVM configuration artefact: a command line or JVM_OPTS, a Kubernetes
-  manifest with resource limits, a GC log or JFR summary offered as evidence, or a bare
-  request for flags. Use when asked to review JVM flags, when inheriting forty accumulated
-  flags, when a JDK upgrade needs old flags checked, when approving a collector or heap
-  change, or when someone asks for "flags to fix p99" — where the answer is usually a
-  missing measurement. Returns prioritised findings, each with the measurement that confirms
-  or kills it. A bare request for flags belongs here even with no artefact: the deliverable
-  is the refusal and the measurement to take. A symptom for diagnosis starts at
-  java-performance. Not the process (performance-methodology), profiler choice
-  (jfr-and-async-profiler), GC log depth (gc-log-analysis), collector and heap sizing
-  (jvm-gc-tuning), container detection (container-awareness), -Xlog construction
-  (unified-logging), source review (code-review), or CI gating (performance-regression-ci).
+  Auditing JVM configuration evidence across the supplied command, effective runtime flags,
+  target JDK build, container/cgroup envelope, workload lifecycle, and stated SLO. Classifies
+  flags by support and origin, detects masking, duplicates and ergonomic interactions, prices
+  heap/non-heap/CPU/startup trade-offs, and emits prioritized falsifiable findings rather than
+  folklore flag lists. Use for JVM options, Kubernetes manifests, JDK upgrades, collector/heap
+  proposals, or claims that a flag fixes latency. Symptom diagnosis, deep GC tuning, profiler
+  selection, and unified-log construction have separate owners.
 
 license: Apache-2.0
 
@@ -43,5 +38,9 @@ files:
 suggests:
   - container-awareness
   - gc-log-analysis
+  - java-performance
+  - jdk-upgrade-impact
+  - jfr-and-async-profiler
   - jvm-gc-tuning
   - jvm-memory-regions
+  - unified-logging

@@ -1,145 +1,94 @@
-# Proving false sharing and fixing it
+# Proving and fixing false sharing
 
-## Hardware counters
+## Hypothesis table
 
-```bash
-perf stat -e cache-misses,cache-references,L1-dcache-load-misses,\
-LLC-load-misses,node-load-misses \
-    java -jar app.jar
+| Hypothesis                       | Supporting observation                            | Discriminator                                 |
+| -------------------------------- | ------------------------------------------------- | --------------------------------------------- |
+| true CAS/data contention         | same logical value and retries                    | shard semantics or locked baseline            |
+| false sharing                    | independent writers, same line, coherence traffic | separate lines/owners without semantic change |
+| ordinary cache capacity/locality | misses track working set/read access              | block/compact/locality change                 |
+| scheduler/NUMA effect            | migration/socket/remote memory alignment          | controlled placement/first-touch              |
+| GC/JIT/load confounder           | aligned runtime phase/work changes                | matched window and runtime evidence           |
+
+## PMU protocol
+
+Use `perf list`/tool discovery for the exact CPU. Event names and meaning differ by Intel/AMD/Arm,
+kernel and perf version. Some useful coherence signals can distinguish local/remote HITM or snoop
+responses, but may be unavailable in VMs/containers.
+
+Record:
+
+```text
+CPU model/microcode, sockets/NUMA/SMT
+event encoding and semantic source
+user/kernel/process/CPU/cgroup scope
+time enabled/running and multiplex ratio
+sample period, lost samples, skid and symbol coverage
+thread/core placement and migrations
 ```
 
-The signal is `cache-misses` and `LLC-load-misses` disproportionately high relative to the
-volume of data the code actually touches — few bytes per logical operation, many misses per
-physical operation.
+Never substitute generic cache-miss counts for ownership invalidations without a stated limitation.
 
-## Two flame graphs over the same interval
+## Controlled perturbations
 
-```bash
-./profiler.sh -e cpu -d 30 -f cpu.html <pid>
-./profiler.sh -e L1-dcache-load-misses -d 30 -f l1miss.html <pid>
+Choose one:
+
+- place independent fields in verified contention groups;
+- increase array stride/alignment;
+- make updates owner-local and combine later;
+- stripe independent cells;
+- batch writes to reduce coherence frequency.
+
+Hold algorithmic semantics, useful work, writer mapping and memory lifecycle constant as far as
+possible. When a mitigation changes consistency (for example `LongAdder`), it is not a pure false-
+sharing experiment; report the semantic factor.
+
+## JMH shape
+
+Use shared benchmark state and per-thread role state so each worker deterministically targets its
+assigned logical variable. Include an invariant/result so updates are not eliminated. Avoid
+`@Group` configurations whose actor ratios/slot mapping differ from production.
+
+Run topology blocks:
+
+```text
+same physical core/SMT siblings
+different cores same socket
+different sockets/NUMA nodes
+container cpuset/quota configuration
 ```
 
-Frames prominent in the L1-miss profile but modest in the CPU profile are strong
-candidates: the time is not spent computing, it is spent waiting for the line to arrive.
+Not every environment permits reliable pinning. Record actual placement and report uncertainty.
 
-## Confirming the layout with JOL
+## Result criteria
 
-JOL is the reference tool for inspecting real field layout and header size, including the
-effect of `@Contended` and of Compact Object Headers. It is maintained by **Aleksey
-Shipilëv** at [github.com/openjdk/jol](https://github.com/openjdk/jol) under the OpenJDK
-project (not by Nitsan Wakart — a common misattribution).
+The claim “false sharing materially caused the regression” requires:
 
-```java
-// org.openjdk.jol:jol-core — check Maven Central for the current version;
-// the API used below has been stable since the early 0.x releases.
-import org.openjdk.jol.info.ClassLayout;
+- verified independent variables and same-line placement in baseline;
+- supported coherence evidence consistent with writer invalidation, or explicit limitation;
+- a separation/ownership change reduces coherence/retry CPU in the same operation;
+- useful throughput/tail/CPU per operation improves across relevant topology;
+- correctness/consistency are unchanged or the change is explicit;
+- footprint/allocation/GC/locality do not create a worse production trade.
 
-System.out.println(ClassLayout.parseInstance(new PaddedCounter()).toPrintable());
+## Troubleshooting
+
+```text
+@Contended shows no layout change
+  -> restriction flag, annotation target/group, wrong JDK/launch, class-file metadata
+layout changes but performance does not
+  -> not false sharing, insufficient write rate/topology, other bottleneck
+performance improves but coherence counter does not
+  -> changed alignment/locality/codegen/work; investigate before attribution
+only cross-socket regression
+  -> remote coherence/NUMA/placement; production scheduler topology matters
+padding causes GC/cache regression
+  -> ownership/batching/striping alternative or keep baseline
 ```
 
-Run under `--add-exports` plus `-XX:-RestrictContended`, the output shows the padding bytes
-inserted around the annotated field explicitly — the direct way to confirm the annotation
-is taking effect, rather than trusting a throughput delta. Run with
-`-XX:+UseCompactObjectHeaders`, the same command shows the 8-byte header and the
-corresponding shift of the first field.
+## Authoritative references
 
-## What JFR can and cannot do here
-
-JFR has no false-sharing event. Do not confuse it with monitor-contention events such as
-`jdk.JavaMonitorEnter` — false sharing passes through no monitor at all. The indirect
-signal is `jdk.ExecutionSample` showing CPU time in methods doing trivial arithmetic,
-correlated with the hardware counters above. Treat JFR here as a tool for temporal
-correlation — _when_ the pattern appeared — not for detection.
-
-## Mitigation decision matrix
-
-| Strategy                                      | When to use                                                                                                                   | Cost                                                                 |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `@Contended`                                  | Few hot fields, high concurrent write frequency, and you control the deploy flags (`--add-exports`, `-XX:-RestrictContended`) | +128 bytes per annotated field (padding before and after)            |
-| Manual padding fields                         | Environments where module flags cannot be added; portability to JVMs that do not implement `@Contended`                       | Fragile — see the field-layout discussion; requires JOL confirmation |
-| Array with stride                             | Per-thread or per-shard counters in an indexable collection                                                                   | +7× memory per useful slot (stride of 8 longs to protect 1)          |
-| Thread-local accumulation with periodic flush | Very high frequency counters where even `LongAdder`'s `sum()` overhead does not pay                                           | Temporal precision lost — the global value lags until the flush      |
-| `LongAdder` / `LongAccumulator`               | Aggregate counter under high contention where the exact value is read only occasionally                                       | `sum()` is O(number of cells); unsuitable for a hot-path read        |
-
-## Stride
-
-```java
-class StridedCounters {
-    // 8 longs per entry = 64 bytes = one whole cache line per logical counter.
-    private final long[] data = new long[N_THREADS * 8];
-
-    void increment(int threadId) { data[threadId * 8]++; }
-
-    long total() {
-        long sum = 0;
-        for (int i = 0; i < N_THREADS; i++) sum += data[i * 8];
-        return sum;
-    }
-}
-```
-
-## Thread-local accumulation
-
-```java
-class ThreadLocalCounter {
-    private long localCount = 0;
-    private final LongAdder global;
-    private static final int FLUSH_THRESHOLD = 1000;
-
-    void increment() {
-        if (++localCount >= FLUSH_THRESHOLD) {
-            global.add(localCount);
-            localCount = 0;
-        }
-    }
-}
-```
-
-## Adjacent objects
-
-```java
-Metrics m1 = new Metrics(); // thread 0 writes here
-Metrics m2 = new Metrics(); // thread 1 writes here
-// Allocated in sequence in the same TLAB, m1 and m2 can land on the same
-// cache line or on neighbouring ones when each object is small.
-```
-
-Prefer grouping per-thread data into a single object with explicit internal padding over
-spreading individual objects that depend on an allocation accident not to collide. With
-Compact Object Headers enabled the risk rises slightly for small objects, since more of
-them fit per line.
-
-## Triage checklist
-
-- [ ] Does throughput really worsen, or scale sub-linearly, as threads are added — with
-      high CPU and no obvious I/O wait?
-- [ ] Is there any logically shared variable between the threads (lock, `Atomic*`,
-      collection)? If so, rule out real data contention before suspecting false sharing.
-- [ ] Are there `volatile` or atomic fields written at high frequency by different threads
-      and physically close — same class, or an array without stride?
-
-## Observation checklist
-
-- [ ] `perf stat` run with `cache-misses` and `LLC-load-misses`; are the numbers
-      disproportionate to the data volume touched?
-- [ ] `cpu` flame graph compared against an `L1-dcache-load-misses` flame graph over the
-      same interval; do the hot frames diverge?
-
-## Measurement checklist
-
-- [ ] The benchmark uses JMH — not a manual `Thread[]` with `System.nanoTime()` — with
-      `@Warmup`, `@Measurement`, `@Fork`, and real contending threads via
-      `@Group`/`@GroupThreads` or `@Threads` as the design requires.
-- [ ] If the candidate fix uses `@Contended`, does the fork include `--add-exports` **and**
-      `-XX:-RestrictContended`? Confirmed via JOL that the padding was actually inserted?
-- [ ] Results compared across three or more forks, not a single run.
-
-## Validation checklist
-
-- [ ] Is the throughput gain the order of magnitude that eliminating an RFO round trip
-      predicts — and not a disproportionately "magical" improvement, which signals another
-      variable changed at the same time?
-- [ ] Has the additional memory footprint from padding been weighed against the service's
-      memory budget?
-- [ ] Was the fix tested at the real production thread count, not merely at the development
-      machine's core count?
+- [Linux perf security](https://docs.kernel.org/admin-guide/perf-security.html)
+- [Linux perf list/stat documentation](https://man7.org/linux/man-pages/man1/perf-stat.1.html)
+- [OpenJDK JMH](https://github.com/openjdk/jmh)
+- [OpenJDK JOL](https://github.com/openjdk/jol)

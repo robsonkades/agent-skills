@@ -1,13 +1,15 @@
 # Costs, and when not to apply immutability
 
-Immutability buys freedom from aliasing bugs, free thread-safety and honest equality. It
+Deep immutability removes many aliasing/data-race states and simplifies equality; it does not make
+methods using mutable external collaborators automatically thread-safe. It
 is paid for in allocation, copying and API surface. This reference is the ledger — read it
 before converting a mutable class, and before rejecting immutability "for performance".
 
 ## The costs, stated as mechanisms
 
-- **Allocation per change.** Every state transition allocates a new instance; a wither on
-  an n-component record copies n references. Escape analysis _may_ eliminate the
+- **Allocation per change.** A changed immutable value normally produces another instance (an
+  unchanged operation may return `this` or a canonical value); a wither passes/assigns n
+  components. Escape analysis _may_ eliminate the
   allocation when the instance does not escape the compiled scope — it is never a promise,
   and it fails silently under inlining limits and deoptimisation. Claiming "the JIT will
   remove it" and claiming "this allocation is killing us" carry the same burden: an
@@ -33,11 +35,12 @@ before converting a mutable class, and before rejecting immutability "for perfor
   Rewriting it as fold-over-immutable-copies adds allocation for zero safety. Mutable
   inside, immutable at the boundary (`List.copyOf`/`Stream.toList()` on return) is the
   idiom.
-- **Entity frameworks.** JPA/Hibernate entities are contractually mutable: proxies,
-  lazy loading and dirty checking require settable state and no-arg construction. An
-  immutable @Entity fights the framework it lives in. Keep entities mutable; put the
-  immutability at the domain-value level (embeddables, record DTOs, values mapped in and
-  out).
+- **Entity frameworks.** Portable Jakarta Persistence entities need framework-compatible
+  construction and proxy/access semantics, but they do not universally require public setters;
+  field access exists, and Hibernate offers read-only/immutable mappings with limitations.
+  Aggregate evolution, lazy associations and dirty checking often make ordinary entities mutable.
+  Choose from provider requirements and update semantics; immutable domain values/DTOs around a
+  mutable persistence model remain a robust default, not a law.
 - **Framework-managed binding targets** generally — configuration holders, form-binding
   beans — where the framework populates fields after construction by design. (Constructor
   binding, where the framework supports it, restores immutability; use it when offered.)
@@ -50,10 +53,22 @@ before converting a mutable class, and before rejecting immutability "for perfor
 
 ## False positives when "immutability" is the review finding
 
-- A setter-free class with a mutable field that **never escapes and is never mutated
-  after construction** is functionally immutable; flag the missing copy only if a route
-  actually exists.
+- A setter-free class with a mutable referent that **never escapes and is never mutated through
+  any alias after construction** can be observationally immutable. Prove constructor callers do
+  not retain a mutable alias before dismissing the missing copy.
 - "This should be a persistent data structure" — the JDK does not ship one; the honest
   alternatives are copy-on-write (measure it) or confined mutation.
 - "Immutable objects are slower" / "the JIT makes them free" — both unmeasured. The only
   admissible form of either claim names the mechanism and shows the profile.
+
+## Measure the decision
+
+For a proposed conversion, compare allocation rate/bytes, retained heap, GC CPU/pause,
+copy volume, cache locality and contention—not only operation throughput. Use production-shaped
+graph sizes and mutation frequency; validate that a “faster” mutable form remains confined under
+failure/cancellation and that an immutable form does not accidentally retain old graph versions.
+
+## Authoritative references
+
+- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)
+- [Hibernate ORM 7 immutability annotation](https://docs.jboss.org/hibernate/orm/7.0/javadocs/org/hibernate/annotations/Immutable.html)

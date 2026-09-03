@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-decorator
-version: 1.1.0
+version: 1.2.0
 description: >-
   Decorator in modern Java: wrapping an object in something of its own interface to add behaviour,
   stackably, at runtime — and the fact that the stacking order changes the semantics. Covers the
@@ -40,7 +40,7 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
+dependencies: []
 
 suggests:
   - caching-strategies

@@ -9,13 +9,15 @@
 | Full (both)         | either reads either                      | **any order**                   | additive-optional only                                       |
 | Breaking            | neither direction holds                  | none — coordinate or don't ship | rename, retype, narrow, reuse a number, add a required field |
 
-Only the "full" row survives a rolling deploy, because during one both versions are running
-and neither is "first". Every single-step change to a shared schema must therefore be
-additive-optional; anything else is a three-deploy sequence.
+Full compatibility permits arbitrary producer/consumer coexistence. A controlled consumer-
+first or producer-first rollout can rely on one direction, but only when services are deployed
+separately, rollback pairs remain compatible, and no durable/cached data introduces the other
+pair. Within one mixed-version process fleet, additive optional evolution is usually safest.
 
-The window over which both directions must hold is the **retention of the data**, not the
-length of the deploy: seven days for an event on a seven-day topic, the lifetime of the rows
-for a persisted column, the TTL for a cached payload.
+The horizon includes deployed old clients, rollback, caches/topics, DLQ/manual replay, backups
+and archives. New readers may need to read old data for its retained/replay lifetime; old
+readers need new-writer compatibility until they are gone (and during rollback). Do not assume
+one symmetric retention window.
 
 ## Expand → migrate → contract
 
@@ -41,28 +43,27 @@ Everything below is about compatibility. Which format is _cheaper_ — bytes on 
 allocation and throughput — is serialization-performance's question, and the two decisions
 are independent: a format can be cheap and evolve badly, or the reverse.
 
-**JSON.** Nothing on the wire enforces anything, so compatibility is a property of the
-readers. Consumers must ignore unknown fields — Jackson's `FAIL_ON_UNKNOWN_PROPERTIES` is
-enabled by default and Spring Boot's auto-configured mapper disables it, so a hand-built
-`new ObjectMapper()` is the shape that breaks on an additive producer change. Never change a
-field's type, including a numeric id to a string. Define absent versus `null` versus empty
-once, in the contract. Publish a JSON Schema and verify it in CI, or the contract is
-whichever implementation was deployed last.
+**JSON.** Compatibility is reader/writer behavior, not guaranteed by syntax. If additive
+fields are part of the policy, readers must ignore/retain them as required; a strict reader
+makes addition breaking. Jackson defaults differ by framework/configuration, so test the
+actual `ObjectMapper`. Changing type or absent/null/empty semantics is breaking unless a
+union/coercion transition is explicit. JSON Schema helps shape, not business semantics or
+runtime configuration.
 
-**Protobuf.** Field _numbers_ are the identity; names are not on the wire (they are in the
-JSON mapping). Never reuse either — `reserved 4, 7;` and `reserved "old_name";` make the
-compiler enforce it. The varint family (`int32`, `int64`, `uint32`, `uint64`, `bool`) is
-mutually wire-compatible, so widening `int32` to `int64` is safe and narrowing truncates
-silently; changing between different wire types is not compatible at all. proto3 singular
-scalars have no presence, so declare `optional` when unset must be distinguishable from zero.
-Give every enum a zero-valued `UNSPECIFIED` member and give every reader a default branch: an
-unrecognised value arrives as its number, not as an error.
+**Protobuf.** Field numbers are binary identity; names affect generated/JSON/TextFormat APIs.
+Reserve removed numbers and names. Some scalar changes share a wire type, but parseability is
+not semantic/full compatibility: a new `int64` value can truncate in an old `int32` reader,
+and signed encodings differ in cost/meaning. Follow the official safe-change matrix and test
+maximum values both ways. Proto3 implicit presence conflates absent/default; `optional` or
+message fields restore it, while Editions default to explicit presence. Give enums a zero
+`UNSPECIFIED` and test generated-language unknown-value behavior.
 
-**Avro.** Decoding needs both the writer's and the reader's schema, and resolution is by field
-name. Add fields only with a default, and remove only fields that have one — without a
-default there is no value for the other side to use. Renames use `aliases`, which map the old
-name onto the new one for readers. A union's default must correspond to its first branch, so
-reordering a union's branches changes what the default means.
+**Avro.** Decoding uses writer and reader schemas; record fields resolve by name/aliases.
+Adding a reader field needs a default to consume old data; deleting a writer field is forward-
+compatible only if old readers already have a default. Aliases are reader-side resolution aids,
+so registry/tooling must evaluate the actual pair. Union ordering affects binary branch indices
+and default interpretation; follow the deployed Avro spec/version rather than assuming a rename
+is transparent.
 
 ## When a new version is genuinely required
 
@@ -75,12 +76,12 @@ Ship a new major version when:
 
 Avoid a new version when:
 - the change is an optional field, a new endpoint, or a new enum value for which every
-  reader has a defined default branch
+  deployed/generated reader has tested unknown-value behaviour
 - the change is only to human-readable text, diagnostics or documentation
 
 Prefer expand-and-contract instead when:
-- the change is breaking but the two shapes can coexist for one retention window, which is
-  true of every rename, widening and split
+- the change is breaking but both shapes can coexist through the measured compatibility
+  horizon; widening is not automatically safe for old readers accepting larger new values
 - the client population cannot be made to move on your schedule — a public API, mobile
   clients, partner integrations — so "both versions are live" is a fact rather than a plan
 ```
@@ -106,3 +107,22 @@ against every registered consumer's expectations and blocks its deploy — run n
 documents breakage instead of preventing it. And error responses need recorded interactions
 too: a suite covering only happy paths leaves the error contract, which is the part clients
 branch on, entirely unverified.
+
+## Evolution gates
+
+- Build a matrix from real schema artifacts and generated clients for each supported version/
+  language; do not rely only on registry compatibility labels.
+- Exercise rollback: new writer to old reader is often missed by forward-only deployment tests.
+- Test unknown JSON fields/enums, absent/null/default, numeric boundaries, malformed/oversized
+  data and security validation.
+- Inventory payloads outside the live broker: DLQ, object storage, audit exports, backups,
+  mobile offline queues and webhook retries.
+- Gate contraction on observed usage plus completion of retention/replay and restore tests—not
+  merely elapsed deployment time.
+
+## Primary references
+
+- [Protocol Buffers: updating a message type](https://protobuf.dev/programming-guides/proto3/#updating)
+- [Protocol Buffers field presence](https://protobuf.dev/programming-guides/field_presence/)
+- [Apache Avro specification: schema resolution](https://avro.apache.org/docs/current/specification/#schema-resolution)
+- [JSON Schema specification](https://json-schema.org/specification)

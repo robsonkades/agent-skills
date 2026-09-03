@@ -1,20 +1,17 @@
 schemaVersion: 1
 
 name: structured-logging
-version: 1.3.0
+version: 1.4.0
 description: >-
-  Logs as queryable events rather than prose: named fields instead of interpolated
-  sentences, the correlation ids every event carries and the MDC lifecycle behind them, the
-  encoder and sync-versus-async appender choice and what each loses, levels as a contract
-  with the on-call, redaction at the encoder, and volume as a cost. Use when finding
-  something in the logs needs a regex, when MDC is empty on a handed-off thread or stale on
-  a pooled one, when INFO events vanish under load while WARN survives, when the trace id
-  key is traceId in one service and trace_id in another, when a handled-and-retried failure
-  is logged at ERROR, when e.getMessage() is concatenated and the stack trace is gone, or
-  when a request body or a token reaches an appender. Not label cardinality
-  (metrics-and-cardinality), span design (distributed-tracing-design), trace propagation
-  cost (opentelemetry-performance), the exception hierarchy (java-exception-design), context
-  mechanics (scoped-values), or alerting policy (slo-and-alerting).
+  Designing application logs as governed event schemas: choosing events and fields,
+  correlation and context lifecycle, exception and severity semantics, synchronous versus
+  buffered delivery, overload/drop behavior, injection prevention, data minimization,
+  integrity/retention and measurable cost. Use when logs require regex parsing,
+  correlation is missing or stale across async work, events disappear under load, fields
+  drift between services, failures are duplicated, secrets or untrusted text reach logs,
+  or logging appears in latency profiles. Metric labels belong to
+  metrics-and-cardinality; span topology to distributed-tracing-design; JVM -Xlog to
+  unified-logging.
 
 license: Apache-2.0
 

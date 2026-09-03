@@ -29,94 +29,111 @@ a hot call that was not inlined or an allocation that survived. The mechanism is
 
 ## Workflow
 
-1. **Measure the allocation, do not infer it from the code.** Under JMH, `-prof gc` gives
-   `gc.alloc.rate.norm` — bytes per operation. In any other harness,
-   `com.sun.management.ThreadMXBean.getCurrentThreadAllocatedBytes()` around N warmed
-   iterations whose result is consumed gives the same number. In production,
+1. **Measure the allocation, do not infer it from source.** Under JMH, `-prof gc` estimates
+   normalized bytes per operation for the benchmark fork. A controlled harness can use a
+   supported/enabled `com.sun.management.ThreadMXBean`, but must subtract harness work,
+   isolate the measured thread and confirm compilation state; it is not automatically the
+   same experiment. In production,
    `jdk.ObjectAllocationSample` in JFR names the most-allocated types; `allocation-profiling`
    owns the attribution.
-2. **Read the result as near-binary.** Scalar replacement either removes the allocation or
-   it does not. If you expect zero and see the object's size, something made it escape; a
-   multiple of the size means it escapes and is allocated more than once.
-3. **Find the boundary before theorising, in this order:** a call the object crosses that
-   was not inlined (`-XX:+PrintInlining`, tier-4 tree, the verdict names the limit); a rare
-   branch that has actually executed; a store into a field, array, static or another
-   thread; an array that is not constant-length, constant-index and at most 64 elements; a
-   merge of two allocations. Only then the analysis itself.
+2. **Reconcile bytes with object layout and compilation.** A repeatable delta close to an
+   aligned object size is a useful hypothesis, not identity proof: boxing, lambda objects,
+   arrays, harness/class-init work and different compiled paths contribute too. Compare
+   allocation profiles/types and the same compile id before attributing the bytes.
+3. **Find the boundary before theorising:** non-inlined/unknown calls; returns or stores to
+   heap/global/thread-visible state; identity-sensitive uses; merges, arrays and indices C2
+   cannot scalarize; or profile-dependent paths excluded from the current graph. Use the
+   inlining log and `escape-analysis-internals`; do not infer an escape category from one
+   source construct.
 4. **For a non-inlined hot call, pick the fix from the verdict**, not from the flag list:
    `hot method too big` wants the callee's rare part extracted, `virtual call` wants fewer
    types at that site, `inlining too deep` wants a flatter chain, `already compiled into a
 big method` means the callee grew. Refactor first; `CompileCommand` to confirm in the lab;
    a global limit last, measured process-wide. See
    `references/inlining-verdicts-and-fixes.md`.
-5. **Quantify what the analysis is delivering** with `-XX:-DoEscapeAnalysis` before and
-   after, and `-XX:-EliminateAllocations` to separate scalar replacement from lock elision.
-   Then ask whether the allocation is on the critical path at all — a TLAB bump costs a few
-   nanoseconds and its GC cost is the subject of `gc-fundamentals` — before changing code
-   for it.
+5. **Isolate factors in a disposable benchmark fork.** Compare EA/allocation/lock-elision
+   switches only as diagnostic experiments; they are global and change many compilations.
+   Then establish whether retained CPU, allocation rate, GC or tail latency matters to the
+   service before accepting a less maintainable source shape.
 
 ## Rules
 
-- Inlining is the doorway to escape analysis. A method that is not inlined is an opaque
-  box, and an object crossing that boundary is allocated even when the callee only reads
-  it — measured 24 B/op for a two-field object passed to a `dontinline` callee. A refused
-  hot call does not cost you a call; it costs the whole chain of downstream optimisations.
-- **The JVM does not allocate objects on the stack.** HotSpot performs scalar replacement:
-  the object is decomposed into variables and ceases to exist. That is not the same as
-  moving it to another memory region, and the difference changes what you expect to
-  measure.
-- The analysis is **flow-insensitive**, with one profile-shaped exception. A branch on
-  which the object escapes marks it escaping on every path — but only once that branch has
-  executed. A branch never taken during profiling is pruned with an uncommon trap and the
-  object stays `NoEscape` (0 B/op measured); the first time it runs, the method recompiles
-  with the branch present and the object escapes on **every** iteration thereafter
-  (24 B/op). A benchmark that never triggers the rare event reports a number production
-  loses at the first incident. Construct the object inside the rare branch, or pass its
-  fields to a method that does.
-- `ArgEscape` permits lock elision only, not scalar replacement. Measured: `synchronized`
-  on an object passed to an opaque callee ran at 2.8 ns/op with the lock elided and
-  12.7 ns/op without, while the allocation stayed at 24 B/op in both.
-- Splitting a large method into small ones usually **improves** the result: each part
-  becomes more easily inlinable and the common path shrinks. Do not merge methods to avoid
-  calls, and do not let a method grow past `HugeMethodLimit` (8000 bytecode bytes) — above
-  it the method is never compiled, prints nothing in any compiler log, and shows up only as
-  interpreted frames in a profiler.
-- Pooling small objects usually makes things worse: storing the object in a pool makes it
-  escape and forces an allocation that would not have existed. Pools are for large or
-  expensive-to-construct objects — and even then, measured, because the pool has its own
-  cost.
-- Megamorphic call sites cost through **lost optimisation**, not through dispatch. One or
-  two receiver types inline; three or more inline only the receiver that holds at least
-  `TypeProfileMajorReceiverPercent` (90%) of the profile, behind a guard, and otherwise
-  the verdict is `virtual call` regardless of callee size. The profile belongs to the
-  bytecode, so a shared helper is megamorphic for every caller once any caller made it so.
-- `@ForceInline` and `@DontInline` are `jdk.internal.vm.annotation` and are honoured only
-  for boot and platform loader classes. On application code they compile (with
-  `--add-exports`) and change nothing — measured. The application-level tools are
+- Inlining commonly exposes object uses to C2's connection graph and downstream
+  optimisations. A non-inlined ordinary Java call is usually an escape boundary, but
+  intrinsics and compiler-known methods are exceptions. A refused call can cost more than
+  dispatch—constant propagation, scalar replacement and dead-code elimination may also stop.
+- **Current HotSpot C2 scalar replacement is not stack allocation.** The object is
+  decomposed into scalar values and ceases to exist in optimized code. That is not the same as
+  moving it to another memory region. Deoptimization may rematerialize virtual objects, so
+  preserve debug/deopt semantics when interpreting assembly and profiles.
+- C2's connection-graph escape state is generally flow-insensitive for code retained in the
+  compiled graph. An unobserved path may initially be removed behind an uncommon trap; if it
+  later executes, deoptimization/recompilation can produce a different graph. One execution
+  does not guarantee a permanent state. Exercise realistic rare paths and correlate each
+  allocation result with compilation/deoptimization history.
+- In current C2, `ArgEscape` is not enough for scalar replacement; it may still enable some
+  lock elimination. Treat measured nanoseconds and byte counts as benchmark-specific.
+- Splitting rare/cold work can improve inlining, but extra boundaries can also block it.
+  Refactor around the measured hot graph. `HugeMethodLimit` and `DontCompileHugeMethods` are
+  implementation policy: scope the 8,000-byte observation to JDK/build and check known
+  version/policy exceptions in `compilation-and-inlining-logs`.
+- Pooling small objects often adds escape, retention, synchronization/cache traffic and stale
+  state risk. Consider it only for resources with measured construction/lifecycle cost and a
+  bounded ownership protocol; compare against ordinary allocation plus GC under load.
+- Polymorphic sites can cost through dispatch and lost optimisation. C2 records a bounded
+  receiver profile and may guard-inline dominant types; exact width/percent thresholds and
+  behavior are version-specific. Profile data belongs to a bytecode call site and can be
+  affected by all executions reaching that site, especially shared helpers.
+- `@ForceInline` and `@DontInline` are unsupported internal annotations. The tested JDK 25
+  build honored them only for privileged boot/platform classes; class-path use with exports
+  changed nothing. Do not depend on that implementation detail. Application experiments use
   `-XX:CompileCommand=inline|dontinline`, compiler directives and JMH `@CompilerControl`,
   and all three are lab tools, not the fix.
-- A lambda is not an escape path by itself. A lambda capturing an object, consumed by an
-  inlined call, allocates nothing (0 B/op measured, primitives or objects); the lambda
-  object and everything it captured allocate together once the lambda reaches a
-  non-inlined callee, a field, a queue or an executor (40 B/op). Ask where the **lambda**
-  goes.
-- `Optional` and streams are free only while the whole chain is one compilation unit.
-  `Optional.of(i).map(f).orElse(0)` inlined end to end measured 0 B/op; the same
-  `Optional` returned from a non-inlined method, 28 B/op. A stream pipeline is several
-  objects behind interface calls, most of them refused as `no static binding` or
-  `callee is too large`; `IntStream.range(0, 4).sum()` measured 56 B/op and the plain loop 0. On a hot path that is a design choice, not something to expect EA to remove.
-- Arrays are scalar-replaced only when the length is constant, at most
-  `EliminateAllocationArraySizeLimit` (64) elements, **and every index is constant**.
-  `new int[8]` written at `a[i & 7]` allocates 48 B/op; the same array at `a[3]`, 0.
-- `cond ? new A(...) : new B(...)` was a guaranteed escape before JDK 22; since
-  `ReduceAllocationMerges` (JDK-8287061) it scalar-replaces (0 B/op on 25, 24 with the
-  flag off). Do not carry the "never merge allocations" rule forward unmeasured.
-- Reflection is opaque, not merely slow. An object passed to `Method.invoke` escapes
-  because the compiler cannot prove otherwise. A constant `MethodHandle` is transparent and
-  can preserve the behaviour.
+- A lambda/capture, `Optional` or stream is not intrinsically free or allocating. Its
+  allocation depends on linkage, caching, inlining, escape and the exact pipeline. Use the
+  measured JDK 25 examples in the reference as observations, never as API cost guarantees.
+- C2 array scalar replacement has stricter implementation limits than object scalar
+  replacement, commonly requiring constant small length and analyzable constant offsets.
+  `EliminateAllocationArraySizeLimit=64` is a tested JDK 25 policy value, not a Java rule.
+- Some same-shape allocation merges became scalar-replaceable with
+  `ReduceAllocationMerges` work delivered from JDK 22. Eligibility depends on classes,
+  control flow and uses; do not carry either “merges always escape” or “merges are free”
+  across JDKs without evidence.
+- Reflection/method-handle transparency depends on constant targets, modern reflection
+  implementation, linkage and inlining. `Method.invoke` is not universally opaque after
+  JEP 416, and a `MethodHandle` is not automatically transparent. Measure the concrete chain.
 - Partial escape analysis in Graal exists precisely for the flow limitation — it decides
   per path rather than per method. Graal left the JDK with JEP 410 (JDK 17); using it is
   `graalvm-jit`.
+
+## Decision framework
+
+| Observation                                            | Prefer                                                              | Avoid until proven                             |
+| ------------------------------------------------------ | ------------------------------------------------------------------- | ---------------------------------------------- |
+| allocation survives but is not hot/retained            | keep readable code                                                  | pooling or API distortion                      |
+| non-inlined hot boundary blocks several optimisations  | extract cold work or specialize a local hot path                    | global inlining limits                         |
+| rare escape invalidates common-path scalar replacement | construct on the rare path or pass scalars, if semantics stay clear | benchmark that never exercises the path        |
+| polymorphic shared site loses inlining                 | isolate stable call sites or redesign only with profile evidence    | type checks added solely to game C2            |
+| JDK upgrade changes allocation/code shape              | compare compile logs, bytes/op, CPU and tails                       | pinning an obsolete compiler heuristic forever |
+
+The production acceptance test is not “0 B/op”. Require the same behavior, maintainable code,
+improved relevant SLO/resource metric under realistic concurrency, no code-cache/compile-time
+regression, and stable results across supported JDK/CPU variants.
+
+## Troubleshooting
+
+```text
+Allocation or latency regression
+  ↓ correlate deploy/JDK, allocation type+stack, compile id and deoptimizations
+Expected call did not inline
+  ↓ read the C2 verdict at the exact call site; inspect profile/size/node budget
+Call inlined but allocation remains
+  ↓ inspect stores/returns/identity/array/merge and escape-analysis limits
+Allocation disappears in JMH only
+  ↓ exercise production receiver mix, rare paths, exceptions and framework boundaries
+Bytes improve but service does not
+  ↓ measure CPU, GC, tails, code cache and bottleneck migration; revert complexity if no value
+```
 
 ## References
 
@@ -126,6 +143,6 @@ big method` means the callee grew. Refactor first; `CompileCommand` to confirm i
   allocation-related code.
 - [From an inlining verdict to a code change](references/inlining-verdicts-and-fixes.md) —
   the limits with their JDK 25 defaults and what each measures, the verdict-to-fix table,
-  polymorphism outcomes, why `@ForceInline` does nothing for you, the method that never
-  compiles, the cost of raising a limit, and how all of it behaves in production. Read when
+  polymorphism outcomes, why internal inlining annotations are not an application contract,
+  huge-method exclusion, the cost of raising a limit, and production behavior. Read when
   a hot call was refused and the next step is unclear.

@@ -12,10 +12,10 @@ java -XX:+PrintFlagsFinal -version \
   | grep -E 'DoEscapeAnalysis|EliminateAllocations|EliminateLocks'
 ```
 
-All three must be `true`. The realistic risk is not that they were turned off deliberately
-but that a startup script inherited from an older JVM still disables one of them, or
-carries a `-XX:CompileCommand=dontinline` nobody remembers. `-XX:+PrintFlagsFinal` prints
-`{command line}` instead of `{default}` in the last column for anything a script set.
+For the ordinary C2 scalar-replacement experiment, confirm these optimisations are enabled
+and record command-line origins. An inherited disable or `dontinline` directive changes the
+question being measured. Flag names/classes are implementation details; first check that the
+exact JDK recognizes them.
 
 | Flag                                    | Default | Class      | Controls                                                          |
 | --------------------------------------- | ------- | ---------- | ----------------------------------------------------------------- |
@@ -34,20 +34,21 @@ carries a `-XX:CompileCommand=dontinline` nobody remembers. `-XX:+PrintFlagsFina
 java -jar target/benchmarks.jar -prof gc MyBenchmark
 ```
 
-`gc.alloc.rate.norm` is bytes allocated per operation. It is deterministic given the same
-code and compilation, which makes it far more reliable than a timing number, and it is
-effectively binary for this question:
+`gc.alloc.rate.norm` estimates normalized bytes allocated per benchmark operation. It is
+often more stable than nanosecond timing for an elimination question, but harness activity,
+compilation path, object layout and profiler support still matter. Treat the following as
+hypothesis patterns, not a decoder:
 
-| Expected | Observed                | Reading                                    |
-| -------- | ----------------------- | ------------------------------------------ |
-| 0 B/op   | 0 B/op                  | scalar replacement happened                |
-| 0 B/op   | the object's exact size | something made it escape — find the path   |
-| 0 B/op   | a multiple of that size | it escapes and is allocated more than once |
+| Expected | Observed                 | Reading                                                          |
+| -------- | ------------------------ | ---------------------------------------------------------------- |
+| 0 B/op   | repeatable 0 B/op        | candidate allocation was likely eliminated; corroborate          |
+| 0 B/op   | near aligned object size | one object-shaped allocation likely survives; profile type/stack |
+| 0 B/op   | a repeatable multiple    | several allocations or iterations/path effects; attribute them   |
 
-An object's size is a 12-byte header padded to 8-byte alignment plus its fields, with
-compressed class pointers on: a two-`int` object is 24, an `Integer` 16, a lambda capturing
-one reference 16, an `int[8]` 48. Knowing the sizes lets you read _which_ object survived
-from the sum.
+The listed JDK 25 default-layout examples used compressed class pointers, 8-byte alignment
+and non-compact headers. Compact headers, pointer modes, alignment, subclass fields and array
+layout change the sizes. Use JOL/`object-layout-and-footprint` on the same VM, then treat a
+size match as a lead rather than proof of identity.
 
 To quantify what the analysis is actually delivering, run the same benchmark with
 `-XX:-DoEscapeAnalysis` and compare. "The JIT resolves it" is exactly as unverified as
@@ -57,19 +58,22 @@ lock-elision gain; `-XX:-EliminateLocks` does the reverse.
 
 ## Outside JMH
 
-The same number in any harness, including a production-shaped integration test:
+A controlled approximation in another harness, including a production-shaped integration
+test, can use allocated-thread bytes when the implementation supports and enables it:
 
 ```java
 var tmx = (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
+if (!tmx.isThreadAllocatedMemorySupported()) throw new UnsupportedOperationException();
+if (!tmx.isThreadAllocatedMemoryEnabled()) tmx.setThreadAllocatedMemoryEnabled(true);
 for (int w = 0; w < 15; w++) sink += run(n);          // warm into C2 first
 long before = tmx.getCurrentThreadAllocatedBytes();
 sink += run(n);                              // consume the result, or C2 removes the work
 System.out.println((tmx.getCurrentThreadAllocatedBytes() - before) / (double) n + " B/op");
 ```
 
-The warm-up matters twice: the number must come from C2 code, and it must come from a
-profile that has already seen every path the production code takes — a rare branch not yet
-taken reports the pre-incident number (see the table).
+Also measure/subtract an empty harness path, isolate work performed on other threads, and
+record compilation/deoptimization events. Warm-up must cover representative receiver/path
+mix; “fifteen” is an example, not a convergence criterion.
 
 ## Measured outcomes on JDK 25
 
@@ -100,9 +104,10 @@ taken reports the pre-incident number (see the table).
 | `synchronized (new Object())` — B/op and ns/op                  | 0, 0.2 ns                           | 16, 13 ns |
 | `synchronized (p)` with `p` `ArgEscape` — B/op and ns/op        | 24, **2.8 ns**                      | 24, 13 ns |
 
-What the table says in one sentence: escape analysis is thorough inside one compilation
-unit and helpless across its boundary, and the boundary is drawn by inlining, by a taken
-branch, by a store, and by the array rules. `opto/escape.cpp` names the array cases
+What the table says about this program/build: inlining exposed many objects to C2, while
+ordinary opaque calls, retained escape paths and array-offset limits blocked several
+eliminations. Compiler-known calls/intrinsics are exceptions, and another JDK can differ.
+`opto/escape.cpp` names array cases
 directly — "has a non-constant length", "has a length that is too big", "has field with
 unknown offset" — and the last is the variable index.
 
@@ -117,7 +122,8 @@ turn one into the other.
 jfr print --events jdk.ObjectAllocationSample recording.jfr
 ```
 
-`jdk.ObjectAllocationSample` is enabled in `default.jfc`; the TLAB events are not
+`jdk.ObjectAllocationSample` is enabled in the referenced default configuration; it is a
+sample, not an allocation census. The TLAB events are not
 (JDK-8257602, JDK 16), so a zero from `jdk.ObjectAllocationInNewTLAB` proves only that the
 session did not enable it. For each of the top allocated types, ask in order:
 
@@ -129,7 +135,8 @@ session did not enable it. For each of the top allocated types, ask in order:
    changes at the first incident, not at the deploy
 5. Is it captured by a lambda that itself escapes? The capture is not the escape; the
    lambda's destination is.
-6. Does it reach `Method.invoke`? Reflection is opaque, so it escapes by construction.
+6. Does it cross reflection or method-handle machinery? Since JEP 416, constant reflective
+   objects may optimize differently from non-constant targets; inspect the actual chain.
 
 ## Reading the inlining chain
 
@@ -139,28 +146,28 @@ java -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining -XX:CompileCommand=quiet 
 ```
 
 Scope it with `CompileCommand=PrintInlining,Class::method` or it prints every compilation
-in the process. Read the tree under the **tier-4** line — the tier-3 tree above it is C1's
+in the process. Under default tiered policy, read the C2/tier-4 tree—the tier-3 tree is C1's
 and says `callee is too large` for anything over 35 bytes regardless of hotness. On the
 hot path, three verdicts matter most:
 
 - `hot method too big` — the callee exceeds `FreqInlineSize` (325 bytecode bytes).
   Everything downstream of that frontier loses escape analysis, constant propagation and
   dead-code elimination. Extract the callee's rare part so the hot remainder fits.
-- `virtual call` — three or more receiver types and none at 90%. Inlining stops, and with
-  it every optimisation in that stretch. The cost appears far from the call site, in what
-  stopped being optimised.
+- `virtual call`—C2 found no usable static/guarded target under the current bounded receiver
+  profile and policy. Inspect the actual type distribution and profile-width overflow rather
+  than applying a universal “three types/90%” rule.
 - `already compiled into a big method` — the callee's own machine code exceeds
   `InlineSmallCode` (2500 bytes), usually because it was compiled first and grew.
 
-C2 never prints `megamorphic`, `too large` or `not inlined`. The full verdict list and the
+C2 in this build did not print `megamorphic`, `too large` or `not inlined`. The full verdict list and the
 fix for each is `inlining-verdicts-and-fixes.md`.
 
 ## Before optimising an allocation
 
 - [ ] The allocation was **measured**, not inferred from reading the code
-- [ ] The measurement came from a profile that had seen every path, including the rare one
-- [ ] The allocation is on the critical path — a TLAB bump is a few nanoseconds; its real
-      cost is GC pressure, and that is measured in allocation rate, not per-object
+- [ ] The measurement exercised representative common, rare, exceptional and receiver paths
+- [ ] The allocation affects a relevant metric—CPU, allocation/GC pressure, memory footprint
+      or tail latency—under realistic concurrency
 - [ ] The object is large or expensive to construct — otherwise manual reuse probably makes
       it worse
 - [ ] A baseline exists from before the change, under the same load
@@ -168,3 +175,12 @@ fix for each is `inlining-verdicts-and-fixes.md`.
 
 The last one is not ceremony. Manual object reuse routinely regresses
 `gc.alloc.rate.norm` by turning a scalar-replaced object into a pooled, escaping one.
+
+## Primary references
+
+- [HotSpot C2 escape analysis source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/escape.cpp)
+- [HotSpot C2 macro expansion/scalar replacement](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/macro.cpp)
+- [ThreadMXBean allocated-memory API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/com/sun/management/ThreadMXBean.html)
+- [JFR runtime guide](https://docs.oracle.com/en/java/javase/25/jfapi/flight-recorder-runtime-guide.html)
+- [JEP 416: Reimplement Core Reflection with Method Handles](https://openjdk.org/jeps/416)
+- [JDK-8287061: reduce allocation merges](https://bugs.openjdk.org/browse/JDK-8287061)

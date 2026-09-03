@@ -29,32 +29,41 @@ public enum Auditor {
 }
 ```
 
-| Form            | Reflection                                   | Deserialisation                                | Lazy                                              | Substitutable in a test    |
-| --------------- | -------------------------------------------- | ---------------------------------------------- | ------------------------------------------------- | -------------------------- |
-| 1. public field | broken by `setAccessible(true)`              | needs `readResolve` + all fields `transient`   | no                                                | no                         |
-| 2. factory      | same                                         | same                                           | no                                                | only by changing the class |
-| 3. holder       | same                                         | same                                           | yes, correctly — class init is the JVM's own lock | no                         |
-| 4. enum         | `Constructor.newInstance` refuses enum types | handled by the deserialisation of enums itself | no                                                | no                         |
+| Form            | Reflection                                                  | Deserialisation                            | Lazy                                       | Substitutable in a test    |
+| --------------- | ----------------------------------------------------------- | ------------------------------------------ | ------------------------------------------ | -------------------------- |
+| 1. public field | deep reflection may bypass, subject to access/module policy | needs `readResolve` for canonical identity | eager when enclosing class initializes     | no                         |
+| 2. factory      | same                                                        | same                                       | eager when enclosing class initializes     | only by changing the class |
+| 3. holder       | same                                                        | same                                       | deferred until holder class initialization | no                         |
+| 4. enum         | standard reflective construction rejects enum types         | enum deserialization preserves constants   | eager when enum class initializes          | no                         |
 
-Forms 1–3 need this to survive deserialisation, and it is routinely forgotten:
+Serializable forms 1–3 need this to preserve canonical identity, and it is routinely forgotten:
 
 ```java
-private Object readResolve() { return INSTANCE; }   // and every field declared transient
+private Object readResolve() { return INSTANCE; }
 ```
 
-Form 3 is the correct answer to "make it lazy" — the JVM's class-initialisation lock gives
-publication for free, with no volatile read on the hot path. Double-checked locking with a
-`volatile` field is correct too but has no advantage here and one more way to be written
-wrong; java-memory-model has the analysis. Lazy initialisation is worth it only when the
-object is expensive _and_ often unused: it turns a startup cost into a first-request
-latency spike, which is a worse trade for a service with an SLO than for a CLI.
+`transient` is a separate state/attack-surface decision: `readResolve` discards the deserialized
+replacement object's identity, but its non-transient graph was still read and could be costly or
+unsafe.
+
+The holder is a strong choice for parameterless, class-loader-lifetime lazy initialization: the
+JVM's class-initialization protocol safely publishes it without a per-access volatile read.
+Correct double-checked locking requires `volatile` and may be justified when initialization must
+live outside class initialization or support another lifecycle; it carries more state-machine
+surface. java-memory-model has the proof. Laziness helps only when deferred/unused work outweighs
+the first-use latency and sticky class-initialization failure risk.
+
+Class initialization also has a sticky failure mode: an exception becomes
+`ExceptionInInitializerError`, and later active uses in that class loader can fail with
+`NoClassDefFoundError` rather than retrying initialization. Do not hide recoverable network or
+configuration discovery inside a holder; make retry/backoff/lifecycle an explicit service policy.
 
 ## What none of the forms defend against
 
-**Testability.** Every form above hard-codes the identity of the collaborator into every
-caller. Nothing can substitute it, so tests either run against the real thing or reach for
-static mocking. The alternative costs one line: declare an interface (or just the class),
-inject it, and let the composition root decide there is exactly one. "Singleton" then
+**Testability.** When used as a collaborator, every form above hard-codes its retrieval into
+callers. Substitution then requires the singleton itself to expose a seam or tests to use static
+mocking. Prefer injecting an interface or concrete class and let the composition root decide
+there is exactly one. "Singleton" then
 describes the _lifecycle a container gives the bean_, not a construction pattern welded into
 the type. This is the same argument as java-dependency-inversion's seam test — apply that
 skill's rule about not inventing an interface with no second implementation.
@@ -71,10 +80,11 @@ reach production:
   application class — a static registry, a `ThreadLocal` on a pooled container thread, a JDBC
   driver, a shutdown hook. Metaspace grows on every redeploy; java-reference-types-and-leaks
   has the diagnosis path.
-- Static state in a class initialised during an AOT/CDS training run or a native-image build
-  is captured at build time, not at start time. Anything that reads configuration, the clock,
-  or the environment in a static initialiser therefore freezes the _builder's_ environment
-  into the image; startup-cds-crac-leyden and graalvm-native-image cover the mechanics.
+- Static initialization timing depends on the deployment technology. Native Image may initialize
+  selected classes at build time; CRaC captures state at checkpoint; ordinary CDS primarily
+  archives class metadata and does not imply that arbitrary application statics were evaluated at
+  training time. Audit configuration, clock, randomness, credentials and open resources against
+  the actual image/checkpoint policy; startup-cds-crac-leyden and graalvm-native-image own details.
 
 **Concurrency.** `INSTANCE` being final and safely published says nothing about the object's
 methods. A shared instance is by definition reached from every request thread at once, so
@@ -88,11 +98,12 @@ normal:
 
 ```java
 private static final Logger LOG = LoggerFactory.getLogger(Ledger.class);
-private static final Pattern ACCOUNT = Pattern.compile("[A-Z]{2}\d{8}");
+private static final Pattern ACCOUNT = Pattern.compile("[A-Z]{2}\\d{8}");
 private static final Set<String> RETRYABLE = Set.of("503", "504");
 ```
 
-Deeply immutable, built from constants, no environment read. These are not:
+The set/pattern are deeply immutable constants; the conventional logger is process-scoped
+infrastructure whose initialization/lifecycle belongs to the logging system. These are not:
 
 ```java
 private static final Map<String, Session> SESSIONS = new ConcurrentHashMap<>();  // unbounded, per-JVM
@@ -108,15 +119,22 @@ the port the JDK already ships.
 
 ## Review checks
 
-- [ ] Every singleton is either an enum, or is container-managed with an interface at the
-      call sites — not a hand-rolled static that no test can replace.
-- [ ] Any `Serializable` hand-rolled singleton has `readResolve` and transient fields.
-- [ ] No `static` non-final field, and no `static final` field holding a mutable object,
-      other than the immutable-constant shapes above.
+- [ ] A singleton's required scope, lifecycle, substitution seam and concurrency contract are
+      explicit; enum/container/holder selection follows those requirements.
+- [ ] Any `Serializable` hand-rolled singleton uses `readResolve`; serialized fields are reviewed
+      independently for state, compatibility and security.
+- [ ] Static mutable objects are justified as process/class-loader scoped, concurrency-safe and
+      lifecycle-bounded—not assumed global merely because the reference is `final`.
 - [ ] No static collection that grows with request volume; anything cached is bounded.
-- [ ] No static initialiser that reads configuration, the clock, the environment or the
-      network — including transitively.
+- [ ] Static initialization that reads configuration, clock, randomness, environment or network
+      is audited for class-init failure, test isolation, image/checkpoint timing and refresh needs.
 - [ ] Anything the code treats as globally unique (a lock, a scheduler that "must run once",
       a sequence) is checked against the replica count; if it must be cluster-unique, it is
       backed by a lease or an election, not by `static`.
 - [ ] Utility classes have a private constructor that throws, and are `final`.
+
+## Authoritative references
+
+- [JLS §12.4.2: Detailed Initialization Procedure](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.4.2)
+- [Java Object Serialization: enum constants](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/serial-arch.html#serialization-of-enum-constants)
+- [ObjectInputStream readResolve model](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/ObjectStreamClass.html)

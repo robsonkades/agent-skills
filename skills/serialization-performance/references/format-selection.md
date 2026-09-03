@@ -1,113 +1,142 @@
-# Choosing a format
+# Format-selection scorecard
 
-## The three wire-encoding families
+Do not select from a universal scenario-to-format table. Score the exact boundary, implementation,
+version, and workload. A format family does not guarantee performance or compatibility quality in
+every language binding.
 
-| Strategy                     | How a field is found                                                                     | Formats                  | Decode cost                                                                            |
-| ---------------------------- | ---------------------------------------------------------------------------------------- | ------------------------ | -------------------------------------------------------------------------------------- |
-| Tag-length-value with VarInt | Each field carries a tag (`field_number << 3 \| wire_type`) as a VarInt, then its value  | Protobuf                 | O(n) over the bytes — every tag must be read to reach the next field; no random access |
-| Fixed layout plus vtable     | The schema fixes offsets per version; a small vtable maps field to offset                | FlatBuffers, Cap'n Proto | O(1) per field — direct offset access, earlier fields never decoded                    |
-| Delimited text framing       | Structure delimited by braces, commas and colons, with field names repeated per instance | JSON                     | O(n) with a high constant — full lexical parse, a `String` per key and value           |
+## Weighted scorecard
 
-The second row is what makes zero-copy possible: a "parse" reduces to validating the header and
-keeping a pointer. The first row is inherently sequential, which is why Protobuf cannot offer the
-same property no matter how it is tuned.
+| Dimension                                       | Requirement/weight | Candidate evidence |
+| ----------------------------------------------- | ------------------ | ------------------ |
+| producer/consumer languages and support horizon |                    |                    |
+| rolling/backward/forward/full compatibility     |                    |                    |
+| retained-data/replay/migration horizon          |                    |                    |
+| encode/decode CPU and tail by corpus            |                    |                    |
+| heap allocation/retention and native buffers    |                    |                    |
+| wire/storage bytes and compression              |                    |                    |
+| streaming, framing, random/selective access     |                    |                    |
+| deterministic/canonical bytes                   |                    |                    |
+| schema registry/code generation/tooling         |                    |                    |
+| malformed/resource-exhaustion security          |                    |                    |
+| debuggability/observability                     |                    |                    |
+| operational dependency and recovery             |                    |                    |
+| migration/dual-read-write/rollback cost         |                    |                    |
 
-## Selection by scenario
+Hard constraints eliminate candidates before weighted preferences. Document uncertain scores and
+run a spike rather than assigning invented precision.
 
-| Scenario                                                    | First choice                                        | Alternative                                  | Avoid                                           |
-| ----------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------- | ----------------------------------------------- |
-| Kafka, high rate, consumers evolving independently          | Avro plus a Schema Registry (BACKWARD/FORWARD/FULL) | Protobuf, if the ecosystem is already gRPC   | JSON (parse cost); Java serialisation (unsafe)  |
-| gRPC or synchronous microservices                           | Protobuf — integrated codegen and streaming         | —                                            | —                                               |
-| Distributed cache (Redis, Hazelcast, Memcached), JVM only   | Kryo with mandatory registration                    | MessagePack, if other languages read it      | Native Java serialisation (versioning hell)     |
-| Analytics events or a data lake                             | Avro or Parquet                                     | —                                            | —                                               |
-| Internal high-performance RPC, few fields read per message  | FlatBuffers (official Java binding)                 | Cap'n Proto, if the peer is already C++/Rust | Protobuf, for this read profile                 |
-| Drop-in JSON replacement, still schema-less, multi-language | MessagePack                                         | —                                            | JSON, once parse CPU is the measured bottleneck |
+## Compatibility questions
 
-Systems legitimately mix formats — Avro on the main topic and Protobuf on low-latency gRPC calls
-inside one service. Treat the table as a starting point, not a rule.
+For every candidate test:
 
-MessagePack keeps JSON's schema-less model in a compact binary encoding, and integrates through
-`org.msgpack:jackson-dataformat-msgpack` by swapping the factory on the same `ObjectMapper` and
-the same POJOs. Its weakness is JSON's weakness: no compile-time schema, no formal compatibility
-rule.
+- adding/removing/renaming fields and changing field IDs/types;
+- required/optional/default/presence semantics;
+- unknown-field retention or loss through read-modify-write intermediaries;
+- enum additions and unknown values;
+- numeric narrowing/sign/overflow and string/bytes changes;
+- map ordering, duplicate fields, canonicalization and signatures;
+- generated-code/runtime version skew and cross-language conformance;
+- schema registry subject/naming/compatibility/cache/outage policy;
+- tombstone/null/empty and malformed historical data;
+- rollback after new writers emitted new bytes.
 
-## The Kryo configuration that actually holds
+Compatibility claims belong to the deployed reader/writer matrix, not only the format spec.
 
-```java
-ThreadLocal<Kryo> KRYO = ThreadLocal.withInitial(() -> {
-    Kryo kryo = new Kryo();
-    kryo.register(Order.class, 10);          // one VarInt on the wire ...
-    kryo.register(OrderItem.class, 11);
-    kryo.register(java.util.ArrayList.class, 12);
-    kryo.setRegistrationRequired(true);      // ... but only because of this line
-    return kryo;
-});
+## Tagged formats
+
+Tagged encodings can skip unknown fields and evolve by stable identifiers under format-specific
+rules. Costs depend on tag/value encoding, schema resolution, generated versus reflective paths,
+object materialization, string/bytes handling and implementation optimizations.
+
+Protocol Buffers field tags combine field number and wire type; field ordering on the wire is not a
+safe application contract unless a deterministic mode/canonical scheme explicitly guarantees the
+needed property. Avro resolution depends on writer and reader schemas. Registry operations and
+caching must be part of availability/latency design.
+
+## Indexed/in-place formats
+
+Offset/vtable/pointer-oriented formats can provide field access without constructing a complete
+object tree. Evaluate:
+
+- validation bounds and behavior on corrupt offsets/lengths;
+- number/locality of fields accessed and repeated traversal;
+- backing buffer ownership and how long it is retained;
+- compression incompatibility with random access unless decompressed/materialized;
+- alignment/endian and implementation behavior;
+- mutation/build complexity and schema evolution constraints;
+- Java binding maturity, supported JDKs, release cadence and interoperability fixtures.
+
+The right comparison is against the actual materialization/access pattern, not “O(1) versus O(n)”
+as a complete performance conclusion.
+
+## JSON and self-describing text
+
+JSON offers ecosystem reach, inspection and flexible producers. Measure name/number/string parsing,
+binding/reflection/codegen, UTF-8/transcoding, unknown fields, duplicate keys, numeric precision,
+canonicalization, compression and allocation for the chosen library/configuration. Streaming/token
+APIs and tree/data-binding APIs have different costs and semantics.
+
+Binary replacements can reduce bytes/CPU while adding schema/tooling/compatibility dependencies.
+Choose them only when measured total benefit exceeds migration and operational cost.
+
+## Kryo/object-graph codecs
+
+Registered classes can use their registrations/IDs even if unregistered classes remain permitted.
+Enabling registration-required changes unknown-type handling by rejecting them and helps keep the
+protocol closed; it is not the switch that retroactively makes registered types compact.
+
+Protocol checklist:
+
+- explicit stable registration IDs and no accidental order dependence;
+- serializer configuration/version pinned and golden bytes retained;
+- reference tracking consistent with cyclic/shared graph semantics;
+- class evolution and custom/version serializer behavior tested;
+- codec instance confinement/reset and pool failure behavior;
+- trust boundary: class instantiation and resource limits reviewed;
+- old bytes, mixed deploy and rollback tested.
+
+Raw session-scoped use may be reasonable for ephemeral trusted data. Long-lived use is possible
+only when the team deliberately owns this protocol and proves compatibility; it is not categorically
+forbidden, but its governance cost may outweigh a schema-first format.
+
+## Java native serialization
+
+Do not choose it for a new untrusted or independently evolved boundary. Legacy compatibility may
+require it. Records have special serialization semantics, including canonical-constructor-based
+reconstruction, while ordinary serializable classes use different construction/hooks. Neither
+removes the need for filtering and resource limits.
+
+For retained legacy paths:
+
+- inventory origins/trust and serializable graph;
+- apply `ObjectInputFilter` class and resource constraints using tested pattern/API semantics;
+- use per-context filter factories where appropriate;
+- test allowed/rejected graphs, depth/references/array/bytes, proxies and substitution hooks;
+- authenticate/integrity-check and bound transport/decompression before object parsing;
+- migrate with dual-read/version envelope and rollback fixtures.
+
+Follow `java-serialization-hardening` for the security design.
+
+## Selection result
+
+```text
+hard constraints and candidates eliminated:
+weighted dimensions and evidence quality:
+payload/version/language corpus:
+performance experiment and total system cost:
+compatibility/failure/security results:
+operational dependencies and ownership:
+migration/rollback plan:
+decision, review date and triggers to revisit:
 ```
 
-Without `setRegistrationRequired(true)`, Kryo's default reflection fallback accepts unregistered
-classes, the full class name still travels on the wire for anything the registry misses, and an
-unknown class is deserialised silently. Registration ids must also be stable: reordering
-`register` calls between deploys makes previously written data unreadable, which is the shape of
-the classic mixed-deploy cache outage.
+## Authoritative references
 
-For a mixed-deploy window that cannot be avoided:
-
-```java
-kryo.addDefaultSerializer(Product.class, VersionFieldSerializer.class);
-```
-
-or move to a format with native schema evolution.
-
-## Records versus conventional classes under native serialisation
-
-| Aspect                           | Conventional `Serializable` class                    | `record` implementing `Serializable`             |
-| -------------------------------- | ---------------------------------------------------- | ------------------------------------------------ |
-| How the object is reconstructed  | `Unsafe.allocateInstance()` — no constructor runs    | The canonical constructor, compact or explicit   |
-| Invariant validation             | Skipped unless `readObject` reimplements it          | Automatic — the same code as `new`               |
-| `writeObject` / `readObject`     | Honoured if declared                                 | **Ignored** — records cannot customise field I/O |
-| `writeExternal` / `readExternal` | Honoured via `Externalizable`                        | **Ignored**                                      |
-| `readResolve` / `writeReplace`   | Honoured if declared                                 | **Honoured** — the only remaining hooks          |
-| Gadget-chain surface             | Wide: constructor-free reconstruction is the exploit | Reduced, not eliminated — still needs the filter |
-
-Non-native paths differ again: Kryo 5.1+ ships a dedicated `RecordSerializer` (check the
-compatibility matrix of the version you pin); Protobuf and Avro generate builder classes, not
-records, so any record wrapper is yours to write.
-
-## If `ObjectInputStream` cannot be removed
-
-```java
-ObjectInputFilter allowList = ObjectInputFilter.Config.createFilter(
-      "com.example.model.Order;"
-    + "com.example.model.OrderItem;"
-    + "java.util.ArrayList;"
-    + "java.lang.String;"
-    + "maxdepth=10;maxrefs=1000;maxbytes=1048576;maxarray=10000;"
-    + "!*");
-
-try (ObjectInputStream ois = new ObjectInputStream(inputStream)) {
-    ois.setObjectInputFilter(allowList);
-    Order order = (Order) ois.readObject();
-}
-```
-
-| Pattern                  | Meaning                                             |
-| ------------------------ | --------------------------------------------------- |
-| `com.example.Order`      | Exactly that class                                  |
-| `com.example.*`          | Classes directly in that package                    |
-| `com.example.**`         | That package and its subpackages                    |
-| `!com.example.Dangerous` | Explicit denial, evaluated in declaration order     |
-| `maxdepth=N`             | Reject object graphs deeper than N                  |
-| `maxrefs=N`              | Reject streams with more than N internal references |
-| `maxbytes=N`             | Reject streams larger than N bytes                  |
-| `maxarray=N`             | Reject arrays larger than N elements                |
-| `!*`                     | Deny everything unmatched — the safe terminator     |
-
-The four limits mitigate a different attack class from the allow-list: not arbitrary code
-execution, but resource exhaustion from a graph built entirely out of _allowed_ classes. A filter
-without them leaves that door open.
-
-Process-wide alternatives: `-Djdk.serialFilter=...`, or `jdk.serialFilter` in
-`conf/security/java.security`, applied to every stream that sets no filter of its own. From JEP
-415 (JDK 17), `ObjectInputFilter.Config.setSerialFilterFactory(...)` selects a different filter
-depending on which code opened the stream — a strict allow-list for network-originated data,
-something looser for trusted internal paths.
+- [Protocol Buffers language guide](https://protobuf.dev/programming-guides/proto3/)
+- [Protocol Buffers encoding](https://protobuf.dev/programming-guides/encoding/)
+- [Apache Avro specification](https://avro.apache.org/docs/current/specification/)
+- [FlatBuffers documentation](https://flatbuffers.dev/)
+- [Cap'n Proto encoding](https://capnproto.org/encoding.html)
+- [Kryo documentation](https://github.com/EsotericSoftware/kryo)
+- [Java Object Serialization specification](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/)
+- [Java serialization filtering](https://docs.oracle.com/en/java/javase/25/core/serialization-filtering1.html)

@@ -27,9 +27,10 @@ that should have been outside it, or it is expected to cover work no transaction
 ## Where the boundary belongs
 
 ```text
-Controller / consumer / job          no transaction; may not decide the boundary
+Controller / consumer / job          usually outside; may own a boundary for a
+                                     message/job unit when it is the use-case entry
         │
-Application service (use case)       ← the transaction starts and ends HERE
+Application service (use case)       common boundary for business atomicity
         │
 Domain                               unaware of transactions
         │
@@ -46,17 +47,18 @@ run inside the transaction and hold a connection while they do.
 1. **State the unit of work in business terms.** "Reserve stock and record the order" is
    one; "record the order and email the customer" is not — the email is not transactional
    and pretending otherwise is where the bug will be.
-2. **Place the boundary at the application service** and remove demarcation from every
-   other layer.
+2. **Prefer the application service for business atomicity**, while allowing repository-local
+   read/write operations and listener/job entrypoints to demarcate when they are the actual unit.
 3. **Push non-transactional work out.** Network calls, message publication, file writes,
    long computations and anything waiting on a human. Each of those inside a transaction
    holds a connection and locks for its full duration.
 4. **Choose isolation deliberately, once**, and record why if it is not the default.
    Raising isolation to fix a specific race is legitimate; raising it globally because a
    race exists somewhere is how throughput disappears.
-5. **Verify rollback actually happens** for the failures you care about — checked
-   exceptions do not roll back a Spring transaction by default, and a self-invoked
-   `@Transactional` method never started one.
+5. **Verify rollback actually happens** for the failures you care about. By default Spring's
+   transaction interceptor rolls back on `RuntimeException`/`Error`, not checked exceptions.
+   Self-invocation in proxy mode does not apply the inner method's transaction attributes; it may
+   still execute inside the caller's existing transaction.
 6. **For anything crossing a process boundary**, design the non-atomic outcome explicitly:
    idempotent retry, an outbox, or a compensating action (`distribution-boundaries`).
 
@@ -105,28 +107,31 @@ Nested use cases where the inner must survive the outer's rollback
   that is smaller than the thread count and holds locks that serialise other work. Long
   transactions are the most common cause of "the database is slow" that is not the database
   (`architecture-and-performance`).
-- Never hold a transaction across a network call. The remote system's timeout becomes your
-  lock duration, and a remote hang converts into pool exhaustion in seconds.
+- Avoid holding a database transaction across a network call because timeout and retry behavior
+  extend lock/connection occupancy. Where correctness requires validation under a lock and no
+  non-atomic redesign is acceptable, bound the call, model pool/lock capacity and test failure;
+  document the deliberate coupling.
 - Rollback rules are a contract you must state. In Spring, unchecked exceptions and `Error`
   roll back; **checked exceptions do not**, unless declared with `rollbackFor`. A checked
   business exception thrown from a service commits the partial work by default.
-- Self-invocation defeats proxy-based demarcation entirely: a `@Transactional` method
-  called from another method on the same bean runs in the caller's context, which may be no
-  transaction at all. Same for `private`, `final` and `static` methods.
-- `readOnly = true` is not enforcement. It permits the ORM to skip dirty checking and may
-  route the connection to a replica; some drivers ignore it. Treat it as an optimisation
+- Self-invocation bypasses interception in Spring's default proxy mode: the callee inherits whatever
+  transaction context the caller already has, but its own propagation/isolation/rollback attributes
+  are not applied. Method visibility/finality constraints depend on JDK versus class proxies and
+  Spring version; `static` methods are not instance-proxied. AspectJ mode differs.
+- `readOnly = true` is not portable enforcement. Spring/provider integrations may adjust flush mode
+  and pass a JDBC read-only hint; replica routing requires separate routing configuration. Treat it as an optimisation
   and a documentation of intent, never as a safety mechanism.
 - Isolation levels are defined by the anomalies they prevent, not by intuition, and
   engines interpret them differently — notably, `REPEATABLE READ` means different things in
   different databases, and `SERIALIZABLE` is implemented by locking in some and by
   optimistic conflict detection with retry in others. Test the behaviour, do not assume it.
-- A transaction is not a distributed transaction. Two-phase commit across services buys
-  atomicity at the price of availability, an extra coordinator to operate, and locks held
-  across a network — which is why the usual answer at a service boundary is a saga with
-  compensations, or an outbox with idempotent consumers.
-- `@Transactional` on a method whose body is one repository call adds nothing the
-  repository does not already have; it is noise that trains readers to ignore the
-  annotation where it matters.
+- A local transaction is not a distributed transaction. XA/two-phase commit can coordinate enlisted
+  resources but adds coordinator/recovery coupling and can block during failures. Sagas/outboxes
+  trade immediate atomicity for explicit intermediate states and idempotent recovery; select from
+  actual resource support and consistency requirements.
+- `@Transactional` around one repository call can still document application semantics, configure
+  isolation/read-only/timeout, or remain stable as orchestration grows. Remove it only when its
+  behavior is truly identical to the repository boundary and the convention is clear.
 - Exceptions thrown after a transaction has been marked rollback-only produce a confusing
   secondary failure (`UnexpectedRollbackException`). When catching an exception inside a
   transaction and continuing, verify the transaction has not already been poisoned by an

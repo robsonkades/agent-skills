@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: linux-for-jvm
-version: 1.2.0
+version: 1.3.0
 description: >-
   The Linux side of a JVM incident: RSS versus virtual memory, page faults and swap,
   AlwaysPreTouch, transparent huge pages, cgroup CPU throttling, the two OOM killers,
-  file-descriptor and process limits, signals and graceful shutdown, and PSI as the earliest
-  saturation signal. Use when a process dies with exit code 137 or no log at all, when a GC
+  file-descriptor and process limits, signals and graceful shutdown, and PSI as a direct
+  stall signal. Use when a process dies with exit code 137 or no log at all, when a GC
   pause in the log does not match the pause the client felt, when "too many open files" or
   "unable to create native thread" appears, when THP or swappiness is being changed by
   reflex, when kill -9 is the first response, or when container CPU limits may be throttling

@@ -39,19 +39,21 @@ layer the hashes (`bcrypt(md5($password))`) and replace with a direct hash on ne
 OWASP is unambiguous: Argon2id first, scrypt if unavailable, bcrypt for legacy, PBKDF2 where
 FIPS demands it. Practitioners are not, and both positions are defensible.
 
-- **The technical crux is memory-hardness, and it is quantitative.** bcrypt uses a fixed
-  4 KiB working set, so an 8 GiB GPU parallelises it massively; Argon2id at 46 MiB permits
-  roughly 175 concurrent instances on the same card (8 GiB ÷ 46 MiB ≈ 178). That is the entire
-  argument.
-- **The counter-position**: bcrypt at cost ≥ 12 is not broken, and there is no incident
-  record of bcrypt-at-adequate-cost being the proximate cause of a breach. Migration has real
-  cost and real risk; the gap is about long-term direction, not urgent remediation.
+- **The technical crux is memory-hardness, and it is quantitative.** bcrypt uses a small fixed
+  working set, whereas an Argon2id configuration at 46 MiB has a hard upper bound of roughly
+  178 simultaneous working sets in 8 GiB before implementation overhead. Actual attacker
+  throughput also depends on bandwidth, compute, occupancy and implementation quality; memory
+  capacity division is a bound, not a cracking benchmark.
+- **The counter-position**: bcrypt at an adequate measured cost is not made immediately unsafe
+  by the existence of Argon2id. Migration has user, availability and operational risk; the
+  urgency depends on the offline-cracking model, compliance bar and legacy 72-byte estate.
 - **A JVM-specific complication that appears in essentially no blog post.**
   `Argon2PasswordEncoder`'s own class javadoc: _"The currently implementation uses Bouncy
   castle which does not exploit parallelism/optimizations that password crackers will, so
   there is an unnecessary asymmetry between attacker and defender."_ On the JVM the
-  defender's Argon2 is slower per unit of security than the attacker's. That partially erodes
-  the theoretical advantage and is a legitimate reason a Java shop stays on bcrypt.
+  defender's Argon2 is slower per unit of work than an optimised cracker. Treat this as a
+  capacity and implementation-selection constraint, not as evidence that bcrypt has equivalent
+  attacker economics.
 
 ## 3. Spring Security encoder facts (verified against the `spring-security-crypto:7.1.1` sources jar)
 
@@ -195,9 +197,11 @@ from the password database", in a secrets vault or an HSM. NIST 800-63B-4 says *
   `Pbkdf2PasswordEncoder`, the one Spring encoder with a pepper, does not override it (§3), so
   here you write the rehash yourself.
 
-**The honest case against**: if the app server is compromised the pepper goes with the
-database in most architectures, so the extra boundary is often illusory; and one known
-plaintext plus salt plus algorithm makes a pepper brute-forceable. **The case for**: it is the
+**The honest case against**: if the app server is compromised the pepper is usable through that
+server in many architectures, so the extra boundary may collapse. A known password/hash pair
+provides an offline verification oracle, but a uniformly random high-entropy pepper is not
+made feasibly brute-forceable by that fact; human-memorable or low-entropy peppers are.
+**The case for**: it is the
 only control that helps in the specific, common scenario of a _database-only_ compromise — SQL
 injection, a leaked backup, a misconfigured replica. Where it lives is the sharper argument:
 HSM (NIST's preference, rare), a secrets manager (common), an environment variable
@@ -213,12 +217,15 @@ entropy is being gathered, for example, if the entropy source is /dev/random". O
 with a thin entropy pool that is a real startup hang.
 
 - `new SecureRandom()` for salts, session ids, reset tokens, CSRF tokens, API keys, OTPs.
-- `getInstanceStrong()` only for long-lived key material. Do not reach for it reflexively.
+- `getInstanceStrong()` selects the algorithms/providers named by the runtime security property;
+  it does not express a portable latency or strength profile. Use it only when that deployment
+  choice was reviewed, and never first-touch an untested blocking provider on a request path.
 - `setSeed` "supplements, rather than replaces, the existing seed" — `new SecureRandom(seed)`
   is not a way to make it deterministic, and a test that assumes so is confused.
-- `new Random()`, `Math.random()` and `ThreadLocalRandom` are a 48-bit LCG: observe two
-  outputs, predict the rest. Java 17's `RandomGenerator` supertype makes this **worse**,
-  because `SecureRandom` and `Xoshiro256PlusPlus` now look interchangeable at a call site.
+- `Random` (and the shared generator historically used by `Math.random()`) is a 48-bit LCG.
+  `ThreadLocalRandom` is implemented differently, but its Javadoc explicitly says it is not
+  cryptographically secure. Java 17's `RandomGenerator` supertype makes misuse easier because
+  `SecureRandom` and `Xoshiro256PlusPlus` can look interchangeable at a call site.
 - `UUID.randomUUID()` is **not a cryptographic defect** — its javadoc specifies "a
   cryptographically strong pseudo random number generator", it is version 4, and it carries 122
   bits of entropy. The common objection confuses it with UUID v1. But it **is** a finding under
@@ -251,7 +258,7 @@ immutable and there is no way to overwrite its internal value when the password 
 is no longer needed. Hence, this class requests the password as a char array, so it can be
 overwritten when done."
 
-**The memory-scrubbing argument is largely obsolete and should not be sold as a control:**
+**Memory scrubbing has bounded value and must not be sold as guaranteed erasure:**
 
 1. A moving/compacting collector — G1, ZGC, Shenandoah, i.e. every collector you will run on
    Java 21+ — may have copied the array repeatedly. `Arrays.fill(pw, '\0')` zeroes one copy.
@@ -265,10 +272,11 @@ overwritten when done."
    made the warning the default in 24, and JDK 25 still has them deprecated-for-removal.
    `VarHandle` and FFM offer no replacement for reaching into a heap `String`.
 
-**What `char[]` still buys**: it shortens the window against a heap or core dump taken after
-use; and, more usefully, it is a **type-level signal** — a `char[]` component will not
-accidentally appear in a `toString()`, in string deduplication or in the constant pool the way
-a `String` will. Keep it where the API demands it (`PBEKeySpec`, `Console.readPassword()`,
+**What `char[]` still buys**: explicit lifetime control can shorten the exposure window against
+a later heap or core dump, even though it cannot erase collector copies; and it can be a
+**type-level signal**. A plain array renders as an identity string by default, unlike a
+`String`, though records, custom renderers and logging code can still leak its contents. Keep it
+where the API demands it (`PBEKeySpec`, `Console.readPassword()`,
 `JPasswordField.getPassword()`, `Argon2BytesGenerator.generateBytes(char[], byte[])`). Do not
 contort a Spring stack to thread it through. Spend the effort instead on never putting the
 credential in a field, a log, a `toString()` or an exception message.
@@ -278,3 +286,14 @@ credential in a field, a log, a `toString()` or an exception message.
 Store the parameters, the date they were chosen and the measured verification time next to the
 encoder bean. A cost factor chosen in 2018 breaks no test and fails no health check; nothing
 in the system makes it visible.
+
+## Authoritative sources
+
+- [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)
+- [Spring Security password storage reference](https://docs.spring.io/spring-security/reference/features/authentication/password-storage.html)
+- [Spring Security `Argon2PasswordEncoder` API](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/crypto/argon2/Argon2PasswordEncoder.html)
+- [Spring advisory CVE-2025-22228](https://spring.io/security/cve-2025-22228/)
+- [Java SE 25 `SecureRandom`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/security/SecureRandom.html)
+- [Java SE 25 `MessageDigest.isEqual`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/security/MessageDigest.html#isEqual(byte%5B%5D,byte%5B%5D)>)
+- [Java SE 25 `Cipher` and AEAD requirements](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/javax/crypto/Cipher.html)
+- [OWASP Cryptographic Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html)

@@ -6,8 +6,12 @@ elapses. If it does not — crash, GC pause, slow dependency, no difference — 
 becomes visible again and another worker takes it. That is the recovery mechanism and the
 duplicate generator, and it is the same mechanism.
 
-Names differ, semantics do not: SQS _visibility timeout_, RabbitMQ _unacked delivery_ bounded
-by consumer timeout, JMS _client acknowledge_, a database queue's _claimed until_ column.
+Names and semantics differ. SQS has per-receipt visibility and can duplicate even within that
+period; RabbitMQ holds an unacknowledged delivery on a channel until ack/nack, connection loss or
+configured enforcement; JMS acknowledgement can cover a session's delivered messages; database
+queues implement whatever claim transaction/clock/fencing was designed. Verify the broker's
+redelivery, ordering, acknowledgement scope and stale-handle behavior rather than translating all
+of them into one lease model.
 
 ## The duplicate-work window
 
@@ -27,26 +31,27 @@ some reject. Read both signals: a redelivery count above one is information, not
 
 ## Choosing the timeout
 
-Let `D` be the handler duration distribution, measured in production, and `B` the number of
-messages fetched per receive call.
+Let `E` be exposure from receive until successful acknowledgement:
 
 ```
-timeout  ≥  B × p99.9(D) + ack round trip + safety margin
+E = prefetch wait + handler + downstream waits + acknowledgement
+visibility timeout > selected tail(E) + clock/client/broker-resolution margin
 ```
 
-- **From the tail, never the mean.** A timeout at p50 redelivers roughly half of all messages
-  under load. That fraction appears in no error metric — only in duplicated side effects and
-  in throughput that is lower than the pool size implies. Interpreting the distribution is
-  `latency-statistics`.
-- **`B` multiplies it.** All `B` leases start at the receive call, not when each item is
-  picked up, so the last message in a batch of ten has already burned nine handler durations.
-  Either size the timeout for the whole batch or fetch one message at a time.
+- **Select the tail from an objective.** A higher timeout reduces expiry overlap but delays
+  crash recovery; a lower one recovers sooner but increases duplicate concurrency. p99.9 is an
+  example only when its nominal 0.1% premature-expiry rate is affordable and the measured sample
+  covers overload, pauses and dependency degradation. Timeouts censor the observed tail.
+- **Prefetch creates waves.** All `B` leases begin at receive. With `C` equal slots, the last
+  record waits behind about `ceil(B/C)-1` waves, but summing individual p99.9 values is not the
+  p99.9 of the sum. Measure `receive→start` and `receive→ack`, simulate from representative
+  distributions, or keep prefetch close to available slots.
 - **The distribution is not stationary.** A dependency degrading from 200 ms to 4 s moves p99.9
   by an order of magnitude while the timeout stays where it was. Alert on
   `p99.9(D) / timeout > 0.5` so the bet is re-examined before it is lost.
-- **One timeout per queue, not per fleet.** Mixing a 50 ms handler and a 40 s handler on one
-  queue forces the timeout to the slow one, which delays recovery of the fast one by the same
-  factor. Split the queues.
+- Separate materially different task classes when they need different timeout, retry, priority,
+  security or capacity policy. Per-message visibility can reduce the timeout coupling on brokers
+  that support it, but operational and head-of-line coupling may remain.
 
 ## Heartbeat extension, and its failure mode
 
@@ -71,9 +76,10 @@ Two conditions make it safe, and both are required:
 - **A hard cap on total lease time.** Stop renewing at `maxProcessingTime`, let the lease
   lapse, and let redelivery do its job. The cap is a business decision — the longest this item
   may plausibly take — not a multiple of the base timeout.
-- **Renew on progress, not on liveness.** The handler updates a progress marker (stage
-  completed, rows written, bytes streamed); the heartbeat renews only if the marker advanced
-  since the last tick. A wedged handler stops renewing on its own.
+- **Renew on credible progress where progress is observable.** Atomic CPU work or one long
+  database operation may have no intermediate marker; inventing one is worse than a conservative
+  maximum. Renewal must stop on cancellation/deadline, failed ownership validation or a stale
+  receipt, and its own partial failures must be observed.
 
 Also cap the _number_ of extensions in a metric and alert on it: an item renewing thirty times
 is telling you the timeout, the batch size or the handler is wrong.
@@ -106,8 +112,8 @@ The three legitimate responses, in the order they should be considered:
 
 ## Checklist
 
-- [ ] Timeout derived from measured p99.9 × batch size, and the derivation is written down.
-- [ ] An alert fires when handler p99.9 approaches the timeout.
+- [ ] Timeout derived from receive-to-ack exposure and a stated duplicate/recovery objective.
+- [ ] Alerts cover exposure headroom, extension failure/cap and redelivery overlap.
 - [ ] Heartbeat, if present, has a total cap and a progress predicate.
 - [ ] Redelivery count is read and logged; first delivery and redelivery are distinguishable.
 - [ ] Handler is repeat-safe, or the path is documented as tolerating a duplicate.

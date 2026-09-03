@@ -98,23 +98,25 @@ that anything varies, and leaving with a name but no statement of what got worse
 
 ```text
 IF two patterns both seem to fit
-THEN the problem is under-specified. Ask what the caller must NOT
-     know — that usually separates them (gof-pattern-confusion).
+THEN they may be alternatives or complementary roles. Ask what the caller
+     must not know, who owns lifecycle/dispatch and whether the patterns
+     compose before declaring the problem under-specified
+     (gof-pattern-confusion).
 
 IF the shortlist is empty
 THEN the problem may not be an object-design problem at all: it may be
      a data problem (configuration), a boundary problem (architecture),
      or a workload problem (measure first).
 
-IF the selected pattern is in the high-risk set — Singleton, Observer,
-Mediator, Proxy, Flyweight, Prototype
-THEN read that skill's "when it is not" before proceeding. These are
-     the six that are usually reached for too early.
+IF the selected pattern introduces shared state, hidden control flow,
+identity/copy semantics or remote access
+THEN read its "when it is not" and failure modes. Risk comes from the
+     mechanism and context, not membership in a fixed six-pattern list.
 
 IF the design already has patterns and they are producing friction
-THEN check the conflict list in the relationship reference. Fix the
-     friction by removing a pattern, not by adding an adapter between
-     two of them.
+THEN check the conflict list and identify which force is no longer served.
+     Simplification, boundary translation or an explicit composition may
+     be correct; do not prescribe removal before diagnosis.
 
 IF a pattern is chosen because a similar module uses it
 THEN that is precedent, not a reason. Re-derive it, or state that the
@@ -141,9 +143,9 @@ Reinforcing
   Observer + Mediator            the hub notifies; participants do not couple
 
 Fighting
-  Singleton + anything testable  global state defeats the seam
-  Observer + ordering guarantees the contract has no order to guarantee
-  Decorator + identity checks    wrapping breaks ==, instanceof, equals
+  Global static Singleton + isolated tests hidden mutable state defeats the seam
+  Observer + assumed ordering     ordering is absent unless the implementation contracts it
+  Decorator + identity checks    wrappers change `==`/runtime type; equality needs an explicit policy
   Flyweight + mutable state      shared mutation across unrelated callers
   Visitor + a growing type set   every operation breaks on every new type
   Mediator + participants that   two sources of truth for the protocol

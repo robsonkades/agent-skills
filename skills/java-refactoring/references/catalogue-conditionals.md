@@ -134,10 +134,8 @@ the compiler now rejects a case dominated by an earlier one — a dominance erro
 means the original chain had an unreachable branch, which is a finding rather than an
 obstacle.
 
-Do not add `default` over a sealed type: it converts every future "you missed a case" from a
-compile error into a silent wrong branch. The single documented exception — a deliberately
-partial handler stating why all unknown variants share one behaviour — is in
-`techniques.md`. Note also that the exhaustiveness proof is a compile-time one: a sealed
-switch with no `default` compiles to an implicit `MatchException` throw, so a permitted
-subtype added in a **separately compiled** module surfaces at runtime rather than at build
-time (`compatibility.md`).
+Avoid `default` when the purpose is sealed exhaustiveness: it converts future missing-policy
+diagnostics into fallback behavior. A deliberate partial handler may define that fallback, as
+described in `techniques.md`. The proof is compile-time, not runtime forward compatibility: an
+old compiled switch receiving a subtype introduced by a newer version of its sealed hierarchy can
+throw `MatchException` (`compatibility.md`).

@@ -46,13 +46,14 @@ receives traffic. `Math.floorMod` is correct for bucketing, and note that
 Integer a = 127, b = 127;
 Integer c = 128, d = 128;
 a == b;        // true  — both come from the Integer cache
-c == d;        // false — two distinct objects
+c == d;        // not portable; usually false with HotSpot's default cache
 ```
 
-The cache covers `-128..127` for `Integer` (also `Byte`, `Short`, `Character` and `Long`; its
-upper bound is settable with `-XX:AutoBoxCacheMax`, but nothing may depend on that).
+For boxing of constant expressions, the JLS guarantees identity for booleans, ASCII characters
+and integral values from `-128` through `127`; implementations may cache more. HotSpot has an
+`Integer` cache tuning flag, but application correctness must not depend on it.
 `Boolean.valueOf` returns the two constants. The practical consequence is that `==` on boxed
-values is a bug that unit tests with small numbers cannot catch.
+values is a bug that unit tests with small numbers can miss.
 
 Three more behaviours to have memorised:
 
@@ -75,18 +76,20 @@ Primitive by default. Boxed when:
 - a framework demands it (JPA identifiers are the standard example, where `null` distinguishes
   "not yet persisted").
 
-Never use a boxed type as a counter, a loop variable, or an accumulator. The classic:
+Avoid a boxed type as a counter, loop variable or accumulator on a material path. The classic:
 
 ```java
 Long sum = 0L;
-for (long i = 0; i < 1_000_000; i++) sum += i;    // ~1M Long allocations, one per iteration
+for (long i = 0; i < 1_000_000; i++) sum += i; // boxing each iteration; escaped/materialized cost is runtime-dependent
 ```
 
 ## Boxing cost, in proportion
 
-Each box is an object header plus the value — for `Integer`, 16 bytes on a typical 64-bit JVM
-with compressed oops — and outside the cache range, one allocation per value. The cost shows up
-as allocation rate and GC pressure, not as arithmetic slowness.
+A materialized box is an object header plus the value—for `Integer`, often 16 bytes on a
+64-bit HotSpot configuration with compressed class/oop pointers, but measure with JOL on the
+target runtime. Caches and escape analysis may avoid some allocations; boxes that escape into a
+collection generally remain. The cost can include allocation/GC, indirection, locality and
+memory bandwidth, not merely arithmetic.
 
 Where it matters (bulk data paths, per-element pipelines over millions of items), the fixes are
 mechanical:
@@ -99,8 +102,8 @@ mechanical:
 | `Function<Integer, Integer>`      | `IntUnaryOperator`                                             |
 | `Optional<Integer>` in a hot path | `OptionalInt`                                                  |
 
-Where it does not matter — request-scoped code touching a few dozen values — the boxed forms
-are clearer and the difference is unmeasurable. Confirm with allocation-profiling that boxing
+Where it usually does not matter—request-scoped code touching a few dozen values—the boxed forms
+may be clearer and the difference is unlikely to be material. Confirm with allocation-profiling that boxing
 is actually on the path before restructuring anything; "boxing is slow" is one of the folklore
 claims performance-methodology exists to discipline.
 
@@ -108,15 +111,16 @@ claims performance-methodology exists to discipline.
 
 - **`long` ids above 2^53 lose precision in JavaScript** and in any consumer that parses JSON
   numbers as doubles. Snowflake-style ids are exactly in this range. Serialise them as strings.
-- **`int` ids run out.** A 32-bit auto-increment reaches its limit at ~2.1 billion rows, and the
-  failure mode is an insert error in production at a time nobody chose. Start with `long`/
+- **`int` ids can run out.** A signed 32-bit positive sequence reaches its limit near 2.1 billion,
+  but exhaustion time depends on allocation gaps, retries and sequence caching—not just live rows.
+  The failure mode is an insert error in production at a time nobody chose. Start with `long`/
   `bigint` unless the table is provably bounded.
 - **UUIDs are 128 bits** and do not fit any primitive; stored as `char(36)` they cost index
   space and locality, stored as `binary(16)` they are compact but need a canonical byte order.
   Time-ordered variants (UUIDv7) exist specifically to restore index locality.
 - **Random ids need `SecureRandom`** when guessing one has consequences.
-  `ThreadLocalRandom`/`Random` are fast, statistically fine and completely predictable from a
-  few outputs.
+  `ThreadLocalRandom`/ordinary `RandomGenerator`s are non-cryptographic regardless of apparent
+  statistical quality.
 
 ## Review checks
 
@@ -129,3 +133,10 @@ claims performance-methodology exists to discipline.
 - [ ] Primitive specialisations on paths that process values in bulk — with a profile, not a
       hunch, when the change costs readability.
 - [ ] Large ids serialised as strings at any boundary a JavaScript client can reach.
+
+## Authoritative references
+
+- [JLS §5.1.7: Boxing Conversion](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.7)
+- [JLS §5.6: Numeric Contexts and Promotions](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.6)
+- [Math exact-arithmetic API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Math.html)
+- [IEEE 754 floating-point arithmetic](https://standards.ieee.org/ieee/754/6210/)

@@ -5,10 +5,10 @@ description: >
   nothing and position is an offset; the rebalance as the central operational event, with
   cooperative assignment as the mitigation and where duplicates enter; why slow processing
   trips max.poll.interval.ms, not the session timeout; pause/resume for slow work; commit
-  strategies; auto.offset.reset as a data-loss-or-reprocessing decision; and lag in time,
-  not records. Use when a group rebalances repeatedly under load, when records are
+  strategies; auto.offset.reset as a data-loss-or-reprocessing decision; and lag as record,
+  byte, time and catch-up signals. Use when a group rebalances repeatedly under load, when records are
   reprocessed after a deploy, when enable.auto.commit is left on, when a consumer starts
-  from the wrong place after an outage, or when lag alerts fire on record counts. Not
+  from the wrong place after an outage. Not
   ordering scope (message-ordering-and-partitioning), guarantees (delivery-semantics),
   repeat-safe handlers (idempotency), the record that never succeeds
   (poison-messages-and-dlq), deserialisation cost (serialization-performance), in-flight
@@ -19,11 +19,12 @@ description: >
 
 ## Purpose
 
-**Kafka is a log, not a queue.** Consuming does not remove a record; it stays until retention
-expires, and a group's position is an offset it stores. Several groups read the same partition
-independently, and a group can be moved backwards. Most confusion in a Kafka consumer — "the
-message disappeared", "why did it reprocess" — dissolves once the offset is understood as the
-only state consumption changes.
+Kafka stores an ordered log per partition and consumer groups layer competing-consumer
+semantics over it. Consumption does not delete a record; retention/compaction controls its
+lifetime, while each group stores offsets independently and can seek or reset. Additional
+groups do not advance one another's offsets, but they do add broker fetch, cache, network and
+downstream load. Treat the committed offset as a recovery checkpoint, not proof that a
+business effect happened.
 
 Two decisions follow. **Where the commit sits relative to the work** decides the guarantee (the
 vocabulary is `delivery-semantics`; do not re-derive it here). **How long the handler takes
@@ -37,9 +38,13 @@ the poll interval, the member is evicted, the group rebalances, the batch comes 
 1. **Fix the guarantee first** — where the commit sits relative to the side effect.
    `delivery-semantics` owns the answer; everything below assumes at-least-once plus a
    repeat-safe handler (`idempotency`).
-2. **Set `enable.auto.commit=false`** wherever correctness matters, and commit explicitly.
-3. **Measure the handler and check the budget:** `max.poll.records × handler p99.9` against
-   `max.poll.interval.ms`. If it does not fit with margin, use the decision block below.
+2. **Choose synchronous processing, manual offset tracking or a framework-managed ack mode.**
+   Auto-commit can be at-least-once only when every record from the previous `poll()` finishes
+   before the next `poll()`/close; disable it for asynchronous work or when the exact commit
+   boundary must be explicit.
+3. **Measure the whole poll-cycle tail.** `records returned × per-record time` is a conservative
+   estimate only for serial homogeneous work; include deserialization, queueing, retries,
+   commits, batch overhead and correlated dependency latency against `max.poll.interval.ms`.
 4. **Choose the assignment strategy and membership shape** — incremental cooperative
    assignment, plus static membership if rolling restarts dominate rebalances
    (`references/poll-loop-and-rebalance.md`).
@@ -54,7 +59,7 @@ the poll interval, the member is evicted, the group rebalances, the batch comes 
 
 ```text
 Process on the poll thread when:
-- max.poll.records × handler p99.9 is comfortably below max.poll.interval.ms
+- the measured worst credible poll cycle is comfortably below max.poll.interval.ms
 - per-partition ordering must hold end to end and the handler is the last step
 - the handler is CPU-bound or calls a dependency with a short, bounded tail
 
@@ -64,57 +69,76 @@ Reduce max.poll.records first when:
 Move work off the poll thread with pause/resume when:
 - a single record's handler can exceed the poll interval on its own, or the dependency's
   latency tail is unbounded or externally controlled
-- throughput needs handler concurrency above one per partition — then per-partition
-  ordering is what you are spending, and it must be stated
+- throughput needs concurrency while the poll thread remains responsive; preserve one ordered
+  lane per partition or explicitly spend per-partition ordering, and track the highest
+  contiguous completed offset rather than the maximum completion
 
 Hand the work to a task queue instead when:
 - the unit takes minutes or must survive independently of the consumer, and per-key
   ordering is not required (task-queues-and-competing-consumers)
 
-Do not raise max.poll.interval.ms first when:
-- it also bounds how long the group waits before reassigning a genuinely dead member
+Raise max.poll.interval.ms when:
+- legitimate bounded processing cannot fit after batch/concurrency changes and the slower
+  detection of a live-but-not-polling member is acceptable; process death is normally found
+  by the session timeout, with static-membership nuances
 ```
 
 ## Rules
 
 - **Consumption removes nothing.** Reprocessing is a seek, not recovery of deleted data, and a
-  second group costs the first nothing. Conversely there is no "drain": retention deletes on
+  second group has independent position but consumes shared broker/downstream resources.
+  Conversely there is no queue-style deletion drain: retention removes on
   time or size whether or not anyone consumed.
-- One partition is consumed by at most one member of a group at a time, so **group concurrency
-  is capped by partition count** — extra members idle. Spring Kafka's container `concurrency`
-  creates that many consumers; above the partition count it only enlarges rebalances.
-- `enable.auto.commit=true` commits on a timer whatever the poll loop returned, finished or
-  not. It loses records on crash _and_ still redelivers on rebalance — not a middle ground.
-- **Slow processing trips `max.poll.interval.ms`, not `session.timeout.ms`.** Heartbeats come
-  from a background thread, so the group sees the member as alive while the handler runs; what
-  expires is the gap between `poll()` calls. Raising the session timeout changes nothing.
+- Under a normal group assignment, one topic-partition is assigned to at most one member at a
+  time. Useful member concurrency is bounded by the assignable partitions across the
+  subscription and assignor constraints; local handler concurrency is a separate decision.
+  Extra Spring container consumers may idle and enlarge group coordination overhead.
+- `enable.auto.commit=true` periodically commits offsets of records returned by prior polls
+  as part of consumer polling. If all those records complete synchronously before the next
+  poll/close, it can be at-least-once. If records escape to asynchronous workers, offsets can
+  advance before effects complete and crash can lose work. Auto-commit does not remove the
+  duplicate window.
+- **Slow application processing normally trips `max.poll.interval.ms`; process/network
+  liveness trips the session timeout.** Heartbeats are independent of record handling in the
+  classic Java client, while the newer consumer group protocol lets the broker control the
+  heartbeat interval. Static members that exceed the poll interval stop heartbeating and may
+  retain assignment until session expiry. Check client/broker protocol and version rather
+  than applying one timing diagram universally.
 - The fix for a slow handler is a smaller `max.poll.records`, a faster handler, or `pause()` on
   the assigned partitions with the work on a **bounded** executor while the loop keeps polling
   (`concurrency-limiting-and-bulkheads`). Polling into an unbounded executor only moves the
   backlog into the heap.
-- **A rebalance redelivers everything processed but not committed** — on every member join and
-  leave, including every rolling deploy. Duplicates therefore exist with zero retries and zero
-  faults, and commit granularity is a duplicate-window decision.
-- Eager assignment revokes **all** partitions from **all** members and reassigns from scratch,
-  stopping the whole group. Incremental cooperative assignment (`CooperativeStickyAssignor`)
-  revokes only the partitions that move. Prefer it; treat the switch as a rolling migration.
-- Set `group.instance.id` (static membership) when rolling restarts dominate rebalances: a
-  member rejoining within the session timeout keeps its assignment. The price is slower
-  detection of one genuinely gone — size the session timeout from how long a stall is tolerable.
+- A rebalance or crash can redeliver records after the last committed next offset. A graceful
+  rebalance does not necessarily duplicate every uncommitted record if revocation commits a
+  safe contiguous position, but correctness cannot depend on that callback during eviction or
+  process death. Commit granularity is a duplicate-window and broker-load decision.
+- Eager rebalancing revokes the current assignment before redistribution; cooperative
+  rebalancing can retain partitions that need not move. `CooperativeStickyAssignor` requires a
+  compatible staged rollout, and Kafka's newer consumer rebalance protocol changes assignor
+  configuration/coordination. Select against deployed client and broker versions.
+- Set a stable, unique `group.instance.id` when ungraceful short restarts dominate and delayed
+  reassignment is acceptable. Graceful leave, duplicate instance IDs and orchestrator identity
+  reuse have different behavior; static membership is not a blanket way to eliminate rolling
+  rebalances. The price is partitions remaining unavailable until session expiry after a dead
+  member.
 - **`auto.offset.reset` applies only when there is no valid committed offset** — a new group, a
   typo in `group.id`, expired offsets, or a committed offset outside retention. `latest`
   silently skips everything produced during the gap; `earliest` replays the whole retained
   topic downstream; `none` fails loudly and makes a human decide.
-- **Lag in records misleads; lag in time does not.** 50 000 records is seconds on one topic and
-  hours on another, and record lag also falls to zero when the _producer_ stops. Alert on the
-  age of the next record to consume, **per partition** — one blocked partition vanishes in a
-  group total.
+- **No single lag number is sufficient.** Record lag needs arrival/service rates to estimate
+  catch-up; timestamp age can be producer-clock skewed, sparse, compacted or based on create
+  versus append time. Track per-partition next-record age where meaningful, oldest in-flight
+  age, record/byte lag, arrival and completion rates, and projected catch-up time.
 - Consumer shutdown is a drain: stop polling, finish or abandon in-flight work, commit what
   completed, then `close()` so the member leaves the group instead of waiting out the session
   timeout. Sequencing and the grace budget are `kubernetes-service-lifecycle`.
 - Deserialisation runs on the poll thread and bills as consumer cost, not handler cost. A record
   that cannot be deserialised is permanently poison and blocks its partition
   (`poison-messages-and-dlq`); the format's own cost is `serialization-performance`.
+- `KafkaConsumer` is not thread-safe. Keep `poll`, assignment, pause/resume, seek and commit on
+  the owning thread; other threads signal it through a thread-safe queue and `wakeup()`. For
+  parallel processing, commit only the next offset after the highest contiguous completed
+  record per partition—never the numerically largest completed offset.
 
 ## References
 

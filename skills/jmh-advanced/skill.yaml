@@ -1,20 +1,15 @@
 schemaVersion: 1
 
 name: jmh-advanced
-version: 1.1.0
+version: 1.2.0
 description: >-
-  JMH beyond the basics: the built-in profilers (`perfasm`, `xperfasm`, `perfnorm`, `gc`,
-  `stack`, `jfr`, `async`), `@State` scope and asymmetric benchmarks with
-  `@Group`/`@GroupThreads`, `@Param` combinatorics, `@Setup` levels, the real `@Fork`
-  attributes, `@CompilerControl`, and diagnosing a benchmark whose variance will not settle.
-  Use when `Error` exceeds roughly 10% of `Score`, when `@Fork(1)` is still in place before
-  publishing a number, when someone writes `@Fork(jvmVersion = ...)`, when a concurrent
-  structure is benchmarked under `Scope.Thread`, when `@Setup(Level.Invocation)` sits on a
-  high-frequency benchmark, when `-prof xperfasm` is attempted on Linux, or when `perfasm`
-  produces no assembly. Does not cover the introductory rules — forks, `Blackhole`,
-  benchmark boundaries and reading `Score` and `Error` (jmh-microbenchmarks) — turning
-  results into a build gate (performance-regression-ci), or interpreting the emitted
-  assembly in depth (reading-jit-assembly).
+  Designing advanced JMH experiments: shared and asymmetric state topologies, groups,
+  parameter matrices, auxiliary counters, fixture arbitration, fork/JVM controls, profilers,
+  hardware counters, annotated assembly, compiler controls, cold-state protocols, and
+  multi-modal variance diagnosis. Uses runtime capability discovery and separates diagnostic
+  profiled runs from decision runs. Use when a benchmark is concurrent, fork-dependent,
+  profiler-sensitive, cold/startup-oriented, or produces unexplained clusters. Basic benchmark
+  validity, statistical gates, assembly interpretation, and load tests have separate owners.
 
 license: Apache-2.0
 
@@ -49,6 +44,12 @@ dependencies:
 suggests:
   - coordinated-omission
   - load-testing
+  - reading-jit-assembly
+  - performance-regression-ci
+  - concurrency-testing
+  - jfr-and-async-profiler
+  - async-profiler-advanced
+  - jfr-advanced
 
 capabilities:
   - reads-source

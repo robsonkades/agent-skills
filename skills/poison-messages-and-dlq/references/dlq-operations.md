@@ -9,20 +9,25 @@ topic's retention has expired, the pod is gone, the logs have rotated.
 ```java
 // Conceptual: the envelope. Serialise as JSON or as headers on the dead-lettered record.
 public record DeadLetter(
-        byte[] payload,                 // raw bytes, NOT the deserialised object —
-                                        // a deserialisation failure has no object
-        Map<String, String> headers,    // including the original key and content type
+        byte[] boundedPayload,          // encrypted bytes, or null when blobRef is used
+        URI blobRef,                    // immutable protected object + digest for large data
+        String payloadDigest,
+        Map<String, String> safeHeaders,// allow-list; never blindly copy credentials
         String sourceTopic,             // or queue name
         Integer sourcePartition,        // null for a queue
         Long sourceOffset,              // or the queue's message id / receipt
-        String failureClass,            // PERMANENT | AMBIGUOUS_EXHAUSTED — never "ERROR"
+        String failureClass,            // PAYLOAD | ENVIRONMENT | TRANSIENT | AMBIGUOUS
+        String failureCode,             // stable machine-readable classifier result
+        String classifierVersion,
         String exceptionType,           // fully qualified; the classifier's input
-        String stackTrace,
+        String boundedRedactedStackTrace,
         int attempts,
         Instant firstFailedAt,
         Instant deadLetteredAt,
         String consumerGroup,
         String buildVersion,            // which deploy failed on it
+        String schemaId,
+        String operationId,
         String traceId) {}              // distributed-tracing-design
 ```
 
@@ -31,6 +36,8 @@ Why each of the less obvious ones:
 - **Raw bytes, not the object.** The most common permanent failure is that the payload cannot
   be turned into an object at all. Storing `payload.toString()` loses the bytes and with them
   any chance of diagnosing an encoding or schema problem.
+- Bound inline size; for a large payload store an immutable encrypted blob plus digest and
+  access-controlled reference. Broker message-size limits apply again on the DLQ path.
 - **`sourcePartition` and `sourceOffset`.** Without them you cannot tell whether the record was
   skipped (leaving an ordering gap) or the partition was blocked, and you cannot reconstruct
   the sequence around it while the source retention lasts.
@@ -38,12 +45,31 @@ Why each of the less obvious ones:
   retried. A large gap on a permanent failure means the classifier is wrong.
 - **`buildVersion`.** The single field that answers "did a deploy cause this?" without
   correlating dashboards. One version accounting for everything is the incident signature.
-- **`failureClass`.** The DLQ should hold permanent and exhausted-ambiguous failures and
-  nothing else; a record classed transient is a classifier bug worth being able to query for.
+- **`failureCode` and classifier version.** They let tooling re-evaluate old decisions after
+  rules or deployments change; an exhausted retry budget is recorded separately from cause.
 
 Store the DLQ's retention explicitly and make it longer than the alert-to-action time,
 weekends included. A DLQ inheriting the source topic's retention deletes the evidence on a
 schedule nobody chose.
+
+Apply the source's data classification or stricter controls: encryption, tenant-scoped ACLs,
+audit, legal hold/deletion, regional residency and field minimization. Stack traces and headers
+often contain tokens, SQL values or user identifiers. Verify that deletion removes both the
+envelope and any external blob.
+
+## Atomic quarantine transfer
+
+The invariant is: a source record is not acknowledged past until either its business effect or
+its quarantine record is durable. Options:
+
+- Kafka consume → DLQ produce → offset commit in one correctly configured Kafka transaction;
+- broker-native dead-letter/redrive feature with documented delivery and retention semantics;
+- durable transfer ledger keyed by source identity, idempotent DLQ publish, then source ack;
+- stop/pause when quarantine cannot be made durable.
+
+A plain asynchronous DLQ `send()` followed by source acknowledgement loses data when the send
+fails or its outcome is unknown. Retrying publish requires a stable quarantine ID such as
+`(cluster, topic, partition, offset, consumer-purpose)` so the DLQ itself does not multiply.
 
 ## Redrive
 
@@ -72,16 +98,17 @@ pressure skips the preconditions.
 
 1. Snapshot or copy the DLQ contents first; redrive that copy. A redrive that fails midway
    should not have consumed the evidence.
-2. Replay **into the source topic or queue**, not by calling the handler directly. The normal
-   path carries the rate limits, retries, metrics and tracing that a bespoke script does not,
-   and a record that fails again lands back in the DLQ with a fresh envelope rather than
-   vanishing into a script's stderr.
+2. Replay through a controlled path that invokes the same validation, authorization,
+   idempotency and business handler. Reinjecting the source topic is simple but changes order,
+   can loop and may collide with live traffic; a dedicated replay topic/job is valid when it
+   shares production code and observability.
 3. Rate-limit it. Full-rate redrive of a backlog accumulated during an outage recreates the
    outage; a redrive is a load test aimed at a dependency that just recovered.
 4. Redrive in batches with a stop condition: if the failure rate of the redriven records
    exceeds a threshold, stop. The fix was not the fix.
-5. Reconcile at the end: records in the snapshot = records succeeded + records back in the DLQ.
-   Any difference is a lost record and is worth an incident review.
+5. Reconcile by stable quarantine/operation ID: selected = terminally applied + terminally
+   rejected + still pending/quarantined. Count equality alone misses duplicates; verify unique
+   business effects and retain an immutable audit of disposition.
 
 ## Alerting
 
@@ -109,13 +136,22 @@ Two more worth having:
 The DLQ path is only exercised by failures, which is why it is usually broken. Three tests,
 all against a real broker under Testcontainers:
 
-- **Genuine poison.** Publish a record that cannot be deserialised. Assert: it reaches the DLQ
-  on the first failure (not after N), the envelope contains raw bytes, exception type, source
-  offset and trace id, and the consumer's offset advanced past it — or, if the design blocks the
-  partition, that it did **not** advance and per-partition lag rose.
+- **Genuine poison.** Publish invalid bytes under a supported schema and assert secure raw-byte
+  capture, stable source identity and atomic quarantine/offset behavior. Separately make the
+  schema registry/key unavailable and assert the fleet pauses rather than quarantining all data.
 - **Transient failure, not dead-lettered.** Stub the dependency to fail with a connection error
   for 30 seconds and then recover. Assert the record is processed successfully and the DLQ is
   empty. This test is what stops "attempts > 5 → DLQ" from being reintroduced.
 - **Redrive.** Dead-letter a record, deploy the fix, redrive, and assert exactly one applied
   side effect downstream and an empty DLQ. Run it against the same handler the production
   redrive uses, or the test proves nothing about the tool you will actually run.
+- **Transfer ambiguity.** Apply DLQ publish then drop its acknowledgement/crash before source
+  commit; restart and prove one logical quarantine entry and no source loss.
+- **Privacy/size.** Include oversized payload, secrets in headers/stack and tenant isolation;
+  assert blob fallback, redaction, ACLs and deletion of envelope plus blob.
+
+## Primary references
+
+- [Kafka transactions and delivery semantics](https://kafka.apache.org/documentation/#semantics)
+- [AWS SQS dead-letter queues](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html)
+- [Google Cloud Pub/Sub dead-letter topics](https://cloud.google.com/pubsub/docs/dead-letter-topics)

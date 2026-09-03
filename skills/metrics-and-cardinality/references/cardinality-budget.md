@@ -1,113 +1,89 @@
-# The cardinality budget
+# Cardinality Budget
 
-## The arithmetic
+## Budget dimensions
 
-For one metric name:
-
-```text
-series = Π(cardinality of each label) × instances × per-instrument multiplier
-
-per-instrument multiplier:
-  counter, gauge      1
-  classic histogram   buckets + 2      (one series per `le`, plus _sum and _count)
-  summary             quantiles + 2    (and the quantiles do not aggregate)
-```
-
-Worked, for one HTTP request histogram on a 40-pod service:
+For each metric family estimate:
 
 ```text
-method   7   (GET POST PUT PATCH DELETE HEAD OPTIONS)
-uri    120   (routes in the application)
-status  12   (distinct codes actually returned)
-outcome  5   (SUCCESS CLIENT_ERROR SERVER_ERROR REDIRECTION INFORMATIONAL)
-
-label combinations = 7 × 120 × 12 × 5            = 50,400
-× instances (40)                                 = 2,016,000
-× (20 buckets + 2)                               = 44,352,000 series
+logical label combinations:
+target/replica series:
+classic bucket / summary quantile multiplier:
+active-series expectation and worst case:
+new-series churn per hour/deploy/day:
+samples per second:
+bytes and retention/compaction assumptions:
+query fan-out:
+owner / limit / overflow action:
 ```
 
-Forty-four million series for one metric. The fixes are all multiplicative, so they compound:
+Simple upper bound:
 
-- `status` and `outcome` are **derivable from each other** — carrying both multiplies by 12
-  where 12 would do. Drop `outcome`: ÷5 → 8.9 M.
-- Most routes never see most methods. Only emit the combinations that occur; the backend only
-  stores observed combinations anyway, so the _realistic_ figure is closer to
-  `routes × methods actually served`. Compute both: the product is the worst case you must
-  survive, the observed count is the bill.
-- Buckets are the cheapest lever and the most often ignored. Twenty generic buckets against
-  eight chosen from the service's measured range: ÷2.
-- Instances: this is why a per-pod `instance` label makes an autoscaled fleet's series count a
-  function of traffic. Aggregate away the instance label in a recording rule if per-pod
-  breakdown is not used in an investigation.
+\[
+C_{upper}=\prod_i |L_i|
+\]
 
-**Add one label of cardinality N and the whole metric multiplies by N.** That is the review
-question for any change that adds a tag: what is N, and who enumerated it?
+This assumes every combination is possible. Build a constraint-aware estimate from routes
+and supported methods/status/outcomes as well. Multiply by simultaneously active targets
+only if target identity is not already represented in a counted label.
 
-## Label catalogue
+Classic histogram float-series multiplier is configured buckets plus sum and count (with
+exporter-specific details such as +Inf). Native histograms are one time series containing
+composite samples whose bucket density/resolution drives bytes and query cost. Verify the
+actual exposition/backend.
 
-| Label                        | Verdict | Why                                                                                             |
-| ---------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
-| `method`                     | Safe    | Fixed by the protocol                                                                           |
-| `status` / `status_class`    | Safe    | Enumerated; prefer the class when per-code is never queried                                     |
-| `uri` as a **route pattern** | Safe    | Bounded by the number of handler mappings                                                       |
-| `outcome`, `result`          | Safe    | Your own enum — keep it an enum in code, not a string literal                                   |
-| `region`, `az`, `cluster`    | Safe    | Bounded by infrastructure, changes at deploy speed                                              |
-| `tenant_id`                  | Careful | Bounded today, unbounded as a business goal. Budget for the sales target, not the current count |
-| `queue`, `topic`, `pool`     | Safe    | Named resources, enumerable from configuration                                                  |
-| `version`, `build`           | Careful | Grows monotonically with deploys; series accumulate over retention                              |
-| `hostname` / `pod`           | Careful | Unbounded in an autoscaled fleet — each new pod is a new value forever                          |
-| `user_id`, `customer_id`     | Fatal   | Grows with the business                                                                         |
-| `request_id`, `trace_id`     | Fatal   | One series per request; a new series on every single sample                                     |
-| `email`, `phone`, `document` | Fatal   | Unbounded **and** personal data now in a system with no redaction                               |
-| Raw `path` or full URL       | Fatal   | `/orders/12345` — cardinality equals the number of entities                                     |
-| Exception `message`          | Fatal   | Contains ids, values, and eventually a whole payload                                            |
-| SQL statement text           | Fatal   | Same, plus it changes with every literal                                                        |
-| A timestamp in any form      | Fatal   | Cardinality equals the number of scrapes                                                        |
+## Label review
 
-## Path templating
+| Class                           | Examples                             | Treatment                                             |
+| ------------------------------- | ------------------------------------ | ----------------------------------------------------- |
+| fixed protocol/application enum | method, outcome, region set          | allowlist and initialize expected values where useful |
+| controlled evolving             | version, node, tenant tier, topic    | growth/churn/retention budget                         |
+| external bounded mapping        | gateway code, exception class        | normalize unknown to bounded class                    |
+| entity identity                 | user, order, session, request, trace | log/span/exemplar, never ordinary label               |
+| caller-controlled text          | raw path/URL, header, SQL/message    | template/classify before instrumenting                |
+| sensitive                       | email, phone, document/token         | prohibit; treat telemetry as data exposure            |
 
-The route label must come from the framework's matched pattern, not from the request. Two
-places this leaks:
+Even fixed labels multiply. Redundant status and outcome dimensions can be useful only when
+their joint queries justify cost; otherwise derive one at query/recording time.
 
-- **A hand-written filter** that tags `request.getRequestURI()`. Spring Boot's own
-  `http.server.requests` uses the matched handler pattern and collapses requests that matched
-  no handler rather than emitting their path; a custom filter has to do the same or it is
-  strictly worse than the default.
-- **A client-side metric** tagging the resolved outbound URL. Tag the _template_ the client
-  was given, and keep the resolved URL for the span attribute.
+## Churn and retention
 
-A 404 flood against random paths is the canonical trigger: no code change, no deploy, and the
-series count goes vertical because every scanned path became a label value.
+Backends age stale series and compact/delete blocks according to implementation and
+retention; deleting instrumentation does not guarantee immediate resource recovery.
+Ephemeral pods and version labels can have modest active cardinality but high churn and
+index/storage cost. Measure:
 
-## Detecting an explosion
+- active/head series;
+- series created/removed;
+- samples ingested/dropped;
+- scrape size/duration/failures;
+- label-name/value concentration;
+- query memory/time and block/index growth.
 
-Before: put the budget in the change, and add a scrape-side ceiling so the failure is a
-refused target rather than a dead backend. Prometheus scrape configs accept `sample_limit`,
-`label_limit` and `label_value_length_limit`; a target that exceeds them fails its scrape and
-alerts, which is a far better outcome than silent ingestion.
+## Containment hierarchy
 
-During: the backend's own metrics are the diagnostic — head series count, memory, and
-ingestion rate. Find the offender by counting series per metric name, then per label:
+1. allowlist/template/classify at the source;
+2. cap or collapse unexpected values in the client library;
+3. enforce target sample/label limits and relabel emergency drops;
+4. apply ingestion quotas/routing;
+5. alert before exhaustion and document reversible incident controls.
 
-```promql
-topk(10, count by (__name__)({__name__=~".+"}))          # which metric
-count(count by (tenant_id) (my_metric))                  # which label, one at a time
+Choose overflow semantics:
+
+- **OTHER:** preserves totals but loses offending distinction;
+- **deny new meter:** can corrupt counts/denominators;
+- **fail scrape:** loud but drops all target metrics;
+- **sample/top-K:** useful for exploration, unsafe for exact SLI totals.
+
+Track overflow attempts separately with a bounded metric.
+
+## Incident path
+
+```text
+Backend/scrape pressure
+  -> identify metric family and exploding label
+  -> stop ingestion with scoped reversible relabel/quota
+  -> preserve critical SLI/control metrics
+  -> fix and cap source
+  -> observe active/churn/storage recovery
+  -> assess privacy exposure and rotate/delete under policy if needed
 ```
-
-Two-step response, in this order: **stop the bleeding at the scrape layer** by dropping the
-metric or the label with a `metric_relabel_configs` rule — no deploy required — and only then
-fix the instrumentation. Series already ingested remain until retention expires, so recovery
-of memory is not immediate; plan the incident timeline around that.
-
-## Pre-ship worksheet
-
-For each new or changed metric:
-
-- [ ] Every label's complete value set is written down, or the label is removed
-- [ ] The largest label's cardinality has an owner who can state its growth rate
-- [ ] `Π(labels) × instances × multiplier` is computed and recorded in the change
-- [ ] No label derives from a caller-controlled string
-- [ ] Any route or URI label is a template, and unmatched requests collapse to a placeholder
-- [ ] Histogram buckets come from the measured range, not from the client default set
-- [ ] The metric is named by at least one dashboard panel or alert rule
-- [ ] A scrape-side limit exists so the failure mode is a failed scrape, not a dead backend

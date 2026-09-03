@@ -1,18 +1,18 @@
 # The cause field
 
-The value in parentheses is the most informative field on a GC log line. Four common
-causes lead to four completely different investigations.
+The value in parentheses is a routing signal, not a root-cause verdict. Interpret it with
+the collector, event type, phase lines and the events immediately before it.
 
-| Cause                    | Meaning                                            | Investigate                                                                |
-| ------------------------ | -------------------------------------------------- | -------------------------------------------------------------------------- |
-| `G1 Evacuation Pause`    | normal young collection                            | nothing, unless frequency changed                                          |
-| `G1 Evacuation Failure`  | old generation had no room for evacuees            | why old filled up — retention, promotion rate, humongous fragmentation     |
-| `Metadata GC Threshold`  | Metaspace pressure triggered a collection          | **not a heap problem** — see `jvm-class-loading`                           |
-| `GCLocker Initiated GC`  | a JNI critical section delayed a needed collection | native code holding array critical regions                                 |
-| `System.gc()`            | someone called it                                  | find the caller; consider `-XX:+DisableExplicitGC` after understanding why |
-| `Allocation Failure`     | allocation could not be satisfied                  | allocation rate, then heap sizing                                          |
-| `Heap Dump Initiated GC` | a tool asked for it                                | expected during diagnosis; exclude from analysis windows                   |
-| `Proactive`              | ZGC decided to collect while idle                  | benign                                                                     |
+| Cause                    | Meaning                                       | Investigate                                                                    |
+| ------------------------ | --------------------------------------------- | ------------------------------------------------------------------------------ |
+| `G1 Evacuation Pause`    | normal young collection                       | nothing, unless frequency changed                                              |
+| `G1 Evacuation Failure`  | evacuation could not obtain usable to-space   | free-region headroom, promotion/survival spike, pinning, humongous topology    |
+| `Metadata GC Threshold`  | Metaspace pressure triggered a collection     | **not a heap problem** — see `jvm-class-loading`                               |
+| `GCLocker Initiated GC`  | GC-locker coordination triggered collection   | collector/JDK behavior and native critical regions                             |
+| `System.gc()`            | explicit collection was requested             | identify caller and required semantics; compare disable vs concurrent handling |
+| `Allocation Failure`     | allocation could not be satisfied             | allocation rate, then heap sizing                                              |
+| `Heap Dump Initiated GC` | a tool asked for it                           | expected during diagnosis; exclude from analysis windows                       |
+| `Proactive`              | ZGC's proactive policy initiated a collection | usually expected; investigate only if CPU/headroom/SLO evidence shows harm     |
 
 `Metadata GC Threshold` recurring is the one most often misread. It looks like a heap
 event, it appears in the heap log, and raising `-Xmx` does nothing at all.
@@ -30,9 +30,9 @@ runbook predates the baseline — that mismatch is information, not a parsing er
 
 ## Alerting on causes
 
-- [ ] Any `Pause Full` in production
+- [ ] Any unplanned `Pause Full` inside an online service's SLO window
 - [ ] GC overhead above the defined budget (total pause time / wall time)
-- [ ] p99 pause above a fraction of the latency SLO
+- [ ] Tail pause above its allocated latency budget, with estimator and sample count named
 - [ ] Recurring `Metadata GC Threshold`
 - [ ] Rising trend in heap used **after** collection
 

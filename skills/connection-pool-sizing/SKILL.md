@@ -28,44 +28,56 @@ it is more expensive to diagnose and slower to reverse.
    and p99). `W` covers everything between the first statement and the commit, including
    code that never touches the database. Estimating it from endpoint latency errs in both
    directions and hides the very defect that matters most.
-2. **Compute `L = λ_db × W`** with a 1.5× margin.
-3. **Apply the database-side ceiling**:
-   `min(max_connections × 0.8, db_cores × 2 + spindles) / instances`. If `L_target` exceeds
-   the ceiling, the plan is to reduce `W` or `λ` — not to raise the pool.
+2. **Compute the observed concurrency `L = λ_db × W`**, then model a candidate pool against the
+   arrival distribution and latency/error budget. A fixed 1.5× margin is a starting hypothesis,
+   not a sizing law.
+3. **Establish the database-side budget** with the database owner: reserved administrative
+   connections, total application instances, workload classes, CPU saturation, storage latency,
+   lock pressure, and failover topology. The familiar `cores × 2 + spindles` expression is a
+   benchmark heuristic, not a portable ceiling. If demand exceeds the measured safe budget, reduce
+   hold time or arrival rate before adding concurrency.
 4. **Set the timeouts and lifetimes** deliberately (see Rules).
 5. **On an incident, check in order**: `pending` and `acquire` p99 (is it the pool?),
    `usage` p50 versus p99 (does a minority hold connections far too long?),
-   `pg_stat_activity` for `idle in transaction` (is there non-database work inside the
-   transaction?), then `pg_stat_statements` ordered by `total_exec_time` **and** by `calls`
+   `pg_stat_activity` for long `idle in transaction` sessions (what code is holding a transaction
+   open while no statement runs?), then `pg_stat_statements` ordered by `total_exec_time` **and** by `calls`
    — the second reveals N+1.
 
 ## Rules
 
 - Reducing `W` is worth more than raising `c`. Since `μ = 1/W`, halving hold time doubles
   pool capacity without opening a single new database connection.
-- The pool queue is M/M/c and the wait grows hyperbolically. With `c = 10` and 50 ms
-  service: 0.4 ms at ρ = 0.5, 10 ms at 0.8, 33 ms at 0.9, 475 ms at 0.99. Between ρ = 0.90
-  and 0.99 the load rises 10% and the wait rises 14×. There is no linear margin above 0.9.
-- Never equate the pool to the container's thread count. Threads waiting for a connection
-  is backpressure working, not a defect. 200 connections per instance also exhausts
-  PostgreSQL's default `max_connections` of 100 outright.
-- `connection-timeout` must never be 0. HikariCP's default is **30,000 ms** (5.x and 6.x),
-  which is far too high for most web endpoints; the accepted minimum is 250 ms. Failing fast
+- Pool waiting grows non-linearly near saturation, but a real database pool is not automatically
+  M/M/c: arrivals may be bursty, hold times heavy-tailed, transactions correlated, and the database
+  itself slows as concurrency rises. Use Erlang-C only as an explicit approximation and validate
+  candidate sizes with production distributions or a representative load test.
+- Never equate the pool to the container's thread count. Threads waiting for a connection can be
+  intentional backpressure, but their wait must still fit the request deadline. Across instances,
+  pool maxima must fit the database's configured connection budget; do not assume a vendor default
+  or managed-service limit.
+- Avoid `connection-timeout=0`, which HikariCP treats as effectively unbounded. Its default is
+  **30,000 ms** and its accepted minimum is 250 ms. Choose a finite value inside the caller's
+  remaining deadline and validate the resulting rejection behaviour. Failing fast
   is what enables a circuit breaker, backoff retry and a degraded response — a long wait
   converts partial saturation into total unavailability.
-- Set `max-lifetime` a few seconds **below** the smallest network or database timeout on the
-  path. Firewalls, load balancers and NAT gateways drop idle TCP connections silently; the
-  connection stays "available" in the pool and dead on the wire. HikariCP's default is
-  1,800,000 ms (30 min), and `0` means infinite. Enable `keepaliveTime` (default 0,
-  disabled) below `max-lifetime`.
-- `@Transactional` only exists when the call crosses the bean boundary. `this.method()`
-  bypasses the proxy silently — no error, no log, no transaction. Extracting to a private or
-  protected method in the same class does **not** fix I/O-inside-transaction; you need a
-  separate bean with public methods, or `TransactionTemplate`.
-- `idle in transaction` is the most specific signal in the catalogue: it says exactly "there
-  is non-database code running inside an open transaction". A 300 ms HTTP call inside
+- Set `max-lifetime` a few seconds **below** an enforced database or infrastructure connection
+  lifetime when one exists; do not derive it from unrelated idle or request timeouts. Firewalls,
+  load balancers and NAT gateways may drop idle TCP connections; pool keepalive, driver/OS TCP
+  keepalive, validation, and JDBC socket timeouts cover different parts of that failure. HikariCP's
+  `maxLifetime` default is 1,800,000 ms (30 min), and `0` means infinite. Current HikariCP defaults `keepaliveTime` to
+  120,000 ms; older releases and some integrations used `0`. Verify the resolved version and
+  effective configuration. Driver/OS TCP keepalive and JDBC socket timeouts address different
+  failure modes.
+- In Spring's default proxy mode, self-invocation such as `this.method()` bypasses transactional
+  interception. Method visibility support depends on proxy type and Spring version; a separate
+  proxied collaborator or `TransactionTemplate` makes the boundary explicit. AspectJ weaving has
+  different semantics, so inspect the configured advice mode before diagnosing from source alone.
+- `idle in transaction` says that a transaction is open while the backend is not executing a
+  statement. Correlate application traces and transaction age before attributing the gap to HTTP,
+  messaging, user think time, or business logic. A 300 ms HTTP call inside
   `@Transactional` caps throughput at `pool_size / 0.3` and holds the snapshot, delaying
-  `VACUUM` for the whole database.
+  PostgreSQL cleanup of versions visible to that old snapshot; the impact depends on transaction
+  age, write volume, and affected relations.
 - N+1 does not show up as a slow query. Each query is fast; the cost is doing 101 of them,
   and it is round-trip cost, not database work. Find it by ordering `pg_stat_statements` by
   `calls`, fix with `JOIN FETCH`/`@EntityGraph`/DTO projection, and **lock the statement

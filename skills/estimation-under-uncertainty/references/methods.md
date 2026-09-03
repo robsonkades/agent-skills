@@ -4,13 +4,14 @@
 
 For each piece, three numbers:
 
-- **O** — optimistic: everything you can foresee goes right.
+- **O** — optimistic endpoint. State whether this means a quantile such as P10 or a bounded
+  best case; traditional PERT usage is inconsistent.
 - **M** — most likely: the value you would have given as a single number.
-- **P** — pessimistic: everything you can _name_ goes wrong. Not the meteor; the integration
-  that turns out to need a second round trip, the reviewer who is on leave, the migration that
-  has to be rewritten.
+- **P** — pessimistic endpoint. State whether this means a quantile such as P90 or a bounded
+  worst case; traditional PERT usage is inconsistent. It is not the
+  simultaneous union of every named failure; that produces an endpoint with no calibrated meaning.
 
-PERT approximates the distribution with:
+The traditional PERT approximation uses:
 
 ```
 E  = (O + 4M + P) / 6          expected value
@@ -24,15 +25,14 @@ E  = (2 + 12 + 10) / 6 = 4.00 days
 SD = (10 − 2) / 6      = 1.33 days
 ```
 
-**The expected value is 4 days, but the most likely value is 3.** That gap is the whole point.
-Software estimates are right-skewed — there are far more ways for a task to take longer than to
-take less — so the number that first comes to mind is systematically optimistic. Not because
-the estimator is careless; because the mode of a skewed distribution is below its mean.
+**The formula's expected value is 4 days, while its modal input is 3.** That distinction is useful,
+but the beta-distribution shape and endpoint interpretation are modelling assumptions, not measured
+facts. Calibrate them against completed work before using the result as a probability claim.
 
 ## Combining pieces
 
-Expected values add. Standard deviations do **not** — variances add, so the combined SD grows
-with the square root of the number of independent pieces:
+Expected values add. For **independent** pieces, variances add, so the combined SD grows with the
+square root of the number of pieces. With correlation, covariance terms are required:
 
 ```
 E_total  = Σ Eᵢ
@@ -45,23 +45,23 @@ Five tasks each with E = 4.00 and SD = 1.33:
 E_total  = 20.0 days
 SD_total = √5 × 1.33 = 2.98 days
 
-50% confident:  20.0 days
-80% confident:  22.5 days
-90% confident:  23.8 days
-95% confident:  24.9 days
+Normal approximation, P50: 20.0 days
+Normal approximation, P80: 22.5 days
+Normal approximation, P90: 23.8 days
+Normal approximation, P95: 24.9 days
 ```
 
 Compare the two shortcuts people actually use:
 
-| Approach                  | Result    | What it means                                   |
-| ------------------------- | --------- | ----------------------------------------------- |
-| Sum of most-likely values | 15 days   | You will beat this roughly never                |
-| PERT expected value       | 20 days   | Coin flip                                       |
-| PERT at 80%               | 22.5 days | A number you can plan against                   |
-| Sum of pessimistic values | 50 days   | Assumes every task's worst case, simultaneously |
+| Approach                  | Result    | What it means                                                 |
+| ------------------------- | --------- | ------------------------------------------------------------- |
+| Sum of most-likely values | 15 days   | Usually optimistic for right-skewed work; probability unknown |
+| PERT expected value       | 20 days   | Mean of this model, not necessarily its median                |
+| PERT at 80%               | 22.5 days | A number you can plan against                                 |
+| Sum of pessimistic values | 50 days   | Assumes every task's worst case, simultaneously               |
 
-Both shortcuts are wrong in opposite directions, and both destroy trust — the first by being
-late every time, the second by being so padded that nobody believes any estimate you give.
+Both shortcuts discard probability information in opposite directions. Their calibration must be
+checked against actual outcomes rather than asserted from the arithmetic alone.
 
 Note the good news buried in the square root: aggregating **reduces** relative uncertainty.
 ±33% on one task becomes ±15% across five, provided the risks are genuinely independent.

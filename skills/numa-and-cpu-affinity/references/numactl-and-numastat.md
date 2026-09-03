@@ -29,7 +29,8 @@ numactl --interleave=all java -jar app.jar
 
 They answer different questions and are not interchangeable.
 
-**Systemic (no `-p`)** — kernel allocator counters per node, across all processes:
+**Systemic (no `-p`)** — kernel page-allocation/fallback counters per node, across all
+processes (not remote memory accesses):
 
 ```
                    node0        node1
@@ -39,8 +40,9 @@ numa_foreign       18932         1204     should have been local, diverted elsew
 interleave_hit      2048         2048
 ```
 
-Ratio per node is `numa_miss / (numa_hit + numa_miss)`; lower is better, and a sustained
-value above roughly 20–30% is strong evidence of a heap with no affinity.
+`numa_miss / (numa_hit + numa_miss)` can describe how often preferred-node page allocation
+fell back system-wide. It cannot be attributed to this JVM and does not say which CPU later
+read the page. Baseline it for host pressure; do not convert it into a remote-access SLO.
 
 **Per process (`-p <pid>`)** — where _this_ process's memory currently sits. It produces no
 hit/miss counters:
@@ -88,8 +90,9 @@ perf report --stdio --sort=overhead,symbol | head -40
 ./asprof -e alloc -d 30 -f alloc.html <pid>    # same window
 ```
 
-Methods at the top of both outputs are the strongest candidates for a heap badly
-distributed against that access pattern.
+Methods at the top of both outputs are hypotheses only. PMU event semantics and call-chain
+quality vary by CPU/kernel, and co-occurring allocation does not identify which object's
+page was remotely accessed. Confirm with controlled placement changes and outcome metrics.
 
 ## Topology and current binding
 
@@ -133,7 +136,7 @@ PID=<pid>
 for task in /proc/$PID/task/*; do
     tid=$(basename "$task")
     name=$(cut -d' ' -f2 "$task/stat" | tr -d '()')
-    # field 39 of /proc/<pid>/task/<tid>/stat = last CPU the thread ran on (man 5 proc)
+    # field 39 = processor last executed on: a sample, not affinity or residency history
     cpu=$(awk '{print $39}' "$task/stat")
     case "$name" in
         GC\ Thread*|G1\ *) echo "$name (tid=$tid) -> cpu $cpu" ;;

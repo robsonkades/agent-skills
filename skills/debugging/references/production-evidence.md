@@ -31,7 +31,9 @@ evidence is collected _first_, because it costs seconds:
 5. **Heap dump** only if the symptom is memory and you have accepted the pause:
    `jcmd <pid> GC.heap_dump`. It stops the world for the duration and writes a file the size of
    the live set.
-6. **Then mitigate** — restart, roll back, shed load.
+6. **Then mitigate** — restart, roll back, shed load — only when the service-impact budget permits
+   this collection sequence. Safety, data integrity, and incident command can require mitigation at
+   step 1; record the evidence traded away.
 
 If the cluster cannot spare a node, mitigate first and say explicitly in the incident record
 that the evidence was traded away. That is a legitimate decision; leaving it unrecorded is what
@@ -47,8 +49,10 @@ A single source is usually ambiguous; two together are usually decisive.
   the two (java-performance, jvm-gc-tuning).
 - **Errors on one node only** → configuration, image version, or hardware. Compare the node's
   environment before reading any code.
-- **Errors start exactly at a deploy** → the deploy. Roll back first and investigate the diff
-  afterwards; do not debug forwards under an active incident.
+- **Errors start exactly at a deploy** → the deploy is the leading hypothesis, not proof. Compare
+  config, traffic, dependency, and infrastructure changes on the same boundary. Roll back when it
+  is safe, reversible, and likely to reduce impact; do not roll back an irreversible migration or
+  known-incompatible contract blindly.
 - **Errors start with no deploy** → data, traffic, time, or a dependency's own change. Work the
   "what changed" table in `method.md`.
 - **Traces show the time inside one span with no child spans** → the missing instrumentation

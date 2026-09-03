@@ -109,8 +109,9 @@ external broker — and assert on the captured payload's fields, not on the whol
 
 ## Spring Boot
 
-- `@MockitoBean` / `@MockitoSpyBean` replace a bean in the test's application context
-  (Boot 3.4+). `@MockBean` and `@SpyBean` were deprecated in 3.4 and **removed in Boot 4**.
+- `@MockitoBean` / `@MockitoSpyBean` are Spring Framework 6.2 annotations that replace or wrap a
+  bean in the test `ApplicationContext`. Spring Boot deprecated `@MockBean` and `@SpyBean` in 3.4
+  for removal in Boot 4; verify the actual Boot/Framework combination before migrating imports.
 - Every distinct combination of mocked beans and properties creates a **new cached application
   context**. Ten test classes each mocking a different bean means ten context startups; this is
   usually the largest single cost in a slow Spring test suite.

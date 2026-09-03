@@ -1,20 +1,20 @@
 schemaVersion: 1
 
 name: gc-log-analysis
-version: 1.3.0
+version: 1.4.0
 description: >-
   Configuring and reading JVM unified GC logs: the -Xlog:gc* baseline with decorators and
   rotation, the cause field, the before->after->capacity triple and headroom, pause
-  distribution, allocation and promotion rate derived from the region lines, premature
-  promotion via gc+age, and correlating with -Xlog:safepoint. Use when a GC log needs to be
+  distribution, Eden-refill and old-region-growth estimates derived from region lines,
+  adaptive tenuring pressure via gc+age, and correlation with -Xlog:safepoint. Use when a log needs to be
   interpreted, when GC logging is not enabled and the right GC tag-sets have to be chosen,
   when full collections or Metadata GC Threshold appear, when the heap floor rises after
-  each complete collection, when an allocation or promotion rate has to come out of the log
-  rather than a profiler, when a log starts at an uptime well above zero, or when an
-  analysis script reports zero pauses. Does not cover collector mechanics (gc-fundamentals),
+  equivalent reclamation points, when an allocation or promotion proxy has to come from the log
+  rather than a profiler, when a log starts above zero uptime, or when an analysis script
+  reports zero pauses. Does not cover collector mechanics (gc-fundamentals),
   collector choice and heap sizing (jvm-gc-tuning), or allocation profiling
-  (jfr-and-async-profiler). The -Xlog syntax itself is unified-logging. Attributing an
-  observed pause across layers is pause-attribution.
+  (jfr-and-async-profiler). Syntax is unified-logging; cross-layer pause attribution is
+  pause-attribution.
 
 license: Apache-2.0
 

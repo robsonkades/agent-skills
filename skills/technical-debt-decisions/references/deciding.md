@@ -11,8 +11,9 @@ nowhere.
 | **Deliberate**  | "We ship without the async job to make the pilot; here's the plan." | "No time for design." |
 | **Inadvertent** | "Now that it's built, we can see the boundary was wrong."           | "What's a layer?"     |
 
-- **Deliberate/prudent** is the only quadrant that is actually debt. Manage it: record, trigger,
-  repay.
+- **Deliberate/prudent** is debt intentionally incurred and easiest to manage: record, trigger,
+  repay. The other quadrants can still describe technical debt; the labels explain how it arose and
+  what prevention is needed, not whether its future cost exists.
 - **Inadvertent/prudent** is learning, and it is unavoidable — you could not have known before
   building it. Do not apologise for it; refactor when the better boundary is clear
   (java-refactoring).
@@ -29,19 +30,18 @@ The answer determines whether you need a plan, a refactoring, a conversation, or
 Each of these is on the list because the cost of the shortcut is not paid by the team that took
 it, or because it cannot be detected once taken.
 
-| Never traded                                    | Because                                                              |
-| ----------------------------------------------- | -------------------------------------------------------------------- |
-| Correctness of money or of a legal record       | The error compounds silently and reconciliation may be impossible    |
-| Authorisation on a newly reachable path         | You cannot detect what was accessed afterwards without an audit log  |
-| Silent data loss                                | Nobody reports what they never saw was missing                       |
-| A migration with no tested rollback             | The one moment you need it is the one where testing it is impossible |
-| Secrets in logs, traces or error responses      | Retention means it is already distributed by the time you notice     |
-| Removing the test for the code you just changed | It removes the mechanism that catches the shortcut going wrong       |
+| Never traded                                                     | Because                                                                |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Correctness of money or of a legal record                        | The error compounds silently and reconciliation may be impossible      |
+| Authorisation on a newly reachable path                          | You cannot detect what was accessed afterwards without an audit log    |
+| Silent data loss                                                 | Nobody reports what they never saw was missing                         |
+| An irreversible migration with no tested recovery or forward-fix | Failure can exceed the recovery objectives when reversal is impossible |
+| Secrets in logs, traces or error responses                       | Retention means it is already distributed by the time you notice       |
+| Removing the only effective evidence for a high-risk change      | It leaves the accepted behavior or control unverified                  |
 
-Note what is _not_ on the list: performance, elegance, duplication, a missing abstraction,
-incomplete documentation, an unsupported edge case that fails loudly. Those are all legitimately
-tradeable, and treating everything as non-negotiable is how the real non-negotiables lose their
-force.
+Performance, documentation and edge cases may be tradeable when they are not tied to an SLO,
+safety/legal obligation, accessibility commitment or resource-exhaustion failure. Classify the
+consequence, not the engineering label; treating everything as non-negotiable dilutes real controls.
 
 ## Containment checklist
 
@@ -121,9 +121,9 @@ If it must ship, the minimum before it does:
 - hardcoded values named and moved to configuration, or documented as deliberate;
 - error paths that fail loudly rather than returning empty results.
 
-That is usually a day, not four, and it converts a liability into contained debt. If even that
-is refused, the honest statement is "this is not ready to ship", not "we will clean it up
-later".
+Estimate this minimum from the actual risk; do not inherit the example's day count. If essential
+authorization, correctness and failure evidence cannot be supplied or explicitly accepted by the
+authorized owner, the honest statement is “this is not ready to ship.”
 
 ## The question that settles most of these
 

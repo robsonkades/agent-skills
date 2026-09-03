@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-resource-management
-version: 1.1.0
+version: 1.2.0
 description: >-
   Deterministic release of what a Java program holds open: try-with-resources and the
   exception semantics that make it non-optional, designing an AutoCloseable (ownership,

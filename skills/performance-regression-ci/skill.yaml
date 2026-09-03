@@ -1,19 +1,18 @@
 schemaVersion: 1
 
 name: performance-regression-ci
-version: 1.0.0
+version: 1.1.0
 description: >-
-  Turning a performance measurement into an automatic gate: choosing a metric stable enough
-  to gate on, calibrating thresholds against the pipeline's own measured variance, fixed
-  thresholds versus historical trending, noise control on shared CI runners, and updating a
-  baseline deliberately. Use when a benchmark job runs on a shared runner, when a threshold
-  was picked by convention rather than measured, when a comparison script compares means and
-  ignores scoreError, when scoreError is assumed to be a 95% interval, when a delta's sign
-  convention was not checked against the BenchmarkMode, when a step captures a piped
-  command's status with raw $?, when a benchmark has a single @Param value, or when a stale
-  baseline keeps producing false positives. Does not cover running or writing the benchmark
-  itself (jmh-advanced), the full-system run (load-testing), or the general question of
-  whether two measurements differ (latency-statistics).
+  Designing trustworthy performance-regression gates: defining the decision and smallest
+  important regression, preserving independent experimental units, calibrating noise and
+  power, comparing compatible JMH results, handling multiplicity and drift, separating
+  screening from confirmation, and operating secure baseline promotion. Use when performance
+  results should influence merge, when a threshold or statistical test lacks an empirical
+  error budget, when JMH scoreError is treated as a two-build test, when repeated iterations
+  are mistaken for independent runs, when CI infrastructure changes contaminate comparisons,
+  or when a pipeline can lose a comparator exit status. Does not teach benchmark construction
+  (jmh-advanced), full-system workload design (load-testing), or general latency inference
+  (latency-statistics).
 
 license: Apache-2.0
 
@@ -48,6 +47,11 @@ dependencies:
     version: ^1.0.0
   - name: latency-statistics
     version: ^1.0.0
+
+suggests:
+  - jmh-microbenchmarks
+  - coordinated-omission
+  - performance-methodology
 
 capabilities:
   - reads-source

@@ -1,20 +1,16 @@
 schemaVersion: 1
 
 name: distributed-tracing-design
-version: 1.2.0
+version: 1.3.0
 description: >-
-  Span modelling as a design decision: what earns a span and what does not, span names as
-  low-cardinality operation names with the detail in attributes, recording errors so a
-  failed trace is findable, and span links versus parent-child for asynchronous and batch
-  work. Use when a trace carries hundreds of spans per request, when a span name contains an
-  order id or a raw path, when a queue consumer is made a child of a producer span from an
-  hour ago, when one poll returns records from many traces and the batch is parented to
-  whichever arrived first, when a background job stretches its caller's trace, or when a
-  failed request shows a green root span. Does not cover sampling, context propagation
-  mechanics, Baggage or agent overhead (opentelemetry-performance), the log event itself
-  (structured-logging), label counting (metrics-and-cardinality), percentile correctness
-  (latency-statistics), the messaging architecture (event-driven-architecture,
-  kafka-consumers-in-java), or alerting (slo-and-alerting).
+  Designing trace topology and semantics: selecting actionable span boundaries, stable
+  operation names, kinds, status and attributes; modelling synchronous, asynchronous,
+  messaging, batch, retry and long-running workflows with parentage and links; and making
+  traces usable with metrics, logs and profiles during incidents. Use when traces are
+  noisy, fragmented, mis-parented, high-cardinality, misleading about errors, or unable to
+  model batches and asynchronous causality. Sampling, propagation mechanics and overhead
+  belong to opentelemetry-performance; metric cardinality to
+  metrics-and-cardinality.
 
 license: Apache-2.0
 

@@ -29,8 +29,9 @@ Non-blocking I/O      the syscall returns immediately with whatever is ready
 Asynchronous model    the code is expressed as callbacks or stages, not statements
 ```
 
-A virtual thread doing `socket.read()` uses a **blocking API**, does **not** block an OS
-thread, sits on top of **non-blocking I/O** at the syscall, and is written in a
+A virtual thread doing `socket.read()` uses a **blocking API**, does **not** dedicate a
+blocked carrier to that request, sits on top of **non-blocking I/O** plus a shared poller in
+the current JDK implementation, and is written in a
 **synchronous** model. All four at once. Any sentence that treats them as the same axis is
 wrong somewhere.
 
@@ -51,9 +52,10 @@ wrong somewhere.
 
 ## Rules
 
-- **A blocking API is not a blocked thread.** On a virtual thread, `InputStream.read` on a
-  socket registers interest with the JDK's poller, parks the virtual thread, unmounts, and
-  frees the carrier. The application code blocks; nothing in the OS does.
+- **A blocking API is not necessarily a blocked carrier.** On a virtual thread,
+  `InputStream.read` on a supported socket path registers interest with the JDK's poller,
+  parks the virtual thread, unmounts, and frees the carrier. Kernel poller threads still
+  wait for readiness; the point is that there is no blocked OS thread per socket request.
 - Under the hood, socket channels are put in **non-blocking mode** by the JDK and a small
   number of dedicated poller threads (`epoll`/`kqueue`) unpark virtual threads when a file
   descriptor becomes ready. That is an implementation detail, not a specification — do not
@@ -67,8 +69,10 @@ wrong somewhere.
   class initialiser — gets no compensation, so it removes a carrier outright. Raising
   `maxPoolSize` helps the first and does nothing for the second.
 - The number of platform threads in the scheduler may therefore legitimately exceed
-  `availableProcessors()`. Growth towards `maxPoolSize` under a file-heavy or native-heavy
-  workload is the system working as designed; sustained saturation of it is the ceiling.
+  `availableProcessors()`. Growth towards `maxPoolSize` under operations the scheduler
+  recognizes for compensation is the system working as designed; native-frame pinning is
+  specifically **not** compensated. Sustained saturation says the compensated-blocking
+  workload reached this implementation ceiling, not that raising it is automatically safe.
 - **`synchronized` no longer pins** on JDK 24 and later (JEP 491), and `Object.wait` unmounts
   too. Advice to replace `synchronized` with `ReentrantLock` for pinning reasons is obsolete;
   `-Djdk.tracePinnedThreads` was removed and silently does nothing.
@@ -76,14 +80,15 @@ wrong somewhere.
   a `Selector` is non-blocking I/O written imperatively. Reactor and RxJava are a programming
   model that happens to sit on non-blocking I/O. Netty is the non-blocking I/O layer under
   both.
-- **Both models end at the same syscalls.** Virtual threads and an event loop both reach
-  `epoll_wait` and `read`. Neither is faster at the kernel boundary; they differ in who holds
-  the suspended state — a continuation on the heap versus a callback chain — and therefore in
-  memory per in-flight request and in what a stack trace can tell you.
+- **Both models ultimately use the same kernel facilities on a given transport**, but their
+  batching, buffer ownership, syscall cadence and wakeups can differ. Do not infer equal
+  performance from a shared `epoll`/`read` foundation; measure CPU, allocation, throughput
+  and tail latency. The architectural difference is where suspended logical state lives and
+  how it is diagnosed.
 - **Blocking inside an event loop is a different severity of bug** from blocking on a pooled
-  thread. An event-loop thread serves many connections; blocking it stalls all of them, and
-  the loop count is typically `2 × cores`. Detect it with BlockHound in tests, not by review
-  alone.
+  thread. An event-loop thread serves many connections, so blocking it can stall every
+  connection assigned to it. Loop count and assignment are framework/configuration details,
+  not a universal `2 × cores`. Combine BlockHound tests with loop-lag and wall-clock evidence.
 - A "non-blocking" client library is only non-blocking to the boundary of its own API. A
   reactive database driver that hands work to a bounded internal pool has the same ceiling as
   a JDBC pool, expressed differently.

@@ -104,6 +104,7 @@ for (const [i, e] of entries.entries()) {
   }
 
   if (!e.metric) fail(name, 'governed with no metric');
+  if (!e.consequence) fail(name, 'governed with no consequence — a metric, not a fitness function');
 
   if (e.governance === 'M') {
     if (!e.criterion)
@@ -128,8 +129,6 @@ for (const [i, e] of entries.entries()) {
   } else {
     if (!e.threshold) fail(name, 'governed with no threshold — a metric alone is a dashboard');
     if (!e.site) fail(name, 'governed with no site — nowhere for it to run');
-    if (!e.consequence)
-      fail(name, 'governed with no consequence — a metric, not a fitness function');
   }
 }
 

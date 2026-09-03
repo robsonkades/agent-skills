@@ -166,11 +166,13 @@ did not move, the split was on the wrong line.
 (`offline-concurrency-control`).
 
 ```text
-1. Add the column    NOT NULL DEFAULT 0. Additive, online. DEPLOY.
+1. Add the column    Add a version column using the database vendor's proven
+                     online-migration sequence. `NOT NULL DEFAULT 0` may rewrite
+                     or lock a large table on some engines/versions. DEPLOY.
 
-2. Map it            @Version on the entity. Now writes check it, but
-                     clients are not yet sending versions, so nothing
-                     conflicts across requests. DEPLOY.
+2. Map it            `@Version` on the entity. ORM-managed updates now detect
+                     concurrent modifications between load and flush, even before
+                     an HTTP client carries the version. DEPLOY and observe.
 
 3. Bulk statements   Audit every bulk UPDATE and native query on the
                      table; add `version = version + 1`. Test it.
@@ -182,11 +184,11 @@ did not move, the split was on the wrong line.
 5. Enforce           Reject writes with a missing or stale version, with
                      a 409/412 and a usable message.
 
-6. Observe           A conflict counter per aggregate type. It is the
-                     evidence that the mechanism is live — a version
-                     column with zero conflicts ever is usually not
-                     working.
+6. Observe           A conflict counter per aggregate type, plus tests that
+                     deterministically create stale writers. Zero production
+                     conflicts may be legitimate; absence of a forced-conflict
+                     test is what leaves the mechanism unproven.
 ```
 
-Step 6 is the one that gets skipped and the one that would have revealed the problem in
-step 3.
+The forced-conflict test and audit of bulk/native writes are what reveal a mechanism that exists in
+mapping metadata but is bypassed on important update paths.

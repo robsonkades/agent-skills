@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: idempotency
-version: 1.1.0
+version: 1.2.0
 description: >-
   Making an operation safe to apply more than once: natural idempotency versus an
-  idempotency key plus a dedup store; choosing and scoping the key, and why a broker message
-  id is the weakest source; the concurrent in-flight duplicate that a check-then-act read
+  idempotency key plus durable operation state; choosing and scoping the key, and why a
+  broker message id covers only one redelivery scope; the concurrent in-flight duplicate
   cannot handle; replaying the stored response instead of returning a conflict; and why
   idempotent is not commutative. Use when a retry produces a second row, charge or email,
   when a handler starts with an exists() check before a write, when an Idempotency-Key

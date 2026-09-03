@@ -19,11 +19,11 @@ description: >
 
 ## Purpose
 
-A timeout is a local decision about how long **this** hop may wait. A deadline is an
-absolute instant that the whole call graph shares. Confusing the two is what turns three
-hops nobody set above 5 s into a 15 s worst case: per-hop timeouts **add**, a deadline only
-**shrinks**. Every hop under a deadline knows how much time is left; every hop under a
-timeout knows only its own patience.
+A timeout is a local duration bound on a named phase. A deadline is a request budget represented
+locally as an instant and propagated as a shrinking timeout. Sequential per-hop maxima can add
+when no outer bound exists; with a 5 s outer timeout the caller may return at 5 s while uncancelled
+descendants continue toward their own bounds. A propagated deadline constrains both visible wait
+and useful downstream work only when every hop honors expiry and cancellation.
 
 The second failure this prevents is the timeout that saves nothing. A caller that stops
 waiting but does not cancel has freed no connection, no thread and no database session at
@@ -36,64 +36,93 @@ mechanisms; both have to be implemented.
 1. **Fix the caller's budget first.** The outermost bound comes from the user-facing SLA or
    the upstream deadline. Everything inside is a division of that budget, never an
    independent choice.
-2. **Take the value from the dependency's measured distribution.** Read its p99 and p99.9
-   over a window with a stated sample count (latency-statistics owns how to read them), and
-   decide explicitly which fraction of calls you are choosing to abandon.
-3. **Add up the chain before deploying it.** Worst case is the sum of per-hop timeouts plus
-   backoff. If that exceeds the caller's budget, the configuration is already broken — no
-   traffic is needed to prove it.
-4. **Propagate the remaining budget on every hop, and check it before starting work.**
-   Compute `remaining`, refuse the call when it cannot plausibly finish, and shrink the
-   downstream timeout to `remaining` minus a return-trip reserve. See
+2. **Use uncensored measurements and the consequence model.** A chosen percentile is evidence,
+   not the timeout itself: include network phases, overload, cold paths and failure recovery;
+   decide the tolerated abandonment rate and resource occupancy.
+3. **Model the whole policy before deploying it.** For sequential attempts, the configured
+   maximum is phase waits + per-attempt work + backoff, clipped by remaining deadline. Include
+   pool/DNS/TLS/body time and hidden framework retries; hedges overlap instead of adding simply.
+4. **Propagate a shrinking remaining budget on every hop.** Deduct elapsed local work and a
+   return reserve before each outbound call; clamp untrusted inputs to a local maximum. Refuse
+   work only when its probability/value of timely completion no longer justifies its cost. See
    `references/deadline-propagation.md`.
 5. **Set every timeout layer the client actually has** — pool lease, connect, TLS, read or
    inactivity, total request — and name the failure each one does _not_ prevent. See
    `references/java-timeout-surface.md`.
-6. **Wire cancellation to the expiry.** Interrupt, cancel the request, close the connection,
-   call the database's cancel path. Then verify it: the callee's in-flight gauge must return
-   to zero after the caller gives up.
-7. **Assert the arithmetic in a test**, not in review. `attempts × per-attempt + Σ backoff ≤
-budget` is a property of configuration and needs no network to check.
+6. **Wire best-effort cancellation to expiry.** Signal the protocol/task, stop producing output,
+   close/abort resources where safe and invoke database cancellation/server timeout. Cancellation
+   is cooperative and races completion; verify bounded resource release and make effects safe
+   for an unknown outcome.
+7. **Assert policy invariants and fault behavior.** Sequential configured maxima must fit the
+   outer budget or be clipped; then inject stalls in pool, DNS/connect/TLS, headers, body and
+   server work and observe cancellation/resource release.
 
 ## Rules
 
-- Per-hop timeouts compose by addition; deadlines compose by minimum. If a request crosses
-  more than two hops, per-hop values alone cannot bound the total.
-- Carry a **remaining duration** on the wire, not an absolute timestamp. A timestamp is only
-  as good as clock synchronisation between the two hosts; a duration costs one transit-time
-  error term and no clock assumption. `grpc-timeout` is a duration for exactly this reason.
-  Convert it on arrival against a monotonic source (`System.nanoTime()`), so an NTP step
-  cannot move the deadline mid-request.
+- Sequential phase/attempt maxima add when no smaller outer bound stops the wait. Nested timeouts
+  do not make the user wait for every orphan sequentially, but they can bind resources much later
+  than the response. A deadline composes by minimum only if it is inherited, never reset.
+- A **remaining duration** avoids cross-host wall-clock skew but transit time before receipt is
+  not observable to the receiver and therefore consumes unaccounted budget. Deduct elapsed time
+  before every onward propagation and retain a network reserve; mature protocols such as gRPC
+  propagate a timeout with elapsed time deducted. Convert inbound duration to a local monotonic
+  deadline (`System.nanoTime()`); never compare `nanoTime` values across processes.
 - HTTP defines no deadline header. Pick one, put it in the API contract, and treat its
   absence as "no inherited budget, use the local default" — never as "unlimited".
-- Refuse to start downstream work when `remaining` is below the operation's own measured p50
-  plus the return-trip reserve. Work that cannot finish still costs the callee everything
-  except the reply.
-- A timeout set at the dependency's p99.9 is a decision to wait as long as its slowest 1 in 1000. Your p99.9 then contains that number by construction. Choosing p99 sheds ~1% of
-  calls as failures and caps the wait — that trade is the actual decision.
+- Refuse or degrade when the conditional chance/value of finishing within `remaining - reserve`
+  is lower than the cost and admission policy allow. p50 is not a universal threshold: it would
+  reject work that still has about a 50% chance under a stationary distribution and ignores
+  criticality, queue state, cancellation cost and warm/cold path.
+- A timeout at a historical p99 nominally abandons about 1% only if the distribution is
+  representative, uncensored and independent of the timeout. Client metrics often record a
+  spike at the configured timeout and hide how long the dependency would have taken. Measure
+  server work and outcomes too; choose from the end-to-end budget and failure cost.
 - Hikari's `connectionTimeout` bounds waiting for a pooled connection, not TCP connect.
   Under saturation it is the first timeout to fire, and it fires on callers that have not
   yet sent a byte. Sizing the pool is connection-pool-sizing; the arithmetic relating wait
   time to arrival rate and service time is littles-law-and-queueing.
-- Closing a JDBC connection does not reliably abort a statement already running on the
-  server; whether and when the server notices is driver- and database-specific.
-  `Statement.setQueryTimeout` — or an explicit server-side cancel — is the only portable
-  request to stop it, and its effect is still driver-dependent. Verify on your driver.
-- Kafka: a slow handler trips `max.poll.interval.ms`, not `session.timeout.ms`. Heartbeats
-  have run on a background thread since KIP-62, so session timeout no longer covers
-  processing. Raising `request.timeout.ms` does not help a slow handler.
-- `HttpClient.Builder.connectTimeout` and `HttpRequest.Builder.timeout` are different
-  bounds, and neither covers name resolution or the time spent consuming a streamed body.
-- Never write `future.get()` or `join()` with no bound, and never catch `TimeoutException`
-  without cancelling the future — the unbounded variants turn a downstream stall into a
-  thread leak in the caller. Note that on a platform thread a blocking read on
+- JDBC exposes `Statement.setQueryTimeout`, `Statement.cancel`, `Connection.setNetworkTimeout`
+  and `Connection.abort`, with distinct semantics and driver support. Prefer a database-side
+  statement timeout as the authoritative execution/lock bound when available, align the driver
+  and transaction limits, and verify whether cancel releases server work and locks promptly.
+- Kafka: processing that delays `poll()` can exceed `max.poll.interval.ms`; broker request and
+  heartbeat/session limits are different. Static membership can defer reassignment until session
+  expiry, and under the consumer group protocol the broker controls session/heartbeat settings.
+  Raising `request.timeout.ms` does not make a slow handler safe.
+- `HttpClient.Builder.connectTimeout` and `HttpRequest.Builder.timeout` are different. In current
+  JDK built-in implementations the request timeout extends through body-subscriber completion;
+  a returned `InputStream` body shifts later consumption/close responsibility to the caller.
+  DNS behavior and implementation details still require fault testing.
+- An unbounded `future.get()`/`join()` is acceptable only when a stronger task/request lifetime
+  is guaranteed. Catching `TimeoutException` should normally initiate cancellation and preserve
+  interrupt status where applicable, but cancellation does not prove the effect stopped. On a
+  platform thread a blocking read on
   `java.net.Socket` does not respond to `Thread.interrupt()`; closing the socket is what
   unblocks it, so a cancellation path built only on interruption does nothing there.
-- A retry policy whose total (attempts × per-attempt timeout + Σ backoff) exceeds the
-  caller's remaining budget has attempts that are unreachable. The policy is decoration; the
-  arithmetic is the review.
+- For sequential fixed maxima, `Σ phase/attempt bounds + Σ backoff` must be clipped by the
+  shrinking deadline. Attempts beyond it are unreachable. Use overflow-safe duration arithmetic;
+  parallel hedges require a concurrency/resource budget rather than the same sum.
 - Say what a timeout bounds. It bounds the caller's wait. It does not bound the callee's
   work, and with a retry above it, it does not bound the total either.
+
+## Failure contract, security and observability
+
+- Distinguish `deadline_exceeded_before_start`, local pool/connect/request timeout, remote
+  deadline response and cancellation. A timeout leaves the business outcome **unknown** unless
+  the protocol provides an outcome/status query; retries require idempotency or reconciliation.
+- Clamp and authenticate inherited budget/priority where a trust boundary requires it. Reject
+  malformed, negative and overflow values; prevent a caller from buying excessive resource time
+  or forcing near-zero budgets as an amplification attack.
+- Record original/remaining budget, phase, attempt, cancellation signal/acknowledgement and work
+  continuing after caller expiry. Keep identifiers low-cardinality and do not log sensitive
+  payload/header contents.
+
+## Primary references
+
+- [gRPC deadlines](https://grpc.io/docs/guides/deadlines/) — propagation, elapsed-time deduction and cooperative server cancellation.
+- [JDK `HttpRequest.Builder.timeout`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpRequest.Builder.html#timeout(java.time.Duration)>) — specified request bound and JDK implementation behavior.
+- [JDBC `Connection.setNetworkTimeout`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#setNetworkTimeout(java.util.concurrent.Executor,int)>) — network timeout versus query timeout.
+- [Apache Kafka consumer configuration](https://kafka.apache.org/41/generated/consumer_config.html) — poll interval, static membership and group-protocol distinctions.
 
 ## References
 

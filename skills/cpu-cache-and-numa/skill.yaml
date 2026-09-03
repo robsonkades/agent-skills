@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: cpu-cache-and-numa
-version: 1.2.0
+version: 1.3.0
 description: >-
   Hardware-aware Java: the cache line as the hardware's indivisible unit, false sharing and
   how it differs from lock contention, object layout measured with JOL, LongAdder versus
   AtomicLong, data locality in arrays and collections, and NUMA topology. Use when
-  throughput gets **worse** as threads are added, when scaling efficiency is below 0.5, when
+  throughput gets **worse** as threads are added, when scaling efficiency collapses, when
   fields are being added to a class shared between threads, when volatile counters sit next
   to each other, when @Contended or padding is proposed, when -XX:+UseNUMA is being set, or
   when someone says a volatile write "flushes the cache". Does not cover happens-before

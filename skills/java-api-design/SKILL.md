@@ -31,9 +31,10 @@ accepted on behalf of unknown callers — publish deliberately, evolve deliberat
    that needs a caller. In a modular build, an unexported package is invisible regardless
    of modifiers — use `exports` for the API packages only. What is not published never
    needs a deprecation cycle.
-3. **Shape the signatures.** In a method signature: four or more parameters, or three
-   with a boolean or two of the same type adjacent → introduce a parameter object (a
-   record with a validating compact constructor) or split the method. Constructor
+3. **Shape the signatures.** Parameter count is a signal, not a threshold. Boolean flags,
+   transposable same-typed arguments, recurring data clumps, optionality and independent
+   evolution often justify a parameter object or split method; a cohesive four-argument
+   operation may be clearer as-is. Constructor
    ergonomics — when a plain constructor or record suffices, builders, staged
    construction — are java-fluent-apis' territory.
 4. **Check the overload set.** Overloads must be interchangeable in behaviour, differing
@@ -47,18 +48,35 @@ accepted on behalf of unknown callers — publish deliberately, evolve deliberat
 
 ## Rules
 
-- Boolean accessors read `is`/`has`/`can` and assert the positive: `isActive`, never
-  `isNotExpired`. A caller should never negate a negation.
+- Prefer positive boolean predicates (`isActive`, `hasCapacity`, `canSettle`) and match the
+  published family/framework convention; records may naturally expose `active()`. A negative
+  concept can be legitimate when it is the domain state, but avoid forcing callers through
+  double negation.
 - Collection-valued names are plural (`lineItems()`), and collection returns are never
-  null — empty means empty.
+  null—empty means empty. Also specify encounter order, mutability, snapshot/live-view semantics,
+  ownership and concurrency; `List` alone answers none of those.
 - No abbreviations except those established in the caller's domain (`VAT`, `IBAN`,
   `TTL`); `calcAmt` saves four characters and costs every reader a guess.
 - Discoverability is structural: each return type should offer the natural next call, so
   the IDE's completion list reads as documentation. A method returning `String` or `Map`
   where a domain type exists throws that thread away.
-- Deprecate with a destination: `@Deprecated(since = "...", forRemoval = true)` plus a
-  Javadoc `@deprecated` naming the replacement. Deprecation without an alternative is a
-  complaint, not a policy. Remove no earlier than the next major version.
+- Accept the least-specific abstraction the operation needs and return the most-specific useful
+  contract, but do not expose an internal mutable collection. `List.copyOf` creates an
+  unmodifiable shallow snapshot and rejects null elements; `Collections.unmodifiableList` is a
+  live read-only view. Choose and document one rather than calling both “immutable.”
+- Keep `exports` (compile/link access) distinct from `opens` (deep reflective access) in JPMS.
+  Framework reflection may require a qualified `opens ... to ...`; exporting a package merely to
+  make reflection work expands the caller API unnecessarily.
+- Treat overloads accepting functional interfaces, `null`, varargs, boxing or related generic
+  types as a source-compatibility hazard. Compile representative lambda/method-reference call sites
+  when adding one; existing binaries do not redo overload resolution.
+- Document nullability, thread safety, blocking, ownership, idempotency and exception guarantees
+  where relevant. These are behavioural API surface even when Java's type system cannot encode
+  them. Cross-process wire compatibility remains rpc-and-api-contracts' responsibility.
+- Deprecate with a migration: `@Deprecated(since = "...", forRemoval = true)` when removal is
+  actually intended, plus a Javadoc `@deprecated` naming the replacement or explaining why no
+  direct substitute exists. Removal follows the published compatibility window—commonly a major
+  version—not merely the annotation.
 - Semantic versioning is a compatibility claim, not a counter: behavioural breaks are
   breaks — a stricter precondition on an existing method is a major version even though
   every caller still compiles and links.

@@ -9,7 +9,7 @@
 | AppCDS               | `-XX:DumpLoadedClassList=<file>`         | Capture the class list from a training run                      |
 | AppCDS               | `-XX:SharedClassListFile=<file>`         | Use that list when dumping the archive                          |
 | Dynamic CDS          | `-XX:ArchiveClassesAtExit=<file>`        | Dump at process exit, no manual class-list step                 |
-| CDS, recommended     | `-XX:+AutoCreateSharedArchive`           | Create when absent; regenerate only on a header failure         |
+| Dynamic CDS          | `-XX:+AutoCreateSharedArchive`           | Reuse/create a dynamic archive at normal VM exit                |
 | CDS, on demand       | `jcmd <pid> VM.cds dynamic_dump <file>`  | Dump a warmed live process; needs `-XX:+RecordDynamicDumpInfo`  |
 | CDS, fail-fast       | `-Xshare:on`                             | Exit instead of running without a rejected archive              |
 | Leyden, fail-fast    | `-XX:AOTMode=on`                         | Exit instead of running without a rejected cache                |
@@ -23,29 +23,29 @@
 | Leyden, legacy (483) | `-XX:AOTMode=record\|create\|off\|auto`  | Phase of the three-step pipeline                                |
 | Leyden, legacy (483) | `-XX:AOTConfiguration=<file>`            | Configuration captured in the `record` phase                    |
 | Leyden, consume      | `-XX:AOTCache=<file>`                    | **Use** an existing cache — the production flag                 |
-| Leyden, train (514)  | `-XX:AOTCacheOutput=<file>`              | Train and rewrite the cache; does this on **every** invocation  |
-| Leyden, train (514)  | `JDK_AOT_VM_OPTIONS`                     | Pass options to the internal training phases                    |
+| Leyden, train (514)  | `-XX:AOTCacheOutput=<file>`              | Record then assemble an output cache for that invocation        |
+| Leyden, assembly     | `JDK_AOT_VM_OPTIONS`                     | Pass JVM options to the assembly child process                  |
 | Leyden, diagnostic   | `-Xlog:aot*`                             | Cache creation and use; confirm the exact tag with `-Xlog:help` |
 
 ¹ Fails with `Unrecognized VM option` on a standard JDK 25.
 
-## The AppCDS flow worth using
+## Choosing an AppCDS creation flow
 
 ```bash
 java -XX:+AutoCreateSharedArchive -XX:SharedArchiveFile=app.jsa -jar app.jar
 ```
 
-One command, in every environment — dev, CI and production. When the file is missing the JVM
-runs normally and writes a dynamic archive at exit, on top of the JDK's default base archive.
-When the file exists, the JVM regenerates it only if the **header** is rejected — a different
-JDK build, or a different `UseCompressedOops` / `UseCompactObjectHeaders` setting (source:
-`FileMapInfo::initialize` in `filemap.cpp` and `CDSConfig` in JDK 25; the compact-headers case
-was executed and rewrote the file). A classpath change or a rebuilt JAR is detected _later_, by
-classpath validation, and that path does not regenerate: the launch logs `shared class paths
-mismatch` and `Unable to use shared archive. The top archive failed to load`, application
-classes come from the JARs, and the stale file survives — every launch, indefinitely. So the
-flag removes the "forgot to create it" failure, not the "forgot to recreate it" one. Either
-delete the file as part of the build that changes the JARs, or name it after the build id.
+This is convenient for a repeated command with a persistent writable directory: when no usable
+same-version archive exists, the JVM can create/replace the dynamic archive at normal exit for a
+later launch. A killed process may produce nothing, the first launch gets no application-archive
+benefit, concurrent writers need an ownership policy, and immutable/read-only production images
+cannot rely on shutdown mutation. For services, prefer a training/build step such as
+`ArchiveClassesAtExit` against final JARs and ship the result under a build-id name.
+
+Exact replacement behavior after header/classpath mismatches has changed across updates. Do not
+encode `filemap.cpp` behavior from one build as a contract: negative-test a changed JAR, changed
+flags and truncated archive on the deployed vendor build. Use logs to prove whether it reused,
+replaced or skipped the archive.
 
 `-XX:+AutoCreateSharedArchive` is ignored with a warning if `SharedArchiveFile` points at a
 static archive (`-Xshare:dump` output), and refuses to combine with `-XX:ArchiveClassesAtExit`.
@@ -65,20 +65,17 @@ java -XX:AOTCacheOutput=app.aot -jar app.jar
 java -XX:AOTCache=app.aot -jar app.jar
 ```
 
-Running the `AOTCacheOutput` command repeatedly rewrites `app.aot` every time: the mtime changes
-on each call and the log prints the configuration-recorded and cache-creation lines on every
-run, not only the first. JEP 514 collapses _training and creation_ from three commands to one;
-it does not change the consumption side, which still needs `-XX:AOTCache`.
+`AOTCacheOutput` requests a training/assembly flow; do not leave it in the service ENTRYPOINT.
+JEP 514 collapses training and creation from three commands to one; consumption still uses
+`-XX:AOTCache`. Create to a temporary path, validate it, then publish atomically so a failed
+training run cannot replace the last known-good artifact.
 
-What the one-command flow actually does (Temurin 25.0.3, `-Xlog:aot=info`): the JVM selects
-`AOTMode=record` because `AOTCacheOutput` is set, writes a temporary `app.aot.config` at exit,
-then launches a **child JVM** with `-XX:AOTMode=create` — its options arrive through
-`JAVA_TOOL_OPTIONS`, so `Picked up JAVA_TOOL_OPTIONS: … -XX:AOTMode=create` in the output is
-expected, not a stray environment variable. Options meant only for the child go in
-`JDK_AOT_VM_OPTIONS` (JEP 514). Two consequences for CI:
+The one-command flow records configuration, then launches an assembly child JVM. Options meant
+for that child go in `JDK_AOT_VM_OPTIONS`. The implementation can expose internal child-launch
+details in logs; do not parse incidental `JAVA_TOOL_OPTIONS` text as a stable protocol. For CI:
 
-- A bad option in `JDK_AOT_VM_OPTIONS` (executed with `-XX:NotAFlag`) makes the child fail,
-  no `.aot` is written, **and the parent still exits 0**. Assert the file exists.
+- Treat parent exit status as necessary but not sufficient: assert a newly created non-empty
+  cache and consume it once with `AOTMode=on`.
 - The training run is the parent; the child only assembles. Memory limits, agents and
   `-Xlog` settings on the parent do not apply to the child unless repeated in
   `JDK_AOT_VM_OPTIONS`.
@@ -93,12 +90,12 @@ java -XX:AOTCache=app.aot -jar app.jar
 
 ## Training run for a Spring application
 
-Spring Framework's CDS documentation gives the training-run switch: `-Dspring.context.exit=onRefresh`
+Spring Framework's startup documentation provides the training-run switch: `-Dspring.context.exit=onRefresh`
 starts the application, refreshes the `ApplicationContext` and exits before serving traffic —
 usable with `-XX:ArchiveClassesAtExit`, `-XX:AOTCacheOutput` and the three-step flow alike.
-Spring Boot's "efficient deployments" page pairs it with `java -Djarmode=tools -jar app.jar extract`,
-whose default layout (application JAR plus `lib/`) is what the archive's JAR checks expect; an
-unexploded fat JAR loads classes through a nested-JAR loader that CDS cannot cover.
+Spring Boot documentation pairs CDS/AOT workflows with extraction so classes use archive-compatible
+loaders/layout. Follow the documentation for the exact Boot/buildpack version; do not assume a
+fat-JAR layout or loader remains compatible across releases.
 
 The switch decides what the artefact contains. For a `.jsa`, refresh-and-exit loads every
 class the context needs, which is most of the win. For JEP 515 profiles, refresh-and-exit
@@ -122,72 +119,67 @@ java -Xlog:class+load -XX:SharedArchiveFile=app.jsa -jar app.jar 2>&1 \
 # What the archive recorded, without running the application
 java -XX:+PrintSharedArchiveAndExit -XX:AOTCache=app.aot -cp app.jar
 
-# Is this build CRaC-capable at all? An empty result is a definitive no.
+# First capability hint; confirm against the vendor's CRaC build/release documentation.
 java -XX:+PrintFlagsFinal -version | grep -i crac
 ```
 
-Effectiveness is confirmed, never assumed — a stale archive costs nothing and gains nothing, and
-looks identical to a working one from the outside. Count application classes specifically: the
+Effectiveness is confirmed, never assumed. Count application classes specifically: the
 JDK's own classes come from the default base archive whether or not yours loaded, so a bare
 `grep -c "source: shared"` is high even when the application archive was rejected.
 
-## A CRaC `Resource`
+## A CRaC resource lifecycle
 
 ```java
-@Component
-public class DatabaseConnectionCRaC implements Resource {
-    public DatabaseConnectionCRaC(DataSource dataSource) {
-        this.dataSource = dataSource;
-        Core.getGlobalContext().register(this);
+public final class RemoteClientResource implements Resource, AutoCloseable {
+    private volatile RemoteClient client;
+
+    public RemoteClientResource() {
+        this.client = connectFromCurrentEnvironment();
+        Core.getGlobalContext().register(this); // retain this object strongly elsewhere
     }
 
     @Override
-    public void beforeCheckpoint(Context<? extends Resource> context) throws Exception {
-        if (dataSource instanceof HikariDataSource hikari) {
-            hikari.getHikariPoolMXBean().suspendPool();
-        }
+    public void beforeCheckpoint(Context<? extends Resource> context) {
+        close();                 // drain first at the service lifecycle boundary
     }
 
     @Override
-    public void afterRestore(Context<? extends Resource> context) throws Exception {
-        if (dataSource instanceof HikariDataSource hikari) {
-            hikari.getHikariPoolMXBean().resumePool();
-        }
+    public void afterRestore(Context<? extends Resource> context) {
+        client = connectFromCurrentEnvironment(); // re-resolve DNS/credentials/identity
+    }
+
+    @Override
+    public void close() {
+        RemoteClient old = client;
+        client = null;
+        if (old != null) old.close();
     }
 }
 ```
 
-CRIU works at the OS layer: it reconstructs memory, threads and file descriptors from `/proc`
-and knows nothing about application semantics — a socket is a file descriptor, not a database
-connection. `org.crac` is the portable dependency that delegates to `jdk.crac` when the JVM has
-it and behaves as a harmless shim otherwise, which is why Spring (6.1 / Boot 3.2 onward) and AWS
-Lambda SnapStart both target it.
+The engine knows OS resources, not application validity. Suspending a pool is insufficient when
+its sockets/credentials are stale; close and reconstruct unless the engine/provider explicitly
+supports preservation. Hooks must be idempotent, ordered, strongly reachable, bounded and
+failure-visible. Quiesce request admission before `beforeCheckpoint`; publish readiness only after
+all `afterRestore` work succeeds. Test DNS/IP/hostname changes, expired credentials/TLS sessions,
+wall-clock jumps, TTL caches, scheduled-task catch-up, random/unique ID state and partial hook
+failure. Multiple restores from one image duplicate captured PRNG/sequence/lease state, so renew
+uniqueness and ownership after restore. AWS SnapStart supplies a customized CRaC context, not the
+CRIU engine.
 
-## Kubernetes checkpoint and restore
+## Container deployment gate for CRaC
 
-Requires a CRaC-enabled JDK image; this does not run on a standard JDK 25.
+Do not copy a generic init-container YAML: engine, runtime and platform permissions differ. The
+deployment must prove the checkpoint and restore use the same immutable application/JDK image,
+compatible CPU/kernel/filesystem paths, supported security context/capabilities, protected image
+storage, explicit warm-up completion (never `sleep N`), drained external resources, and a
+post-restore readiness probe. Run restore tests after node/hostname/IP/DNS/credential changes and
+after the maximum planned snapshot age.
 
-```yaml
-spec:
-  initContainers:
-    - name: warmup-and-checkpoint
-      image: my-java-app:crac-enabled
-      command:
-        - /bin/sh
-        - -c
-        - |
-          java -XX:CRaCCheckpointTo=/checkpoint app.jar &
-          APP_PID=$!
-          sleep 10                       # wait until ready and warm
-          jcmd $APP_PID JDK.checkpoint
-          wait $APP_PID
-      volumeMounts: [{ name: checkpoint-volume, mountPath: /checkpoint }]
-  containers:
-    - name: app
-      image: my-java-app:crac-enabled
-      command: ['java', '-XX:CRaCRestoreFrom=/checkpoint']
-      volumeMounts: [{ name: checkpoint-volume, mountPath: /checkpoint }]
-  volumes:
-    - name: checkpoint-volume
-      emptyDir: {}
-```
+## Primary references
+
+- [Java 25 launcher: CDS and AOT cache](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
+- [Spring Framework checkpoint/restore](https://docs.spring.io/spring-framework/reference/integration/checkpoint-restore.html)
+- [Spring Boot checkpoint/restore](https://docs.spring.io/spring-boot/reference/packaging/checkpoint-restore.html)
+- [AWS Lambda SnapStart Java runtime hooks](https://docs.aws.amazon.com/lambda/latest/dg/snapstart-runtime-hooks-java.html)
+- [Azul CRaC runtime requirements](https://docs.azul.com/crac/usage/running-crac)

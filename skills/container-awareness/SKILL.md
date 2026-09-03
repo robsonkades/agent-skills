@@ -40,13 +40,16 @@ and is structurally incapable of answering the question.
    fail loudly on v2, it finds nothing.
 3. **Separate the memory question from the CPU question.** They have different evidence:
    `memory.current` / `memory.events` for one, `cpu.max` / `cpu.stat` for the other.
-4. **For a kill, check `oom_kill` in the cgroup's own `memory.events` first.** If it
-   incremented, the process exceeded its own `memory.max` — stay here. If it did not and
-   the pod died anyway, the decision came from the node, not this cgroup; that is
-   `linux-for-jvm`'s layer.
-5. **Attribute RSS with Native Memory Tracking under load**, not at boot, before changing
-   any limit. Heap near `Xmx` at the moment of the kill points at heap; heap well below it
-   points at native footprint, and lowering `-Xmx` then makes things worse.
+4. **For a kill, take deltas from the process's actual cgroup.** An `oom_kill` increment in
+   cgroup v2 `memory.events.local` proves a task in that cgroup was killed by memcg OOM; the
+   hierarchical `memory.events` may include descendants. Correlate pod/container status and
+   timestamps to prove it was this JVM. Absence routes investigation to runtime, node and
+   signal evidence in `linux-for-jvm`.
+5. **Reconcile memory views under load**, not at boot, before changing any limit. NMT tracks
+   many JVM-native reservations/commitments but not all process or cgroup charges, and
+   committed bytes are not identical to RSS. Compare heap, NMT, RSS/PSS, direct-memory
+   metrics and cgroup `memory.stat`; lowering `-Xmx` may create headroom at the cost of more
+   GC, so validate both rather than calling it intrinsically wrong.
 6. **For latency spikes with no matching GC pause, measure throttling**: `nr_throttled`
    over `nr_periods` from `cpu.stat`, at peak load, timestamp-correlated with the
    client-side spikes.
@@ -74,19 +77,23 @@ and is structurally incapable of answering the question.
 - On cgroups v2, the controller subdirectory does not exist: `/sys/fs/cgroup/cpu.stat`,
   not `/sys/fs/cgroup/cpu/cpu.stat`. The field names changed too — `nr_periods`,
   `nr_throttled`, `throttled_usec`, not `throttled_periods`.
-- The JVM sizes `ActiveProcessorCount` from `limits.cpu` (`cpu.max`), never from
-  `requests.cpu`. A pod with `requests.cpu: 500m` and `limits.cpu: 4` sizes GC threads,
-  JIT compiler threads and `ForkJoinPool.commonPool` as though it owned four CPUs.
+- Kubernetes CPU requests are scheduler shares and are not a cgroup CPU-capacity value the
+  JVM can use as a processor count. HotSpot derives an effective count from applicable
+  quota, cpuset/affinity and host constraints (or an explicit `ActiveProcessorCount`). A pod
+  with request `500m` and limit `4` can therefore size parallel facilities near four even
+  though contention guarantees only the requested share.
 - Never ship a Deployment with `resources: {}` or a missing block. Without `limits.memory`
   the detected memory tends towards the node's, and heap ergonomics take 25% of the whole
   node.
 - Never set `-Xmx` numerically equal to `limits.memory`. That leaves zero headroom for
   everything that is not heap.
-- Reject any fixed multiplier over `Xmx` as a memory-limit rule, `1.5×` included. Native
-  footprint is a function of the application, not of the heap; a measured case reached
-  `1.62×`. Size `limits.memory` from an NMT-measured RSS at peak.
-- Treat `MaxRAMPercentage=90` as a bug. Measure headroom first; 60–70% is a starting point
-  to revalidate, not an answer.
+- Reject any fixed multiplier over `Xmx` as a universal memory-limit rule. Native footprint
+  is workload-dependent. Size from correlated heap, NMT, process RSS/PSS and cgroup charges
+  at representative peaks, with restart/dump/traffic transients included.
+- Treat `MaxRAMPercentage=90` as a high-risk hypothesis, not automatically a bug. It can be
+  viable for a simple low-native-footprint process and disastrous for many threads, direct
+  buffers or agents. Absolute headroom and kill probability decide; no 60–70% default is an
+  answer either.
 - CFS throttling freezes the entire cgroup — application, GC and JIT threads alike — until
   the next period. It never appears in the unified GC log as a pause, because the kernel
   scheduler, not the collector, caused it.

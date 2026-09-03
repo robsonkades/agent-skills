@@ -37,8 +37,9 @@ because a record generated `toString` for every component.
    defined so subclasses cannot break symmetry. `references/equals-and-hashcode.md` has the
    two defensible answers and the one that is a trap.
 5. **If the type will be sorted or put in a sorted collection**, implement `Comparable` for
-   the natural order or supply a `Comparator` — and make the order _total_, including a
-   tiebreaker, before it is used for pagination or by a second process.
+   the natural order or supply a `Comparator` that satisfies the total-order contract. Add a
+   unique deterministic tiebreaker when distinct elements must coexist in a sorted set, or when
+   pagination/canonicalization must reproduce one strict sequence.
 6. **Write `toString` for the person reading the incident**, then check what it discloses.
 7. **Verify by contract, not by example.** Reflexivity, symmetry, transitivity and the hash
    obligation are properties: assert them over generated pairs, not over one hand-picked
@@ -58,7 +59,10 @@ because a record generated `toString` for every component.
   cover every component; the two edge cases to know are array components (compared by
   identity — use `List` instead) and floating-point components (compared as by
   `Double.compare`, so `NaN` equals `NaN` and `0.0` does not equal `-0.0`).
-- Compare `double`/`float` fields with `Double.compare`/`Float.compare`, never `==`, and
+- Choose floating-point equality deliberately. `Double.compare`/`Float.compare` provide the
+  wrapper/record equivalence needed by conventional collections (all NaNs equivalent, signed
+  zeros distinct); primitive `==` has different semantics. Reject/canonicalize special values or
+  use a tolerance in an algorithm—not in `equals`—when the domain requires another relation. And
   compare arrays with `Arrays.equals`/`Arrays.deepEquals`, never `==`. `Objects.equals`
   handles null on both sides for everything else.
 - Do not depend on any hash value crossing a process, a restart or a JVM version. `Object`'s
@@ -66,12 +70,14 @@ because a record generated `toString` for every component.
   is specified and stable but is not a distribution function. Persisting, sharding,
   partitioning or deduplicating on `hashCode` is a defect; use an explicit digest or key. See
   consistent-hashing and idempotency.
-- For a JPA entity, do not build `equals` on a database-generated id: the id is null before
-  the flush, so an entity added to a `HashSet` before persisting is lost afterwards. Use an
-  application-assigned identifier (a UUID set at construction) or a real business key, and
-  return a constant-per-class `hashCode` when neither exists. Compare with `instanceof`, not
-  `getClass()`, or a lazy Hibernate proxy — whose class is a generated subclass — will never
-  equal its own entity.
+- Entity equality is a lifecycle/provider decision. Reference equality may be sufficient inside
+  one persistence context. For detached/cross-context values, prefer an immutable real business
+  key or an application-assigned identifier available at construction. A generated id requires
+  special handling: two transient instances with null ids are never equal, equality becomes
+  id-based only after assignment, and hash membership must remain stable. Proxy-safe type checks
+  are provider-specific—plain `instanceof`, `getClass()` and provider “effective class” helpers
+  make different inheritance/loading trade-offs. Test transient, managed, detached and
+  proxy/unproxied pairs with the actual provider; see orm-structural-mapping.
 - `equals`, `hashCode` and `toString` must not trigger loading. Touching a lazy association
   inside them turns a debugger step, a log line or a `Set.add` into a query, and outside a
   session into a `LazyInitializationException`.
@@ -82,11 +88,11 @@ because a record generated `toString` for every component.
 - Never implement `compareTo` by subtraction (`a.value - b.value`). It overflows for large
   and negative operands and returns the wrong sign. Use `Integer.compare`, `Long.compare`,
   `Double.compare`, or build the comparator with `Comparator.comparingInt(...)`.
-- A comparator that is not a total order fails loudly and non-deterministically: `Arrays.sort`
-  and `List.sort` on objects use TimSort, which throws
-  `IllegalArgumentException: Comparison method violates its general contract!` when it detects
-  inconsistency — often only above the insertion-sort threshold, so it passes every small unit
-  test and fails on production-sized input.
+- A comparator that violates its contract may corrupt ordered-collection semantics or be detected
+  by a sorting implementation. OpenJDK object sorts commonly use TimSort and can throw
+  `IllegalArgumentException: Comparison method violates its general contract!` for some input
+  shapes; detection is not guaranteed. Treat the exception as evidence against the comparator,
+  and test its algebraic properties over adversarial/generated triples.
 - Any order used for paging, for cross-service comparison, or for a reproducible export must
   be total: append a unique tiebreaker (the id) after every business sort key. Ties broken
   arbitrarily mean two pages can both contain, or both skip, the same row.
@@ -96,10 +102,12 @@ because a record generated `toString` for every component.
   any type carrying a secret; structured-logging covers what belongs in a log at all.
 - Nothing may parse `toString`. If a textual form is part of the API, give it a named method
   and a documented grammar (`toIso8601`, `format`), and let `toString` stay free to change.
-- Do not implement `Cloneable`. It is a marker interface that changes the behaviour of a
-  protected method on `Object`, cannot deep-copy `final` fields, and imposes a contract no
-  subclass can honour reliably. Offer a copy constructor, a static `copyOf`, or wither methods
-  on an immutable type instead. The one place `clone()` remains idiomatic is arrays.
+- Avoid introducing `Cloneable` into new domain APIs. It is a marker interface around a protected,
+  shallow-copy mechanism; final reference fields cannot be replaced by ordinary clone code and
+  inheritance makes deep-copy semantics hard to state. Immutable objects can safely be shared or
+  shallow-copied, so `Cloneable` is not inherently incompatible with them—it is usually
+  unnecessary. Prefer a copy constructor, `copyOf`, explicit deep-copy operation or withers.
+  Arrays retain an idiomatic public `clone()`.
 
 ## References
 

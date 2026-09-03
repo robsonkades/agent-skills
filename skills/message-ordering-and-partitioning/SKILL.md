@@ -1,12 +1,12 @@
 ---
 name: message-ordering-and-partitioning
 description: >
-  Ordering guarantees and the partition as the unit that provides them: ordering is
-  per-partition, never global; per-key ordering holds only while the key-to-partition
+  Ordering guarantees and their exact scope/stage: common logs order per partition while a
+  global total order requires a serialized sequencer; per-key ordering depends on key-to-partition
   mapping is stable; why the partition count is nearly a one-way door; what silently breaks
   order in a consumer or producer; and whether ordering is required at all — version guards,
   commutative handlers, state-machine guards. Use when a design says messages are processed
-  in order with no scope, when global ordering is proposed, when partitions are added to a
+  in order with no scope, when partitions are added to a
   live topic, when records are produced with no key, when the handler dispatches to an
   executor in the poll loop, when a retry republishes to the topic's tail, or when an older
   update overwrites a newer one. Not duplicates (delivery-semantics), repeat-safe handlers
@@ -19,12 +19,12 @@ description: >
 
 ## Purpose
 
-**Ordering is a per-partition property, never a global one.** A partition is one ordered log
-read by one consumer within a group, and that is the entire mechanism: order exists inside a
-partition and nowhere else. A system that requires global ordering has therefore chosen a
-single partition — one consumer, throughput bounded by one handler, and no horizontal scale
-available later. That is the trade, and it has to be written down in those words rather than
-as "we need ordering".
+Ordering is always scoped and staged. A partitioned log commonly provides a total append
+order **within one partition**; a consensus log or singleton sequencer can provide a wider
+total order at the price of a serialized sequencing/commit point. Neither guarantees that
+parallel consumers start, finish or make external effects visible in that order. State the
+entity/key/partition scope and the stage—source commit, broker append, delivery, handler
+completion or sink commit—rather than writing only "processed in order".
 
 The failure this prevents is the guarantee nobody actually has. A design says "processed in
 order", the implementation gets per-partition ordering, the key is absent or the partition
@@ -44,9 +44,10 @@ cannot.
 3. **Choose the partition key from the ordering scope**, then check it for skew. The entity
    whose order must hold forces the key; whether that key is evenly loaded is a separate
    question, owned by `sharding-and-partitioning` and `hot-partitions-and-rebalancing`.
-4. **Fix the partition count deliberately.** It sets the maximum consumer parallelism for the
-   life of the topic, and changing it later rehashes keys — treat it as a migration, not a
-   configuration change.
+4. **Choose partition count and mapping evolution deliberately.** It bounds parallel group
+   ownership for that topic now; default modulo partitioners commonly remap keys when count
+   changes. A stable custom mapping, quiescence or epoch/barrier migration can preserve a
+   contract, but an uncoordinated count increase cannot.
 5. **Audit the consumer for the four things that break order inside a partition**: parallel
    dispatch, republished retries, DLQ skips, and rebalance overlap
    (`references/where-ordering-breaks.md`).
@@ -73,24 +74,27 @@ Prefer a version guard instead when:
 - the chosen ordering key is skewed and the hot key would become a serial bottleneck
 - records arrive from more than one producer, where "the order they happened" is not
   observable in the log anyway
-Require global ordering only when: a single partition, a single consumer and that consumer's
-throughput as the topic's permanent ceiling are all acceptable — state the number.
+Require a global total order only when:
+- the availability/throughput of one logical sequencer and ordered commit point is acceptable.
+  Parallel compute may surround it, but visible ordered effects must serialize or buffer/reorder
 ```
 
 ## Rules
 
-- Never write "ordered" or "in order" without a scope. There are four, and only two are
-  guarantees a broker gives: none, per partition, per key (per partition, _conditional_ on the
-  key-to-partition mapping being stable), global (per partition, with one partition).
+- Never write "ordered" without scope, stage and failure behavior. Broker products differ:
+  common scopes include channel/partition, key/message group and a single total-order log.
+  Redelivery, retry, failover and parallel handlers can change delivery/completion/effect order
+  even when append order remains intact.
 - A record produced with **no key** is placed by the client's partitioner — round-robin or
   sticky batching — so it has no per-key ordering at all. Nothing raises an error. This is the
   most common way per-key ordering is lost.
-- Per-key ordering holds only while the key maps to one partition. **Adding partitions
-  rehashes**: new records for key K land on a different partition while K's earlier records
+- With the default modulo-style mapping, per-key log ordering holds only while mapping is
+  stable. **Adding partitions remaps some keys**: new records for key K can land on a different partition while K's earlier records
   sit in the old one, and there is no ordering relation between two partitions. There is no
   guarantee "across the change" to reason about — the two histories are simply unordered.
-- Increasing the count in place is safe only where per-key ordering is not required or the
-  topic is quiescent; otherwise it is a topic migration (`references/where-ordering-breaks.md`).
+- Increasing count without a mapping/cutover protocol is safe only where cross-change per-key
+  ordering is unnecessary. Otherwise use quiescence or a versioned migration with a per-key/
+  global barrier (`references/where-ordering-breaks.md`).
 - Ordering is the order the broker **accepted** records, not the order events happened: two
   producers writing one key have their relative order decided by arrival. Record timestamps are
   not an ordering either — clock skew between producers is unbounded.
@@ -108,16 +112,43 @@ throughput as the topic's permanent ceiling are all acceptable — state the num
   is applied to a state the skipped record never reached. The result is wrong, not late. Where
   per-key order matters, pause the key or the partition instead
   (`poison-messages-and-dlq`).
-- **Consumer, rebalance**: a partition can be revoked while its records are still in flight, and
-  the new owner resumes from the last committed offset. Exclusivity and order hold between
-  commit boundaries only, and only with a revocation handler that stops in-flight work.
-- **Producer, in-flight retries**: with several request batches in flight on one connection, a
-  failed batch retried after a later batch succeeded lands out of order _within_ the partition.
-  Two settings prevent it, by role: bound in-flight requests per connection to one, or enable
-  the idempotent producer, which preserves per-partition order across retries within its
-  in-flight window. Do not copy a number from a blog; read your client's documented limit.
-- Ordering and skew pull the key in opposite directions. When the entity that needs ordering is
-  also the hot one, remove the ordering requirement with a version guard — no key is cleverer.
+- **Consumer, rebalance**: a partition can be revoked while records remain in flight, and the
+  new owner resumes from a checkpoint. Group assignment does not fence late side effects.
+  Stop admission, commit only contiguous completion and make the sink reject stale ownership
+  epochs or tolerate duplicates.
+- **Producer, in-flight retries**: non-idempotent producers with multiple batches in flight can
+  reorder a failed/retried batch behind a later success. Kafka's idempotent producer preserves
+  order within its producer session subject to documented configuration; it does not order
+  independent producer instances or business events. Current defaults and allowed in-flight
+  limits are version-specific.
+- Ordering and skew pull the key in opposite directions. When one entity is hotter than a
+  partition, a version guard can reject stale final-state updates but does not preserve every
+  intermediate transition or external effect. Decide whether coalescing, aggregation, a
+  sequencer plus parallel execution, or domain redesign can relax the actual invariant.
+
+## Ordering contract template
+
+```text
+Scope: accountId
+Source order: monotonically increasing account version committed by the authority
+Broker order: same key maps to one partition within mapping epoch E
+Delivery: at-least-once; retries may be out of delivery order
+Apply rule: commit v only when v == current + 1; duplicates v <= current are acknowledged
+Gap rule: park boundedly, then fetch snapshot/replay missing range
+Visibility: account state commits in version order; notifications may arrive later
+Mapping change: close E, record barrier, drain through barrier, open E+1
+```
+
+## Security and operational edge cases
+
+- Do not trust a caller-provided version as authority; authenticate producer identity and bind
+  sequence/version to the aggregate or signed event stream.
+- Poison records and missing sequence values can block a key forever. Bound parking, expose
+  gap age and provide resync/reconciliation—not silent skip.
+- Sequence counters need overflow/reset/restore semantics; database restore or producer epoch
+  reset can make a numerically lower valid history appear stale.
+- Retention/compaction may remove the record needed to fill a gap. Recovery then requires an
+  authoritative snapshot with a version watermark.
 
 ## References
 

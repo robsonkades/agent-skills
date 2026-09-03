@@ -3,16 +3,14 @@ name: cascading-failures
 description: >
   How one slow dependency becomes a total outage: the amplification loop and the four points
   that close it — retry storms, unbounded queues, thread and connection exhaustion, an inner
-  timeout longer than the outer one. Covers why only cutting offered load recovers a
-  cascading system, metastable failure where the trigger is gone and the backlog sustains
-  it, the thundering herd on recovery, and criticality separation. Use when one dependency's
+  timeout longer than the outer one. Covers why cutting offered work is usually the first stabilization step in a
+  cascade, metastability sustained by backlog, recovery herds and criticality separation. Use when one dependency's
   latency rise took down services that never call it, when the dependency recovered and the
   system did not, when adding replicas mid-incident made it worse, or when queue depth grows
   while goodput falls to zero. Does not cover the breaker (circuit-breakers), shedding
   policy (rate-limiting-and-load-shedding), bulkheads (concurrency-limiting-and-bulkheads),
   retry policy (retries-and-backoff), queue arithmetic (littles-law-and-queueing), replica
-  routing (load-balancing-and-routing), the fault model (failure-models), or the patterns
-  individually (distributed-failure-catalogue).
+  routing (load-balancing-and-routing), or the fault model (failure-models).
 ---
 
 # Cascading Failures
@@ -21,37 +19,38 @@ description: >
 
 A cascade is a loop, not a list of failures. A dependency slows; its callers' threads and
 connections sit blocked waiting; the callers saturate; _their_ callers slow; retries add
-load to the already-slow dependency; it slows further. Every incident that begins in one
-component and ends with an unrelated one down went round that loop. The work is to name the
-amplification point closing it here, and cut that one.
+load to the already-slow dependency; it slows further. A wide incident is a cascade only when
+such positive feedback expands or sustains the failure. Name and cut that edge. A shared infrastructure outage or a
+coordinated bad deploy can create a wide blast radius without such a loop, so topology and timing
+remain competing hypotheses.
 
 The failure this prevents is the intervention that deepens the outage. **During a cascade
 the system is doing more work than normal and completing less of it** — retries, queued
-requests whose callers have already given up, connections held by abandoned calls. Every
-instinctive response (add replicas, raise timeouts, retry harder) increases offered load,
-and only the responses that reduce it recover the system.
+requests whose callers have already given up, connections held by abandoned calls. Common
+responses—uncontrolled replicas, longer timeouts, more retries—can increase offered load.
+Stabilization usually starts by reducing admitted work; repairing the trigger or adding warm,
+usable capacity can also recover the system when it does not amplify the bottleneck.
 
 ## Workflow
 
-1. **Distinguish a cascade from a dependency outage.** An outage shows errors concentrated at
-   one dependency and flat inbound rates. A cascade shows that dependency's inbound rate
-   _rising_ while its success rate falls, pools pinned at 100% in services that do not call
-   it, and queue depth growing while completions fall. See `references/cascade-response.md`.
+1. **Distinguish trigger from feedback.** Compare logical calls with attempts, admitted load with
+   goodput, queue age, pool occupancy and capacity/routing changes. No single metric proves a
+   cascade; reconstruct the time order (`references/cascade-response.md`).
 2. **Name the amplification point.** Retries (system-level storm — the policy is
    `retries-and-backoff`), an unbounded queue, an exhausted thread or connection pool, or a
-   timeout stack. There is usually one dominant point; cutting it stops the loop.
-3. **Reduce offered load before anything else.** Shed at the entry point
+   timeout stack. Rank edges by amplification and reversibility; incidents can have several loops.
+3. **Stabilize offered work before scaling blindly.** Shed at the entry point
    (`rate-limiting-and-load-shedding`), cap concurrency at the saturated resource
    (`concurrency-limiting-and-bulkheads`), trip breakers on the failing dependency
-   (`circuit-breakers`). These are the only three levers that shorten the loop rather than
-   feed it.
+   (`circuit-breakers`). Also cancel expired work, disable optional fan-out and stop retry owners.
 4. **Check the timeout stack down the call path.** An inner timeout longer than its caller's
    remaining budget means the outer hop gives up while the inner call still holds a thread, a
    connection and a downstream request. The bound arithmetic is `timeouts-and-deadlines`;
    the consequence — resources held by work nobody will read — is here.
 5. **Decide whether the state is metastable.** If the trigger is gone and the system is still
-   down, the backlog is now the cause, and recovery means destroying work: drain the queue,
-   reject until it clears, or restart with admission ramped back in.
+   down, backlog/retries may now sustain overload. Classify queued work as expired, supersedable or
+   durable before dropping anything; drain at a controlled rate, quarantine, reject new work or
+   restart only under an explicit recovery contract.
 6. **Ramp with jitter.** Everything retrying the instant the dependency returns knocks it
    over again. Admit a fraction of traffic, raise it while watching goodput, and stagger
    restart and reconnect timing across instances.
@@ -70,16 +69,16 @@ Add capacity when:
 - utilisation is high, latency is elevated, and goodput still rises with offered load —
   that is under-provisioning, not a cascade
 Avoid adding capacity when:
-- goodput is falling as offered load rises. New instances start with cold caches, cold JIT
+- goodput is falling as offered load rises and new instances would hit the same bottleneck. New instances start with cold caches, cold JIT
   and empty pools, take a full share of a backlog, saturate, and add a fresh source of
   timeouts and retries against the same dependency
 Avoid raising a timeout when:
 - the dependency is already slower than the caller's budget. A longer wait holds each
   thread longer, which raises concurrency at the dependency by Little's Law
   (littles-law-and-queueing) and slows it further
-Restart only when:
-- the backlog is in process memory and cannot be drained otherwise — and then only with
-  admission ramped in, never with the full fleet at once
+Restart when:
+- evidence identifies unrecoverable in-process state/resource failure or it is the safest way to
+  discard explicitly disposable work; preserve durable work and ramp admission per failure domain
 ```
 
 ## Rules
@@ -87,10 +86,10 @@ Restart only when:
 - **Goodput, not throughput, is the incident metric.** Throughput counts responses produced;
   goodput counts responses delivered inside the caller's deadline. A saturated system holds
   throughput flat while goodput goes to zero — every response arrives after its caller left.
-- An unbounded queue does not absorb overload; it converts overload into unbounded latency.
-  Once queue wait exceeds the caller's timeout, **every** dequeued item is waste, and the
-  service spends 100% of capacity on work nobody will read. Bound every queue and define the
-  rejection; an unbounded `LinkedBlockingQueue` in an executor is the shape to find.
+- An unbounded queue converts sustained overload into growing latency/memory. Work past an
+  propagated request deadline is waste only when it has no durable side effect obligation;
+  accepted commands/jobs may still require completion or reconciliation after the caller leaves.
+  Bound queues and define expiry, rejection and durability semantics.
 - Pool exhaustion propagates upstream, which is why the blast radius looks wrong for the
   fault: a slow dependency occupies request threads and pooled connections in its caller, so
   endpoints that never touch it start failing on acquisition. One pool shared across
@@ -106,17 +105,23 @@ Restart only when:
 - A shared dependency is a shared failure domain whatever the topology says: two services
   with no call between them fail together if they share a database, a cache or a token
   issuer. Enumerate shared components, not the call graph (`failure-models`).
-- **Classify every dependency as critical or non-critical, and implement the classification.**
+- **Classify each dependency per operation and failure mode, and implement the classification.**
   A non-critical dependency on the request path with no fallback is critical in practice.
-  Fail open with a defined degraded response — a default, a stale value
+  Degrade with a defined response—a default, a stale value
   (`caching-strategies`), a skipped enrichment — and make the degraded state observable.
-- A readiness probe that calls a downstream dependency converts that dependency's slowdown
-  into fleet-wide unreadiness, and outlier ejection then removes the instances that were
-  still serving. Probe design is `kubernetes-service-lifecycle`, ejection is
+- A readiness probe that calls a downstream dependency can convert its slowdown into fleet-wide
+  removal. Include a dependency only if the pod cannot correctly serve any admitted traffic
+  without it, and test threshold/hysteresis. Probe design is `kubernetes-service-lifecycle`, ejection is
   `load-balancing-and-routing`.
 - Prove the loop is cut before the incident: load-test at capacity, inject latency into one
   dependency, and assert goodput on paths that do not use it stays flat (`load-testing`,
   `distributed-systems-testing`).
+
+## Primary sources
+
+- [Google SRE — Addressing Cascading Failures](https://sre.google/sre-book/addressing-cascading-failures/)
+- [Google SRE — Handling Overload](https://sre.google/sre-book/handling-overload/)
+- [AWS Builders' Library — Avoiding insurmountable queue backlogs](https://aws.amazon.com/builders-library/avoiding-insurmountable-queue-backlogs/)
 
 ## References
 

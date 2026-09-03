@@ -80,13 +80,13 @@ sees, which is what makes "who could have modified this?" answerable by reading 
 ## `InheritableThreadLocal` has no equivalent, on purpose
 
 ```java
-// Before: every child thread gets a COPY of every inheritable value
+// Before: each child gets an inherited map; childValue may share or transform values
 private static final InheritableThreadLocal<Tenant> TENANT = new InheritableThreadLocal<>();
 new Thread(() -> useTenant()).start();               // works
 
 // After: only a structured fork inherits
 try (var scope = StructuredTaskScope.open()) {       // preview API — see structured-concurrency
-    scope.fork(() -> useTenant());                   // sees the binding, by reference
+    scope.fork(() -> useTenant());                   // sees the captured binding
     scope.join();
 }
 

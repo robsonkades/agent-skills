@@ -2,22 +2,22 @@
 
 ## The three classes
 
-The class is a property of the failure, not of the message and not of the attempt count. It is
-decided once, at the point where the error is caught, from a type the contract defines.
+Classification is a hypothesis supported by operation, input, environment and downstream
+evidence. It can change after deployment/configuration repair or status lookup; persist the
+reason and classifier version rather than deciding forever from one exception class.
 
-| Class                     | Identifying signal                                                                                                                                                                         | Destination                                                                                          |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| **Permanent (poison)**    | Deserialisation or schema failure; validation rejection; 400/404/422 from a downstream; a business rule that cannot be satisfied by this input; `IllegalArgumentException` from the domain | DLQ on the **first** failure. No retry, no delay topic                                               |
-| **Transient**             | Connection refused, DNS failure, 503, a pool timeout, a broker unavailable, a lock timeout — the operation demonstrably did not happen                                                     | Retry in place with backoff; delay topic if the outage outlasts the poll budget. **Never** the DLQ   |
-| **Ambiguous**             | Request timeout, socket reset mid-call, 502/504 — the side effect may or may not have been applied                                                                                         | Retry **only** under idempotency; bound by attempt count and deadline; DLQ once the bound is reached |
-| **Poison-by-environment** | The same record fails on one consumer version and succeeds on another — a bad deploy, a missing schema, a wrong config                                                                     | Neither. Stop the consumer and fix the environment                                                   |
+| Class                     | Identifying signal                                                                                                                               | Destination                                                                                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| **Payload-intrinsic**     | Authenticated schema says invalid encoding/value and the same supported build/schema reproduces it; immutable business intent can never be legal | Secure quarantine, often after one diagnostic attempt; repair/producer feedback owns it                          |
+| **Transient/overload**    | Explicit retryable response, dependency unavailability, quota/lock contention with no effect, bounded resource pressure                          | Backoff/delay/pause within deadline and retry budget; exhaustion escalates or parks—it does not change the cause |
+| **Ambiguous**             | Timeout/reset/cancellation after possible dispatch; downstream may have applied the effect                                                       | Preserve operation ID; status lookup/reconcile or retry only against downstream idempotency                      |
+| **Poison-by-environment** | The same record fails on one consumer version and succeeds on another — a bad deploy, a missing schema, a wrong config                           | Neither. Stop the consumer and fix the environment                                                               |
 
 Two consequences worth stating plainly:
 
-- **The attempt count belongs to the ambiguous class only.** It is the bound on how long to
-  keep guessing. Applied to the transient class it converts a dependency outage into mass
-  dead-lettering; applied to the permanent class it wastes N attempts on a record that will
-  never parse.
+- Attempt count and elapsed/deadline budgets protect capacity for transient and ambiguous
+  work; they do not identify the cause. Exhausted transient work may remain in a durable retry
+  queue or trigger incident recovery rather than contaminate a poison quarantine.
 - **The fourth row is why an attempt count is not a classifier.** A deploy that breaks
   deserialisation makes every record look permanently poison, individually indistinguishable
   from genuine poison, and the DLQ fills with valid data. The signal is the _rate_: one poison
@@ -27,10 +27,10 @@ Two consequences worth stating plainly:
 
 ```text
 Dead-letter immediately when:
-- the failure is permanent by type: the payload cannot be parsed, fails schema validation,
-  or is rejected by a downstream contract with a non-retryable status
+- evidence proves the payload itself violates a supported immutable contract, not merely that
+  this consumer build/environment cannot parse it
 - the record's business intent is already invalid and no retry can change that
-- the volume is low enough that a human will look at each one
+- the quarantine has an automated or human remediation/disposition workflow at expected volume
 
 Retry in place (no topic hop) when:
 - the failure is transient and expected to clear within the poll budget
@@ -41,6 +41,7 @@ Use a retry topic or delay queue when:
 - the failure is transient and the expected recovery time exceeds the poll budget
 - ordering for this key is not required, or the key has at most one in-flight record
 - you want the main partition to keep advancing for the other keys on it
+- the delayed transfer and source acknowledgement are atomic or repeat-safe
 
 Block the partition (stop committing, keep retrying) when:
 - per-key ordering is a correctness requirement downstream — a state machine, a CDC
@@ -77,14 +78,16 @@ processed either, because there is one offset for the partition, not one per key
 - Required: an alert on **per-partition** lag or per-partition oldest-record age, not fleet
   lag. Without it this option fails silently for hours.
 
-**Option 2 — dead-letter and commit past.** Send 48 to the DLQ, commit offset 49, continue.
+**Option 2 — atomically quarantine and commit past.** Durably transfer 48, then commit the next
+source offset (49 in Kafka's next-offset convention), continue.
 
 - What is preserved: progress for every other key on the partition, and the record itself, in
   the DLQ, with its context.
 - What is paid: `k=A` now has a gap. `A:49` is applied to a state that never saw `A:48`. If A's
   events are a state machine or a set of deltas, the projection is now wrong and will stay
   wrong; if they are full-state snapshots (last-writer-wins on the whole entity), the gap is
-  harmless because 49 supersedes 48 anyway.
+  harmless only when an authority version guard proves 49 supersedes 48 and no intermediate
+  effect/audit transition is required.
 - Required: knowing which of those two your payloads are. That is the whole decision, and it
   is answerable from the event schema, not from operational preference.
 
@@ -95,6 +98,11 @@ record, and the parked set itself becoming state that must be bounded and draine
 where the gap in option 2 is unacceptable and the block in option 1 is too expensive — and
 only then, because the parked set is a new place to lose messages.
 
+**Option 4 — resynchronize from authority.** Quarantine the bad delta, fetch an authoritative
+snapshot/version, atomically replace the projection, and continue from a known watermark. This
+preserves progress but intentionally gives up observing every intermediate transition; it is
+valid only when the projection contract allows that.
+
 ## What this decision is not
 
 - It is not a retry policy. How long and how often to retry the transient class is
@@ -104,3 +112,13 @@ only then, because the parked set is a new place to lose messages.
   maps to a partition, is `message-ordering-and-partitioning`. What is settled here is only
   that dead-lettering out of an ordered log costs an ordering gap, and that the cost has to be
   named before the code is written.
+
+## Classification tests
+
+- replay the same bytes against old/current/next consumer builds and schema registry state;
+- test representative HTTP/domain results, especially 408/409/412/425/429, authentication
+  refresh, validation and business terminal rejection;
+- inject downstream apply-then-drop-response and prove it is `AMBIGUOUS`, not transient;
+- trigger one corrupt record versus a fleet-wide deserializer/config failure and verify the
+  circuit pauses before mass quarantine;
+- version the classifier rules in the envelope so reclassification/redrive is auditable.

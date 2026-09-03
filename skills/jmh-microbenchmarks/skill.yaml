@@ -1,19 +1,16 @@
 schemaVersion: 1
 
 name: jmh-microbenchmarks
-version: 1.3.0
+version: 1.4.0
 description: >-
-  Writing microbenchmarks that do not lie: dead-code elimination and constant folding,
-  Blackhole and returning results, fork and state scoping, warm-up verification, reading
-  Score and Error as a confidence interval, gc.alloc.rate.norm as the most reliable number,
-  and converting a bench result into a system prediction via Amdahl. Use when a benchmark is
-  being written or reviewed, when @Fork(0) or a hand-rolled timing loop appears, when a
-  benchmark discards its result, when two variants are compared with different boundaries,
-  when overlapping error intervals are read as "no difference", or when a CI performance
-  gate needs a threshold. Does not cover finding what to benchmark (jfr-and-async-profiler,
-  flame-graph-analysis), the compilation model itself (jit-compilation), or full-system load
-  tests (load-testing). The profilers and variance diagnosis are jmh-advanced, and gating is
-  performance-regression-ci.
+  Designing and auditing JVM microbenchmarks whose workload, observation boundary,
+  compiler context, state topology, lifecycle, units, and statistical comparison match the
+  engineering question. Covers dead-code elimination, constant folding, Blackhole/return
+  values, forks, warm-up, fixture levels, inputs, operations-per-invocation, allocation
+  counters, experimental units, uncertainty, paired comparisons, negative controls, and
+  production extrapolation. Use before trusting a JMH score or replacing a system test with
+  a microbenchmark. Advanced concurrency layouts, profilers, assembly, and regression gates
+  have separate owners.
 
 license: Apache-2.0
 
@@ -50,6 +47,12 @@ dependencies:
 optionalDependencies:
   - name: performance-methodology
     version: ^1.0.0
+
+suggests:
+  - jmh-advanced
+  - performance-regression-ci
+  - reading-jit-assembly
+  - load-testing
 
 capabilities:
   - reads-source

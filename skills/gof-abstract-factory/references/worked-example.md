@@ -70,8 +70,10 @@ class ReportFamilies {
 }
 ```
 
-The family is now one immutable object. It cannot be half-constructed, it is safely publishable
-to every thread, and "which family" is a single lookup rather than a branch per product.
+The family is now one immutable object. Its constructor cannot expose a partially populated
+record, and final-field initialization safety protects the components after construction. The
+containing map still must be safely published (for example by container initialization) and the
+components themselves must obey their own thread-safety contracts.
 
 The service holds no format knowledge:
 

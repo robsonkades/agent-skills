@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: humble-objects-and-functional-core
-version: 1.1.0
+version: 1.2.0
 description: >-
   Splitting a component into the part that decides and the part that acts, so the decision is
-  pure, deterministic and cheap to test while the effectful part stays too thin to be worth
-  testing — the Humble Object pattern and the functional core / imperative shell shape of the
+  pure, deterministic and cheap to test while the effectful part stays thin enough for a small
+  set of boundary/integration tests—the Humble Object pattern and the functional core / imperative shell shape of the
   same idea. Use when a rule can only be exercised by standing up the framework because the
   decision lives inside the component that performs the effect, when logic sits in a controller,
   scheduler, message listener or UI component, when a test needs a mocking framework to reach

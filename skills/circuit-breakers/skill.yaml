@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: circuit-breakers
-version: 1.2.0
+version: 1.3.0
 description: >-
   The breaker as a state machine that stops calling a failing dependency: closed, open and
-  half-open; why the trip condition must be a failure rate over a minimum call count, not
-  consecutive failures; why half-open admits a bounded number of probes; the failure
-  predicate — which status codes count and why a 4xx must not; and the honest limit, that a
+  half-open; choosing rate windows versus consecutive failures; why half-open admits a bounded
+  number of probes; the failure predicate—classifying correlated dependency failures rather than
+  blindly counting status classes—and the honest limit, that a
   breaker converts a slow failure into a fast one and creates no availability unless the
   caller has a fallback. Use when a breaker trips on consecutive failures, when it never
   trips or trips on one client's bad requests, when half-open sends full traffic at a

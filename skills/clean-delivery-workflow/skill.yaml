@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: clean-delivery-workflow
-version: 1.0.0
+version: 1.1.0
 description: >-
   The order of work for a change, and how much of that order a given change actually warrants:
   understanding before editing, clarifying what is ambiguous, deciding the test approach,

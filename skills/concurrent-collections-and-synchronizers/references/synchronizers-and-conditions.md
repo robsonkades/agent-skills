@@ -33,12 +33,17 @@ Failure modes:
 ```java
 CountDownLatch done = new CountDownLatch(tasks.size());   // size read once, before any submit
 for (Runnable t : tasks) {
-    executor.execute(() -> {
-        try { t.run(); }
-        finally { done.countDown(); }                     // first statement of finally
-    });
+    try {
+        executor.execute(() -> {
+            try { t.run(); }
+            finally { done.countDown(); }
+        });
+    } catch (RejectedExecutionException rejected) {
+        done.countDown();                                 // this party will never start
+        throw rejected;
+    }
 }
-if (!done.await(30, TimeUnit.SECONDS)) {                  // bounded, and the result is used
+if (!done.await(30, TimeUnit.SECONDS)) {                  // bounds waiting, not worker lifetime
     throw new TimeoutException("workers did not finish");
 }
 ```
@@ -124,7 +129,7 @@ for deadlock recovery, and the reason for the two failure shapes below.
    sem.release();     // never reached
    ```
 
-   Throughput decays _monotonically over days_, in steps, and never recovers without a restart;
+   Available capacity can decay over time and does not recover without a compensating release;
    `availablePermits()` trends to 0; threads pile up parked in `Semaphore$NonfairSync`. The classic
    "fine after a restart, degrades over a week" ticket. Fix: `acquire()` immediately before `try`,
    `release()` as the first statement of `finally`.
@@ -149,8 +154,9 @@ try {
 }
 ```
 
-`reducePermits(int)` is `protected` and is the correct primitive for shrinking a limit;
-`drainPermits()` is the sledgehammer. Bulkhead framing belongs to
+`reducePermits(int)` is `protected`; dynamic resizing therefore needs an owned abstraction and a
+protocol for in-flight holders. `drainPermits()` changes immediately available permits but does not
+revoke permits already acquired. Bulkhead framing belongs to
 concurrency-limiting-and-bulkheads.
 
 ## Exchanger
@@ -262,12 +268,13 @@ boolean aMethod(long timeout, TimeUnit unit) throws InterruptedException {
 The bug this prevents is re-passing the _original_ timeout inside the loop: with N wakeups the
 total wait becomes N × timeout, an unbounded wait dressed as a bounded one. The symptom is a
 "5-second timeout" that occasionally takes minutes and never reports a timeout. `await(time, unit)`
-returns `false` on timeout but gives no remaining time, so it cannot be used correctly in a re-wait
-loop — `awaitNanos` exists precisely for that.
+returns `false` on timeout but gives no remaining time. A re-wait loop can still be correct by
+carrying an absolute monotonic deadline; `awaitNanos` is convenient when carrying a remaining
+budget.
 
-`awaitUninterruptibly()` is correct only in code that genuinely cannot be cancelled, usually a
-cleanup path. In a request path it produces a thread that ignores shutdown: the JVM will not exit
-and `shutdownNow()` does nothing.
+`awaitUninterruptibly()` is appropriate only when the operation deliberately defers cancellation
+and the surrounding lifecycle has another bound. In a request path it can delay shutdown
+indefinitely if no signal arrives.
 
 Two further contract points. The three waiting forms (interruptible, non-interruptible, timed) are
 not required to give identical guarantees, and an implementation "can favor responding to an
@@ -275,3 +282,10 @@ interrupt over normal method return" — so an `InterruptedException` does **not
 condition was not signalled. And a `Condition` is an ordinary object: `synchronized (cond) {
 cond.wait(); }` compiles, runs, and has no specified relationship with the associated `Lock`. The
 javadoc recommends never using a `Condition` that way.
+
+## Authoritative references
+
+- [Java 25 `CountDownLatch`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CountDownLatch.html)
+- [Java 25 `Phaser`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Phaser.html)
+- [Java 25 `Semaphore`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html)
+- [Java 25 `Condition`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/Condition.html)

@@ -1,12 +1,11 @@
 schemaVersion: 1
 
 name: leader-election
-version: 1.2.0
+version: 1.3.0
 description: >-
   Electing one active instance for work that must not run concurrently: the lease renewal
-  model and the rule that a leader stops acting when renewal fails, not when it learns it
-  lost; split-brain as the window between those, and the two designs that survive it — fence
-  every write, or make the work idempotent; failover time as detection, election and
+  model and the rule that failed renewal never extends the leader's conservative deadline;
+  split-brain and resource-side fencing/idempotency; failover time as detection, election and
   warm-up; coordination-store leases, Kubernetes Lease objects and ShedLock rows, and what
   each is adequate for; and when not to elect. Use when a @Scheduled job runs once per
   replica after scaling out, when two instances both believe they lead, when a leader keeps

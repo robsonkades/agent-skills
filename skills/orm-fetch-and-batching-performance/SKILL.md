@@ -56,18 +56,21 @@ and the first raises it for every other query in the system.
 - **Open-session-in-view converts the exception into invisible queries.** The N+1 still happens;
   it now happens during rendering, outside any transaction, where it is harder to see and holds
   the connection longer. Treat enabling it as an admission, not a fix.
-- **Join fetching two collections in one query multiplies rows.** Ten line items and five
-  shipments returns fifty rows carrying the same order fifty times. The ORM de-duplicates the
-  objects; the database and the network still moved the rows. One collection per query.
-- **Pagination over a join-fetched collection cannot be done in SQL.** The row count no longer
-  matches the entity count, so the ORM will page in memory after reading everything — Hibernate
-  says so in a warning that is routinely ignored. Page the root ids first, then fetch.
+- **Join fetching multiple to-many associations can multiply rows.** Ten line items and five
+  shipments may produce fifty rows carrying the same order. Hibernate rejects some multiple-bag
+  shapes, while other collection combinations may execute and still explode the result. Prefer one
+  collection fetch per query unless measured cardinalities prove the product is bounded.
+- **Pagination over a collection fetch requires version- and query-specific verification.** Common
+  Hibernate query shapes warn and page in memory because SQL row limits do not equal root-entity
+  limits. Fail on that warning in tests; use a root-id page followed by a bounded fetch, or a
+  provider feature whose generated SQL and ordering you have verified.
 - **Batch fetching turns N+1 into N/batch + 1, not into 1.** It is the right answer when the
   association is needed for most rows and a join fetch would multiply, and it is still round
   trips.
-- **A DTO projection is the cheapest read**, because the rows never become managed entities:
-  fewer columns, no persistence-context growth, no dirty checking, nothing to flush. Prefer it
-  for any read that will not be written back.
+- **A DTO projection often reduces read cost**, because the rows never become managed entities:
+  fewer columns, no persistence-context growth, no dirty checking, nothing to flush. It can lose
+  identity-map and second-level-cache benefits and may duplicate rows or computation, so prefer it
+  when measurement and ownership fit a read model.
 - **The persistence context is not a cache you want large.** Flush cost scales with the number of
   managed entities, because dirty checking visits each one. A batch job that loads 100,000
   entities into one context is paying that on every flush.

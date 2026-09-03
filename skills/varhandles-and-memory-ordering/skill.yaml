@@ -1,19 +1,14 @@
 schemaVersion: 1
 
 name: varhandles-and-memory-ordering
-version: 1.1.0
+version: 1.2.0
 description: >-
-  VarHandle access modes and explicit memory ordering: plain, opaque, acquire/release and
-  volatile, choosing the weakest sufficient mode, compareAndSet versus weakCompareAndSet and
-  compareAndExchange, the four hardware barrier kinds, and what each mode costs on x86
-  versus aarch64. Use when replacing volatile with setRelease and getAcquire, when a field
-  is both declared volatile and accessed through a VarHandle, when the same field is written
-  plain on one path and release on another, when a concurrency bug appears only on Graviton
-  or Apple Silicon and never on x86, when compareAndExchange is assigned to a boolean, or
-  when someone proposes -XX:+StressGCM to expose an ordering race. Does not cover
-  happens-before, safe publication and the correctness contract (java-memory-model), the
-  algorithms built on these primitives (lock-free-patterns), or cache coherency and
-  cache-line effects (cpu-cache-and-numa).
+  Designing and proving low-level Java variable access with VarHandle plain, opaque,
+  acquire/release and volatile modes; compare-and-set/exchange, weak CAS, read-modify-write,
+  fences, coordinates, signature-polymorphic typing, supported modes, and mixed-access hazards.
+  Connects each mode to an algorithmic synchronization edge, allowed outcomes, jcstress model,
+  generated-code evidence and target-specific performance measurement. Use only when ordinary
+  volatile, atomics, locks or concurrent utilities do not express the required protocol.
 
 license: Apache-2.0
 
@@ -44,6 +39,9 @@ files:
 dependencies:
   - name: java-memory-model
     version: ^1.0.0
+
+suggests:
+  - lock-free-patterns
 
 capabilities:
   - reads-source

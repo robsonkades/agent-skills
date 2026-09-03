@@ -16,20 +16,22 @@ A downcall is a `Linker`-generated machine-code stub followed by the actual C co
 a Java frame the JVM manages. That is why there is no branch in either API that avoids this —
 it is not an API decision, it is a limitation of freeze in the presence of a native frame.
 
-## Detecting it: the JFR event only
+## Detecting carrier capture
 
-`-Djdk.tracePinnedThreads` was removed in JDK 24. The only source of truth is
-`jdk.VirtualThreadPinned`.
+`-Djdk.tracePinnedThreads` was removed in JDK 24. `jdk.VirtualThreadPinned` remains useful,
+but it reports an attempted Java blocking operation while the virtual thread is pinned. A C
+function that blocks internally can capture its carrier without executing a Java park point
+that produces this event. Use complementary evidence.
 
 ```bash
-# Record with the event enabled; profile.jfc's 20 ms default hides short, frequent pinning:
+# Record with the event enabled; inspect the chosen JFC threshold before interpreting absence:
 java -XX:StartFlightRecording=filename=jni-ffi.jfr,settings=profile \
      --enable-native-access=ALL-UNNAMED MyApp
 
 jfr print --events jdk.VirtualThreadPinned jni-ffi.jfr
 
-# Or set the threshold explicitly before recording:
-jfr configure jdk.VirtualThreadPinned#threshold=1ms
+# Or generate a custom configuration, then start the JVM with settings=vt-pinning.jfc:
+jfr configure --output vt-pinning.jfc jdk.VirtualThreadPinned#threshold=1ms
 ```
 
 For live instrumentation in production or the lab:
@@ -45,10 +47,9 @@ try (RecordingStream rs = new RecordingStream()) {
 }
 ```
 
-The event's `stackTrace` is what distinguishes a JNI origin from an FFM one in practice: the
-top frame is either the `native` method (JNI) or the downcall's `MethodHandle.invokeExact`
-(FFM). In both cases there is no `LockSupport.park` or `Object.wait` frame above it, because
-no unmount happened. The distinction is diagnostic only — both need the same mitigation.
+An event stack can expose a native method, FFM/linker frame, monitor or other pinning context,
+but frame names and truncation vary. Correlate it with call-duration metrics, thread dumps and
+wall/native profiles. Absence of events does not rule out blocking inside native code.
 
 ## Wall-clock profiling
 
@@ -56,19 +57,17 @@ no unmount happened. The distinction is diagnostic only — both need the same m
 asprof -e wall -t -d 30 -f wall.html <pid>
 ```
 
-Wall-clock mode is what reveals this: a virtual thread pinned in native code appears busy even
-though it is blocked, which CPU mode would not show. Look for `native` method frames (JNI) or
-`MethodHandle.invokeExact` / `Linker` stub frames (FFM) under carrier-marked threads, with no
-parking frame above.
+Wall-clock mode can reveal time accumulated in native/linker frames that CPU-only sampling
+misses. Verify profiler version/options from its own documentation and symbolize native
+libraries; unknown frames or missing symbols are not evidence of Java overhead.
 
-`asprof` is the binary in the 3.x/4.x series. If your environment still exposes `profiler.sh`,
-it is running a 2.x or older build; upgrade before using any of this.
+## Structural mitigations
 
-## The only structural mitigation
-
-No JNI or FFM variant avoids pinning when the call blocks — least of all `critical()`, which
-widens the blast radius. Isolate the blocking call on a dedicated platform-thread pool, sized
-by Little's Law, and never dispatch it from the virtual-thread executor:
+No synchronous JNI/FFM variant makes a blocking native frame unmountable. A bounded dedicated
+platform-thread pool is one mitigation; others are a genuinely asynchronous native API,
+process isolation, shorter bounded batches or a Java implementation. Size the pool with
+measured latency/concurrency, native resource capacity and explicit queue/load-shedding—not
+Little's Law alone:
 
 ```java
 // Dedicated platform pool, sized by the native call's real latency and the
@@ -81,15 +80,16 @@ CompletableFuture.supplyAsync(() -> nativeLib.compress(payload), nativeCallPool)
                  .thenAccept(result -> /* ... */);
 ```
 
-This restores to the virtual thread the property it should have had: blocking on a `Future` is
-ordinary Java and unmounts normally, while the problematic native frame stays entirely inside a
-pool of threads that were never virtual in the first place.
+The native frame then remains on a platform worker while the virtual caller waits in Java and
+can normally unmount. Bound the executor queue, propagate deadlines to the native protocol
+where supported, and define late completion because cancelling the `Future` does not
+reliably cancel C code.
 
 ## JEP 472: the native access policy
 
-Since JDK 24, both JNI (`System.loadLibrary` / `System.load`) and FFM (creating a
-`downcallHandle`, an `upcallStub`, or a library lookup) emit a restricted-access warning on
-first use per module:
+FFM restricted methods already required native-access authorization; JEP 472 brought JNI
+loading/use under the same direction in JDK 24. Under the JDK 24/25 warn policy, unauthorized
+restricted access produces a warning associated with the caller module:
 
 ```
 WARNING: A restricted method in java.lang.foreign.Linker has been called
@@ -98,27 +98,27 @@ WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers i
 WARNING: Restricted methods will be blocked in a future release unless native access is enabled
 ```
 
-| Action                                                                   | Warns without `--enable-native-access`?                               |
-| ------------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| `System.loadLibrary(...)` / `System.load(...)`                           | Yes                                                                   |
-| `Linker.nativeLinker().downcallHandle(...)`                              | Yes                                                                   |
-| `Linker.nativeLinker().upcallStub(...)`                                  | Yes                                                                   |
-| `SymbolLookup.libraryLookup(...)`                                        | Yes                                                                   |
-| Allocating an `Arena` and reading or writing an existing `MemorySegment` | No — the warning fires at link/load time, not on every access         |
-| `jextract`-generated code that internally calls `downcallHandle`         | Yes — attributed to the module **using** the binding, not to jextract |
+| Action                                         | Restricted/native-access relevance                                      |
+| ---------------------------------------------- | ----------------------------------------------------------------------- |
+| native library load and JNI use                | governed by JEP 472 policy in current releases                          |
+| `Linker.nativeLinker().downcallHandle(...)`    | restricted FFM operation                                                |
+| `Linker.nativeLinker().upcallStub(...)`        | restricted FFM operation                                                |
+| `SymbolLookup.libraryLookup(...)`              | restricted library lookup                                               |
+| Existing segment read/write                    | memory access itself is not a new native link/load authorization        |
+| generated binding invoking a restricted method | authorization belongs to the calling module; generation is no exemption |
 
 ```bash
 java --enable-native-access=com.example.nativebridge -jar app.jar
 ```
 
-Set it per module (or `ALL-UNNAMED` for classpath code). The JEP announces the intent to make
-`deny` the default in a future release; on a JDK 25 baseline that release has no publicly
-numbered JEP yet. Treat the flag as mandatory production configuration now.
+Set it per module (or `ALL-UNNAMED` for classpath code), and test the exact release with
+`--illegal-native-access=deny`. The JEP announces an eventual deny-by-default direction; do
+not suppress warnings without auditing which module and operation need native authority.
 
 ## jextract
 
-Not distributed with the GraalVM or any OpenJDK build. It is a standalone OpenJDK project
-(github.com/openjdk/jextract) that parses a C header with libclang and emits header constants
+`jextract` is a standalone OpenJDK project rather than a standard JDK tool; vendor bundles may
+differ. It parses a C header with libclang and emits header constants
 as static fields, `StructLayout`/`UnionLayout` with per-field `VarHandle`s at the correct
 target-platform offset and alignment, and one `MethodHandle` per function with its
 `FunctionDescriptor` already built.
@@ -130,38 +130,31 @@ jextract \
     /usr/include/sqlite3.h
 ```
 
-```java
-MemorySegment db = sqlite3_h.sqlite3_open(arena.allocateFrom("mydb.db"));
-```
-
 It generates bindings, not memory-ownership semantics, and not an exemption from the native
-access policy.
 
 ## Operational checklists
 
 ### Before production
 
-- [ ] Every native call (JNI or FFM) that can block has been identified and isolated from
-      virtual threads on a dedicated platform-thread pool
-- [ ] Every use of `Linker.Option.critical()` is justified by a real JMH measurement under
-      representative load against the eligibility criteria — sub-microsecond duration and
-      proven absence of blocking
+- [ ] Every native call that can block has explicit carrier strategy: bounded platform pool,
+      asynchronous native API, process isolation or justified platform-thread execution
+- [ ] Every `Linker.Option.critical()` use satisfies the documented extremely-short/no-upcall
+      contract, has bounded non-blocking behavior, service-level evidence and rollback
 - [ ] `--enable-native-access` is configured explicitly for the modules or jars doing native
       interop, rather than left on the warn-only default
 - [ ] `jextract`-generated bindings are versioned alongside the source C header, with a
       documented regeneration process — not generated once by hand and forgotten
-- [ ] If the service uses virtual threads and makes native calls on a hot path,
-      `jdk.VirtualThreadPinned` instrumentation via `RecordingStream` is live in production,
-      not only in the lab
+- [ ] Native call duration, platform-pool queue/active count, carrier saturation and selected
+      JFR/wall-profile diagnostics can be collected without unbounded overhead
 - [ ] No runbook or start script references `-Djdk.tracePinnedThreads` or `--enable-preview`
       for FFM code
 
 ### During an incident
 
-- [ ] JFR collected with `jdk.VirtualThreadPinned#threshold` lowered to 1 ms before concluding
-      there is no pinning of native origin
-- [ ] The event's `stackTrace` identifies the origin as JNI or FFM — and that distinction was
-      treated as irrelevant to the fix, since both need the same mitigation
+- [ ] JFR event threshold/settings were verified, and absence of events was not used to rule
+      out blocking inside C code
+- [ ] Event/thread-dump/wall/native profiles were correlated to identify the actual call and
+      whether the stall occurs before, inside or after native execution
 - [ ] If any call uses `critical()`: the hypothesis that it is blocking and delaying safepoints
       for the **whole** JVM has been ruled out (`-Xlog:safepoint+stats=debug` showing raised
       wait time — not `-XX:+PrintSafepointStatistics`, which is removed and will not start)
@@ -170,3 +163,11 @@ access policy.
       adjusted
 - [ ] Before proposing "swap JNI for Panama" as the fix, it was confirmed whether the call
       blocks; if it does, that swap on its own changes nothing
+
+## Primary references
+
+- [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)
+- [JEP 491: Synchronize Virtual Threads without Pinning](https://openjdk.org/jeps/491)
+- [JEP 472: Prepare to Restrict the Use of JNI](https://openjdk.org/jeps/472)
+- [Java 25 native-access guide](https://docs.oracle.com/en/java/javase/25/core/restricted-methods.html)
+- [OpenJDK jextract project](https://github.com/openjdk/jextract)

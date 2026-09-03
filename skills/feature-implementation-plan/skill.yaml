@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-implementation-plan
-version: 1.0.0
+version: 1.0.1
 description: >-
   Assembling everything established about a feature into one document another engineer could
   execute without re-deriving the architecture: the resources in dependency order, the schema,

@@ -1,117 +1,153 @@
-# Collecting the data and fitting the model
+# Collecting and fitting a defensible USL curve
 
-## Environment, before the first point
+## Pick one of two experiment shapes
 
-- Dedicated machine for the application; no competing workloads.
-- CPU governor pinned: `cpupower frequency-set -g performance`.
-- Load generator on a **separate** machine, so it does not compete for CPU with the app.
-- JVM warm-up of at least 120 s before anything is recorded.
-- Range of N decided up front: 1 to at least 2 x the estimated `N_max`.
+### `N` is closed concurrency
 
-## Per-point protocol
+Hold hardware/topology fixed and run `N` synchronous users/workers with declared think time and
+work mix. Completion throughput versus population is the classic software-scalability/machine-
+repairman shape. Record response time so `N≈X(R+Z)` reconciles. This does not claim latency under an
+exogenous arrival rate.
 
-For each N in {1, 2, 4, 8, 16, 32, 64, …}:
+### `N` is provisioned resources
 
-1. Start the application configured for that N.
-2. Warm up 60–120 s under moderate load — **discard**.
-3. Measure 60 s of stable open-loop load; record mean throughput.
-4. Cool down 10–30 s before the next point.
+For each core/JVM/pod count, estimate useful service capacity with a validated offered-load sweep or
+controlled backlog. The load generator must expose the ceiling without becoming the bottleneck,
+and errors/rejections/timeouts remain guardrails. A single fixed offered rate below all capacities
+produces flat completion throughput and cannot identify resource scalability.
 
-Three repetitions per N, take the median, discard outliers. Record CPU, GC pause time and
-connection-pool utilisation alongside throughput — they are what turns a coefficient into a
-diagnosis later.
+In both designs, keep per-unit CPU/memory/quota, routing, downstream topology, dataset, operation
+mix and correctness invariant. If adding pods also shards data or changes cache fit, that is a new
+regime to model explicitly, not noise.
 
-## Open-loop collection with k6
+## Experimental design
 
-```javascript
-export const options = {
-  scenarios: {
-    test: {
-      executor: 'constant-arrival-rate',
-      rate: parseInt(__ENV.RATE),
-      timeUnit: '1s',
-      duration: '90s', // 30 s warm-up + 60 s measurement
-      preAllocatedVUs: parseInt(__ENV.VUS) * 2,
-      maxVUs: parseInt(__ENV.VUS) * 4,
-    },
-  },
-};
-export default function () {
-  http.get(__ENV.APP_URL);
-}
-```
+- Choose `N` values to distinguish linear, saturating and possible retrograde curvature. Start with
+  a pilot; add points where competing curves diverge or prediction uncertainty is widest.
+- Preserve independent run/JVM/host replication. Request samples within one run do not replicate
+  placement, compilation or cache state.
+- Randomise or block `N`/treatment order against time/host drift. Include a repeated baseline near
+  the end to detect aging.
+- Define cold/ramp/sustained state from the decision and observable JIT/cache/GC/throughput state;
+  no universal warm-up or measurement duration exists.
+- Predeclare practical prediction precision, stopping/safety limits and outcome handling. Do not
+  discard “outlier” runs without a rule and root-cause evidence; report exclusions.
+- Record offered/admitted/completed/error/drop/timeout counts, latency, CPU/quota throttling, GC,
+  queue state, downstream saturation and generator health at every point.
 
-The driver loop sweeps N, derives `TPS = http_reqs / 60`, and appends `N,TPS` to a CSV.
-
-**Assert on the extraction.** k6's summary output format has changed between major versions;
-check `k6 version` before trusting a fixed `grep`/`awk`. A pattern that stops matching returns
-empty, which is indistinguishable from "0 TPS measured" unless the script aborts:
-
-```bash
-if [ -z "$TOTAL_REQS" ] || [ "$TOTAL_REQS" -eq 0 ]; then
-    echo "ERROR: could not extract http_reqs from k6 output for N=$N" >&2
-    exit 1
-fi
-```
-
-Without that guard the run silently produces a corrupted dataset that still fits.
-
-## The fit
+## Fit raw throughput and the scale jointly
 
 ```python
 import numpy as np
 from scipy.optimize import curve_fit
 
-def usl(N, sigma, kappa):
-    return N / (1 + sigma * (N - 1) + kappa * N * (N - 1))
+def usl(n, gamma, alpha, beta):
+    return gamma * n / (1 + alpha * (n - 1) + beta * n * (n - 1))
 
-X_norm = X_vals / X_vals[0]                 # normalise by the N = 1 baseline
-popt, pcov = curve_fit(usl, N_vals, X_norm,
-                       p0=[0.1, 0.01],
-                       bounds=([0, 0], [1, 1]))
-sigma, kappa = popt
-std_errors = np.sqrt(np.diag(pcov))         # report the coefficients with these
+# One row per independent run, not only per-N medians.
+n = runs["N"].to_numpy(float)
+x = runs["throughput"].to_numpy(float)
 
-residuals = X_norm - usl(N_vals, sigma, kappa)
-r_squared = 1 - np.sum(residuals**2) / np.sum((X_norm - np.mean(X_norm))**2)
+# `run_sd` must come from the experimental design. Do not invent equal precision.
+sigma_x = runs["run_sd"].to_numpy(float)
 
-N_max  = np.sqrt((1 - sigma) / kappa)       # only meaningful when kappa > 0
-X_peak = usl(N_max, sigma, kappa) * X_vals[0]
+popt, pcov = curve_fit(
+    usl,
+    n,
+    x,
+    p0=[x[n.argmin()], 0.05, 0.001],
+    sigma=sigma_x,
+    absolute_sigma=True,
+    bounds=([0.0, 0.0, 0.0], [np.inf, 1.0, np.inf]),
+    maxfev=50_000,
+)
+gamma, alpha, beta = popt
+residual = x - usl(n, *popt)
 ```
 
-Direct non-linear fitting avoids the weighting bias of the manual linearisation
-`y = N/X_norm`, which weights errors unevenly and can return an invalid (negative) sigma on
-datasets spanning a wide range of N.
+The `[0,1]` alpha bound represents the conventional nonnegative sublinear regime; `beta≥0` permits
+retrograde scaling. First plot an unconstrained/alternative fit as a diagnostic. If data require a
+negative coefficient, do not publish a constrained curve as though it explained superlinearity;
+find the regime change or use a model that permits it.
 
-## Validity gates — all four, before interpreting anything
+Dividing every value by one observed `X(1)` makes that observation a shared noisy denominator and
+forces its error into all rows. Fitting `γ` jointly (as current `usl` packages do) avoids treating a
+single run as exact. Multiple baseline runs still anchor the scale.
 
-| Gate                                 | Failure means                                          |
-| ------------------------------------ | ------------------------------------------------------ |
-| R² > 0.95                            | Poor fit — suspect heterogeneous units first           |
-| sigma >= 0 and kappa >= 0            | Physically invalid parameters; the fit method is wrong |
-| predicted `X_peak` >= max measured   | The fit contradicts the data — redo the regression     |
-| measured points exist beyond `N_max` | kappa is unconstrained; the projection has no support  |
+`curve_fit` covariance is a local approximation and can be misleading at bounds or with weak
+identification. Bootstrap independent runs/blocks, use profile likelihood or a suitable Bayesian
+model, and propagate parameter uncertainty to `X(N)`, marginal gain and peak. If per-point variance
+changes with `N`, weighted least squares or a variance model is preferable to unweighted fitting;
+throughput counts may also need a count/process model.
 
-Then plot measured points against the fitted curve and look at it. Multiple visible "steps"
-mean heterogeneous units — segment the analysis by homogeneous tier instead of fitting one
-curve across all of them.
+## Identification checks
 
-## The R alternative
+`α(N−1)` and `βN(N−1)` look similar over a narrow low-N range. Diagnose:
+
+- wide/highly correlated coefficient intervals or bootstrap sign/boundary pile-up;
+- a Jacobian/information matrix with poor conditioning;
+- radically different `N*` across leave-one-N-out fits;
+- full USL and `β=0` model making indistinguishable predictions over measured N;
+- predicted peak driven by points not independently replicated.
+
+When `β` is weakly identified, report saturation evidence and a lower/interval bound on peak rather
+than a precise `N*`. Add a safe high-N point where model predictions diverge if the decision value
+justifies it.
+
+## Validation gates—decision-specific, not magic constants
+
+1. Units/mix/topology remained invariant or the curve is segmented.
+2. Generator realised the intended design and did not hide drops/omission.
+3. Conservation/guardrail metrics reconcile and useful output remains correct.
+4. Residuals show no systematic step, curvature, time order or variance pattern.
+5. Held-out N/run predictions meet the predeclared absolute/relative decision tolerance.
+6. Parameter and peak/marginal intervals are narrow enough to choose between options.
+7. Integer feasible N near a continuous peak are evaluated directly.
+
+R² may be reported descriptively but is not a gate. It can be high for a biased curve and unstable
+when throughput varies little. “Predicted peak below one noisy measured maximum” is likewise not an
+automatic refit instruction; inspect prediction intervals and residuals.
+
+## Peak and marginal value
+
+For `β>0`, `α<1`:
+
+```text
+N*continuous = sqrt((1−α)/β)
+```
+
+If `N*≤1`, the feasible integer curve peaks at one unit. Otherwise evaluate `floor(N*)`, `ceil(N*)`
+and feasible neighbours with prediction intervals. The economic
+decision is often earlier: compare `X(N+1)−X(N)` and its interval with unit cost, availability and
+latency guardrails. Do not report a decimal pod/thread optimum.
+
+## R package
 
 ```r
 library(usl)
-packageVersion("usl")            # decides which output naming to expect
-model <- usl(throughput ~ load, data)
-summary(model)                   # <= 1.8.x: sigma, kappa. >= 2.0.0: alpha, beta, gamma
-scalability(model, c(64, 128))   # project
+packageVersion("usl")
+model <- usl(throughput ~ load, data = runs)
+coef(model)       # current releases estimate alpha, beta and gamma
+confint(model)
+plot(model)
 ```
 
-Same mathematics, different symbols. Check the installed version before reading the summary.
+The CRAN package interface changed across major versions; current 3.x documentation uses
+`alpha`, `beta`, `gamma` and nonlinear solvers. Pin the installed version and archive session info.
+Package intervals inherit regression assumptions; they do not repair pseudoreplication or a bad
+experiment.
 
 ## Reporting
 
-Document sigma, kappa, `N_max`, `X_peak`, R² and the interpretation together — a coefficient
-without its R² and its measured range is not a result. Record which bottleneck limits the
-current `N_max`, so the next optimisation is prioritised against it. Comparing sigma and kappa
-before and after a change says which physical mechanism the change actually attacked; a single
-throughput figure does not.
+Publish raw run rows, design/invariants, model equation and software version, coefficient covariance/
+intervals, residual and held-out plots, supported N range, integer peak/marginal intervals, outcome
+guardrails and unresolved regime changes. A coefficient without its measured range and uncertainty
+is not reusable.
+
+## Sources
+
+- Gunther, [“A General Theory of Computational Scalability Based on Rational Functions”](https://arxiv.org/abs/0808.1431)
+- Gunther, Subramanyam and Parvu, [“A Methodology for Optimizing Multithreaded System Scalability on Multi-cores”](https://arxiv.org/abs/1105.4301)
+- [CRAN `usl` package](https://cran.r-project.org/package=usl)
+- [SciPy nonlinear least squares documentation](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html)
+- NIST/SEMATECH, [nonlinear least-squares regression](https://www.itl.nist.gov/div898/handbook/pmd/section1/pmd142.htm)

@@ -1,140 +1,106 @@
-# ForkJoinPool internals
+# Pool mechanics and contracts
 
-## The `WorkQueue` deque
+## Stable model versus HotSpot/OpenJDK detail
 
-Each worker owns a deque (a private static class inside `java.util.concurrent.ForkJoinPool`
-— an implementation detail, not public API):
+The supported model is work stealing: worker-local queues, external submissions, local execution,
+stealing by idle workers, join-aware assistance, and optional managed blocking. Exact queue fields,
+scan strides, memory fences, helper method names and control-word encodings are OpenJDK implementation
+details and change between releases. Use them to explain a profile only after matching the deployed
+JDK source/build; never make application correctness depend on them.
 
+Conceptually, default local scheduling is stack-like for forked work, favoring depth-first execution
+and locality. Other workers steal older work, which often represents a larger remaining subtree.
+`asyncMode=true` switches local scheduling toward FIFO for event-style tasks that are not joined.
+External submissions are not identical to locally forked child tasks, so a benchmark that submits all
+leaves from one outside thread does not model recursive work stealing.
+
+## Fork, join and help
+
+`fork()` schedules a task in the current fork/join pool when called from one, or the common pool when
+called outside such a computation. Re-forking a task before completion/reinitialization is a usage
+error. `join()` waits for completion and reports unchecked failure; the implementation may execute or
+help tasks rather than passively blocking.
+
+Join assistance improves liveness for well-formed task DAGs but does not make arbitrary cyclic waits
+safe. A child waiting for an unrelated future, lock, socket or another pool can still deadlock or
+starve. Draw wait-for edges across executors and synchronizers rather than assuming work stealing
+breaks them.
+
+The classic binary pattern is:
+
+```java
+left.fork();
+R rightResult = right.compute();
+R leftResult = left.join();
+return combine(leftResult, rightResult);
 ```
-class WorkQueue {
-    ForkJoinTask<?>[] array;   // circular buffer, resized on demand
-    volatile int base;         // read and CAS-written by thieves
-    int top;                   // read and written only by the owner, no CAS needed
+
+This avoids immediately forking both branches and then waiting while the current worker could compute.
+Use `invokeAll` when it improves clarity; benchmark rather than treating source shape as proof of
+speed.
+
+## Memory visibility and task state
+
+`ForkJoinTask` documentation warns that modifications made after `fork()` are not necessarily
+consistently observable until completion is established with `join`/related methods or a successful
+completion check. Future-style result retrieval provides the completion boundary. This does not order
+concurrent sibling accesses to a shared mutable object.
+
+Safe pattern:
+
+1. initialize immutable task inputs before scheduling;
+2. confine mutable partial result to one task;
+3. retrieve/merge only after completion;
+4. use locks, atomics, concurrent structures or another documented synchronization edge for any live
+   cross-task communication.
+
+Do not mutate task inputs after scheduling unless the data structure and protocol were designed for
+concurrent mutation.
+
+## Managed blocking
+
+`ForkJoinPool.managedBlock` repeatedly checks `isReleasable()` before invoking `block()`. In a pool it
+may expand/activate spare capacity. Therefore a blocker must:
+
+- make `isReleasable()` cheap, non-blocking and correct under repeated calls;
+- return `true` from `block()` only when no further blocking is necessary;
+- publish its result safely between these methods;
+- propagate/restores interruption according to the enclosing operation's contract;
+- release resources on failure and cancellation.
+
+```java
+final class AwaitLatch implements ForkJoinPool.ManagedBlocker {
+    private final CountDownLatch latch;
+
+    AwaitLatch(CountDownLatch latch) { this.latch = latch; }
+
+    @Override public boolean isReleasable() {
+        return latch.getCount() == 0;
+    }
+
+    @Override public boolean block() throws InterruptedException {
+        latch.await();
+        return true;
+    }
 }
 ```
 
-- **push** (owner only): write `array[top]`, increment `top`. Publication uses a release
-  barrier so a thief that sees the new `top` also sees the array contents.
-- **pop** (owner only): decrement `top`; resolves via CAS only if it collides with a thief
-  taking the same slot — the rare path.
-- **poll** (thieves): CAS `base` forward to claim the oldest entry; on failure, move on.
+Compensation can increase thread count and memory/context-switch pressure. It cannot increase a
+database pool, remote quota or disk throughput. Pair it with resource-local admission control.
 
-The point: **the owner's path needs no atomic instruction in the common case.** The owner
-works LIFO from the top, which is also good for cache locality of recursive forks; thieves
-take approximately FIFO from the base, which tends to steal the largest remaining subtree.
+## Limits and release changes
 
-This is what `ForkJoinPool` solves that a single-queue `ThreadPoolExecutor` does not — the
-shared queue is a contention point every worker must pass through on every task.
+Java 25 documents `ForkJoinPool` as also implementing `ScheduledExecutorService` and adds scheduling
+operations; older LTS releases do not have that surface. The extended constructor exists since Java 9,
+but parameter behavior is version-sensitive (`corePoolSize` is documented ignored in Java 25).
+`setParallelism` exists since Java 19 and may be unsupported for a property-configured common pool.
 
-## The stealing scan
+The common pool ignores shutdown requests and uses daemon workers. A dedicated pool has normal
+executor lifecycle. `shutdownNow()` for a fork/join pool always returns an empty list in Java 25; do
+not infer that there was no queued work.
 
-An idle worker does not ask "who is next to me":
+## Authoritative references
 
-```
-1. Pick a pseudorandom starting index over the array of WorkQueues,
-   which includes every worker queue AND the external submission queues.
-2. Sweep the array cyclically with a pseudorandom stride, testing each slot:
-     a. empty or null -> next slot in the cycle
-     b. non-empty     -> CAS on 'base' to steal the oldest task
-     c. CAS failed    -> try the NEXT queue; do not retry the same victim
-3. If a full sweep finds nothing, the worker may become partially and then
-   fully inactive, to be reactivated when a task appears in any queue.
-```
-
-Any worker can steal from any other, with a probability that does not depend on position —
-only on which queues have work at scan time. Steals concentrated on one queue mean that
-queue held large tasks while the others ran dry; the cause is never topological.
-
-The randomisation is what keeps several thieves from converging on the same victim.
-
-The formal guarantee behind randomised work stealing (Blumofe & Leiserson, 1999) is
-`T_P ≤ T_1/P + O(T_∞)`, with an expected steal count of `O(P · T_∞)` — the reason it scales
-with low communication overhead.
-
-## What `fork()` and `join()` actually do
-
-```
-task.fork()
-  -> caller is a ForkJoinWorkerThread: push() onto its own local WorkQueue
-     (common path, no CAS)
-  -> caller is outside the pool: external submission, into a dedicated
-     submission queue
-
-task.join()
-  -> already complete: return the result immediately (most common, fastest)
-  -> still on the caller's own WorkQueue, unstolen: the caller runs it
-     directly ("unforking") rather than waiting at all
-  -> stolen and running elsewhere: the caller enters the pool's HELP
-     mechanism instead of blocking naively
-```
-
-**The help mechanism is not called `helpStealer()`.** That name is plausible but
-corresponds to no method in the current `ForkJoinPool` source. The real mechanism is
-`helpJoin`, with `helpComplete` for the `CountedCompleter` pattern (which propagates
-completion through the task tree rather than by return value). A thread that called
-`join()` and cannot re-run the task locally looks for other useful pool work to run while
-it waits — preferably work that advances the same task tree, otherwise anything available.
-Only when there is nothing useful left does the pool decide between parking the thread —
-potentially triggering compensation so parallelism is not lost — and continuing to try.
-
-This is why `ForkJoinTask.join()` is safe against the pool-exhaustion deadlock that a naive
-`Future.get()` produces in a fixed-size `ThreadPoolExecutor`, where all N threads can end
-up waiting on each other with none free to unwind the dependency. A joining thread here
-stays productive.
-
-## Parallelism, threads and the ceiling
-
-```java
-ForkJoinPool pool = new ForkJoinPool(
-    parallelism,                                        // default: availableProcessors()
-    ForkJoinPool.defaultForkJoinWorkerThreadFactory,
-    null,                                               // UncaughtExceptionHandler
-    asyncMode);                                         // true = local FIFO
-```
-
-| Parameter     | CPU-bound divide-and-conquer    | Streams / event-driven, no nested join                                                    |
-| ------------- | ------------------------------- | ----------------------------------------------------------------------------------------- |
-| `parallelism` | `nCPU`                          | `nCPU`, adjusted to the load profile                                                      |
-| `asyncMode`   | `false` (local LIFO — locality) | `true` (local FIFO — avoids the first submission never running under a continuous stream) |
-
-`parallelism` is a target, not by itself a hard thread ceiling. The common pool allows up
-to **256 spare threads** beyond it by default, to compensate for `ManagedBlocker` blocking;
-that number is the common pool's default (`java.util.concurrent.ForkJoinPool.common.maximumSpares`),
-not a universal limit. The architectural ceiling of any instance, common pool included, is
-`MAX_CAP = 32,767` (`0x7fff`, an internal constant).
-
-A dedicated pool sets its own ceiling through the nine-argument constructor (Java 9+):
-
-```java
-public ForkJoinPool(int parallelism,
-                    ForkJoinWorkerThreadFactory factory,
-                    UncaughtExceptionHandler handler,
-                    boolean asyncMode,
-                    int corePoolSize,
-                    int maximumPoolSize,     // this pool's thread ceiling
-                    int minimumRunnable,
-                    Predicate<? super ForkJoinPool> saturate,
-                    long keepAliveTime,
-                    TimeUnit unit)
-```
-
-## The happens-before guarantee, exactly
-
-The `ForkJoinTask` Javadoc's memory-consistency section establishes two edges and only two:
-
-- Actions by a thread **before** calling `fork()` happen-before the actions of the task.
-- Actions of the task happen-before actions by any thread **after** a successful `join()`
-  on that same task (or an equivalent return, such as `invoke()`).
-
-It says nothing about two **sibling** tasks, both forked from the same `compute()` and
-running concurrently without one joining the other. Two siblings incrementing a shared
-`static` field are in a data race in the strict JMM sense; sharing a pool creates no
-ordering.
-
-This is why `left.fork(); rightResult = right.compute(); return left.join() + rightResult;`
-is safe to combine at the point after `join()`, and a shared accumulator is not.
-
-## The virtual thread connection
-
-The virtual-thread scheduler is itself a dedicated `ForkJoinPool`, with `asyncMode = true`
-(FIFO) and compensation that reuses the `ManagedBlocker` protocol.
+- [Java 25 `ForkJoinPool`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinPool.html)
+- [Java 25 `ForkJoinTask`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinTask.html)
+- [Java Language Specification §17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5)

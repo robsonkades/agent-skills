@@ -35,7 +35,7 @@ Each of those is removed silently by a change that appears to be about performan
 2. **Inventory every pool and write down what it was limiting.** For each: how many threads,
    what resource sat behind it, and what happens if that number becomes unbounded. This
    document is the actual deliverable of the migration's first week.
-3. **Audit for blockers** — pinning from native frames and class initialisers, file-heavy
+3. **Audit for blockers** — native/foreign pinning, carrier-capturing or file-heavy
    paths, `ThreadLocal` caches, thread-name dependencies, executors that encode ordering.
    The greps are in the playbook.
 4. **Declare the replacement limits** next to each scarce resource, and deploy _that_ change
@@ -43,8 +43,8 @@ Each of those is removed silently by a change that appears to be about performan
    is exactly the proof you want before changing anything else.
 5. **Flip one workload, behind a flag**, starting with an I/O-bound path whose downstream has
    a known bound. Canary at real load against the baseline.
-6. **Re-size the connection pool deliberately**, from Little's Law and the database's own
-   capacity — not in proportion to the new concurrency.
+6. **Revalidate the connection pool deliberately**, using measured hold time, required throughput,
+   queueing headroom and the database's aggregate capacity — not in proportion to new thread count.
 7. **Confirm the observability works** on the new model before widening: JSON thread dumps,
    pinning events, carrier count, named thread factories.
 8. **Widen one workload at a time**, with the rollback criteria stated before each step.
@@ -66,19 +66,21 @@ Each of those is removed silently by a change that appears to be about performan
 - **The connection pool is not the thing to grow first.** More concurrent requests do not
   make the database faster; a pool sized past the database's capacity converts a fast
   rejection into a slow timeout for everyone.
-- **Do not migrate CPU-bound work.** Virtual threads add no parallelism. If the profile is
-  CPU-dominated, this migration will produce a rounding error and a lot of risk.
+- **Do not expect CPU-bound work to improve.** Virtual threads add no CPU capacity. A request can
+  still use one virtual lifetime while CPU-heavy phases are isolated/bounded; migrate only for a
+  demonstrated lifecycle/operability reason.
 - **Do not migrate to fix a slow dependency.** More concurrency against a saturated
   dependency makes its queue longer, not its latency shorter.
-- **Check the JDK baseline before auditing locks.** On JDK 21–23 `synchronized` pins and may
-  genuinely need changing; on 24+ (JEP 491) it does not, `Object.wait` unmounts, and
+- **Check the JDK baseline before auditing locks.** On JDK 21–23 a virtual thread that blocks while
+  holding a monitor can pin; on 24+ (JEP 491) monitor use/`Object.wait` no longer causes pinning, and
   `-Djdk.tracePinnedThreads` was removed and does nothing. Migrating on 21 and migrating on
   25 are different projects.
-- **Keep platform pools for what needs them**: CPU-bound work, native/JNI-heavy libraries,
-  and file-heavy paths. A migration is not required to be total, and "everything is virtual"
-  is not a goal.
-- **Rollback must be configuration.** A flag per workload, flipped without a build. If
-  rolling back requires reverting code, the canary is not a canary.
+- **Keep or introduce bounded platform execution where evidence requires it**: CPU parallelism,
+  thread affinity/priority, or causal native/foreign/file paths that the current JDK cannot handle
+  efficiently. A migration need not be total.
+- **Rollback should be fast and rehearsed.** A per-workload runtime/configuration switch is ideal;
+  where architecture prevents it, staged deployment rollback must still preserve task ordering,
+  drain and compatibility.
 - **Load-test against the real dependency or a faithful simulator.** The entire mechanism
   being changed is what happens while waiting; a mocked dependency that returns instantly
   removes the phenomenon under test.
@@ -96,3 +98,6 @@ Each of those is removed silently by a change that appears to be about performan
   without an error: thread naming and log correlation, `ThreadLocal` caches, ordering
   guarantees, pool metrics that go to zero, `@Async` and `@Scheduled`, tests that depended on
   a pool. Read during the audit, and again when something inexplicable appears after a flip.
+- [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)
+- [JEP 491: Synchronize Virtual Threads without Pinning](https://openjdk.org/jeps/491)
+- [Java 25 virtual-thread adoption guide](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)

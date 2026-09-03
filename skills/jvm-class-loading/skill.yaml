@@ -1,10 +1,10 @@
 schemaVersion: 1
 
 name: jvm-class-loading
-version: 1.3.0
+version: 1.4.0
 description: >-
   Class loading, class identity and classloader leaks: parent-first delegation, {loader,
-  binary name} identity, loading versus linking versus initialisation, Metaspace retention,
+  defining loader and binary name} identity, loading versus linking versus initialisation, Metaspace retention,
   and CDS/AOT cache for startup. Use when a ClassCastException reports identical type names
   on both sides, when Metaspace grows monotonically across redeploys or plugin reloads, when
   ClassNotFoundException and NoClassDefFoundError need to be told apart, when
@@ -12,7 +12,7 @@ description: >-
   --add-opens, when a startup hangs with "waiting on the Class initialization monitor" in a
   thread dump, when a static initialiser does I/O, or when reducing cold start. Does not cover
   the Metaspace budget itself (jvm-memory-regions), JIT warm-up (jit-compilation), or heap
-  leak analysis (jvm-gc-tuning). Metaspace internals are metaspace-internals and startup
+  object-retention analysis (heap-dump-analysis). Metaspace internals are metaspace-internals and startup
   caching in depth is startup-cds-crac-leyden.
 
 license: Apache-2.0
@@ -44,6 +44,13 @@ files:
 dependencies:
   - name: jvm-memory-regions
     version: ^1.0.0
+
+suggests:
+  - heap-dump-analysis
+  - jdk-upgrade-impact
+  - jvm-bytecode
+  - metaspace-internals
+  - startup-cds-crac-leyden
 
 capabilities:
   - reads-source

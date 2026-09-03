@@ -55,7 +55,9 @@ feasible, allowing the architect to skip modeling those combinations."_ The purp
 plainly: _"to determine what forces the architect needs to study — in other words, which forces
 require trade-off analysis?"_
 
-Then make the survivors MECE. Two failures to check for by name:
+Then make the survivors comparable and decision-complete. MECE is the source method's aspiration;
+in an open market, document credible exclusions rather than claiming literal exhaustiveness. Two
+failures to check for by name:
 
 - **Not mutually exclusive** — _"it is invalid to compare a message queue to an entire ESB because
   they aren't really the same category of thing."_
@@ -114,9 +116,9 @@ modelled for payments:
 | Use several payment types in a single payment | single service — performance and data consistency               |
 
 After the first two the book says _"so far, separate services look appealing."_ The third inverts
-it. That is the point of the technique, and the reason two scenarios are not enough: you stop when
-a scenario reverses the ranking, or when new scenarios stop changing it — not when you have
-reached a round number.
+it. The example demonstrates why analysis should seek scenarios that challenge the current
+preference. There is no universal minimum count or guarantee of an inversion; stop using a
+documented saturation/value-of-information criterion rather than a round number.
 
 Their conclusion, verbatim: _"the real trade-off analysis comes down to which is more important:
 performance and data consistency (a single payment service) or extensibility and agility (separate
@@ -142,8 +144,9 @@ Put to the business as one question:
    starts immediately, or responsiveness and fault tolerance?"
 ```
 
-Four technical rows collapse into one either/or in the stakeholders' own language. If the question
-you hand over still contains a technology name, it has not been reduced.
+Four technical rows collapse into one business decision. Technology names may remain when vendor,
+regulatory or operational constraints are themselves decision-relevant; the test is whether the
+accountable stakeholder can see consequences and authority, not whether jargon count is zero.
 
 ## Step 8 — fix the fundamental dimension, iterate, stop
 

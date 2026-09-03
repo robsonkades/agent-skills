@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-adapter
-version: 1.2.0
+version: 1.3.0
 description: >-
   Adapter in modern Java: making an existing type usable through an interface it was not
   written for, and keeping a foreign model, vocabulary and failure mode from leaking inward.
@@ -41,7 +41,7 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
+dependencies: []
 
 suggests:
   - circuit-breakers

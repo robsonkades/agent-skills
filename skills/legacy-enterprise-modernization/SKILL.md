@@ -32,8 +32,8 @@ operates two architectures and pays for both.
 ## Principles
 
 ```text
-Never rewrite while the original is still changing.
-        You are chasing a moving target with a smaller team.
+Avoid a parallel rewrite while the original changes unless a bounded scope,
+        compatibility strategy and funded cutover make drift controllable.
 
 Every step ships and delivers value on its own.
         A step that only pays off at the end will not be funded to the end.
@@ -53,7 +53,7 @@ The legacy model must not infect the new one.
 
 1. **Map what exists**, from evidence: which tables are written by what, which endpoints are
    actually called, where rules live (code, procedures, triggers, jobs, spreadsheets).
-   Production data beats documentation and beats memory.
+   Reconcile production evidence, documentation and operator knowledge: each has blind spots.
 2. **Pin behaviour with characterisation tests** at the boundary you will preserve — usually
    the HTTP API or the batch output — before touching anything.
 3. **Pick the first slice by value and by risk**, not by architecture: something that changes
@@ -69,15 +69,17 @@ The legacy model must not infect the new one.
 
 ```text
 The system still changes regularly and earns money
-        → strangle. A rewrite competes with a moving target and loses.
+        → prefer incremental replacement. A rewrite carries moving-target,
+          parity and cutover risk; use it only with evidence those costs are bounded.
 
 The system is frozen, small, and thoroughly understood
         → a rewrite may be genuinely cheaper. This is rare; verify
-          "frozen" against the last twelve months of commits.
+          "frozen" against a representative change window and operational roadmap.
 
 Several applications write the same tables
-        → data ownership first. Until one writer owns a table, no
-          extraction, no independent deploy, no schema change.
+        → establish write authority and compatible migration rules first.
+          Read-only extraction or additive schema evolution may proceed, but
+          independent writes remain coupled until ownership is enforced.
 
 A new component must read a legacy schema
         → anti-corruption layer. Translate at the boundary; do not let
@@ -108,9 +110,9 @@ A slice's old and new paths must both work for a long period
 - **Characterisation tests capture behaviour, including bugs.** That is intentional — users
   and downstream systems depend on behaviour nobody specified, and the migration's job is not
   to fix it silently. Record the ones that look wrong; decide about them separately.
-- Use production evidence over documentation. Access logs say which endpoints are used;
-  audit and query logs say which tables are written; a month of data beats anyone's memory
-  of the system.
+- Prefer triangulated evidence over recollection alone. Access/audit logs cover only their retention,
+  sampling and instrumentation; documentation can encode rare regulatory and recovery paths absent
+  from recent traffic. Choose an observation window from business cycles, not “a month” by default.
 - **Rules hide outside the application.** Stored procedures, triggers, scheduled jobs,
   database defaults, ETL scripts and a spreadsheet someone runs monthly. A module "replaced"
   without inventorying those has left its rules behind, and they will fire on the new data.
@@ -118,8 +120,9 @@ A slice's old and new paths must both work for a long period
   concepts from entering the new one, which means it may drop, merge, rename and reinterpret
   — and it will be ugly, because it holds the mismatch that would otherwise be spread
   through the new code (`enterprise-base-patterns`).
-- **Data ownership precedes code ownership.** With several writers to a table, no extraction
-  is possible and no schema change is safe. This is usually the largest and least glamorous
+- **Write ownership constrains independent evolution.** Several writers can coexist under additive,
+  backward-compatible migrations, but conflicting semantics and removal cannot be made independently.
+  Establish authority before transferring writes. This is usually the largest and least glamorous
   part of the work, and skipping it is why extractions fail
   (`distribution-boundaries`).
 - Prefer strangling at a boundary that already exists — an endpoint, a queue, a batch file —
@@ -129,8 +132,9 @@ A slice's old and new paths must both work for a long period
   that realises the benefit.
 - Keep the legacy system running well while it lives. Deliberate neglect ("it is going away")
   extends its life by making the migration riskier and the team's mornings worse.
-- **Do not modernise the technology and the design in the same step.** Upgrading a framework
-  and restructuring the domain simultaneously produces failures nobody can attribute.
+- Prefer separating technology upgrades from domain restructuring so failures remain attributable.
+  Combine them only when one unlocks the other and the migration has independent behavioral,
+  compatibility and rollback evidence.
 
 ## References
 

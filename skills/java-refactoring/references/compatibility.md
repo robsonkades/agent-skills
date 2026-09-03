@@ -50,10 +50,11 @@ where it links.
 
 Classify the symbol before the first step:
 
-1. **Private / package-private / internal (non-exported package of a module):** all
-   techniques available. JPMS makes this a real guarantee — a package absent from
-   `exports` cannot have external compile-time consumers, so `module-info.java` is the
-   authoritative list of what is refactorable at will.
+1. **Private / package-private / internal (non-exported package of a module):** usually the
+   smallest static caller set. JPMS blocks ordinary external compile-time access to a package
+   absent from `exports`, but `opens`, reflection, instrumentation, generated code,
+   `--add-exports`, and split or legacy class paths remain explicit exceptions. Treat
+   `module-info.java` as strong evidence, not permission to ignore runtime contracts.
 2. **Public within a deployable you rebuild atomically:** binary/source rows collapse;
    only behavioural rows apply. Move fast, keep the test evidence.
 3. **Exported / published:** any row above marked "breaks" is no longer a refactoring —
@@ -68,7 +69,7 @@ Classify the symbol before the first step:
    event** shape is not — that is rpc-and-api-contracts' expand → migrate → contract,
    over a window equal to the data's retention rather than the deploy's length.
 
-When in doubt, run the check that cannot lie: compile the _old_ clients (or a
-representative one) against the _new_ artefact, and run them without recompiling. A
-refactoring that cannot pass that pair at a published boundary has not preserved the
-contract, whatever the tests inside the module say.
+At a published boundary, compile representative old source against the new artifact, then run
+old compiled clients without recompiling. Failure disproves compatibility; success covers only
+the clients, paths and environments exercised, so combine it with API-diff tooling and the
+declared compatibility policy.

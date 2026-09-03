@@ -1,7 +1,8 @@
 # Worked example: a charge-request API
 
-A payment client constructs charge requests. Two parameters are required (customer,
-amount); capture mode, statement descriptor and idempotency key are optional.
+A payment client constructs charge requests. Customer, amount and a caller-stable idempotency key
+are required; capture mode and statement descriptor are optional. Treating the key as optional
+would make retry safety depend on a stylistic builder call.
 
 ## Before
 
@@ -27,13 +28,14 @@ var request = new ChargeRequest(customerId, amount, "BRL", idempotencyKey,
 
 ## Analysis
 
-- Six parameters, three optional — over the builder threshold (≥4 with ≥2 optional).
+- Six positional parameters with multiple optional/defaulted roles make call sites ambiguous.
 - Three adjacent `String` parameters. The call site above compiles with the idempotency key
   in the statement-descriptor slot; the bug surfaces as truncated bank statements, not as a
   compile error.
 - Each new optional parameter has been adding a constructor overload — the telescoping
   pattern proper, not the harmless two-overload pair.
-- Cross-field rules ("manual capture requires an idempotency key") have nowhere to live.
+- Idempotency is an operation contract, not a manual-capture option: every retryable charge
+  creation needs the same caller-generated key across attempts.
 
 ## After: required-in-factory, optional-in-builder
 
@@ -45,20 +47,21 @@ cross-field rule.
 public final class ChargeRequest {
     private final CustomerId customerId;
     private final Money amount;
+    private final IdempotencyKey idempotencyKey;
     private final CaptureMode captureMode;
     private final String statementDescriptor;   // null = provider default
-    private final String idempotencyKey;        // null = no retry protection
 
     private ChargeRequest(Builder b) {
         this.customerId = b.customerId;
         this.amount = b.amount;
+        this.idempotencyKey = b.idempotencyKey;
         this.captureMode = b.captureMode;
         this.statementDescriptor = b.statementDescriptor;
-        this.idempotencyKey = b.idempotencyKey;
     }
 
-    public static Builder charge(CustomerId customerId, Money amount) {
-        return new Builder(customerId, amount);
+    public static Builder charge(
+            CustomerId customerId, Money amount, IdempotencyKey idempotencyKey) {
+        return new Builder(customerId, amount, idempotencyKey);
     }
 
     public Optional<String> statementDescriptor() {
@@ -69,13 +72,15 @@ public final class ChargeRequest {
     public static final class Builder {
         private final CustomerId customerId;
         private final Money amount;
+        private final IdempotencyKey idempotencyKey;
         private CaptureMode captureMode = CaptureMode.AUTOMATIC;
         private String statementDescriptor;
-        private String idempotencyKey;
 
-        private Builder(CustomerId customerId, Money amount) {
+        private Builder(
+                CustomerId customerId, Money amount, IdempotencyKey idempotencyKey) {
             this.customerId = Objects.requireNonNull(customerId, "customerId");
             this.amount = Objects.requireNonNull(amount, "amount");
+            this.idempotencyKey = Objects.requireNonNull(idempotencyKey, "idempotencyKey");
         }
 
         public Builder captureMode(CaptureMode mode) {
@@ -88,17 +93,9 @@ public final class ChargeRequest {
             return this;
         }
 
-        public Builder idempotencyKey(String key) {
-            this.idempotencyKey = key;
-            return this;
-        }
-
         public ChargeRequest build() {
             if (statementDescriptor != null && statementDescriptor.length() > 22) {
                 throw new IllegalStateException("statement descriptor over 22 characters");
-            }
-            if (captureMode == CaptureMode.MANUAL && idempotencyKey == null) {
-                throw new IllegalStateException("manual capture requires an idempotency key");
             }
             return new ChargeRequest(this);
         }
@@ -110,50 +107,54 @@ The call site, one call per line so breakpoints and stack-trace lines land on in
 calls:
 
 ```java
-var request = ChargeRequest.charge(customerId, Money.of("290.00", "BRL"))
+var request = ChargeRequest.charge(
+                customerId, Money.of("290.00", "BRL"), IdempotencyKey.of(requestId))
         .statementDescriptor("LOJA CENTRO")
-        .idempotencyKey(requestId)
         .captureMode(CaptureMode.MANUAL)
         .build();
 ```
 
-`Money` and `CustomerId` are records — one role per type, so the transposition bug is now a
-compile error everywhere, not only inside the builder.
+`Money`, `CustomerId` and `IdempotencyKey` are validated role types, so transposition is a
+compile error and key presence is mandatory. The key's value must originate at the operation
+caller and remain stable across retries; generating it inside `build()` would defeat deduplication.
 
 ## The staged variant, if required-at-compile-time must be total
 
 ```java
 public interface CustomerStage { AmountStage customer(CustomerId id); }
 
-public interface AmountStage { OptionsStage amount(Money amount); }
+public interface AmountStage { IdempotencyStage amount(Money amount); }
+
+public interface IdempotencyStage { OptionsStage idempotencyKey(IdempotencyKey key); }
 
 public interface OptionsStage {
     OptionsStage captureMode(CaptureMode mode);
     OptionsStage statementDescriptor(String text);
-    OptionsStage idempotencyKey(String key);
     ChargeRequest build();
 }
 ```
 
-One hidden class implements all three; the entry point returns `CustomerStage`, and
-`build()` is unreachable until both required stages have run.
+One hidden class implements all four; the entry point returns `CustomerStage`, and `build()` is
+unreachable until all required stages have run. The factory already provides that guarantee more
+cheaply here; staging is shown only to expose its cost for APIs that truly require ordered gradual
+construction.
 
 ## Trade-offs
 
 Honest, against the factory-plus-builder above:
 
-- Three public interfaces for two required parameters; the surface grows linearly with
+- Four public interfaces for three required parameters; the surface grows linearly with
   required parameters.
-- Making "manual capture requires an idempotency key" a _compile-time_ rule needs further
-  stage types; as written it still lives in `build()` — staging rarely captures cross-field
-  rules, only presence and order.
+- Staging captures presence and order, not arbitrary cross-field rules among options; encoding
+  those requires a branching state graph whose API and compatibility cost grows quickly.
 - Promoting an optional parameter to required later inserts a stage: source-breaking for
   every caller that stored an intermediate stage type, binary-breaking for any implementor.
   The factory-plus-builder version absorbs the same change by moving one parameter into
   `charge(...)` — still breaking, but one method, not an interface family.
 
-Here the API is internal to one codebase, so the factory-plus-builder wins: the missing-key
-failure is a unit-test-time exception with a clear message, and evolution stays open.
+Here the factory-plus-builder wins even for a published API: required values are compile-time
+arguments without exposing intermediate stage types, while optional evolution stays relatively
+open.
 
 ## Verification
 
@@ -162,6 +163,7 @@ failure is a unit-test-time exception with a clear message, and evolution stays 
 - If the artefact is published, run a binary-compatibility check (for example japicmp)
   against the previous release — removed constructors and changed return types must be a
   deliberate major-version decision, not a surprise.
-- Add tests that drive `build()` through each invalid combination and assert the message
-  names the missing or offending field.
+- Add tests for every local and cross-field invariant, repeated `build()` behavior, and defensive
+  copies of mutable inputs; assert stable failure codes/types rather than brittle prose when the
+  API is published.
 - Confirm formatting: chains one call per line in the touched call sites.

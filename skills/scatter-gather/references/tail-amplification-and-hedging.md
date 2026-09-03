@@ -1,28 +1,28 @@
 # Choosing N, and hedging safely
 
-## The only number that matters at the root
+## Root order statistics
 
-The root waits for the slowest leaf, so its latency distribution is the distribution of the
-maximum over N leaves. Two consequences that a leaf dashboard cannot show:
+For all-of-N, the root waits for the slowest required leaf. For first-success it observes the
+minimum; k-of-N observes the kth completion, plus coordinator/merge time. The familiar closed
+forms require independent identically distributed leaves; shared hosts, queues and dependencies
+make joint traces/load tests essential.
 
-- **The root's p99 is governed by a much deeper leaf percentile.** With N leaves, the leaf
-  percentile that lands in the root's p99 is roughly the p(100 − 1/N)th. At N = 20 a leaf
-  budget must be met at p99.95, not p99. Derive it with the amplification formula in
+- **The root's p99 is governed by a deeper leaf percentile.** For iid all-of-N, leaf CDF at the
+  root p99 is `0.99^(1/N)`; at N=20 this is about 99.9498%, often called p99.95. Derive it in
   `tail-latency-analysis`; do not copy the root SLO down to the leaves.
-- **A leaf's rare event becomes the root's common event.** A GC pause, a safepoint, a cold
-  connection or a rebalanced partition that hits one leaf in a thousand hits the root once
-  every `1000/N` requests.
+- **A rare independent leaf event becomes common at the root.** Probability of at least one is
+  `1-(1-p)^N`, approximately `Np` only for small `p`; do not state `1000/N` as exact.
 
-Correlation cuts both ways and must be stated, not assumed. Leaves on the same host, behind
-the same pool, or sharing a saturated dependency fail _together_ — the tail is then not
-amplified but the fan-out gains nothing either, because it was never parallel.
+Correlation can increase or decrease the iid amplification relative to the product model.
+Common pauses make leaves move together; contention created by the fan-out can also make later
+leaves slower conditional on N. Measure joint events and placement, not only marginals.
 
 ## Choosing N
 
 Model the root as three terms:
 
 ```text
-root ≈ max over N of leaf_service_time(W/N)     # shrinks as N grows
+root ≈ order statistic of leaf_service_time(W_i, placement, load)
      + fan_out_cost(N)                          # serialisation, N requests issued, N sockets
      + gather_cost(N)                           # merge, sort, dedup at the root
 ```
@@ -56,15 +56,19 @@ spent a chosen percentile of its expected time; the first answer wins and the ot
 cancelled. It converts leaf-local, uncorrelated slowness into an extra request. It does not
 fix a slow system.
 
-**Both conditions must hold before any hedge is enabled:**
+All conditions must hold before a hedge is enabled:
 
-1. **The leaf operation is read-only or idempotent** (`idempotency`). A hedge is a deliberate
-   duplicate send, so a non-idempotent leaf executes twice by design, not by accident.
-2. **The hedge rate is capped as a small fraction of traffic.** Without a cap, hedging fires
+1. **The leaf operation is semantically equivalent across candidates and read-only or
+   downstream-idempotent** (`idempotency`). Consistency/session guarantees must still hold.
+2. **The hedge and total in-flight rate are capped.** Without a cap, hedging fires
    hardest precisely when the dependency is slow across the board — it is then a load
    multiplier arriving at a system already past its knee. Dean and Barroso's _The Tail at
    Scale_ reports capping backup requests at a few percent of requests; take that as the shape
    of the constraint and measure your own.
+3. **Placement changes the likely cause.** Exclude the original host/zone/queue where possible;
+   otherwise correlated work rarely wins.
+4. **One deadline and cancellation contract apply.** The hedge receives only remaining time;
+   residual loser work is included in capacity even if cancellation is advisory.
 
 Implement the cap by role, not by hope: a rolling counter of hedges issued over requests
 issued in a short window, checked before each hedge, with hedging suppressed while the ratio
@@ -75,7 +79,7 @@ is over the cap. The window must be short enough to react within one incident.
 - Issue the hedge from the **root**, not inside the leaf client — the root is the only place
   that knows the remaining budget and the completion rule.
 - Send it to a **different replica**. A hedge to the same instance queues behind the same
-  saturated pool or the same stop-the-world pause.
+  saturated pool or pause; a different replica sharing a database may still be correlated.
 - The hedge inherits the _remaining_ budget, not a fresh one. It is a second attempt inside
   one deadline, never an extension of it.
 - Cancel the loser as soon as either answer arrives, on the same path that cancels leaves at
@@ -87,14 +91,24 @@ is over the cap. The window must be short enough to react within one incident.
 
 Four series, published together with the change:
 
-| Series                                        | What it tells you                                                              |
-| --------------------------------------------- | ------------------------------------------------------------------------------ |
-| hedges issued ÷ requests issued               | Whether the cap is holding; if it is pinned at the cap, hedging is not the fix |
-| responses won by the hedge ÷ hedges issued    | Near zero means the trigger is too late — pure added load                      |
-| downstream request rate and utilisation delta | The load actually added, measured at the callee rather than inferred           |
-| root p99 and p99.9 before/after               | Whether the point of the change happened at all                                |
+| Series                                         | What it tells you                                                              |
+| ---------------------------------------------- | ------------------------------------------------------------------------------ |
+| hedges issued ÷ requests issued                | Whether the cap is holding; if it is pinned at the cap, hedging is not the fix |
+| responses won by the hedge ÷ hedges issued     | Near zero means the trigger is too late — pure added load                      |
+| downstream request rate and utilisation delta  | The load actually added, measured at the callee rather than inferred           |
+| root p99 and p99.9 before/after                | Whether the point of the change happened at all                                |
+| loser residual duration / cancellation success | Whether returned latency hides continuing downstream work                      |
 
 Disable hedging when the hedge win rate collapses while the hedge rate is at the cap: that
 combination says leaf slowness is correlated, and duplication is making it worse. Wire the
 cap and the disable as configuration you can change without a deploy — the moment you need
 them is an incident.
+
+Measure with an open-loop load model at fixed offered traffic. A closed-loop client reduces
+arrivals when the root slows and can make extra hedge load look harmless. Segment by original/
+hedge placement and consistency result; a fast stale answer is not a win.
+
+## Primary references
+
+- [Dean and Barroso, The Tail at Scale](https://research.google/pubs/the-tail-at-scale/)
+- [Jeff Dean, Achieving Rapid Response Times in Large Online Services](https://research.google/pubs/achieving-rapid-response-times-in-large-online-services/)

@@ -12,7 +12,7 @@ Breaks: log patterns containing `%thread`, MDC populated from the thread name, m
 by thread name, log filters that select a pool's threads, and any dashboard grouped by thread.
 
 ```java
-// Name the factory, always, and before you need it
+// Use a stable role prefix; do not embed secrets or unbounded tenant cardinality.
 ThreadFactory f = Thread.ofVirtual().name("checkout-", 0).factory();
 ExecutorService exec = Executors.newThreadPerTaskExecutor(f);
 ```
@@ -29,18 +29,19 @@ private static final ThreadLocal<byte[]> BUFFER =
         ThreadLocal.withInitial(() -> new byte[1 << 20]);     // 1 MB each
 ```
 
-Also fine with 200 pooled threads and quietly wrong with virtual threads: per-thread
-`SimpleDateFormat`, per-thread `Kryo`/`ObjectMapper` instances, per-thread connections,
-per-thread random generators seeded once.
+Other candidates for review include legacy mutable formatters/serializers, large buffers,
+connections/sessions and inherited security context. Some modern clients/mappers are thread-safe and
+should be shared; others require an explicit bounded pool. Decide from the API contract, not the
+class category.
 
 The fix depends on which property was wanted:
 
-| Wanted                     | Replacement                                        |
-| -------------------------- | -------------------------------------------------- |
-| Avoid allocation           | a pool, or a shared immutable/thread-safe instance |
-| Avoid contention           | a striped structure, or accept the allocation      |
-| Per-request context        | `ScopedValue`                                      |
-| Scarce resource per worker | an explicit pool with a size                       |
+| Wanted                     | Replacement                                                               |
+| -------------------------- | ------------------------------------------------------------------------- |
+| Avoid allocation           | shared immutable/thread-safe instance, redesign, or measured bounded pool |
+| Avoid contention           | a striped structure, or accept the allocation                             |
+| Per-request context        | `ScopedValue`                                                             |
+| Scarce resource per worker | an explicit pool with a size                                              |
 
 Measure allocation before and after: replacing a per-thread buffer with a per-request one is
 correct and can still be a GC regression worth knowing about.
@@ -61,8 +62,10 @@ costs one platform thread), or make the ordering explicit with a lock, a per-key
 sequence number the consumer sorts by. What is not acceptable is discovering the property
 existed after removing it.
 
-The same applies to a `ScheduledExecutorService` with one thread that prevented overlapping
-runs of a job, and to actor-like designs where "one thread per entity" was the invariant.
+The same audit applies to scheduled/actor-like designs, but note that one periodic task submitted via
+`scheduleAtFixedRate`/`scheduleWithFixedDelay` is already specified not to overlap with itself even in
+a multi-thread scheduled executor. Distinguish that API guarantee from serialization between
+different jobs.
 
 ## Pool metrics that go to zero
 
@@ -75,16 +78,15 @@ Replace them, in the same change, with:
 
 - in-flight requests (a gauge you now maintain yourself, because the pool no longer is one)
 - available permits and wait time on each declared limit
-- carrier count, so compensation is visible
+- scheduler pool/mounted/queued estimates (Java 24+), so pressure is visible
 - the connection pool's own metrics, which are now doing more of the work
 
-## `@Async` and `@Scheduled`
+## Framework adapters
 
-Covered in detail in `reactive-and-virtual-thread-selection`; the migration-relevant summary:
-`@Async` becomes unbounded (`SimpleAsyncTaskExecutor`) unless
-`spring.task.execution.simple.concurrency-limit` is set, and `@Scheduled` stops serialising
-executions of the same job. Both were previously bounded by defaults nobody chose, which is
-exactly why nobody remembers them.
+Framework flags can change request, async and scheduled executors differently, and their defaults
+change across versions. Inventory the effective runtime executor and framework version; do not infer
+`@Async`/`@Scheduled` ordering or bounds from the request-thread flag. Route framework-specific
+selection to `reactive-and-virtual-thread-selection` and official versioned documentation.
 
 ## Tests
 
@@ -110,8 +112,8 @@ now one of the few left.
 
 ## Debuggers, profilers and agents
 
-- `jstack` does not list virtual threads. Every runbook that uses it is now misleading rather
-  than merely incomplete — the dump comes back _short_, which reads as "not many threads".
+- `jstack`/traditional dumps do not list virtual threads. They remain useful for platform-thread
+  lock ownership, but are incomplete for the application's virtual-thread population.
 - Some profilers and APM agents sample platform threads only, or attribute virtual-thread
   work to carriers. Verify your specific agent version rather than assuming.
 - `ThreadMXBean.findDeadlockedThreads()` does not see virtual threads at all, so automated
@@ -119,7 +121,7 @@ now one of the few left.
 
 ## The order to check these in after an unexplained regression
 
-1. Carrier count and pinning events — is the scheduler starved?
+1. Scheduler queued/pool/mounted estimates, CPU and pinning/capture evidence — is scheduling causal?
 2. Connection-pool wait time — did the bottleneck simply move?
 3. Heap and GC overhead — suspended stacks and per-request allocations
 4. Downstream error rate — did we start overwhelming something?
@@ -127,3 +129,10 @@ now one of the few left.
 
 Most post-migration surprises are (2) or (5), and both are answered by the limit inventory
 from Stage 1 rather than by profiling.
+
+## Authoritative references
+
+- [Java 25 virtual-thread guide](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
+- [Java 25 `ScheduledThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ScheduledThreadPoolExecutor.html)
+- [Java 25 thread-local variables](https://docs.oracle.com/en/java/javase/25/core/thread-local-variables.html)
+- [JEP 444](https://openjdk.org/jeps/444)

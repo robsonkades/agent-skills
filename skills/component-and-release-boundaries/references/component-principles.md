@@ -83,12 +83,15 @@ toward common reuse. Moving is a refactor, not a failure.
 
 ### Acyclic dependencies
 
-The dependency graph between components must be a directed acyclic graph.
+The current source/build dependency graph between components must be a directed acyclic graph for
+Maven or JPMS to build it. Release-time dependencies across separately published versions are a
+different graph and may temporarily point both ways, though that makes coordinated breaking change
+expensive.
 
-This is not a stylistic preference. A cycle has no valid build or release order: to release A
-you need the new B, and to release B you need the new A. Maven will refuse a cycle between
-modules outright. Teams therefore "solve" it by keeping the cyclic parts in one module and
-releasing them together — which is the correct answer, arrived at accidentally.
+Maven refuses a reactor cycle outright. With previously published versions, A can sometimes release
+against old B and vice versa, so “no release order exists” is too strong; the failure appears when a
+change requires both new contracts at once. That is evidence to invert an edge, introduce a stable
+protocol, or acknowledge one release unit.
 
 Three mechanical ways, in the order to consider them.
 
@@ -146,14 +149,14 @@ dependencies, from 0 (depended on by many, depends on nothing; maximally rigid) 
 on many, depended on by nothing; freely changeable). `java-cohesion-coupling` covers computing
 it over packages.
 
-Used as a design tool, it says one thing worth acting on: **an edge from a low-I component to
-a high-I component is a defect**, because a rigid component has taken a dependency on
-something designed to churn. Used as a target — "no module may exceed I = 0.6" — it is
-numerology, and a review should reject it.
+Used as a design prompt, an edge from a low-I component to a high-I component deserves examination:
+a widely consumed component may import another component's churn. It is not automatically a defect;
+runtime adapters, platform contracts and compatible evolution can make the edge appropriate. As a
+target — “no module may exceed I = 0.6” — it is numerology.
 
 ### Stable abstractions
 
-A component's abstractness should rise with its stability. If a component is hard to change
+A classical heuristic says a component's abstractness should rise with its stability. If a component is hard to change
 because everything depends on it, the only way to keep it extensible is for it to be extended
 rather than edited: interfaces, sealed hierarchies and abstract policy, with implementations
 living in less stable components.
@@ -190,7 +193,8 @@ concrete). Both ends are good positions. The two corners **off** the diagonal ar
 - **Zone of uselessness** — top-right: abstract and depended on by nobody. Interfaces written
   for an extension that never arrived. The fix is deletion.
 
-Treat the diagonal as a diagnostic for outliers, never as a score to optimise. A leaf
+Treat the diagonal as a hypothesis-generating diagnostic, never as a score to optimise. It ignores
+semantic stability, generated APIs, compatibility policy, ownership and change frequency. A leaf
 application module is legitimately concrete and unstable; a port module is legitimately
 abstract and stable. Both sit on the line, and neither got there by measuring.
 

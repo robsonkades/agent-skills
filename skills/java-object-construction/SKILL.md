@@ -29,17 +29,18 @@ class loader in one JVM among N replicas.
 
 1. **State what the caller needs to say.** If two ways of creating the object differ in
    _meaning_ rather than in parameter types, that difference belongs in a name, not in an
-   overload. `Money.ofMinor(1050)` and `Money.ofMajor(10.50)` cannot be two constructors.
+   overload. `Money.ofMinor(1050)` and `Money.ofMajor(new BigDecimal("10.50"))` should not be
+   two ambiguous constructors—and an exact decimal must not pass through a `double`.
 2. **Pick the cheapest form that carries it.** Canonical/compact constructor of a record →
    named static factory → static factory plus private constructor → builder. Stop at the
    first that fits; `java-fluent-apis` owns the builder threshold.
-3. **Decide instance control explicitly.** Does every call have to produce a fresh
-   identity? If not, a factory may cache, canonicalise, or return a shared instance — and
-   you have now made identity part of the contract. Document it, and bound anything you
-   cache.
-4. **Keep the constructor total.** Validate, normalise, assign. No I/O, no registration, no
-   thread start, no overridable method call, no `this` escaping — see java-immutability's
-   safe-publication rules for why the last two are correctness bugs, not style.
+3. **Decide instance control explicitly.** Does every successful call have to produce a fresh
+   identity? A factory may cache, canonicalise, share or allocate. Identity becomes a contract
+   only if the API promises it; otherwise callers must use value equality. Bound any cache.
+4. **Keep ordinary domain constructors side-effect-contained.** Validate, normalize, assign.
+   Resource-owning types may necessarily acquire a resource and must define failure/cleanup
+   semantics. Never register/start threads/call overridable methods/let `this` escape during
+   construction—see java-immutability's safe-publication rules.
 5. **Push variability to the caller.** Anything the class cannot substitute later — clock,
    HTTP client, repository, random source — arrives through the constructor. `new` on such
    a thing inside domain logic is the decision you will need to undo first.
@@ -60,9 +61,10 @@ class loader in one JVM among N replicas.
 - A static factory with a private constructor removes subclassing. That is usually the
   point; take it deliberately, not by accident, and say so in the Javadoc rather than
   leaving callers to discover it from a compile error.
-- Instance control is a promise you cannot withdraw. Once `valueOf` returns cached
-  instances, callers write `==`; once it always allocates, callers rely on distinct
-  identity. Either way the first release fixes it.
+- Document whether fresh or canonical identity is guaranteed. An implementation is free to add
+  or remove an undocumented cache while preserving value semantics; callers using `==` on that
+  basis are wrong. A documented freshness/canonicalization guarantee is an API commitment and
+  constrains future implementations.
 - Never cache without a bound. An unbounded interning map keyed by user or tenant data is a
   leak with a factory in front of it — see java-reference-types-and-leaks.
 - Do not synchronise on, or key identity off, a value-based class (`Optional`, `LocalDate`,
@@ -70,10 +72,11 @@ class loader in one JVM among N replicas.
   identity-sensitive operations are documented as subject to failure in a future release.
 - Enforce noninstantiability with a private constructor that throws, not with `abstract`:
   an abstract class is still instantiable through a subclass, and reads as "extend me".
-- The only singleton form that survives both reflection and deserialisation without extra
-  code is a single-element enum. A `private static final` field plus a private constructor
-  is defeated by `setAccessible(true)` and, if the type is `Serializable`, by
-  deserialisation unless it implements `readResolve` and declares every field transient.
+- Within standard reflection and Java serialization, a single-element enum has the strongest
+  built-in singleton guarantees. A `private static final` field plus private constructor can be
+  bypassed by deep reflection (subject to module/access policy) and serialization creates another
+  instance unless `readResolve` returns the canonical one. Fields need not all be transient for
+  identity, though serializing instance state may be wasteful or unsafe.
 - A singleton's scope is one class loader in one JVM. It is not a global lock, not a
   cluster-wide counter and not a distributed cache. When uniqueness must hold across
   replicas, that is leader-election or distributed-locks-and-leases, and the local

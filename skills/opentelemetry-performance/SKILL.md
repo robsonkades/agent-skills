@@ -1,115 +1,187 @@
 ---
 name: opentelemetry-performance
 description: >
-  OpenTelemetry as a performance instrument and as a performance cost: head-based versus
-  tail-based sampling and what each hides of the tail, span attributes versus Baggage and
-  what each costs, context propagation across executors, CompletableFuture and virtual
-  threads, and measuring the agent's own overhead. Use when a trace shows an orphan root
-  span, when a child span appears disconnected after `Thread.ofVirtual().start(...)` or
-  `CompletableFuture.runAsync`, when a backend shows `unknown_service:java`, when spans leak
-  because `end()` is not in a finally, when a slow trace was sampled away, when tail-based
-  sampling drops traces across Collector replicas, or when someone quotes a published
-  agent-overhead number. Does not cover the statistics of the numbers a trace produces
-  (latency-statistics), profiles as opposed to traces (continuous-profiling), or
-  interpreting the tail the traces reveal (tail-latency-analysis).
+  Designing OpenTelemetry tracing that remains causally useful within an explicit overhead
+  and data-risk budget: auditing automatic/manual coverage, preserving context across
+  asynchronous boundaries, choosing head/tail sampling and collector topology, controlling
+  attributes/baggage, backpressure and export failure, and measuring application plus
+  collector cost. Use when traces fragment, rare tails disappear, Collector memory grows,
+  telemetry drops under incidents, instrumentation duplicates spans, or someone assumes a
+  published agent-overhead figure applies locally. Trace schema design belongs to
+  distributed-tracing-design; statistics to latency-statistics; profiling to
+  continuous-profiling.
 ---
 
 # OpenTelemetry Performance
 
 ## Purpose
 
-Get traces that answer performance questions, at a cost you have measured. Two things
-decide whether tracing earns its overhead: whether the trace is intact across every thread
-boundary the request crosses, and whether the sampling strategy keeps the traces that
-matter. Both fail silently — a broken context produces a valid-looking trace that is simply
-fragmented, and head-based sampling discards a trace before anyone knows it became
-interesting.
+Obtain trace evidence that is complete enough for the decision while bounding CPU,
+allocation, network, storage, latency, cardinality, privacy and failure coupling.
 
-The specific failure this prevents is the confident conclusion drawn from an incomplete
-trace: latency attributed to the last visible span because the expensive work happened in
-an orphaned subtree, or a tail investigation run against traces from which the tail was
-sampled out.
+Instrumentation can fail silently in two directions: missing/broken context hides causal
+work, while duplicate or over-detailed telemetry changes the workload and overloads the
+pipeline during the incident it should explain.
 
 ## Workflow
 
-1. **Find out what is already instrumented.** Run with `-Dotel.javaagent.debug=true` before
-   writing any manual span. Supported I/O libraries — Spring MVC, JDBC drivers, Kafka
-   clients, HTTP clients — are already covered, and duplicating them adds cost and noise.
-2. **Pick the right instrument for the gap.** Pure business logic with no I/O is the
-   legitimate custom-span case; a business count or distribution is a metric, not a span;
-   context that must cross services is Baggage, context local to one span is an attribute.
-3. **Handle every thread boundary explicitly.** Capture `Context.current()` **before** the
-   boundary and call `makeCurrent()` **inside** it. Nothing propagates on its own outside a
-   library the agent already wraps.
-4. **Choose sampling for the question being asked.** Uniform volume reduction is
-   head-based; capturing rare error or high-latency traces is tail-based in the Collector,
-   with the routing requirement that entails.
-5. **Fix the identity and the configuration source.** Set `service.name` explicitly, and
-   check that `-Dotel.*` and `OTEL_*` are not setting the same field to different values.
-6. **Measure the agent's overhead here.** Same load test with and without
-   `-javaagent`, comparing p50, p99 and average CPU. A published percentage is a
-   hypothesis about someone else's library mix.
+### 1. Define the performance question
 
-## Rules
+State which journey, boundary, tail/error cohort and causal relationship must be visible.
+Decide whether metrics, logs, profiles or traces are the right population evidence.
+Traces explain individual paths; sampled traces alone do not generally estimate fleet
+rates or quantiles without sampling-aware analysis.
 
-- Hold `Tracer` and `Meter` in `static final` fields. `GlobalOpenTelemetry.getTracer(...)`
-  on every request is a lookup on every request.
-- Put `span.end()` in `finally`, with `recordException` and `setStatus(StatusCode.ERROR, …)`
-  in the `catch`. An `end()` written after the work inside a `try` block does not run when
-  the work throws.
-- `Context` is immutable — `with(...)` returns a new instance. That is what makes it safe to
-  capture `Context.current()` into a variable and restore it across several thread
-  boundaries.
-- The default `ContextStorage` is a plain `ThreadLocal` with **no inheritance**. A virtual
-  thread from `Thread.ofVirtual().start(...)`, a raw `ExecutorService`, and
-  `CompletableFuture.runAsync` all start from `Context.root()`; `Span.current()` there
-  returns `Span.getInvalid()` and the new span becomes an orphan root. It compiles, runs and
-  produces a trace — a fragmented one.
-- Virtual threads change nothing about this rule. They only change where people assume it is
-  already handled.
-- A `traceparent` has a 32-hex-character `trace-id` (128 bits) and a 16-hex-character
-  `parent-id` (64 bits). An abbreviated id such as `00-abc123-xyz456-01` is not a valid
-  header and no implementation produces or accepts it.
-- Never put PII or secrets in Baggage. It propagates via headers to every downstream
-  service, including ones behind a gateway that you do not control. Attributes stay local
-  to the span.
-- Baggage adds bytes to every downstream request and grows with the number of entries.
-  Attributes cost nothing extra on the wire — they travel inside the span already exported.
-- Tail-based sampling requires every span of a trace to reach the same Collector replica.
-  With several replicas behind a plain load balancer, each sees a fragment and decides
-  inconsistently; put a load-balancing exporter that routes by trace-ID hash in front of the
-  `tail_sampling` processor. `decision_wait` alone does not fix this.
-- Head-based sampling must be `ParentBased` so children inherit the root's decision. Its
-  structural risk is discarding a trace that only becomes interesting later — a late error.
-- Config precedence is `-Dotel.*` > `OTEL_*` env var > `.properties` file > defaults, and a
-  conflict between two sources is resolved silently, with no warning. Check both before
-  concluding why `service.name` is wrong.
-- Never accept `unknown_service:java` in production. Set `service.name` and `service.version`
-  on the `Resource`.
-- Instrument the **publish** side of messaging with an explicit `SpanKind.PRODUCER` span, not
-  only the `CONSUMER` side. Without it, the time and failures of `send()` are invisible.
-  Removing the producer span does not break `propagator.inject` — that depends only on
-  `Context.current()` — it removes visibility.
-- `gaugeBuilder(...).ofLongs().buildWithCallback(...)` returns `ObservableLongGauge`. There
-  is no generic `ObservableGauge<Long>` in `io.opentelemetry.api.metrics`.
-- Custom business attributes (`order.id`, `order.tenant`) are **not** OpenTelemetry Semantic
-  Conventions. Semantic Conventions are a specific, versioned registry
-  (`io.opentelemetry.semconv`, e.g. `http.request.method`, `db.system.name`); domain
-  attributes follow only your own naming convention.
-- Pass `-javaagent` on the command line. A `ClassFileTransformer` registered from `premain`
-  cannot transform classes already loaded, so attaching later loses coverage from boot.
-- Report agent overhead only from your own measurement. It scales with how many libraries
-  are instrumented and how many spans are emitted, so a published figure does not transfer.
+### 2. Inventory actual instrumentation
 
-## References
+Pin agent, SDK, semantic-convention and library versions. Inspect the current Java agent's
+supported-library matrix and a smoke trace. Map ingress, egress, messaging, database and
+async boundaries; locate duplicates, missing links and excessive internal spans.
 
-- [Instrumentation patterns](references/instrumentation-patterns.md) — static `Tracer` and
-  `Meter` setup, the correct span lifecycle, explicit context capture across virtual
-  threads and `CompletableFuture`, Kafka `PRODUCER`/`CONSUMER` inject and extract, and
-  correlating a span with GC time. Read when writing or reviewing instrumentation code.
-- [Sampling, configuration and overhead](references/sampling-and-config.md) — head versus
-  tail sampling, attributes versus Baggage, the `tail_sampling` Collector configuration and
-  its routing prerequisite, the agent configuration precedence table, a decision table for
-  when custom instrumentation is warranted, and the overhead measurement procedure. Read
-  when choosing a sampling strategy, debugging agent configuration, or being asked what
-  tracing costs.
+Do not assume every I/O library is instrumented or that manual instrumentation is required.
+Agent debug output can help in a controlled environment but may be verbose and is not a
+production default.
+
+### 3. Establish resource identity and schema
+
+Set stable service identity and deployment/resource attributes through one authoritative
+configuration path. Use versioned semantic conventions where available and a governed
+domain schema otherwise. Avoid IDs or arbitrary strings on metrics; span attributes also
+carry storage, indexing and privacy cost.
+
+### 4. Verify context at each boundary
+
+OpenTelemetry Context is immutable; making it current is scoped and must be closed. Default
+Java ContextStorage is thread-local, while automatic instrumentation and Context wrapping
+can propagate across many executors/frameworks. Therefore “nothing propagates” and
+“everything propagates” are both wrong.
+
+For every raw executor, CompletableFuture, virtual-thread, callback and reactive/messaging
+boundary:
+
+1. test whether the pinned instrumentation already wraps it;
+2. assert parent/trace IDs in an integration fixture;
+3. if missing, capture Context at submission and wrap/restore at execution;
+4. avoid double wrapping and scope leaks.
+
+Virtual threads do not inherit arbitrary thread locals by contract; agent/library support
+and JDK combinations must be tested.
+
+### 5. Choose sampling as an estimator and capacity policy
+
+Head sampling decides early with limited information and bounds application/export volume.
+Parent-based policies preserve the upstream decision, but trust-boundary and remote-parent
+semantics need review.
+
+Tail sampling buffers spans and decides from later trace properties. It can retain errors
+or high latency but costs memory/CPU, delays export, loses late spans, and requires spans of
+a trace to be routed consistently enough for the policy. Size decision wait, expected
+traces, policies and collector shards from measured arrival/completion distributions.
+
+Sampling policies change the dataset. Preserve decision metadata and use unbiased
+probabilistic coverage when population estimation matters.
+
+### 6. Engineer the telemetry failure path
+
+Define batch queue, exporter timeouts/retries, memory limiter, load balancing, disk/agent
+buffering if used, and drop behavior. Under backend/network failure, telemetry must not
+unboundedly consume application or Collector resources. Monitor the telemetry pipeline with
+independent signals: accepted/exported/dropped items, queue utilization, export failures,
+collector CPU/memory and decision latency.
+
+### 7. Measure overhead experimentally
+
+Compare the production-relevant configuration against a baseline using randomized/blocked
+repeated runs. Separate:
+
+- agent bytecode/instrumentation cost;
+- span creation/enrichment and context propagation;
+- sampling/processing;
+- batching/serialization/export;
+- Collector and backend cost.
+
+Hold observability and workload configuration fixed except the treatment. Measure useful
+throughput, latency distribution, CPU, allocation/GC, memory, network and telemetry loss
+under normal and failure scenarios. Report confidence and environment, not one percentage.
+
+## Sampling decision table
+
+| Need                          | Prefer                                | Main limitation                         |
+| ----------------------------- | ------------------------------------- | --------------------------------------- |
+| bounded representative sample | probabilistic head sampling           | rare late outcomes may be missed        |
+| preserve upstream decision    | parent-based policy                   | remote trust and biased upstream sample |
+| retain errors/slow traces     | tail sampling plus consistent routing | buffering, late/incomplete traces       |
+| low-volume critical journey   | always-on or targeted head rule       | cost/cardinality/privacy                |
+| fleet rates/SLO quantiles     | metrics with exemplars                | less per-request detail                 |
+| exploratory incident capture  | time-bounded increased sampling       | pipeline overload/data exposure         |
+
+## Attributes and baggage
+
+- Span attributes remain on that span but add process/export/backend bytes and indexing
+  cost; they are not free merely because they are not request headers.
+- Baggage is separate contextual key/value data. A configured propagator may put it on
+  downstream carriers; it is not automatically a span attribute.
+- Baggage can cross trust boundaries, lacks inherent integrity guarantees and can expose
+  sensitive data. Allowlist, validate, size-limit and strip it at egress.
+- Do not put secrets in either. Minimize or hash/tokenize personal identifiers under an
+  explicit policy; hashing may remain personal/linkable data.
+
+## Span lifecycle rules
+
+- End spans in a finally path and close Scope in lexical order.
+- Record exception details and status according to semantic conventions; exception text can
+  contain sensitive/high-cardinality data.
+- Prefer library/agent spans at protocol boundaries; add manual spans where they represent
+  meaningful business or hidden asynchronous work.
+- Async sends end according to actual completion semantics, not immediately after enqueue
+  unless the span explicitly models enqueue only.
+- Cancellation of a future is not proof downstream work or export stopped.
+
+## Failure modes
+
+| Symptom                             | Distinguish with                                                 | Response                                            |
+| ----------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------- |
+| orphan root/subtree                 | boundary fixture, agent support/version, double instrumentation  | wrap missing context or remove duplicate            |
+| tail traces absent                  | head decision, tail policy, late spans, dropped telemetry        | inspect sampling/drop path; retain metric exemplars |
+| traces fragmented across collectors | trace-ID routing and exporter connections                        | consistent routing before tail decision             |
+| Collector OOM/restarts              | trace rate/span count, decision wait, queue/retry/backend outage | bound buffers, shard, reduce detail/policy          |
+| app latency rises with tracing      | allocation/CPU/export blocking and attributes                    | batch, sample, simplify and remeasure               |
+| telemetry disappears during outage  | queues, exporter timeout/retry/drop counters                     | fail boundedly and preserve pipeline health         |
+| sensitive data reaches third party  | baggage/attributes and propagator/egress                         | strip, rotate/revoke, assess incident               |
+
+## Anti-patterns
+
+**Manual spans before coverage inventory:** duplicates protocol spans and costs without new
+causal information.
+
+**Static-final tracer as performance law:** caching stable instruments is sensible, but
+lookup micro-cost is rarely the governing overhead; measure the real hot path.
+
+**Process-wide GC delta attached to a request:** concurrent requests observe the same
+cumulative collector counter, so the attribute does not identify that request's cause.
+Correlate timestamped JFR/GC events offline.
+
+**Tail sampling behind a random balancer:** trace fragments lead to incomplete decisions.
+Use a supported trace-aware routing topology and measure late fragments.
+
+**Attach mode assumptions:** Java-agent startup/dynamic-attach/retransformation behavior is
+version and distribution specific. Follow the pinned agent documentation and verify
+coverage; do not claim premain is the only possible mechanism.
+
+## Cross-skill routing
+
+- [instrumentation patterns](references/instrumentation-patterns.md)
+- [sampling, configuration and overhead](references/sampling-and-config.md)
+- distributed-tracing-design for span topology and semantic boundaries.
+- metrics-and-cardinality for metric dimensions.
+- tail-latency-analysis for causal interpretation.
+- continuous-profiling/JFR for runtime attribution.
+
+## Authoritative references
+
+- [OpenTelemetry Java](https://opentelemetry.io/docs/languages/java/)
+- [OpenTelemetry Java API and Context](https://opentelemetry.io/docs/languages/java/api/)
+- [OpenTelemetry Java agent](https://opentelemetry.io/docs/zero-code/java/agent/)
+- [OpenTelemetry sampling](https://opentelemetry.io/docs/concepts/sampling/)
+- [OpenTelemetry baggage](https://opentelemetry.io/docs/concepts/signals/baggage/)
+- [OpenTelemetry security](https://opentelemetry.io/docs/security/)

@@ -1,19 +1,14 @@
 schemaVersion: 1
 
 name: lock-free-patterns
-version: 1.1.0
+version: 1.2.0
 description: >-
-  Lock-free algorithm patterns: CAS retry loops and how they fail, the ABA problem and when
-  it is actually reachable in Java, lock-free versus wait-free versus obstruction-free
-  progress, spin backoff, LongAdder-style striping, lock-free queues and stacks, and
-  deciding when a plain lock is the better answer. Use when a CAS loop spins without
-  backoff, when AtomicLong stops scaling with thread count, when CPU is high but throughput
-  is flat and jstack shows no BLOCKED threads, when a node pool is added to a lock-free
-  structure, when someone plans to hand-roll a structure that java.util.concurrent already
-  ships, or when a lock-free rewrite is justified by "biased locking" or measured with a
-  System.nanoTime loop. Does not cover the access modes and barriers the algorithms are
-  built from (varhandles-and-memory-ordering), happens-before and safe publication
-  (java-memory-model), or what a contended monitor actually costs (lock-inflation).
+  Designing and reviewing nonblocking Java algorithms: linearization points, lock-free,
+  wait-free and obstruction-free progress, CAS/RMW loops, success/failure ordering, contention
+  collapse, backoff/helping, ABA/version wrap, node reuse and reclamation, publication,
+  linearizability, starvation and shutdown. Requires comparison with JDK/library and lock-based
+  alternatives plus retry and topology measurement. Use when implementing or diagnosing atomics,
+  striped counters, queues, stacks or ring buffers—not as a synonym for “fast.”
 
 license: Apache-2.0
 

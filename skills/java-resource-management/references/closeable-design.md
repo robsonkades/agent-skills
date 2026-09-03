@@ -25,18 +25,19 @@ the desugaring, and both matter in review:
 - The generated `close` runs inside its own `try`, so a `close` that throws cannot skip the
   close of the earlier resources.
 
-Anything logged and swallowed inside a `close` implementation destroys this: the caller now
-believes the operation succeeded. Let `close` throw, and let the construct decide.
+A close implementation must follow its documented durability semantics. Swallowing a flush/commit
+failure can create false success; genuinely best-effort cleanup may record and continue. Let
+material failure propagate and let try-with-resources establish primary/suppressed ordering.
 
 ## Ownership rules
 
-| Shape                                                            | Who closes                                                                    |
-| ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Method acquires it                                               | the method, in `try`-with-resources                                           |
-| Method receives it as a parameter                                | the caller — never the method                                                 |
-| Method returns it                                                | the caller, and the Javadoc must say so                                       |
-| Constructor receives it and the object's lifetime is bound to it | the object, in its own `close` — and it must document that it takes ownership |
-| It came from a pool                                              | the borrower, by `close()`, which returns rather than destroys                |
+| Shape                                                            | Who closes                                                                        |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Method acquires it                                               | the method, in `try`-with-resources                                               |
+| Method receives it as a parameter                                | caller by default; callee only under explicit consume/ownership-transfer contract |
+| Method returns it                                                | the caller, and the Javadoc must say so                                           |
+| Constructor receives it and the object's lifetime is bound to it | the object, in its own `close` — and it must document that it takes ownership     |
+| It came from a pool                                              | the borrower, by `close()`, which returns rather than destroys                    |
 
 The rule that gets violated most is the second. A `void process(InputStream in)` that closes
 `in` works fine until a caller wants to read a header first, or to process two sections of
@@ -57,9 +58,13 @@ public final class LedgerExport implements AutoCloseable {
         BufferedWriter out = Files.newBufferedWriter(target, UTF_8);   // acquired, not yet owned
         try {
             return new LedgerExport(out);                              // ownership transferred here
-        } catch (RuntimeException e) {
-            out.close();                                               // constructor failed: release
-            throw e;
+        } catch (RuntimeException | Error failure) {
+            try {
+                out.close();                                           // constructor failed: release
+            } catch (IOException closeFailure) {
+                failure.addSuppressed(closeFailure);
+            }
+            throw failure;
         }
     }
 
@@ -107,8 +112,9 @@ try (var raw = new FileWriter(path);
      var out = new BufferedWriter(raw)) { ... }          // raw closes even if wrapping fails
 ```
 
-Double-close is fine here precisely because `close` is idempotent: `out.close()` closes
-`raw`, then `raw.close()` is a no-op.
+Double-close is fine for these `Closeable` implementations because their contract requires no
+effect on a repeated close. Do not generalize this to arbitrary `AutoCloseable` or reference-counted
+resources.
 
 ## Returning a resource to the caller
 
@@ -128,3 +134,10 @@ public Stream<String> lines() throws IOException {
     return Files.lines(target);      // holds an open file handle until closed
 }
 ```
+
+## Authoritative references
+
+- [JLS §14.20.3: try-with-resources](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.20.3)
+- [AutoCloseable contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/AutoCloseable.html)
+- [Closeable idempotence contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Closeable.html)
+- [JDBC Connection close/transaction contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#close()>)

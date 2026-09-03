@@ -1,36 +1,38 @@
 ---
 name: gof-builder
 description: >
-  Builder in modern Java: what it actually buys once records, compact constructors and named
-  static factories exist — named arguments the language does not have, whole-object validation
-  at one point, and safe construction of a large immutable value. Covers the arity and
-  optionality thresholds that justify it, staged builders, where validation must live so it
-  cannot be bypassed, the thread-safety hazards of a mutable builder, and test data builders.
-  Use when a constructor has grown past four parameters or several
-  booleans, when telescoping constructors or a half-initialised object appear, when a builder is
-  proposed for a two-field type, when Lombok's @Builder is applied to an entity, or when a
-  builder permits invalid combinations that only fail later. Does not cover selecting which type
-  to create (gof-factory-method, gof-abstract-factory), copying an existing instance
-  (gof-prototype), fluent APIs in general (java-fluent-apis), or record and value semantics
-  (java-immutability).
+  Builder in modern Java: distinguish the original GoF separation of construction process from
+  representation from the Effective Java fluent value builder. Covers selection signals rather
+  than parameter-count thresholds, staged builders, invariant placement, mutable-builder
+  concurrency hazards, Lombok/JPA boundaries, performance evidence, and test data builders. Use
+  for ambiguous or telescoping construction, incremental input, multiple representations, or a
+  builder that permits invalid combinations. Does not cover product-type selection
+  (gof-factory-method, gof-abstract-factory), copying (gof-prototype), fluent APIs generally
+  (java-fluent-apis), or value semantics (java-immutability).
 ---
 
 # Builder
 
 ## Purpose
 
-Make the construction of a large immutable object readable and safe. Java has no named
-arguments and no default parameter values; a builder supplies both, and gives one place where
-the whole object's invariants can be checked before any instance exists.
+Make the construction of a complex object readable and safe. Java has no named arguments and no
+default parameter values; a builder can simulate both and gives one place where the whole
+object's invariants can be checked before publication.
 
-That is the entire justification. A builder that does not improve readability at the call site,
-and does not enforce an invariant a constructor could not, is ceremony.
+The original GoF pattern also separates a **construction process** from the representations it
+can produce: the same parser or director can drive a tree builder, text builder, or test builder.
+That is distinct from the now-common Effective Java fluent builder for one value type. Name which
+variant is intended; their selection criteria and failure modes differ.
+
+For a fluent value builder, readability, defaults, staged input and invariant enforcement are the
+usual justification. For a GoF representation builder, the justification is reuse of the
+construction process across outputs. A builder that provides neither is ceremony.
 
 ## When it is the answer
 
 ```text
-5+ constructor parameters, or 3+ of the same type in a row
-        → the call site is unreadable and mis-ordering compiles.
+A constructor whose arguments are easy to misread or mis-order
+        → consider a builder, named factories, or stronger parameter types.
 
 Several parameters are genuinely optional with sensible defaults
         → telescoping constructors otherwise, or nulls as "absent".
@@ -48,8 +50,9 @@ The object is built from parsed or streamed input arriving in pieces
 
 ## When it is not
 
-- **Fewer than four components, all required.** A record's canonical constructor is already
-  named-by-position and checked by the compiler.
+- **A small, obvious value with required, well-typed components.** A record's canonical
+  constructor already checks arity and types; Java remains positional, so repeated or weak types
+  can still justify named factories or a builder.
 - **All components required and of distinct types.** Mis-ordering does not compile; the builder
   removes a compile-time check and replaces it with a runtime one.
 - **The variants are few and nameable.** Two or three static factories
@@ -82,8 +85,8 @@ copies, bypasses it.
 ## Decision rules
 
 ```text
-IF the type has ≤4 components and all are required
-THEN record + canonical constructor. No builder.
+IF the type is small and the positional call remains unambiguous
+THEN prefer a record or constructor; do not use parameter count alone as the decision.
 
 IF several components are optional
 THEN builder, or a record whose optional components have documented
@@ -107,8 +110,9 @@ THEN the illegal combination must be rejected in build(), naming both
      fields. "field X is required" when Y was set is not enough.
 
 IF @Builder is applied to a JPA entity
-THEN stop: it produces instances bypassing the entity's own invariants and
-     silently leaves relations null (orm-structural-mapping).
+THEN verify the generated constructor path, identity/lifecycle rules, association
+     defaults and ORM constructor requirements. Prefer domain factories when they
+     make valid aggregate creation clearer (orm-structural-mapping).
 ```
 
 ## Cross-cutting checks
@@ -122,10 +126,10 @@ THEN stop: it produces instances bypassing the entity's own invariants and
   second builder. What crosses the wire is the built value, so its invariants must hold after
   deserialisation too: a builder-enforced rule that the deserialiser does not re-run is not
   enforced (`java-immutability`).
-- **Performance.** A builder allocates one extra object plus the intermediate state. In a hot
-  path where the builder does not escape, escape analysis frequently removes it entirely; where
-  it does escape, the cost is one allocation, not a reason to abandon immutability. Measure
-  before optimising construction (`jmh-microbenchmarks`, `allocation-profiling`).
+- **Performance.** A conventional mutable builder introduces a candidate allocation and may also
+  allocate collection buffers or staged lambdas. HotSpot may scalar-replace a non-escaping
+  builder, but this is compilation- and call-site-dependent. Measure allocation and retained
+  data before changing construction (`jmh-microbenchmarks`, `allocation-profiling`).
 - **Testing.** Test data builders are the strongest everyday use of this pattern: a builder with
   a valid default for every field, where a test names only what it cares about. It keeps tests
   readable when a required field is added, because only the builder changes
@@ -138,7 +142,8 @@ THEN stop: it produces instances bypassing the entity's own invariants and
 - [ ] Cross-field rules are checked at `build()` and name both fields when violated
 - [ ] Required components are enforced — by a staged builder, or by a check that names them
 - [ ] No builder instance is shared across calls, threads or requests
-- [ ] The parameter count actually justifies it (≥5, or optional components present)
+- [ ] Call-site ambiguity, optionality, staged construction, or representation variance actually
+      justifies it; parameter count alone does not
 - [ ] Collections are defensively copied on the way in and unmodifiable on the way out
 - [ ] `withX` copy methods exist for deriving a variant, rather than a builder round trip
 - [ ] No generated builder is wrapped in a hand-written one

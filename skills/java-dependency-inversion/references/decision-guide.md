@@ -2,13 +2,13 @@
 
 ## Classifying the edge
 
-| The dependency is on…   | Examples                          | Decision                               |
-| ----------------------- | --------------------------------- | -------------------------------------- |
-| A mechanism you own     | persistence layer, HTTP client    | Invert when policy tests need a seam   |
-| A system you do not own | payment gateway SDK, mail relay   | Invert — the boundary exists anyway    |
-| A stable platform type  | `java.time`, `BigDecimal`, `Path` | Leave it; you will never substitute it |
-| Another piece of policy | pricing rules used by order flow  | Leave it; peers may call directly      |
-| An API you publish      | plugin SPI, extension points      | Already inverted — keep the interface  |
+| The dependency is on…   | Examples                         | Decision                                                                       |
+| ----------------------- | -------------------------------- | ------------------------------------------------------------------------------ |
+| A mechanism you own     | persistence layer, HTTP client   | Invert when change/failure/release isolation repays a port                     |
+| A system you do not own | payment gateway SDK, mail relay  | Quarantine it at an adapter; add a policy port when policy calls it            |
+| A stable value/API type | `Instant`, `BigDecimal`, `Path`  | Usually keep it; abstract the operation (`Files`/remote I/O), not value syntax |
+| Another piece of policy | pricing rules used by order flow | Leave it; peers may call directly                                              |
+| An API you publish      | plugin SPI, extension points     | Already inverted — keep the interface                                          |
 
 Direction matters more than layering vocabulary. The question is never "is this the
 service layer calling the repository layer" but "if this dependency changed vendor,
@@ -52,6 +52,7 @@ module shop.orders {            // policy: no requires on any mechanism
 module shop.smtp {              // adapter: depends on the policy, not vice versa
     requires shop.orders;
     requires jakarta.mail;
+    exports shop.smtp to shop.app;
 }
 
 module shop.app {               // composition root: the only module seeing both
@@ -71,8 +72,9 @@ with an architecture test over the package graph — weaker, but better than pro
 A factory inverts _creation_ the way a port inverts _invocation_. Decide the same
 way:
 
-- Policy needs a fresh mechanism instance per unit of work (a connection, a
-  session) → inject a factory port (`ConnectionFactory`), not the product.
+- Policy needs fresh instances of a **policy concept** per unit of work → inject a factory port.
+  Database connections, HTTP sessions and transport clients should normally be acquired inside
+  the adapter; exposing `ConnectionFactory` to policy merely renames the mechanism leak.
 - Policy needs one collaborator for its lifetime → inject the instance; a factory
   adds a level of indirection with no second creation site.
 - The factory only centralises `new` with no variation → it is the composition
@@ -83,7 +85,8 @@ way:
 After inverting, all of these should hold; if any fails, the inversion is
 incomplete or was not needed:
 
-- The double is a hand-written class of under ~15 lines implementing the port.
+- The double implements only the policy capability and has no vendor/framework setup; line count
+  is a smell locator, not an acceptance criterion.
 - The policy test constructs the subject with `new`, no framework and no reflection.
 - The test asserts on policy outcomes (what was sent, what was decided), not on
   interaction scripts ("verify method X was called once").

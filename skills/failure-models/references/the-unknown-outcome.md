@@ -23,20 +23,23 @@ feeds it is `java-exception-design`.
 The question is always the same: **could the request have reached the peer and taken
 effect?** Everything below follows from that.
 
-| Call                | Rejected (never applied)                                                                        | Unknown                                                                                                                                   |
-| ------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| HTTP                | connect timeout, DNS failure, TCP refused, TLS handshake failure — no request bytes were sent   | response/read timeout, connection reset after the request was written, 502/504 from a proxy, client cancelled                             |
-| JDBC statement      | failure acquiring a connection from the pool, syntax or constraint error returned by the server | socket read timeout during execution, connection dropped mid-statement                                                                    |
-| JDBC `commit()`     | —                                                                                               | **always potentially unknown**: an exception from `commit()` may mean the commit record was durable and only the acknowledgement was lost |
-| Kafka `send()`      | serialisation failure, `RecordTooLargeException`, unknown topic before dispatch                 | `TimeoutException` on the future or callback — the leader may have appended the batch and the ack was lost                                |
-| Kafka offset commit | —                                                                                               | a failed commit may have been applied; a rebalance then redelivers                                                                        |
+| Call                | Rejected (never applied)                                                                                     | Unknown                                                                                                                                                                                                               |
+| ------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| HTTP                | locally proven pre-dispatch failure, such as invalid URI or DNS failure with no usable cached route          | response/read timeout, reset after dispatch, client cancellation, and proxy 502/504 unless intermediary evidence proves non-forwarding                                                                                |
+| JDBC statement      | failure acquiring a connection before dispatch; server rejection whose transaction semantics prove no effect | socket timeout or disconnect during execution; a driver may not know whether a trigger/procedure or transaction effect occurred                                                                                       |
+| JDBC `commit()`     | —                                                                                                            | **always potentially unknown**: an exception from `commit()` may mean the commit record was durable and only the acknowledgement was lost                                                                             |
+| Kafka `send()`      | synchronous serialization/size/configuration failure before the record enters the accumulator                | delivery timeout or disconnect after possible transmission; classify from producer metadata and protocol evidence, because `TimeoutException` can also arise while metadata or buffer progress never allowed dispatch |
+| Kafka offset commit | —                                                                                                            | a failed commit may have been applied; a rebalance then redelivers                                                                                                                                                    |
 
 Two consequences that surprise people:
 
-- **A connect timeout is a good outcome.** It is the one network failure that is provably
-  Rejected, because the handshake never completed and no request bytes went out. This is why
-  connect timeout and read timeout must be configured separately and never collapsed into
-  one number: they carry different information.
+- **Pre-dispatch evidence can turn ambiguity into rejection.** A DNS error before any route
+  is selected or a local serialization failure proves this attempt did not reach the peer.
+  A connect timeout often occurs before application bytes are written, but do not infer that
+  from an exception name alone: clients, proxies and transparent retries can change the
+  boundary. Instrument whether the request entered the transport and whether an
+  intermediary forwarded it. Connect and response timeouts should remain separately
+  observable because they carry different evidence.
 - **`commit()` is the worst case in the table.** The two-generals structure is exact: the
   database cannot tell you it committed without a message that can be lost. A JDBC client
   that catches an exception from `commit()` and reports "transaction failed" is guessing.
@@ -56,8 +59,8 @@ Exactly one of these three, chosen per write path and written down:
    for rare, high-value, non-idempotent operations. Illegal as an unstated default, which is
    what "log the exception and move on" actually is.
 
-There is no fourth option. A write path that has none of the three resolves Unknown by
-coin-flip.
+These are the terminal strategies; a protocol may combine them (for example, status lookup
+before a keyed retry). A write path with none leaves the business outcome unresolved.
 
 ## Read paths are not exempt, only cheaper
 
@@ -86,8 +89,29 @@ Do not test this with mocks that throw. Test it with a fault that is genuinely a
 - **Testcontainers plus a network fault** between the application and the dependency — pause
   the container, or drop packets on the bridge — _after_ the request is written. Assert the
   peer's state after recovery, not the exception the client saw.
-- **A proxy that accepts and discards.** Put a proxy in front of the dependency that forwards
-  the request and then closes the connection without returning the response. That is the
-  Unknown case exactly, and almost nothing else reproduces it faithfully.
+- **A proxy that forwards then cuts the response.** Put a controllable proxy in front of the
+  dependency, allow the request to apply, and close or black-hole the response. This is a
+  faithful unknown-outcome case; also test the complementary pre-dispatch cut to prove the
+  client distinguishes the two.
 - Assert on the **downstream row count**, not on the caller's return value. The bug being
   hunted is a second row, and the caller cannot see it.
+
+## Evidence hierarchy
+
+Classify from the strongest available evidence, not the Java exception class:
+
+1. peer-side durable operation ID and terminal status;
+2. protocol acknowledgement whose durability scope is documented;
+3. intermediary evidence that the request was or was not forwarded;
+4. client transport phase (queued, connected, bytes written, response started);
+5. timeout/cancellation alone — normally `Unknown` for a mutating operation.
+
+Cancellation only stops the caller's wait unless the protocol confirms cancellation of the
+operation. An HTTP/2 stream reset, interrupted Java future, or expired deadline does not by
+itself roll back a peer-side commit.
+
+## Primary references
+
+- [RFC 9110: HTTP Semantics, §9.2.2 Idempotent Methods](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.2)
+- [JDBC 4.3 specification, transactions](https://jcp.org/aboutJava/communityprocess/mrel/jsr221/index3.html)
+- [Apache Kafka producer configuration: delivery timeout and idempotence](https://kafka.apache.org/documentation/#producerconfigs)

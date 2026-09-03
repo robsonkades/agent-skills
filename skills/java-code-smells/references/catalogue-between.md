@@ -53,8 +53,9 @@ live relative to the data they concern.
 
 - **Looks like:** a class whose methods all delegate one-for-one to a field; wrappers
   wrapping wrappers.
-- **Detect:** more than half the public methods are single-line delegations adding no
-  behaviour, translation or invariants.
+- **Detect:** a substantial part of the public surface delegates one-for-one while callers gain
+  no narrower contract, translation, policy, telemetry or substitution boundary. Ratios locate
+  candidates; they do not establish intent.
 - **Not it when:** the wrapper is a boundary on purpose: an anti-corruption layer, a
   port implementation, a facade narrowing a wide API, or a Demeter-driven wrapper that
   actually changes the contract.
@@ -153,12 +154,13 @@ live relative to the data they concern.
 
 ## Data Class
 
-- **Looks like:** fields, getters, setters and nothing else, with every computation over
-  those fields living in services around it.
-- **Detect:** every method is an accessor, neighbours show Feature Envy toward it, and the
-  same derivation over its fields appears in three places.
+- **Looks like:** a domain type exposes mutable state while invariants and repeatedly co-changing
+  computations over that state are scattered through services.
+- **Detect:** neighbours show Feature Envy toward it, bypass its invariants, and repeat a
+  derivation that changes with the data's own rules. Getter count alone is not evidence.
 - **Not it when:** the type is data by design — a DTO at a boundary
-  (remote-facade-and-dto), an event payload, or a record modelling a value. The smell is a
-  _domain_ class with no behaviour, not any class without behaviour.
+  (remote-facade-and-dto), an event payload, a persistence projection, or a record modelling a
+  value — or when orchestration policy properly belongs to an application/domain service. An
+  anemic object is a smell only when misplaced behavior and unenforced invariants are evidenced.
 - **Fix:** Move Function into it, Encapsulate Collection, Replace Derived Variable with
   Query. If it should stay data, make it a record and stop treating it as a domain object.

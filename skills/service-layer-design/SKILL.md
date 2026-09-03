@@ -50,8 +50,9 @@ entries inline is where the domain went.
 1. **Name the use case, not the entity.** `PlaceOrder`, `CancelSubscription`,
    `SettleInvoice`. Services named after entities (`OrderService`) accumulate every
    operation that mentions an order, which is how the god service forms.
-2. **Establish the transaction here and only here.** One use case, one transaction
-   boundary, demarcated at this layer — not in the controller, not in the repository
+2. **Establish the business transaction here by default.** Repository-local defaults and
+   listener/job entrypoints can demarcate their own actual units; verify propagation rather than
+   treating layer placement as the mechanism
    (`enterprise-transactions`).
 3. **Decide authorisation here.** This is the layer that knows the actor and the intent.
    Repository-level filtering is a defence in depth, not the decision; controller-level
@@ -103,9 +104,9 @@ An external caller needs a coarse-grained, network-shaped operation
 
 ## Rules
 
-- The service layer's defining responsibility is the **transaction boundary**. Everything
-  else it does is negotiable; that one is why the layer exists in a system with more than
-  one write per use case.
+- A service layer provides a stable use-case boundary for transaction, authorization,
+  orchestration and protocol-independent invocation. A transaction is a common justification, not
+  its only defining responsibility and not dependent on a write-count threshold.
 - An application service that reads like the use case description is right. One that reads
   like a database procedure has absorbed the domain.
 - **Do not add a service layer by default.** For read paths and single-write CRUD it is
@@ -120,10 +121,10 @@ An external caller needs a coarse-grained, network-shaped operation
 - Keep application services free of framework types in their signatures. `ResponseEntity`,
   `HttpServletRequest`, `Pageable` in a service signature ties the use case to one caller
   and blocks reuse from a job or a consumer (`layering-and-boundaries`).
-- Self-invocation defeats proxy-based transaction and cache annotations: a
-  `@Transactional` method called from another method of the same bean runs with no new
-  transaction. This is the most common silent transaction bug in Spring codebases; the fix
-  is to move the method to a collaborator, not to inject the bean into itself.
+- In default proxy mode, self-invocation does not apply the callee's transaction/cache attributes;
+  it still runs in the caller's existing context if one exists. Prefer a collaborator or explicit
+  transaction boundary when semantics differ; AspectJ mode behaves differently. Self-injection is
+  usually a smell, not the sole possible fix.
 - Authorisation belongs to the use case, not to the entity and not to the endpoint. Encode
   it where the intent is known, and treat repository-level tenant filters as a second
   layer of defence rather than the decision.
@@ -131,9 +132,9 @@ An external caller needs a coarse-grained, network-shaped operation
   locally and calls a remote system needs an explicit outcome for "local committed, remote
   failed" — retries, compensation or an outbox — decided at this layer
   (`distribution-boundaries`).
-- Batch and per-item are different use cases. A service method that loops over items and
-  opens a transaction per item is fine; one that loops inside a single transaction is a
-  long transaction holding locks, and it belongs in a different design
+- Batch and per-item are different units. Per-item transactions isolate failures but add commit
+  overhead and may violate batch atomicity; chunk transactions balance restartability, lock time and
+  throughput. A single transaction is appropriate only when bounded size and atomicity justify it
   (`architecture-and-performance`).
 
 ## References

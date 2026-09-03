@@ -1,13 +1,12 @@
 schemaVersion: 1
 
 name: consensus-and-quorums
-version: 1.1.0
+version: 1.2.0
 description: >-
-  Agreement among processes that may crash, and the arithmetic that makes it work: FLP and
-  why every failure detector is only a timeout; majority quorums, 2f+1, and the R + W > N
-  intersection property with what it does and does not buy; why an even node count adds
-  nothing and why quorum latency rises with cluster size; Raft's leader, term and log, with
-  the term number as a fencing token; and what etcd, ZooKeeper and Consul actually are. Use
+  Crash-fault consensus and quorum reasoning: FLP, safety versus liveness, majority 2f+1,
+  R + W > N intersection and its limits, voter/failure-domain placement, Raft terms and why
+  external fencing still requires resource enforcement, plus the differing read/watch
+  contracts of etcd, ZooKeeper and Consul. Use
   when a cluster size is being chosen, when nodes are spread across AZs or regions, when
   application data or a queue is being put in etcd or ZooKeeper, when a coordination store
   sits on the request path, when a watch is treated as a delivery guarantee, or when a

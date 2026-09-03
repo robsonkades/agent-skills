@@ -1,125 +1,262 @@
 ---
 name: continuous-profiling
 description: >
-  Always-on profiling in production: collection architecture and its permanent overhead
-  budget, profile storage and retention, differential and time-windowed queries, business
-  labels, and correlating profiles with deploys and incidents. Use when an incident is
-  already over and nobody profiled it, when a regression must be attributed to a deploy,
-  when "which tenant is burning the CPU" cannot be answered from an aggregate, when
-  allocation profiling is enabled unconditionally in production, when two flame graphs from
-  incomparable load windows are being diffed, or when someone says continuous profiling
-  needs a third-party agent. Does not cover choosing and running a single profile
-  (jfr-and-async-profiler), JFR event configuration (jfr-advanced), profiler engines and
-  conversions (async-profiler-advanced), or reading the resulting graph
-  (flame-graph-analysis).
+  Designing and operating always-on production profiling: question-driven signal choice,
+  permanent overhead and coverage budgets, in-process versus host collection, context-label
+  propagation, profile schemas, storage and cardinality, retention and incident preservation,
+  deploy-aware comparisons, trust boundaries, and evidence-quality SLOs. Use when historical
+  CPU/allocation/lock evidence must survive an incident, when profile cost or tenant labels
+  can grow without bound, when a backend or agent is being selected, or when two time windows
+  are compared as a regression claim. Does not teach one-off capture mechanics
+  (jfr-and-async-profiler), async-profiler engines (async-profiler-advanced), JFR tuning
+  (jfr-advanced), or graph interpretation (flame-graph-analysis).
 ---
 
 # Continuous Profiling
 
 ## Purpose
 
-Move the profiling decision from collection time to question time. A one-off profile can
-only answer questions you thought to ask while the process was still misbehaving;
-continuous profiling makes the incident that ended twenty minutes ago, and the deploy from
-last Tuesday, still answerable. Business labels are what separate it from "one-off
-profiling, left switched on": an aggregate flame graph shows what the JVM was doing, a
-labelled one shows what one tenant on one endpoint was doing.
+Continuous profiling moves a bounded set of collection decisions before an incident so that
+historical code-resource evidence remains queryable afterward. It does not make every future
+question answerable: the chosen event, interval, context, retention, stack fidelity, and
+backend schema define the evidence envelope.
 
-Two failure modes follow. First, treating a permanent overhead as if it were the temporary
-overhead of a 60-second profile — allocation sampling at a low byte threshold, multiplied
-by every instance, every day. Second, reading a difference that is an artefact of load
-rather than of code, because the two compared windows were not comparable.
+Treat it as a production telemetry system. It consumes CPU, memory, network, disk, backend
+compute, and operational attention on every instance; it can expose sensitive code and tenant
+metadata; and it can fail silently while its dashboard remains available.
 
-## Workflow
+## Ownership boundary
 
-1. **Name the retroactive question.** "Which tenant caused the CPU spike at 03:10 last
-   Thursday" is the class of question this exists for. If the question can be answered by
-   profiling now, profile now instead.
-2. **Choose the architecture deliberately.** Agent in the JVM, eBPF on the host, native
-   JFR, or a commercial SaaS — the four trade footprint, kernel privilege, multi-language
-   coverage and who operates the backend. See `references/architecture-choice.md`.
-3. **Budget the overhead as a permanent cost** and get it approved as such. Measure it on
-   your own workload; quoted percentages are lab estimates.
-4. **Plan the labels before the first profiled deploy.** At minimum tenant, endpoint,
-   version, region, env. Labels added later do not apply retroactively to stored profiles.
-5. **Configure retention explicitly** — backend retention for Pyroscope or Parca,
-   `maxsize`/`maxage` for a native JFR recording. Without it the history either grows
-   unbounded or disappears before you need it.
-6. **Query with comparable windows.** Same weekday and hour, or explicitly the interval
-   immediately before and after a deploy under equivalent load; filter by label before
-   comparing; read the sample count of every frame you quantify.
-7. **Confirm against a business metric** before declaring root cause. The flame graph says
-   where time went, not why latency moved.
+This skill owns collection architecture, permanent budgets, context dimensions, storage,
+retention, comparison protocol, security, and operational health. Delegate:
 
-## Rules
+- event/engine mechanics to `async-profiler-advanced` and `jfr-advanced`;
+- one-off collection choice to `jfr-and-async-profiler`;
+- statistical interpretation and differential graphs to `latency-statistics` and
+  `flame-graph-analysis`;
+- metric-label economics to `metrics-and-cardinality`;
+- system-wide eBPF/JIT symbol mechanics to `ebpf-for-jvm`.
 
-- Keep CPU profiling on permanently; put allocation and lock profiling behind a feature
-  flag or a conservative threshold. `setProfilingAlloc("1k")` in production is the
-  anti-pattern; `"512k"` is the conservative form.
-- Allocation overhead scales with the inverse of the byte threshold — it is not a fixed
-  cost of "being enabled". A low threshold captures a stack trace every few objects, and
-  the stack capture is the expensive part.
-- Budget overhead as `samples per second × cost per sample`, never as a quoted percentage.
-  `cpu`/`ctimer` samples are bounded by cores × rate; `wall` samples **every thread** at
-  the interval, so 2,000 threads at 10 ms is 200,000 stack walks a second — `wall` is the
-  channel that breaks a budget, and `--wall 100ms` or `--filter` is how it stays inside
-  one. The arithmetic per channel is in `references/architecture-choice.md`.
-- A continuous JFR recording uses `settings=default`: the JDK documents `default.jfc` as
-  the low-overhead configuration "for recordings that run continuously" and `profile.jfc`
-  as "for short periods of time", and `jcmd help JFR.start` warns that modified defaults
-  "may exceed 1%". Override single events on top of `default` instead of switching to
-  `profile`.
-- `jdk.ExecutionSample` samples at most **5 Java threads and 1 native thread per period**
-  (`MAX_NR_OF_JAVA_SAMPLES` / `MAX_NR_OF_NATIVE_SAMPLES`, `jfrThreadSampler.cpp`,
-  JDK 25). Halving the period from 20 ms to 10 ms doubles that cap; it does not make the
-  sampler cover every thread. On a 200-thread service a thread is visited about every
-  0.8 s at 20 ms, so a rare hot path needs a long window, not a short period.
-- `jdk.CPUTimeSample` (JEP 509, JDK 25, experimental, Linux) samples per thread by
-  consumed CPU time and is the JFR channel with an explicit budget: `throttle=500/s` is
-  a rate cap, `throttle=10ms` a CPU-time period, and `jdk.CPUTimeSamplesLost` says when
-  the cap was hit. It is disabled in both shipped `.jfc` files; enable it deliberately.
-- Never state a per-frame conclusion without its sample count, and never diff two windows
-  whose load differs structurally — peak weekday traffic against Sunday at 03:00 changes
-  the composition of the flame graph on volume alone.
-- Ship the minimum label set (tenant, endpoint, version, region, env). A method at 30% of
-  total CPU may be 80% for one abusive tenant and 5% for everyone else; without labels
-  that distinction does not exist in the data.
-- "No budget for a third-party agent" is not a reason to have no continuous profiling.
-  `jdk.jfr.consumer.RecordingStream` (JEP 349, since JDK 14) and `JFR.start` without
-  `duration=` are both in the JDK.
-- There is no JFR settings profile called `continuous` — only `default.jfc` and
-  `profile.jfc`. What makes a recording continuous is the **absence of `duration=`**, with
-  `maxsize`/`maxage` supplying retention instead.
-- Call `rs.startAsync()` on a `RecordingStream`. `rs.start()` blocks the calling thread
-  indefinitely.
-- The Pyroscope Java SDK takes **one** CPU engine via `setProfilingEvent(EventType)`
-  (default `ITIMER`). Allocation and lock are separate channels configured by a `String`
-  threshold — `setProfilingAlloc("512k")`, `setProfilingLock("10ms")`. There is no
-  `Config.Builder.addProfilingType(...)`; code written against it does not compile.
-- `setSamplingEventOrder(List<EventType>)` has no effect unless `setSamplingDuration` is
-  configured — the SDK's internal `resolve()` discards it and logs "not implemented". It
-  is a silent no-op, and the feature is experimental.
-- The SDK's default upload interval is `Duration.ofSeconds(10)`, not 15.
-- Do not pin the `io.pyroscope:agent` version from memory; check Maven Central. Third-party
-  SDK APIs move between minor releases far more often than the JVM does.
-- Base container images on `eclipse-temurin:25-jdk`. The Docker Hub `openjdk` repository is
-  discontinued and no longer receives updates.
-- Allocation sampling comes from a HotSpot TLAB callback, not a generic JVMTI callback;
-  lock profiling covers `synchronized` **and** `java.util.concurrent.locks` through
-  async-profiler's own bytecode instrumentation, not `JVMTI MonitorContendedEnter` alone,
-  which sees only `synchronized`.
-- OpenTelemetry's profiling proposal is an **OTEP**, not a JEP. JEP numbers belong to
-  OpenJDK only.
+## Define the retroactive questions
+
+Start with decisions, not a vendor:
+
+| Question                                            | Required evidence                                              | Common missing dimension                            |
+| --------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------- |
+| Which deploy increased CPU per completed operation? | CPU stack weight, version, workload denominator, deploy marker | work mix and completed operations                   |
+| Why did latency rise while CPU stayed flat?         | wall/off-CPU stacks, thread/task context, queues/I/O timeline  | wait cause, not just parked location                |
+| Which code creates allocation pressure?             | allocation stack/weight, rate, version                         | lifetime/retention and GC context                   |
+| Which tenant/operation drives cost?                 | bounded approved context propagated to samples                 | context loss across async/virtual-thread boundaries |
+| What changed before an incident ended?              | pre-incident retained window and immutable snapshot            | clock alignment and evidence loss                   |
+
+For each question declare: event, weight semantics, population, interval/threshold, required
+dimensions, comparison denominator, retention horizon, minimum detectable contribution, and
+known omissions. If the system cannot retain the required context safely, narrow the question
+instead of adding unbounded labels.
+
+## Architecture decision
+
+Choose among in-process profiler/agent, native JFR, host/eBPF collector, or managed service by
+capability and ownership—not by a universal decision tree.
+
+| Dimension                | In-process profiler     | Native JFR pipeline   | Host/eBPF                                | Managed service         |
+| ------------------------ | ----------------------- | --------------------- | ---------------------------------------- | ----------------------- |
+| JVM/JIT awareness        | Usually strong          | Strong for JFR events | Requires JIT symbols/context integration | Product-specific        |
+| Multi-language/host view | Per-runtime             | JVM only              | Strong                                   | Product-specific        |
+| Process modification     | library/agent or attach | JDK facility/API      | host collector                           | usually agent/collector |
+| Privilege/blast radius   | process-level           | process-level         | host/kernel policy                       | product-specific        |
+| Backend/query work       | included or self-hosted | must build/integrate  | often included/self-hosted               | delegated               |
+| Context propagation      | SDK/runtime-specific    | custom events/context | difficult from kernel alone              | product-specific        |
+| Portability              | runtime/platform matrix | JDK/JVM matrix        | kernel/architecture matrix               | vendor matrix           |
+
+Hybrids are normal: low-cost JFR for JVM chronology, sampled CPU profiles for code cost, and
+short elevated capture for incidents. See
+[Architecture and cost model](references/architecture-choice.md).
+
+## Permanent overhead budget
+
+Budget every channel from event opportunity, selected rate, stack depth, encoding, export,
+and backend amplification:
+
+```text
+collection CPU ~= selected events/s * collection cost/event
+ingest bytes    ~= events/s * encoded bytes/event
+storage         ~= ingest bytes/s * retention * replication/compression factor
+query cost      ~= series/stack partitions touched * window * resolution
+```
+
+Approximate opportunity rates:
+
+```text
+CPU samples       ~ consumed CPU time / interval
+wall candidates   ~ eligible thread population * elapsed time / interval
+allocation events ~ allocated bytes / sampling interval
+lock events       ~ qualifying contentions under threshold/sampling policy
+```
+
+The implementation may batch, throttle, skip, or bias these opportunities. Measure actual
+events, drops, CPU seconds per operation, allocation/GC effects, latency percentiles,
+export bytes, and backend cost on a representative canary. Repeat at peak thread/allocation
+rate and during exporter/backend failure.
+
+Do not install universal thresholds such as `512k` allocation or `10ms` wall sampling. A
+safe setting on one service can be useless or destabilizing on another. Start with CPU or a
+low-overhead JFR configuration only after calibration; enable allocation, wall, lock, method
+trace, and native-memory channels according to a budgeted question and rollout policy.
+
+## Coverage budget
+
+Overhead and coverage are duals. Increasing intervals or thresholds reduces cost but can make
+short-lived/rare stacks invisible. Estimate the number of weighted observations expected for
+the smallest contribution worth detecting, then validate with synthetic known workloads.
+
+JFR sampling details can change between JDK releases. JDK 25 introduced experimental CPU-time
+profiling (JEP 509) and cooperative sampling (JEP 518), and experimental method timing/tracing
+(JEP 520); event availability, defaults, settings, platform support, and implementation caps
+must be discovered from the deployed JDK. Internal constants are not stable coverage SLAs.
+
+Monitor evidence quality itself:
+
+- active profilers versus expected targets;
+- event/sample rate by version/host class;
+- lost, dropped, throttled, truncated, or unknown stacks;
+- context-present ratio and cardinality;
+- export queue depth, oldest-unexported age, errors, bytes, and backoff;
+- backend ingest lag, rejected samples, retention and query freshness;
+- symbolization/JIT-map freshness and unresolved-frame fraction.
+
+## Context and cardinality
+
+Profile context is not ordinary metric labeling. Attaching a tenant or request dimension to
+every stack can multiply storage by unique context combinations and leak sensitive data.
+
+Choose the minimum bounded set per question:
+
+- stable service/version/environment identifiers;
+- low-cardinality operation/route template, not raw URI;
+- workload class or sampled cohort;
+- tenant tier/hash/cohort only when governance and cardinality budgets permit—not tenant ID by
+  default;
+- trace/exemplar linkage only when sampled and supported, not a unique label on every profile
+  series.
+
+For each dimension define source, normalization, maximum active/churn cardinality, missing
+value, retention, privacy class, and propagation boundary. Test executor, reactive, servlet
+async, coroutine/continuation, virtual-thread, and cancellation handoffs. Thread-local context
+does not automatically follow logical work, and carrier-thread identity is not request
+identity.
+
+Cardinality controls include allowlists, route aggregation, cohorts, hashing with a bounded
+bucket count, sampling, per-tenant opt-in, and dropping at the producer before backend cost is
+incurred. Never solve profiling cardinality by moving raw identifiers into thread names.
+
+## Retention and incident preservation
+
+Use two horizons:
+
+- **rolling operational retention** sized for normal comparison and cost;
+- **incident/legal hold snapshots** immutable, access-controlled, checksum/provenance-bearing,
+  and explicitly expired/released.
+
+Local JFR `maxage`/`maxsize` or profiler loops bound a process-local repository only. They do
+not guarantee export, cluster-wide retention, or survival of pod/node loss. Define behavior
+for disk full, clock change, restart/PID reuse, exporter outage, backend throttling, partial
+upload, duplicate delivery, schema change, and encryption-key loss.
+
+Retention must preserve deploy markers and enough pre/post history for the comparison cadence.
+Long retention without symbol/build provenance can leave undecodable addresses; retain image
+digest, JDK/profiler version, build IDs/maps, configuration, and source commit.
+
+## Query and comparison protocol
+
+Before comparing windows, establish:
+
+1. same event/weight/schema/symbolization and compatible tool epoch;
+2. workload mix, offered load, successful work, errors/timeouts, and capacity state;
+3. equal filters/context availability and comparable lifecycle/warm-up phase;
+4. deploy/config/dependency/infrastructure differences;
+5. enough independent windows and observations for the claim;
+6. normalization appropriate to the question (per CPU time, wall time, request, byte, or
+   completed operation).
+
+“Same weekday one week apart” is only a candidate control; it does not prove comparable load.
+A percent change in profile samples can reflect more traffic, fewer samples elsewhere, a new
+sampling rate, or a changed denominator. Differential graphs localize changed stack weight;
+they do not estimate user impact without business metrics and a controlled comparison.
+
+Prefer deploy-aware repeated before/after blocks or matched windows. Preserve total weights,
+not only normalized percentages. If a backend exposes only normalized flame graphs, retrieve
+raw sample/weight counts and collection health before quantitative conclusions.
+
+## Security and trust
+
+Profiles reveal code structure, library versions, native symbols, process roles, and possibly
+tenant/operation context. Treat them as sensitive telemetry:
+
+- authenticate producers and bind service identity to accepted labels;
+- authorize queries by environment/tenant sensitivity;
+- encrypt transit/storage and govern cross-region transfer;
+- prevent label spoofing and query injection;
+- sign/attest agents and collector configuration;
+- isolate host collectors and minimize kernel capabilities;
+- redact/drop disallowed context before export;
+- audit access, incident holds, and deletions.
+
+A compromised workload must not be able to publish profiles under another service/version or
+poison a trusted regression baseline.
+
+## Failure modes and troubleshooting
+
+| Symptom                                    | Distinguish                                                                    | Action                                                                              |
+| ------------------------------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Dashboard has no incident data             | collector inactive, rolling data overwritten, export lag/drop, query mismatch  | Follow target→collector→queue→backend→query and preserve local remnants             |
+| CPU profile disagrees with host CPU        | missing processes/native/kernel frames, throttling, sample loss, normalization | Reconcile CPU-time accounting and scope; complement with host/JFR evidence          |
+| Cost explodes                              | event rate, stack/context cardinality, retention, query fanout                 | Disable highest-amplification dimension/channel; preserve a bounded incident sample |
+| Tenant attribution vanishes                | context propagation break or unsupported profiler context                      | Test each handoff; report unknown rather than inherit wrong thread context          |
+| Deploy diff colors everything              | sampling/config/load/denominator changed                                       | Stop causal claim; compare raw totals and rebuild matched controls                  |
+| Backend appears healthy but coverage drops | silent throttling, target churn, symbol/JIT-map lag                            | Alert on expected-target and evidence-quality SLOs, not API uptime alone            |
+| Profiler worsens tail latency              | event burst, exporter pause/backpressure, wall thread fanout                   | Roll back channel/interval; reproduce on canary and bound failure mode              |
+
+## Anti-patterns
+
+**Anti-pattern: permanent CPU everywhere, other channels behind one global threshold.** Service
+shapes differ, and even CPU collection can violate a tight budget. Use per-workload calibration,
+staged rollout, dynamic kill switch, and question-specific channels.
+
+**Anti-pattern: tenant, endpoint, region, environment, and version as a universal minimum.**
+This can expose identifiers and multiply partitions. Define context from a concrete query with
+active/churn budgets and privacy approval.
+
+**Anti-pattern: a home-grown `RecordingStream` counter is “a profiler backend.”** Counting only
+top frames discards full stacks, thread/time context, weights, loss evidence, and provenance;
+slow callbacks can perturb or backlog delivery. Either build the complete telemetry contract or
+retain/query JFR through a proven pipeline.
+
+**Anti-pattern: alert on sample-rate ratio with `offset 1w`.** Sampling configuration and load
+change the numerator, and calendar offset does not control them. Alert first on absolute
+business/resource guardrails and use profiles for attribution; regression automation belongs
+to `performance-regression-ci`.
+
+## Definition of done
+
+- [ ] Retroactive questions, event semantics, minimum detectable contribution, and omissions
+      are documented.
+- [ ] Architecture and privilege choices are justified against alternatives.
+- [ ] Per-channel collection, transport, storage, and query budgets were measured at peak.
+- [ ] Context propagation, missing context, privacy, and cardinality limits were tested.
+- [ ] Rolling retention and immutable incident preservation survive restart and backend outage.
+- [ ] Evidence-quality SLOs detect missing targets, drops, lag, unresolved frames, and schema
+      incompatibility.
+- [ ] Before/after queries use compatible epochs, matched work, raw denominators, and repeated
+      evidence.
+- [ ] Kill switch, staged rollout, rollback, access control, and incident runbook are exercised.
 
 ## References
 
-- [Architecture choice](references/architecture-choice.md) — the four-architecture
-  comparison, the decision tree, the per-channel overhead arithmetic with a worked
-  budget, the `EventType`-to-engine mapping, and the JDK 25 sampling-machine changes
-  (`jdk.ExecutionSample`'s per-period cap, `jdk.CPUTimeSample`'s throttle) that matter
-  for a recording that never stops. Read before committing to a collection architecture
-  or an overhead budget.
-- [Setup and queries](references/setup-and-queries.md) — working Pyroscope SDK
-  configuration against the real API, per-request labels in Spring Boot, a
-  `RecordingStream` exporter skeleton, continuous `jcmd` recording with retention, and a
-  regression alert rule. Read when implementing collection or writing a comparison query.
+- [Architecture and cost model](references/architecture-choice.md)
+- [Collection, context, storage, and query protocol](references/setup-and-queries.md)
+- [JDK 25 `java` command: Flight Recording settings](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html) — `default.jfc` versus `profile.jfc`; use deployed-JDK docs.
+- [JFR `RecordingStream` API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/consumer/RecordingStream.html)
+- [JEP 509: JFR CPU-Time Profiling](https://openjdk.org/jeps/509)
+- [JEP 518: JFR Cooperative Sampling](https://openjdk.org/jeps/518)
+- [JEP 520: JFR Method Timing & Tracing](https://openjdk.org/jeps/520)

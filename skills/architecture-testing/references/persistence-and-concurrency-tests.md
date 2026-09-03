@@ -20,8 +20,9 @@ locking, isolation, dialect and plan behaviour. A `SELECT ... FOR UPDATE` that d
 a check constraint that is not applied, an `OptimisticLockException` that never fires — all
 pass in memory and fail in production.
 
-Keep one container per test class hierarchy (reuse it; do not start one per test), and let
-the migrations create the schema so the schema under test is the schema that will exist.
+Reuse containers at a scope that preserves isolation and acceptable runtime; per-test containers
+may be justified for destructive or parallel scenarios. Use the production engine family and a
+supported version representative of production, then let migrations create the schema.
 
 ## Mapping round trips
 
@@ -58,13 +59,13 @@ void duplicate_email_is_rejected_by_the_database() {
             customers.save(new Customer(new Email("ana@example.com")));
             em.flush();
         })
-        .isInstanceOf(DataIntegrityViolationException.class)
-        .hasMessageContaining("uq_customer_email");    // the constraint NAME is the contract
+        .isInstanceOf(DataIntegrityViolationException.class);
 }
 ```
 
-Asserting on the constraint name matters: error translation matches on it, so a migration
-that renames the constraint breaks the error handling silently
+If application error translation intentionally depends on a named constraint, test the translated
+domain/API outcome and inspect the vendor-specific cause or SQL state through a dedicated adapter.
+Matching a framework exception message is brittle across drivers and dialects
 (`enterprise-base-patterns`).
 
 ## Query budgets
@@ -132,13 +133,13 @@ The second test guards a real default that surprises people and is invisible in 
 ```java
 @Test
 void concurrent_edits_produce_exactly_one_winner() throws Exception {
-    var start = new CountDownLatch(1);
+    var loaded = new Phaser(2);
 
     Callable<Boolean> edit = () -> {
-        start.await();
         try {
             transactionTemplate.executeWithoutResult(status -> {
                 var order = orders.byId(orderId).orElseThrow();
+                loaded.arriveAndAwaitAdvance(); // both transactions hold the same version before either writes
                 order.changeShippingAddress(new Address("..."));
             });
             return true;
@@ -150,7 +151,6 @@ void concurrent_edits_produce_exactly_one_winner() throws Exception {
     try (var pool = Executors.newVirtualThreadPerTaskExecutor()) {
         var a = pool.submit(edit);
         var b = pool.submit(edit);
-        start.countDown();
         assertThat(List.of(a.get(), b.get())).containsExactlyInAnyOrder(true, false);
     }
     assertThat(orders.byId(orderId).orElseThrow().version()).isEqualTo(initialVersion + 1);
@@ -158,7 +158,7 @@ void concurrent_edits_produce_exactly_one_winner() throws Exception {
 ```
 
 Requirements: real transactions (not a single test transaction that would serialise them),
-a latch so both threads reach the write together, and an assertion on the **final version**
+a barrier after both reads so both writers hold the same version, and an assertion on the **final version**
 as well as the outcomes — a test that only checks the exception passes even if both writes
 landed (`offline-concurrency-control`).
 
@@ -196,8 +196,9 @@ void transfers_in_opposite_directions_do_not_deadlock() throws Exception {
 }
 ```
 
-Run it repeatedly (a `@RepeatedTest(20)`) — a deadlock is timing-dependent and a single run
-frequently misses it. It passes when acquisitions are ordered on a stable key
+Repeated execution can increase the chance of observing a deadlock but cannot prove its absence.
+Make acquisition ordering directly testable where possible, add database lock/deadlock diagnostics,
+and keep a bounded stress test outside the deterministic unit gate. Stable key ordering is a common remediation
 (`offline-concurrency-control`).
 
 ## Test data volume
@@ -221,7 +222,7 @@ belongs in CI.
 
 ```java
 @Test
-void migrations_apply_cleanly_from_empty_and_are_idempotent() {
+void migrations_apply_cleanly_from_empty_and_validate() {
     var flyway = Flyway.configure().dataSource(DB.getJdbcUrl(), user, password).load();
     assertThat(flyway.migrate().success).isTrue();
     assertThat(flyway.validate().validationSuccessful).isTrue();
@@ -229,5 +230,6 @@ void migrations_apply_cleanly_from_empty_and_are_idempotent() {
 }
 ```
 
-Cheap, and it catches an edited already-applied migration, a checksum mismatch and a
-migration that only works against a database that already has data.
+This proves a clean bootstrap and that Flyway records versioned migrations so a second invocation is
+a no-op; it does not prove each migration is intrinsically idempotent or that upgrades from every
+supported production schema/data state succeed. Test those starting states separately.

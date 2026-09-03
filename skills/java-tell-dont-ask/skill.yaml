@@ -1,9 +1,9 @@
 schemaVersion: 1
 
 name: java-tell-dont-ask
-version: 1.1.0
+version: 1.2.0
 description: >-
-  Decision ownership: the object that has the data makes the decision. Use when a service
+  Decision ownership: the type that owns an invariant or policy makes the decision. Use when a service
   reads state with getters, decides, and writes state back (if (acct.getBalance() > x)
   acct.setBalance(...)), when the same rule is re-derived from the same getters in several
   places, when an invariant exists but no type enforces it, when a domain model is all

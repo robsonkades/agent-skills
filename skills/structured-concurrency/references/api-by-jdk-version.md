@@ -8,7 +8,7 @@
 | `--enable-preview` to run          | every JVM start, including tests, CI and the container entrypoint                                                       |
 | Class files are **version-locked** | a class compiled with preview on 25 refuses to load on 26 — `UnsupportedClassVersionError`-class failure, not a warning |
 | No compatibility promise           | the API changed in 25, 26 and again in 27; a JDK upgrade can be a code change                                           |
-| Libraries cannot ship it           | no library will expose a preview type in its public API, so this stays inside your own code                             |
+| Public library API risk            | a library _can_ expose a preview type, but consumers inherit the exact-JDK and preview-flag obligations                 |
 
 The version lock is the decisive one for anything shipped as an artefact: a preview build is
 not "a jar that runs on 25+", it is "a jar that runs on exactly this JDK". For an
@@ -38,7 +38,7 @@ Read one column. Mixing two is how code ends up calling a method that exists in 
 
 ## The same fan-out, per version
 
-**JDK 25 (LTS) — the version most production code targets**
+**JDK 25 — the long-term-support baseline used by major vendors**
 
 ```java
 Response handle() throws InterruptedException {
@@ -83,7 +83,7 @@ try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
     return new Response(user.get(), order.get());
 }
 
-// After (JDK 25+)
+// After (JDK 25; consult the table before targeting a later preview)
 try (var scope = StructuredTaskScope.open()) {      // the default policy IS shutdown-on-failure
     Subtask<User> user = scope.fork(() -> findUser(id));
     Subtask<Order> order = scope.fork(() -> fetchOrder(id));
@@ -96,14 +96,14 @@ try (var scope = StructuredTaskScope.open()) {      // the default policy IS shu
 
 Mapping table for the rest:
 
-| JDK 21–24                                  | JDK 25+                                                          |
-| ------------------------------------------ | ---------------------------------------------------------------- |
-| `new ShutdownOnFailure()`                  | `open()`                                                         |
-| `scope.throwIfFailed(f)`                   | `catch (FailedException e)` and map `e.getCause()`               |
-| `new ShutdownOnSuccess<T>()` + `result()`  | `open(Joiner.anySuccessfulOrThrow())`, result from `join()`      |
-| `scope.joinUntil(Instant)`                 | `open(joiner, cf -> cf.withTimeout(duration))`                   |
-| `scope.shutdown()`                         | the joiner's `onComplete` returning `true`, or a custom `Joiner` |
-| `subtask.state() == Subtask.State.SUCCESS` | unchanged                                                        |
+| JDK 21–24                                  | JDK 25+                                                               |
+| ------------------------------------------ | --------------------------------------------------------------------- |
+| `new ShutdownOnFailure()`                  | `open()`                                                              |
+| `scope.throwIfFailed(f)`                   | `catch (FailedException e)` and map `e.getCause()`                    |
+| `new ShutdownOnSuccess<T>()` + `result()`  | 25: `open(Joiner.anySuccessfulResultOrThrow())`, result from `join()` |
+| `scope.joinUntil(Instant)`                 | `open(joiner, cf -> cf.withTimeout(duration))`                        |
+| `scope.shutdown()`                         | the joiner's `onComplete` returning `true`, or a custom `Joiner`      |
+| `subtask.state() == Subtask.State.SUCCESS` | unchanged                                                             |
 
 ## Detecting the mismatch early
 

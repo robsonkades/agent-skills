@@ -1,16 +1,16 @@
 schemaVersion: 1
 
 name: kafka-consumers-in-java
-version: 1.2.0
+version: 1.3.0
 description: >-
   Operating a Kafka consumer from Java: the log-not-a-queue model where consumption removes
   nothing and position is an offset; the rebalance as the central operational event, with
   cooperative assignment as the mitigation and where duplicates enter; why slow processing
   trips max.poll.interval.ms, not the session timeout; pause/resume for slow work; commit
-  strategies; auto.offset.reset as a data-loss-or-reprocessing decision; and lag in time,
-  not records. Use when a group rebalances repeatedly under load, when records are
+  strategies; auto.offset.reset as a data-loss-or-reprocessing decision; and lag as record,
+  byte, time and catch-up signals. Use when a group rebalances repeatedly under load, when records are
   reprocessed after a deploy, when enable.auto.commit is left on, when a consumer starts
-  from the wrong place after an outage, or when lag alerts fire on record counts. Not
+  from the wrong place after an outage. Not
   ordering scope (message-ordering-and-partitioning), guarantees (delivery-semantics),
   repeat-safe handlers (idempotency), the record that never succeeds
   (poison-messages-and-dlq), deserialisation cost (serialization-performance), in-flight

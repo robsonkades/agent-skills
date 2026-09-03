@@ -2,7 +2,8 @@
 
 ## The arithmetic
 
-Work it out before writing code. On HotSpot with compressed oops, 64-bit:
+Work it out before writing code. The following is only an illustrative HotSpot layout with
+compressed class/object references and 8-byte alignment; confirm it with JOL or a heap dump:
 
 ```text
 Object header                     12 bytes  (mark + compressed class word)
@@ -11,7 +12,7 @@ Alignment                          to 8 bytes
 
 record Currency(String code)      12 + 4 = 16 bytes, plus the String
 String "EUR"                      String object 24 B + byte[] 16+3→24 B ≈ 48 B
-HashMap.Entry                     ~32 bytes + the key reference + table slot ≈ 40–50 B
+HashMap node/table/key            implementation- and load-factor-dependent
 ```
 
 Two consequences that decide most cases:
@@ -24,35 +25,32 @@ Two consequences that decide most cases:
   40 M references (already paid for, inside the record) plus 300 × 48 B — a saving of essentially
   the whole 1.9 GB. That ratio, occurrences ÷ distinct values, is the number that decides.
 
-```text
-occurrences / distinct  >  ~100    sharing is clearly worth it
-                        ~10–100    depends on object size; measure
-                        <  ~10     usually a loss
-```
+There is no portable ratio threshold. Compute `(avoided duplicate bytes) - (canonical table,
+keys and retained-lifetime cost)` and include lookup CPU and contention. Large values can pay at
+low ratios; tiny values can lose even at much higher ratios.
 
 ## The JDK's own flyweights, and their limits
 
-| Mechanism                               | Shared set                      | Limit to know                                                   |
-| --------------------------------------- | ------------------------------- | --------------------------------------------------------------- |
-| `Integer.valueOf`                       | −128..127 (upper bound tunable) | `==` works inside the range and fails outside it                |
-| `Boolean.valueOf`                       | `TRUE`, `FALSE`                 | `new Boolean(...)` defeats it and is deprecated for that reason |
-| String literals                         | Constant pool, per class loader | Only literals and `intern()`ed strings                          |
-| `String.intern()`                       | A native hash table             | Fixed-size buckets; heavy use degrades to long chains           |
-| Enum constants                          | One per constant                | The closed-set case, and the best one                           |
-| `List.of()` / `Collections.emptyList()` | One shared empty instance       | Only for empty                                                  |
+| Mechanism                               | Shared set                      | Limit to know                                                           |
+| --------------------------------------- | ------------------------------- | ----------------------------------------------------------------------- |
+| `Integer.valueOf`                       | −128..127 (upper bound tunable) | `==` works inside the range and fails outside it                        |
+| `Boolean.valueOf`                       | `TRUE`, `FALSE`                 | `new Boolean(...)` defeats it and is deprecated for that reason         |
+| String literals                         | JVM string table                | Equal literals are interned; identity is still the wrong value contract |
+| `String.intern()`                       | JVM-managed string table        | Retention, lookup and sizing behavior vary by JDK/collector             |
+| Enum constants                          | One per constant                | The closed-set case, and the best one                                   |
+| `List.of()` / `Collections.emptyList()` | One shared empty instance       | Only for empty                                                          |
 
-`String.intern()` deserves specific caution: the table lives outside the Java heap's normal
-accounting, its bucket count is fixed at startup (`-XX:StringTableSize`), and interning millions
-of distinct strings turns lookups into linked-list walks. A plain `ConcurrentHashMap` you own is
-usually better behaved, because you can bound it.
+`String.intern()` deserves specific caution: modern HotSpot keeps interned strings in the Java
+heap, while the table and its tuning/rehash behavior are JVM-version details. Interning millions
+of request-derived distinct values can increase retention and lookup/GC work. An application map
+is not automatically better, but it can express scope, bounds and eviction explicitly.
 
 ## Alternatives that usually win
 
-**G1/ZGC string deduplication.** `-XX:+UseStringDeduplication` makes the collector share the
-backing `byte[]` of equal `String`s in the background. No code, no cache, no contention, and it
-is reverted by removing a flag. For duplicate strings this should always be tried first; the
-`String` objects themselves remain, so it recovers roughly half of what full canonicalisation
-would, at zero design cost.
+**GC string deduplication.** On collectors/JDKs that support it, `-XX:+UseStringDeduplication`
+can make equal `String`s share backing arrays in the background. It needs no application cache,
+but consumes deduplication table memory and concurrent GC CPU, and the `String` objects remain.
+Evaluate it as a reversible experiment; do not promise a fixed fraction of recovered memory.
 
 **Canonicalisation at the boundary.** Intern once, where data enters, rather than everywhere it
 is used:
@@ -112,10 +110,10 @@ message ids — it grows without limit and is a leak by construction. The sympto
 old-generation occupancy that survives every full GC. Bound it, key it on a closed set, or scope
 it to the operation.
 
-**Contention on the pool.** `ConcurrentHashMap.computeIfAbsent` holds the bin's lock while the
-mapping function runs. Two consequences: an expensive mapping function serialises every thread
-hashing to that bin, and a mapping function that touches the same map deadlocks. Keep the
-function trivial — ideally `Function.identity()` or a constructor call.
+**Contention on the pool.** `ConcurrentHashMap.computeIfAbsent` atomically installs a mapping and
+may coordinate callers contending for the same key/bin; the exact mechanism is JDK-specific. An
+expensive mapping function stalls peers, while recursive updates can throw or violate assumptions.
+Keep it short, side-effect-free and non-recursive, then profile the expected key distribution.
 
 **Mutation of a shared instance.** The failure that is a security incident rather than a bug: a
 flyweight carrying tenant-scoped data, mutated by one request, read by another. The only reliable

@@ -59,15 +59,16 @@ Do not flag these; each has a genuine seam despite the count:
 
 ## Inversion that creates layers instead of seams
 
-- **Pass-through delegation.** A "use case" interface whose implementation calls
-  one repository method and returns the result adds a layer, not a seam. Collapse
-  it until there is policy to hold.
+- **Pass-through delegation.** A "use case" interface whose implementation calls one repository
+  method may add only navigation. Before collapsing it, check whether the boundary owns
+  authorization, transactions, caching, telemetry, release compatibility or capability
+  restriction; those are behavior even when the happy-path body is one line.
 - **Adapters wrapping adapters.** A port over your HTTP client that is itself a
   port over the JDK client — one translation boundary per foreign system, not per
   library.
-- **Ports for peers.** Two policy classes in the same module separated by an
-  interface "for decoupling". Peers may call each other directly; inversion is for
-  edges toward mechanisms and boundaries, not for every edge.
+- **Ports for peers.** Two policy classes in the same module usually call directly. A real team,
+  release or cyclic-dependency boundary can still justify a contract; "same layer" neither
+  proves nor disproves a seam.
 - **Abstracting the domain model.** `OrderLike` interfaces over entities so that
   "the domain stays flexible". The domain model is the stable thing everything else
   depends on; abstracting it inverts the wrong way.

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: quality-gates
-version: 1.0.0
+version: 1.0.1
 description: >-
   Choosing which automated checks a change must pass, and making them cheap enough that they
   stay switched on: matching the gate set to the change's risk rather than running everything

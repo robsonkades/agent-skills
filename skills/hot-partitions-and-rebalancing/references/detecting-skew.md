@@ -1,29 +1,33 @@
 # Detecting skew and finding the key
 
-Skew is a statement about the _spread_ across shards. Every metric here must therefore carry
-a `shard` label, and the derived series that matters is a ratio, not a total.
+Skew is a statement about the distribution across shards. Every metric here needs a bounded
+`shard` identity (or an equivalent inventory join), and interpretation must account for
+capacity, replication role and offered work. A ratio is useful; no single ratio is enough.
 
 ## The four series and the ratio
 
-| Series       | Per-shard measure                       | Elevated max/mean means                        |
-| ------------ | --------------------------------------- | ---------------------------------------------- |
-| Request rate | ops/s accepted by the shard             | Traffic skew — the classic hot partition       |
-| p99 latency  | per-shard response-time percentile      | One shard is saturated or queueing             |
-| Storage      | bytes or row count held                 | Data skew — a large tenant or an unbounded key |
-| CPU / IOPS   | utilisation of the shard's own resource | Work skew, which need not track request count  |
+| Series       | Per-shard measure                        | Elevated max/mean means                                     |
+| ------------ | ---------------------------------------- | ----------------------------------------------------------- |
+| Request rate | offered, accepted and rejected ops/s     | Traffic skew or saturation-induced admission                |
+| p99 latency  | per-shard response-time percentile       | One shard is saturated or queueing                          |
+| Storage      | bytes or row count held                  | Data skew — a large tenant or an unbounded key              |
+| CPU / IOPS   | demand and utilization per capacity unit | Work skew, which need not track request count               |
+| Queue / lag  | queue age/depth and replica/change lag   | Service rate is below arrivals or migration cannot converge |
 
 The derived series to alert on:
 
 ```promql
-# Skew ratio: 1.0 is perfect, and anything sustained above your tolerance is the incident
+# Screening ratio for equal-capacity primary shards; guard an empty denominator.
 max(rate(shard_requests_total[5m])) by (cluster)
   /
 avg(rate(shard_requests_total[5m])) by (cluster)
 ```
 
-With N shards and one saturated, the **average** rises by roughly 1/N — invisible. The
-maximum rises by whatever the skew is. Only the ratio makes the condition monitorable, and
-it is worth a panel and an alert before any incident, because it costs nothing when healthy.
+With N equal shards and one saturated, excess in the fleet average is diluted. Pair the
+ratio with maximum utilization, top-1/top-5 traffic share, median or p90 shard, rejection
+rate and queue age. At low traffic, rates and per-shard p99 are noisy; require minimum sample
+counts and sustained windows. For unequal hardware or replica roles, divide demand by an
+empirically measured capacity weight before comparing shards.
 
 Two supporting views:
 
@@ -35,15 +39,15 @@ Two supporting views:
 
 ## Signatures
 
-| Signature                                                                        | Class                      | Repair direction                                                    |
-| -------------------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------- |
-| One shard: high read rate, high CPU, normal storage, writes normal               | **Read-hot key**           | Cache, request coalescing, or a read replica of that shard          |
-| One shard: high write rate, write latency and queue depth up, reads normal       | **Write-hot key**          | Salting, or splitting the key's own workload; a cache does nothing  |
-| One shard: storage far above the others, traffic near the mean                   | **Storage-hot**            | Dedicated shard, or a composite key that splits the large tenant    |
-| One shard: high everything, and it is always the same shard after a rehash       | **Structural key problem** | The shard key concentrates by design — `sharding-and-partitioning`  |
-| One shard: high everything, and the identity of the shard moves with each rehash | **Incidental collision**   | Genuine placement imbalance — raise V or re-check the hash function |
-| All shards: elevated together, ratio near 1                                      | **Overloaded fleet**       | Capacity or shedding, not skew                                      |
-| One shard: latency up, rate _down_                                               | **Saturated and shedding** | The shard has stopped accepting; measure queue depth and rejections |
+| Signature                                                                  | Class                      | Repair direction                                                    |
+| -------------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------- |
+| One shard: high read rate, high CPU, normal storage, writes normal         | **Read-hot key**           | Cache, request coalescing, or a read replica of that shard          |
+| One shard: high write rate, write latency and queue depth up, reads normal | **Write-hot key**          | Salting, or splitting the key's own workload; a cache does nothing  |
+| One shard: storage far above the others, traffic near the mean             | **Storage-hot**            | Dedicated shard, or a composite key that splits the large tenant    |
+| Same logical key dominates before and after remapping                      | **Intrinsic hot key**      | Split/cache/coalesce/isolate that key; remapping cannot divide it   |
+| Excess load follows different sets of ordinary keys after remapping        | **Placement imbalance**    | Inspect token/range weights, hash quality and virtual-node count    |
+| All shards: elevated together, ratio near 1                                | **Overloaded fleet**       | Capacity or shedding, not skew                                      |
+| One shard: latency up, rate _down_                                         | **Saturated and shedding** | The shard has stopped accepting; measure queue depth and rejections |
 
 The last row is the trap: a shard past its limit shows _lower_ request rate because it is
 failing or timing out, so a rate-only dashboard points at the wrong shard entirely. Always
@@ -61,6 +65,9 @@ A shard metric proves skew exists. The repair needs the key.
   rate and count only the sample: a key taking a large share of traffic dominates a sample of
   a few thousand requests, which is the only case you are looking for. Rare keys are
   invisible in the sample, and that is correct — they are not the problem.
+- **Sample by work as well as count.** One rare key may consume most bytes, CPU or lock time.
+  Weight or maintain separate sketches for requests, bytes and service time; correct for
+  head/tail sampling bias when extrapolating.
 - **Bound the counter.** A hot-key detector must have a fixed memory footprint or it becomes
   the outage. A count-min sketch, or a Space-Saving / "top-K with eviction" structure of
   fixed capacity, gives approximate top-K in constant space. A `ConcurrentHashMap<String,
@@ -69,6 +76,9 @@ LongAdder>` keyed by user input is an unbounded-growth bug with a plausible-look
 - **Never make the key a metric label.** Per-key labels multiply the time-series count by the
   key cardinality and will take down the metrics backend before they identify anything. Emit
   the top-K periodically as a log line, or expose it on an admin endpoint.
+- Treat keys as potentially sensitive tenant or user identifiers. Hash with a rotating,
+  access-controlled keyed digest or map them to an internal opaque identifier; restrict
+  retention and access to top-K output.
 
 ```java
 // Conceptual: sampled top-K, fixed capacity, off the hot path except for one branch.
@@ -88,3 +98,22 @@ if (ThreadLocalRandom.current().nextInt(SAMPLE_RATE) == 0) {
 - **Record the numbers you used.** The max/mean ratio at the time of the incident is the
   baseline against which the repair is judged, and it is unrecoverable afterwards if nobody
   wrote it down.
+
+## Troubleshooting path
+
+```text
+Tail latency/errors rise
+  ↓ compare offered, accepted and rejected work by shard and capacity
+One shard differs?
+  ├─ no → fleet capacity, dependency or common-mode incident
+  └─ yes → compare CPU/IO, queue, storage, replication lag and request mix
+             ↓
+           bounded top-K by count, bytes and service time
+             ↓
+           identify logical key/range/tenant and retry amplification
+             ↓
+           replay observed distribution; validate repair and migration invariants
+```
+
+Do not average per-shard percentiles to obtain a fleet percentile. Aggregate compatible
+histogram buckets or raw distributions with request weighting; see `latency-statistics`.

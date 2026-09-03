@@ -30,8 +30,9 @@ The failure this prevents is the adapter treated as a permanent answer to a cont
 An adapter that parses an application's log lines or metric output is coupled to an
 **unversioned interface**: the app's next release renames a field, the adapter keeps running
 and reporting, and the platform receives plausible, wrong data with no error anywhere in the
-chain. Where the application can be changed instead, changing it is the cheaper answer over
-any horizon longer than a quarter. The adapter is for when it cannot.
+chain. Where the application can be changed instead, compare its one-time migration cost with
+the adapter's recurring compatibility, resource and release burden. The adapter is strongest
+when the producer genuinely cannot be changed.
 
 ## Workflow
 
@@ -46,9 +47,9 @@ any horizon longer than a quarter. The adapter is for when it cannot.
 4. **Pin the input contract.** Capture a genuine sample of the app's output as a fixture, run
    the adapter against it in CI, and treat a format change as a breaking change in a
    dependency you do not control.
-5. **Bound the output.** Every label, field or metric name the adapter derives from app output
-   must come from an enumerable set; anything carrying an identifier is a cardinality
-   incident waiting for traffic.
+5. **Bound indexed dimensions.** Metric names and label values must come from controlled sets.
+   Log field values can be high-cardinality, but indexing, retention, privacy and redaction
+   policies must account for them; identifiers must not become metric labels.
 6. **Decide the behaviour when the adapter falls behind or dies** — does the application
    block, drop, or fill a volume until the pod is evicted? Pick one deliberately.
 7. **Test the output contract**, not the adapter's internals: fixture in, expected platform
@@ -95,10 +96,10 @@ Prefer changing the application instead when:
 - Every derived label must come from a bounded set. A path label containing identifiers, a
   customer ID, or an exception message creates one time series per distinct value; the series
   count is the label sets multiplied, not added. The sizing is `metrics-and-cardinality`.
-- **stdout is a pipe.** If nothing drains it, the kernel buffer (64 KiB by default on Linux)
-  fills and the next `write` blocks — logging turns into latency and then into a stall in the
-  application thread that logged. Any design where the adapter is the drain must state what
-  happens when the adapter stops draining.
+- **stdout ultimately has bounded buffering.** Linux pipe capacity and container-runtime
+  buffering vary by kernel and configuration. If the runtime or a custom adapter path stops
+  draining, writes can block or logs can be dropped; state which component owns buffering,
+  rotation and backpressure and verify it under backend outage.
 - A file handed over through an `emptyDir` is node ephemeral storage. An adapter that falls
   behind fills it, and the pod is evicted for local storage usage. Set a `sizeLimit`, rotate,
   and decide explicitly whether the application drops lines or blocks when the file cannot
@@ -106,9 +107,10 @@ Prefer changing the application instead when:
 - A metrics adapter that scrapes the app and re-exposes must publish **its own** success and
   the age of what it is serving. Serving a cached exposition without its age turns a dead
   application into a healthy-looking flat line.
-- A health adapter must exercise the protocol the legacy process actually speaks — a query it
-  really answers — not a TCP connect, which succeeds against a wedged process holding an open
-  socket. What each probe should answer, and how it is configured, is
+- A health adapter should exercise the cheapest operation that proves the condition Kubernetes
+  must act on. A TCP connect proves only listening/accept-path availability and can be adequate
+  for that narrow contract; it does not prove application semantics. What each probe should
+  answer, and how it is configured, is
   `kubernetes-service-lifecycle`.
 - Version the adapter's **output** schema and emit the version in the output. Consumers can
   then fail loudly on a change instead of silently mis-reading a renamed field.
@@ -116,6 +118,9 @@ Prefer changing the application instead when:
   semantics still differ — one service's `request_duration` includes queueing and another's
   does not. Uniform shape is not uniform meaning, and a dashboard that assumes otherwise
   compares two different quantities.
+- Treat translation as a data boundary: redact secrets and personal data before export, use
+  least-privilege access to shared files/endpoints, authenticate remote sinks, and test malformed
+  or adversarial input so one record cannot crash the parser or amplify output without bound.
 
 ## References
 

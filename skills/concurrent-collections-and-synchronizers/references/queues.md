@@ -15,9 +15,9 @@ From the `BlockingQueue` javadoc (Java SE 25):
 
 Which insert form is a design decision, not a style preference:
 
-- **`offer(e, timeout, unit)` — the right default for a service.** It bounds the backpressure: a
-  `false` is a shed-load, spill-to-disk or 503 decision, and it carries a deadline. This is the
-  one senior engineers under-use.
+- **`offer(e, timeout, unit)`** fits a service path that has a finite admission budget and an
+  explicit policy for `false` (shed, degrade, retry elsewhere, or fail). It is not a universal
+  default: waiting consumes the caller's remaining deadline and can relocate a queue upstream.
 - `put(e)` — unconditional backpressure. Correct when the producer's own thread is the throttle
   and nothing bounds the enqueue path.
 - `offer(e)` — fail-fast. Correct only where dropping is genuinely acceptable and counted
@@ -100,8 +100,7 @@ the API has for noticing overload at once: `put` never blocks, `offer` never ret
 Where it hides: the no-arg `new LinkedBlockingQueue<>()`; `Executors.newFixedThreadPool(n)` and
 `newSingleThreadExecutor()` (both use one — pool internals belong to executors-and-task-lifecycle,
 the queue choice is ours); `PriorityBlockingQueue`, `DelayQueue`, `LinkedTransferQueue` and
-`ConcurrentLinkedQueue`, none of which has a bounded variant; and Spring Boot's default task
-executor queue capacity.
+`ConcurrentLinkedQueue`, none of which has a bounded variant.
 
 What an engineer observes, in order:
 
@@ -137,8 +136,9 @@ void consumeInBatches(BlockingQueue<Task> q, int maxBatch) throws InterruptedExc
 }
 ```
 
-`drainTo(list)` without `maxElements` on a deep queue materialises the whole backlog in memory —
-a latency spike, then an OOM. The bounded overload exists for that reason.
+`drainTo(list)` without `maxElements` on a deep queue can materialise the whole backlog in one batch,
+causing a latency/allocation spike and possibly memory exhaustion. Use the bounded overload when
+batch memory and processing time must be controlled.
 
 ## LinkedTransferQueue: what it adds, and the JDK 21–25 bug
 
@@ -166,12 +166,12 @@ if (t == null) {
 ```
 
 Symptom: a consumer loop that idles or exits with items still queued, or a "drained" assertion that
-fails only under load and never reproduces in a unit test. Prefer `LinkedBlockingQueue`; if the
-class is required, retry the poll or gate on `Runtime.version().feature() >= 26`.
+fails only under load. Prefer another queue when transfer-specific operations are unnecessary. If
+the class is required, check the exact runtime build and backport status and make work completion an
+explicit protocol rather than a single `poll() == null` observation.
 
 Related: JDK-8301341 ("LinkedTransferQueue does not respect timeout for poll()") has fix version
-22, so on JDK 21 the timed `poll` may also over- or under-wait. Treat `LinkedTransferQueue` as the
-least battle-tested member of the family.
+22, so on affected JDK 21 builds the timed `poll` may also over- or under-wait.
 
 ## DelayQueue: the contract violation is deliberate
 
@@ -214,9 +214,15 @@ Unbounded, non-blocking, Michael & Scott algorithm; weakly consistent iterators;
 (`addAll`, `removeIf`, `forEach`) are not atomic. The javadoc is explicit that **`size()` is NOT a
 constant-time operation** — it traverses. `LinkedTransferQueue` carries the identical warning.
 
-The anti-pattern this creates: exporting `size()` as a gauge scraped every 15 seconds on a queue
-holding 100k elements adds a 100k-node pointer chase to the metrics path, on a queue chosen for
-being lock-free. The flame graph shows a large sample fraction in `ConcurrentLinkedQueue.size`
-under the scrape thread, and the cost grows with the very backlog you were trying to observe. Use
-`isEmpty()` — it is `first() == null`, so amortised O(1) rather than a traversal, though `first()`
-does walk past self-linked and already-matched nodes — or maintain a `LongAdder` alongside.
+The anti-pattern this creates is exporting `size()` as a frequently scraped gauge on a large queue:
+the metrics cost grows with the backlog being observed. Use `isEmpty()` only for an observational
+empty/non-empty hint, or maintain an explicitly approximate counter alongside while accounting for
+failed offers/removals and drift.
+
+## Authoritative references
+
+- [Java 25 `BlockingQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/BlockingQueue.html)
+- [Java 25 `LinkedTransferQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/LinkedTransferQueue.html)
+- [Java 25 `DelayQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/DelayQueue.html)
+- [OpenJDK JDK-8371740](https://bugs.openjdk.org/browse/JDK-8371740)
+- [OpenJDK JDK-8301341](https://bugs.openjdk.org/browse/JDK-8301341)

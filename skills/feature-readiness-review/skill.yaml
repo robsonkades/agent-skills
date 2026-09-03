@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-readiness-review
-version: 1.0.0
+version: 1.1.0
 description: >-
   The two gates around implementing a feature: before, checking that nothing implementation
   depends on is still unresolved, and after, checking that what was built is what was agreed and

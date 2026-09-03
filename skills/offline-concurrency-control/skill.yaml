@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: offline-concurrency-control
-version: 1.1.0
+version: 1.2.0
 description: >-
   Protecting data from concurrent edits that span more than one transaction: optimistic
   offline lock, pessimistic offline lock, coarse-grained locking at the aggregate, and

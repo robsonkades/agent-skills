@@ -2,43 +2,46 @@
 
 ## Situation to solution
 
-| Situation                                                  | Use                                        |
-| ---------------------------------------------------------- | ------------------------------------------ |
-| Serving static files, proxying raw bytes                   | `transferTo` / `transferFrom`              |
-| Repeated or random access to one large file                | `MappedByteBuffer` via `FileChannel.map`   |
-| 100K+ connections, syscalls dominating `strace -c`         | Netty io_uring — route (a)                 |
-| Environment forbids third-party native binaries            | FFM binding — route (b), accept the upkeep |
-| A tested C wrapper over `liburing` already exists in-house | Own JNI — route (c)                        |
-| Unsure whether syscalls are the bottleneck at all          | Measure first; choose nothing yet          |
+| Situation                                                   | Candidate                     | Validate before adopting                                                       |
+| ----------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------ |
+| File-to-socket or file-to-file transfer                     | `transferTo` / `transferFrom` | channel pair, partial progress, fallback path and CPU per byte                 |
+| Repeated/random access to a large file                      | `MappedByteBuffer`            | page-fault pattern, address-space/native-memory budget and unmapping lifecycle |
+| Many asynchronous operations with transition/queue overhead | Netty io_uring                | kernel/native compatibility, batching evidence, tail latency and fallback      |
+| Third-party native artifact is prohibited                   | FFM binding                   | whether binding `liburing` is acceptable; ABI, ownership and support burden    |
+| Tested native wrapper already exists                        | JNI wrapper                   | packaging, ABI matrix, native-memory safety and operational ownership          |
+| Bottleneck is unknown                                       | No mechanism yet              | profile and trace the representative workload first                            |
 
-The first two rows need no dependency and no minimum kernel. Exhaust them before reading on.
+Connection count alone is not a decision threshold. epoll can perform well at high connection
+counts when few descriptors are active, while io_uring can help at lower counts when operation
+mix, batching and storage/network behavior fit it.
 
-## The only three routes to io_uring from a JVM
+## Three common JVM routes to io_uring
 
-| Route | Where the binding lives                                                 | Adoption cost                                                              |
-| ----- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| (a)   | Netty `netty-transport-native-io_uring` — C compiled against `liburing` | Low: swap `EventLoopGroup` and `Channel`, keep the rest of the pipeline    |
-| (b)   | Your own `java.lang.foreign` downcalls (JEP 454, final in JDK 22)       | High: you reimplement what `liburing` does, kernel struct layouts included |
-| (c)   | Your own JNI wrapper plus `.so`                                         | High: native build, multiplatform packaging and memory lifetime are yours  |
+| Route | Where the binding lives                      | Adoption cost                                                                                   |
+| ----- | -------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Netty | `netty-transport-native-io_uring`            | Lowest when the application already uses a compatible Netty line                                |
+| FFM   | Downcalls to `liburing` or direct kernel ABI | High: layouts, ownership, callbacks, errors and concurrency become application responsibilities |
+| JNI   | Owned wrapper/library                        | High: native build, ABI matrix, packaging, lifetime and crash diagnostics                       |
 
-There is no fourth route. Route (b)'s binary layouts (`io_uring_sqe`, `io_uring_cqe`,
-`io_uring_params`) are defined by the kernel and have gained fields between kernel versions, so
-the binding needs review on kernel upgrades — that coupling is why (a) is the default.
+These are common routes, not an exhaustive law: another library or sidecar can own the native
+interface. An FFM binding to `liburing` avoids reproducing all of liburing, whereas direct
+syscall bindings inherit more kernel-ABI coupling. Record which ABI is being supported.
 
-## JDK-native zero-copy versus io_uring
+## JDK transfer APIs versus io_uring
 
-| Property                       | `transferTo` / `MappedByteBuffer` | io_uring (a/b/c)                      |
-| ------------------------------ | --------------------------------- | ------------------------------------- |
-| Part of the JDK, no dependency | Yes                               | No                                    |
-| Reduces CPU copies             | Yes (`sendfile` / `mmap`)         | Only with the `_ZC` opcodes           |
-| Reduces syscall count          | No — still one syscall per call   | Yes — this is the whole point         |
-| Minimum kernel                 | None                              | Linux 5.1; 6.0-era for zero-copy send |
-| Stable public JDK API          | Yes, since JDK 1.4                | None exists                           |
+| Property                      | `transferTo` / mapping                                                                   | io_uring transport                                                                         |
+| ----------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Stable JDK API                | Yes                                                                                      | No JDK-native transport through JDK 25                                                     |
+| Eliminates payload copies     | May avoid specific copies; mapping alone does not guarantee an end-to-end copy-free path | Ordinary reads/writes copy; selected zero-copy/splice operations may avoid specific copies |
+| Amortizes syscall transitions | Not a general property                                                                   | Possible through batching/shared rings; workload- and implementation-dependent             |
+| Portability                   | JDK API is portable; optimization is platform-dependent                                  | Linux-specific with kernel and native-library constraints                                  |
+| Failure surface               | Partial/zero transfer, fallback implementation, mapping faults/lifetime                  | Queue saturation, native ABI/artifact, unsupported opcodes, fallback and native memory     |
+
+The `FileChannel` contract permits an implementation-specific optimized path; it does not
+promise `sendfile(2)` or `splice(2)`. Correct code handles partial progress and validates the
+actual implementation on its deployment JDK and operating system.
 
 ## Netty API era map
-
-Mixing these two columns is the most common failure, and it surfaces at runtime as
-`NoSuchMethodError` or `ClassNotFoundException`, never at compile time.
 
 | 4.1.x incubator (`IOUring*`) | 4.2 GA (`IoUring*`, `io.netty.channel.uring`)                |
 | ---------------------------- | ------------------------------------------------------------ |
@@ -48,39 +51,44 @@ Mixing these two columns is the most common failure, and it surfaces at runtime 
 | `IOUringChannelOption`       | `IoUringChannelOption`                                       |
 | `IOUring.isAvailable()`      | `IoUring.isAvailable()`                                      |
 
-If the project is deliberately pinned to a 4.1.x release, the all-caps spelling is correct
-_for that version_. Confirm which era you are on against the BOM before writing a line.
+Mixed source and dependencies may be rejected by compilation or may fail during linkage/class
+loading. Resolve the dependency tree and BOM; do not diagnose every mismatch as a runtime-only
+problem.
 
-## Bootstrap with the fallback in place
+## Bootstrap with a coherent fallback
 
 ```java
 EventLoopGroup group;
+Class<? extends ServerChannel> serverChannel;
+
 if (IoUring.isAvailable()) {
-    group = new MultiThreadIoEventLoopGroup(
-        Runtime.getRuntime().availableProcessors(), IoUringIoHandler.newFactory());
+    group = new MultiThreadIoEventLoopGroup(IoUringIoHandler.newFactory());
+    serverChannel = IoUringServerSocketChannel.class;
+} else if (Epoll.isAvailable()) {
+    log.warn("io_uring unavailable", IoUring.unavailabilityCause());
+    group = new MultiThreadIoEventLoopGroup(EpollIoHandler.newFactory());
+    serverChannel = EpollServerSocketChannel.class;
 } else {
-    log.warn("io_uring unavailable: {}", IoUring.unavailabilityCause().getMessage());
-    group = Epoll.isAvailable()
-        ? new MultiThreadIoEventLoopGroup(EpollIoHandler.newFactory())
-        : new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
+    log.warn("native transports unavailable; using NIO");
+    group = new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
+    serverChannel = NioServerSocketChannel.class;
 }
 
-new ServerBootstrap().group(bossGroup, group)
-    .channel(IoUringServerSocketChannel.class)
-    .option(ChannelOption.SO_BACKLOG, 4096)            // generic, not IoUringChannelOption
-    .childOption(IoUringChannelOption.TCP_FASTOPEN, 5) // this one is io_uring-specific
+new ServerBootstrap()
+    .group(bossGroup, group)
+    .channel(serverChannel)
+    .option(ChannelOption.SO_BACKLOG, 4096)
     .childOption(ChannelOption.TCP_NODELAY, true);
 ```
 
-One event loop per CPU is a starting point to validate under load, not a rule.
+The example deliberately pairs each event-loop implementation with its matching channel. Tune
+thread counts and backlog from saturation, accept-queue and latency evidence rather than CPU
+count alone. Ensure `bossGroup` follows the same lifecycle and shutdown policy.
 
-## The real fields of `IoUringChannelOption`
+## Channel options are versioned API
 
-`TCP_CORK`, `TCP_NOTSENT_LOWAT`, `TCP_KEEPIDLE`, `TCP_KEEPINTVL`, `TCP_KEEPCNT`,
-`TCP_USER_TIMEOUT`, `IP_FREEBIND`, `IP_TRANSPARENT`, `TCP_FASTOPEN`, `TCP_DEFER_ACCEPT`,
-`TCP_QUICKACK`, `MAX_DATAGRAM_PAYLOAD_SIZE`, `IO_URING_BUFFER_GROUP_ID`,
-`IO_URING_WRITE_ZERO_COPY_THRESHOLD`, `IP_MULTICAST_ALL`.
-
-`SO_BACKLOG` is absent from that list because it is a generic socket option valid on every
-Netty transport. `IO_URING_WRITE_ZERO_COPY_THRESHOLD` is the write size above which Netty
-switches to `IORING_OP_SEND_ZC`.
+`SO_BACKLOG` is a generic `ChannelOption`, not an `IoUringChannelOption`. io_uring-specific
+options, including any zero-copy threshold, vary by Netty release and operation support. Inspect
+the exact dependency version and generated API docs before configuring them; do not copy a field
+list from another Netty era. When zero-copy is enabled, test unsupported-kernel fallback,
+completion ownership and delayed buffer reuse.

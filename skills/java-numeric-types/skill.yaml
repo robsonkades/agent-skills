@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: java-numeric-types
-version: 1.1.0
+version: 1.2.0
 description: >-
   Choosing and using Java's numeric types correctly: why float and double cannot represent
   decimal amounts, BigDecimal construction, scale, rounding and the equals/compareTo split,
   integer overflow and the exact-arithmetic methods, primitives versus boxed types, the
-  Integer cache that makes == work for small values and fail for large ones, unboxing NPEs,
+  boxed-value caching that makes == appear to work for some values, unboxing NPEs,
   boxing cost in bulk paths, and what happens to a numeric value when it crosses JSON, a
   database column or a JavaScript client. Use when money or any exact quantity is held in
   double or float, when new BigDecimal(double) appears, when divide() has no rounding mode,

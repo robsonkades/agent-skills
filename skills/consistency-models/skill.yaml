@@ -1,14 +1,14 @@
 schemaVersion: 1
 
 name: consistency-models
-version: 1.2.0
+version: 1.3.0
 description: >-
-  Choosing a consistency model as an engineering decision: the ladder from linearizable
-  through sequential, causal and the session guarantees (read-your-writes, monotonic reads)
-  to eventual, stated as what a client can and cannot observe; CAP stated correctly — the
-  choice between C and A exists only while partitioned — and PACELC as the more useful
-  framing; and where the surprise lives, from a replica serving a stale read to the writer
-  that just wrote to transaction isolation being orthogonal to distributed consistency. Use
+  Choosing distributed consistency guarantees as an engineering decision: linearizability,
+  sequential/causal ordering, session guarantees (read-your-writes, monotonic reads), bounded
+  staleness and eventual convergence, stated as observable contracts rather than a false total
+  ladder; CAP stated correctly—the
+  choice between C and A exists only while partitioned—and PACELC, replica paths and
+  transaction isolation boundaries. Use
   when a user cannot see their own write, when a read after a write returns the previous
   value, when a design names a model instead of an observable requirement, when reads are
   being routed to replicas, or when someone cites "pick two". Does not cover multi-service

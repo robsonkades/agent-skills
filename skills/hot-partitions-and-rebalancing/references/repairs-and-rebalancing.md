@@ -4,26 +4,29 @@
 
 | Repair                  | Selected when                                                                   | Price                                                                    |
 | ----------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Request coalescing      | Many identical concurrent reads of one key                                      | None to correctness; only helps while concurrency is high                |
+| Request coalescing      | Many semantically identical concurrent reads                                    | Shared failure/latency/cancellation; auth and consistency must be keyed  |
 | Cache in front of key   | Read-hot, value tolerates a TTL's staleness                                     | Staleness, invalidation, memory — `caching-strategies` owns the decision |
-| Read replica of a shard | Read-hot and the value must be fresher than a cache allows                      | Replication lag becomes observable — `consistency-models`                |
+| Read replica of a shard | Read-hot and replica consistency/lag satisfies the read contract                | Lag and stale routing become observable — `consistency-models`           |
 | Key salting             | Write-hot single key, reads rare or aggregate                                   | Every read of that key fans out to S partitions, permanently             |
 | Dedicated shard         | One named, persistently large or hot tenant; the set is small and slow-changing | An operational special case in routing, capacity and runbooks            |
 | Composite shard key     | One tenant is too large for any shard and its data subdivides naturally         | A migration — `sharding-and-partitioning`                                |
 | Partition split         | Store supports online split and the hot region is a contiguous range            | A move while serving; see below                                          |
 | Per-key rate limit      | Immediate mitigation, or the key is abusive rather than popular                 | Rejected requests — `rate-limiting-and-load-shedding`                    |
 
-Coalescing is first in the table on purpose: it is the only repair with no staleness and no
-fan-out cost, and it is frequently sufficient for a read-hot key on its own.
+Coalescing can remove burst duplication without TTL staleness or storage, but it is not free:
+one slow request delays all waiters and one failure fans out to all of them. Include tenant,
+authorization scope, consistency level and representation in the key; decide whether one
+waiter's cancellation cancels shared work; bound waiter count and execution time.
 
 ## Salting, written out
 
 Split one logical key into S physical keys:
 
 ```java
-// Write: pick a sub-key. Round-robin per writer thread spreads better than random at low
-// rates; random is adequate at high rates and needs no state.
-String writeKey = key + '#' + ThreadLocalRandom.current().nextInt(SPLIT_FACTOR);
+// Write: a stable entity/event id gives deterministic retry routing. Random selection needs
+// the chosen bucket to be persisted with the idempotency record.
+int bucket = Math.floorMod(stableHash(eventId), SPLIT_FACTOR);
+String writeKey = key + '#' + bucket;
 
 // Read: every sub-key must be consulted and the results merged.
 List<Entry> merged = IntStream.range(0, SPLIT_FACTOR)
@@ -40,8 +43,11 @@ Consequences to accept before shipping it:
 - **S is baked into the data.** Changing S later means rewriting the key's rows; treat it
   like a shard key and choose the smallest S that carries the write rate.
 - **Only append-style workloads salt cleanly.** Counters, event streams and append-only lists
-  merge trivially. A single mutable value does not: S copies of one value is S values that
-  can disagree.
+  can have defined merges, but global ordering, uniqueness and atomic aggregate checks no
+  longer come for free. A single mutable value does not: S copies can disagree.
+- **Retries must return to the same bucket.** Randomly choosing again can duplicate an event
+  across buckets and defeats per-bucket idempotency. Persist the choice or derive it from a
+  stable operation/entity identifier.
 - **Salt selectively.** Keep the hot-key list in configuration that can change without a
   deploy, and salt only those keys; the alternative is charging every read in the system the
   fan-out to fix one key.
@@ -61,24 +67,27 @@ Sequence:
 3. **Stream the changes since the snapshot** to the new owner until the lag is small and
    stable. "Small and stable" is the go/no-go signal — a lag that is not converging means the
    cut-over will need a longer freeze than planned.
-4. **Freeze writes to that partition only**, briefly. The old owner rejects writes with a
-   retryable error; clients retry, and the freeze becomes latency rather than errors provided
-   it is shorter than the client timeout — that budget is `timeouts-and-deadlines`.
+4. **Establish the cutover fence.** Stop admission at the old epoch (or use a store-supported
+   atomic ownership transition), drain accepted writes and persist the final change
+   position. Clients may observe retryable errors, deadline expiry or latency; a short freeze
+   does not guarantee success, so preserve idempotency and remaining deadlines.
 5. **Drain the remaining changes**, verify by comparison (row counts and a checksum over the
    key range, not a spot check).
-6. **Publish version v+2** with the new owner authoritative. **The old owner must now reject
-   any write stamped with a map version below v+2.** This is the fencing rule and it is not
-   optional: a client that was paused in GC or blocked on a slow call may still be holding
-   v+1 and will otherwise write to a store nobody reads. The general mechanism is
+6. **Publish version v+2** with the new owner authoritative. Every commit path validates the
+   current ownership epoch; the old owner rejects all mutations for the moved partition,
+   including a request carrying a newer map but routed to the wrong endpoint. A paused client
+   or owner must be unable to commit. The general mechanism is
    `distributed-locks-and-leases`.
-7. **Unfreeze, watch, then delete the source copy** — as a separate, later step, so a bad
-   cut-over is a rollback rather than a restore.
+7. **Unfreeze, reconcile, and retain the source under quarantine.** Delete it only after the
+   rollback window and restore evidence pass. The old copy is not automatically a rollback:
+   after cutover it lacks new writes. Roll back by assigning a new epoch and reverse-copying
+   or replaying the post-cutover log, never by reactivating v+1.
 
 Stop-the-world migration — reject writes, copy, resume — is the correct choice when the
-partition is small enough that the freeze fits inside the client timeout budget, and it is
-dramatically simpler. Choose it deliberately rather than defaulting to live migration
-because live sounds safer; the live path has more states, and every one of them needs the
-version check.
+partition is small enough for the agreed maintenance/degraded-service budget and lost
+availability is acceptable. It is simpler than live migration, but client timeouts do not
+make it transparent. Choose deliberately; every live state needs an epoch check and a
+restartable, idempotent transition.
 
 ## Throttling and hysteresis
 
@@ -105,3 +114,15 @@ version check.
 - For the migration path, inject the failure that matters: pause a client between reading the
   shard map and issuing its write, complete the cut-over, then release it. Assert the write is
   rejected. A migration test that does not include a stale writer has not tested the fencing.
+- Crash and restart the controller after every state transition. Resume from a durable
+  migration record without repeating destructive steps; verify that source and target
+  checksums use a stable snapshot/cut position rather than racing live writes.
+- Model migration bandwidth and write amplification against foreground SLO headroom. Abort
+  or reduce rate when replication lag, queue age or error-budget burn crosses its guardrail;
+  do not let the controller optimize balance by violating durability.
+
+## Primary references
+
+- [Apache Kafka operations: partition reassignment throttling](https://kafka.apache.org/documentation/#basic_ops_cluster_expansion)
+- [Amazon DynamoDB adaptive capacity and split-for-heat behavior](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
+- [Google Cloud Spanner: schema design and hotspot avoidance](https://cloud.google.com/spanner/docs/schema-design)

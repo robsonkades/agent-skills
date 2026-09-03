@@ -1,112 +1,172 @@
 ---
 name: concurrency-limiting-and-bulkheads
 description: >
-  Bounding in-flight work with semaphores and bulkheads: the difference between a
-  concurrency limit, a rate limit and a queue limit, why Little's Law is the only thing
-  connecting them, placing one limit per scarce resource, partitioning so one caller or
-  dependency cannot consume the whole budget, and why a Semaphore bounds one JVM and not a
-  cluster. Use when a virtual-thread executor replaced a pool and nothing bounds the fan-out
-  any more, when a semaphore is described as a rate limiter, when one global limit protects
-  several dependencies, when acquire has no timeout, when a permit is released outside a
-  finally block, when a limit was divided by the replica count and autoscaling changed it,
-  or when a downstream reports more concurrency than the limit allows. Not the queueing
-  arithmetic (littles-law-and-queueing), database pool sizing (connection-pool-sizing),
-  retry amplification (retries-and-backoff), how long to wait (timeouts-and-deadlines), or
-  demand inside a reactive pipeline (reactive-backpressure).
+  Engineer process-local concurrency limits and bulkheads around scarce resources, with explicit
+  admission deadlines, permit ownership, weighted work, partitioning, fairness, observability and
+  overload validation. Distinguishes concurrency, rate and queue limits and the assumptions behind
+  Little's Law. Use after virtual-thread migrations, during downstream saturation, or when local
+  limits leak, over-release, double-queue or fail to compose across replicas.
 ---
 
 # Concurrency Limiting and Bulkheads
 
-## Purpose
+## Purpose and boundary
 
-Make the amount of work in flight a number the system chooses, rather than a number that
-emerges from whatever the callers happen to send. Every stable system has such a number
-somewhere; the question is only whether it was designed, inherited from a thread pool, or
-discovered during an incident.
+Bound the work simultaneously holding or competing for a scarce resource inside one JVM. A limit is
+correct only when it names the protected resource, admission location, waiting budget, ownership,
+rejection behavior and scope.
 
-This matters more after adopting virtual threads, because the thread pool that used to
-impose the limit as a side effect is gone. Removing it was the point; failing to replace it
-is how a migration turns a slow service into a broken dependency.
+This Category D skill owns process-local mechanisms. Cluster-wide allocation, rate limiting and
+distributed leases cross process boundaries and belong to Category F; this skill detects that
+handoff and links to `rate-limiting-and-load-shedding` and `distributed-locks-and-leases` rather than
+duplicating their protocols.
 
-## Workflow
+## Design workflow
 
-1. **Name the scarce resource.** Not "the service" — the specific thing that runs out: a
-   connection pool, a downstream quota, a licence count, memory held per in-flight request.
-2. **Choose which of the three limits you actually need.** They are not
-   interchangeable and most systems need two of them.
-3. **Put the limit immediately around the resource**, not at the edge of the application. A
-   limit at the edge protects everything equally badly.
-4. **Size it** from the resource's own capacity and Little's Law, then check the implied
-   rate at both the fast and the slow latency the dependency actually exhibits.
-5. **Bound the wait for a permit.** `tryAcquire(timeout)` converts overload into a fast,
-   countable rejection; a plain `acquire()` converts it into an unbounded queue with no
-   metric.
-6. **Partition it** if one tenant, one endpoint or one dependency being slow must not
-   consume the budget of the others.
-7. **Multiply by the replica count** and compare against what the dependency published. A
-   per-JVM limit is a per-JVM limit.
+1. Name the constrained unit: calls, connections, bytes, file handles, CPU tasks, tenant share, or a
+   provider quota.
+2. Decide whether the requirement is simultaneous work, arrivals per time, or waiting backlog.
+3. Inventory existing gates and queues from ingress to resource. Avoid accidental serial limits and
+   double queueing.
+4. Establish a capacity envelope from measurement/provider tests, required throughput, service-time
+   distribution, replicas and safety headroom.
+5. Place a resource-local gate before costly allocation/launch. Add hierarchical ingress/tenant
+   limits only when they protect a distinct failure domain.
+6. Define permit weight, acquisition deadline, interruption, rejection/degradation and retry policy.
+7. Load-test overload, slow dependency, cancellation, release failure, autoscaling and skew; validate
+   useful throughput, tail latency, memory, fairness and dependency health.
 
-## The three limits
+## Do not confuse the controls
+
+| Control         | Bounds                           | Typical mechanism                              | Does not guarantee                                                |
+| --------------- | -------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------- |
+| concurrency     | simultaneous admitted work       | semaphore, connection pool, fixed CPU executor | arrivals per time or bounded waiting                              |
+| rate            | arrivals/operations per interval | token/leaky bucket                             | simultaneous work when latency changes                            |
+| queue/admission | waiting work or bytes            | bounded queue/window plus rejection            | downstream concurrency unless connected to a worker/resource gate |
+
+Little's Law, `L = λW`, relates long-run average in-system work, throughput and average residence
+time for a stable, conserved population. It is not a per-request identity, a tail-latency formula or
+a guarantee under overload/non-stationary traffic. Use it as a consistency check alongside burst,
+variance and queueing analysis.
+
+## Placement and composition
+
+A resource-local limit prevents one slow dependency from consuming capacity intended for another.
+An edge/global limit can still be valuable for heap, CPU or total-request protection. These are
+hierarchical bounds with different ownership, not “one limit is always wrong.”
 
 ```text
-Concurrency limit   how many at once        Semaphore, pool size, scope of in-flight work
-Rate limit          how many per second     token bucket, leaky bucket, the dependency's quota
-Queue limit         how much waiting work   bounded queue + a rejection policy
+ingress memory/CPU admission
+  -> tenant or priority partition (optional)
+    -> dependency-specific concurrency gate
+      -> client connection pool/provider quota
 ```
 
-Little's Law is the only bridge between the first two: `rate = concurrency ÷ latency`. Ten
-permits allow 1 000 requests per second at 10 ms latency and 10 per second at 1 s latency —
-the same limit, two orders of magnitude apart, decided by the dependency's behaviour rather
-than yours. That is why **a semaphore is not a rate limiter**, and why a system that must
-honour "1 000 calls per minute" needs a token bucket regardless of how many permits it holds.
+If a client/connection pool already limits concurrency, determine whether it also bounds its wait
+queue and exposes a usable deadline/rejection signal. A smaller outer gate may reserve headroom and
+avoid allocating request state while waiting. An identical outer semaphore often adds a second queue,
+but can be justified for observability/admission only if the ownership and order are explicit.
 
-## Rules
+Acquire before starting the protected operation, not after obtaining its scarce connection or
+allocating its large buffer. Do not hold one resource's permit while waiting for another without a
+global ordering/cycle analysis.
 
-- One limit per scarce resource, placed next to it. A single global limit shared by three
-  dependencies means the slowest one starves the other two — which is precisely the failure
-  a bulkhead exists to prevent.
-- **Always `try { … } finally { release(); }`.** A permit leaked on an exception path is
-  permanently gone; the limit silently ratchets down until nothing gets through, and the
-  symptom appears hours after the code that caused it.
-- Use `acquire()` (interruptible), not `acquireUninterruptibly()`, on any cancellable path,
-  or a cancelled request keeps waiting for a permit it will never use.
-- `tryAcquire(timeout, unit)` is usually the right call: it makes the wait explicit, and its
-  `false` return is the shedding decision. Count it. An unbounded `acquire()` on a request
-  path is an invisible queue in front of a visible one.
-- `Semaphore(1)` is **not** a lock: it is not reentrant, so a re-entering call deadlocks
-  against itself, and any thread may release a permit it never acquired. For mutual
-  exclusion use `synchronized` or `ReentrantLock`.
-- Fairness (`new Semaphore(n, true)`) gives FIFO and prevents starvation at a measurable
-  throughput cost. Default barging is right for uniform short work; fairness earns its cost
-  when hold times vary widely and tail latency matters.
-- If the resource already has a bound — a connection pool, an HTTP client's
-  `maxConnectionsPerRoute` — that bound is the limit. Wrapping it in a semaphore of the same
-  size adds a second queue and a second place to be wrong; a semaphore _smaller_ than the
-  pool is a deliberate reservation, and worth saying so in a comment.
-- A `Semaphore` bounds one JVM. Actual concurrency at the dependency is
-  `limit × replicas`, and that product changes every time the deployment scales. Design the
-  number against the product, and re-derive it when the replica count changes.
-- Retries consume permits. A limit plus an aggressive retry policy under overload amplifies
-  load rather than shedding it; the retry budget belongs to `retries-and-backoff` and has to
-  be decided together with this number.
-- Instrument four things: permits available, time spent waiting for a permit, rejections,
-  and the ratio of the two ends (`inFlight / limit`). The wait time rises before the
-  rejections start, which makes it the alertable signal.
-- A limit is only load shedding if what happens on rejection is defined: a 429 with
-  `Retry-After`, a cached answer, a degraded response. "Throw and let it bubble" turns a
-  designed limit into a 500.
-- Adaptive limits (AIMD, gradient algorithms) are worth reaching for only when the
-  dependency's ceiling genuinely varies and you have latency feedback to drive them. They
-  replace one number you must maintain with a controller you must tune; start with the
-  static number and a metric.
+## Permit ownership
+
+- Acquire interruptibly or with a remaining monotonic deadline on cancellable paths.
+- Enter `try/finally` only after acquisition succeeds; release exactly once in `finally`.
+- A semaphore has no owner: any thread can release and over-release silently raises capacity. Wrap it
+  behind an API that makes the permit a scoped capability.
+- `Semaphore(1)` is not a reentrant/owned mutex. Use a lock when mutual exclusion and ownership are
+  the contract.
+- Bulk `acquire(n)` can create head-of-line blocking; large weighted requests can starve or starve
+  small requests depending on fairness and arrival pattern.
+- Cancellation while waiting must not release an unacquired permit; cancellation after acquisition
+  must still execute cleanup.
+
+Fair semaphores order acquisition at documented internal points, not by wall-clock method arrival;
+untimed `tryAcquire` can barge even on a fair semaphore. Fairness can reduce starvation/variance at a
+throughput cost, but it does not solve tenant isolation or priority inversion. Measure the actual
+hold-time distribution and queue age.
+
+## Selecting a static limit
+
+Do not choose the arithmetic minimum of “capacity, share, average demand” mechanically. Required
+average concurrency `λW` at target throughput would imply full utilization if used with no headroom;
+variability then creates queueing. Instead:
+
+1. measure dependency throughput/latency/error behavior at increasing concurrency;
+2. identify the knee before tail/error/resource collapse;
+3. cap by contractual/provider and local resource ceilings;
+4. reserve headroom for variance, other clients, rolling overlap and failure recovery;
+5. verify that the chosen limit can meet required load without violating the SLO;
+6. test slow-tail and burst scenarios, not just average service time.
+
+Adaptive control is appropriate only with a trustworthy feedback signal, minimum/maximum bounds,
+stability analysis, exploration policy and safe behavior when telemetry fails. A controller can
+oscillate or chase downstream latency caused by unrelated load; start static when the ceiling is
+stable and revisit from evidence.
+
+## Bulkhead partitioning
+
+Partition by the failure domain that must be isolated: dependency, tenant, operation cost, priority,
+or workload class. Partitioning trades utilization for isolation. A shared reserve/borrowing policy
+recovers utilization but must prevent one partition from permanently consuming it.
+
+Per-tenant maps require lifecycle/cardinality control; otherwise the bulkhead itself becomes an
+unbounded memory structure. Hashing tenants into cells bounds state but permits noisy-neighbor
+collisions. Dedicated limits fit a small set of high-value tenants; long-tail tenants can share a
+bounded pool.
+
+## Virtual threads
+
+`newVirtualThreadPerTaskExecutor()` removes platform-thread scarcity; it does not create resource
+capacity or admission control. It can still reject after shutdown and fail under resource
+exhaustion. Audit every old fixed pool to identify which resource its size had accidentally bounded,
+then replace that side effect with resource-specific gates. Do not pool virtual threads merely to
+recreate platform-thread scarcity.
+
+## Operability
+
+Measure by named limiter/resource:
+
+- configured/effective limit and any dynamic changes;
+- requested weight, successful/failed/interrupted acquisition and rejection reason;
+- wait duration and queue age distribution;
+- acquired/in-flight and hold duration;
+- over-release/leak conservation violations;
+- downstream concurrency, latency, errors and late work;
+- per-partition saturation and unused capacity.
+
+`availablePermits()` is a momentary value, not proof of in-flight count or correctness. Maintain
+accepted/acquired/released lifecycle counters and reconcile with known dynamic resizing. Alert on SLO
+risk using wait/queue age, rejection and downstream health; no one signal is universally earliest.
+
+## Failure-mode diagnosis
+
+| Symptom                                          | Distinguish with                                     | Likely change                                                     |
+| ------------------------------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------- |
+| wait grows before dependency saturation          | gate is too early/global or another resource is held | move/split gate and analyze acquisition order                     |
+| dependency sees more than local limit            | replicas/other clients/retries or over-release       | sum scoped limits; reconcile permit lifecycle                     |
+| permits fall over days                           | acquisition/release conservation and dynamic config  | repair scoped ownership; recover abandoned resources deliberately |
+| low aggregate utilization but one tenant rejects | per-partition skew and borrowing                     | adjust partitions/reserve/routing, not only total limit           |
+| bounded concurrency but heap grows               | queue/live future count and captured bytes           | bound admission/windowing in addition to execution                |
+| increased limit lowers throughput                | dependency knee, contention and service time         | reduce to stable envelope; eliminate hold time/contention         |
+
+## Review checklist
+
+- [ ] Requirement is correctly classified as concurrency, rate or queue/byte bound.
+- [ ] Protected resource and process/cluster scope are named.
+- [ ] Existing queues/pools/gates and acquisition order are inventoried.
+- [ ] Limit derives from measured capacity and required load with headroom, not average arithmetic alone.
+- [ ] Acquisition is deadline-aware/interruptible; release is exactly once after success.
+- [ ] Rejection/degradation/retry semantics are explicit and tested.
+- [ ] Partition state is bounded and skew/borrowing behavior is observable.
+- [ ] Per-replica limits are treated as an aggregate upper bound, not a global guarantee.
 
 ## References
 
-- [Choosing and placing the limit](references/limit-selection.md) — the decision table, the
-  sizing arithmetic worked through, where the limit goes for each resource type, bulkhead
-  partitioning by tenant and by dependency, and the code patterns including the permit
-  wrapper and the rejection path. Read when adding or reviewing a limit.
-- [Limits across replicas](references/distributed-limits.md) — why per-JVM limits do not
-  compose, the division strategies and what breaks each one, coordination options with their
-  costs, autoscaling interaction, and treating the dependency's own limit as authoritative.
-  Read when the limit must hold for the cluster rather than the process.
+- [Limit selection and implementation](references/limit-selection.md)
+- [Process-to-cluster boundary](references/distributed-limits.md)
+- [Java 25 `Semaphore`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html)
+- [Java 25 virtual-thread adoption guide](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)

@@ -8,12 +8,12 @@ membership, and that decides everything else.
 | Property                   | Client-side sharded                                | Proxy-fronted                                        | Clustered (server-owned slots)                             | Fully replicated                                       |
 | -------------------------- | -------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------ |
 | Who knows the membership   | Every client                                       | The proxy                                            | The server, advertised to clients                          | Every node holds everything, so placement is trivial   |
-| Hops on the cache path     | 1                                                  | 2                                                    | 1 (client is redirected once, then caches the slot map)    | 0 if the copy is local, else 1                         |
+| Hops on the cache path     | 1                                                  | 2                                                    | Usually 1 after client discovers/caches placement          | 0 only in-process; otherwise 1                         |
 | Adding or removing a node  | Every client must agree, simultaneously            | Proxy config change; clients untouched               | Cluster reshards slots; clients follow redirects           | New node must be filled before it serves               |
 | Memory for a working set W | W                                                  | W                                                    | W                                                          | N × W                                                  |
-| Losing one node            | About 1/N of keys miss, until re-warmed            | Same, unless the proxy fails over to a replica       | Same, unless the slot has a replica that is promoted       | No key loss at all; the node just stops being asked    |
-| Multi-key operations       | Only across keys the client places together        | Proxy-dependent, often unsupported                   | Constrained to keys in the same slot                       | Unconstrained — every node has everything              |
-| Consistency across copies  | One copy per key, so no divergence                 | One copy per key                                     | One copy per key, plus replica lag if replicas serve reads | Every write must reach N nodes; divergence is the norm |
+| Losing one node            | Its request/key share remaps and misses            | Same, unless the proxy fails over to a ready replica | Depends on replica promotion, routing and client retry     | No key loss if remaining replicas are current/routable |
+| Multi-key operations       | Client/product-specific coordination               | Proxy/product-dependent                              | Product-specific; often same-slot or coordinated at a cost | Local data placement does not imply atomic semantics   |
+| Consistency across copies  | One owner per key, barring topology-version drift  | Depends on replica/failover policy                   | Depends on acknowledgement and replica-read policy         | Depends on write fan-out/acknowledgement policy        |
 | Operational cost           | Lowest infrastructure, highest coupling to clients | One more tier to run, monitor and upgrade            | The cache product owns it; you own understanding its mode  | Simple to run, expensive in memory and write fan-out   |
 | Fits when                  | Few clients, one runtime, latency-critical         | Polyglot or numerous clients, topology changes often | You already run the clustered product and fit its model    | Small, read-dominated reference data                   |
 
@@ -47,11 +47,10 @@ before adopting the mode. Where replicas exist, be explicit about whether reads 
 from them — if they may, reads are subject to replication lag and read-after-write is not
 guaranteed (`consistency-models`).
 
-**Fully replicated.** Memory is `N × W` and every write is a fan-out to N nodes, so write
-rate is the limit rather than memory in many cases. It is the right answer far more often
-than its reputation suggests, for exactly one shape: a small, read-dominated, slow-changing
-dataset — feature flags, rate tables, routing configuration, reference lists. It removes the
-node-loss miss storm entirely, because no key lives on only one node.
+**Fully replicated.** Memory is approximately `N × W` plus metadata, and write propagation grows
+with replicas. It fits a small, read-dominated, slow-changing dataset when the convergence model is
+acceptable. It avoids key loss on one node only if another current replica is routable and has
+capacity; a partition, stale replica or failed local process can still cause misses/errors.
 
 ## The near-cache (local L1 in front of a shared L2)
 

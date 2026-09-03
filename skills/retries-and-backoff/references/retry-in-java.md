@@ -4,14 +4,15 @@
 
 ```text
 Retry when:
-- the contract classifies the failure transient, and the call can land on a different instance
+- contract evidence says another attempt can succeed (possibly after delay/state refresh),
+  whether or not routing selects a different instance
 - faults are independent: a low, uncorrelated failure rate, so the second attempt has
   materially different odds from the first
 - the operation is idempotent, or ambiguous outcomes are impossible for it (a pure read)
 - the remaining deadline still fits one more attempt plus its backoff
 
-Avoid retrying when:
-- the class is permanent, or the dependency answered 429 or 503 with a deliberate Retry-After
+Avoid retrying now when:
+- the outcome is terminal, or a valid 429/503 `Retry-After` cannot fit the remaining deadline
 - the operation is a non-idempotent write and no idempotency key exists
 - another layer in the same call path already retries this call
 - most attempts are already failing: retries are then a constant multiplier on a bottleneck
@@ -28,9 +29,17 @@ Prefer instead when:
 
 ```java
 static Duration fullJitter(int attempt, Duration base, Duration cap) {
-    long shifted = base.toMillis() << Math.min(attempt, 20);       // guard the shift, not the value
-    long window  = Math.min(cap.toMillis(), Math.max(shifted, 1));
-    return Duration.ofMillis(ThreadLocalRandom.current().nextLong(window + 1));  // [0, window]
+    if (attempt < 0 || base.isNegative() || base.isZero()
+            || cap.isNegative() || cap.isZero()) {
+        throw new IllegalArgumentException("positive base/cap and non-negative attempt required");
+    }
+    long baseMs = Math.max(1, base.toMillis());
+    long capMs = Math.max(1, cap.toMillis());
+    int shift = Math.min(attempt, 62);
+    long exponential = baseMs > (Long.MAX_VALUE >> shift)
+            ? Long.MAX_VALUE : baseMs << shift;
+    long window = Math.min(capMs, exponential);
+    return Duration.ofMillis(ThreadLocalRandom.current().nextLong(window)); // [0, window)
 }
 ```
 
@@ -40,6 +49,7 @@ the same schedule, and is the variant that survives review looking correct.
 ## Classify on a type, then loop against the deadline and the budget
 
 ```java
+// Record patterns in the switch below require Java 21; use instanceof/visitor on Java 17.
 public sealed interface Outcome<T> {
     record Ok<T>(T value) implements Outcome<T> {}
     record Transient<T>(String code, Duration advisedDelay) implements Outcome<T> {}  // ZERO = none
@@ -48,9 +58,9 @@ public sealed interface Outcome<T> {
 }
 ```
 
-The adapter speaking HTTP or gRPC is the only place that maps a status onto this type, and
-everything above it switches exhaustively — so a fifth class becomes a compile error rather
-than a silent fall-through into "retry it".
+The HTTP/gRPC adapter combines transport evidence with the operation contract when mapping to
+this type. Everything above switches exhaustively, so a new class becomes a compile error
+rather than silently falling through to retry.
 
 ```java
 // Conceptual: no metrics, no per-endpoint budget scoping.
@@ -70,12 +80,12 @@ than a silent fall-through into "retry it".
         if (attempt + 1 >= policy.maxAttempts()) throw new CallFailed("attempts-exhausted");
         if (!budget.tryAcquire())                throw new CallFailed("retry-budget-exhausted");
 
-        Duration wait = advised.isPositive()          // Retry-After wins over local backoff
-                ? advised : fullJitter(attempt, policy.base(), policy.cap());
+        Duration local = fullJitter(attempt, policy.base(), policy.cap());
+        Duration wait = advised.compareTo(local) > 0 ? advised : local;
         if (deadline.remaining().minus(wait).compareTo(policy.expectedCost()) < 0) {
             throw new CallFailed("deadline-would-be-exceeded");   // do not sleep to fail later
         }
-        Thread.sleep(wait);   // on a virtual thread this unmounts the carrier rather than blocking it
+        TimeUnit.NANOSECONDS.sleep(wait.toNanos()); // Java 17 API; virtual threads unmount on Java 21+
     }
 }
 ```
@@ -100,18 +110,19 @@ final class RetryBudget {
 }
 ```
 
-With the dependency fully down there are no successes, so the bucket empties and retries stop
-by themselves. An attempt count cannot do that: under a total outage `maxAttempts(3)` sends
-three times the normal load exactly while the dependency is trying to come back.
+With the dependency fully down there are no successes, so after any initial tokens the bucket
+empties. In steady state, ratio `r` earns at most roughly `r × successes` retries plus the
+configured burst. Define startup tokens, time decay and scope; otherwise a cold client cannot
+retry or accumulated burst lands during recovery. Attempt count remains a per-call safety cap,
+while the budget limits aggregate retries.
 
 ## Resilience4j and Spring Retry
 
 `RetryConfig` carries `maxAttempts`, an `IntervalFunction` for the schedule,
 `retryOnException` / `retryOnResult` predicates, and `failAfterMaxAttempts`.
 
-- **The default usually left wrong:** the wait duration defaults to a _fixed_, unjittered
-  interval, so every client retries on the same schedule. Replace it with an interval function
-  that grows exponentially with randomisation.
+- Inspect library/version defaults; fixed unjittered schedules synchronize clients. Configure
+  and test the interval function implementing the intended jitter distribution.
 - `retryExceptions(Exception.class)` retries permanent failures too — use an explicit predicate
   over your own retryable property. And the module bounds attempts per call site with no notion
   of retries as a fraction of traffic, so a budget must come from the mesh, the proxy, or code.
@@ -128,10 +139,26 @@ three times the normal load exactly while the dependency is trying to come back.
 public PaymentReceipt authorise(PaymentCommand command) { ... }
 ```
 
-- `random = true` is the attribute most often omitted; without it `@Backoff` is a deterministic
-  schedule shared by every instance.
+- `random = true` randomizes Spring Retry's multiplier according to its documented version; do
+  not assume it implements AWS-style full jitter. Use a custom policy when distribution
+  matters and test sampled bounds rather than annotation presence.
 - `@Retryable` is proxy-based, so a call through `this` is never intercepted — no retry, no
   warning — and a `@Recover` whose signature does not match the thrown and returned types is
   not selected, surfacing the underlying failure instead of the fallback. Test both paths.
 - Check whether the advice sits inside or outside `@Transactional`: inside, the backoff sleeps
   with the transaction and its connection held open.
+
+## Timeout and attempt allocation
+
+Do not give every attempt the entire remaining deadline. Reserve time for backoff, cleanup and
+caller response, and choose a per-attempt timeout from latency distribution and endpoint
+selection. An attempt that cannot plausibly finish within the remaining time should not start.
+Retries after partial request-body/stream transmission need protocol evidence; reconnecting
+does not prove the peer failed to apply a write.
+
+## Primary references
+
+- [RFC 9110 §9.2.2: idempotent methods and automatic retry](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.2)
+- [AWS Architecture Blog: exponential backoff and jitter](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/)
+- [gRPC retry design](https://github.com/grpc/proposal/blob/master/A6-client-retries.md)
+- [Spring Retry `@Backoff` API](https://docs.spring.io/spring-retry/docs/current/apidocs/org/springframework/retry/annotation/Backoff.html)

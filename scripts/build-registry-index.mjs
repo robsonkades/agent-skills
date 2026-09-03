@@ -140,6 +140,21 @@ if (descriptionDrift.length > 0) {
 // index is the one place that sees every published version at once, so the range check lives
 // here. It is how four skills stayed uninstallable without any check going red.
 const published = new Map(skills.map((skill) => [skill.name, skill.latest]));
+const unknownSuggestions = [];
+for (const { from, suggested } of routingTargets) {
+  for (const target of suggested) {
+    if (!published.has(target)) {
+      unknownSuggestions.push(`${from} suggests "${target}", which is not published`);
+    }
+  }
+}
+if (unknownSuggestions.length > 0) {
+  console.error(`error: ${unknownSuggestions.length} suggestion(s) target unpublished skills:`);
+  for (const line of unknownSuggestions) console.error(`  - ${line}`);
+  console.error('Remove each stale suggestion or publish the named skill.');
+  process.exit(1);
+}
+
 const unresolvable = [];
 for (const ref of dependencyRefs) {
   const version = published.get(ref.to);
@@ -221,8 +236,7 @@ if (undeclaredRouting.length > 0) {
 }
 if (unsuggestedProse.length > 0) {
   console.error(`error: ${unsuggestedProse.length} document reference(s) are not declared:`);
-  for (const line of unsuggestedProse.slice(0, 40)) console.error(`  - ${line}`);
-  if (unsuggestedProse.length > 40) console.error(`  … and ${unsuggestedProse.length - 40} more`);
+  for (const line of unsuggestedProse) console.error(`  - ${line}`);
   console.error('Add each to `suggests`, or stop naming it.');
   process.exit(1);
 }

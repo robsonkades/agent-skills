@@ -4,10 +4,11 @@
 
 ```
 1. Measure W with hikaricp.connections.usage (p50 AND p99)
-2. L_target = λ_db × W × 1.5
-3. ceiling  = min(max_connections × 0.8, db_cores × 2 + spindles) / instances
-4. maximumPoolSize = min(L_target, ceiling)
-5. If L_target > ceiling: the plan is to reduce W or λ, not to raise the pool
+2. L_observed = λ_db × W
+3. Obtain a per-workload connection budget from measured database saturation, reserved
+   administrative capacity, all application instances, and failover topology
+4. Model a candidate maximumPoolSize against the latency/error budget
+5. Load-test the candidate; if demand exceeds the safe database budget, reduce W or λ
 ```
 
 `W` is **hold** time, not query latency. It includes everything between the first statement
@@ -17,13 +18,13 @@ latency would hide.
 
 ## HikariCP settings and their real defaults
 
-| Property                   | Default (5.x/6.x) | What to set                                                           |
-| -------------------------- | ----------------- | --------------------------------------------------------------------- |
-| `connection-timeout`       | 30,000 ms         | inside the endpoint's latency budget; **never 0**; min 250 ms         |
-| `max-lifetime`             | 1,800,000 ms      | a few seconds **below** the smallest network/DB timeout; 0 = infinite |
-| `keepalive-time`           | 0 (disabled)      | enabled, and below `max-lifetime`                                     |
-| `leak-detection-threshold` | 0 (disabled)      | 60 s in production, lower in staging                                  |
-| `maximum-pool-size`        | 10                | from the calculation above                                            |
+| Property                   | Default (5.x/6.x)                                           | What to set                                                           |
+| -------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------- |
+| `connection-timeout`       | 30,000 ms                                                   | inside the endpoint's latency budget; **never 0**; min 250 ms         |
+| `max-lifetime`             | 1,800,000 ms                                                | a few seconds **below** the smallest network/DB timeout; 0 = infinite |
+| `keepalive-time`           | version-dependent; 120,000 ms upstream since HikariCP 6.2.1 | below `max-lifetime` when application-level keepalive is needed       |
+| `leak-detection-threshold` | 0 (disabled)                                                | 60 s in production, lower in staging                                  |
+| `maximum-pool-size`        | 10                                                          | from the calculation above                                            |
 
 HikariCP logs the effective configuration at startup at `DEBUG` level. Confirm there rather
 than trusting the file — a property in the wrong prefix is accepted silently.
@@ -68,12 +69,12 @@ by the absence of slowness.
 ## Pre-deploy checklist
 
 - [ ] `W` **measured** with `hikaricp.connections.usage` (p50 and p99), not estimated
-- [ ] `L = λ_db × W` calculated with a 1.5× margin
-- [ ] Ceiling checked: `min(max_connections × 0.8, db_cores × 2 + spindles) / instances`
-- [ ] `maximumPoolSize = min(L_target, ceiling)` — and a plan if `L_target` exceeds it
+- [ ] `L = λ_db × W` calculated from a stated arrival and hold-time window
+- [ ] Database budget agreed across all instances, admin reserve, workload classes, and failover
+- [ ] Candidate pool size validated at representative concurrency; margin justified by evidence
 - [ ] `connection-timeout` inside the endpoint's latency budget, never 0
 - [ ] `max-lifetime` below the smallest network/database timeout on the path
-- [ ] `keepalive-time` configured and below `max-lifetime`
+- [ ] Effective `keepalive-time` verified for the resolved HikariCP version and kept below `max-lifetime`
 - [ ] `leak-detection-threshold` active
 - [ ] `spring.jpa.open-in-view=false`
 
@@ -91,8 +92,8 @@ by the absence of slowness.
 - [ ] Query count per endpoint verified (1–3 typical, not N+1)
 - [ ] **An automated test locking the statement count** on the critical path
 - [ ] No external I/O (HTTP, gRPC, queue, sleep) inside `@Transactional`
-- [ ] `@Transactional` methods are `public` and called from **another** bean — never via
-      `this`
+- [ ] Transaction interception mode verified; in default proxy mode, calls cross the proxy and do
+      not use self-invocation. Method visibility is checked against proxy type and Spring version
 - [ ] `hibernate.jdbc.batch_size` configured for bulk operations, with `SEQUENCE` not
       `IDENTITY`
 - [ ] `try-with-resources` on every manual JDBC access

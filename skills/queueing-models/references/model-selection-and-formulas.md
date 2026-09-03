@@ -1,350 +1,210 @@
-# Choosing the model, and the formulas for each
+# Model selection and formula contracts
 
-## Symbols, defined once
+## Symbols and boundaries
 
-| Symbol    | Meaning                                                             | Units   |
-| --------- | ------------------------------------------------------------------- | ------- |
-| `lambda`  | Arrival rate, including retries and internal fan-out                | 1/time  |
-| `mu`      | Service rate of **one** server; `S = 1/mu` is the mean service time | 1/time  |
-| `c`       | Servers that make progress in parallel (the _effective_ count)      | count   |
-| `rho`     | Per-server utilisation, `lambda/(c·mu)`; stability needs `rho < 1`  | —       |
-| `a`       | Offered load in Erlangs, `lambda/mu = c·rho`                        | Erlangs |
-| `c_a`     | Coefficient of variation of inter-arrival time, `std/mean`          | —       |
-| `c_s`     | Coefficient of variation of service time, `std/mean`                | —       |
-| `L`, `Lq` | Mean number in the system, in the queue                             | count   |
-| `W`, `Wq` | Mean time in the system, in the queue; `W = Wq + S`                 | time    |
-| `C(c,a)`  | Erlang C: probability an arrival must wait (M/M/c)                  | —       |
-| `B(c,a)`  | Erlang B: probability an arrival is lost (M/M/c/c, no queue)        | —       |
-| `K`       | System capacity, servers plus queue slots (M/M/c/K)                 | count   |
+| Symbol          | Meaning                                                          | Units         |
+| --------------- | ---------------------------------------------------------------- | ------------- |
+| `λ`             | offered arrival rate at the selected boundary                    | 1/time        |
+| `λ_eff` / `X`   | admitted/departure throughput for the selected cohort            | 1/time        |
+| `S`, `μ=1/E[S]` | one service position's service time/rate under the model         | time, 1/time  |
+| `c`             | simultaneous statistically equivalent service positions          | count         |
+| `a=λ/μ`         | offered load                                                     | Erlangs       |
+| `ρ=λ/(cμ)`      | offered utilisation per position for infinite-buffer open models | dimensionless |
+| `C_a`, `C_s`    | coefficient of variation of inter-arrival/service time           | dimensionless |
+| `K`             | maximum customers in service plus queue                          | count         |
+| `L`, `L_q`      | mean population in system/queue                                  | count         |
+| `W`, `W_q`      | mean residence/queue wait for the relevant admitted cohort       | time          |
 
-`L = lambda·W` and `Lq = lambda·Wq` throughout (Little's Law, owned by
-`littles-law-and-queueing`). Every `Wq` below is a mean unless it says percentile.
+Little's `L=XW` is owned by `littles-law-and-queueing`. For a loss/finite system use effective
+admitted throughput and the same admitted cohort; offered `λ` does not pass through unchanged.
+
+Kendall's extended notation is `A/S/c/K/N/D`: arrival process, service distribution, servers,
+system capacity, source population and discipline. Add abandonment/patience, priorities, vacations,
+blocking and class/routing rules explicitly; hiding them behind `G` does not make them irrelevant.
 
 ## Selection table
 
-| Arrivals                          | Service                   | Servers | Model         | Use it when                                     |
-| --------------------------------- | ------------------------- | ------- | ------------- | ----------------------------------------------- |
-| Independent (Poisson)             | Exponential, `c_s ≈ 1`    | 1       | M/M/1         | One server, memoryless service                  |
-| Independent (Poisson)             | Exponential, `c_s ≈ 1`    | c       | M/M/c         | A pool with a shared queue and fixed `c`        |
-| Independent (Poisson)             | Constant, `c_s ≈ 0`       | 1       | M/D/1         | Frame rendering, standardised batch items       |
-| Independent (Poisson)             | Arbitrary, `c_s` measured | 1       | M/G/1         | Poisson traffic, non-exponential service        |
-| Independent (Poisson)             | Arbitrary                 | c       | Allen–Cunneen | A pool with measured `c_s ≠ 1`                  |
-| Correlated (retries, cron, batch) | Anything                  | 1       | G/G/1         | Kingman, with `c_a` measured — no M/\* applies  |
-| Correlated                        | Anything                  | c       | Allen–Cunneen | Kingman's factor on top of Erlang C             |
-| Poisson, no queue slots           | Exponential               | c       | M/M/c/c       | Erlang B: a bulkhead or pool that rejects       |
-| Poisson, bounded queue            | Exponential               | c       | M/M/c/K       | Rejection rate versus wait for a bounded queue  |
-| Finite population `N`             | Anything                  | c       | closed        | A closed load generator, a fixed set of workers |
+| Evidence and decision                                           | Candidate                       | What it can supply                               | Reject it when                                                                         |
+| --------------------------------------------------------------- | ------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| stationary Poisson arrivals, exponential service, one server    | M/M/1                           | exact mean and response/wait distributions       | rate/service depends on state, finite queue or non-exponential tail matters            |
+| same, `c` equivalent servers behind one FCFS queue              | M/M/c                           | Erlang-C wait probability, mean and wait tail    | per-server queues, affinity, unequal servers, abandonment                              |
+| Poisson arrivals, general IID service, one FCFS server          | M/G/1                           | exact mean via P–K                               | service correlated/state-dependent, multiple servers, tail required from moments alone |
+| Poisson plus deterministic service, one server                  | M/D/1                           | exact mean as M/G/1 special case                 | “low CV” is only approximate determinism                                               |
+| renewal arrivals and general service, one server, heavy traffic | GI/G/1 Kingman                  | approximate mean                                 | nonrenewal/batched/state-dependent arrivals or low-load accuracy needed                |
+| general arrivals/service, multiple shared servers               | Allen–Cunneen family            | heuristic mean                                   | no validation data; heterogeneous/routed servers or tail/loss decision                 |
+| exponential open loss system, no waiting slots                  | M/M/c/c                         | Erlang-B blocking and carried load               | callers wait, retry feedback, non-Poisson bursts                                       |
+| exponential open finite system                                  | M/M/c/K                         | stationary occupancy, blocking and admitted mean | abandonment or state-dependent admission/service not represented                       |
+| finite users with think time                                    | closed queueing network/MVA     | throughput/residence by population               | arrivals are exogenous or sessions arrive independently                                |
+| transient burst/autoscaling/failover                            | fluid/CTMC/transient simulation | time-varying backlog/loss                        | stationary formula is being used merely because it is simpler                          |
 
-Kendall notation is `A/S/c/K/N/D`: arrival distribution, service distribution, servers, queue
-capacity (default infinite), population (default infinite), discipline (default FCFS). The
-first three are the ones that change the answer; `K` decides whether the system rejects, and a
-finite `N` changes the arrival process itself (see the production reference).
-
-"M" means Markovian, meaning Poisson arrivals and memoryless exponential service. Memoryless
-service is optimistic: in real systems a request that has already been running for 100 ms is
-_more_ likely to be a heavy one, not equally likely. So M/\* models understate high percentiles
-under heavy-tailed service unless Kingman is used with a measured `c_s`.
-
-Sources for the closed forms: Kleinrock, _Queueing Systems_ vol. 1 (1975), ch. 3 (birth–death
-models: M/M/1, M/M/c, M/M/1/K) and ch. 5 (M/G/1, Pollaczek–Khinchine); Gross & Harris,
-_Fundamentals of Queueing Theory_, ch. 2–3; Harchol-Balter, _Performance Modeling and Design
-of Computer Systems_ (2013), ch. 13–15 (M/M/1, M/M/k, server farms) and ch. 23 (M/G/1).
+`C_s≈1` does not imply exponential service: many distributions share a coefficient of variation.
+Likewise `C_a≈1` does not imply Poisson arrivals. Test distribution/independence/stationarity at the
+timescale relevant to the queue.
 
 ## M/M/1
 
-Stability requires `rho = lambda/mu < 1`.
+For `ρ=λ/μ<1`:
 
-| Metric                | Formula                |
-| --------------------- | ---------------------- |
-| Utilisation           | `rho = lambda/mu`      |
-| Mean number in system | `L  = rho/(1-rho)`     |
-| Mean number in queue  | `Lq = rho²/(1-rho)`    |
-| Mean time in system   | `W  = 1/(mu-lambda)`   |
-| Mean time in queue    | `Wq = rho/(mu-lambda)` |
-
-Expressed in units of service time, `Wq / S = rho/(1-rho)`:
-
-```
-rho = 0.50 ->  1x service time
-rho = 0.80 ->  4x
-rho = 0.90 ->  9x
-rho = 0.95 -> 19x
-rho = 0.99 -> 99x
+```text
+L  = ρ/(1−ρ)             Lq = ρ²/(1−ρ)
+W  = 1/(μ−λ)             Wq = ρ/(μ−λ)
 ```
 
-## M/M/c
+Stationary total response `W` is exponential with rate `μ−λ`:
 
-Per-server utilisation `rho = lambda/(c·mu)`. Offered load in Erlangs `a = lambda/mu = c·rho`.
-
-```
-Wq = C(c, a) / (c·mu - lambda)
-W  = Wq + 1/mu
-Lq = lambda · Wq        (Little's Law)
-L  = lambda · W
+```text
+P(W > t) = exp(−(μ−λ)t)
+Q_W(p)   = −ln(1−p)/(μ−λ)
 ```
 
-Erlang C — the probability an arrival has to wait:
+Queue wait has a point mass `1−ρ` at zero and, conditional on waiting, the same exponential rate:
 
-```
-             (a^c / c!) · (c / (c - a))
-C(c, a) = ---------------------------------------------
-          sum(k=0..c-1) a^k/k!  +  (a^c / c!)·(c/(c-a))
+```text
+P(Wq > t) = ρ exp(−(μ−λ)t), t ≥ 0
 ```
 
-Worked check — `c = 2`, `mu = 10/s`, `lambda = 16/s`, so `a = 1.6`, `rho = 0.8`:
+These tail formulas do **not** survive arbitrary service distributions with the same mean/CV.
 
-```
-k=0: 1        k=1: 1.6        sum(k=0..1) = 2.6
-k=2: 1.6²/2! = 1.28
-numerator   = 1.28 · 2/(2-1.6) = 6.4
-C(2, 1.6)   = 6.4 / 9.0 = 0.7111
-Wq          = 0.7111 / (20 - 16) = 0.1778 s = 177.8 ms
-```
+## M/M/c and Erlang C
 
-The single-server equivalent at the same rho and the same per-server mu (`mu = 10`,
-`lambda = 8`) gives `Wq = 0.8/(10-8) = 400 ms`. Pooling two servers cut the wait to less than
-half, not to half — pooling reduces the probability that _all_ servers are busy at once, which
-is also why `C(c, a) <= rho` always, with equality only at `c = 1`.
+For `a=λ/μ`, `ρ=a/c<1`, one shared FCFS queue and equivalent servers:
 
-### One pool of `c` versus `k` pools of `c/k`
-
-Eight servers, `mu = 10/s` each, `rho = 0.8` throughout:
-
-| Layout       | `C(c, a)` | Mean `Wq` |
-| ------------ | --------- | --------- |
-| 1 pool of 8  | 0.458     | 28.6 ms   |
-| 2 pools of 4 | 0.596     | 74.6 ms   |
-| 4 pools of 2 | 0.711     | 177.8 ms  |
-| 8 pools of 1 | 0.800     | 400 ms    |
-
-Splitting a pool of 8 into 8 queues of 1 costs 14x in mean wait at identical utilisation and
-identical hardware. What splitting buys is isolation and ordering — a slow class cannot occupy
-the shared servers, and a partition preserves FIFO — so the split is a trade, and the price
-is this table. Which real systems are which is in `references/production-behaviour.md`.
-
-### Large `c` moves the knee
-
-The "70–80%" rule of thumb is an M/M/1 fact. With a shared queue, `Wq/S = C(c,a)/(c(1-rho))`
-and both factors shrink with `c`:
-
-| `c` | `rho = 0.8` `Wq/S` | `rho = 0.95` `Wq/S` |
-| --- | ------------------ | ------------------- |
-| 1   | 4.00               | 19.0                |
-| 2   | 1.78               | 9.26                |
-| 8   | 0.29               | 2.11                |
-| 32  | 0.025              | 0.43                |
-| 100 | 0.001              | 0.10                |
-
-A 100-thread pool at 95% utilisation queues for a tenth of a service time; a single server at
-95% queues for nineteen. The general form is square-root staffing (Halfin & Whitt, 1981;
-Harchol-Balter ch. 15): `c = a + beta·sqrt(a)` holds the probability of waiting roughly
-constant as `a` grows, so the tolerable utilisation `a/c` rises towards 1 with the pool size —
-`beta = 1` gives `C ≈ 0.29` at `a = 4` (`rho = 0.67`) and `C ≈ 0.23` at `a = 1024`
-(`rho = 0.97`). This is why a fleet-wide 70% CPU target wastes money on a 64-core box and
-underprovisions a 2-thread pool.
-
-## Erlang C via the Erlang B recursion (numerically stable)
-
-The direct form as written overflows: `c!` exceeds a double at `c = 171`, and the running sum
-of `a^k/k!` approaches `e^a`, which overflows once `a` passes about 700 even when each term is
-built by the recurrence `term *= a/k`. Use Erlang B instead, which is bounded in `[0, 1]` at
-every step:
-
-```
-B(0, a) = 1
-B(n, a) = a·B(n-1, a) / (n + a·B(n-1, a))
-
-C(c, a) = c·B(c, a) / (c - a·(1 - B(c, a)))
+```text
+P(wait) = C(c,a)
+Wq      = C(c,a)/(cμ−λ)
+W       = Wq + 1/μ
+P(Wq>t) = C(c,a) exp(−(cμ−λ)t)
 ```
 
-Cross-check for `c = 10, a = 8`: `B(10,8) = 0.12166`, so
-`C = 1.2166 / (10 - 8·0.87834) = 1.2166 / 2.9733 = 0.4092` — the same value the direct sum
-gives. Publish a number only after both methods agree in the range where both can run; past
-`a ≈ 700` only the recursion runs (`c = 5000, a = 4900` gives `C = 0.0999` by recursion and
-`NaN` by the term recurrence).
+Therefore the unconditional p-quantile of queue wait is zero when `p≤1−C`; otherwise:
 
-`B(c, a)` is a result in its own right: the blocking probability of M/M/c/c, the system with
-`c` servers and **no** queue. It models a semaphore bulkhead that rejects on `tryAcquire()`, or
-a pool whose acquisition timeout is zero. `B < C` always — rejecting is cheaper than queueing
-for the ones who get in, at the price of the ones who do not.
-
-## M/M/c/K — the bounded queue
-
-`K` is the capacity of the whole system, servers plus queue slots (`K = c + queue`). For
-`c = 1` (Kleinrock vol. 1, ch. 3; Gross & Harris ch. 2):
-
-```
-P(n)     = (1-rho)·rho^n / (1 - rho^(K+1)),   n = 0..K      (rho ≠ 1; valid for rho >= 1 too)
-P(block) = P(K)
-lambda_eff = lambda·(1 - P(K))
-L        = sum(n=0..K) n·P(n)
-W        = L / lambda_eff                                   (Little, on the admitted arrivals)
+```text
+Q_Wq(p) = −ln((1−p)/C)/(cμ−λ)
 ```
 
-Worked, `rho = 0.95`, `K = 20`: `P(block) = 2.7%`, `L = 8.15`, `W = 8.8 S`, against `W = 20 S`
-with an unbounded queue. The bounded queue trades 2.7% rejections for 2.3x lower residence
-time for the admitted 97.3%, and — the property the unbounded model cannot offer — it is
-stable at `rho >= 1`. That is the arithmetic behind "bound every queue"; the policy is
-`littles-law-and-queueing`. Rejected work leaves the latency metric and enters the error
-metric, so `W` measured on completions improves _because_ the system is shedding: read both.
+This is queue wait, not total response. Total response combines waiting and service and must not be
+reported using this quantile formula.
 
-## M/D/1
+Direct Erlang C:
 
-```
-Wq(M/D/1) = rho / (2·mu·(1-rho)) = 0.5 · Wq(M/M/1)
+```text
+                  (a^c/c!) (c/(c−a))
+C(c,a) = -------------------------------------------------
+         Σ(k=0..c−1) a^k/k! + (a^c/c!) (c/(c−a))
 ```
 
-Exactly half, at identical utilisation. Service variance is responsible for half of M/M/1's
-queue latency.
+Avoid factorial/power overflow. Compute Erlang B recursively in bounded probability space:
 
-## Kingman (G/G/1), Pollaczek-Khinchine (M/G/1) and Allen–Cunneen (G/G/c)
-
-```
-Wq(G/G/1) ≈ rho/(1-rho) · (c_a² + c_s²)/2 · 1/mu        (Kingman, 1961; also "VUT")
-
-Wq(M/G/1)  = lambda·E[S²] / (2(1-rho))                   (Pollaczek-Khinchine, exact)
-           = rho/(1-rho) · (1 + c_s²)/2 · 1/mu
-Lq(M/G/1)  = rho²(1 + c_s²) / (2(1-rho))
-
-Wq(G/G/c) ≈ C(c, a)/(c·mu - lambda) · (c_a² + c_s²)/2     (Allen–Cunneen approximation)
+```text
+B(0,a)=1
+B(n,a)=aB(n−1,a)/(n+aB(n−1,a))
+C(c,a)=B(c,a)/(1−ρ+ρB(c,a))
 ```
 
-P-K has no `c_a` term because M/G/1 already assumes Poisson arrivals (`c_a = 1` baked in).
-Setting `c_a = 1` in Kingman and converting `Wq` to `Lq` via Little's Law reproduces P-K
-exactly — Kingman contains P-K as a special case. Allen–Cunneen is Kingman's variability
-factor applied to the M/M/c wait; it reduces to Kingman at `c = 1` and to Erlang C at
-`c_a = c_s = 1`, and it is the model for a thread pool whose service time is not exponential.
-(Allen, _Probability, Statistics, and Queueing Theory_, 2nd ed., 1990, ch. 6 — chapter not
-verified here.)
+Reject invalid inputs (`c≤0`, `a<0`, or Erlang-C `ρ≥1`), use sufficient numeric precision near
+critical load, and cross-check small cases against a direct/log-domain implementation. Property
+tests should cover `0≤B,C≤1`, monotonicity in load, and `c=1` reductions.
 
-Sanity checks: `c_a = c_s = 1` reproduces M/M/1; `c_a = 1, c_s = 0` reproduces M/D/1.
+## Pooling versus routed queues
 
-Two limits of Kingman worth knowing before trusting it:
+An M/M/c shared queue can dispatch the next job to any free server. `c` independent M/M/1 queues
+cannot, so imbalance raises wait under otherwise matching assumptions. The benefit is not a
+universal multiple of `c` and depends on load and routing. Splitting may be required for affinity,
+ordering, blast-radius isolation or heterogeneous classes; compare per-class loss/tail, not just
+aggregate mean.
 
-- It is a **heavy-traffic** result — asymptotically exact as `rho -> 1` and least accurate at
-  low utilisation, where it can overstate the wait for `c_a < 1` (regular arrivals) by a wide
-  margin. Refinements exist (Whitt, 1993, "Approximations for the GI/G/m queue" — not verified
-  here); below `rho ≈ 0.5` treat Kingman as an upper bound rather than a prediction.
-- It is a **mean**. Two service distributions with the same `c_s` can have very different
-  `p99` waits: P-K fixes the mean queue through `E[S²]` alone, but the tail of `Wq` in M/G/1
-  inherits the tail of the service distribution — heavy-tailed service (a Pareto-like slow
-  path) gives a `Wq` tail that decays polynomially, not exponentially, and no `c_s` corrects an
-  exponential-tail percentile formula into it (Harchol-Balter ch. 20 on heavy tails). For
-  a percentile under non-exponential service, measure or simulate.
+Round-robin Poisson splitting can produce Erlang inter-arrivals per destination only in an ideal
+single dispatcher without stickiness, retries, health changes or multiple upstreams. Random
+splitting preserves Poisson only under the thinning assumptions. Least-loaded routing is not
+literally a shared queue because state is delayed and work cannot migrate after assignment.
 
-## What service variance costs
+## M/G/1, M/D/1 and variability
 
-Multiplier on `Wq` relative to M/M/1 at the same rho, from `(1 + c_s²)/2`. Independent of rho:
+For stationary Poisson arrivals, IID service with finite second moment, one FCFS server and
+`ρ=λE[S]<1`, Pollaczek–Khinchine gives:
 
-| `c_s` | Multiplier | Interpretation              |
-| ----- | ---------- | --------------------------- |
-| 0.0   | 0.50x      | Deterministic (M/D/1)       |
-| 0.5   | 0.625x     | Low variance                |
-| 1.0   | 1.00x      | M/M/1 reference             |
-| 1.5   | 1.625x     | High variance (sporadic GC) |
-| 2.0   | 2.50x      | Very high (bimodal queries) |
-| 3.0   | 5.00x      | Severe heavy tail           |
-
-### Worked: the bimodal service time
-
-99% of requests take 10 ms, 1% take 500 ms (a report path, a cold cache, a full GC):
-
-```
-E[S]  = 0.99·10 + 0.01·500       = 14.9 ms
-E[S²] = 0.99·10² + 0.01·500²     = 2599 ms²
-c_s   = sqrt(2599 - 14.9²)/14.9  = 3.27       -> multiplier (1 + c_s²)/2 = 5.85
+```text
+E[Wq] = λE[S²]/(2(1−ρ))
+      = ρ(1+C_s²)E[S]/(2(1−ρ))
 ```
 
-| `lambda` | `rho` | `Wq` P-K (M/G/1) | M/M/1 on the same mean | M/M/1 on the fast path only |
-| -------- | ----- | ---------------- | ---------------------- | --------------------------- |
-| 20/s     | 0.30  | 37 ms            | 6.3 ms                 | 2.5 ms                      |
-| 40/s     | 0.60  | 129 ms           | 22 ms                  | 6.7 ms                      |
-| 60/s     | 0.89  | 736 ms           | 126 ms                 | 15 ms                       |
+At fixed mean and utilisation this is `(1+C_s²)/2` times M/M/1 mean queue wait. M/D/1
+(`C_s=0`) is exactly half. This relationship concerns the **mean** in M/G/1; splitting classes,
+timeouts or GC changes more than `C_s` and must be reparameterised at the new boundary. If
+`E[S²]` is infinite, the stationary mean wait is infinite even while `ρ<1`.
 
-At 30% utilisation the mean queue wait is already 3.7x the fast path's own service time, and
-an M/M/1 fitted to the averaged service time is optimistic by 5.85x at every load. The 1%
-path sets the queue for the 99%; the remedy is a separate pool for it, which turns one M/G/1
-with `c_s = 3.3` into two queues with `c_s ≈ 0` each. `littles-law-and-queueing` covers the
-utilisation share of the slow path; this is its wait-time cost.
+P–K does not determine the wait CDF from two moments. Use numerical transforms, discrete-event
+simulation, or empirical measurement for tail decisions and validate sensitivity to censored slow
+service.
 
-### Batch arrivals
+## Kingman and Allen–Cunneen
 
-A cron fan-out, a Kafka poll returning a full batch, or a scatter-gather that emits `b`
-sub-requests at once is not Poisson at the request level even if the batches are. For
-Poisson batches of constant size `b` with exponential service (M^[b]/M/1; Gross & Harris,
-ch. 3, bulk input — section not verified here):
+For a GI/G/1 renewal queue in heavy traffic, Kingman's approximation is:
 
-```
-L  = rho·(b + 1) / (2(1-rho))          Wq = L/lambda - 1/mu
+```text
+E[Wq] ≈ [ρ/(1−ρ)] [(C_a²+C_s²)/2] E[S]
 ```
 
-At `rho = 0.8`, `S = 1`: `b = 1` gives `Wq = 4`, `b = 4` gives `11.5`, `b = 10` gives `26.5`
-(each reproduced by simulation to within 2%). The wait grows roughly as `(b + 1)/2` — the
-average position inside one's own batch — before any queue from other batches. The
-per-request `c_a` of a batched stream is not `1`, and it is not `sqrt(b)` either; Kingman with
-`c_a² = b` under-predicts these by about 15%, so use the bulk formula for constant batches and
-measure `c_a` directly for variable ones.
+When arrivals are Poisson (`C_a=1`), the expression matches P–K's exact mean. That does not make
+Kingman exact for arbitrary arrival processes with `C_a=1`; autocorrelation and higher-order/batch
+structure remain invisible.
 
-## Priority and head-of-line blocking
+A commonly used Allen–Cunneen-style G/G/c approximation scales the M/M/c mean wait by
+`(C_a²+C_s²)/2`. Published variants and correction factors differ. Pin the formula/source used,
+validate it on held-out load points, and never use it as a closed-form tail distribution.
 
-Two classes, non-preemptive, one server, Poisson arrivals (Cobham, 1954; Kleinrock vol. 2,
-ch. 3), with `rho_1` the high-priority load, `rho = rho_1 + rho_2`:
+Kingman is asymptotically motivated near heavy traffic; at lower load it may err in either
+direction. It is not a guaranteed upper bound.
 
-```
-W0    = sum_i lambda_i·E[S_i²] / 2            mean residual work found by an arrival
-                                              (= rho/mu when service is exponential)
-Wq_1  = W0 / (1 - rho_1)
-Wq_2  = W0 / ((1 - rho_1)(1 - rho))
-```
+## Loss and finite-capacity systems
 
-Worked, `S = 1`, `rho_1 = 0.2`, `rho_2 = 0.6`: `Wq_1 = 1.0`, `Wq_2 = 5.0`, against `4.0` for
-FCFS at the same total load. Priority moves wait, it does not remove it: the conservation law
-`sum_i rho_i·Wq_i = rho·Wq_FCFS` holds for any work-conserving non-preemptive discipline
-(`0.2·1.0 + 0.6·5.0 = 3.2 = 0.8·4.0`). A priority lane is therefore a decision about _who_
-waits, and the low class's `1/(1 - rho)` denominator means it starves first as load rises.
+For M/M/c/c, Erlang B gives offered-call blocking probability `B(c,a)`. Carried throughput is
+`λ_eff=λ(1−B)`. Retries break the exogenous Poisson assumption unless included in a fixed-point or
+simulation model.
 
-Head-of-line blocking is the FCFS case with heterogeneous work in one FIFO: a single slow item
-holds every item behind it, and the queue behaves as M/G/1 with the slow item's variance —
-the bimodal table above — rather than as the fast path's M/M/1. A Kafka partition, a
-single-threaded event loop and a `SynchronousQueue` hand-off are all one FIFO of this kind.
-The fix is either a separate lane (priority) or a separate pool (isolation), and each pays the
-price its table shows.
+For M/M/c/K, construct the birth–death stationary probabilities rather than reusing Erlang C:
 
-## Wait-time percentiles, in closed form
-
-For M/M/c (and M/M/1 as the case `c = 1`, where `a = rho` and `C(1, rho) = rho`):
-
-```
-P(Wq = 0)    = 1 - C(c, a)
-P(Wq <= t)   = 1 - C(c, a)·exp(-c·mu·(1-rho)·t),      t >= 0
-t_p          = -ln((1-p) / C(c, a)) / (c·mu·(1-rho))   for p >= 1 - C(c, a); otherwise 0
+```text
+birth rate λ_n = λ for n<K, 0 at n=K
+death rate μ_n = min(n,c)μ
+p_n = p_0 ∏(i=1..n) λ_(i−1)/μ_i, then normalise Σp_n=1
+P_block = p_K
+λ_eff = λ(1−p_K)
+L = Σ n p_n
+W = L/λ_eff
 ```
 
-Worked, M/M/1 at rho = 0.9, mu = 50/s, so `C = 0.9` and `mu(1-rho) = 0.005/ms`:
+Finite state makes a stationary distribution possible even when offered `λ≥cμ`, but high load is
+paid as blocking/loss. Completion-latency improvement while loss rises is not an SLO win.
+Abandonment/deadlines require Erlang-A or another patience model; treating timed-out waiters as
+instant blocking changes occupancy and retry traffic.
 
-```
-p50 = -ln(0.50/0.9)/0.005 ≈ 117.6 ms
-p95 = -ln(0.05/0.9)/0.005 ≈ 578.1 ms
-p99 = -ln(0.01/0.9)/0.005 ≈ 900.0 ms
-mean Wq                    = 180 ms
-```
+## Classes, batches, priorities and networks
 
-The p50 sits **below** the mean. The distribution is a mixture of a point mass at zero (the
-arrivals that found the system free) and an exponential tail, which is exactly the shape that
-makes a mean useless against a p99 SLO.
+- Batch arrivals need batch-size distribution and within-batch order; `C_a` alone is insufficient.
+- Non-preemptive priority formulas require Poisson classes, IID services, one server and a
+  work-conserving discipline. Validate conservation and per-class starvation; do not generalise a
+  two-class formula to executor priorities without checking cancellation/aging.
+- Sequential stage **means** add for the same cohort, but tail quantiles do not. Blocking-before-
+  service, finite buffers and synchronous calls couple nodes, so product-form/open-network results
+  may not apply.
+- Closed networks should use population and think time with mean value analysis or simulation.
+  They can saturate a bottleneck (`U→1`) but cannot sustain offered throughput above it; response
+  time grows as population waits inside the network.
 
-Worked, M/M/8 at rho = 0.8, mu = 10/s (`a = 6.4`, `C = 0.458`, `c·mu·(1-rho) = 16/s`):
+## Decide analytical model versus simulation
 
-```
-P(Wq = 0) = 0.542   ->   p50 = 0 ms       (more than half the arrivals never queue)
-p95 = -ln(0.05/0.458)/16 ≈ 138 ms
-p99 = -ln(0.01/0.458)/16 ≈ 239 ms
-mean Wq                   = 28.6 ms
-```
+Prefer discrete-event simulation or direct measurement when service/routing changes with queue
+length, arrivals synchronize with system state, queues have complex priorities/abandonment,
+servers share a hidden bottleneck, or the decision is a tail under non-Markovian inputs. Validate a
+simulator with conservation laws, deterministic/simple analytical cases, seeded repetitions and
+held-out production observations. A more detailed model is not better unless its parameters are
+observable and its predictions falsifiable.
 
-Whenever `C(c, a) < 0.5` the median queue wait is exactly zero while the p99 is not. A pooled
-system's dashboard median says nothing about its tail; this is a property of the model, not a
-measurement artefact.
+## Sources
 
-Exponential service is the only service distribution here with such a simple closed form.
-M/D/1 and bimodal distributions have none — measure their percentiles empirically.
+- John D. C. Little, [“A Proof for the Queuing Formula: L = λW”](https://doi.org/10.1287/opre.9.3.383)
+- Harchol-Balter, [_Performance Modeling and Design of Computer Systems_](https://www.cs.cmu.edu/~harchol/PerformanceModeling/book.html)
+- Denning and Buzen, [“The Operational Analysis of Queueing Network Models”](https://www.columbia.edu/~ww2040/8100S12/DenningBuzen1978.pdf)
+- Halfin and Whitt, [“Heavy-Traffic Limits for Queues with Many Exponential Servers”](https://doi.org/10.1287/opre.29.3.567)
+- Whitt, [“Approximations for the GI/G/m Queue”](https://doi.org/10.1080/15326349308807207)

@@ -1,98 +1,232 @@
 ---
 name: jmh-microbenchmarks
 description: >
-  Writing microbenchmarks that do not lie: dead-code elimination and constant folding,
-  Blackhole and returning results, fork and state scoping, warm-up verification, reading
-  Score and Error as a confidence interval, gc.alloc.rate.norm as the most reliable number,
-  and converting a bench result into a system prediction via Amdahl. Use when a benchmark is
-  being written or reviewed, when @Fork(0) or a hand-rolled timing loop appears, when a
-  benchmark discards its result, when two variants are compared with different boundaries,
-  when overlapping error intervals are read as "no difference", or when a CI performance
-  gate needs a threshold. Does not cover finding what to benchmark (jfr-and-async-profiler,
-  flame-graph-analysis), the compilation model itself (jit-compilation), or full-system load
-  tests (load-testing). The profilers and variance diagnosis are jmh-advanced, and gating is
-  performance-regression-ci.
+  Designing and auditing JVM microbenchmarks whose workload, observation boundary,
+  compiler context, state topology, lifecycle, units, and statistical comparison match the
+  engineering question. Covers dead-code elimination, constant folding, Blackhole/return
+  values, forks, warm-up, fixture levels, inputs, operations-per-invocation, allocation
+  counters, experimental units, uncertainty, paired comparisons, negative controls, and
+  production extrapolation. Use before trusting a JMH score or replacing a system test with
+  a microbenchmark. Advanced concurrency layouts, profilers, assembly, and regression gates
+  have separate owners.
 ---
 
-# JMH Microbenchmarks
+# JMH microbenchmarks
 
 ## Purpose
 
-Produce a benchmark number that can be believed and converted into a prediction. A broken
-benchmark does not fail — it lies confidently: dead-code elimination, constant folding,
-insufficient warm-up and clock resolution all yield plausible wrong numbers with no error
-message.
+Use JMH to estimate a narrowly defined cost under an explicitly generated JVM context. JMH
+handles harness mechanics; it cannot decide whether the operation, data, compiler context, state
+sharing, or statistical unit represents production. A precise answer to the wrong estimand is
+still wrong.
 
-## Workflow
+## Ownership boundary
 
-1. **Do not start here.** The order is profiler → Amdahl → JMH: the profiler says _where_
-   (`p`), Amdahl says _whether it is worth it_, JMH says _how much_ (`s`). Starting at JMH
-   measures the irrelevant precisely.
-2. **Define the boundary** — what goes in `@Setup` and what is inside the measured window.
-   For a comparison, both sides must have exactly the same boundary. Write both methods and
-   ask "what is inside one and outside the other?"; if the answer is not "nothing", the
-   comparison is invalid.
-3. **Configure**: `@Fork(≥2)`, explicit `@Warmup`/`@Measurement`, `jvmArgs` with
-   `-Xms` = `-Xmx` and a declared collector, mode matched to the question.
-4. **Validate before believing any number** — see the checklist in
-   `references/validating-a-benchmark.md`. The proportionality test and `-prof comp` catch
-   most broken benchmarks in one run each.
-5. **Convert to a system prediction** with the profiler's `p`, then validate on the real
-   system.
-6. **Explain the divergence** between predicted and observed. That divergence is the
-   learning — usually about inlining, about the input distribution, or about the bottleneck
-   having moved.
+- This skill owns the benchmark question, observable work, boundary, lifecycle, basic state, and
+  result claim.
+- `jmh-advanced` owns groups, profilers, counters, compiler controls, assembly capture, and
+  difficult variance.
+- `performance-regression-ci` owns automated gates and historical baselines.
+- `jit-compilation` and `reading-jit-assembly` own compiler interpretation.
+- `load-testing` owns arrival rate, queueing, saturation, and end-to-end latency.
+- `performance-methodology` owns causal investigation and production validation.
 
-## Rules
+## Benchmark contract
 
-- Never `@Fork(0)`. The type profile of one benchmark contaminates the next one's
-  compilation and the result becomes order-dependent. Its one legitimate use is running
-  under a debugger. Even `@Fork(1)` loses between-fork variance, which is a real source of
-  uncertainty — JMH forks per benchmark precisely to capture the non-determinism of
-  compilation itself.
-- Return the result or consume it with a `Blackhole`. The dangerous case is not total
-  elimination but **partial** — some work survives, some is removed, the number stays
-  plausible, and only the proportionality test exposes it.
-- Avoid `@Setup(Level.Invocation)` for short operations: JMH does not subtract setup, and
-  invocation-level setup perturbs the pipeline between invocations. Pre-build instances at
-  `Level.Trial` and consume them round-robin.
-- **Never subtract a baseline.** JMH does not, and neither should you: harness cost is
-  neither additive nor independent — it interacts with inlining and the pipeline, and
-  subtraction can yield negative or artificially small values. The empty method diagnoses
-  the environment; it does not correct the result.
-- `Error` is the **half-width of the 99.9% confidence interval**, not a standard deviation.
-  Above ~5% of `Score`, diagnose the cause (`-prof comp`, `-prof gc`) before piling on
-  iterations.
-- Overlapping intervals do not prove equality. Non-overlapping ⇒ significant difference;
-  overlapping ⇒ **the experiment does not decide**. Treating "I do not know" as "they are
-  the same" is exactly how a CI gate approves a real regression it merely lacked the
-  resolution to see.
-- Reaching C2 does not end warm-up. An uncommon trap can recompile inside the measured
-  window; `-prof comp` is what distinguishes that from a GC pause.
-- `gc.alloc.rate.norm` is the most reliable number JMH produces. Bytes per operation is
-  deterministic for the same code; time is not. For a CI gate it is the best signal
-  available. `0 B/op` from code that visibly allocates means escape analysis removed the
-  object _in this inlining context_ — a real result for the benchmark, not a promise for a
-  caller the JIT does not inline.
-- `Cnt` is forks × iterations and the `Error` interval treats them as independent samples,
-  which they are not when forks disagree. Read the per-fork scores in the raw output: forks
-  clustering into two modes is JIT non-determinism, and the interval understates it.
-- `SampleTime` is the only mode that shows the tail. `Throughput` and `AverageTime` report a
-  central value and cannot see a p99 regression. It is still a closed loop of an isolated
-  operation — service time, not latency under load — and it samples a subset of
-  invocations (jmh-advanced).
-- A loop inside the benchmark body needs `@OperationsPerInvocation(N)` so the score is per
-  element, but the annotation only fixes the arithmetic: the loop is still exposed to
-  unrolling, hoisting and partial elimination. Prefer one element per invocation, or a
-  `@Param`-sized batch that passes the proportionality test.
-- On the baseline, `Blackhole` is a compiler intrinsic (JMH 1.34+ on JDK 17+) with
-  effectively zero cost. The `Blackhole mode` line in the output states which mechanism is
-  active — material written before 2022 describes only the old one.
-- Fields that must not be constant-folded must not be `static final`.
-- The bench number is not a promise about the system. The conversion requires `p`.
+Write this before code:
+
+```text
+decision and smallest meaningful effect:
+operation and semantic result:
+included/excluded work:
+input population and distribution:
+state owner, sharing, mutation, and reset policy:
+steady-state, cold, startup, or transition lifecycle:
+mode, unit, threads, batch/operations semantics:
+JDK/JMH/build/hardware/OS/JVM controls:
+comparison design and experimental unit:
+expected analytical scaling and negative/positive controls:
+production fraction/denominator and external validation:
+```
+
+If changing the boundary or compiler context would reverse the decision, those are experimental
+factors, not incidental details.
+
+## Decide whether JMH is appropriate
+
+| Question                                             | Use                                                            | Do not infer                                           |
+| ---------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
+| Relative cost of two local implementations           | JMH with equivalent semantics/boundaries                       | service throughput or SLO impact directly              |
+| Allocation produced by a hot operation               | JMH GC profiler plus compiler/escape-analysis context          | retained heap or GC-pause reduction                    |
+| Shared in-process algorithm under controlled threads | JMH with representative sharing/topology                       | distributed or open-loop capacity                      |
+| Cold invocation/startup                              | `SingleShotTime`, fork/process lifecycle, explicit cache state | steady-state cost                                      |
+| Tail latency under arrival rate                      | load test/queueing experiment                                  | JMH sample percentiles as request latency              |
+| Database/network/storage behavior                    | component/system benchmark with controlled dependency          | production behavior from a mocked/local microbenchmark |
+
+Profile or model first when selecting the optimization target. Exploratory microbenchmarks are
+legitimate, but label them as mechanism experiments rather than production impact estimates.
+
+## Preserve semantic work
+
+The compiler may fold inputs, inline through the benchmark, scalar-replace objects, remove unused
+results, or specialize on a monomorphic profile. These can be the phenomenon under study or a
+benchmark artifact.
+
+- Return the semantic result or consume it with `Blackhole` when the caller must observe it.
+- Create inputs through `@State`/`@Setup` when compile-time constants are not representative.
+- Vary inputs enough to model the decision, but do not add randomness inside the measured region
+  unless random generation is part of the operation.
+- Check generated/compiled code or profiler evidence when elimination/specialization could decide
+  the result.
+- Test a changed workload size or known-slower positive control. Expected scaling depends on the
+  algorithm; doubling work need not double time.
+
+Returning a value prevents some complete elimination; it does not guarantee the desired call
+shape, allocation, type profile, or memory effects.
+
+## Boundary and fixture lifecycle
+
+Separate fixture construction from the operation only when production also amortizes it. For each
+comparison, list work inside each measured boundary; semantic equality alone does not imply equal
+setup, conversion, validation, copying, exception, or cleanup cost.
+
+| Level        | Use                                                 | Risk                                                                              |
+| ------------ | --------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `Trial`      | state valid for a whole fork                        | drift/mutation can make later iterations different                                |
+| `Iteration`  | reset between measurement/warm-up intervals         | cache/GC/reset effects can leak across boundary                                   |
+| `Invocation` | long operations needing per-call fixture/think time | per-invocation timestamps, arbitration, overlap, and coordinated-omission caveats |
+
+JMH attempts to exclude invocation fixture time; it does not make it free. The official
+`Level.Invocation` contract warns that timestamping and synchronization can distort short or
+concurrent benchmarks. Prefer precomputed immutable inputs, indexed pools, or iteration reset when
+they preserve semantics; validate exhaustion and wraparound.
+
+Do not subtract an independently measured empty benchmark as a universal correction. Harness and
+payload interact. Use empty/no-op cases as diagnostics, or design a direct paired/differential
+operation when the difference itself is the stated estimand and both paths share the same context.
+
+## Forks, warm-up, and lifecycle
+
+A fork is a fresh JVM and normally the meaningful independent replication unit. Iterations within
+one fork share compilation, heap, OS, and thermal history. `@Fork(0)` runs in the harness JVM and
+is useful for debugging only; it invalidates ordinary isolation assumptions.
+
+Choose counts empirically:
+
+1. Run enough warm-up to observe throughput/time, compilation, deoptimization, allocation, and GC
+   reaching the declared lifecycle state.
+2. Use multiple measurement iterations to expose within-fork drift.
+3. Use enough forks to expose between-JVM compilation/environment variation and support the
+   intended comparison power.
+4. Inspect per-fork trajectories; do not hide bimodality in one mean/error field.
+
+JMH defaults are starting points, not evidence that a benchmark is warm or adequately powered.
+Pinning `-Xms = -Xmx`, pre-touching memory, fixing a collector, or forcing CPU policy can remove
+real production mechanisms. Apply controls only when they match the estimand or deliberately
+isolate a factor, and record them.
+
+For cold/startup questions, discarded warm-up is often conceptually wrong. Define process, class,
+code, filesystem, page-cache, CDS, data-cache, and dependency state and reset the required layer
+between observations.
+
+## Mode and units
+
+| Mode             | Measures                                  | Principal caveat                                      |
+| ---------------- | ----------------------------------------- | ----------------------------------------------------- |
+| `AverageTime`    | average operation time under harness loop | not request latency under load                        |
+| `Throughput`     | completed operations per time             | saturation/threads and batching define the population |
+| `SampleTime`     | sampled invocation-duration distribution  | sampled closed-loop service time; may omit pauses     |
+| `SingleShotTime` | one/batched invocation per iteration      | reset/cold-state definition dominates                 |
+
+`@OperationsPerInvocation(N)` rescales the score; it does not stop hoisting, vectorization,
+amortization, loop unrolling, or partial elimination. Declare whether one reported operation is one
+element, one batch, or one transaction and verify the arithmetic with a known case.
+
+## State and concurrency basics
+
+- `Scope.Thread`: one state per worker; no sharing through that state.
+- `Scope.Benchmark`: one state shared by all benchmark workers.
+- `Scope.Group`: state shared by a configured group; use with advanced asymmetric layouts.
+
+Thread count is part of the workload, not a knob for improving confidence. A shared data-structure
+benchmark must define read/write mix, key distribution, occupancy, contention topology, CPU
+placement, correctness/invariants, and whether failed/retried operations count. Use
+`jmh-advanced` and concurrency-specific tests for deeper designs.
+
+## Read results without statistical shortcuts
+
+The standard `Score Error` is computed at JMH's configured confidence level (commonly displayed as
+99.9% in current JMH output), over the data supplied to its result aggregation. It is not a generic
+proof of reproducibility, effect significance, or equivalence; iterations within a fork are not
+fresh JVM experiments.
+
+Never use these shortcuts:
+
+- overlapping intervals => equal;
+- non-overlapping intervals => production-relevant;
+- error/score below a fixed percentage => valid;
+- more iterations => independent replication;
+- one faster aggregate => all forks/workloads faster.
+
+For a comparison, preserve raw iteration and fork identity. Randomize or block execution order,
+pair comparable baseline/candidate runs when defensible, examine drift/outliers without silently
+deleting them, and use an interval for the effect (ratio/difference) against a predeclared practical
+threshold. If the design cannot distinguish improvement, equivalence, regression, and instability,
+report it as inconclusive. Follow `latency-statistics` and `performance-regression-ci`.
+
+## Allocation and secondary results
+
+Allocation profilers estimate a specific allocation metric (for example normalized bytes per
+operation) in this compiled context. Treat `0 B/op`, nonzero TLAB activity, and profiler rounding
+according to the profiler/version implementation. Escape analysis may remove an object here but
+not at a non-inlined production caller. Allocation rate is not retained size, live set, native
+memory, or pause time.
+
+Use allocation as a high-signal regression dimension when it represents the outcome, but do not
+call it universally deterministic or JMH's most reliable number. Validate with compiler evidence
+and production allocation/GC behavior.
+
+## From score to engineering decision
+
+Estimate system impact only after establishing production exposure:
+
+```text
+work-normalized saving = calls per business operation * saving per call
+capacity/latency impact = function of hot fraction, concurrency, queueing, GC, and new bottleneck
+```
+
+Amdahl's law can bound CPU speedup when its assumptions hold; it is not mandatory and does not
+model allocation, queueing, tail latency, resource contention, or changed parallelism by itself.
+Validate the change at the next realistic layer and explain divergence.
+
+## Anti-patterns
+
+| Anti-pattern                     | Symptom/detection                          | Better approach                                 | Sometimes acceptable                            |
+| -------------------------------- | ------------------------------------------ | ----------------------------------------------- | ----------------------------------------------- |
+| Hand-written `nanoTime` loop     | no fork/warm-up/generated harness controls | JMH or justified component harness              | coarse long-running external operation          |
+| Discarded result                 | implausible scaling/empty assembly         | observe semantic output and inspect compilation | operation's real semantics are side effects     |
+| One constant happy input         | folded/monomorphic/unrepresentative path   | parameterized representative input cohorts      | deliberately measuring that specialization      |
+| `@Fork(0)` result published      | order/IDE/harness-JVM sensitivity          | isolated forks                                  | debugger-only diagnosis                         |
+| Fixed “5% noise” validity rule   | result accepted/rejected by ratio alone    | effect/power/drift/fork analysis                | local triage heuristic, explicitly non-decisive |
+| SampleTime p99 sold as SLO       | no arrival rate/queue/dependency           | open-loop/component/system load test            | isolated service-time mechanism question        |
+| Independent baseline subtraction | negative/unstable adjusted cost            | direct boundary or paired differential design   | calibrated instrument with justified model      |
+
+## Validation checklist
+
+- [ ] The contract and practical effect threshold are written.
+- [ ] Inputs, state sharing, reset, and result observation match the intended semantics.
+- [ ] Positive/negative controls and analytical scaling behave as expected.
+- [ ] Warm-up/measurement trajectories and compiler/GC activity support the lifecycle claim.
+- [ ] Multiple forks expose between-JVM behavior; raw fork identity is retained.
+- [ ] Comparison order, pairing/blocking, environment, versions, and flags are recorded.
+- [ ] Score, unit, operation denominator, secondary metrics, uncertainty, and exclusions are clear.
+- [ ] The claim is bounded to the benchmark context and validated at the next realistic layer.
 
 ## References
 
-- [Validating a benchmark](references/validating-a-benchmark.md) — the checks that must
-  pass before any number is believed, the CI gate design, and the anti-patterns with their
-  corrected forms. Read before trusting or publishing a result.
+- [Validating a benchmark](references/validating-a-benchmark.md)
+- [OpenJDK JMH project and samples](https://github.com/openjdk/jmh)
+- [JMH sample: dead-code elimination](https://github.com/openjdk/jmh/blob/master/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_08_DeadCode.java)
+- [JMH sample: constant folding](https://github.com/openjdk/jmh/blob/master/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_10_ConstantFold.java)
+- [JMH `Level.Invocation` API contract](https://javadoc.io/doc/org.openjdk.jmh/jmh-core/latest/org/openjdk/jmh/annotations/Level.html)
+- [JMH result statistics source](https://github.com/openjdk/jmh/tree/master/jmh-core/src/main/java/org/openjdk/jmh/results)

@@ -74,8 +74,9 @@ ambient versions.
   dependencies in no meaningful sense.
 - The composition root itself: somewhere `Clock.systemUTC()` must be called once. That
   place is not hiding a dependency; it is declaring one.
-- `UUID.randomUUID()` for identifiers whose value no logic branches on — inject a
-  generator only when tests actually need to predict ids.
+- `UUID.randomUUID()` for identifiers whose exact value is irrelevant — inject a generator
+  when tests, replay, ordering, audit correlation or deterministic simulations need control,
+  not merely because every dependency could theoretically be abstracted.
 
 **When not to apply.** Threading a `Clock` through fifteen call layers to reach one
 `now()` is worse than the disease if nothing between them uses it — restructure so time
@@ -97,3 +98,23 @@ Splitting stops paying when any of these holds:
 The over-fragmented example in `worked-examples.md` shows the merge. The honest metric is
 concepts-in-flight for the reader, not method length; a linear 30-line method at one level
 is often the most readable form a computation has.
+
+## Diagnostic sequence
+
+```text
+Hard to understand
+  ↓
+Mixed policy/mechanics? ── yes → extract a named stable concept
+  │ no
+Hidden input or ordered state? ── yes → expose value/state transition
+  │ no
+Navigation exceeds local complexity? ── yes → inline/merge adjacent fragments
+  │ no
+Leave it; avoid a cosmetic churn diff
+```
+
+Useful primary API references: [`Clock`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Clock.html)
+for explicit time sources and [`RandomGenerator`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/random/RandomGenerator.html)
+for the deliberately broad generator abstraction. The refactoring vocabulary follows Martin
+Fowler's [official catalog](https://refactoring.com/catalog/), but the decision criteria above
+are stricter than applying a named refactoring mechanically.

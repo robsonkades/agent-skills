@@ -27,21 +27,23 @@ does neither predictably.
 
 ## Workflow
 
-1. **Confirm it is retention, not throughput.** Compare live-set size after successive full
-   collections. If the post-collection floor rises monotonically with traffic, it is
-   retention. A high allocation rate with a flat floor is allocation-profiling's problem, not
-   this skill's.
+1. **Confirm a retention hypothesis, not merely occupancy.** Compare equivalent
+   post-reclamation points under normalized load/cache/topology. A rising floor means more
+   remains reachable; it does not by itself say “defect.” Avoid forced Full GC on a serving
+   instance unless its pause and side effects are explicitly accepted.
 2. **Get the retaining path, not the biggest object.** A heap dump's dominator tree and
    _path to GC root_ answers "who is holding this"; the class histogram only says what is
    there. heap-dump-analysis owns the tool workflow. JFR's `jdk.OldObjectSample` gives the
-   same answer with allocation stacks, from a running process, at a cost you can leave on.
+   complementary sampled evidence from a running process. Its stacks/path settings,
+   overhead and collector-specific behavior must be verified before continuous use.
 3. **Match the path against the catalogue** in `references/leak-patterns.md`. Nearly every
    real leak is one of eight shapes, and each has a specific fix.
 4. **Fix the ownership, not the symptom.** Bound the cache, remove the listener, `remove()`
    the ThreadLocal, null the slot in a self-managed array. Adding `-Xmx` or a weaker
    reference type moves the failure later.
-5. **Verify against the floor.** Re-run the same load and compare the post-full-GC live set
-   over time. "Heap looks better" is not a result.
+5. **Verify against the ownership and capacity contract.** Under equivalent conditions,
+   the former retaining path/count should stop unbounded growth and the service must still
+   meet latency/throughput. “Heap looks better” is not a result.
 
 ## Rules
 
@@ -57,9 +59,10 @@ does neither predictably.
   to the collector, which clears under pressure — after already having done the collection
   work, and typically all at once, so the cache's hit rate falls off a cliff exactly when the
   system is busiest.
-- `WeakHashMap` is for canonicalising maps whose keys have an independent lifetime, and only
-  when key identity is what matters — it compares with `equals`, but a key nobody else holds
-  disappears whether or not an equal key exists. It leaks whenever the _value_ references
+- `WeakHashMap` is for mappings whose key reachability elsewhere controls entry lifetime,
+  with stable `equals`/`hashCode` semantics. It is not an identity map: an equal lookup can
+  find an entry, while the particular stored key can still disappear when no strong owner
+  retains it. It retains entries whenever the _value_ references
   its own key, directly or transitively, because that makes the key strongly reachable.
 - Never use `finalize()`. It is deprecated for removal (JEP 421), can already be turned off
   at runtime with `--finalization=disabled`, runs on an unspecified thread with no ordering
@@ -89,9 +92,10 @@ does neither predictably.
   is a class-loader leak: something in a longer-lived loader still references an application
   class. The usual holders are static registries, `ThreadLocal` values on container threads,
   JDBC drivers, shutdown hooks and unremoved listeners.
-- A distributed system hides leaks and then reveals them all at once. Per-replica heap growth
-  looks like a healthy rolling restart until traffic shifts to fewer replicas or a deploy
-  freezes; "it recovers after a restart" is a leak diagnosis, not a mitigation.
+- Restarts can mask per-replica retention until traffic concentrates or deploy cadence
+  changes. “It recovers after restart” is evidence of process-lifetime state, not proof of a
+  leak; bounded caches, fragmentation and load reset can look similar. Preserve evidence
+  and test the ownership/capacity hypothesis before institutionalizing restarts.
 
 ## References
 

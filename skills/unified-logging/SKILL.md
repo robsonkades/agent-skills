@@ -1,193 +1,192 @@
 ---
 name: unified-logging
 description: >
-  Constructing and verifying a HotSpot -Xlog configuration: tag-set versus wildcard
-  selection, levels, decorators, outputs, rotation, async logging, `jcmd VM.log`, and
-  pre-JDK-9 flag migration. Use when -Xlog produces an empty or zero-byte file, when a
-  tag-set has to be chosen for a subsystem, when a log is missing or truncated after a
-  restart, when a pre-JDK-9 flag such as -XX:+PrintGCDetails or -XX:+TraceClassLoading sits
-  in a startup script, when a JVM refuses to start on an -Xlog option, when logging must be
-  toggled without a restart, when asked what -Xlog costs, or where a container's log should
-  go. Produces a log that exists and holds what was meant; does not interpret it — a GC log
-  is gc-log-analysis, safepoints and time-to-safepoint are safepoints and pause-attribution,
-  compilation output is compilation-and-inlining-logs and deoptimization, code cache is
-  code-cache-segments, class loading is jvm-class-loading, CDS and AOT are
-  startup-cds-crac-leyden, and application logging is structured-logging.
+  Constructing, validating and operating HotSpot unified JVM logging: exact versus wildcard
+  tag-set selection, levels, outputs, decorators, file rotation, asynchronous drop/stall
+  modes, runtime VM.log changes, environment-injected options and legacy-flag migration.
+  Use when -Xlog is empty, excessive, missing after restart, rejected at startup, changed
+  live with jcmd, mixed with container logs, or evaluated for overhead. Producing and
+  preserving the intended evidence belongs here; interpretation belongs to GC, safepoint,
+  JIT, class-loading and other owning skills.
 ---
 
-# Unified Logging
+# Unified JVM Logging
 
 ## Purpose
 
-`-Xlog` fails in three different ways, and the two that matter are silent. A wrong tag
-stops the JVM from starting, which is loud and cheap. A valid selection that matches no
-tag-set warns **on stdout, never into the file you named**, exits 0, and leaves a 0-byte
-file. A valid tag-set logged at a level where nothing fires warns not at all, and leaves
-the same 0-byte file. Both silent cases are discovered during the incident the log was
-supposed to explain.
+Produce the intended HotSpot evidence on the exact runtime without relying on remembered
+tags, defaults or diagnostic wording. Unified logging is a versioned JVM interface: tags,
+call-site levels, async modes and legacy aliases change across JDK releases and vendors.
 
-This skill ends with a configuration that has been proven to emit the tag-set that was
-intended, on the JDK that will actually run it.
-
-## Scope
-
-**Covers:** selection syntax, tag-set semantics, levels, decorators, outputs, rotation,
-async logging, `jcmd VM.log`, legacy flag migration, and the cost of enabling logging.
-
-**Does not cover:** what any log line means. Handing over a produced log is the end of
-this skill's work — see the neighbours named in the description.
+The only authoritative discovery sources for a target process are its JDK documentation,
+java -Xlog:help, effective startup command/environment and jcmd help/configuration.
 
 ## Workflow
 
-1. **Pin the JDK version before writing a flag.** The tag list, the level of the
-   `jit+compilation` call sites and the accepted `-Xlog:async` spellings all differ
-   between JDK 21 and JDK 25. A flag validated on the wrong JDK is worth nothing.
-2. **Discover the tags on that JDK**: `java -Xlog:help`. This is the only correct source.
-   A tag list read from `logTag.hpp` over-counts a shipped product build — eight tags in
-   the JDK 25 header are `NOT_PRODUCT`/`DEBUG_ONLY` and are absent from `-Xlog:help`.
-3. **Choose a tag-set, not a tag** (table below). A tag existing does not mean a tag-set
-   of that one tag exists: `jit` is a real tag, and `-Xlog:jit` alone matches nothing.
-4. **Prove it on stdout, before any `file=`:**
-   `java -Xlog:<selection> -version`, watching **stdout**. This is the only step that
-   surfaces `No tag set matches selection: …` and its up-to-five suggestions. Adding
-   `file=` moves the log into the file and leaves this diagnostic on stdout, which a
-   container log pipeline usually discards. A refused start is split the same way: stderr
-   carries only `Invalid -Xlog option '…', see error log for details.`; the reason is the
-   `[error][logging]` line on stdout.
-5. **Prove it on a representative workload, with the file attached**, and assert the
-   content, not the exit code: the file is non-empty **and** contains the tag-set. Match
-   the tag-set with a trailing-space tolerance, `grep -E '\[gc,age[ ]*\]' gc.log`, never
-   `wc -l` and never an exact `\[gc\]`: UL pads the tags field to the width of the widest
-   tag-set on that output, so a `{gc}` line under `gc*` prints as `[gc     ]` and an
-   exact-bracket grep returns zero hits on a log that is working. This is the only step
-   that catches a real tag-set at a level where nothing fires — do not let the assertion
-   itself manufacture the empty result it is checking for.
-6. **Only now add the production shape**: `file=`, `filecount`, `filesize`, decorators,
-   `async`. Then re-read step 5's assertion once more if a second `-Xlog` argument points
-   at the same output — decorators belong to the output and the last argument silently
-   rewrites them for everything already routed there.
-7. **If async is on, grep the log for `messages dropped`** before drawing any conclusion
-   from it, and before handing it to an analysis skill.
+### 1. Pin and discover
 
-## Selection forms
+Record vendor/build/version and startup option sources. Run:
 
-`-Xlog[:[selections][:[output][:[decorators][:output-options]]]]`, where a selection is
-`tag1[+tag2...][*][=level][,...]`. Every HotSpot call site carries an unordered tag-set of
-one to five tags; a selection is matched against whole tag-sets, never against message
-text.
+```text
+java -Xlog:help
+java -Xlog:<selection> -version
+```
 
-| Written        | Reads as                           | `{gc}` | `{gc,age}` | `{gc,age,ergo}` | `{safepoint}` | `{gc,safepoint}` |
-| -------------- | ---------------------------------- | ------ | ---------- | --------------- | ------------- | ---------------- |
-| `gc`           | exact `{gc}`                       | yes    | no         | no              | no            | no               |
-| `gc+age`       | exact `{gc,age}`                   | no     | yes        | no              | no            | no               |
-| `gc*`          | any superset of `{gc}`             | yes    | yes        | yes             | no            | yes              |
-| `gc,safepoint` | exact `{gc}` ∪ exact `{safepoint}` | yes    | no         | no              | yes           | **no**           |
+The first exposes syntax/tags/decorators/output options for that build. The second proves
+selection parsing, not that a workload will emit the desired events.
 
-The comma is a union of independent selections, each with its own level
-(`gc*=info,safepoint*=off`), and it deliberately excludes the intersection. The wildcard
-binds to the whole preceding combination: `gc+class*` means "at least `gc` and `class`".
+### 2. Select tag sets correctly
 
-A level is a **threshold, not an equality**: `=debug` selects debug and everything more
-severe, so a `gc=debug` file legitimately contains info lines. Levels are `off, trace,
-debug, info, warning, error`.
+Syntax:
 
-## The three failure modes
+```text
+-Xlog[:[selections][:[output][:[decorators][:output-options]]]]
+selection = tag[+tag...][*][=level]
+```
 
-| Input                                                                                       | JVM              | Exit | Diagnostic                                                                                                                                                                                                                                                        |
-| ------------------------------------------------------------------------------------------- | ---------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unknown tag, level or decorator (`gcc`, `=verbose`, `::foobar`), or the `gc+*` spelling     | refuses to start | 1    | **on stdout**: `[error][logging] Invalid tag 'gcc' in log selection.` / `Invalid level 'verbose' in log selection.` / `Invalid decorator 'foobar'.` / `Invalid tag '' in log selection.`; stderr gets only `Invalid -Xlog option '…', see error log for details.` |
-| Output cannot be initialised (directory missing, `filecount` on `stdout`, `filecount=1001`) | refuses to start | 1    | **on stdout**: `Error opening log file '…': No such file or directory` / `Invalid option 'filecount' for log output (stdout).` / `filecount must be in range [0, 1000]`, then `Initialization of output '…' … failed.`                                            |
-| Valid tags, no matching tag-set (`gc+jit`)                                                  | starts           | 0    | `[warning][logging] No tag set matches selection` **on stdout only**                                                                                                                                                                                              |
-| Valid tag-set, nothing fires at that level (`gc+age` at info)                               | starts           | 0    | **none at all** — empty file, no warning                                                                                                                                                                                                                          |
+Without wildcard, a selection matches the exact tag set. With wildcard, it matches tag
+sets containing at least those tags. Comma unions selections; plus combines tags in one
+set. A level is a threshold including that level and more severe levels.
 
-Verified by execution on Temurin 25.0.3; the wording of the diagnostics on JDK 21 is not
-verified, but the split is structural. The two loud rows share one shape: stderr names the
-option, stdout names the reason. The symptom-to-cause table is in
-`references/production-and-troubleshooting.md`.
+Examples:
 
-## Rules
+| Selection               | Meaning                                                 |
+| ----------------------- | ------------------------------------------------------- |
+| gc                      | exact gc tag set at default info                        |
+| gc+age=debug            | exact gc,age set through debug threshold                |
+| gc*=info                | all tag sets containing gc                              |
+| gc,safepoint            | exact gc OR exact safepoint, not their combined tag set |
+| gc*=info,safepoint*=off | gc supersets except sets disabled by safepoint wildcard |
 
-- **Defaults are two different things.** With no `-Xlog` at all the JVM runs
-  `all=warning:stdout:uptime,level,tags`. Bare `-Xlog` means `all=info:stdout` with the
-  same decorators. Your `-Xlog` is added alongside the warning baseline, not instead of it.
-- **`-Xlog:disable` clears the warning/error baseline too.** After it, JVM warnings and
-  errors are silent unless explicitly re-enabled. Use it only when that is the intent.
-- **The output destination is a decision, not a rule.** `file=` on a mounted volume when
-  one exists; `stderr` when the application's stdout is a parsed stream and the collector
-  labels lines by stream; `stdout` only when nothing parses it line by line. UL writes
-  each line whole (JEP 158) and nothing more; `exceptions` events span three lines unless
-  `foldmultilines=true`; `file=/dev/stdout` with rotation on refuses to start; and the
-  `all=warning` baseline stays on stdout whatever the file says. The table is in
-  `references/production-and-troubleshooting.md`.
-- **A baseline exists that costs nothing measurable at `info`**: `gc*`, `safepoint`, and
-  the startup-only tags `os`, `pagesize`, `arguments`. Everything at `debug` or `trace` is
-  a time-boxed capture, not configuration — `gc*=trace` took a quarter of throughput on the
-  one machine measured. Per-tag rates and the proven flag are in the same reference.
-- **Rotation is not optional, and its defaults are not "keep everything":**
-  `filecount=5, filesize=20M`, so `(filecount + 1) × filesize` = 120 MB on disk per output
-  once the slots fill. `filecount=0` means no rotation
-  **and truncate the existing file at startup** — it destroys the previous run's log and
-  also disables manual rotation. To keep a file until an operator asks for a rotation, use
-  `filesize=0` with `filecount>0`.
-- **Every JVM restart archives the active file and consumes a rotation slot.** A crash
-  loop erases the history in `filecount` restarts. Put `%p` (pid) or `%t` (start
-  timestamp) in the filename when several JVMs share a host or restarts are expected.
-- **Decorators are a property of the output, not of the selection.** Two `-Xlog` arguments
-  naming the same file: the later decorator list wins for lines already routed there,
-  silently. Decorator order is fixed by the framework, so `pid,uptime` and `uptime,pid`
-  produce byte-identical output.
-- **`-Xlog:async` is a restart-only decision.** `jcmd VM.log async=true` is rejected as an
-  unknown argument, and `async=true` as an output option is `Invalid option 'async'` on the
-  command line and in `jcmd`. Everything else about an output can be changed at runtime —
-  but **always pass `what=` to `VM.log`**: `output=… decorators=…` alone re-selects
-  `all=info` on that output, silently replacing whatever it logged.
-- **Three environment variables inject `-Xlog`, on different sides of the command line.**
-  `JDK_JAVA_OPTIONS` and `JAVA_TOOL_OPTIONS` lose to the command line on an overlapping
-  tag-set; `_JAVA_OPTIONS` beats it. The `Picked up …` notices are on stderr.
-  `jcmd <pid> VM.log list` is the only statement of what is in effect.
-- **Do not quote an overhead percentage.** No citable published benchmark of UL overhead
-  exists. The cost is dominated by message rate and by the selection: on one machine,
-  `gc*` and `gc*=debug` sat inside run-to-run noise, `all=info` cost 7% and `gc*=trace`
-  25% of throughput, and async recovered most of the latter. Those are observations with a
-  method attached (`references/async-and-cost.md`), not figures to repeat. If a number is
-  needed, measure it on the target and report the method.
-- **Pre-JDK-9 flags split three ways**, unchanged across JDK 21, 25 and 26. `-XX:+PrintGC`,
-  `-XX:+PrintGCDetails` and `-Xloggc:` still work as deprecated aliases with a warning.
-  Most of the rest (`PrintGCTimeStamps`, `PrintTenuringDistribution`, `PrintReferenceGC`,
-  `PrintAdaptiveSizePolicy`, `UseGCLogFileRotation`, the `Trace*` family,
-  `PrintSafepointStatistics`) were removed before JDK 21 and the **JVM refuses to start**.
-  `-XX:+PrintCompilation` is neither: it is a live product flag that is not unified
-  logging at all.
-- **Ask rather than guess** when the target JDK version, the subsystem of interest, or
-  whether the log is for a one-off capture or permanent production configuration is
-  unstated. Each changes the answer.
+### 3. Prove content on a representative workload
 
-## References
+Attach the intended output and decorators, execute behavior that triggers the subsystem, and
+assert semantic content/tag sets. Exit zero and a nonempty file are insufficient; unrelated
+warning lines can satisfy them. Conversely, a valid selection can be empty because no
+matching call site executed or its level was below threshold.
 
-- [Selection syntax and finding the right tag-set](references/selection-syntax.md) — how
-  multiple `-Xlog` arguments merge or override, how to go from "I want to see X" to a
-  tag-set, the JDK 21→25→26 tag deltas, and the worked `jit` versus `compilation` case
-  including the JDK 21/25 level change. Read when choosing what to log, or when a
-  selection produced nothing, too much, or the wrong thing.
-- [Outputs, decorators and rotation](references/outputs-and-rotation.md) — the full
-  decorator table, output options, exact rotation and restart-archiving semantics, and
-  filename placeholders. Read when configuring a file output that must survive production,
-  or when a log is missing, truncated or unparseable after a restart.
-- [Runtime reconfiguration with jcmd](references/runtime-reconfiguration.md) — `VM.log`
-  syntax, recipes for adding, silencing and rotating an output on a live JVM, and the six
-  things it cannot do. Read when logging must change without a restart.
-- [Async logging and cost](references/async-and-cost.md) — `-Xlog:async` by JDK version,
-  `drop` versus `stall`, `AsyncLogBufferSize`, how dropped messages are reported, and one
-  single-machine measurement with its full method. Read when logging sits on a hot path,
-  when message volume is high, or when asked whether `-Xlog` is expensive.
-- [Legacy flag migration](references/legacy-flags.md) — the removed / deprecated / alive
-  classification and the official mapping tables from GC and runtime flags to `-Xlog`.
-  Read when a pre-JDK-9 flag appears in a startup script or a JVM fails to start on an
-  unrecognised `-XX:+Print…` or `-XX:+Trace…` option.
-- [Production, containers and troubleshooting](references/production-and-troubleshooting.md)
-  — what to log always with the per-tag rate and cost class, the `exceptions` undercount
-  under the JIT, the file / `stderr` / `stdout` decision for a container, the
-  `JDK_JAVA_OPTIONS` / `JAVA_TOOL_OPTIONS` / `_JAVA_OPTIONS` precedence, and the
-  symptom-to-cause table. Read when writing the permanent configuration for a service,
-  when the log that ran is not the one that was written, or when a log is missing, empty
-  or unparseable and the cause is not yet known.
+Capture both stdout and stderr during validation. Exact diagnostic streams/wording can vary
+by build and launcher environment.
+
+### 4. Design output and retention
+
+Choose stdout/stderr versus file from the platform collection and evidence-survival
+contract. For files, define directory ownership, unique names, rotation size/count, disk
+budget, restart/crash-loop behavior and collection lag. Filename placeholders such as pid,
+start time and host are build-documented features.
+
+Defaults are not retention requirements. On JDK 25 documentation, files rotate by default
+with up to five rotated files around 20 MB; filecount zero disables rotation and may
+overwrite an existing file. Pin and set explicit production values.
+
+### 5. Choose sync or async from loss policy
+
+Synchronous logging can block at log sites. Current JDK 25 supports global async modes:
+
+- drop: bounded buffer and nonblocking log-site writes, messages can be lost;
+- stall: writers wait for buffer space, preserving more evidence at latency risk.
+
+No mode is universally safe. Size/test buffer and sink throughput, monitor drop notices,
+and test shutdown/crash behavior. Do not extrapolate overhead from a different selection or
+workload.
+
+### 6. Reconfigure safely
+
+Use jcmd target help before invoking VM.log because diagnostic command options vary:
+
+```text
+jcmd <pid> help VM.log
+jcmd <pid> VM.log list
+```
+
+Snapshot before/after effective configuration, make the smallest change, trigger a known
+event and restore. Runtime reconfiguration cannot be assumed equivalent to every startup
+directive; test async/global behavior on the exact JDK.
+
+### 7. Migrate legacy flags from official mapping
+
+Classify each old option for the target JDK:
+
+- removed/unrecognized: replace with documented -Xlog selection;
+- deprecated compatibility alias: replace proactively and compare output semantics;
+- still-live non-unified flag: do not translate merely because it prints diagnostics.
+
+Use the target JDK java man page's GC/runtime mapping and test startup. Do not maintain a
+cross-version status table from source snapshots as timeless truth.
+
+## Production decision framework
+
+Use a permanent low-volume selection when its evidence is repeatedly useful, cost is
+measured and retention is bounded. Use time-boxed debug/trace capture when event rate,
+sensitive content or overhead is workload-dependent. Prefer JFR when structured event
+semantics, stack traces or bounded recording are better suited; the two can complement each
+other.
+
+For containers:
+
+- stdout/stderr integrates with platform collection but can mix JVM/application schemas and
+  backpressure on pipes;
+- file output preserves separate parseable streams but needs a mounted durable-enough path,
+  tailer and disk/rotation lifecycle;
+- ephemeral container storage is not incident retention.
+
+### Minimal decision record
+
+```text
+JDK vendor/build:
+Question and owning analysis skill:
+Selection and why exact/wildcard:
+Output/decorators/rotation:
+Sync or async mode and loss behavior:
+Expected event rate/bytes and measured overhead:
+Validation trigger/assertion:
+Collection/retention/security:
+Rollback/restoration:
+```
+
+## Failure modes
+
+| Symptom                      | Distinguish with                                            | Response                                                |
+| ---------------------------- | ----------------------------------------------------------- | ------------------------------------------------------- |
+| JVM refuses startup          | capture both streams; validate help/syntax/path/options     | correct for exact build                                 |
+| warning says no tag set      | exact/wildcard semantics and suggestions/help               | select actual tag combination                           |
+| empty file, no warning       | workload trigger, level, effective output/config            | exercise representative path or lower level temporarily |
+| expected lines missing       | wildcard exclusions, later overrides, async drops, rotation | list effective config and inspect all files             |
+| file truncated after restart | filecount/filename/restart rotation                         | explicit retention and unique placeholders              |
+| container has no logs        | stdout/stderr routing, file mount/tailer, permissions       | repair platform path                                    |
+| throughput/latency regresses | lines/s, bytes/s, formatting/I/O, sync/async                | narrow selection, async with known loss, remeasure      |
+| live change logs too much    | omitted what/default selection or output override           | restore snapshot with explicit selection                |
+
+## Anti-patterns
+
+**Hard-coded “safe baseline”:** event rates and costs depend on collector, heap, workload
+and call-site levels. Validate on target.
+
+**Exact benchmark percentage as product fact:** a local 7% or 25% result is an experiment,
+not transferable knowledge.
+
+**Tags from OpenJDK source instead of product help:** product/debug builds and versions
+differ.
+
+**File exists therefore logging works:** validate expected tag/content under a trigger.
+
+**All trace/debug is temporary by law:** some low-rate debug selections may be safe
+permanently; decide from measured rate, sensitivity and value.
+
+**Disable defaults without restoring warnings/errors:** -Xlog:disable clears the default
+configuration; re-enable intended baselines explicitly.
+
+## Cross-skill routing
+
+- [selection syntax](references/selection-syntax.md)
+- [outputs and rotation](references/outputs-and-rotation.md)
+- [runtime reconfiguration](references/runtime-reconfiguration.md)
+- [async and cost](references/async-and-cost.md)
+- [legacy flags](references/legacy-flags.md)
+- [production troubleshooting](references/production-and-troubleshooting.md)
+
+## Authoritative references
+
+- [JDK 25 java command: unified logging](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#enable-logging-with-the-jvm-unified-logging-framework)
+- [JEP 158: Unified JVM Logging](https://openjdk.org/jeps/158)
+- [JDK 25 jcmd](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)

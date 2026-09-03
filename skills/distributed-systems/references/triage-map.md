@@ -24,7 +24,8 @@ same second. It usually settles the fork in a minute.
 
 **Separating question:** is the value _old_, or is it _inconsistent between readers_?
 
-- Old everywhere, converges later → replication lag: `consistency-models`.
+- Old everywhere, converges later → test replication lag, cached snapshots and delayed
+  invalidation; route to `consistency-models` or `caching-strategies` based on the serving path.
 - Different per replica or per instance, does not converge → `cache-sharding-and-replication` if a
   cache is involved, otherwise `consistency-models` for the model actually in force.
 - The writer cannot read its own write → read-your-writes: `consistency-models`.
@@ -35,9 +36,11 @@ same second. It usually settles the fork in a minute.
 
 **Separating question:** is the service _working harder_ or _waiting_?
 
-- Waiting, with CPU low → a queue or a dependency. `littles-law-and-queueing` for the arithmetic;
-  `timeouts-and-deadlines` if it waits without a bound.
-- Working harder, CPU high, one process → this is not a distributed question yet: `java-performance`.
+- Low process CPU does not prove “waiting”: inspect off-CPU time, throttling, run queue,
+  downstream latency and queue age. Use `littles-law-and-queueing` for queue arithmetic and
+  `timeouts-and-deadlines` for unbounded remote waits.
+- High CPU in one process → first route to `java-performance`; then determine whether skew,
+  retries or serialization from distributed traffic created the load.
 - Slow only for some keys or tenants → `hot-partitions-and-rebalancing`.
 - Slow only on fan-out requests, fine on simple ones → `scatter-gather` (max-of-N).
 - Slow and spreading across services, error rate rising with it → `cascading-failures`. Time-critical.
@@ -62,8 +65,9 @@ same second. It usually settles the fork in a minute.
   failures are sustained and correlated.
 - Slow (timeouts, threads held) → `timeouts-and-deadlines` first, because a missing bound is the
   amplifier; then `circuit-breakers`.
-- Rejecting with 429 → you are the problem: `retries-and-backoff` for the client obligation and
-  `rate-limiting-and-load-shedding` to understand what it is enforcing.
+- Rejecting with 429 → inspect the named quota/scope and `Retry-After`; it may be valid
+  admission control, quota misconfiguration or unexpected workload. Route to
+  `retries-and-backoff` and `rate-limiting-and-load-shedding`.
 - Up, healthy, and useless (gray failure) → `failure-models`, then `load-balancing-and-routing`
   for outlier ejection.
 
@@ -71,10 +75,10 @@ same second. It usually settles the fork in a minute.
 
 **Separating question:** across what scope was ordering ever promised?
 
-Nothing promises global ordering unless one partition was chosen deliberately. Establish the
-scope first — `message-ordering-and-partitioning` — because most "ordering bugs" are a correct
-system meeting an assumption nobody wrote down. If the scope was per-key and the key was right,
-look for a parallel handler, a retry that re-enqueued, or a DLQ that let the next message through.
+Global ordering requires a named serialization mechanism such as one log/partition, sequencer
+or consensus order, and it trades availability/throughput. Establish the promised scope first —
+`message-ordering-and-partitioning`. If it was per-key and the key was right, inspect parallel
+handlers, retries/redrive, producer epochs and gaps before calling the broker unordered.
 
 ## Two candidates that are usually the same answer
 
@@ -82,7 +86,8 @@ look for a parallel handler, a retry that re-enqueued, or a DLQ that let the nex
   `rate-limiting-and-load-shedding` separates them.
 - "Circuit breaker or bulkhead?" — a breaker stops calling a failing dependency; a bulkhead stops
   one dependency consuming all your capacity. `circuit-breakers` and the concurrency-limiting
-  skill respectively. A system under a slow dependency usually needs the bulkhead first.
+  skill respectively. Under a slow dependency, a bulkhead often protects caller capacity while
+  a breaker may reduce futile calls; select from measured saturation and fallback semantics.
 - "Saga or outbox?" — an outbox makes one write-plus-publish atomic; a saga sequences several
   local transactions with compensations. `distributed-transactions-and-sagas` decides, and
   `delivery-semantics` owns the outbox itself.

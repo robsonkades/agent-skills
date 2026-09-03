@@ -4,7 +4,7 @@
 
 ```
 Young GC allocates in Eden
-  |  old occupancy crosses the effective IHOP (static floor, or the adaptive prediction),
+  |  old occupancy crosses the effective IHOP (initial static value or adaptive prediction),
   |  or a humongous allocation requests a cycle (cause: G1 Humongous Allocation)
   v
 Pause Young (Concurrent Start)     STW, piggybacked on a young GC —
@@ -72,9 +72,10 @@ Three things to read off it:
 
 - The cycle has its **own GC id** (`GC(2626)`), one higher than the concurrent-start pause.
   A parser that groups by id must not expect the marking lines under the pause's id.
-- `Pause Remark 234M->166M` drops occupancy: Remark reclaims wholly empty regions. The
-  occupancy at each `Pause Young (Concurrent Start)` is the datum to trend — rising across
-  cycles means the trigger is falling behind the promotion rate.
+- `Pause Remark 234M->166M` drops occupancy: cleanup around remark can reclaim eligible empty/
+  humongous regions. Trend concurrent-start occupancy with effective threshold, current old
+  capacity, old-allocation rate, cycle time and subsequent mixed reclaim; a rising series alone
+  does not prove the predictor is behind.
 - With `-Xlog:gc+ergo+ihop=debug` every pause also logs the effective threshold:
 
 ```
@@ -83,8 +84,8 @@ Three things to read off it:
 [gc,ergo,ihop] Request concurrent cycle initiation (occupancy higher than threshold) ... source: concurrent humongous allocation
 ```
 
-The number in parentheses after `threshold:` is the effective IHOP as a percentage — the
-adaptive value once the predictor has samples, the static floor before.
+The number in parentheses after `threshold:` is the effective IHOP as a percentage—the adaptive
+value once the predictor has samples, the configured initial value before.
 
 ## Humongous allocation in the log
 
@@ -150,9 +151,9 @@ ergonomic values change with the machine.
 
 | Flag                                                              | Default (JDK 25)                                | Controls                                                                                         |
 | ----------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `-XX:InitiatingHeapOccupancyPercent`                              | 45, product                                     | Initial floor for the marking trigger; the only value used when the adaptive predictor is off    |
+| `-XX:InitiatingHeapOccupancyPercent`                              | 45, product                                     | Initial marking threshold; the fixed threshold when adaptive IHOP is off                         |
 | `-XX:+G1UseAdaptiveIHOP`                                          | `true`, product                                 | Enables adaptive prediction of the trigger point                                                 |
-| `-XX:G1AdaptiveIHOPNumInitialSamples`                             | 3, experimental                                 | Cycles that run on the static floor before the predictor takes over                              |
+| `-XX:G1AdaptiveIHOPNumInitialSamples`                             | 3, experimental                                 | Observation count before the adaptive predictor can replace the initial value                    |
 | `-XX:G1EagerReclaimRemSetThreshold`                               | experimental, ergonomic — 16 on 17–24, 32 on 25 | Remembered-set entry count above which a humongous region stops being eligible for eager reclaim |
 | `-XX:ConcGCThreads`                                               | `(ParallelGCThreads + 2) / 4`, ergonomic        | Threads dedicated to concurrent marking; 5 with `ParallelGCThreads=18` here                      |
 | `-XX:G1ConcMarkStepDurationMillis`                                | 10, product                                     | How long a marking thread works before checking for a pending pause                              |

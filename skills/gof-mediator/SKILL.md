@@ -22,19 +22,19 @@ Take the interaction rules out of the participants and put them in one place. Wh
 each know about the other four, a change to one ripples through the set; when each knows only a
 hub, the ripple stops there.
 
-The cost is exact and unavoidable: **the hub now knows everything.** Every rule about how two
-participants relate is in it, and it grows with every new relationship. That is the pattern's
-whole trade, and it is why a mediator either stays deliberately small or becomes the class nobody
-wants to open.
+The trade-off is concentration: the mediator owns interaction rules and therefore becomes a
+coupling and operational hotspot if its protocol boundary is too broad. It need not know every
+participant implementation or all domain rules; ports, messages and protocol state can keep the
+hub focused.
 
 ## The direction test
 
 ```text
-Facade     callers call in; the subsystem does not call back and need
-           not know the facade exists.
+Facade     callers use a simpler entry point; subsystem components need
+           not coordinate peers through it.
 
-Mediator   the participants call in AND are called back. They depend on
-           the hub; the hub owns their protocol.
+Mediator   peer interactions are routed/coordinated through a hub, directly
+           or through messages; the hub owns their collaboration protocol.
 ```
 
 If your "facade" is invoked by its own collaborators, it is a mediator and it will accumulate
@@ -43,7 +43,7 @@ their interaction rules (`gof-facade`).
 ## When it is the answer
 
 ```text
-Four or more components interact in a genuine web, and the rules
+Several components interact in a genuine web, and the rules
 about their interaction are the complicated part
         → Mediator. Classic examples: dialog widgets that enable and
           disable each other, a resource scheduler, a session
@@ -60,8 +60,8 @@ compensation and visibility
 
 ## When it is not
 
-- **Fewer than four collaborators.** Direct references are clearer, and the hub is an extra layer
-  with no coupling saved worth having.
+- **A small stable interaction where direct collaboration is clearer.** Participant count alone
+  does not decide it; cyclic coupling, protocol state, ownership and change rate do.
 - **The interaction is one-way notification.** "This happened, whoever cares may react" is
   Observer or an application event, and it decouples further than a mediator does
   (`gof-observer`).
@@ -75,10 +75,9 @@ compensation and visibility
 ## Decision rules
 
 ```text
-IF the hub has more than roughly seven participants, or its methods
-share no state
-THEN split it by protocol, not by noun. One mediator per interaction,
-     not one per subsystem.
+IF participants or methods change for unrelated protocols
+THEN split by protocol, consistency boundary or lifecycle. Count is only a signal;
+     a large cohesive mediator may be safer than several hubs with duplicated state.
 
 IF a participant notifies the hub, which notifies that participant
 THEN reentrancy: a loop, or a stack overflow, or a partially applied
@@ -90,24 +89,24 @@ THEN its thread-safety contract must be explicit. A single-threaded
      hub processing a queue is a legitimate and simple answer; an
      unsynchronised hub shared by request threads is a race.
 
-IF the hub is the only path between components in a hot flow
-THEN it is a serialisation point. Measure before assuming that is
-     acceptable.
+IF the hub is the only path in a hot flow
+THEN inspect whether implementation actually serializes work. Stateless routing can be
+     concurrent; shared state, locks or a single-consumer mailbox create the bottleneck.
 
 IF participants need to know the outcome of what other participants did
 THEN the protocol has results, not just notifications. Model the
      protocol explicitly rather than passing state through callbacks.
 
 IF the hub spans processes
-THEN it is an orchestrator: its availability becomes every
-     participant's availability, and every step needs a timeout,
-     a retry policy and a compensation
+THEN it is an orchestrator: flows it coordinates depend on its durable progress and
+     recovery. Each remote step needs a deadline and explicit retry/terminal policy;
+     compensation is needed only for effects that must be semantically undone
      (distributed-transactions-and-sagas).
 
 IF the alternative is "each component publishes what it did"
-THEN compare explicitly: choreography removes the hub and the
-     bottleneck, and removes the single place where the flow is
-     readable. Both are defensible; the choice must be stated.
+THEN compare explicitly: choreography distributes coordination and failure handling,
+     reducing central runtime dependency but increasing emergent coupling, observability,
+     schema evolution and cancellation complexity. Both are defensible.
 ```
 
 ## Cross-cutting checks
@@ -123,22 +122,25 @@ THEN compare explicitly: choreography removes the hub and the
   operational rather than structural: it must survive its own restart (state persisted, steps
   resumable), every call to a participant can fail or time out, compensation replaces rollback,
   and its availability multiplies into everyone's. Choreography — participants reacting to each
-  other's events — has none of those and gives up the single readable flow and the ability to
-  cancel it (`event-driven-architecture`).
-- **Performance.** A hub that every interaction passes through is a queue whether or not it is
-  implemented as one. Its cost is contention on its state and, in the single-threaded variant, a
-  hard concurrency limit of one. Both are acceptable in many systems and neither should be assumed
+  other's events — distributes those duties; it still needs durable delivery, idempotency,
+  observability and can support cancellation only through an explicit protocol
+  (`event-driven-architecture`).
+- **Performance.** A hub is not necessarily a queue: stateless synchronous routing may run
+  concurrently, while locks, shared state or a mailbox introduce queueing. A single consumer has
+  one-at-a-time service semantics but can batch or delegate work; measure arrival rate, service
+  time and queue growth
   (`littles-law-and-queueing`).
 - **Testing.** A well-bounded mediator is unusually testable: fake participants, drive the
   protocol, assert the interactions — it is the one place where interaction-based testing is
-  clearly appropriate, because interaction _is_ the subject. A mediator that needs twelve mocks
-  has already failed the size test (`java-test-doubles`).
+  clearly appropriate, because interaction _is_ the subject. Many test doubles are a cohesion
+  smell, not a numerical failure criterion; shared protocol fixtures and contract fakes can keep
+  tests expressive (`java-test-doubles`).
 
 ## Review checklist
 
-- [ ] Participants are called back by the hub — otherwise it is a facade
+- [ ] Peer collaboration is coordinated through the hub—otherwise compare a facade/dispatcher
 - [ ] No participant retains a direct reference to another
-- [ ] The hub coordinates fewer than about seven participants
+- [ ] Participants share one coherent protocol, lifecycle or consistency reason
 - [ ] The hub's methods share protocol state; unrelated methods mean it is two mediators
 - [ ] Reentrant notification is prevented or explicitly safe
 - [ ] The hub's thread-safety model is stated (single-threaded queue, or synchronised state)

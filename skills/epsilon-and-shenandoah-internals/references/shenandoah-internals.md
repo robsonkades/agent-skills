@@ -158,11 +158,11 @@ Two shapes that are not errors:
 
 ## Generational mode
 
-| Milestone                              | JEP     | Status                                                                                | JDK          |
-| -------------------------------------- | ------- | ------------------------------------------------------------------------------------- | ------------ |
-| Generational Shenandoah (experimental) | JEP 404 | Delivered; required `-XX:+UnlockExperimentalVMOptions` (per JEP)                      | 24           |
-| Generational Shenandoah                | JEP 521 | Delivered; **product**, no unlock (verified on 25.0.3)                                | 25           |
-| Generational mode by default           | JEP 535 | **Targeted** to JDK 28 per jdk-dev; also deprecates non-generational mode for removal | 28 (planned) |
+| Milestone                              | JEP           | Status                                                                                                 | JDK         |
+| -------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------ | ----------- |
+| Generational Shenandoah (experimental) | JEP 404       | Delivered; required `-XX:+UnlockExperimentalVMOptions` (per JEP)                                       | 24          |
+| Generational Shenandoah                | JEP 521       | Delivered; **product**, no unlock (verified on 25.0.3)                                                 | 25          |
+| Generational mode by default           | draft 8379682 | **Draft**, unnumbered and untargeted as of 2026-09-03; also proposes deprecating non-generational mode | Unscheduled |
 
 ```bash
 # generational, product on JDK 25 — explicit opt-in
@@ -177,7 +177,7 @@ jcmd <pid> VM.flags -all | grep -E "ShenandoahGCMode|ShenandoahGCHeuristics"
 ```
 
 Product describes maturity and official support; default describes what runs when nothing is
-specified. They are independent axes until JEP 535 ships.
+specified. They remain independent axes unless and until that draft is targeted and delivered.
 
 The heap is partitioned by region into young and old; the split is adaptive between
 `ShenandoahMinYoungPercentage` (20) and `ShenandoahMaxYoungPercentage` (100), and the log
@@ -202,13 +202,13 @@ piecemeal inside young cycles (`Chosen CSet evacuates young: …, old: …`, bou
 (`ShenandoahGenerationalAdaptiveTenuring`, ages 1–15). All verified as log lines and flags on
 25.0.3.
 
-| Aspect                               | `satb` (default single-generation)  | `generational` (opt-in, JEP 521)                                   |
-| ------------------------------------ | ----------------------------------- | ------------------------------------------------------------------ |
-| Treats young and old alike           | Yes                                 | No — frequent young cycles, separate old marking                   |
-| Barriers                             | LRB, SATB pre-write during marking  | LRB, SATB pre-write, card-mark post-write on every reference store |
-| Extra memory                         | None per object                     | Card table plus remembered-set bookkeeping                         |
-| Work per cycle under high allocation | Marks every live object every cycle | Young cycles mark young plus dirty cards                           |
-| Maturity on JDK 25                   | Product since JDK 15 (JEP 379)      | Product since JDK 25, becomes default in 28 (JEP 535, targeted)    |
+| Aspect                               | `satb` (default single-generation)  | `generational` (opt-in, JEP 521)                                    |
+| ------------------------------------ | ----------------------------------- | ------------------------------------------------------------------- |
+| Treats young and old alike           | Yes                                 | No — frequent young cycles, separate old marking                    |
+| Barriers                             | LRB, SATB pre-write during marking  | LRB, SATB pre-write, card-mark post-write on every reference store  |
+| Extra memory                         | None per object                     | Card table plus remembered-set bookkeeping                          |
+| Work per cycle under high allocation | Marks every live object every cycle | Young cycles mark young plus dirty cards                            |
+| Maturity on JDK 25                   | Product since JDK 15 (JEP 379)      | Product since JDK 25; a draft proposes making it the future default |
 
 Among the three generational region-based collectors, Shenandoah's remembered set is
 structurally the closest to G1's: a card table with fixed card size, scanned during young
@@ -418,16 +418,16 @@ disadvantage — without the generational hypothesis — against ZGC, which has 
 mode since JEP 490 (JDK 24). The gap is widest exactly where such benchmarks tend to run: high
 young allocation.
 
-| Aspect                                   | ZGC (generational, only mode)               | Shenandoah `satb` (default)                                                              | Shenandoah `generational` (opt-in)              |
-| ---------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Barrier                                  | Conditional load barrier plus store barrier | Conditional LRB plus SATB pre-write                                                      | LRB, SATB pre-write, card-mark post-write       |
-| Per-object memory                        | None; colour bits in the pointer            | None; forwarding in the mark word                                                        | None; card table on the side                    |
-| Compressed oops                          | No — 64-bit references always               | Yes below 32 GB                                                                          | Yes below 32 GB                                 |
-| Sensitive to the generational hypothesis | Yes, since JEP 439/474/490                  | No — every object treated alike                                                          | Yes — JEP 404/521                               |
-| Mutator stall mechanism before STW       | Allocation stalls when GC falls behind      | Pacer (`ShenandoahPacing`)                                                               | Pacer                                           |
-| Fallback                                 | Allocation stall, then OOM — no full GC     | Degenerated, then full                                                                   | Degenerated, then full                          |
-| Maturity on JDK 25                       | Product                                     | Product since JDK 15, longest tested                                                     | Product since JDK 25, default from 28 (planned) |
-| Availability (JDK 25 builds)             | Every OpenJDK build, Oracle's included      | OpenJDK vendor builds (verified: Temurin Windows x64); **absent from Oracle JDK builds** | Same                                            |
+| Aspect                                   | ZGC (generational, only mode)               | Shenandoah `satb` (default)                                                              | Shenandoah `generational` (opt-in)                          |
+| ---------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Barrier                                  | Conditional load barrier plus store barrier | Conditional LRB plus SATB pre-write                                                      | LRB, SATB pre-write, card-mark post-write                   |
+| Per-object memory                        | None; colour bits in the pointer            | None; forwarding in the mark word                                                        | None; card table on the side                                |
+| Compressed oops                          | No — 64-bit references always               | Yes below 32 GB                                                                          | Yes below 32 GB                                             |
+| Sensitive to the generational hypothesis | Yes, since JEP 439/474/490                  | No — every object treated alike                                                          | Yes — JEP 404/521                                           |
+| Mutator stall mechanism before STW       | Allocation stalls when GC falls behind      | Pacer (`ShenandoahPacing`)                                                               | Pacer                                                       |
+| Fallback                                 | Allocation stall, then OOM — no full GC     | Degenerated, then full                                                                   | Degenerated, then full                                      |
+| Maturity on JDK 25                       | Product                                     | Product since JDK 15, longest tested                                                     | Product since JDK 25; future-default proposal remains Draft |
+| Availability (JDK 25 builds)             | Every OpenJDK build, Oracle's included      | OpenJDK vendor builds (verified: Temurin Windows x64); **absent from Oracle JDK builds** | Same                                                        |
 
 When a published benchmark concludes Shenandoah loses on throughput under high allocation, the
 first question is which mode it ran. If it ran the default — which is what happens when no

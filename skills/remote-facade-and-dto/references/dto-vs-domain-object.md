@@ -85,13 +85,13 @@ contract rather than to a jar.
 
 ## Mapping strategies
 
-| Strategy                          | Mismatch discovered | Notes                                                              |
-| --------------------------------- | ------------------- | ------------------------------------------------------------------ |
-| Constructor / record construction | Compile time        | A new component breaks every construction site — usually a feature |
-| Annotation processor (MapStruct)  | Build time          | Configure `unmappedTargetPolicy = ERROR`, or it warns and passes   |
-| Hand-written mapper method        | Never               | A forgotten field is silently null                                 |
-| Reflection-based deep mapper      | Runtime             | Also slow, and type mismatches surface on one path only            |
-| Projection in the query           | Build time          | No mapper at all — prefer where the shape allows                   |
+| Strategy                          | Mismatch discovered | Notes                                                                    |
+| --------------------------------- | ------------------- | ------------------------------------------------------------------------ |
+| Constructor / record construction | Compile time        | A new component breaks every construction site — usually a feature       |
+| Annotation processor (MapStruct)  | Build time          | Configure `unmappedTargetPolicy = ERROR`, or it warns and passes         |
+| Hand-written mapper method        | Never               | A forgotten field is silently null                                       |
+| Reflection-based deep mapper      | Runtime             | Runtime-only mismatch risk; throughput cost is library/workload specific |
+| Projection in the query           | Build time          | No mapper at all — prefer where the shape allows                         |
 
 Whichever is used: **no business logic in the mapper.** A mapper that computes a total,
 resolves a status or applies a discount has put a rule where nobody looks for one and where
@@ -122,8 +122,9 @@ Safely, in this order:
    Delete them and pass the record.
 3. **Find layers that map to map** — entity → domain → DTO → response, where two of the four
    are structurally identical. Collapse the identical pair.
-4. **Keep every DTO at a remote boundary**, however redundant it looks today. That is the
-   one where the copy is doing work you cannot see until the schema changes.
+4. **Keep an explicit remote contract**, which may be a dedicated DTO, generated binding or stable
+   immutable boundary type. Preserve a separate DTO when it controls exposure or independent
+   evolution; do not retain a field-for-field copy solely by category label.
 
 Measure the result by files touched when adding a field. Seven is a symptom; two or three is
 healthy (`enterprise-architecture-smells`).

@@ -1,112 +1,154 @@
-# Profilers, hsdis and the command line
+# Profilers and annotated assembly
 
-## Command line anatomy
-
-```bash
-java -jar benchmarks.jar ".*HashMap.*" \
-    -f 3 -wi 5 -i 10 \
-    -bm avgt -tu us \
-    -rf json -rff results.json
-```
-
-| Flag         | Meaning                                       | Default when omitted                  |
-| ------------ | --------------------------------------------- | ------------------------------------- |
-| `-f`         | number of forks                               | `Defaults.MEASUREMENT_FORKS` = 5      |
-| `-wi`        | warmup iterations                             | `Defaults.WARMUP_ITERATIONS` = 5      |
-| `-i`         | measurement iterations                        | `Defaults.MEASUREMENT_ITERATIONS` = 5 |
-| `-bm`        | mode: `thrpt`, `avgt`, `sample`, `ss`, `all`  | whatever `@BenchmarkMode` declares    |
-| `-tu`        | output time unit                              | whatever `@OutputTimeUnit` declares   |
-| `-rf`/`-rff` | exported result format and file               | none — stdout only                    |
-| `-jvm`       | path to an alternative `java` binary          | the JVM running the harness           |
-| `-v EXTRA`   | verbose output, prints `Score ±(99.9%) Error` | normal                                |
-
-## Reading the standard output
-
-```
-Benchmark                 (size)  Mode  Cnt    Score    Error  Units
-MyBench.binarySearch          10  avgt    5    0.042 ±  0.003  us/op
-MyBench.binarySearch         100  avgt    5    0.089 ±  0.011  us/op
-MyBench.binarySearch        1000  avgt    5    0.142 ±  0.009  us/op
-MyBench.binarySearch       10000  avgt    5    0.198 ±  0.017  us/op
-                                                │        │
-                                                │        └─ 99.9% Student's-t CI
-                                                └─ mean across forks and iterations
-```
-
-(Illustrative numbers — run the benchmark to get real ones.)
-
-`Cnt` is the number of aggregated samples (iterations × forks) behind `Score` and `Error`.
-The `(size)` column is the `@Param` value; each row is one combination, never an average
-across them.
-
-Check the shape before accepting the value: here a 1000× growth in `size` produces roughly
-1.7× the time, which is consistent with the logarithmic complexity binary search should
-have. A number that does not match its analytical expectation is a finding, not a result.
-
-## The `-prof` catalogue
-
-| Profiler   | Platform                       | What it shows                                                                       | Prerequisite                                                                     |
-| ---------- | ------------------------------ | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `gc`       | any                            | allocation and GC activity normalised per operation                                 | none                                                                             |
-| `stack`    | any                            | simple stack sampling from JMH's own sampler — not a replacement for async-profiler | none                                                                             |
-| `perfnorm` | Linux                          | hardware counters per operation (`cycles/op`, `instructions/op`, `cache-misses/op`) | Linux `perf` installed, `perf_event_paranoid` permissive                         |
-| `perfasm`  | Linux, macOS                   | JIT-emitted assembly annotated with per-instruction execution frequency             | hsdis for the architecture and JDK in use                                        |
-| `xperfasm` | **Windows**                    | the functional equivalent of `perfasm`, sampling through ETW/Xperf                  | hsdis plus the Windows Performance Toolkit                                       |
-| `jfr`      | any                            | writes a `.jfr` during the run for later analysis                                   | none — JFR ships with the JDK                                                    |
-| `async`    | Linux, macOS (partial Windows) | async-profiler wired into JMH's warmup/measurement cycle — CPU, alloc or lock       | async-profiler JAR and native library on the classpath; **not bundled with JMH** |
-
-`xperfasm` is not "perfasm with more detail". It exists because `perf_events` does not
-exist on Windows. Running it on a Linux server fails for lack of Xperf/ETW.
-
-Check availability before committing to a twenty-minute measurement:
+JMH profiler names and availability are version/environment facts. Discover them from the pinned
+benchmark artifact:
 
 ```bash
-java -jar benchmarks.jar -prof list
+java -jar benchmarks.jar -lprof
+java -jar benchmarks.jar -prof <name>:help
+java -jar benchmarks.jar -h
 ```
 
-## hsdis
+Do not use `-prof list`; `-lprof` is the profiler-list option in current JMH.
 
-`perfasm`, `xperfasm` and the JVM's own `-XX:+PrintAssembly` all depend on the HotSpot
-disassembler plugin, which translates JIT-emitted machine code into readable assembly. It
-does not ship with the JDK, for licensing reasons — it depends on binutils.
+## Question-to-profiler map
 
-The source lives in the OpenJDK repository itself:
+The exact names below are commonly present, but the runtime list is authoritative.
 
+| Question                     | Candidate profiler/evidence         | Validate                                                          |
+| ---------------------------- | ----------------------------------- | ----------------------------------------------------------------- |
+| allocation/GC per operation  | `gc`                                | counter meaning, TLAB/EA context, denominator, perturbation       |
+| compilation during phases    | `comp`                              | profiled versus total window, per-fork compilation state          |
+| coarse Java stacks           | `stack`                             | sampling bias/adequacy; not a full profiler replacement           |
+| Linux PMU/process counters   | `perf`, `perfnorm`                  | support, multiplex, kernel policy, event scope, normalization     |
+| sampled annotated code       | `perfasm` on supported Linux path   | perf access, symbols, code mapping, disassembler, sample coverage |
+| Windows annotated code       | `xperfasm` when available           | ETW/WPT access and compatible disassembly                         |
+| macOS annotated code         | `dtraceasm` when available          | DTrace policy/access and compatible disassembly                   |
+| JFR chronology               | `jfr` when available                | settings, phase boundaries, artifact integrity                    |
+| async-profiler stacks/events | `async` when integration is present | library/version, engine, output, access, adequacy                 |
+
+Profiler output is a diagnostic secondary result. Run an unprofiled decision measurement unless
+the profiler is part of the production condition or calibration proves the effect negligible for
+the decision.
+
+## Hardware counters
+
+Before interpreting cycles, instructions, cache misses, or branches:
+
+- confirm the PMU event is supported and not reported as unsupported;
+- preserve time-enabled/time-running or equivalent multiplex coverage;
+- establish process/thread/CPU/cgroup scope and user/kernel inclusion;
+- state whether counters include warm-up, setup, harness, JVM service threads, and profiler work;
+- normalize only by a denominator collected over the same population;
+- account for migration, SMT, NUMA, frequency/throttling, and virtualization;
+- avoid treating IPC, cache-miss rate, or branch misses as causal without a controlled hypothesis.
+
+`perfnorm` does not make an unsuitable event meaningful merely by dividing it by operations.
+
+## Annotated assembly pipeline
+
+The useful mental model is:
+
+```text
+PMU/timer samples
+  -> instruction pointer and event skid
+  -> process/code-cache mapping
+  -> nmethod/version/symbol resolution
+  -> machine-code disassembly
+  -> source/assembly region attribution
 ```
-https://github.com/openjdk/jdk/tree/master/src/utils/hsdis
+
+Failures at any stage can leave numeric benchmark results intact while annotation is incomplete.
+Validate total samples, mapped/unknown share, hottest-region coverage, compilation level, multiple
+compiled versions, and whether the desired method was inlined into another nmethod.
+
+## Disassembler support
+
+HotSpot diagnostic assembly paths may use an `hsdis` plugin or other support available in the
+specific JDK distribution/version. Do not assume every JDK bundles a compatible binary or that a
+library built for another JDK/architecture works. Discover effective JVM output and profiler
+diagnostics.
+
+OpenJDK maintains hsdis source and build instructions under `src/utils/hsdis`. If an organization
+builds or distributes it:
+
+- pin source revision, toolchain/binutils, target architecture, and artifact digest;
+- follow the target JDK's library-loading convention;
+- review supply-chain/licensing requirements;
+- validate with a known compiled method and recognizable instructions;
+- never copy an arbitrary binary into a production JDK during an incident.
+
+Assembly interpretation belongs to `reading-jit-assembly`; a register name or `lock` prefix alone
+is not a sufficient performance diagnosis.
+
+## Async-profiler and JFR integration
+
+The JMH integration version and async-profiler native library must be mutually compatible. A
+profile can capture warm-up, measurement, or both depending on options/integration. Record phase
+boundaries and do not compare a whole-fork profile to a measurement-only score as if populations
+matched.
+
+For async-profiler, validate event engine, CPU versus wall semantics, Java/native/kernel frame
+coverage, stack mode, interval, lost events, unknown frames, and access policy. For JFR, validate
+event settings/thresholds/periods, recording interval, count/opportunity, and file integrity.
+
+Use `jfr-and-async-profiler`, `async-profiler-advanced`, and `jfr-advanced` for instrument-specific
+decisions.
+
+## Safe run protocol
+
+```text
+1. Run unprofiled pilot and retain raw fork trajectories.
+2. Discover profiler and its version-specific help.
+3. Run a short positive control; validate expected event/counter/frames.
+4. Run one bounded diagnostic cell and inspect overhead, loss, coverage, output size.
+5. Collect the minimum matrix that discriminates the mechanism.
+6. Repeat unprofiled decision cells in randomized/blocked order.
+7. Reconcile diagnostic mechanism with unprofiled effect.
 ```
 
-It is **not** in `AdoptOpenJDK/jitwatch`; that reference circulates in outdated material
-and points at a repository which does not contain the code.
+Do not enable many profilers concurrently by default. When a transient requires simultaneous
+capture, calibrate combined cost and preserve each instrument's population and timestamps.
 
-Build per that directory's README, against a binutils toolchain matching the target
-architecture and the exact JDK version. Building against the wrong one produces a library
-that loads and then emits unreadable assembly or fails silently. Place the resulting
-`hsdis-<arch>.so`/`.dll`/`.dylib` where the JVM finds it — typically the library directory
-of the JDK running the benchmark.
+## Failure tree
 
-The failure mode to watch for: without a working hsdis, `perfasm` does not abort the
-benchmark. The numeric result still prints, just without annotation, which is easy to miss.
-
-## Triaging annotated assembly
-
-Three patterns carry most of the diagnostic value when scanning `perfasm`/`xperfasm`
-output, before any deeper reading:
-
-- `xmm`/`ymm` registers — automatic vectorisation (SIMD) happened.
-- An unexpected `call` inside a hot loop that should have been fully inlined.
-- CAS instructions (`lock cmpxchg` on x86-64) revealing implicit synchronisation — a
-  monitor or an `AtomicX` — that the source does not make obvious.
-
-The frequency annotation beside each instruction localises time inside the compiled
-method at a granularity no stack sampler offers.
-
-## CI export
-
-```bash
-java -jar benchmarks.jar -rf json -rff results.json
+```text
+profiler absent from -lprof
+  -> JMH artifact/version lacks integration or prerequisite initialization failed
+profiler listed but run fails
+  -> target access, platform tool, native library, policy, output path, incompatible option
+numeric score but no assembly
+  -> no samples, missing mapping/symbol/disassembler, method inlined/not compiled, wrong event
+mostly unknown/unmapped frames
+  -> unwind/stack/symbol/JIT mapping mismatch; do not infer source hotspot
+counters vary implausibly across forks
+  -> multiplex/migration/scope/normalization/host variation or true compilation clusters
+profile changes benchmark ranking
+  -> interaction; use separate diagnostic and decision claims
 ```
 
-Exporting JSON and comparing against a stored baseline is the raw material for a
-regression gate. The gate's design — statistical tolerance, what fails the build, how the
-baseline is versioned — is a separate concern.
+## Artifact manifest
+
+```yaml
+jmh_version: ''
+jdk_build: ''
+profiler_name_and_options: ''
+native_tool_version_digest: ''
+os_kernel_hardware: ''
+access_and_counter_scope: ''
+benchmark_cell_fork_phase: ''
+event_counter_and_denominator: ''
+coverage_multiplex_loss_unknown: ''
+output_digest: ''
+unprofiled_comparison: ''
+```
+
+## Authoritative references
+
+- [JMH profiler sample and `-lprof`](https://github.com/openjdk/jmh/blob/master/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_35_Profilers.java)
+- [JMH profiler implementations](https://github.com/openjdk/jmh/tree/master/jmh-core/src/main/java/org/openjdk/jmh/profile)
+- [OpenJDK hsdis source and instructions](https://github.com/openjdk/jdk/tree/master/src/utils/hsdis)
+- [Linux perf security](https://docs.kernel.org/admin-guide/perf-security.html)
+- [Linux perf event ABI](https://docs.kernel.org/userspace-api/perf_ring_buffer.html)
+- [async-profiler](https://github.com/async-profiler/async-profiler)
+- [JDK Flight Recorder](https://docs.oracle.com/en/java/javase/25/jfapi/flight-recorder-runtime-guide/index.html)

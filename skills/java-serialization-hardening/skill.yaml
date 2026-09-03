@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-serialization-hardening
-version: 1.1.0
+version: 1.2.0
 description: >-
   Java built-in serialization as an attack surface and a permanent API commitment: why
   readObject is an extra constructor that accepts arbitrary bytes, gadget chains and what

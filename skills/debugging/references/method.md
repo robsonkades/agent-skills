@@ -66,8 +66,9 @@ Caused by: java.sql.SQLException: deadlock victim
 - The **top** line is the outermost translation — usually your own layer boundary, and usually
   the least informative about the cause.
 - The **bottom** `Caused by` is the original fault. Read it first.
-- The deepest frame **in your own package** is where to set the breakpoint; frames inside a
-  library are almost never the bug, they are where your input arrived.
+- The deepest frame **in your own package** is often the first useful boundary breakpoint. It is
+  not proof of ownership: framework callbacks, generated adapters, reflection, native transitions,
+  and genuine library defects can put the causal behaviour elsewhere.
 - `Suppressed:` entries come from try-with-resources — a close() that failed while another
   exception was propagating. They are easy to miss and sometimes carry the real cause.
 
@@ -95,8 +96,9 @@ one reproducing 1% will consume the investigation in waiting.
 When adding logging, attaching a debugger or enabling assertions makes the fault disappear, the
 observation itself changed the timing or the optimisation. That is evidence, not an obstacle:
 
-- Disappears under a debugger or with extra logging → almost certainly a race; the added
-  latency changed the interleaving.
+- Disappears under a debugger or with extra logging → timing sensitivity. A race is one candidate;
+  changed deadlines, queueing, buffering, resource pressure, compilation, or instrumentation side
+  effects are others. Design the next experiment to separate them.
 - Disappears in a debug build or with `-Xint` → a JIT-visible data race, or reliance on
   behaviour the optimiser is entitled to change (java-memory-model).
 - Disappears when a field is made `volatile` → a visibility bug. Do not stop there: `volatile`

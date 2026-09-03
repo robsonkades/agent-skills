@@ -37,20 +37,21 @@ leaves the real problem undiagnosed while looking like a fix.
 2. **Read the flags off the running JVM, not from memory.** Check `ZCollectionInterval`,
    `ZAllocationSpikeTolerance` and `ZProactive` with `-XX:+PrintFlagsFinal` or
    `jcmd <pid> VM.flags -all` against the build in use; these defaults move between releases.
-3. **Capture all three STW phases.** Log with `-Xlog:gc*,gc+phases=debug` and make every
-   pause measurement include `Pause Mark Start`, `Pause Mark End` **and** `Pause Relocate
-Start`. See `references/cycles-logs-and-events.md`.
-4. **Separate the young cycle from the old cycle.** Young cycles run continuously; old cycles
-   are rare. A symptom that tracks old-cycle frequency is a promotion problem, not an
-   allocation-rate problem.
-5. **Classify an allocation stall by its temporal pattern.** Stalls spread evenly across the
-   day mean the heap is undersized for the steady state; stalls clustered in peak windows
-   mean bursty allocation, and the sizing factor — not the trigger heuristic — is wrong.
-6. **Attribute barrier overhead to reads or writes before quoting a number.** Load-barrier
-   frames appear in every sample that reads a reference; store-barrier frames only in samples
-   writing old→young references. See `references/barriers-and-remembered-set.md`.
-7. **Escalate an allocation stall in cost order:** raise `ZAllocationSpikeTolerance`, then
-   `-Xmx` headroom, then reduce the application's allocation rate.
+3. **Capture every STW phase emitted by the target build.** Log with
+   `-Xlog:gc*,gc+phases=debug`; validate the parser against real young and old cycles and do
+   not assume one textual phase list survives releases.
+4. **Separate young and old-cycle evidence.** Frequency is workload/ergonomic, not “continuous
+   versus rare.” Correlate promotion/aging, live bytes, allocation and old-cycle triggers;
+   temporal overlap alone does not prove promotion pressure.
+5. **Classify allocation stalls from capacity signals.** Join each stall to free/used/soft-max
+   heap, live set, page/large allocation, concurrent-cycle progress, allocation rate,
+   `ConcGCThreads`, CPU throttling and safepoints. Time-of-day clustering is context, not cause.
+6. **Attribute barrier cost from generated code/profile evidence.** Fast paths are commonly
+   inlined and may not appear as named frames. Stores execute a barrier path broadly; only
+   some require remembered-set work. See `references/barriers-and-remembered-set.md`.
+7. **Choose remediation by the proven bottleneck:** reduce allocation/live set, restore CPU,
+   add justified hard/soft heap headroom, control bursts/backpressure, or run a scoped
+   heuristic experiment. There is no safe global order of flags.
 
 ## Rules
 
@@ -61,32 +62,43 @@ Start`. See `references/cycles-logs-and-events.md`.
   Timeline: JEP 439 (JDK 21, opt-in) → JEP 474 (JDK 23, default) → JEP 490 (JDK 24, only mode).
 - Never prescribe `-XX:+ZProactive` for allocation stalls. It is already `true` by default,
   and it addresses idleness and low allocation, not sustained allocation peaks.
-- Heap sizing is conditional on a **measured** allocation profile, not a memorised constant:
-  roughly live set × 2.5 for a steady profile, live set × 3.5–4 for documented sustained
-  bursts. Measure the peak-to-mean allocation ratio before choosing. Carrying G1's
-  1.5–2× rule into ZGC produces allocation stalls.
+- Heap sizing is conditional on measured live set, allocation distribution, relocation
+  progress, large pages/objects, concurrent CPU and burst duration. No collector-independent
+  live-set multiplier (1.5×, 2.5× or 4×) predicts safety; derive and validate headroom under
+  steady, peak and throttled conditions.
 - A pause script that greps `"Pause Mark"` reports an optimistically wrong percentile —
   `Pause Relocate Start` is a real STW pause and is commonly omitted from diagrams. Every
   such script needs a sanity assertion that aborts when the sample count is zero.
 - The load-barrier fast path tests **the pointer value** with a bitmask, before any access to
   the pointed-to object. Any explanation shaped like `if (obj.color != expected)` inverts the
   dependency order that makes the mechanism safe.
-- An object's generation is metadata on the `ZPage`, not a bit in the pointer. Only
-  mark/remap state lives in the pointer bits, because only that is tested on every read.
+- An object's generation is represented in `ZPage` metadata on the inspected JDK 25 source,
+  not inferred from a simple generation color in each oop. Pointer metadata and barrier masks
+  evolve; quote exact bits only from the target source/build.
 - The remembered set is a **bitmap** (`ZBitMap`, `zRememberedSet.hpp`) with one bit per
   potential object-field address — not G1's byte-per-card array. Do not describe it as a
   card table.
-- Multi-mapping was removed with JEP 490. Inflated RSS for ZGC processes is a pre-JDK-24
-  artefact; container limits sized from that observation were reacting to a mapping artefact,
-  not to resident memory.
-- The only valid JFR events are `jdk.ZYoungGarbageCollection`, `jdk.ZOldGarbageCollection`,
-  `jdk.ZAllocationStall` and `jdk.ZPageAllocation`. There is no combined
-  `jdk.ZGCGarbageCollection`.
+- Legacy ZGC multi-mapping and JEP 490's removal of non-generational mode are distinct
+  changes. Never infer cgroup charge from old `ps` folklore; measure RSS/PSS, heap and
+  `memory.current` on the target build.
+- Confirm ZGC JFR events with `jfr metadata`. JDK 25 includes the young/old/stall/page events
+  plus relocation-set, statistics, thread-phase and uncommit events. There is no
+  `jdk.ZGCGarbageCollection` on that build, but do not turn this list into a cross-release
+  allowlist.
 - `jcmd <pid> Thread.dump` is not a subcommand. Use `Thread.print` or
   `Thread.dump_to_file -format=json` — and neither measures CPU. For per-thread CPU use
   `top -H -p <pid>` or `pidstat -t -p <pid> 1`.
 - Label every overhead and sizing number as an expected order of magnitude to be measured
   locally, never as a measurement already taken on this build and workload.
+
+## Production acceptance
+
+- Parse counts must reconcile with actual cycle IDs/generations; fail closed on unknown phase
+  names, truncated/rotated logs and recording loss rather than reporting a perfect percentile.
+- Exercise allocation spikes, old live-set growth, large objects, CPU quota/throttling and
+  `SoftMaxHeapSize` pressure. Verify stalls, achieved throughput and cgroup headroom together.
+- For any barrier/flag change, preserve correctness tests and compare CPU, allocation,
+  throughput and tail latency across repeated runs on the exact JDK build.
 
 ## References
 
@@ -98,3 +110,7 @@ Start`. See `references/cycles-logs-and-events.md`.
   store barrier fast paths, the remembered-set bitmap, its double buffering, and how to
   attribute barrier cost in a profile. Read when barrier overhead is suspected, when
   promotion rate is in question, or when documenting the mechanism internally.
+
+Authoritative sources: [JEP 439](https://openjdk.org/jeps/439),
+[JEP 474](https://openjdk.org/jeps/474), [JEP 490](https://openjdk.org/jeps/490), and the
+[OpenJDK ZGC sources](https://github.com/openjdk/jdk/tree/master/src/hotspot/share/gc/z).

@@ -42,8 +42,9 @@ class OrderPricingRouter implements PricingPort {
 
 Requirements that make this safe:
 
-- **Route per case**, not globally: per tenant, per customer, per order type. A global switch
-  has one blast radius — everything.
+- Route at the smallest key that preserves consistency and supportability. Per-tenant/order routing
+  reduces blast radius but can split workflows or related data; a global/region switch may be safer
+  when state cannot straddle implementations.
 - **The flag is data, not a deploy.** Rolling back must not require a release.
 - **Someone owns each case.** "Which implementation served this request?" must be answerable
   from the logs, always.
@@ -185,6 +186,6 @@ Slice selection, in order of preference:
 NOT: the most technically interesting, the most broken, or the largest.
 ```
 
-Ship the first slice end to end — including decommissioning its legacy path — before
-starting the second. A programme with five slices in flight and none finished has learned
-nothing about whether its approach works, and has five parallel runs to operate.
+Prove at least one representative slice end to end—including decommissioning—before scaling the
+pattern broadly. Parallel slices can be justified for independent teams or business deadlines, but
+cap work in progress and account for every coexistence path operationally.

@@ -74,8 +74,10 @@ THEN the plan must be readable cold. Assume the reader has none of the conversat
 
 ## Constraints
 
-- **No dates, no sizes.** They belong to a different discipline and they rot the plan when they
-  are wrong, which is always.
+- **Do not invent dates or effort estimates.** `estimation-under-uncertainty` owns forecasts.
+  Preserve operational facts that constrain execution — migration windows, batch limits,
+  retention periods, rollout intervals, and externally committed deadlines — and label their
+  provenance instead of deleting them from the plan.
 - **No design arguments.** The plan says what will be built; why it was chosen lives in the
   decision records, and duplicating it means two documents that disagree later.
 - **No aspiration.** Everything in the plan is work someone will do. Nice-to-haves belong in the

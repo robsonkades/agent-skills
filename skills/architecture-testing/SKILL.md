@@ -26,8 +26,8 @@ all of those are functionally correct in a single-threaded test against ten rows
 ## The levels, and what each is for
 
 ```text
-Domain unit test        rules and invariants. No framework, no database,
-                        milliseconds. Should be most of the suite.
+Domain unit test        pure rules and invariants. No framework or database;
+                        usually milliseconds. Its share follows domain risk.
 
 Use case test           orchestration, with fakes for ports. Fast; asserts
                         the collaboration, not the SQL.
@@ -39,7 +39,7 @@ Boundary test           binding, validation, status codes, error shape,
                         payload contract. Web layer only.
 
 Architecture test       dependency rules, package boundaries, conventions.
-                        Static; runs in seconds.
+                        Usually static and fast; measure large classpaths.
 
 Concurrency test        two threads, real transactions, asserting one wins.
 
@@ -56,10 +56,10 @@ Contract test           the shape both sides agreed, verified from both
 2. **Test the adapter against the real engine.** An in-memory database has different
    constraints, different SQL and different locking; a passing test proves little about
    production.
-3. **Add architecture tests for every boundary you claim.** A rule that is not executed is a
-   suggestion.
-4. **Add a budget test to every endpoint whose cost matters.** This is the only reliable
-   defence against a reintroduced N+1.
+3. **Automate boundaries that can be represented faithfully.** Keep semantic ownership and runtime
+   boundaries in review, contract, or operational checks rather than encoding a misleading proxy.
+4. **Add a budget test where query or call-count regressions are material.** Pair it with production
+   latency and plan evidence: counts catch multiplicative access, not expensive individual calls.
 5. **Test the failure paths of every gateway** — timeout, 500, malformed response — with a
    stub that can produce them.
 6. **Test concurrency with concurrency**, at least for the aggregates where a lost update
@@ -68,9 +68,10 @@ Contract test           the shape both sides agreed, verified from both
 ## Decision rules
 
 ```text
-The assertion is about a business rule
-        → domain unit test. If it needs a database, the rule is in the
-          wrong place (domain-logic-organization).
+The assertion is about a pure business rule
+        → domain unit test. Rules whose truth depends on durable uniqueness,
+          isolation or current persisted state also need an integration test;
+          do not simulate database semantics in a unit test.
 
 The assertion is about mapping, a query, a constraint, or ORM behaviour
         → integration test against the real engine (Testcontainers).
@@ -116,9 +117,10 @@ The assertion is "our API still satisfies its consumers"
 - **Do not mock what you do not own.** A mocked HTTP client asserts your belief about the
   vendor. Test the gateway against a stub server that can also fail
   (`enterprise-base-patterns`).
-- **Query-budget tests are the highest-return architecture test in a JPA codebase.** An N+1
-  is functionally correct, so nothing else catches it, and it appears in production at a
-  data volume no test used (`architecture-and-performance`).
+- Query-budget tests are a high-value guard in JPA paths where multiplicative access is a known
+  risk. Scope counters to the operation/test and control background activity; global Hibernate
+  statistics can be contaminated by parallel tests. A bounded count does not prove a good plan or
+  acceptable latency (`architecture-and-performance`).
 - Concurrency assertions require concurrency. A single-threaded test cannot observe a lost
   update, a deadlock or a race; the test that can is two threads, a latch, and a real
   transaction each (`offline-concurrency-control`).

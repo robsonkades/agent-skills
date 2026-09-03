@@ -28,9 +28,9 @@ convention or magic string doing a job an annotation would do with compile-time 
 
 ## Workflow
 
-1. **Name the reader before defining the annotation.** Which processor, framework or piece of
-   your own code reads it, and what does it do? If the answer is "nothing yet", the annotation
-   is documentation — write Javadoc instead.
+1. **Name the consumer before defining the annotation.** It may be the compiler, processor,
+   framework, static-analysis tool, documentation generator or a human-facing API contract. If no
+   consumer benefits from structured metadata, Javadoc is usually clearer.
 2. **Pick the retention from the reader.** `SOURCE` for compile-time-only checks, `CLASS` for
    bytecode tools, `RUNTIME` only when something reflects over it at runtime. Retention is not
    a default to copy from the last annotation you wrote.
@@ -49,9 +49,9 @@ convention or magic string doing a job an annotation would do with compile-time 
   `equals(MyType other)` that overloads instead of overriding, so the collection calls
   `Object.equals` and identity semantics apply. Interface implementations included — it is
   allowed there and catches the same drift when the interface changes.
-- Prefer an annotation to a naming pattern for marking code (`@Test` over `testFoo`,
-  `@Deprecated` over a comment). A naming pattern has no compiler support: a typo produces
-  silence, and the convention cannot carry parameters.
+- Prefer an annotation to a naming pattern when the tool/API supports metadata (`@Test` over
+  `testFoo`, `@Deprecated` plus migration Javadoc). The compiler checks annotation syntax and
+  target, while the annotation's processor/framework still owns semantic validation.
 - Prefer a marker **interface** when the marked thing is a type and something should be checked
   at compile time: an interface defines a type, so it can be a parameter or return type, and
   the compiler enforces it at every use. Prefer a marker **annotation** when the target is not
@@ -73,21 +73,25 @@ convention or magic string doing a job an annotation would do with compile-time 
   `Validator` is invoked — by the framework at a `@Valid` parameter, or by your code. A DTO
   covered in `@NotBlank` that is deserialised and used without validation is unvalidated
   input; java-defensive-programming covers where the check belongs.
-- Proxy-based annotations (`@Transactional`, `@Cacheable`, `@Retryable`, `@Async` and their
-  equivalents) apply only when the call arrives through the proxy. A call from one method of a
-  class to another method of the same instance bypasses it entirely, as does a call to a
-  private or final method, or one made before the container has wired the bean. This is the
-  most common "the annotation is there but nothing happens" defect; framework-coupling-and-independence
-  covers keeping such behaviour visible.
-- `RUNTIME` retention plus classpath scanning has a startup cost proportional to the classes
-  scanned, and it defeats static analysis: ahead-of-time compilation and native image need the
-  reflective use registered explicitly, and dead-code elimination cannot see it. Prefer
-  annotation _processing_ (compile-time code generation) when the same job can be done then —
-  it moves the cost to build time and keeps the runtime introspection-free. See
-  graalvm-native-image and startup-cds-crac-leyden.
-- Do not put secrets, environment values or anything mutable in annotation members. Annotation
-  members must be compile-time constants; the value is baked into the class file and cannot be
-  changed without recompiling.
+- Proxy-based annotations (`@Transactional`, `@Cacheable`, `@Retryable`, `@Async` and equivalents)
+  depend on the configured advice mechanism. In ordinary Spring proxy mode, self-invocation and
+  private methods bypass advice; final classes/methods block subclass proxies but interface-based
+  proxies differ. AspectJ weaving and programmatic APIs have other semantics. Test the actual
+  call path; framework-coupling-and-independence covers making it visible.
+- `RUNTIME` metadata does not itself force whole-classpath scanning or defeat AOT. Startup cost
+  depends on framework indexing, scan scope and caching; native-image reachability depends on what
+  build-time analysis can discover and supplied metadata. Prefer annotation processing or
+  build-time generation when it provides equivalent semantics and its build/debugging cost is
+  acceptable. On JDK 24+, command-line `javac` runs processors only when annotation processing is
+  explicitly configured (for example `--processor-path`, `-processor`, or `-proc:full`); ensure
+  the build tool declares processors rather than relying on classpath discovery.
+- Do not put secrets or environment-specific policy in annotation elements. Element values are
+  restricted to annotation-compatible constants/types and are baked into class metadata; they
+  require recompilation to change and may be visible through bytecode/reflection.
+
+- For repeatable annotations, inspect both the repeated annotation and its container: retention,
+  target and inheritance must be compatible. For `TYPE_USE`, decide whether the consumer reads
+  declaration annotations or type annotations; they occupy different class-file/reflection APIs.
 - Deprecate with `@Deprecated(since = "…", forRemoval = …)` plus `@deprecated` Javadoc saying
   what to use instead. `forRemoval = true` turns usage warnings into a stronger signal and is
   part of the API contract — see java-api-design.

@@ -34,9 +34,10 @@ public final class InstantSettlementAccount extends SettlementAccount {
 
 Every caller holding a `SettlementAccount` was promised that a covered, positive
 amount succeeds. Hand it the subtype and a legal call now throws. Detection: any
-argument check in an override that the supertype does not make. Fix: lift the cap
-into the supertype contract (a `maxWithdrawal()` the caller must consult), or stop
-pretending the subtype is substitutable and model it as a separate type.
+argument check in an override that the supertype does not make. Fix: change the supertype
+operation to an honest outcome/capability contract every subtype honours, or stop pretending the
+subtype is substitutable and model it separately. A `maxWithdrawal()` query followed by
+`withdraw()` merely creates a check-then-act race unless the operation enforces the same rule.
 
 ### Violation 2: throwing from an override
 
@@ -85,11 +86,12 @@ public final class VersionedSku extends Sku {
 
 `new Sku("A1").equals(new VersionedSku("A1", 2))` is `true`; the reverse is
 `false`. Symmetry — part of the `Object.equals` contract — is broken, so
-collections behave differently depending on comparison order. There is no fix that
-keeps subclassing, a state-extending subclass, and a working `equals`: prefer a
-`record` or `final` class per identity, or composition (`VersionedSku` _has a_
-`Sku`). Detection: any `equals` override in a non-final class compared against any
-subclass that adds state.
+collections behave differently depending on comparison order. Prefer a record/final value or
+composition (`VersionedSku` _has a_ `Sku`). Other coherent policies exist but change semantics:
+the base can use exact-class equality so cross-subtype values are always unequal, or final base
+equality can deliberately ignore subtype state when that state is not identity. Detection:
+`instanceof` equality in an extensible value class plus a state-adding subtype, especially when
+the subtype overrides equality differently.
 
 ### LSP false positives
 
@@ -129,8 +131,9 @@ implementors — the legitimate use, and the reason `Collection.stream()` could
 ship. The trap: a default that cannot be implemented meaningfully at the interface
 level (returning `null`, throwing, or silently doing nothing) is a fat interface
 hiding behind source compatibility. Every implementor that _should_ have made a
-decision now silently inherits a wrong one. Rule: a default must be a correct
-implementation for every conceivable implementor, or it is deferred breakage.
+decision now silently inherits a wrong one. Rule: a default must satisfy the documented contract
+for every conforming implementor, or it is deferred breakage. Binary compatibility alone is not
+behavioral compatibility.
 
 ### ISP false positives and limits
 

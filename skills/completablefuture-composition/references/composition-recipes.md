@@ -1,156 +1,132 @@
 # Composition recipes
 
-Every recipe here passes an explicit executor. That is not stylistic: the no-executor
-overloads pick `ForkJoinPool.commonPool()`, or a thread per stage when the pool's
-parallelism is below 2.
+These are policy templates, not copy-paste defaults. Supply operation-specific executors, deadlines
+and result types.
 
-## Fan-out with typed results
+## Preserve branch outcomes
 
-`allOf` returns `Void`, so the results come from joining the inputs after it settles — safe
-precisely because they are all complete at that point.
+Represent partial failure explicitly instead of losing causality in `Optional.empty()`:
 
 ```java
-List<CompletableFuture<Quote>> futures = suppliers.stream()
-        .map(s -> CompletableFuture.supplyAsync(() -> quote(s), ioPool))
-        .toList();
+sealed interface Outcome<T> {
+    record Success<T>(T value) implements Outcome<T> {}
+    record Failure<T>(Throwable cause) implements Outcome<T> {}
+}
 
-CompletableFuture<List<Quote>> all =
-        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
-                .thenApply(ignored -> futures.stream()
-                        .map(CompletableFuture::join)      // all complete: join cannot block
-                        .toList());
+static <T> CompletableFuture<Outcome<T>> outcome(CompletableFuture<T> input) {
+    return input.handle((value, failure) -> failure == null
+            ? new Outcome.Success<>(value)
+            : new Outcome.Failure<>(unwrapKnownWrappers(failure)));
+}
 ```
 
-`allOf` does not fail fast. If one supplier fails at 10 ms and another takes 5 s, this waits
-5 s and then reports the failure. When "abandon the rest on first failure" is the
-requirement, that is `StructuredTaskScope`, not `CompletableFuture`.
+After `allOf(outcomes...)` completes normally, join each outcome. This retains per-branch failures
+and permits a deliberate quorum/partial-response policy.
 
-## Fan-out that tolerates partial failure
+## Bound graph size and resource use
 
-```java
-List<CompletableFuture<Optional<Quote>>> futures = suppliers.stream()
-        .map(s -> CompletableFuture.supplyAsync(() -> quote(s), ioPool)
-                .orTimeout(500, TimeUnit.MILLISECONDS)
-                .<Optional<Quote>>thenApply(Optional::of)
-                .exceptionally(t -> {                       // per-branch terminal
-                    log.warn("supplier {} degraded", s.id(), unwrap(t));
-                    degraded.increment();
-                    return Optional.empty();
-                }))
-        .toList();
-```
-
-Each branch now terminates in a value, so `allOf` can never fail and the aggregate is a
-partial result by design. Count the degradations — a silent fallback that fires on every
-request is an outage nobody has noticed.
-
-## Bounded fan-out
-
-`CompletableFuture` has no notion of a concurrency limit. The bound is whatever you give it.
+Submitting every element to a fixed pool bounds running workers, not queued tasks or future objects.
+Process a bounded window and launch another item only after one completes. A semaphore can protect a
+remote dependency, but acquire it before submitting/starting work when the objective also is bounded
+admission.
 
 ```java
-// The executor is the bound.
-ExecutorService ioPool = new ThreadPoolExecutor(
-        16, 16, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<>(200),
-        new ThreadPoolExecutor.AbortPolicy());
-
-// Or, on virtual threads, where the executor cannot bound anything:
-Semaphore permits = new Semaphore(16);
-
-CompletableFuture<Quote> guarded = CompletableFuture.supplyAsync(() -> {
-    permits.acquireUninterruptibly();        // see cancellation-and-interruption before choosing this
+static <T> T withPermit(Semaphore permits, Callable<T> action) throws Exception {
+    permits.acquire();
     try {
-        return quote(s);
+        return action.call();
     } finally {
-        permits.release();                   // finally, always: a leaked permit never comes back
+        permits.release();
     }
-}, vtExecutor);
+}
 ```
 
-## Timeout with a fallback
+Define a timed acquisition or upstream rejection policy; waiting forever merely relocates the queue.
+Fair semaphores reduce barging but can reduce throughput. One global semaphore can also create
+head-of-line blocking; isolate by dependency or tenant where failure domains differ.
+
+## Apply timeout at all relevant layers
 
 ```java
-CompletableFuture<Price> price = CompletableFuture
-        .supplyAsync(() -> pricing.lookup(sku), ioPool)
-        .orTimeout(300, TimeUnit.MILLISECONDS)     // bounds the CALLER
-        .exceptionally(t -> cached.get(sku));      // and gives the caller something
+CompletableFuture<Price> visible = operation
+        .orTimeout(remaining.toMillis(), TimeUnit.MILLISECONDS)
+        .exceptionallyCompose(failure -> recoverOrPropagate(unwrapKnownWrappers(failure)));
 ```
 
-`orTimeout` completes the future exceptionally with `TimeoutException` and leaves
-`pricing.lookup` running. Pair it with a bound on the call itself — an HTTP request timeout,
-a JDBC query timeout — or the load simply accumulates behind a caller that thinks it
-recovered.
+This bounds visibility of `operation`; it does not stop its supplier. Configure the HTTP/JDBC/client
+request deadline from the same remaining budget and design late side effects explicitly. Note that
+`orTimeout` mutates `operation`; use `copy()` first when a caller must not alter an internally owned
+future's completion.
 
-## Sequential composition, and the flattening mistake
-
-```java
-// Wrong: a future of a future. It completes when the OUTER stage does — before the order exists.
-CompletableFuture<CompletableFuture<Order>> wrong =
-        findUser(id).thenApply(user -> createOrder(user));
-
-// Right
-CompletableFuture<Order> right =
-        findUser(id).thenComposeAsync(user -> createOrder(user), ioPool);
-```
-
-`thenCompose` is flatMap. If the lambda returns a `CompletionStage`, it is always
-`thenCompose`.
-
-## Combining two independent stages
+## Adapt a callback with a race-safe contract
 
 ```java
-CompletableFuture<User> user  = supplyAsync(() -> users.find(id), ioPool);
-CompletableFuture<Cart> cart  = supplyAsync(() -> carts.find(id), ioPool);
+CompletableFuture<Response> call(Request request) {
+    var result = new CompletableFuture<Response>();
+    final Cancellable call;
+    try {
+        call = client.start(request, new Callback() {
+            @Override public void success(Response response) {
+                if (!result.complete(response)) {
+                    response.close(); // ownership policy for a duplicate/late response
+                }
+            }
 
-CompletableFuture<Page> page = user.thenCombineAsync(cart, Page::new, cpuPool);
-```
-
-Both start at construction; `thenCombine` only joins them. Building `cart` _inside_ a
-`thenCompose` on `user` would serialise two calls that had no dependency — the most common
-accidental latency doubling in async code.
-
-## Wrapping a callback API
-
-This is the case `CompletableFuture` exists for, and the one virtual threads do not remove.
-
-```java
-CompletableFuture<Response> call(Request req) {
-    CompletableFuture<Response> cf = new CompletableFuture<>();
-    client.enqueue(req, new Callback() {
-        @Override public void onSuccess(Response r) { cf.complete(r); }
-        @Override public void onFailure(Throwable t) { cf.completeExceptionally(t); }
+            @Override public void failure(Throwable failure) {
+                result.completeExceptionally(failure);
+            }
+        });
+    } catch (RuntimeException startupFailure) {
+        result.completeExceptionally(startupFailure);
+        return result;
+    }
+    result.whenComplete((value, failure) -> {
+        if (result.isCancelled()) call.cancel();
     });
-    return cf;
+    return result;
 }
 ```
 
-Two obligations follow: the callback must complete the future on **every** path — an
-uncompleted future is a thread waiting forever — and the stage after it should be
-`*Async` with your executor, because otherwise the continuation runs on the client's I/O
-thread.
+Completion may race with timeout, cancellation and duplicate callbacks. `complete` returning `false`
+is operationally meaningful: release any response resource whose ownership was not transferred.
+Ensure synchronous exceptions thrown by `client.start` are also represented. The example catches
+`RuntimeException`; adapt that boundary to the callback API's declared failures without masking
+process-integrity `Error`s.
 
-## The unwrap helper you will need everywhere
+## Flatten dependencies, combine independence
 
 ```java
-static Throwable unwrap(Throwable t) {
-    return (t instanceof CompletionException || t instanceof ExecutionException)
-            && t.getCause() != null ? t.getCause() : t;
+CompletableFuture<Order> order = findUser(id)
+        .thenComposeAsync(user -> createOrder(user), dependencyExecutor);
+
+CompletableFuture<Page> page = userFuture.thenCombineAsync(
+        cartFuture, Page::new, renderExecutor);
+```
+
+`thenCompose` encodes dependency. Constructing `cartFuture` inside a continuation on `userFuture`
+serializes work; start independent operations before combining them. Do not start speculative calls
+when their side effects or capacity costs are unacceptable.
+
+## Normalize known wrappers conservatively
+
+```java
+static Throwable unwrapKnownWrappers(Throwable failure) {
+    Throwable current = failure;
+    while ((current instanceof CompletionException || current instanceof ExecutionException)
+            && current.getCause() != null) {
+        current = current.getCause();
+    }
+    return current;
 }
-
-// Without it, this never matches, and the fallback silently never runs:
-//   .exceptionally(t -> t instanceof TimeoutException ? fallback() : rethrow(t))
 ```
 
-## Handing a chain to a virtual-thread executor
+Use this at an integration boundary for type-based policy. Do not globally flatten every cause:
+`CompletionException` can itself be a meaningful application exception, and the wrapper/cause chain
+is useful evidence. Preserve the original as the logged or rethrown causal chain.
 
-```java
-// Hold one executor for the application's lifetime.
-private final ExecutorService vt = Executors.newVirtualThreadPerTaskExecutor();
+## Test completion-order semantics
 
-// Not this — a new executor per call, whose close() blocks and whose threads are unbounded:
-//   supplyAsync(this::work, Executors.newVirtualThreadPerTaskExecutor());
-```
-
-A virtual-thread executor makes blocking inside a stage harmless to other stages. It does
-not give the fan-out a bound, does not make cancellation work, and does not make the chain
-easier to read — those are the reasons to reach for structured concurrency instead.
+Use manually controlled futures to test already-complete and later-complete inputs, both orderings of
+two failures, executor rejection, action failure inside `whenComplete`, empty `allOf`/`anyOf`, timeout
+races and duplicate callback completion. Tests must assert both the returned outcome and whether
+losing work/resources were actually stopped or released.

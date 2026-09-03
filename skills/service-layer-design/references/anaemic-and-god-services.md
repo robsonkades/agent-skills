@@ -46,9 +46,9 @@ It is not justified by "we might need it later" or by symmetry with other module
 
 ### The fix
 
-Delete the pass-throughs; keep the methods that orchestrate. Let the controller or the
-query handler use the repository directly for reads. This usually removes 60–80% of such a
-class and makes the remainder obviously meaningful.
+Delete pass-throughs only after checking authorization, transaction, caching, audit and stable API
+semantics. Let a controller or query handler use a read gateway directly where those duties do not
+apply. Measure the resulting surface; no general removal percentage is defensible.
 
 ## The god service
 
@@ -57,8 +57,8 @@ everything.
 
 ### How it forms
 
-It is never a decision. The sequence is always the same: the service layer starts as
-pass-through, so it has no defined responsibility; the service already holds the
+It often emerges incrementally rather than by explicit decision: a pass-through layer has no clear
+responsibility; the service already holds the
 transaction and every repository, so each new rule is cheapest to add there; entities have
 setters, so the rule can be written as read-branch-write; nobody objects because each
 individual addition is two lines.
@@ -67,11 +67,11 @@ individual addition is two lines.
 
 | Signal                                 | Threshold worth investigating                             |
 | -------------------------------------- | --------------------------------------------------------- |
-| Injected collaborators                 | more than ~6                                              |
-| Public methods                         | more than ~15, or methods whose names share no vocabulary |
-| Conditionals mentioning entity state   | any; each one is a rule outside the model                 |
-| Entity setters called from the service | any on a state field                                      |
-| Methods no caller uses together        | two clusters that never co-occur = two services           |
+| Injected collaborators                 | unrelated capability clusters or high fixture/change cost |
+| Public methods                         | unrelated vocabulary and consumers, not a numeric cutoff  |
+| Conditionals mentioning entity state   | investigate whether protocol/orchestration or domain rule |
+| Entity setters called from the service | state transitions bypassing an invariant owner            |
+| Methods no caller uses together        | evidence of separable ownership/change clusters           |
 | Test setup length                      | fixtures longer than the assertions                       |
 
 ### Detection, from the history

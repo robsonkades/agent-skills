@@ -8,13 +8,13 @@ frequency showing up directly in the latency profile.
 The decision depends primarily on the pause the SLO can absorb and on the CPU the
 collector may take from the application; heap size and throughput break the ties.
 
-| Collector    | Pause model                                                                                                                    | Prefer when                                                                                                                 | Becomes problematic when                                                                                                                            |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| G1 (default) | STW young and mixed pauses, concurrent marking; `MaxGCPauseMillis` target                                                      | The SLO tolerates pauses of tens of milliseconds, ≥ 2 CPUs, heap from a few hundred MB to tens of GB — the general case     | The SLO is single-digit ms at p99.9; the heap is so large that mixed pauses cannot fit the target; or the pod has one CPU (see the ergonomics note) |
-| ZGC          | Concurrent marking and relocation; STW pauses independent of heap size (JEP 333/377, generational by definition since JEP 490) | p99 must stay below a millisecond, the heap is large, and there are spare CPUs for the concurrent threads                   | 1–2 CPUs (mutators and GC threads compete; allocation stalls), or when RSS is read as heap — ZGC's multi-mapping is zgc-and-shenandoah territory    |
-| Shenandoah   | Same design point as ZGC; generational is product on 25 (JEP 521), default from 28 (JEP 535)                                   | The ZGC requirement, on a vendor build that ships Shenandoah and where its mode has been declared explicitly                | The same CPU constraints as ZGC; comparisons that omit `ShenandoahGCMode`                                                                           |
-| Parallel     | STW everything, all cores; adaptive sizing                                                                                     | No latency SLO — batch, ETL, offline scoring — where work per hour is the metric                                            | Any user-facing latency requirement: full-GC pause grows with heap size                                                                             |
-| Serial       | STW everything, one thread                                                                                                     | One CPU, small heap, short-lived or memory-minimal processes where a second GC thread would only steal from the application | Anything else — and, through JDK 26, anything that _ergonomically_ got it (below)                                                                   |
+| Collector  | Pause model                                                                                                                 | Prefer when                                                                              | Becomes problematic when                                                                                               |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| G1         | STW young/mixed pauses, concurrent marking, adaptive pause target                                                           | Balanced starting point where measured tails and CPU fit the SLO; broad heap/CPU range   | Root/RSet/copy-heavy pauses exceed budget, evacuation headroom fails, or concurrent work competes for scarce CPU       |
+| ZGC        | Concurrent generational marking/relocation; normal pauses dominated by roots/coordination rather than whole-heap relocation | Very tight tail-latency objective with CPU and heap headroom to outrun allocation        | Scarce CPU/headroom, allocation stalls, or barrier/concurrent cost violates throughput; no sub-ms result is guaranteed |
+| Shenandoah | Concurrent evacuation; traditional/generational mode is build/configuration-specific (generational product since JEP 521)   | Similar low-pause objective on a build that ships it, with mode named and benchmarked    | Scarce CPU/headroom, degeneration/full fallback, pinning, or comparisons that omit mode/vendor                         |
+| Parallel   | Stop-the-world young/full work using multiple workers; adaptive sizing                                                      | Throughput-oriented batch/offline work when measured pauses are acceptable               | Live-set/heap pauses violate the actual deadline or monopolizing cores harms colocated work                            |
+| Serial     | Stop-the-world collection with one GC worker                                                                                | Small/short-lived or single-CPU workloads where simplicity/footprint wins in measurement | One worker cannot meet pause/throughput needs; accidental ergonomic selection conflicts with the SLO                   |
 
 **CPU is the dimension most often missed.** GC thread counts come from the processor count
 the JVM sees, measured on 25.0.3 with `-XX:ActiveProcessorCount`: G1 uses
@@ -24,104 +24,117 @@ the JVM sees, measured on 25.0.3 with `-XX:ActiveProcessorCount`: G1 uses
 2-CPU pod therefore runs its cycle on the same core the application needs, which is why
 "we moved to ZGC and throughput fell" is a CPU-count finding, not a collector defect.
 
-**Ergonomics through JDK 26:** a JVM that sees one CPU selects Serial (executed on 25.0.3:
+**Ergonomics are release/build inputs:** a JVM that sees one CPU selected Serial on the
+verified 25.0.3 build
 `-XX:ActiveProcessorCount=1` → `UseSerialGC = true {ergonomic}`). The JDK 9-era rule also
 demotes small-memory hosts; that half was not reproducible here without a cgroup, so
-verify on the target with `jcmd <pid> VM.flags`. **From JDK 27 (JEP 523) the JVM always
-selects G1 when no collector is named**, so Serial becomes an explicit choice
-(`-XX:+UseSerialGC`) and a one-CPU pod that relied on the demotion changes collector on
-upgrade.
+verify on the target with startup logs/`jcmd <pid> VM.flags`. JDK 27 EA documentation says
+G1 is the default, but JEP 523 is still Candidate as of 2026-09-03. Test the exact target
+build and explicitly select the intended collector rather than encoding an EA/JEP status
+as a fleet guarantee.
 
 Two decisions this table does **not** make for you:
 
-- **Whether to change collector at all.** It is a bigger lever than tuning one and a
-  smaller lever than reducing allocation rate. Try them in that reverse order.
-- **Whether the pause requirement is real.** Sub-millisecond pauses are bought with
-  barriers and concurrent CPU. For batch work with no latency SLO, Parallel delivers more
-  work per hour.
+- **Whether to change collector at all.** Compare change risk and causal fit: an allocation
+  redesign may be larger than a collector experiment, while a copied experimental flag can
+  be riskier than both.
+- **Whether the pause requirement is real.** Low pauses are bought with barriers,
+  concurrent CPU and headroom. For batch work, Parallel is a throughput candidate; a
+  representative useful-work/hour measurement decides.
 
-With a stop-the-world compacting collector the full-GC pause grows with heap size, so a
-large heap plus a latency requirement rules out Parallel and Serial by construction.
+With a stop-the-world compacting collector, full-GC work generally grows with live data and
+heap/metadata traversal. Whether that disqualifies Parallel/Serial depends on the actual
+deadline, event probability and recovery model—not heap size alone.
 
 ## Heap sizing
 
 ```
--Xms<N> -Xmx<N>        # equal, always, in a container
+-Xms<initial> -Xmx<maximum>   # choose from measured startup/residency/SLO requirements
 ```
 
-A heap that grows pauses while it grows, and its GC behaviour changes as it grows — which
-means yesterday's measurement does not describe today's process.
+A variable heap changes ergonomics and can incur growth/page costs; a fixed heap commits
+capacity earlier and can increase density/RSS pressure. Benchmark startup, steady state,
+idle uncommit and peak for the chosen collector/container policy.
 
 **Leave headroom for non-heap.** Metaspace, code cache, thread stacks, direct buffers and
 the collector's own structures are all outside `-Xmx` and all count against the cgroup
 limit. Measure them with NMT under real load rather than estimating; `jvm-memory-regions`
-covers the budget and the `MaxRAMPercentage` arithmetic. Note that in a container the
-default heap is 25% of the limit (`MaxRAMPercentage`), so an unsized JVM in a 2 GB pod runs
-a 512 MB heap — "GC is constant" in a new deployment is often just that.
+covers the budget and the `MaxRAMPercentage` arithmetic. On common modern HotSpot server
+ergonomics `MaxRAMPercentage` defaults to 25, but minimum-heap rules, visible memory,
+vendor/build and explicit options can change effective `-Xmx`. Read `MaxHeapSize`,
+container logs and flags on the target rather than multiplying the pod limit blindly.
 
 ### Sizing from the live set
 
 The number the heap is sized from is the **live set**: what survives a complete
 collection under representative load, not what the dashboard shows between collections.
 
-1. Measure it. On a running replica: `jcmd <pid> GC.run` then `GC.heap_info`, repeated
-   three times a few minutes apart under load; or the post-full/remark occupancy from the
-   GC log (gc-log-analysis). Take the highest, not the average — the heap must fit the
-   peak live set, and a live set that keeps rising is a leak (java-reference-types-and-leaks),
-   which no sizing absorbs.
-2. Measure the allocation rate from the same log (bytes promoted or allocated per second).
-   It sets how much young space buys how much time between collections.
+1. Measure equivalent post-reclamation occupancy across representative regimes. Forced
+   `GC.run` is high impact and belongs on a drained/controlled replica; a G1 Remark is a
+   marking phase, not a complete reclamation point. Use collector-specific cycle/mixed
+   evidence and heap/JFR data. Keep the distribution and peak context; a rising floor is a
+   retention hypothesis, not automatically a leak.
+2. Measure allocation and old-generation pressure from appropriate evidence. GC region
+   deltas are estimates, not exact promoted/allocated byte counters.
 3. Size old for the live set plus the room the collector needs to run before it is full.
-   Under G1 marking starts when old occupancy crosses the IHOP (45% of heap by default,
-   adaptive on 25), so a live set that already sits above that fraction keeps marking
-   running back-to-back and drifts toward evacuation failure — the total heap wants the
-   live set well under half of it. Hunt and John's _Java Performance_ (2011, ch. 7) gives
-   three to four times the live set as the starting total; treat it as the first
-   iteration, not the answer.
+   Under G1, adaptive IHOP derives an effective trigger from predicted old allocation,
+   marking time, young size and reserve/waste constraints; the configured 45% is not a
+   universal live-set ratio. Size from measured live set, allocation during the cycle,
+   evacuation/reserve margin and workload bursts, then validate policy logs. Rules such as
+   “3–4× live set” are only coarse experimental brackets, not recommendations.
 4. Under a concurrent collector, the heap must also absorb `allocation rate × cycle time`
    while the cycle runs, or the mutators stall on allocation — the sizing and the
    `Allocation Stall` signal are zgc-and-shenandoah.
-5. Fit the result into the container budget (jvm-memory-regions) and, if it does not fit,
-   the trade is a smaller live set or a bigger pod — not a smaller margin.
-6. Validate the way the baseline was measured: same load, same duration, compare pause
-   distribution, full-GC count and the post-collection floor.
+5. Fit the result into the container budget (jvm-memory-regions). If it does not fit,
+   reduce live state/allocation, increase capacity, change the collector/architecture, or
+   accept and quantify a smaller safety margin—never silently erase it.
+6. Validate with equivalent workload/regimes and enough events for the declared confidence:
+   compare pause distribution by type, STW share, concurrent CPU, allocation stalls/full
+   collections, throughput and post-reclamation occupancy.
 
 ### The 32 GB boundary
 
-Above roughly 32 GB, compressed oops turn off and every reference doubles from 4 to 8
-bytes. A pointer-rich 33 GB heap can hold **fewer** useful objects than a 31 GB one — one of
-the few changes where raising a limit makes things worse. Evaluate `-Xmx31g` with ZGC before
-crossing it.
+For collectors using ordinary HotSpot compressed oops, the zero-based compressed-oop range
+is often near 32 GiB, but the actual cutoff depends on object alignment, heap base/reservation
+and build. When `UseCompressedOops` turns off, ordinary heap references typically grow from
+4 to 8 bytes and headers/layout can change, so a pointer-rich heap may lose effective
+capacity. Confirm with `-Xlog:gc+heap+coops=debug`/flags and measure object layout on the
+target. ZGC uses colored-pointer/addressing machinery rather than serving as a
+“31 GiB compressed-oops” workaround; compare collectors independently.
 
 ## MaxGCPauseMillis
 
 It is a target, not a guarantee, and G1 cannot honour it in the face of humongous
 allocations, evacuation failure or a saturated old generation.
 
-The counter-intuitive part: **lowering it shrinks the young generation**, which produces
-more frequent collections and less time for objects to die in Eden, raising premature
-promotion. For throughput under G1 the adjustment is usually to _raise_ the target.
+Lowering it often makes policy choose less young/CSet work, producing more frequent
+collections. Promotion rises only when the changed lifetime/survivor regime causes it.
+For throughput, raising the target is a hypothesis whose pause, frequency, CPU and useful
+work must be validated.
 
 Derive it from the SLO, knowing it is a target — not from a round number.
 
 ## When the flag is not the answer
 
-| Log observation                                  | Actual investigation                          |
-| ------------------------------------------------ | --------------------------------------------- |
-| Frequent young collections, little promotion     | usually fine; look elsewhere                  |
-| Frequent young collections, heavy promotion      | caches without eviction, oversized buffers    |
-| Rising heap floor after full collection          | retention — a leak or an unbounded cache      |
-| Full GCs with `G1 Evacuation Failure`            | why did old fill up? not "raise the heap"     |
-| `Metadata GC Threshold`                          | Metaspace, not heap — see `jvm-class-loading` |
-| Logged pause much smaller than client-felt pause | TTSP or the host — not the collector          |
+| Log observation                                  | Actual investigation                                                    |
+| ------------------------------------------------ | ----------------------------------------------------------------------- |
+| Frequent young collections, little old growth    | quantify pause share/allocation; may be healthy or fixed-cost overhead  |
+| Frequent young collections, heavy old pressure   | lifetime/in-flight/cache/survivor policy; identify allocation/owners    |
+| Rising comparable post-reclamation floor         | retention/capacity hypothesis; distinguish workload, cache and defect   |
+| Full GCs after evacuation failure                | usable to-space, live set, promotion spike, pinning, humongous topology |
+| `Metadata GC Threshold`                          | Metaspace, not heap — see `jvm-class-loading`                           |
+| Logged pause much smaller than client-felt pause | correlate TTSP, queue amplification, host and other request work        |
 
 The last two rows are the ones most often "fixed" with a heap flag that cannot possibly
 help.
 
 ## Validating a change
 
-- [ ] Same load, same duration, before and after
-- [ ] Compare frequency, p99, max, total overhead and full-GC count — not one of them
-- [ ] One variable per iteration
-- [ ] A change that does not move the pause distribution is reverted, not kept
-- [ ] Result **and mechanism** recorded
+- [ ] Equivalent workload, JDK/container limits, warm-up and operating regimes before/after
+- [ ] Sample counts, percentile estimator and uncertainty reported by GC event type
+- [ ] Compare frequency, tails/max, STW share, concurrent CPU, allocation stalls/full GC,
+      throughput and footprint—not one metric
+- [ ] Isolate one mechanism per iteration when feasible; document interactions otherwise
+- [ ] Predeclare expected signal, abort/rollback thresholds and capacity guardrails
+- [ ] Revert a change that misses its prediction or causes a material regression
+- [ ] Record result, mechanism, effective flags and vendor/update

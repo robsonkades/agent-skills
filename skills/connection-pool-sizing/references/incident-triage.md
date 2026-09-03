@@ -34,10 +34,12 @@ WHERE state = 'idle in transaction'
 ORDER BY duration DESC;
 ```
 
-`idle in transaction` says exactly: a transaction is open and nothing is running on it.
-That is an HTTP call, a queue publish, or business logic inside `@Transactional`. A 300 ms
+`idle in transaction` says exactly: a transaction is open and the backend is not currently
+executing a statement. It does not identify the application-side cause. Correlate transaction age,
+traces, and stack samples to distinguish an HTTP call, a queue publish, user think time, or business
+logic inside `@Transactional`. A 300 ms
 external call there caps throughput at `pool_size / 0.3` and holds the snapshot, delaying
-`VACUUM` for the entire database.
+cleanup of row versions visible to that snapshot; severity depends on age, write rate, and relations touched.
 
 Watch for the silent variant: `this.method()` inside the same bean does not go through the
 proxy, so the transaction people believe exists does not.

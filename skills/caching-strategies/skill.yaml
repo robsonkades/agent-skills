@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: caching-strategies
-version: 1.1.0
+version: 1.2.0
 description: >-
   Deciding whether to cache, then doing it safely: the h × T_source criterion, bounded size
   or weight, TTL and jitter, stampede and its four distinct scopes, cache-aside versus

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-pattern-selection
-version: 1.2.0
+version: 1.3.0
 description: >-
   Getting from a stated design problem to a candidate pattern, or to no pattern, without
   choosing by familiarity. The second of two stages: it assumes the forces are named and the

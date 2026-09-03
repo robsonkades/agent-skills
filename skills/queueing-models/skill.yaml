@@ -1,19 +1,19 @@
 schemaVersion: 1
 
 name: queueing-models
-version: 1.2.0
+version: 1.3.0
 description: >-
-  Choosing a queueing model and reading what it says: M/M/1 versus M/M/c versus M/G/1 versus
-  M/D/1, the Erlang C and Erlang B formulas, Kingman's G/G/1 approximation, the service-time
-  coefficient of variation, and what each model's assumptions cost when they are violated.
+  Choosing, parameterising and falsifying queueing models: M/M/1, M/M/c, M/G/1, finite/loss
+  and closed networks; Erlang C/B, Pollaczek–Khinchine, Kingman/Allen–Cunneen, variability,
+  queue topology and what model assumptions permit.
   Use when a predicted wait time disagrees with the measured one, when latency is far worse
   than utilisation suggests, when service times are bimodal or GC-spiked, when arrivals are
   retries or cron bursts rather than independent users, when Erlang C must be computed for a
-  large number of servers, when a load balancer or partition layout turns one pool of c into
-  c queues of one, or when deciding whether a measured p99 is even reachable by an
-  M/* model. Does not cover the N = lambda x R law, the utilisation cliff as a rule of
-  thumb, or thread and connection pool sizing (littles-law-and-queueing), the alpha/beta
-  scalability model (universal-scalability-law), or the statistics of the measured numbers
+  large number of servers, when routing or partitioning changes the queue topology, or when
+  deciding whether a measured tail can be inferred from an analytical model. Does not cover
+  the `L = λW` conservation law or operational pool sizing
+  (littles-law-and-queueing), the alpha/beta scalability model
+  (universal-scalability-law), or the statistics of the measured numbers
   themselves (latency-statistics).
 
 license: Apache-2.0

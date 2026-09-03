@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-abstract-factory
-version: 1.1.0
+version: 1.2.0
 description: >-
   Abstract Factory in modern Java: the pattern exists to keep a _family_ of related objects
   mutually consistent when the family varies, not to centralise construction. Covers the family
@@ -40,7 +40,7 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
+dependencies: []
 
 suggests:
   - gof-flyweight

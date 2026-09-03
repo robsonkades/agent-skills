@@ -2,16 +2,17 @@
 
 `MemorySegment` and `Arena` come from JEP 454, final since JDK 22 — no preview flags on a
 JDK 25 baseline. They give spatial safety (bounds checking) and temporal safety (lifetime
-checking) that `Unsafe` never had, at a small per-access cost.
+checking) that raw addresses lack. Measure access/call-path cost on the target JDK rather
+than assuming it is small or material.
 
 ## The four Arena types
 
-| Arena          | Release                 | Multi-thread access     | `close()`                                         | When to use                                                                                           |
-| -------------- | ----------------------- | ----------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `ofConfined()` | Deterministic, explicit | No — owning thread only | Supported, owning thread only                     | The default case: buffers with a clear scope and a single owner (parsers, request buffers)            |
-| `ofShared()`   | Deterministic, explicit | Yes                     | Supported, from any thread                        | Structures shared across threads with a single coordinated closing point (pools, shared caches)       |
-| `ofAuto()`     | Non-deterministic (GC)  | Yes (read)              | **Unsupported** — `UnsupportedOperationException` | Only when there is no natural scope to tie a try-with-resources to; accepts the Cleaner's timing risk |
-| `global()`     | Never                   | Yes                     | **Unsupported** — `UnsupportedOperationException` | Permanent native data, living as long as the process                                                  |
+| Arena          | Release                 | Multi-thread access     | `close()`                                         | When to use                                                                                     |
+| -------------- | ----------------------- | ----------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `ofConfined()` | Deterministic, explicit | No — owning thread only | Supported, owning thread only                     | Buffers with a clear scope and a single owner (parsers, thread-confined work)                   |
+| `ofShared()`   | Deterministic, explicit | Yes                     | Supported, from any thread                        | Structures shared across threads with a single coordinated closing point (pools, shared caches) |
+| `ofAuto()`     | Non-deterministic (GC)  | Yes                     | **Unsupported** — `UnsupportedOperationException` | Only when there is no natural scope to tie a try-with-resources to; accepts GC-managed timing   |
+| `global()`     | Never                   | Yes                     | **Unsupported** — `UnsupportedOperationException` | Permanent native data, living as long as the process                                            |
 
 Selection rule:
 
@@ -26,13 +27,13 @@ Need native memory
         |
         +-- Yes -> Does more than one thread access OR close the segment?
                      |
-                     +-- No  -> Arena.ofConfined()   (recommended default)
+                     +-- No  -> Arena.ofConfined()   (strong confinement)
                      +-- Yes -> Arena.ofShared()
 ```
 
 `ofAuto()` is the mode people reach for thinking it is "the explicit one". It is not: it is
-GC-managed, and it carries exactly the non-deterministic timing risk of the
-`Cleaner`/`DirectByteBuffer` model that `Arena` exists to fix.
+GC-managed, and it reintroduces nondeterministic release timing. Use it only when that
+lifetime is acceptable and bounded by another resource policy.
 
 ## Allocation and typed access
 
@@ -82,48 +83,29 @@ direct buffer and is not deterministic.
 
 ## Pooling long-lived allocations
 
-```java
-class OffHeapPool implements AutoCloseable {
-    private final Arena arena = Arena.ofShared();
-    private final long blockSize;
-    private final Queue<MemorySegment> freeList = new ConcurrentLinkedQueue<>();
-
-    OffHeapPool(long blockSize, int initialCapacity) {
-        this.blockSize = blockSize;
-        for (int i = 0; i < initialCapacity; i++) {
-            freeList.add(arena.allocate(blockSize));
-        }
-    }
-
-    MemorySegment acquire() {
-        MemorySegment seg = freeList.poll();
-        return seg != null ? seg : arena.allocate(blockSize);
-    }
-
-    void release(MemorySegment seg) {
-        freeList.offer(seg);
-    }
-
-    @Override
-    public void close() {
-        arena.close();  // frees the pool's entire memory at once
-    }
-}
-```
+Do not implement a pool as an unbounded concurrent queue over one shared arena. Such a sample
+usually accepts foreign/duplicate releases, permits use after logical release, races shutdown,
+retains peak memory forever and leaks prior-tenant data. Prefer a proven bounded allocator or
+define all of these invariants: maximum blocks/bytes, backpressure on exhaustion, membership
+and generation token, exclusive lease, zero-on-release policy, close/drain protocol, metrics
+and behavior for cancellation. Closing the shared arena invalidates every outstanding slice;
+the pool must first prevent acquisition and coordinate all leases.
 
 ## Migrating from Unsafe or DirectByteBuffer
 
 1. Identify the ownership pattern and pick the `Arena` from the selection rule above — one
    thread start to finish (`ofConfined`), several threads accessing or closing (`ofShared`),
    no natural try-with-resources scope (`ofAuto`, last resort), truly permanent (`global`).
-2. Replace `unsafe.allocateMemory(n)` or `ByteBuffer.allocateDirect(n)` with
-   `arena.allocate(n)`.
+2. Translate size/alignment with checked arithmetic; `arena.allocate(n, alignment)` is not a
+   safe mechanical replacement until ownership and maximum allocation are enforced.
 3. Replace raw address access (`unsafe.getLong(address)`) with typed segment access
    (`segment.get(ValueLayout.JAVA_LONG, offset)`) — bounds checking comes with it.
 4. Replace manual release (`unsafe.freeMemory(address)` in a `finally`) or implicit release
    (waiting for the Cleaner) with `arena.close()` — deterministic, and use-after-free throws
    `IllegalStateException` instead of silently corrupting memory.
-5. If the legacy code used object-plus-offset CAS (`compareAndSetLong`), **do not migrate it
+5. Reconcile endianness, alignment, atomic access modes and native struct padding; test
+   malformed sizes, use-after-close, wrong-thread access and close/access races.
+6. If the legacy code used object-plus-offset CAS (`compareAndSetLong`), **do not migrate it
    here**. It is not a target of JEP 471 or JEP 498. Moving it to `VarHandle` is a separate,
    independent decision.
 
@@ -132,7 +114,7 @@ class OffHeapPool implements AutoCloseable {
 ```bash
 --sun-misc-unsafe-memory-access=warn    # default on JDK 24/25: warning on first use
 --sun-misc-unsafe-memory-access=allow   # suppresses the warning
---sun-misc-unsafe-memory-access=deny    # fails today; still NOT the default as of JDK 27
+--sun-misc-unsafe-memory-access=deny    # rejects targeted calls; not the default on verified JDK 27 EA
 ```
 
 Running with `deny` in CI is how you find out, before the baseline moves, which code paths

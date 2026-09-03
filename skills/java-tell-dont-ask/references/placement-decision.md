@@ -16,21 +16,22 @@
   place to synchronise or version.
 - **Tests for a domain rule construct a service with five mocks.** The rule is trapped in
   orchestration; in the domain object it tests with a constructor call.
-- **Getters with side effects.** Any accessor that writes — lazy init visible to callers,
-  "touch on read" timestamps — violates CQS and makes every heuristic above unreliable,
-  because reads are no longer safe to reason about. Fix those first.
+- **Queries with observable side effects.** "Touch on read" timestamps, emitted business events
+  or mutation visible through later results make reads order-dependent. Private memoization can
+  be observationally pure, but must still be safe under the type's concurrency contract and must
+  not cache data whose validity changes behind it.
 
 ## False positives — asking that is correct
 
-| Pattern                                                           | Why it stays                                                                                                                                                                          |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Mapper/serialiser reading every field to build a DTO or JSON      | Boundary projection. Data out is the job; there is no decision to move.                                                                                                               |
-| A view or template reading state to render it                     | Rendering is a query over state, not a decision about it.                                                                                                                             |
-| Validation of raw input _before_ a domain object exists           | There is no object to tell yet; parse and validate at the boundary, then construct.                                                                                                   |
-| A pricing engine reading catalogue, customer and campaign objects | Cross-aggregate policy: no single object owns the rule. The service decides, asking each object questions it can answer (`campaign.isActiveOn(date)`), rather than mining raw fields. |
-| Reporting and analytics queries                                   | Read models exist to be asked.                                                                                                                                                        |
-| A transaction script over a table with no invariants              | CRUD. Adding behaviour methods to a bag of columns is ceremony; anemia without invariants is not a disease.                                                                           |
-| Framework-required accessors (JPA, Jackson)                       | The framework asks by contract. Keep those accessors from becoming the API other _domain_ code uses to decide.                                                                        |
+| Pattern                                                           | Why it stays                                                                                                                                                                                                      |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mapper/serialiser reading every field to build a DTO or JSON      | Boundary projection. Data out is the job; there is no decision to move.                                                                                                                                           |
+| A view or template reading state to render it                     | Rendering is a query over state, not a decision about it.                                                                                                                                                         |
+| Validation of raw input _before_ a domain object exists           | There is no object to tell yet; parse and validate at the boundary, then construct.                                                                                                                               |
+| A pricing engine reading catalogue, customer and campaign objects | Cross-aggregate policy: no participating entity owns the whole rule. A domain policy or service decides, asking each object questions it can answer (`campaign.isActiveOn(date)`), rather than mining raw fields. |
+| Reporting and analytics queries                                   | Read models exist to be asked.                                                                                                                                                                                    |
+| A transaction script over a table with no invariants              | CRUD. Adding behaviour methods to a bag of columns is ceremony; anemia without invariants is not a disease.                                                                                                       |
+| Framework-required accessors (JPA, Jackson)                       | The framework asks by contract. Keep those accessors from becoming the API other _domain_ code uses to decide.                                                                                                    |
 
 ## The costs of moving — count them before refactoring
 
@@ -38,10 +39,14 @@
   the rule is the object's own; bad when the object starts accumulating every rule that
   merely mentions it — a growing entity with unrelated commands is heading toward a God
   Object.
-- **Dependencies must not follow the decision.** If the decision needs a rate from a
-  remote service, do not inject the client into the entity; the service fetches the rate
-  and passes the value: `account.withdraw(amount, todaysLimit)`. If the method ends up
-  taking five fetched values, the decision may genuinely belong outside.
+- **Infrastructure must not follow the decision.** If the decision needs a rate from a
+  remote service, the application layer obtains a trusted snapshot and passes a domain value,
+  or invokes a separately owned domain policy. Do not inject an HTTP client or repository into
+  an entity. If the method needs many externally fetched values, the decision likely belongs
+  outside or needs a cohesive policy/context value.
+- **Snapshot semantics become part of correctness.** A supplied exchange rate, entitlement or
+  limit needs an as-of time/version and an explicit stale-data policy when it can change between
+  retrieval and commit.
 - **Outcome signalling changes shape.** A service `if` can return anything; a domain
   command needs a result the caller can act on — an exception for "caller broke the
   contract", a result type for expected refusals. That is new API to design and keep

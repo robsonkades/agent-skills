@@ -3,14 +3,15 @@
 ## "It died with no log"
 
 ```bash
-echo $?                                   # 137 = SIGKILL, 143 = SIGTERM
-dmesg -T | grep -i "killed process"       # global OOM killer
-cat /sys/fs/cgroup/memory.events          # cgroup OOM (oom_kill counter)
+echo $?                                   # convention: 137 = SIGKILL, 143 = SIGTERM
+journalctl -k --since '-15 min'            # kernel record, if authorized and retained
+cat /sys/fs/cgroup/memory.events          # cgroup v2: compare oom/oom_kill deltas
 ```
 
-Exit code 137 closes the question: the kernel sent `SIGKILL`. There is no
-`OutOfMemoryError`, no shutdown hook and no heap dump, because the JVM never learned it was
-dying. Application logs cannot contain the cause.
+Exit code 137 supports `SIGKILL`; it does not identify who sent it or why. A JVM killed this
+way cannot run hooks or emit a Java heap dump at termination, though earlier application logs
+can still contain precursors. Confirm OOM with cgroup/kernel/orchestrator evidence; absence
+of a `dmesg` line is not proof against it.
 
 ## Memory pressure
 
@@ -21,8 +22,8 @@ awk '{print "minflt="$10, "majflt="$12}' /proc/<pid>/stat
 cat /proc/pressure/memory                 # PSI: time actually stalled
 ```
 
-Take `majflt` twice around the pause and use the **delta**. Major faults cost what the
-medium costs: ~50–200 µs on NVMe, ~5–10 ms on a spinning disk.
+Take `majflt` twice around the pause and use the **delta**. Attribute its cost with block-I/O,
+reclaim and wall-clock evidence on this host; device labels do not determine queueing latency.
 
 ## CPU throttling
 
@@ -31,9 +32,10 @@ cat /sys/fs/cgroup/cpu.stat               # nr_periods, nr_throttled, throttled_
 cat /proc/pressure/cpu
 ```
 
-Throttling inflates GC pauses and leaves **no trace in the GC log**. Compare
-`nr_throttled / nr_periods` against baseline. Raising the quota is the third-best response;
-before it come sizing `ParallelGCThreads` for the quota and widening the period.
+Throttling can inflate observed pauses without appearing as a GC cause. Compare counter
+deltas: throttled periods show frequency, while throttled microseconds over elapsed time show
+denied CPU. Then test collector/thread ergonomics, application runnable demand, quota and
+period; changing the period alters burst and tail behaviour and is not a generic remedy.
 
 ## Descriptors and threads
 
@@ -45,10 +47,13 @@ ls /proc/<pid>/fd | wc -l
 # java.lang.OutOfMemoryError: unable to create native thread
 grep "Max processes" /proc/<pid>/limits
 ls /proc/<pid>/task | wc -l
+cat /sys/fs/cgroup/pids.current /sys/fs/cgroup/pids.max /sys/fs/cgroup/pids.events
 ```
 
-The second error misleads by its name. It is not a heap problem, so a heap dump does not
-help — it is a task limit or native memory exhaustion.
+The second error is not necessarily heap exhaustion. Distinguish cgroup `pids.max`, user
+`RLIMIT_NPROC`, system thread/PID limits, native stack/address-space exhaustion and commit
+failure. A heap dump is secondary unless retained Java objects explain excessive thread
+creation.
 
 ## Unexplained pause
 

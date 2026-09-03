@@ -209,8 +209,9 @@ java -XX:+UnlockDiagnosticVMOptions -XX:+TraceDeoptimization -jar app.jar 2>&1 |
 ```
 
 A `diagnostic` flag since JDK 18 (JDK-8154011); without the unlock the JVM refuses to start
-with `Error: VM option 'TraceDeoptimization' is diagnostic and must be enabled via …`. It is
-ported to unified logging in JDK 28 (JDK-8287010; not verified here). The output on 25.0.3:
+with `Error: VM option 'TraceDeoptimization' is diagnostic and must be enabled via …` on the
+JDK 25 baseline. For later releases, inspect `java -Xlog:help` and `PrintFlagsFinal` rather
+than assuming a mainline change has shipped. The output on 25.0.3:
 
 ```
 UNCOMMON TRAP method=DeoptLab.dispatch(LDeoptLab$Shape;)J  bci=1 pc=0x000001c6da2411cc, relative_pc=0x000000000000004c, debug_id=0 compiler=c2 compile_id=21 (@0x000001c6da2411cc) thread=68856 reason=class_check action=maybe_recompile unloaded_class_index=-1 debug_id=0
@@ -307,3 +308,10 @@ it.
 - [ ] If the fix narrowed a static type or made a class `final`, no other code path depended
       on subclassing it
 - [ ] No diagnostic flag left active outside the investigation session
+
+## Authoritative sources
+
+- [JDK 25 HotSpot `deoptimization.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/deoptimization.cpp)
+- [JDK 25 JFR event definitions](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml)
+- [JDK 25 `jcmd` documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+- [JDK-8154011: make `TraceDeoptimization` diagnostic](https://bugs.openjdk.org/browse/JDK-8154011)

@@ -1,7 +1,8 @@
 # jhsdb and core dump commands
 
-Run the `jhsdb` from the same `$JAVA_HOME` that produced the process or the core. Everything
-below assumes that.
+Run `jhsdb` from the same exact vendor/update/build that produced the process/core and keep
+the matching executable, `libjvm`, dependent libraries and debug symbols/build IDs.
+Everything below assumes that archived toolchain.
 
 ## jhsdb modes
 
@@ -23,6 +24,11 @@ jhsdb debugd  ...                                         # remote debug server 
 `--binaryheap` against a core is the way to get an HPROF out of a process that no longer
 exists; `--gz` compresses it inline. The result opens in MAT like any other dump
 (heap-dump-analysis).
+
+For every `--pid` form, treat SA attach as an exclusive invasive operation: it suspends the
+target and the tool warns that detaching can leave the process hung. Drain it, prevent
+concurrent debugger/attach use and plan restart. Prefer `--exe ... --core ...` whenever a
+usable core exists.
 
 `hsdb` gives the same navigation as `clhsdb` in a window — worth it when the exploration is
 visual rather than scriptable.
@@ -72,7 +78,8 @@ clhsdb> quit
 
 ## Generating a core dump
 
-On demand, without losing the process:
+On demand, normally resuming rather than intentionally killing the process—but suspending it
+for capture and consuming substantial memory/I/O:
 
 ```bash
 sudo gcore -o core <pid>
@@ -90,12 +97,15 @@ recreated:
 kill -ABRT <pid>
 ```
 
-Automatically on crash, configured before the incident:
+Automatically on crash, configured before the incident. `core_pattern` is host-wide and
+should be managed durably by the node owner, not changed ad hoc during an application
+incident:
 
 ```bash
 ulimit -c unlimited
-echo "/tmp/core.%p" | sudo tee /proc/sys/kernel/core_pattern
-# plus -XX:+CreateCoredumpOnCrash on the JVM
+cat /proc/sys/kernel/core_pattern
+cat /proc/self/coredump_filter
+# plus -XX:+CreateCoredumpOnCrash on the JVM and a preconfigured destination/handler
 ```
 
 In Kubernetes, `kernel.core_pattern` is a host-wide setting, not a per-container one: it
@@ -106,6 +116,11 @@ incident, from inside the container: `cat /proc/sys/kernel/core_pattern` for whe
 and `grep core /proc/self/limits` for whether the container's soft limit is `0`. A plain path
 pattern is resolved in the crashing process's own mount namespace, so `/tmp/core.%p` inside
 the container works only if that `/tmp` is a volume with room for the whole heap.
+
+Also record `/proc/<pid>/coredump_filter`, `RLIMIT_CORE`, the handler's size/compression
+limits and free space. A file can exist yet be truncated or omit mappings required by SA;
+“core present” is not the same as “core complete.” Attach/capture additionally needs
+ptrace permissions (`CAP_SYS_PTRACE`, Yama policy or equivalent) and matching credentials.
 
 ## Inspecting a core
 
@@ -120,8 +135,9 @@ gdb java /tmp/core.<pid>
 (gdb) x/10wx $rsp   # examine the stack
 ```
 
-`jhsdb` gives Java objects and threads; GDB gives native registers and memory. A JNI crash
-usually needs both.
+`jhsdb` gives Java objects and threads; GDB gives native registers and memory. Configure
+GDB's `sysroot`/`solib-search-path` from the archived container/root filesystem and verify
+build IDs before trusting symbols. JNI/FFM/Unsafe crashes usually need both views.
 
 ## Production JVM configured for crash analysis
 
@@ -150,8 +166,8 @@ Restart=on-failure
 RestartSec=5
 ```
 
-Keep `hs_err_pid*.log` out of logrotate. A rotation config for the application's own logs
-should not match it:
+Keep `hs_err_pid*.log` out of generic log rotation. For example, this broad configuration
+is unsafe because it does match the crash report:
 
 ```
 /var/log/myapp/*.log {
@@ -162,5 +178,7 @@ should not match it:
 }
 ```
 
-That glob does match `hs_err_pid*.log` — narrow the pattern, or move crash artefacts to a
-separate directory and upload them to durable storage before the service restarts.
+Narrow the pattern or move crash artefacts to a separate restricted directory. Upload them
+encrypted to durable storage before restart cleanup and apply an explicit retention policy;
+both core and hs_err can expose credentials, payloads, environment values and command-line
+secrets.

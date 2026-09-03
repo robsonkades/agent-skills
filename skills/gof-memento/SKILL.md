@@ -28,13 +28,13 @@ is the coupling the pattern exists to prevent.
 ## Memento, snapshot, event sourcing
 
 ```text
-Memento          in-process, opaque, transient. Restores an object to a
-                 prior state. No schema, no versioning, no durability.
+Memento          opaque to its caretaker; restores an originator to prior
+                 state. It may be transient or durable—the pattern does not
+                 remove schema/versioning duties when persisted.
                  Answers: what was it?
 
-Snapshot         durable, serialised, a contract. Written to storage,
-                 read back by a future version of the code, so it needs a
-                 schema and a versioning policy.
+Snapshot         a state capture, often durable/serialized and consumed across
+                 versions, so it needs a schema and compatibility policy.
                  Answers: what was it, later and elsewhere?
 
 Event sourcing   state is derived by replaying an append-only log of
@@ -47,9 +47,9 @@ evolution across every historical event, replay, projection rebuilds — buys no
 matters for audit, correction or analytics, no amount of snapshotting recovers it after the fact
 (`event-sourcing`).
 
-The naming failure worth catching in review: calling a persisted, versioned, cross-process state
-document a "memento". It is a snapshot, and the difference is precisely that it has a schema
-somebody else depends on.
+A durable state document can be both a snapshot and the memento in an undo/recovery design. The
+important review point is not the label: persistence and cross-version readers make its schema a
+contract regardless of pattern name.
 
 ## When it is the answer
 
@@ -62,8 +62,8 @@ A what-if branch: the user explores a change and may discard it
         → Memento of the pre-state, or a copy of the working object.
 
 A long computation must be resumable after a failure
-        → a checkpoint, which is a durable snapshot, not a memento —
-          it needs a format and a version.
+        → a checkpoint/durable snapshot; it may play the memento role,
+          but needs consistency, format and version policy.
 ```
 
 ## When it is not
@@ -72,8 +72,8 @@ A long computation must be resumable after a failure
   most proposed uses (`java-immutability`).
 - **The operation has a cheap exact inverse.** `Move(+5)` undoes with `Move(-5)`; storing the
   whole diagram is waste (`gof-command`).
-- **The capture must survive the process.** That is a snapshot: give it a schema, a version, and a
-  tolerant reader.
+- **The capture must survive the process.** Memento alone is insufficient guidance: add durable
+  snapshot consistency, schema, compatibility, corruption and recovery semantics.
 - **Every change must be recoverable, with reasons.** That is event sourcing.
 - **The "memento" is passed to another module that reads it.** Then it is a DTO with a contract,
   and the encapsulation the pattern promised is gone.
@@ -141,8 +141,9 @@ THEN memory is depth × size. Prefer command inverses, diffs, or
      persistent structures with structural sharing.
 
 IF the capture is written to storage or sent to another process
-THEN it is a snapshot: it needs a stable format, a version field, and
-     a defined behaviour when read by an older or newer version.
+THEN it is also a wire/storage snapshot: it needs a stable format and explicit
+     compatibility strategy. A literal version field is one mechanism, not mandatory
+     when schema identifiers/envelopes or evolution rules provide the version.
 
 IF restoring must also restore things outside the object — files sent,
 messages published, money moved
@@ -159,8 +160,8 @@ THEN consider event sourcing before building a snapshot history that
 - **Concurrency.** Capturing is a multi-field read and is not atomic: a concurrent mutation
   produces a capture the object never had. The same applies to `restore`, which must not be
   observable half-applied. Either both run under the lock that guards the state, or the state is
-  an immutable value swapped through a single `volatile` reference — in which case capture is
-  reading one reference and restore is writing one, and both are atomic for free
+  an immutable state value swapped through a single `volatile`/atomic reference—in which case
+  capture/restore of that state reference is atomic, provided no related state lives outside it
   (`java-memory-model`).
 - **Distribution.** A memento does not cross a process boundary; the moment it does it is a
   serialised snapshot with a schema. Replaying a snapshot written by a different version needs a
@@ -168,14 +169,15 @@ THEN consider event sourcing before building a snapshot history that
   documented default. Distributed checkpointing — consistent captures across several processes —
   is a different problem requiring barriers or a consistent-cut algorithm
   (`distributed-aggregation-and-barriers`).
-- **Performance.** The cost is memory: depth × size, retained for as long as undo is offered.
+- **Performance.** A full-copy upper bound is depth × state size, but structural sharing, deduplication
+  and variable diffs change retained size; measure the reachable graph.
   Options in order of preference — make the object immutable and share structure between versions;
   store inverses instead of states; store diffs; bound the depth. Also watch retention: an undo
   stack holding large graphs keeps them alive and is a common source of "the heap grows during a
   long editing session" (`heap-dump-analysis`).
 - **Testing.** The property to assert is a round trip: `restore(capture(s))` leaves the object
-  equal to `s`, over generated states. That single property catches the recurring defect — a field
-  added to the object but not to the capture — which no example-based test finds reliably.
+  equal to `s`, over generated states, plus mutate-after-capture and restore-after-intervening-change
+  cases. It catches omitted state only when generators and semantic equality include that state.
 
 ## Review checklist
 
@@ -185,9 +187,9 @@ THEN consider event sourcing before building a snapshot history that
 - [ ] Capture and restore are atomic with respect to concurrent mutation
 - [ ] Adding a field to the originator breaks the capture at compile time, or a round-trip test fails
 - [ ] Undo depth is bounded, and the memory cost was calculated
-- [ ] A durable capture has a version field and a tolerant reader
+- [ ] A durable capture has an explicit schema identity/evolution strategy and corruption handling
 - [ ] External effects are compensated, not "restored"
-- [ ] It is called a snapshot when it is persisted, and event sourcing when history matters
+- [ ] Persisted captures are treated as snapshots/contracts even when they also serve as mementos
 
 ## References
 

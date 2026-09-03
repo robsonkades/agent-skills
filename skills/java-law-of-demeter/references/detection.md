@@ -8,8 +8,9 @@ against dot counts.
 ## Heuristics that indicate real coupling
 
 - **The caller branches or mutates on the navigated result.** `if (order.getCustomer()
-.getAddress().getCountry() == BR) …` makes a decision three shapes away from the data.
-  The decision is misplaced (java-tell-dont-ask) _and_ the caller is structurally coupled.
+.getAddress().getCountry() == BR) …` makes a decision three shapes away. Structural coupling is
+  real; placement depends on policy ownership. An application service coordinating aggregates
+  may own the decision even though it should consume a narrower projection.
 - **The same chain appears at several call sites.** One navigation at an assembly point is
   wiring; the identical three-step walk in five services means five classes break when the
   middle type changes.
@@ -28,14 +29,14 @@ against dot counts.
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ChargeRequest.charge(id, amount).captureMode(MANUAL).build()`                 | Fluent builder: every call returns the same conceptual object; no second object's structure is exposed. Design questions about it belong to java-fluent-apis. |
 | `orders.stream().filter(Order::isOpen).map(Order::total).toList()`             | Stream pipeline: each call transforms a value; the "chain" is dataflow, not navigation.                                                                       |
-| `response.body().items().getFirst().sku()` on records you defined for this API | Records and DTOs are data, not collaborators; their shape _is_ the contract. Navigating a contract is reading it.                                             |
+| `response.body().items().getFirst().sku()` on records you defined for this API | The shape is the wire/projection contract, so coupling is intentional; still handle empty items and schema/version evolution.                                 |
 | A mapper building `OrderSummaryDto` from the domain graph                      | Boundary code whose entire job is projecting one structure into another. Hiding the structure from it defeats it.                                             |
 | `assertThat(result.receipt().lines()).hasSize(2)` in a test                    | Assertions pin structure deliberately — that is what makes them fail when structure changes.                                                                  |
 | `Optional.map(...).filter(...).orElseThrow()`                                  | Same as streams: value transformation on one conceptual value.                                                                                                |
 
-The recurring distinction: **collaborators have behaviour and hide state; data types have
-state as their published shape.** The law governs collaborators. Applying it to data types
-produces wrappers around nothing.
+The recurring distinction: **collaborators hide representation; data/projection types publish a
+shape.** The law guards encapsulation of the former. Data chains still carry schema coupling and
+edge cases; they are not automatically good, only a different review question.
 
 ## The dogmatic failure mode
 
@@ -61,6 +62,6 @@ someone else's chain with a name on it.
 
 - Query and reporting code: its output mirrors structure by requirement.
 - Serialisation, persistence mapping, view rendering: boundary projections.
-- Code owned and consumed inside a single class or package where the "coupled" types
-  change together anyway — coupling to a co-changing neighbour costs little.
+- Code owned and consumed inside one cohesive package where the types demonstrably co-change —
+  coupling costs less, though aggregate invariants and runtime I/O can still make navigation bad.
 - Any case where the fix adds more public methods than it removes call-site knowledge.

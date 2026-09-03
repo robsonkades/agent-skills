@@ -27,18 +27,20 @@ use, and to say what would reduce it.
 
 ## Workflow
 
-1. **Refuse to estimate an unclear requirement**, and say what is missing rather than declining
-   flatly. Half of estimation variance comes from scope nobody has pinned down
-   (requirements-and-acceptance); an estimate produced over that gap is a number about a
-   different piece of work.
+1. **Do not hide requirement uncertainty inside a precise estimate.** When a decision still needs a
+   number, give a deliberately broad conditional range and state what is missing; otherwise defer
+   the forecast until the scope-changing questions are answered (requirements-and-acceptance).
 2. **Decompose until the pieces are things you have done before.** A piece you can compare with
    something real is estimable; a piece that is still a category ("the reporting") is not. The
    decomposition is also the most reliable way to find work nobody had counted.
-3. **For each piece give three numbers** — optimistic, most likely, pessimistic — where
-   pessimistic means "everything I can name goes wrong", not "the world ends"
+3. **For each piece give three calibrated quantiles** — for example P10, P50, and P90 — or use
+   reference-class cycle-time samples directly. If using PERT's optimistic/most-likely/pessimistic
+   inputs, document what probability each endpoint is intended to represent; “everything goes
+   wrong” is not a reproducible quantile
    (`references/methods.md`).
-4. **Combine them properly.** Expected values add; uncertainties do not. Summing most-likely
-   cases produces a plan nobody hits, and summing worst cases produces a number nobody believes.
+4. **Combine them with their dependencies.** Expected values add, but variance adds only under an
+   independence model. Shared people, platforms, approvals, and integration risks create
+   correlation; model them explicitly or use Monte Carlo over historical throughput/cycle time.
 5. **Calibrate against history.** What this team actually delivered in the last three
    comparable pieces of work beats introspection, every time.
 6. **State the result as a range with a confidence and its assumptions**: "18–25 days, about

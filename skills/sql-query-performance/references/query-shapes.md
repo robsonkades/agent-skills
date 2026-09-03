@@ -26,8 +26,9 @@ value in its own indexed column. Both are deliberate; neither is "add an index o
 ## Implicit conversion
 
 The subtler form of the same defect, and harder to see because nothing in the SQL looks
-transformed. When a column and a parameter have different types, one side is converted — and the
-rules usually convert the column.
+transformed. When a column and a parameter have different types, one side may be converted. Which
+side follows the engine's type-precedence, collation, and coercion rules; a column-side conversion is
+the harmful case because it can prevent use of the stored index expression.
 
 ```sql
 -- account_number is VARCHAR, the parameter binds as a number
@@ -40,9 +41,9 @@ parameter's type against the column type; in JDBC that means checking what `setO
 
 ## Pagination that degrades with depth
 
-`LIMIT m OFFSET n` produces and discards `n` rows before returning `m`. Page 1 is instant; page
-5,000 reads everything before it. The cost is linear in the page number and no index removes it,
-because the work is inherent to the offset.
+`LIMIT m OFFSET n` logically skips `n` rows before returning `m`. The work usually grows with offset
+depth; an index can avoid sorting or table lookups but does not give SQL permission to return rows
+without locating/skipping the preceding logical positions.
 
 **Keyset (seek) pagination** carries the last row's ordering key forward:
 
@@ -55,10 +56,11 @@ WHERE tenant_id = ? AND (created_at, id) < (?, ?)
 ORDER BY created_at DESC, id DESC LIMIT 50;
 ```
 
-Flat in page number, and it uses the composite index directly. What it gives up: jumping to an
-arbitrary page number, and a stable total count. Both are usually product decisions rather than
-requirements — and the total count is frequently the more expensive half of the original query
-anyway.
+Bounded by page size when the predicate has a matching index and a unique tie-breaker. What it gives
+up: jumping to an arbitrary page number and snapshot-like navigation under concurrent inserts or
+updates unless the application carries an appropriate consistency boundary. A stable total count
+is separate. These are product decisions rather than requirements — and the total count is
+frequently the more expensive half of the original query anyway.
 
 If a page number is genuinely required, the honest options are an approximate count, a capped
 count (`count` with a bound), or keeping the offset form and accepting the cost with a maximum

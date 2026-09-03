@@ -33,8 +33,8 @@ code.
 - **A decision record**, when the shortcut shaped an architectural boundary
   (architecture-decision-making).
 
-Avoid `// TODO` and `// FIXME` as the only record. They are unowned, untriggered, unsearchable
-across repositories, and every codebase contains hundreds from people who left years ago. A
+Avoid `// TODO` and `// FIXME` as the only record. They are searchable but commonly unowned,
+untriggered and disconnected from prioritization across repositories. A
 `TODO` with a ticket reference is fine; a bare one is a wish.
 
 ## Triggers that actually fire
@@ -58,8 +58,8 @@ roughly in order of reliability:
 
 1. **Time added to changes that touch it.** If every change in this module takes an extra half
    day of care, that is measurable from the history and is the strongest argument available.
-2. **Incidents or defects attributable to it.** One production incident usually outweighs a
-   quarter of irritation.
+2. **Incidents or defects attributable to it.** Price severity, frequency, detection and recovery;
+   one incident does not imply a universal priority over accumulated delivery delay.
 3. **Blocked work.** Debt that prevents a feature from being built has a cost equal to that
    feature's delay, which is often the largest number and the one nobody computes.
 
@@ -85,10 +85,10 @@ place. Slow, safe, and the only approach that keeps working while you do it
 
 **Never** — see below.
 
-What none of these is: a "cleanup sprint". Debt is created continuously by ordinary work, and a
-periodic purge treats it as an event. If a cleanup sprint appears necessary, the interesting
-question is what in the normal flow is generating debt faster than it is being repaid — usually
-a missing gate or a review practice (quality-gates, code-review).
+A focused remediation sprint can be appropriate for a migration deadline, systemic vulnerability,
+reliability target or concentrated dependency upgrade. It does not replace fixing the flow that
+creates recurring debt; measure whether ordinary work is generating debt faster than it is repaid
+(`quality-gates`, `code-review`).
 
 ## Deciding not to repay
 

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: heap-dump-analysis
-version: 1.2.0
+version: 1.3.0
 description: >-
   Taking and analysing a JVM heap dump: capturing without making the incident worse,
   dominator tree versus shallow and retained size, path to GC roots excluding weak

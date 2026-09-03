@@ -1,13 +1,13 @@
 schemaVersion: 1
 
 name: rate-limiting-and-load-shedding
-version: 1.2.0
+version: 1.3.0
 description: >-
   Two mechanisms kept apart: rate limiting as a fairness and quota policy enforced per
   client whether or not you are busy, and load shedding as self-protection that refuses work
   you cannot complete, from your own saturation. Covers token versus leaky bucket, fixed
   versus sliding windows, burst capacity, distributed limits and local-plus-shared
-  reconciliation, the 429 and Retry-After contract, saturation signals, oldest-first
+  reconciliation, the 429 and Retry-After contract, saturation signals, deadline-aware
   rejection. Use when a limit is enforced per replica and multiplies by replica count, when
   a fixed window lets through double the rate intended, when a limiter returns 500 or omits
   Retry-After, when a service collapses under traffic that broke no limit, or when shed rate

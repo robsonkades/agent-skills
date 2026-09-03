@@ -18,12 +18,17 @@ java -cp "$out" After
 
 echo
 echo "--- AfterTransposed.java: MUST fail to compile"
-if javac --release 21 -Xlint:all -d "$out" AfterTransposed.java 2>"$out/err"; then
+if javac --release 21 -Xlint:all -XDrawDiagnostics -d "$out" AfterTransposed.java 2>"$out/err"; then
     echo "FAIL: the transposition compiled; the wrappers are not distinguishing anything"
     exit 1
 fi
-grep -q "incompatible types: CustomerId cannot be converted to AccountId" "$out/err" || {
+grep -q "compiler.err.cant.apply.symbol" "$out/err" || {
     echo "FAIL: compilation failed for the wrong reason:"
+    cat "$out/err"
+    exit 1
+}
+grep -q "CustomerId" "$out/err" && grep -q "AccountId" "$out/err" || {
+    echo "FAIL: type-mismatch diagnostic did not name both domain types:"
     cat "$out/err"
     exit 1
 }

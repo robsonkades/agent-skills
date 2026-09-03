@@ -4,7 +4,8 @@ description: >
   Interpreter in modern Java: representing a small language as a typed tree and evaluating it,
   expressed today as a sealed AST with an exhaustive switch rather than an eval() method per node.
   Covers parsing as a separate problem the pattern does not solve, when an existing expression
-  language beats writing one, why evaluating user-supplied SpEL or OGNL is remote code execution,
+  language beats writing one, how general expression engines become code-execution surfaces when
+  exposed with unsafe capabilities,
   the resource bounds an interpreter over untrusted input needs, and closure compilation when tree
   walking is too slow. Use when a filter, rule or formula language is designed, when configuration
   has grown conditionals, when someone proposes embedding an expression evaluator, or when an
@@ -22,11 +23,10 @@ Give a small language a typed representation and an evaluator. The pattern is wo
 users — or configuration, or another service — must express conditions the code cannot enumerate:
 filter expressions, pricing formulas, routing rules, feature-flag conditions, alert predicates.
 
-Two boundaries define it. **Parsing is not part of it**: GoF assumes the tree already exists, and
-turning text into that tree is a separate problem with mature tools. And **it is for small
-languages**: anything with scoping, user-defined functions, recursion or performance requirements
-has outgrown a tree-walking interpreter, and the alternative is a real language runtime rather
-than a bigger `switch`.
+Two boundaries help scope it. Parsing is a separate responsibility even though a usable language
+normally needs it. And the GoF class-per-production approach fits small grammars best; scoping,
+user functions, recursion, optimization or strict isolation may justify a mature runtime, bytecode
+VM, or existing language rather than an ever-growing `switch`.
 
 ## When it is the answer
 
@@ -52,11 +52,12 @@ optimised, translated to SQL, shown in a UI
   usually cheaper than designing, documenting, versioning and securing your own.
 - **The grammar is non-trivial.** Precedence, associativity, error recovery and position tracking
   are what parser generators and combinator libraries do properly.
-- **The expression comes from an untrusted source and you were going to use SpEL, OGNL, MVEL or a
-  template engine.** That is remote code execution, and it has produced a long series of critical
-  CVEs.
-- **It must be fast.** A tree walk allocates and dispatches per node. If the expression runs
-  millions of times, compile it (see below) or do not use this shape.
+- **The expression comes from an untrusted source and the chosen engine exposes constructors,
+  reflection, bean/type access or host functions.** That can become arbitrary code execution.
+  Prefer a capability-restricted evaluator (for example SpEL `SimpleEvaluationContext` where its
+  limits fit), an allowlisted language, or process isolation.
+- **It has an unverified latency target.** A tree walk need not allocate per node and may be fast
+  enough. Profile parsing and evaluation before adding closure or bytecode compilation.
 
 ## Modern Java expression
 
@@ -86,26 +87,28 @@ every fold. Keep `interpret()` on the nodes only when third parties contribute n
 
 ```text
 IF expressions come from users or another service
-THEN they are untrusted input. Bound depth, node count and evaluation
-     time; forbid side effects; and never hand them to a general-purpose
-     expression or template engine.
+THEN they are untrusted input. Bound text size, parse depth/node count,
+     function capabilities and evaluation work. In-process wall-clock timeout alone
+     cannot safely stop arbitrary non-cooperative code; use cooperative budgets or isolation.
 
 IF a general-purpose engine (SpEL, OGNL, MVEL, EL, a template engine)
 is being fed a string that a request can influence
-THEN stop. That is arbitrary code execution, not configuration.
+THEN audit the evaluation context and reachable capabilities. Full reflection/type/
+     method access can become arbitrary code execution; a documented restricted mode
+     may be acceptable after adversarial tests.
 
 IF the grammar has precedence, nesting or useful error messages
 THEN use a parser generator or combinators. Hand-rolled parsers for
      non-trivial grammars are where the bugs live.
 
-IF the AST is walked more than once per parse
-THEN parse once and cache the AST, keyed by the expression text.
-     Parsing usually costs more than evaluating.
+IF the AST is walked repeatedly
+THEN consider caching only after measuring parse cost. Bound cache size/weight and key
+     normalization; request-controlled unique expressions otherwise create a retention attack.
 
 IF evaluation is in a hot path
-THEN compile the AST once into a tree of closures (or bytecode) and
-     evaluate that. This routinely wins an order of magnitude over
-     re-walking nodes, and is measurable (jmh-microbenchmarks).
+THEN compare tree walking, specialized closures, bytecode and vectorized/batched
+     evaluation. Compilation has warm-up, code-cache and eviction costs; benchmark
+     representative expressions and polymorphism (jmh-microbenchmarks).
 
 IF an expression must run in more than one process or version
 THEN the grammar is a contract: version it, and decide what an older
@@ -115,9 +118,9 @@ IF nodes hold evaluation state
 THEN the AST is not shareable. Keep nodes immutable and pass the
      context as a parameter.
 
-IF the language grows variables, functions, loops or recursion
-THEN it has stopped being a small language. Reconsider embedding an
-     existing one before adding scoping to a switch.
+IF the language grows scoping, user functions, loops or recursion
+THEN revisit parser/runtime, resource accounting, stack behavior, debugging and
+     compatibility. This is a complexity trigger, not an automatic prohibition.
 ```
 
 ## Cross-cutting checks
@@ -131,13 +134,13 @@ THEN it has stopped being a small language. Reconsider embedding an
   A node type added by a newer producer must have a defined meaning for an older evaluator —
   usually "reject the expression", never "ignore the node", which silently changes a filter's
   meaning and can widen an authorisation rule (`rpc-and-api-contracts`).
-- **Performance.** Tree walking costs a virtual call and often an allocation per node, and the
-  call site is megamorphic by construction. The three levers, in order: cache the parsed AST;
-  compile to closures so the structure is resolved once; short-circuit and reorder cheap
-  predicates first. Measure each — the parse is frequently the dominant cost and the one nobody
-  profiles (`jfr-and-async-profiler`, `allocation-profiling`).
+- **Performance.** Tree walking incurs dispatch/branching but need not allocate per node after the
+  AST exists. Cache parsing only with bounded cardinality, specialize only hot stable expressions,
+  and reorder predicates only when error, null and short-circuit semantics permit it. Measure
+  parse, evaluation, allocation and generated-code retention separately
+  (`jfr-and-async-profiler`, `allocation-profiling`).
 - **Testing.** Property-based testing suits this unusually well: generate expressions, assert
-  algebraic laws (`a AND b` equals `b AND a`, `NOT NOT a` equals `a`), and compare the compiled
+  semantic laws valid for the language's null/error model, and compare the compiled
   evaluator against the tree walker on random inputs. Add fuzzed text against the parser, and
   assert that pathological input is rejected by the limits rather than by a `StackOverflowError`.
 
@@ -145,10 +148,10 @@ THEN it has stopped being a small language. Reconsider embedding an
 
 - [ ] The language is small, and its growth is deliberately bounded
 - [ ] An existing expression language was considered and rejected for a stated reason
-- [ ] No user-influenced string reaches SpEL, OGNL, MVEL, EL or a template engine
+- [ ] Any user-influenced engine input runs with an audited allowlist/capability model or isolation
 - [ ] Depth, node count and evaluation time are bounded for untrusted expressions
 - [ ] Evaluation has no side effects and no access to the host environment
-- [ ] Parsing is separate from interpreting, and parsed ASTs are cached
+- [ ] Parsing is separated; any AST cache is measured, bounded and resistant to key-cardinality abuse
 - [ ] AST nodes are immutable; evaluation state lives in a per-call context
 - [ ] An unknown node type from a newer producer is rejected, not ignored
 - [ ] Performance claims about compilation are backed by a benchmark

@@ -2,7 +2,7 @@
 name: gof-chain-of-responsibility
 description: >
   Chain of Responsibility in modern Java, and the pipeline it is usually confused with: the
-  classical form where exactly one handler handles and the rest pass, versus the middleware form
+  classical first-accepting form versus middleware where stages may all process and forward
   where every stage processes and forwards. Covers choosing between them, the unhandled-request policy that silent
   chains get wrong, ordering discipline when handlers are contributed independently, error
   propagation and partial state when a stage throws mid-chain, and why servlet filters and
@@ -25,8 +25,8 @@ added, removed and reordered without touching it.
 Two shapes travel under this name and behave differently:
 
 ```text
-Classical CoR      each handler decides "mine?" — the first that says yes
-                   handles it and the chain stops. Exactly one handles.
+Classical CoR      each handler decides whether to handle or pass. First-match-wins
+                   is common, but a contract may allow handling and continuation.
                    Fallthrough to the end is a defined outcome.
 
 Pipeline /         every stage processes and passes on: filters,
@@ -60,8 +60,8 @@ Cross-cutting work must wrap request handling
 
 - **Three fixed cases you own.** A `switch` over a sealed type is shorter, exhaustive and
   readable; a chain hides the whole decision behind wiring (`java-composition-over-inheritance`).
-- **Every handler must run and none may decline.** That is a pipeline, and calling it a chain
-  invites someone to add a short-circuit that silently skips the rest.
+- **Every handler must run and none may decline.** This is the pipeline/middleware variant of CoR;
+  name its no-short-circuit contract so a handler cannot silently skip required stages.
 - **The framework already provides it.** A hand-rolled chain beside servlet filters or
   `HandlerInterceptor` duplicates ordering and is invisible to the framework's metrics and
   tracing.
@@ -74,9 +74,8 @@ Cross-cutting work must wrap request handling
 
 ```text
 IF nothing handles the request
-THEN the behaviour must be defined: a terminal default handler, or an
-     explicit exception. A chain that returns silently is the single
-     most common defect in this pattern.
+THEN define whether this is a no-op/not-applicable result, a terminal default, or an
+     error. Silent fallthrough is correct only when the API makes that outcome visible.
 
 IF handler order is expressed as @Order(100), @Order(200)
 THEN the ordering rationale exists only in someone's head. Name the
@@ -98,8 +97,9 @@ THEN a shared chain is not thread-safe. State belongs in the context
      object passed along the chain, not in the handler.
 
 IF the chain is assembled at every request
-THEN it allocates per call for no benefit. Build it once; pass the
-     request through it.
+THEN determine whether tenant, capability or request data genuinely changes membership.
+     Otherwise precompute immutable chains; when it does, cache bounded variants or
+     measure per-call assembly rather than assuming it is free.
 
 IF a chain is used for validation and stops at the first failure
 THEN callers get one problem at a time. Decide deliberately: fail fast,
@@ -135,8 +135,9 @@ try/finally, running it on another thread, or skipping it — which is the pipel
 
 - **Concurrency.** A chain built once and shared is used by every request thread simultaneously,
   so handlers must be stateless and the per-request state must travel in the request or a context
-  object. `ThreadLocal` works but leaks across pooled threads if not cleared and does not follow
-  work handed to another thread; `ScopedValue` is the modern replacement
+  object. `ThreadLocal` can leak across pooled threads if not cleared and does not automatically
+  follow arbitrary executor handoffs; `ScopedValue` (final in Java 25) is suited to immutable
+  dynamically scoped context, not a general mutable replacement
   (`scoped-values`, `thread-sizing-and-virtual-threads`).
 - **Distribution.** Chains that process messages must define what a mid-chain failure means for
   acknowledgement: a stage that throws after a side effect has been applied, in an at-least-once
@@ -144,8 +145,8 @@ try/finally, running it on another thread, or skipping it — which is the pipel
   once at the end (`idempotency`, `delivery-semantics`, `poison-messages-and-dlq`). Cancellation
   must also propagate — a chain that ignores an expired deadline keeps working for a caller that
   has gone (`cancellation-and-interruption`).
-- **Performance.** Cost is one call per link plus whatever context object is allocated. It is
-  rarely significant, but two patterns are: a chain that computes an expensive value for every
+- **Performance.** Cost depends on traversal, dispatch and context design; a context may already
+  exist and need not be allocated by each link. Important patterns are a chain that computes an expensive value for every
   handler to inspect rather than lazily, and a chain long enough that the call site becomes
   megamorphic in a hot path (`jit-inlining-and-escape-analysis`).
 - **Testing.** Three distinct tests. Each handler alone, with a trivial context. The chain's
@@ -160,10 +161,10 @@ try/finally, running it on another thread, or skipping it — which is the pipel
 - [ ] Order is expressed as an explicit list or named positions, not bare numbers
 - [ ] Handlers hold no per-request state in fields
 - [ ] A mid-chain failure leaves no partial effects, or compensation is defined
-- [ ] The chain is built once, not per request
+- [ ] Chain assembly lifetime matches actual variability and is measured/cached when request-specific
 - [ ] Deadlines and cancellation propagate through the chain
 - [ ] The framework's own chain was considered for cross-cutting concerns
-- [ ] The handler set is genuinely open; a fixed set of three is a `switch`
+- [ ] A closed set was compared with an exhaustive switch; chain ordering/composition still has a stated benefit
 
 ## References
 

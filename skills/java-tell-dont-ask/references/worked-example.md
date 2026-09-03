@@ -50,7 +50,8 @@ is a broken caller contract, so it throws.
 public final class Account {
     private BigDecimal balance;
     private final BigDecimal overdraftLimit;
-    // constructor and persistence mapping elided
+    // Constructor validates non-null values, scale/currency policy, overdraftLimit >= 0,
+    // and balance >= overdraftLimit.negate(); persistence must not bypass these invariants.
 
     public sealed interface Withdrawal permits Withdrawn, Refused {}
     public record Withdrawn(BigDecimal newBalance) implements Withdrawal {}
@@ -63,7 +64,7 @@ public final class Account {
         BigDecimal candidate = balance.subtract(amount);
         BigDecimal floor = overdraftLimit.negate();
         if (candidate.compareTo(floor) < 0) {
-            return new Refused(floor.subtract(candidate).abs());
+            return new Refused(floor.subtract(candidate));
         }
         balance = candidate;
         return new Withdrawn(balance);
@@ -73,7 +74,10 @@ public final class Account {
 }
 ```
 
-There is no `setBalance`. The fee job calls the same `withdraw` and gets the same rule.
+There is no `setBalance`. Do not automatically route the fee job through `withdraw`: fees may
+have different overdraft, grace-period or regulatory rules. Share a private invariant-preserving
+debit primitive or model a separate `chargeFee` command only after those product semantics are
+explicit; merely reusing a method is not domain consistency.
 
 ## What stays in the service
 
@@ -97,10 +101,17 @@ public class WithdrawalService {
 }
 ```
 
-The switch is exhaustive over the sealed result with no `default` — adding a third outcome
-to `Withdrawal` becomes a compile error here, not a silently unhandled case. Transaction
-boundary, loading, saving, event publication and translation to the API shape remain
-service concerns; `Account` knows none of them.
+The switch is exhaustive over the sealed result with no `default` — recompiling after adding a
+third outcome finds the source sites that need policy. An independently deployed old binary may
+instead encounter `MatchException`, so use versioned deployment/compatibility discipline rather
+than treating source exhaustiveness as runtime forward compatibility. Transaction boundary,
+loading, saving, event publication and translation to the API shape remain service concerns;
+`Account` knows none of them.
+
+`@Transactional` covers only enlisted resources. It does not make `events.publish(...)` and the
+database commit atomic. Persist an outbox record in the same transaction and publish it
+idempotently, or define another recovery protocol; otherwise a crash can lose the event or a
+retry can duplicate it.
 
 ## Trade-offs
 
@@ -108,6 +119,9 @@ service concerns; `Account` knows none of them.
   gap in this process, but two transactions on two nodes can still both load and both
   withdraw. The persistence layer still needs optimistic locking (`@Version`) or an
   equivalent database guard. Moving the decision is not a licence to remove them.
+- **Money is not just `BigDecimal`.** Production code must bind amount to currency, define scale
+  and rounding, reject nulls and unsupported currency combinations, and decide whether returned
+  balances are immutable snapshots or versioned representations.
 - **New public API to keep stable.** `Withdrawal` and its two records are now a contract;
   callers pattern-match on it. Renaming a variant is a breaking change a service-local
   `if` never was.
@@ -124,7 +138,8 @@ service concerns; `Account` knows none of them.
 - `Account` tests construct the object directly and cover: withdrawal into the overdraft,
   refusal one cent past the floor, `shortfall` arithmetic, non-positive amounts throwing —
   no mocks, no Spring context.
-- The fee job's tests now pass through `withdraw` and gain the overdraft case it used to
-  get wrong.
-- A concurrency test (two threads, one account, optimistic lock enabled) still fails one
-  writer — proving the version column stayed load-bearing.
+- Fee tests exercise their explicitly chosen `chargeFee`/debit policy, including whether fees may
+  consume overdraft; they do not inherit withdrawal semantics accidentally.
+- An integration test uses two distinct persistence contexts/transactions (or concurrent
+  conditional updates) so both writers load the same version and exactly one commit succeeds.
+  Two threads sharing one managed entity do not prove database optimistic locking.

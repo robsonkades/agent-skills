@@ -58,17 +58,21 @@ nothing, and the operation the eye lands on is usually not the one spending the 
 - **An index on a low-cardinality column rarely helps a predicate.** It may still earn its place
   by supplying ordering or by covering the query — decide which of the three jobs you are
   buying, because they are not the same index.
-- **In a composite index the column order is the contract.** It serves a leading prefix of its
-  columns: equality predicates first, then at most one range, then the ordering column. A
-  composite index is not a set.
-- **A function or a cast on the column side usually disables the index.** So does an implicit
-  conversion caused by comparing a column to a parameter of a different type — the conversion is
-  applied to the column, and the index is on the column's untransformed value.
+- **In a composite index the column order is a contract with a particular engine and workload.**
+  Leading equality columns commonly narrow the seek before a range; later columns may still filter,
+  cover, or satisfy ordering, and some engines support skip scans. Equality-column order is often
+  interchangeable for one query but not for other queries, compression, statistics, or ordering.
+  Verify the executed plan instead of applying a universal mnemonic.
+- **A function or cast on the indexed expression can make a predicate non-sargable.** Expression or
+  functional indexes may restore an access path. With mismatched parameter types, which operand is
+  converted follows the database's type-precedence and coercion rules; inspect the plan rather than
+  assuming the column is always converted.
 - **`SELECT *` defeats covering.** An index that could have answered the query alone now needs a
   lookup per row for the columns nobody asked for.
-- **`OFFSET n` degrades linearly in n**, because the rows before the offset are still produced
-  and discarded. Keyset pagination — carry the last key forward and use a range predicate — is
-  flat in page number. Deep pagination is the case where the shape must change, not the index.
+- **Large `OFFSET n` usually performs work proportional to skipped rows**, even when an index avoids
+  a sort. Keyset pagination bounds work by page size when its ordering is unique and supported by an
+  index, but changes navigation and concurrent-update semantics. Deep pagination is a query and
+  product-contract decision, not merely an index decision.
 - **Every index is paid for on every write** to its table, and in space. An index proposal
   without the write cost is half a proposal.
 - **The same statement can have two plans.** Fast for one parameter and slow for another means

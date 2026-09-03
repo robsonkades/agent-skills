@@ -5,7 +5,7 @@ description: >
   client whether or not you are busy, and load shedding as self-protection that refuses work
   you cannot complete, from your own saturation. Covers token versus leaky bucket, fixed
   versus sliding windows, burst capacity, distributed limits and local-plus-shared
-  reconciliation, the 429 and Retry-After contract, saturation signals, oldest-first
+  reconciliation, the 429 and Retry-After contract, saturation signals, deadline-aware
   rejection. Use when a limit is enforced per replica and multiplies by replica count, when
   a fixed window lets through double the rate intended, when a limiter returns 500 or omits
   Retry-After, when a service collapses under traffic that broke no limit, or when shed rate
@@ -46,14 +46,19 @@ waiting for. Nothing was violated. Nothing was rejected. Throughput goes to zero
    wrong whenever load is uneven or the count changes; a shared counter puts a round trip on
    every request; local buckets reconciled against a shared budget is the usual middle. State
    the resulting over-admission bound rather than claiming the global rate is exact.
-4. **For shedding: pick a saturation signal you can act on before it is too late.** Queue
-   depth and time-in-queue lead; CPU lags and is misleading under I/O-bound load. Shed the
-   **oldest** queued work first — it is closest to its deadline and least likely to still be
-   wanted (`timeouts-and-deadlines`).
-5. **Make rejection cheap.** Reject before authentication, before deserialising a body,
-   before touching the database. A rejection that costs as much as a success sheds nothing.
-6. **Publish the contract.** 429 with `Retry-After` for a quota breach, 503 with
-   `Retry-After` for shedding, both documented in the API contract
+4. **For shedding: pick a leading saturation signal and an explicit queue policy.** Queue
+   delay, deadline slack and in-flight work often lead CPU; the real bottleneck may instead be
+   a connection pool, event loop or downstream limit. Reject expired work first. For live work,
+   choose reject-new, deadline/priority scheduling or controlled LIFO from fairness and wasted-
+   work costs—oldest-first is not universal.
+5. **Make rejection early but preserve trust.** Apply cheap connection/global abuse controls
+   before expensive parsing, then authenticate enough to determine tenant, cost and priority.
+   Bound body/headers before deserialization and reject before business/database work. Never
+   trust a caller's priority header merely to save authentication cost.
+6. **Publish the contract.** 429 commonly represents client-specific quota; 503 commonly
+   represents temporary service unavailability. `Retry-After` is useful when the server can
+   estimate it, but must not promise recovery it cannot know. Document scope, reset semantics
+   and headers in the API contract
    (`rpc-and-api-contracts`) so a client can act on them (`retries-and-backoff`).
 7. **Load-test the rejection path**, not just the happy path. Drive load past capacity and
    assert that goodput holds flat rather than collapsing (`load-testing`).
@@ -82,10 +87,10 @@ Do not use shedding as a substitute for capacity when:
 
 ## Rules
 
-- Rate limiting is keyed by **who**; load shedding is keyed by **how loaded you are**. If a
-  mechanism consults the client's identity to decide whether to reject under load, it is a
-  limiter; if it consults its own queue, it is a shedder. Anything that does both without
-  saying so is untunable.
+- Rate limiting allocates an arrival/work budget by a policy dimension—tenant, credential,
+  endpoint, operation, region or globally. Load shedding reacts to current capacity. An
+  overload controller may preserve fair shares/priority while shedding; expose quota and
+  saturation decisions separately so both remain explainable.
 - A **fixed window** admits up to twice the intended rate across a boundary: a full window's
   worth at the end of one window and another full window's worth at the start of the next.
   Use a sliding window (or a token bucket) whenever the burst matters.
@@ -93,42 +98,63 @@ Do not use shedding as a substitute for capacity when:
   left equal to the rate by accident. Capacity is how much idle credit a client may
   accumulate and spend at once; refill rate is the sustained limit. Set both, and size
   capacity against what the service can actually absorb in a burst.
-- **A per-replica limit divided by the replica count is wrong**, not approximate: uneven
-  balancing means some replicas reject while others idle, and during a rollout the count
-  changes so the fleet limit changes with it. If you use it anyway, say so, and expect the
-  effective limit to be lower than configured under skew.
+- A static per-replica share is exact only under restrictive assumptions about membership,
+  routing and demand. Under skew it rejects locally while capacity/allowance elsewhere idles;
+  during rollout the aggregate changes. It can be an intentionally conservative emergency
+  bound, but publish those assumptions.
 - A shared counter (Redis or equivalent) makes the limiter a required dependency on every
   request: one round trip added to every call, and a decision about what happens when it is
   unavailable. Fail-open admits everything during the outage; fail-closed rejects everything.
   Pick one deliberately, and prefer a local fallback bucket over either.
-- With local buckets reconciled against a shared budget, over-admission is bounded by roughly
-  `replicas × local burst` per reconciliation interval. State that bound; do not describe the
-  result as an exact global rate.
-- The response is part of the mechanism. **429 means "you exceeded your quota"; 503 means "I
-  am overloaded"** — a client should back off harder on the first and may retry another
-  replica on the second. Both carry `Retry-After`. A limiter that returns 500 is
+- With local escrow/leases, the error bound is the sum of outstanding grants that can still be
+  spent, plus protocol failure/clock uncertainty—not a universal `replicas × burst`. A shared
+  allocator must never issue overlapping budget across failover. State the exact grant,
+  expiry and partition behavior; strict monetary/security quotas may require centralized or
+  reservation-based enforcement.
+- The response is part of the mechanism. **429 usually means the request exceeded a policy
+  limit; 503 means the service is temporarily unable to serve.** Another replica may share the
+  same bottleneck/quota, so blind failover amplifies load. Use `Retry-After` when meaningful;
+  client backoff/jitter and an end-to-end deadline remain required. A limiter that returns 500 is
   indistinguishable from a defect and will be retried immediately.
-- Never `Thread.sleep` a caller to enforce a limit. Throttling by blocking converts a
-  rejection into an occupied thread, a held connection and a filled queue — it moves the
-  overload inside your own process. Reject, and let the client back off.
+- Do not implement shaping as unbounded `Thread.sleep` on request workers. A bounded
+  asynchronous delay queue can intentionally smooth traffic when deadlines and memory permit;
+  account for held connections/context and reject when waiting cannot finish usefully.
 - **CPU is a lagging and misleading shedding signal.** An I/O-bound service saturates its
   connection pool and its queues at moderate CPU, and a CPU-based shedder acts long after
   latency has already broken. Prefer queue depth, time-in-queue, or in-flight concurrency
   against a measured limit.
-- **Reject the oldest queued request first.** It has consumed the most of its caller's budget,
-  is most likely already abandoned, and completing it delivers a response nobody is waiting
-  for. FIFO under overload maximises the number of requests that time out just before
-  completing — the worst possible outcome per unit of work spent.
+- Reject work whose deadline has expired first. Among live requests, rejecting new arrivals is
+  simple/fair and preserves invested wait; controlled LIFO/drop-head can improve deadline
+  goodput under overload but risks starvation and is safe only before execution begins. Use
+  propagated deadlines or cancellation signals instead of guessing that age means abandonment.
 - Shedding must be non-uniform to be useful. Assign priority or criticality classes — health
   and control-plane calls above interactive user traffic above batch and prefetch — and shed
   from the bottom. Uniform shedding degrades everything a little, including the things whose
   failure costs the most.
-- **A shedding service is healthier than an overloaded one.** Shed rate is a saturation
-  signal, not an error rate: page on **goodput** — successful responses delivered inside the
+- Shedding can keep the service recoverable, but each rejected required request is still a
+  user-visible availability outcome and usually counts against its SLI. Page on **goodput** — successful responses delivered inside the
   caller's deadline — and on the latency of admitted work, plot shed rate alongside them, and
-  alert on shedding only when it is sustained or reaches high-priority classes. A saturated
+  alert on shedding according to error-budget burn/priority. A saturated
   service without shedding shows high throughput while delivering almost nothing useful;
   `slo-and-alerting` owns the alerting policy.
+
+## Overload control loop
+
+```text
+Measure offered load + bottleneck queue/slack + admitted goodput
+  ↓
+Estimate safe concurrency/work rate with headroom
+  ↓
+Allocate by trusted tenant/priority and reject before expensive work
+  ↓
+Propagate explicit 429/503 outcome and retry guidance
+  ↓
+Observe survivor latency, fairness, shed SLI and recovery hysteresis
+```
+
+Fail closed when the limiter protects a security/spend invariant; fail open or use conservative
+local emergency allowance when availability is more important and overage is repairable. This
+is a business safety choice, not a Redis-client default.
 
 ## References
 
@@ -138,6 +164,6 @@ Do not use shedding as a substitute for capacity when:
   and Resilience4j fit by role. Read before writing or reviewing a limiter or a shedder.
 - [Choosing limits and shedding policy](references/limits-and-shedding-decisions.md) — the
   algorithm comparison table, distributed-limit strategies with the error each admits,
-  priority classes, oldest-first rejection with its rationale and its fairness cost, what to
+  priority classes, deadline-aware queue policies and their fairness cost, what to
   alert on versus what to plot, and how to load-test the rejection path. Read when choosing
   an algorithm, setting a limit's value, or reviewing overload behaviour.

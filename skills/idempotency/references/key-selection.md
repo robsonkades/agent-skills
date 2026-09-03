@@ -10,12 +10,14 @@ distinct intents, or failing to deduplicate two copies of one.
 | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Client-supplied request id (`Idempotency-Key` header, a UUID the client generates **once per intent** and reuses across its own retries) | the caller's intent | the caller is code you can specify, and retries come from the caller                         | a client that regenerates the id per attempt deduplicates nothing; a client that reuses one id across genuinely distinct intents suppresses real work                                                                          |
 | Deterministic hash of the canonical business payload                                                                                     | the content         | no id can be added to the protocol, and identical content genuinely means the same operation | two legitimately identical operations (the same customer buying the same item twice in a minute) collapse into one. Only safe when the payload contains something that varies per intent — an order number, a client timestamp |
-| Business-natural key already in the domain (order number, invoice number, external transaction reference)                                | the domain object   | the domain already has a unique identifier for the thing being created                       | none particular to the key; this is the strongest option and needs no separate dedup table, because a unique constraint on the business table _is_ the dedup store                                                             |
+| Business-operation key (order id + operation kind/version, payment attempt id, external transaction reference)                           | one domain intent   | the domain defines a stable, non-recycled identity for this operation                        | an object id alone may collapse distinct operations on the same object; recycled/imported identifiers require namespace and epoch                                                                                              |
 | Broker message id / delivery id                                                                                                          | one _delivery_      | last resort, and only against redelivery of the same message                                 | an upstream that republishes after its own crash emits a **new** message id for the same intent, and both are processed. It also cannot deduplicate across a topic migration or a producer restart                             |
 
-Ranking: business-natural key > client request id > payload hash > broker message id. The
-broker id is last because it is the only one that changes when the business intent does
-not.
+There is no universal ranking independent of scope. A non-recycled business-operation ID is
+usually strongest; a correctly generated caller intent ID is equally useful at an API
+boundary. Payload hash is a lossy fallback because identical content may represent distinct
+intents. Broker IDs are suitable only for the documented redelivery identity; producer
+republication can create a new ID for the same business operation.
 
 ## Decision block — synthetic key and dedup store, or something cheaper
 
@@ -31,15 +33,16 @@ Use a synthetic idempotency key with a dedup store when:
 Avoid a synthetic key when:
 - the operation is already naturally idempotent — a full-representation PUT, an absolute
   SET, a delete, an insert that a unique constraint already guards
-- the guard is available in the domain state itself: a transition legal only from one
-  state (PENDING → CONFIRMED) is self-deduplicating and needs no key
+- the state predicate alone fully defines the contract and no replayed response or external
+  effect must be associated with a particular command. Otherwise combine predicate and key
 - the only identifier available is a broker delivery id and the upstream can republish;
   the key would give false confidence rather than deduplication
 
 Prefer a unique constraint on the business table instead when:
 - the domain already carries a unique identifier for the created object (order number,
   invoice number, external transaction reference). One constraint replaces the dedup
-  table, the retention policy and the cleanup job
+  table for preventing duplicate rows; retain an operation/result record if the API must
+  distinguish retries or replay a stable outcome
 
 Prefer an absolute write instead when:
 - the operation is an increment or an append that can be restated as a target value plus
@@ -64,19 +67,20 @@ is unprotected.
 
 ## Retention
 
-Retention is bounded below by the client's retry horizon and above by the lifetime of the
-business record.
+Retention is bounded below by every accepted replay path; its upper bound is a product,
+legal, privacy and storage decision rather than automatically the business record's lifetime.
 
-| Retention                                                                         | Consequence                                                                                                                                 |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Shorter than the client's total retry window (including a DLQ replay hours later) | the retry executes again. The dedup store is present, passes tests, and does nothing at the moment it exists for                            |
-| Longer than the business record it protects                                       | a legitimate re-submission after the record was deleted or archived is suppressed with no explanation, and the row is a permanent tombstone |
-| Unbounded                                                                         | the table grows without limit and its unique index eventually dominates write latency                                                       |
+| Retention                                                                         | Consequence                                                                                                                                     |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shorter than the client's total retry window (including a DLQ replay hours later) | the retry executes again. The dedup store is present, passes tests, and does nothing at the moment it exists for                                |
+| Longer than response/business data may legally be retained                        | response snapshots or fingerprints can violate minimization; retain the smallest tombstone/outcome permitted and use a new key for a new intent |
+| Unbounded                                                                         | the table grows without limit and its unique index eventually dominates write latency                                                           |
 
-Set it from the observable: the maximum age at which a retry can still arrive. That is the
-client's retry policy (`retries-and-backoff`) plus, if messages can be replayed from a
-dead-letter queue, the operational latency of that replay (`poison-messages-and-dlq`).
-Twenty-four hours is a common answer; the point is that it is derived, not guessed.
+Set it from the maximum age of every supported retry/replay source: client policy, transport
+redelivery, offline devices, outbox retention, operator replay and DLQ policy. If the system
+permits replay beyond dedup retention, document that it may execute again or preserve a
+smaller permanent business-operation uniqueness key. Derive the duration; do not cargo-cult
+24 hours.
 
 Delete expired rows with a bounded batch job, not a `DELETE … WHERE expires_at < now()` over
 the whole table — the second one is a lock-holding scan that fires during the same incident
@@ -84,16 +88,27 @@ that grew the table.
 
 ## Payload binding
 
-Store a hash of the canonical payload beside the key. Without it, a client that reuses a key
-with a different body silently receives the first body's response, and the mismatch is
-undetectable from the server side. Canonicalise before hashing (sort keys, fix number
-formatting) or the same logical payload serialised twice produces two hashes.
+Store a keyed digest or collision-resistant hash of a canonical operation fingerprint beside
+the key. Without it, a client that reuses a key with a different body silently receives the
+first result. Canonicalise semantic fields (including operation/version and excluding
+transport-only values) before hashing. Excluding a field that changes semantics makes
+distinct requests collide; unstable serialization makes equivalent requests differ. Avoid
+raw secrets and do not use the digest as the key unless equal content truly means equal
+intent.
 
 ## What the dedup store's own consistency must be
 
-The conditional insert has to be atomic _and_ linearizable with respect to the reads that
-follow it — a claim that succeeds on one replica while a concurrent claim succeeds on
-another is not a claim. A single-primary relational store gives this on a primary-key
-constraint. A multi-primary or eventually consistent store does not, without an explicit
-compare-and-set on a single owner for the key. The vocabulary for that requirement is
-`consistency-models`.
+All competing claims for one scoped key need a single atomic uniqueness/CAS decision. Reads
+used to replay or take over must observe an appropriate current version; stale replicas can
+misreport `PENDING` or absence. A relational unique constraint works only within the database
+and transaction scope where it is enforced. Multi-primary stores require documented
+conflict/consensus semantics rather than an assumed compare-and-set. The vocabulary for that
+requirement is `consistency-models`.
+
+## Key evolution and compatibility
+
+Include an operation namespace and semantic version when deployments can interpret the same
+payload differently. During a rolling upgrade, old and new instances must compute the same
+fingerprint for the same accepted request, or ingress must persist the canonical fingerprint.
+Do not change namespace or normalization silently: it opens a second dedup universe for
+in-flight retries.

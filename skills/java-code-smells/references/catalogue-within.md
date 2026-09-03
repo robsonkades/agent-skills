@@ -40,7 +40,10 @@ pattern-matches it, and which java-refactoring technique addresses it (named, no
   arithmetic constraints or formatting? Neither, and the type is a rename with allocation.
   Each wrapper costs a file, a serialiser or `@JsonValue`, an `AttributeConverter` and a
   mapper entry, and its call sites drift towards `getValue()` at every use, which is the
-  wrapper undone. Forty one-line wrappers prevent nothing (Lazy Element, below).
+  wrapper undone. Wrappers can add allocation/serialization/mapping cost, although HotSpot may
+  eliminate short-lived allocations; measure performance-sensitive paths rather than assuming
+  either outcome. Forty one-line wrappers that satisfy neither test prevent nothing (Lazy
+  Element, below).
   When a reviewer disputes the confusion test, run `scripts/primitive-obsession/verify.sh`:
   untyped, the transposed call runs and exits 0; typed, `javac --release 21` rejects it with
   `incompatible types: CustomerId cannot be converted to AccountId`.
@@ -52,7 +55,8 @@ pattern-matches it, and which java-refactoring technique addresses it (named, no
 - **Looks like:** `LocalDate start, LocalDate end` or `String street, String city, String
 zip` recurring together across signatures.
 - **Detect:** delete one of the group — if every use site breaks, they are one concept.
-  Three or more co-travelling parameters in two or more signatures.
+  Repeated co-travel, ordering/confusion risk and a shared invariant are stronger evidence than
+  any fixed parameter or occurrence count.
 - **Not it when:** the values co-occur once, or only inside one private method chain.
 - **Fix:** Introduce Parameter Object with a record; the invariant between them (end not
   before start) moves into the compact constructor.
@@ -72,8 +76,9 @@ zip` recurring together across signatures.
 
 - **Looks like:** copy-paste blocks with a variable renamed; parallel `if` arms differing
   in one operand; the same mapping written in three adapters.
-- **Detect:** search for a distinctive literal or expression; three-plus occurrences of a
-  block that would all change together for the same reason.
+- **Detect:** search for a distinctive literal or expression, then use co-change and defect
+  history to ask whether the occurrences encode one decision. Two copies of volatile knowledge
+  can already be harmful; ten coincidentally similar adapters can be independent.
 - **Not it when:** the duplication is incidental — same shape today, different reasons to
   change. Whether merging pays is java-dry-kiss-yagni's call; only its detection is here.
 - **Fix:** Extract Method / Extract Class; for parallel conditional arms, Consolidate via
@@ -93,8 +98,9 @@ zip` recurring together across signatures.
 
 - **Looks like:** a paragraph explaining what a block does; "careful", "hack", "don't
   touch"; a comment restating the next line.
-- **Detect:** the comment answers _what_ rather than _why_. Why-comments (constraints,
-  workarounds with links, measurements) are healthy and are not this smell.
+- **Detect:** the comment merely restates syntax while the code hides its intent. Why-comments
+  (constraints, invariants, units, protocols, workarounds with links, measurements) are healthy;
+  phase comments in a dense algorithm can also be clearer than forced extraction.
 - **Not it when:** Javadoc on a public contract, licence headers, or a why-comment.
 - **Fix:** Extract Method named after the comment; Rename until the comment is
   redundant; keep only the why.
@@ -115,8 +121,10 @@ zip` recurring together across signatures.
 - **Looks like:** interfaces with one implementation, `AbstractBase*` with one subclass,
   type parameters never bound to a second type, hooks nobody calls, config for values
   that never vary.
-- **Detect:** search for second users — implementations, subclasses, callers. One user
-  and no concrete planned second is the evidence.
+- **Detect:** search for second users — implementations, subclasses, callers — and identify the
+  boundary the abstraction protects. One implementation is a signal, not sufficient evidence:
+  an owned port, substitutable test seam or published interface may be valuable without a
+  production twin.
 - **Not it when:** the seam is load-bearing for testing or module boundaries, or the
   second implementation genuinely exists on a roadmap with a date. The economics are
   java-dry-kiss-yagni's; detection is here.
@@ -139,11 +147,11 @@ zip` recurring together across signatures.
 
 ## Long Parameter List
 
-- **Looks like:** five or more parameters; the same three recurring across signatures;
+- **Looks like:** many independent parameters; the same group recurring across signatures;
   booleans among them; a parameter only forwarded to another call.
 - **Detect:** the call site is unreadable without opening the signature; two adjacent
   parameters share a type, so a swapped pair still compiles; a parameter the body never
-  reads on its own.
+  reads on its own. Count is a locator, not the definition.
 - **Not it when:** a record's canonical constructor with eight components — that is the
   data, not a parameter list. Nor a DI constructor with five collaborators: that is Large
   Class, and counting parameters points at the wrong fix.
@@ -186,7 +194,7 @@ zip` recurring together across signatures.
 - **Detect:** deleting it changes nothing except the diff; its name restates the thing it
   delegates to.
 - **Not it when:** the seam is load-bearing for testing, module boundaries or API
-  stability — and, importantly, when a thin type makes an invariant checkable. A record
-  wrapping a `String` to make `CustomerId` a type is the Primitive Obsession fix, not this
-  smell; the difference is whether the wrapper carries a rule.
+  stability — and, importantly, when a thin type makes an invariant or concept distinction
+  checkable. A record wrapping `String` can prevent `CustomerId`/`AccountId` transposition even
+  without validation; the difference is demonstrated confusion risk or a rule, not body size.
 - **Fix:** Inline Function, Inline Class, Collapse Hierarchy.

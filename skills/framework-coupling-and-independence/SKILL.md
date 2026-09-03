@@ -20,10 +20,9 @@ description: >
 ## Purpose
 
 Decide deliberately which parts of a system are allowed to know about the framework, and pay
-attention to the fact that the decision is asymmetric: you commit to the framework across
-your whole codebase; it commits to nothing about your system. It will change its programming
-model, rename its packages, deprecate its abstractions and end its support window on its own
-schedule.
+attention to asymmetric incentives: your system may depend on the framework for years, while the
+project promises only its documented compatibility and support policy. Maintainers can change
+programming models, rename packages, deprecate abstractions and end support on their release cycle.
 
 That asymmetry is an argument for placing the coupling deliberately — **not** an argument for
 avoiding frameworks or for wrapping every one of them. A codebase with an abstraction layer
@@ -57,10 +56,10 @@ price of a mapping layer everybody pays for on every change.
 Not all framework dependencies are equal. Ordered by what a migration would cost:
 
 ```text
-CHEAP — replaceable in an afternoon, mechanically
+CHEAP — usually mechanical, with cost proportional to occurrences
   Constructor injection, @Component/@Service on a class you own.
-  The class is a plain object; the annotation is metadata a different
-  container could supply. Nothing about the design depends on Spring.
+  The design may remain plain Java, but annotated classes still require
+  the annotation dependency to compile and framework scanning to wire.
 
 MODERATE — replaceable per call site, tediously
   @Transactional, @Scheduled, @Cacheable, @RestController mappings.
@@ -73,9 +72,10 @@ EXPENSIVE — the model leaks into your types
   types, framework base classes, framework-managed identity, lazy-loading
   proxies escaping into business code (orm-structural-mapping).
 
-IRREVERSIBLE IN PRACTICE — the framework chose your architecture
+SYSTEMIC — the framework shaped architecture and cross-layer contracts
   The concurrency model (servlet vs reactive), the threading model, the
-  data-access paradigm, the module system. Not a migration; a rewrite
+  data-access paradigm, the module system. Often a staged redesign rather
+  than a search-and-replace; migration seams may still be possible
   (reactive-and-virtual-thread-selection).
 ```
 
@@ -94,7 +94,8 @@ The coupling is a declarative behaviour on your own class (@Transactional,
 @Cacheable)
         → accept it, at the application-service layer. Do not build an
           abstraction over it; do understand its proxy semantics, because
-          self-invocation makes it silently inert (service-layer-design).
+          self-invocation bypasses advice in default proxy mode; AspectJ
+          weaving and explicit proxy calls differ (service-layer-design).
 
 A framework annotation would go on a type that encodes business rules
         → decide explicitly, and record why. This is the boundary where
@@ -117,8 +118,9 @@ Someone proposes wrapping the framework "to stay independent"
           insurance costs more than the risk (enterprise-architecture-smells).
 
 The dependency is on a small library rather than a framework
-        → an adapter is cheap and often worth it: libraries are replaced
-          far more often than frameworks, and the surface is small.
+        → use an adapter when it owns external failure/protocol semantics,
+          replacement is plausible, or its API must not cross your boundary.
+          Do not wrap stable value APIs mechanically.
 
 The framework's abstraction already IS the port you were going to write
         → use it. Spring's Cache, Resource and transaction abstractions are
@@ -146,17 +148,17 @@ The framework's abstraction already IS the port you were going to write
   read, and its tests run, with the container off the classpath?"** Annotations that only
   carry metadata frequently pass this test; a lifecycle callback containing a business rule
   does not.
-- **A framework upgrade across a fleet is a coordinated release.** Every service sharing a
-  parent POM or a platform library upgrades in step, which makes the framework version a
-  fleet-wide coupling regardless of how independent the services are
+- A framework upgrade becomes coordinated when a shared parent/platform pins one version and policy
+  requires all consumers to move together. Independently versioned services can roll through a
+  compatibility window; inventory and support deadlines determine the real coupling
   (`component-and-release-boundaries`).
 - Prefer the framework's neutral abstraction to a hand-rolled one, and a hand-rolled one to a
   vendor-specific API. `javax.sql.DataSource` over a driver class; the caching abstraction over
   a client SDK; a JDK type over a framework type in a signature you own.
-- **Upgrade continuously.** The dominant cost of framework coupling is not migrating between
+- **Upgrade at a governed cadence.** The dominant cost of framework coupling is often not migrating between
   frameworks — almost nobody does — it is falling behind within one, until the jump crosses
-  several breaking changes at once and lands outside the support window. Staying current is
-  the cheapest form of independence available.
+  several breaking changes at once and lands outside the support window. Balance smaller deltas
+  against change frequency, validation cost and support policy; “latest” is not itself a control.
 - Keep the framework out of the build's fast tests. If the domain's tests need a container to
   start, the coupling has already crossed the line the ladder describes, whatever the package
   structure says.

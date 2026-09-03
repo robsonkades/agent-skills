@@ -1,107 +1,171 @@
 # Validating a benchmark
 
-## The checks that must pass first
+Validation is an argument that the harness measured the intended population and can distinguish
+the decision-relevant effect. It is not a checklist of universal fork counts or error percentages.
 
-- [ ] The reference (empty) method costs a few nanoseconds — if not, the environment is
-      wrong, not the code
-- [ ] **Proportionality test**: doubling the work roughly doubles the time. If it does not,
-      something is being eliminated — and no other symptom would have shown it
-- [ ] `Error` below 5% of `Score`
-- [ ] `-prof comp` shows no meaningful compilation inside the measurement phase
-- [ ] `-prof gc` run, and `gc.alloc.rate.norm` recorded
-- [ ] The `Blackhole mode` line in the output was actually read
-- [ ] For comparisons: do the intervals **decide**, or is the experiment inconclusive?
+## Semantic oracle and boundary
 
-The proportionality test is the cheapest dead-code-elimination detector that exists, and
-partial elimination has no other symptom.
+Before timing, test results/invariants against a trusted implementation, cover relevant boundary
+and failure cases, and prove baseline/candidate implement the same contract. A fast wrong
+implementation is not a performance result.
 
-## Anti-patterns and their corrected forms
+Create a boundary ledger:
 
-```java
-// ❌ the value is not observed → it can be eliminated
-@Benchmark public void broken() throws Exception {
-    mapper.writeValueAsString(obj);
-}
+| Work item             | Production frequency/owner | Baseline | Candidate | Measured/excluded reason |
+| --------------------- | -------------------------- | -------- | --------- | ------------------------ |
+| input construction    |                            |          |           |                          |
+| conversion/validation |                            |          |           |                          |
+| core operation        |                            |          |           |                          |
+| allocation/copy       |                            |          |           |                          |
+| result consumption    |                            |          |           |                          |
+| cleanup/reset         |                            |          |           |                          |
 
-// ✅ return it (JMH consumes it) or consume it explicitly
-@Benchmark public String fixed() throws Exception {
-    return mapper.writeValueAsString(obj);
-}
-@Benchmark public void fixedBH(Blackhole bh) throws Exception {
-    bh.consume(mapper.writeValueAsString(obj));
-}
+If an excluded cost changes between variants or is not amortized in production, redesign the
+boundary. Setup outside timing still affects cache, heap, type profile, and contention state.
+
+## Anti-optimization controls
+
+Use several discriminating controls; none is sufficient alone:
+
+1. Return/consume the semantic result and mutate inputs as production does.
+2. Compare generated machine code or compilation logs when folding/elimination/inlining matters.
+3. Change problem size and compare with expected complexity, including fixed-cost regions.
+4. Insert a known extra operation whose effect should be visible.
+5. Run an empty/no-op diagnostic to identify clock/harness floor, without blindly subtracting it.
+6. Confirm secondary counters move consistently with the hypothesis.
+
+Unexpected controls invalidate the current explanation, not automatically the harness.
+
+## Lifecycle evidence
+
+Preserve verbose/raw output per fork and inspect:
+
+```text
+warm-up and measurement score trajectory
+compilation/deoptimization during each phase
+GC/allocation/heap occupancy and pauses
+CPU frequency/throttling/steal and competing work
+fork order, process start, temperature and host changes
 ```
 
-```java
-// ❌ the cost of clear() lands inside the measurement
-@Setup(Level.Invocation)
-public void reset() { list.clear(); }
+Plateau-looking throughput alone does not prove stable compiled state. Compilation in measurement
+may also be intentional for a lifecycle benchmark; state which lifecycle is being estimated.
 
-// ✅ pre-build at Trial level and consume round-robin
-@Setup(Level.Trial)
-public void setup() {
-    copies = new ArrayList[1024];
-    for (int i = 0; i < copies.length; i++) copies[i] = new ArrayList<>(original);
-}
+## Comparison design
 
-@Benchmark
-public List<Integer> sort() {
-    List<Integer> l = copies[idx++ & 1023];
-    Collections.sort(l);
-    return l;
-}
+Define the experimental unit before analysis. Usually a fresh fork/process run is closer to an
+independent unit than an iteration inside one fork. Decide whether baseline and candidate are run
+in randomized blocks, paired within a controlled block, distributed across workers with worker as
+a factor, or compared as an explicit factorial JDK/hardware experiment.
+
+Avoid “all baseline, then all candidate” when drift can alias with the change. Preserve failed and
+timed-out runs; declare exclusion rules before observing scores.
+
+Report:
+
+```text
+ratio or difference per fork/block
+practical regression/improvement/equivalence thresholds
+interval/model and assumptions
+independent units versus within-unit iterations
+raw distribution, drift, bimodality, and exclusions
 ```
 
-```java
-// ❌ A measures construction + insertion; B measures insertion only
-@Benchmark public void a() { new ArrayList<>(1000).add(item); }
-@Benchmark public void b() { existingList.add(item); }
+JMH's displayed error describes its aggregation; it does not replace experimental design.
+Interval overlap is not an equivalence test. Equivalence needs predeclared margins and a suitable
+test or interval.
+
+## Environment and provenance
+
+Record at minimum:
+
+```yaml
+benchmark_source_commit: ''
+artifact_digest: ''
+jmh_version: ''
+jdk_vendor_version_build: ''
+jvm_args: []
+mode_unit_threads_operations_per_invocation: ''
+warmup_measurement_forks: ''
+params_and_input_generation: ''
+host_cpu_topology_memory_os_kernel: ''
+container_cgroup_cpuset_limits: ''
+power_frequency_turbo_smt_numa_controls: ''
+profilers_and_agents: []
+run_order_and_randomization: ''
+raw_result_artifact: ''
 ```
 
-```java
-// ❌ subtracting a baseline
-// realTime = measured - reference;
+Container quota/cpuset, NUMA placement, security mitigations, JDK build, and profiler can all
+change the result. “Same instance type” is insufficient provenance.
+
+## Diagnostic trees
+
+### Implausibly fast or flat across input sizes
+
+```text
+result unobserved / input constant / work hoisted / loop partly eliminated
+  -> return/consume, vary state, inspect compilation, add positive work control
+wrong operations-per-invocation denominator
+  -> compare raw batch time and annotation arithmetic
+timer/harness floor dominates
+  -> enlarge legitimate work batch and test scaling without changing semantics
 ```
 
-Harness cost is neither additive nor independent. The empty method diagnoses the
-environment; it never corrects a result arithmetically.
+### Forks form separate clusters
 
-## Reading the interval
-
-```
-A: 42.0 ± 5.0     B: 44.0 ± 5.0
-❌ "there is no difference between A and B"
-✅ "this experiment does not decide; I need more data or a formal test"
-```
-
-The consequence is asymmetric and practical: accepting "no difference" is how a CI gate
-approves a regression it merely lacked resolution to detect.
-
-## Verifying warm-up
-
-```bash
-java -jar target/benchmarks.jar -prof comp MyBenchmark
+```text
+different compilation/type profiles/deoptimization
+  -> compilation/JFR/assembly evidence per fork
+host placement/frequency/NUMA/noisy neighbor
+  -> OS counters and controlled blocks
+GC/heap lifecycle differs
+  -> allocation/GC/occupancy evidence
+unordered workload or mutable fixture drift
+  -> seed/order/state audit
 ```
 
-Compilation happening inside the measurement window means either warm-up did not finish or
-the code is being deoptimised mid-measurement. In both cases the number describes a
-transition, not steady state.
+Do not average clusters away before explaining them.
 
-## CI gate design
+### Allocation metric surprises
 
-- [ ] The gate uses `gc.alloc.rate.norm` in addition to time — bytes per operation is
-      deterministic, time is not
-- [ ] The threshold is calibrated against the **measured variance of the pipeline itself**,
-      not chosen as a round number
-- [ ] `-rf json` results stored per commit, for a historical series
-- [ ] The baseline is updated deliberately after an intentional optimisation, never
-      automatically
+```text
+zero/near zero
+  -> escape/scalar replacement, rounding, denominator, profiler support
+larger than expected
+  -> boxing, copies, exception/logging, fixture leakage, compiler path
+time improves but allocation worsens
+  -> decide using CPU/GC/live-set/production impact; neither metric dominates universally
+```
 
-## From number to decision
+### Profiler changes the winner
 
-- [ ] The effect was converted into system impact via Amdahl, with `p` from the profiler
-- [ ] The change was validated **on the real system**, not only on the bench
-- [ ] The divergence between predicted and observed was explained
+```text
+profiler overhead interacts with variant
+  -> unprofiled decision run plus separate diagnostic run
+different compilation or event engine
+  -> compare compilation/environment and profiler configuration
+insufficient samples or symbol quality
+  -> adequacy/loss/unknown-frame validation
+```
 
-Without `p`, a JMH result does not convert into a prediction about the system. Measuring
-the irrelevant precisely is the best-documented waste in performance work.
+## Publishing claim
+
+```text
+Under [JDK/JMH/hardware/OS/JVM flags], for [input/state/thread topology] and boundary
+[included work], candidate changed [metric/unit] by [effect interval] versus baseline across
+[independent units/blocks]. The practical threshold was [threshold]. Controls [list] behaved as
+expected. This supports [narrow decision], not [load/queueing/GC/retention/etc.]. Next-layer
+validation [result or pending].
+```
+
+For automation, hand raw results, provenance, experimental-unit identity, thresholds,
+inconclusive behavior, retry budget, and baseline governance to `performance-regression-ci`.
+
+## Authoritative references
+
+- [OpenJDK JMH repository](https://github.com/openjdk/jmh)
+- [JMH samples](https://github.com/openjdk/jmh/tree/master/jmh-samples/src/main/java/org/openjdk/jmh/samples)
+- [JMH annotation APIs](https://javadoc.io/doc/org.openjdk.jmh/jmh-core/latest/org/openjdk/jmh/annotations/package-summary.html)
+- [JMH `Level` warnings](https://javadoc.io/doc/org.openjdk.jmh/jmh-core/latest/org/openjdk/jmh/annotations/Level.html)
+- [JMH statistics implementation](https://github.com/openjdk/jmh/tree/master/jmh-core/src/main/java/org/openjdk/jmh/util)

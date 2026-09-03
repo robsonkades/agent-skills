@@ -1,12 +1,13 @@
 schemaVersion: 1
 
 name: gof-interpreter
-version: 1.1.0
+version: 1.2.0
 description: >-
   Interpreter in modern Java: representing a small language as a typed tree and evaluating it,
   expressed today as a sealed AST with an exhaustive switch rather than an eval() method per node.
   Covers parsing as a separate problem the pattern does not solve, when an existing expression
-  language beats writing one, why evaluating user-supplied SpEL or OGNL is remote code execution,
+  language beats writing one, how general expression engines become code-execution surfaces when
+  exposed with unsafe capabilities,
   the resource bounds an interpreter over untrusted input needs, and closure compilation when tree
   walking is too slow. Use when a filter, rule or formula language is designed, when configuration
   has grown conditionals, when someone proposes embedding an expression evaluator, or when an
@@ -40,7 +41,7 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
+dependencies: []
 
 suggests:
   - allocation-profiling

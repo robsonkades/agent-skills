@@ -3,8 +3,8 @@
 Every string below is the one HotSpot prints, taken from `_trap_reason_name[]` and
 `_trap_action_name[]` in `deoptimization.cpp` and confirmed against
 `-Xlog:deoptimization=debug` and `jfr print --events jdk.Deoptimization` on Temurin 25.0.3.
-Another JVM is under no obligation to use them; a JVMCI-enabled build (every Temurin build
-is) suffixes three of them.
+Another JVM is under no obligation to use them; the tested JVMCI-enabled Temurin 25.0.3 build
+suffixes three of them.
 
 ## Reasons — why the trap fired
 
@@ -33,13 +33,13 @@ Five, not three. Only the last three invalidate the nmethod; every one of the fi
 deoptimises the current frame — the thread continues in the interpreter from `trap_bci`
 regardless.
 
-| Action                | Effect on the nmethod                                                                                          | Effect on the profile     | Cost                                                              |
-| --------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------- | ----------------------------------------------------------------- |
-| `none`                | Kept. C2 emitted the trap knowing it must not cause another recompile                                          | Not updated               | A full frame deoptimisation on **every** hit, forever — see below |
-| `maybe_recompile`     | Kept; a recompilation is requested. Made not entrant once the bci has trapped `PerBytecodeTrapLimit` (4) times | Trap recorded at the bci  | Cheap until the fourth hit                                        |
-| `reinterpret`         | Made not entrant; invocation counters reset so the interpreter reprofiles for a while                          | Trap recorded; reprofiled | Interpreted until the counters climb again                        |
-| `make_not_entrant`    | Made not entrant; recompiled as soon as the counters allow                                                     | Trap recorded             | One recompilation                                                 |
-| `make_not_compilable` | Made not entrant and the method is excluded from **C2**                                                        | —                         | Permanent until restart; C1 code from then on                     |
+| Action                | Effect on the nmethod                                                                                          | Effect on the profile     | Cost                                                                              |
+| --------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------- |
+| `none`                | Kept. C2 emitted the trap without requesting another recompile                                                 | Not updated               | Frame deoptimisation on each hit while that nmethod remains installed — see below |
+| `maybe_recompile`     | Kept; a recompilation is requested. Made not entrant once the bci has trapped `PerBytecodeTrapLimit` (4) times | Trap recorded at the bci  | Cheap until the fourth hit                                                        |
+| `reinterpret`         | Made not entrant; invocation counters reset so the interpreter reprofiles for a while                          | Trap recorded; reprofiled | Interpreted until the counters climb again                                        |
+| `make_not_entrant`    | Made not entrant; recompiled as soon as the counters allow                                                     | Trap recorded             | One recompilation                                                                 |
+| `make_not_compilable` | Made not entrant and the loaded method is excluded from **C2**                                                 | —                         | Persistent for that loaded method; C1 can still compile it                        |
 
 `make_not_compilable` is almost never the action C2 requests. The give-up decision in
 production is the runtime's, taken in `uncommon_trap_inner` (`deoptimization.cpp`) when a
@@ -88,7 +88,7 @@ The two shapes that do not converge:
 **The `none` storm.** `Compile::too_many_recompiles` returns true once the method has
 decompiled `PerMethodRecompilationCutoff / 2 + 1` times (201 by default) or a bci has
 `PerBytecodeRecompilationCutoff / 8` (25) overflow recompiles. C2 then emits the trap with
-`Action_none`: the nmethod is never invalidated, the profile is never updated, and every hit
+`Action_none`: the nmethod is not invalidated by that action, the profile is not updated, and each hit
 is a full deoptimisation of the frame — an interpreter round-trip per call. Forced with
 `-XX:PerMethodRecompilationCutoff=3`, the same method logged 11,843 `unstable_if none` lines
 at one `cid` and the run took 38 s instead of 2 s (executed, 25.0.3). This is what "never
@@ -216,3 +216,10 @@ Two entries are absent on purpose. Splitting an oscillating `if` into separately
 methods solves a problem that does not exist: after the first trap the branch is compiled
 with both sides. Raising a recompilation cutoff changes when the JVM gives up, not whether
 the method converges — and the `none` storm sits well before the cutoff.
+
+## Authoritative sources
+
+- [JDK 25 HotSpot `deoptimization.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/deoptimization.cpp)
+- [JDK 25 HotSpot `compile.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/compile.cpp)
+- [JDK 25 HotSpot `methodData.hpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/oops/methodData.hpp)
+- [JDK-8216041: JFR event for deoptimization](https://bugs.openjdk.org/browse/JDK-8216041)

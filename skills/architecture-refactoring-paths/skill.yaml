@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-refactoring-paths
-version: 1.2.0
+version: 1.3.0
 description: >-
   Moving an enterprise application from one architectural choice to another without a
   rewrite: transaction script to domain model, Active Record to Data Mapper, in-process call

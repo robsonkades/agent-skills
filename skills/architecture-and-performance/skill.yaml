@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-and-performance
-version: 1.2.0
+version: 1.2.1
 description: >-
   Reasoning about performance across the whole request path rather than pattern by pattern:
   budgeting latency from controller to database, counting round trips as the primary
@@ -48,7 +48,7 @@ dependencies:
   - name: connection-pool-sizing
     version: ^1.0.0
   - name: allocation-profiling
-    version: ^1.0.0
+    version: ^2.0.0
   - name: java-performance
     version: ^2.0.0
 

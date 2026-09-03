@@ -1,10 +1,9 @@
 ---
 name: scatter-gather
 description: >
-  Fanning one request out to N workers and combining the answers: the root's latency is the
-  max over N leaves, not their mean, choosing N against tail exposure, the completion rule
-  (all-of-N, first-of-N, k-of-N-by-deadline), hedges and the two conditions that make them
-  safe, partial results with a completeness field, deadline propagation, and cancelling
+  Fanning one request out to N workers and combining answers: order-statistic latency,
+  choosing N against tail exposure, all-of-N/first-of-N/k-of-N completion, safe hedging,
+  partial-result completeness and watermarks, deadline propagation, and cancelling
   losers. Use when a keyless query fans out to every shard, when leaf dashboards are green
   but user-facing p99 is not, when more leaves made the request slower, when a fan-out gives
   no way to tell no-data from no-answer, when a hedge is proposed, or when an in-flight
@@ -19,9 +18,10 @@ description: >
 
 ## Purpose
 
-**A scatter/gather request is as slow as its slowest leaf.** The root's latency is the
-_maximum_ of N samples drawn from the leaf distribution, not the mean — so the root inherits
-every leaf's tail. At N = 100 with independent leaves, roughly 63% of root requests contain
+For **all-of-N**, root latency includes the maximum of the required leaf completion times plus
+scatter/gather overhead. First-success and k-of-N use order statistics and can return earlier;
+quorum/partial semantics decide whether that answer is correct. At N = 100 with independent,
+identically distributed leaves, roughly 63% of root requests contain
 at least one leaf beyond its own p99. The arithmetic is `tail-latency-analysis`; the
 consequence is this skill's whole subject.
 
@@ -39,18 +39,20 @@ losing leaves keep running with their connections held.
 2. **Choose N, and record why.** N is a trade between per-leaf work and tail exposure, not a
    free parameter. "One leaf per shard" is a _default inherited from the data layout_, not a
    decision — see `references/tail-amplification-and-hedging.md`.
-3. **Propagate the deadline to every leaf** and refuse to start a leaf whose remaining budget
-   is below its own measured p50. A leaf that cannot finish still costs the callee everything
-   except the reply (`timeouts-and-deadlines`).
+3. **Propagate one deadline to every leaf** with a reserve for merge/serialization/return.
+   Start a leaf only when its probability/value of completing within remaining budget justifies
+   the work; p50 is not a universal cutoff (`timeouts-and-deadlines`).
 4. **Bound the in-flight fan-out.** Virtual threads make N cheap in the root and change
    nothing downstream: the limit belongs next to the scarce resource
    (`concurrency-limiting-and-bulkheads`).
-5. **Cancel the losers the moment the gather is satisfied**, and verify it against the
-   callee's in-flight gauge rather than against `Future.isCancelled()`.
-6. **Decide the partial-result contract with the caller**, not in the root. Returning 8 of 10
-   shards beats waiting for 10 only if the response says which 8 (`rpc-and-api-contracts`).
-7. **Only then consider hedging**, and only if both safety conditions in the rules below
-   hold.
+5. **Signal cancellation to losers when the gather is satisfied**, and verify root tasks plus
+   remote work release resources. Cancellation may be advisory and cannot undo a committed
+   effect; budget residual work even after reply.
+6. **Decide the partial/quorum-result contract with the caller.** Include expected/responded/
+   missing owners, errors, data/version watermark and whether aggregation is exact, lower/
+   upper-bounded or stale (`rpc-and-api-contracts`).
+7. **Only then consider hedging**, with operation safety, replica independence/consistency,
+   rate/capacity budget and cancellability measured.
 
 ## Decision block
 
@@ -58,16 +60,17 @@ losing leaves keep running with their connections held.
 Use scatter/gather when:
 - the answer genuinely requires data from several owners, each holding a disjoint slice
   (sharding-and-partitioning), and it must be current as of this request
-- N is small, bounded and known at request time — it does not grow with tenant size or
-  with the result set
-- the root's latency budget exceeds the leaf p99.9 with room for the gather itself
+- N and total work are bounded by an admission budget; hierarchical/dynamic fan-out has a
+  global descendant cap rather than recursively multiplying unchecked
+- root latency is derived from measured joint/order-statistic behavior, not one leaf percentile
 - the caller's contract can express a partial answer, or all-of-N genuinely fits the budget
 Avoid scatter/gather when:
 - the leaves share a saturated resource — one database, one pool, one node — so the fan-out
   is concurrency against itself rather than parallelism
 - N grows with data volume: latency then degrades as the workload succeeds
-- the request writes. A fan-out write across N owners is not a transaction
-  (distributed-transactions-and-sagas); reads are what this pattern is for
+- the request writes and requires atomic all-or-nothing visibility without a commit protocol.
+  Fan-out writes can be valid for replicated/quorum or idempotent broadcast semantics, but
+  scatter/gather alone is not a transaction (`distributed-transactions-and-sagas`)
 - the root budget is at or below the leaf p99: the max over N will exceed it by construction
 Prefer instead:
 - an index or denormalised view keyed by the query, so one owner answers it
@@ -82,27 +85,30 @@ Prefer instead:
 
 - Never quote a leaf's p99 as the root's SLO. Derive each leaf's budget backwards from the
   root's, using the fan-out amplification in `tail-latency-analysis`.
-- Raising N reduces per-leaf work linearly and raises the chance the root meets a slow leaf
-  monotonically. There is a crossover; find it by measuring the root, because no leaf metric
-  contains it.
-- The root is a **single** point of failure and each leaf is a **partial** one. Under
-  all-of-N, root availability is the product of the leaf availabilities: N = 20 leaves at
-  99.9% each gives roughly 98% for the request. Partial results are what break that product.
+- Raising N may reduce divisible data work, but fixed setup, skew, duplicate work and shared
+  bottlenecks prevent linear scaling. For all-of-N it increases exposure to any slow leaf;
+  correlation determines how much. Find the crossover at the root with realistic placement.
+- The coordinator/root is a failure and capacity domain unless replicated/stateless. Under
+  all-of-N, independent required leaves with aligned success definitions multiply to about
+  98% at N=20 and 99.9% each; real correlation requires joint measurement. k-of-N availability
+  follows a binomial model only for independent identical leaves, while quorum correctness has
+  separate consistency assumptions.
 - A partial result must carry an explicit completeness field naming the missing owners. A
   list of 8 elements is indistinguishable from 8 shards that had no data, and a caller that
   cannot tell will cache the wrong answer or show it as authoritative.
 - Every leaf call takes the **remaining** budget, not a per-leaf constant. Fixed per-leaf
   timeouts under a root deadline are unreachable configuration the first time a leaf is slow.
-- Cancellation is delivered as an interrupt and proves nothing on its own. A cancelled
-  `Future` means the root stopped waiting; the leaf may still hold a thread, a connection and
-  a database session. Assert on the callee's in-flight gauge returning to zero.
-- **Hedging is safe only when both hold**: the leaf operation is read-only or idempotent
-  (`idempotency`), and the hedge rate is capped as a small fraction of traffic. An uncapped
+- Java `Future.cancel(true)` attempts interruption; `CompletableFuture.cancel` does not
+  guarantee interrupting supplier execution, and remote cancellation depends on protocol/
+  client. A cancelled handle proves only local state. Assert remote in-flight/resource release.
+- **Hedging requires all of these**: equivalent/read-only or downstream-idempotent operation;
+  an independent eligible replica with acceptable consistency; remaining deadline; global
+  hedge/concurrency budget; and cheap cancellation/residual-work accounting. An uncapped
   hedge fires most often exactly when the dependency is already slow, which makes it a load
   multiplier at the worst moment.
-- Send the hedge to a **different** replica than the original, after the original has already
-  spent its trigger percentile — a hedge to the same instance queues behind the same slow
-  thing. Trigger placement and its load cost are `tail-latency-analysis`.
+- Prefer a different failure domain than the original after a conditional latency trigger.
+  A different replica sharing the same shard/database may add only load, and a stale replica
+  may not be semantically equivalent. Trigger placement is `tail-latency-analysis`.
 - A retry _inside_ a leaf multiplies the whole fan-out: N leaves at 3 attempts is 3N calls
   inside one root budget, and the budget arithmetic must include it
   (`retries-and-backoff`).
@@ -110,11 +116,11 @@ Prefer instead:
   fan-out cost; it converts a capacity problem into a latency-variance problem. Say that in
   the design review rather than discovering it at N = 50.
 - Java: the production shape is `Executors.newVirtualThreadPerTaskExecutor()` in
-  try-with-resources with `invokeAll(tasks, timeout, unit)` for by-deadline gathers, or
-  `invokeAny` for first-of-N. `StructuredTaskScope` is the better _model_ for this exact
-  problem but has been a **preview** API on every released JDK including 25 and 26, requiring
-  `--enable-preview` and recompilation for each JDK — `structured-concurrency` owns the API
-  and the version matrix. Do not treat it as the default without that decision being made.
+  a lifecycle-managed virtual-thread executor (Java 21+) plus completion/cancellation tracking,
+  or a framework client with equivalent lifecycle. A per-call try-with-resources executor can
+  block in `close()` until uncooperative tasks terminate, defeating the response deadline.
+  `StructuredTaskScope` expresses ownership better but remains preview through JDK 26 (JEP 525),
+  requiring preview flags/recompilation; `structured-concurrency` owns the version matrix.
 
 ## References
 
@@ -125,6 +131,6 @@ Prefer instead:
   and before enabling any hedge or backup request.
 - [Fan-out in Java](references/java-fan-out.md) — a virtual-thread executor fan-out under a
   propagated deadline, per-leaf timeouts derived from the remaining budget, cancellation of
-  the outstanding leaves and the `close()` trap behind it, partial-result assembly as a
-  record with a completeness field, and a test that asserts the losers were actually
-  interrupted. Read when implementing or reviewing a fan-out.
+  outstanding leaves and the `close()` trap behind it, partial-result assembly with
+  completeness/watermark fields, and tests distinguishing local cancellation from residual
+  remote work. Read when implementing or reviewing a fan-out.

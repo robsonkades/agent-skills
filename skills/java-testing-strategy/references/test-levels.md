@@ -15,7 +15,9 @@ your own; the numbers matter only as ratios.
 
 ## Unit
 
-A unit test is a test with no I/O, no clock, no random source and no framework container.
+A unit test is a test with no external I/O, no uncontrolled clock or random source, and no
+framework container. Injected `Clock`, seeded randomness, and deterministic in-memory collaborators
+remain compatible with a unit test.
 That definition — not "one class" — is what makes it fast and deterministic.
 
 Prefer a **sociable** unit test: instantiate the real collaborators you own, and substitute
@@ -71,9 +73,10 @@ side computes the right answer.
 
 ## End-to-end
 
-Slow, order-sensitive, environment-sensitive, and the least diagnostic thing you own: a red
-end-to-end test names a journey, not a cause. Keep one per critical journey and invest the
-saved effort in the levels that localise a fault.
+Slow, environment-sensitive, and less diagnostic than narrower tests: a red end-to-end test names a
+journey, not a cause. Keep the smallest portfolio that covers critical user and operational
+journeys. One test may cover a simple journey; multiple cases are justified when materially
+different identity, payment, migration, failover, or compatibility paths carry distinct risk.
 
 ## Characterisation
 

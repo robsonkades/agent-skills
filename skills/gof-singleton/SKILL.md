@@ -32,14 +32,14 @@ without any type having to enforce it, and without any caller reaching around it
 
 ```text
 Thread          ThreadLocal / ScopedValue
-Class loader    a static field — THIS is what a Java singleton gives you
+Defining class loader    a static field — the same class may exist in several loaders
 Process (JVM)   a static field, if one class loader; a DI container's
                 singleton scope, if one container
 Container/pod   the process, restated — one JVM per pod by convention
-Node            a file lock, a unix socket, a pid file
+Node            an OS-coordinated lock/socket, with stale-owner and namespace handling
 Cluster         leader election or a distributed lock with a lease
 Region          the above, plus a consensus system that spans zones
-System          does not exist as a primitive; it is designed, not declared
+System          a protocol and authority boundary, not a language primitive
 ```
 
 A `getInstance()` gives you row two. Every requirement expressed as "there must be only one" in
@@ -59,9 +59,10 @@ The type is a stateless, immutable value or function, and passing it
 around is genuinely noise
         → an enum constant or a static final field. Not getInstance().
 
-The JVM itself requires singularity: a java.lang.instrument agent, a
-shutdown hook, a ServiceLoader provider, a JNI/FFM library binding
-        → Singleton, because there is no injection point.
+The hosting API owns creation and offers no injection point, while one
+process-wide adapter must coordinate access to a JVM/native facility
+        → a singleton bridge may be justified; hosting does not itself prove
+          uniqueness (ServiceLoader, for example, can return many providers).
 
 A framework or legacy call site cannot be given a dependency and must
 reach one
@@ -109,7 +110,9 @@ THEN two threads can deadlock on class initialisation locks. Keep static
      initialisers free of cross-class work and of I/O.
 
 IF tests need a reset() method on it
-THEN the design has already failed; the reset is a confession, not a fix.
+THEN treat that as evidence of hidden mutable lifetime. Prefer an owned instance;
+     when legacy migration requires reset, synchronize it, constrain it to tests,
+     and prevent parallel-test interference.
 
 IF an enum is used purely as a namespace for one instance holding
 mutable state
@@ -123,14 +126,15 @@ THEN the serialisation and reflection safety it buys is irrelevant, and
   shared by every thread, which makes any mutable field in it a contended, visibility-sensitive
   variable. Publication of the instance itself must be safe — the holder idiom and `enum` get
   this from class-initialisation semantics; a plain `if (instance == null)` does not, and
-  double-checked locking without `volatile` is broken on every JVM
+  double-checked locking without `volatile` has no Java Memory Model guarantee
   (`java-memory-model`).
 - **Distribution.** Process-local, always. A singleton connection pool, rate limiter or
   scheduler becomes N of them under horizontal scaling, and the resulting limit is N times what
   was configured — a common cause of exhausting a database's connection limit after a scale-up
   (`connection-pool-sizing`, `rate-limiting-and-load-shedding`).
-- **Performance.** A `synchronized getInstance()` on a hot path is real contention; the holder
-  idiom removes it at zero cost. The larger effect is indirect: a single shared mutable
+- **Performance.** A contended `synchronized getInstance()` on a hot path can add latency; modern
+  JVMs can make uncontended locking cheap, while the holder idiom removes per-access locking. The
+  larger effect is indirect: a single shared mutable
   structure becomes the contention point for the whole application, and no amount of lock
   tuning fixes a design that funnels every thread through one object
   (`false-sharing-and-contended`, `lock-inflation`).

@@ -1,20 +1,16 @@
 schemaVersion: 1
 
 name: slo-and-alerting
-version: 1.2.0
+version: 1.4.0
 description: >-
-  Turning measurements into an on-call contract: SLI, SLO and SLA, choosing an indicator
-  that reflects the user's experience and where it is measured, the availability definition
-  (window, which status classes count, shed traffic), error budgets as a change-velocity
-  decision, and multi-window burn-rate alerting on symptoms not causes. Use when an SLO is
-  quoted with no window or definition of a good event, when the target equals or is looser
-  than the SLA, when 100% is proposed as a target, when high CPU or heap pages someone, when
-  a page fires for one instance in a replicated fleet, when an alert is routinely
-  acknowledged and ignored, when shed 429s are counted as errors, or when anomaly detection
-  is proposed for paging. Does not cover the metrics themselves (metrics-and-cardinality),
-  percentile correctness (latency-statistics), tail decomposition (tail-latency-analysis),
-  the log event (structured-logging), the shedding mechanism
-  (rate-limiting-and-load-shedding), or the fault model detected (failure-models).
+  Engineering service-level contracts and actionable alerting: defining user-centered
+  SLIs and SLOs with explicit populations and windows, negotiating error-budget policy,
+  separating request- and time-based semantics, deriving multi-window burn alerts,
+  handling low traffic and missing data, and routing symptoms or predictive hazards by
+  urgency and actionability. Use when an SLO is ambiguous, an SLA lacks operating margin,
+  alert noise is high, resource thresholds page without context, or PromQL burn rules need
+  review. Instrument design belongs to metrics-and-cardinality; percentile semantics to
+  latency-statistics; overload controls to rate-limiting-and-load-shedding.
 
 license: Apache-2.0
 

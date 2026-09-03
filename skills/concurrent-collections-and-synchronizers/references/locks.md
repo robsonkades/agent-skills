@@ -19,12 +19,10 @@ Two consequences for the _choice_ — the diagnosis of pinning, and what to use 
   JEP 491: "such migration will no longer be necessary. You need not revert code that has been
   migrated to use `ReentrantLock` back to using `synchronized`." A migration done now buys nothing
   and costs new `try`/`finally` bugs. Pinning is therefore not an input to this decision at all.
-- **"`ReentrantLock` is faster than `synchronized`" is stale.** It came from Java 5-era numbers;
-  Java 6 closed most of the gap, and biased locking — which made _uncontended_ `synchronized`
-  nearly free — was disabled by default in JDK 15 (JEP 374) and removed in JDK 18 (JDK-8256425).
-  Uncontended `synchronized` now costs a CAS, which is what `ReentrantLock` always cost, so the
-  performance argument moved toward parity, not away. Monitor cost under contention belongs to
-  lock-inflation.
+- **"`ReentrantLock` is faster than `synchronized`" is not a portable decision rule.** Lock paths,
+  JIT optimizations and contention behavior change across JDKs; biased locking was disabled by
+  default in JDK 15 and removed later. Choose on semantics, then measure the deployed workload.
+  Monitor cost under contention belongs to lock-inflation.
 
 JEP 491 then endorses JCiP §13.4 directly: "Use `synchronized` where practical, since it is more
 convenient and less error prone, and use `ReentrantLock` and the other APIs in
@@ -120,7 +118,8 @@ Which acquisition form:
 
   Both `unlock()` calls are the first statement of their `finally`, and A is released before the
   retry — that release is what makes the ordering deadlock impossible. Stress-tested on 25.0.3 with
-  six threads making 2000 opposed transfers each: no deadlock, and the total is preserved.
+  a stress harness, but a finite run is evidence against one implementation bug, not proof of
+  deadlock freedom for every caller protocol.
 
   The method returns `void` on purpose. An earlier `boolean` version guarded the loop with
   `while (!Thread.currentThread().isInterrupted())` and returned `false` at the bottom — but every
@@ -208,9 +207,8 @@ Every constraint is a footgun:
 - **No `Condition` support.** `asReadLock()` / `asWriteLock()` return `Lock` views whose
   `newCondition()` throws.
 - **No ownership.** "Like `Semaphore`, but unlike most `Lock` implementations, StampedLocks have no
-  notion of ownership." No `isHeldByCurrentThread`, and — critically — **no deadlock detection**:
-  `jstack` and `ThreadMXBean` report nothing. A self-reentry deadlock looks exactly like a slow
-  operation.
+  notion of ownership." There is no `isHeldByCurrentThread`, and a self-reentry is not represented
+  as an ownable-lock cycle in standard deadlock detection; corroborate parked stacks and stamps.
 - **No fairness policy at all**, and all `try` methods are best-effort.
 - **Optimistic reads see torn state.** "Fields read while in optimistic read mode may be wildly
   inconsistent" — so the body may only copy fields into locals, must be side-effect-free, and must
@@ -239,15 +237,10 @@ double distanceFromOrigin() {
 }
 ```
 
-The verbosity is the point: if your read section cannot be written in this shape, `StampedLock` is
-not the tool. Under virtual threads it parks via `LockSupport` and unmounts, which makes a
-self-deadlock _cheaper to create_ — you can have a million — and no easier to see. A secondary but
-credible source (Heinz Kabutz, JavaSpecialists 321) demonstrates writer starvation where
-`ReentrantReadWriteLock` shows none, worsened by the ability to hold far more than 65535 concurrent
-readers; the magnitude is one author's harness and unverified, the direction is consistent with the
-absent fairness policy. JDK-8345052 "Harden StampedLock" landed in JDK 24. Treat it as the least
-mature of the three, appropriate for small hot in-memory structures with a stable field layout — a
-point, a rectangle, a rate limiter's counters — and rarely for application code.
+The verbosity is the point: if the read section cannot be written in this shape, `StampedLock` is
+not the tool. Under virtual threads its parking is cheap, but that does not improve fairness or
+diagnosability. Evaluate it for small, hot in-memory structures with a stable field layout and
+measured optimistic-read success; compare with immutable snapshots and a plain lock.
 
 ## AbstractQueuedSynchronizer, last
 
@@ -260,13 +253,11 @@ block". Subclasses "should be defined as non-public internal helper classes" —
 into a synchronizer, never exposed as one. `AbstractQueuedLongSynchronizer` is the same framework
 with a `long` state, which is what `ReentrantReadWriteLock` moved to in JDK 25.
 
-The skill body carries the ladder to walk down before allowing one. The rung that matters most is
-**`ReentrantLock` + one `Condition` per predicate**: it covers essentially every
-state-dependent class an application will ever need. It is more code than AQS with two overrides,
-but it is readable code with known failure modes. The only shape that genuinely justifies AQS is a
-_blocking_ synchronizer with a _novel_ acquisition predicate needing timeouts, interruption and
-queue instrumentation, in a hot path where the allocation of a `ReentrantLock` plus a `Condition`
-per instance actually shows up in a profile.
+The skill body carries a ladder to walk down before allowing one. `ReentrantLock` plus one
+`Condition` per predicate covers many application-level state machines with clearer ownership. AQS
+is justified for a reusable blocking synchronizer with a novel acquisition/release state machine,
+where timeout, interruption, shared/exclusive modes and queue machinery are all required and the
+maintenance burden is acceptable.
 
 Two obligations if you do write one. Call `setExclusiveOwnerThread` — the setter is inherited from
 `AbstractOwnableSynchronizer`, and it is `AbstractQueuedSynchronizer`'s own class javadoc that
@@ -275,3 +266,11 @@ users in determining which threads hold locks." Skip it and your lock is invisib
 deadlock analysis. And review it with a jcstress test and a documented state-word encoding, because
 the cost of getting AQS wrong is not a wrong answer — it is a permanently parked thread with no
 exception and no log line.
+
+## Authoritative references
+
+- [Java 25 `Lock`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/Lock.html)
+- [Java 25 `ReentrantLock`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/ReentrantLock.html)
+- [Java 25 `ReentrantReadWriteLock`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/ReentrantReadWriteLock.html)
+- [Java 25 `StampedLock`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/StampedLock.html)
+- [JEP 491: Synchronize Virtual Threads without Pinning](https://openjdk.org/jeps/491)

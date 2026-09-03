@@ -3,32 +3,31 @@
 ## The cycle, with the phase diagrams omit
 
 ```
-Pause Mark Start (STW)              marks GC roots; fixes the good colour for this mark
-Concurrent Mark                     load barrier marks objects as they are read
-Pause Mark End (STW)                finalises marking; processes pending references
+Pause Mark Start (STW)              establishes cycle/root-marking state
+Concurrent Mark                     traces the reachable graph with mutator barriers preserving invariants
+Pause Mark End (STW)                completes marking and cycle-boundary processing
 Concurrent Prepare for Relocate     selects candidate pages, most garbage first
 Pause Relocate Start (STW)          starts concurrent relocation
 Concurrent Relocate                 load barrier redirects through the forwarding table
 Concurrent Remap                    updates remaining pointers; may defer to the next cycle
 ```
 
-Three phases are stop-the-world, not two. `Pause Relocate Start` sits between two larger
-concurrent phases, is sub-millisecond, and is the one routinely dropped from simplified
-diagrams — and therefore from measurement scripts.
+The verified JDK 25 log exposes these three pause labels. `Pause Relocate Start` is often
+dropped from simplified diagrams and measurement scripts. Treat names/count as
+release-sensitive and validate them on the target build.
 
-| STW phase            | What it does                                              |
-| -------------------- | --------------------------------------------------------- |
-| Pause Mark Start     | Marks GC roots (stacks, registers); fixes the good colour |
-| Pause Mark End       | Finalises marking; processes weak references and friends  |
-| Pause Relocate Start | Starts concurrent relocation                              |
+| STW phase            | What it does                                    |
+| -------------------- | ----------------------------------------------- |
+| Pause Mark Start     | Establishes marking/root state for the cycle    |
+| Pause Mark End       | Completes marking and cycle-boundary processing |
+| Pause Relocate Start | Starts concurrent relocation                    |
 
-Durations are sub-millisecond as an expected order of magnitude. Measure them on the
-workload in question rather than quoting a figure.
+Short durations are a design goal, not an SLO guarantee. Root count, platform, scheduling and
+workload matter; measure distributions and safepoint TTSP on the target.
 
-Young cycles run far more often than old cycles — in a healthy service, young every few
-hundred milliseconds against old every tens of minutes. The remembered set is what lets a
-young cycle avoid scanning all of old as a root; that is the throughput gain the generational
-mode exists for.
+Young and old-cycle cadence is selected from allocation, aging/live-set and ergonomics. The
+remembered set lets young tracing avoid treating all old objects as roots, but no universal
+“hundreds of milliseconds versus tens of minutes” ratio defines health.
 
 ## Enabling the log
 
@@ -43,8 +42,8 @@ cycle summaries only, and `Pause Relocate Start` is not in them.
 
 ## Reading the log
 
-The generational log labels by **generation** — `Young Generation` / `Old Generation`. It has
-never used "Minor"/"Major"; neither does the JFR event set. Shape (verify the exact format
+The verified generational log labels by **generation** — `Young Generation` / `Old Generation`.
+Do not build a parser around remembered “Minor/Major” terminology. Shape (verify the exact format
 against the build in use before publishing it as a reference):
 
 ```
@@ -78,7 +77,7 @@ if [ "$n" -eq 0 ]; then
   echo "no pause samples matched — check the pattern and that gc+phases=debug is on" >&2
   exit 1
 fi
-sort -g pauses.txt | awk -v n="$n" 'NR == int(n*0.99)+0 { print "p99:", $1, "ms over", n, "samples" }'
+sort -g pauses.txt | awk -v n="$n" 'NR == int((99*n + 99)/100) { print "p99:", $1, "ms over", n, "samples" }'
 ```
 
 A zero-sample run is the failure mode this guards: a mistyped pattern produces an empty set,
@@ -95,14 +94,15 @@ jfr print --events jdk.ZYoungGarbageCollection,jdk.ZOldGarbageCollection zgc.jfr
 jfr print --events jdk.ZAllocationStall zgc.jfr
 ```
 
-| Event                         | Fires when                              | Use                                                  |
-| ----------------------------- | --------------------------------------- | ---------------------------------------------------- |
-| `jdk.ZYoungGarbageCollection` | End of each young cycle                 | Young cycle frequency and duration                   |
-| `jdk.ZOldGarbageCollection`   | End of each old cycle                   | Old cycle frequency and duration; promotion pressure |
-| `jdk.ZAllocationStall`        | A thread blocks for want of a free page | Undersized heap or bursty allocation                 |
-| `jdk.ZPageAllocation`         | The collector allocates a new page      | Correlate allocation rate with page creation         |
+| Event                         | Fires when                              | Use                                                     |
+| ----------------------------- | --------------------------------------- | ------------------------------------------------------- |
+| `jdk.ZYoungGarbageCollection` | End of each young cycle                 | Young cycle frequency and duration                      |
+| `jdk.ZOldGarbageCollection`   | End of each old cycle                   | Old cycle frequency/duration; correlate aging/live set  |
+| `jdk.ZAllocationStall`        | A thread blocks for want of a free page | Stall evidence; classify heap, rate, CPU and page cause |
+| `jdk.ZPageAllocation`         | The collector allocates a new page      | Correlate allocation rate with page creation            |
 
-There is no combined `jdk.ZGCGarbageCollection`. The **field names inside** these events vary
+JDK 25 also exposes relocation-set, statistics, thread-phase and uncommit events. There is no
+combined `jdk.ZGCGarbageCollection` on that build. The **field names inside** events vary
 by release, because the cycle was redesigned between JEP 439 and the post-JEP-490 state —
 check them with `jfr print --events ... --stack-depth 0` on the build in use before writing a
 parser against them.
@@ -116,14 +116,14 @@ jcmd <pid> VM.flags -all | grep -i -E "usezgc|zproactive|zcollectioninterval|zal
 
 | Flag                          | Meaning                                                                                    |
 | ----------------------------- | ------------------------------------------------------------------------------------------ |
-| `ZCollectionInterval=N`       | Minimum seconds between cycles; `0` disables, collecting only on allocation pressure       |
+| `ZCollectionInterval=N`       | General interval control; `0` removes that periodic trigger, not every proactive heuristic |
 | `ZAllocationSpikeTolerance=N` | Multiplier of tolerance over the observed mean allocation rate used by the start heuristic |
 | `ZProactive`                  | Already `true`; starts a cycle proactively under **idleness or low allocation**            |
 
-`ZCollectionInterval` forces a periodic cycle even when allocation is low — useful when the
-SLO caps how old retained garbage may get. `ZAllocationSpikeTolerance` decides how much margin
-above the recent mean the heuristic reserves before starting a cycle; raising it reacts
-earlier to accelerating allocation at the cost of potentially more frequent cycles.
+`ZCollectionInterval` can bound time between cycles even when allocation is low; use only for
+a measured requirement and verify generation-specific interval options on the build.
+`ZAllocationSpikeTolerance` influences heuristic reserve for spikes; changing it can start
+cycles earlier/more often and consume CPU. Validate rather than treating either as a stall fix.
 
 ## Thread-level CPU
 

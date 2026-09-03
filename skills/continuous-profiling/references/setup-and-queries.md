@@ -1,227 +1,234 @@
-# Setting up collection and querying the history
+# Collection, context, storage, and query protocol
 
-## Pyroscope Java SDK — the real `Config.Builder` API
+## Configuration as a versioned contract
 
-```java
-import io.pyroscope.javaagent.EventType;
-import io.pyroscope.javaagent.PyroscopeAgent;
-import io.pyroscope.javaagent.config.Config;
+Keep a checked-in profile policy separate from deployment wiring:
 
-import java.time.Duration;
-import java.util.Map;
-
-public final class PyroscopeSetup {
-
-    public static void configure() {
-        Config.Builder builder = new Config.Builder()
-            .setApplicationName("order-service")
-            .setServerAddress(System.getenv().getOrDefault(
-                "PYROSCOPE_SERVER_ADDRESS", "http://localhost:4040"))
-            .setProfilingInterval(Duration.ofMillis(10))
-            // One CPU engine, not a list. Default is ITIMER.
-            .setProfilingEvent(EventType.ITIMER)
-            .setUploadInterval(Duration.ofSeconds(10))   // the SDK's real default
-            .setLabels(Map.of(
-                "env", System.getenv().getOrDefault("ENVIRONMENT", "local"),
-                "region", System.getenv().getOrDefault("AWS_REGION", "unknown"),
-                "version", BuildInfo.VERSION));
-
-        // Allocation and lock are independent channels behind a threshold, not
-        // EventType values — and they belong behind a flag in production.
-        if (Boolean.parseBoolean(System.getenv()
-                .getOrDefault("ENABLE_ALLOC_PROFILING", "false"))) {
-            builder.setProfilingAlloc("512k");
-        }
-
-        PyroscopeAgent.start(builder.build());
-    }
-}
+```yaml
+schemaVersion: 1
+service: order-service
+epoch: jdk25-profiler45-policy3
+channels:
+  cpu:
+    enabled: true
+    interval: calibrated-value
+  allocation:
+    enabled: false
+context:
+  allowed: [service, version, environment, operation]
+  maxActiveValues:
+    operation: 100
+retention:
+  rolling: 7d
+  incidentHold: 30d
+budgets:
+  cpuPerOperation: measured-limit
+  tailLatency: measured-limit
+  exportQueueBytes: bounded-limit
 ```
 
-Verify signatures against `agent/src/main/java/io/pyroscope/javaagent/config/Config.java` in
-`grafana/pyroscope-java` for the version you actually installed. `addProfilingType(...)` is
-not in that class.
+The deployment translates this policy to the pinned JFR/profiler/vendor API. Validate the
+translation against runtime metadata/help and emit the effective configuration. Third-party
+Java APIs and defaults move; do not preserve uncompiled SDK snippets as platform truth.
 
-Resolution against overhead, when tuning:
+Configuration rollout needs canary percentage, health criteria, automatic/manual rollback,
+kill switch, and an epoch marker. A profiler update is an observability change that can alter
+both overhead and historical comparability.
 
-```java
-.setProfilingInterval(Duration.ofMillis(10))    // default: more resolution, more overhead
-// .setProfilingInterval(Duration.ofMillis(100)) // minimal overhead
-.setProfilingLock("10ms")                        // enable while debugging contention
-```
+## Native JFR rolling buffer
 
-Maven coordinate — check Maven Central for the current stable version rather than pinning a
-number from memory:
-
-```xml
-<dependency>
-    <groupId>io.pyroscope</groupId>
-    <artifactId>agent</artifactId>
-    <version><!-- check before use --></version>
-</dependency>
-```
-
-## Per-request labels in Spring Boot
-
-The label API is `io.pyroscope.labels.v2`: `LabelsSet` (key/value pairs),
-`ScopedContext` (`AutoCloseable`; the constructor pushes the labels onto the **current
-thread's** async-profiler context id, `close()` restores the previous one) and
-`Pyroscope.LabelsWrapper.run(LabelsSet, Runnable | Callable)` which wraps the two. There
-is no `Labels.Builder`, no `Scope` and no `LabelsWrapper.of(...)`.
-
-```java
-import io.pyroscope.labels.v2.LabelsSet;
-import io.pyroscope.labels.v2.ScopedContext;
-
-@Component
-public class PyroscopeRequestInterceptor implements HandlerInterceptor {
-
-    private static final String ATTR = ScopedContext.class.getName();
-
-    @Override
-    public boolean preHandle(HttpServletRequest req, HttpServletResponse res, Object handler) {
-        String tenant = req.getHeader("X-Tenant-Id");
-        String route = (String) req.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
-        req.setAttribute(ATTR, new ScopedContext(new LabelsSet(
-            "tenant", tenant != null ? tenant : "unknown",
-            "endpoint", req.getMethod() + " " + (route != null ? route : "unmatched"))));
-        return true;
-    }
-
-    @Override
-    public void afterCompletion(HttpServletRequest req, HttpServletResponse res,
-                                Object handler, Exception ex) {
-        ScopedContext ctx = (ScopedContext) req.getAttribute(ATTR);
-        if (ctx != null) ctx.close();
-    }
-}
-```
-
-Two things the interceptor shape gets wrong unless you handle them. The label is bound to
-the thread, so a servlet async dispatch or a hand-off to another executor runs the rest of
-the request unlabelled — wrap that work in `LabelsWrapper.run(...)` on the worker. And the
-`endpoint` label must be the **route template**, not `getRequestURI()`: a URI with an id
-in it is one label value per request, which is the cardinality failure
-`metrics-and-cardinality` describes, paid here in the profile store.
-
-Every sample taken inside the scope carries those labels; filtering the UI by
-`tenant="acme"` then isolates that tenant's flame graph.
-
-## Continuous profiling with only the JDK
-
-Recording that never stops, retained on disk:
+For a target JDK, inspect first:
 
 ```bash
-# No duration= — this is the continuous form. maxsize/maxage supply retention.
-# settings=default is the configuration the JDK documents for continuous use;
-# profile.jfc is "for short periods of time". Override single events on top of it
-# with <event>#<setting>=<value> (jcmd help JFR.start shows the syntax).
-jcmd <pid> JFR.start name=continuous settings=default \
-  jdk.ExecutionSample#period=10ms \
-  maxsize=512m maxage=24h filename=/var/log/jfr/continuous.jfr
-
-# JDK 25, Linux, experimental: per-thread CPU-time samples with an explicit budget.
-jcmd <pid> JFR.start name=cputime settings=default \
-  jdk.CPUTimeSample#enabled=true jdk.CPUTimeSample#throttle=500/s maxage=6h
-
-# Read the accumulated history without stopping the recording; -30m limits the dump:
-jcmd <pid> JFR.dump name=continuous begin=-30m filename=/var/log/jfr/snapshot-%t.jfr
-
-# Look before you download: top frames of the last 10 minutes, in the JVM.
-jcmd <pid> JFR.view hot-methods maxage=10m
-
-jcmd <pid> JFR.stop name=continuous
+jcmd <pid> help JFR.start
+jfr configure --interactive
+jfr metadata
 ```
 
-`maxage`/`maxsize` bound what stays on disk; `JFR.dump begin=`/`end=` bound what one
-snapshot carries. A dump without either copies the whole retained window every time.
+A conceptual continuous recording uses a low-overhead settings file, no finite duration, and
+bounded age/size:
 
-Consuming events live instead, with nothing written to disk:
-
-```java
-import jdk.jfr.consumer.RecordingStream;
-
-public final class ContinuousStreamExporter {
-
-    private static final Map<String, Long> samplesByTopFrame = new ConcurrentHashMap<>();
-
-    public static void main(String[] args) throws InterruptedException {
-        try (RecordingStream rs = new RecordingStream()) {
-            rs.enable("jdk.ExecutionSample").withPeriod(Duration.ofMillis(20));
-            rs.onEvent("jdk.ExecutionSample", event -> {
-                var stack = event.getStackTrace();
-                if (stack == null || stack.getFrames().isEmpty()) return;
-                String top = stack.getFrames().get(0).getMethod().getName();
-                samplesByTopFrame.merge(top, 1L, Long::sum);
-            });
-            rs.startAsync();   // start() would block this thread indefinitely
-
-            Thread.sleep(Duration.ofSeconds(60).toMillis());
-            samplesByTopFrame.forEach((m, c) -> System.out.printf("%-40s %d%n", m, c));
-        }
-    }
-}
+```bash
+jcmd <pid> JFR.start \
+  name=continuous \
+  settings=/etc/service/continuous.jfc \
+  maxage=24h \
+  maxsize=512m
 ```
 
-Replacing the final `printf` with a Micrometer/Prometheus `/metrics` endpoint or a periodic
-`POST` to a time-series backend turns this into a minimal continuous profiler with no
-third-party `-javaagent`.
+Exact syntax/options are JDK-version inputs; validate them on the deployed runtime. Define
+disk repository location and `dumponexit`/filename behavior deliberately. `maxage` and
+`maxsize` limit retained chunks but do not promise an exact time horizon when event volume,
+chunk size, disk failure, or process lifecycle intervenes.
 
-## Regression alerting
+On incident trigger, dump a bounded window to a unique local path, checksum it, upload
+atomically, verify remote receipt, and retain metadata:
 
-```yaml
-apiVersion: 1
-groups:
-  - name: cpu-regression
-    interval: 5m
-    rules:
-      - alert: CPUProfilingRegression
-        expr: |
-          (
-            sum(rate(pyroscope_cpu_samples_total{
-              app="order-service", endpoint="/api/orders"}[5m]))
-            /
-            sum(rate(pyroscope_cpu_samples_total{
-              app="order-service", endpoint="/api/orders"}[5m] offset 1w))
-          ) > 1.2
-        labels:
-          severity: warning
-        annotations:
-          summary: 'CPU regression on /api/orders'
-          description: '20% more expensive than the same window last week.'
+```bash
+jcmd <pid> JFR.dump \
+  name=continuous \
+  begin=-30m \
+  filename=/var/log/jfr/incident-<id>-<timestamp>.jfr
 ```
 
-The `offset 1w` is doing the load-comparability work: same weekday, same hour.
+Discover whether `begin`, `end`, path expansion, view, or other conveniences exist in the
+target JDK rather than assuming cross-version support. Do not stop the rolling recording just
+to take a snapshot unless the operational protocol requires it.
 
-## Diff query procedure
+## RecordingStream design
 
-1. Pick two windows with structurally equivalent load — same weekday and hour, or the
-   intervals immediately before and after a deploy under the same traffic.
-2. Filter by the relevant label (tenant, endpoint) **before** comparing. Comparing
-   unfiltered aggregates mixes signals from different sources.
-3. Read the sample count of every frame before any quantitative statement.
-4. Confirm the direction of the diff against latency or throughput before declaring root
-   cause, and check that no new frame appeared as an unforeseen side effect of the fix.
+`RecordingStream.start()` blocks; `startAsync()` returns a thread. That API fact does not make
+an exporter safe. Event handlers must avoid blocking I/O, unbounded maps, per-event logging,
+and expensive symbol/string transformations.
 
-## Development environment
+Architecture:
 
-```yaml
-services:
-  pyroscope:
-    image: grafana/pyroscope:latest
-    ports: ['4040:4040']
-    command: ['server', '--config.file=/etc/pyroscope/config.yaml']
-    volumes:
-      - ./pyroscope-config.yaml:/etc/pyroscope/config.yaml
-      - pyroscope-data:/var/lib/pyroscope
-
-  app:
-    image: eclipse-temurin:25-jdk # the openjdk Docker Hub repo is discontinued
-    environment:
-      PYROSCOPE_SERVER_ADDRESS: 'http://pyroscope:4040'
-      PYROSCOPE_APPLICATION_NAME: 'my-java-app'
-      PYROSCOPE_PROFILING_INTERVAL: '10ms'
-
-volumes:
-  pyroscope-data:
+```text
+RecordingStream callback
+  -> validate/minimize event
+  -> bounded in-memory handoff
+  -> batch/encode/export worker
+  -> retry with bounded spool
+  -> authenticated backend
 ```
+
+Specify overload behavior: sample/drop by class, spill to bounded disk, or disable a channel.
+Expose dropped-event and queue-age metrics. Closing the stream must stop workers, flush within
+a deadline, and leave recoverable spool state. Test application shutdown, exporter exception,
+callback exception, backend timeout, and schema rejection.
+
+Preserve full stack and event weight where profiling queries require them. A map keyed only by
+top method loses caller ownership, timestamp, thread/task context, and uncertainty; exporting
+such a counter is telemetry, not a continuous profiler.
+
+## Context propagation contract
+
+For each allowed dimension:
+
+| Field            | Question                                                                 |
+| ---------------- | ------------------------------------------------------------------------ |
+| Semantic source  | Is this authenticated route/workload metadata or user input?             |
+| Canonicalization | How are case, aliases, unknown, and version formats normalized?          |
+| Bound            | Maximum simultaneous values and churn per retention window?              |
+| Privacy          | Personal/customer/security classification and permitted viewers/regions? |
+| Propagation      | Which executor/reactive/virtual-thread/async boundaries carry it?        |
+| Lifetime         | Exactly where is context installed, restored, cancelled, and cleared?    |
+| Missing          | Is `unknown` explicit, or can old thread context leak into new work?     |
+
+Use lexical/scoped wrappers supplied by the pinned profiler SDK where possible and close them
+with structured lifetime. Verify nested scopes and exceptional/cancelled exits. Never assume a
+servlet interceptor covers async dispatch or that a `ThreadLocal` follows tasks through a pool.
+
+For virtual threads, bind logical context inside each task. For reactive streams, propagate
+through the framework context/hook designed for the pinned version. Sampling a trace ID as a
+high-cardinality profile label is usually wrong; use sparse linkage/exemplars or backend joins.
+
+Test with two concurrent tenants/tasks repeatedly switching threads. The assertion is not only
+“label present,” but “no sample from A is attributed to B.”
+
+## Backend schema
+
+At minimum preserve:
+
+```text
+producer identity and authenticated service
+profile/event type and weight/unit
+time interval and clock metadata
+stack/frame identity plus language/native/JIT type
+thread/task state where available
+bounded approved context
+service version, artifact/image digest, JDK/profiler/config epoch
+sample/event totals and loss/throttle counters
+source manifest and checksum
+```
+
+Profile stores often intern stacks and labels. Schema changes to frame normalization,
+demangling, hidden/lambda names, thread labels, or weight units can split/merge historical
+series. Version the schema and prevent comparisons across incompatible epochs by default.
+
+## Query procedure
+
+### Incident localization
+
+1. Establish the affected service/version/instances and UTC time range from SLO metrics.
+2. Check collection coverage, clock, event totals, loss, and unresolved frames for that range.
+3. Select the event that matches CPU, elapsed wait, allocation, lock, or native question.
+4. Filter only by governed context whose presence ratio is known.
+5. Inspect absolute weights and totals before normalized stack percentages.
+6. Correlate with deploy/config/infrastructure/JFR/trace/queue evidence.
+7. Form a causal hypothesis and validate through reproduction or controlled change.
+
+### Deploy comparison
+
+Build matched sets rather than one arbitrary “before” and “after” window:
+
+```text
+same profile/config epoch
+same route/workload distribution
+same offered and completed work bands
+same error/timeout/cancellation treatment
+same capacity/autoscaling lifecycle and host class
+equivalent warm-up/uptime phase
+multiple independent instances/windows
+```
+
+Compare code-resource cost in a denominator tied to the decision, such as CPU-weight per
+successful operation. Preserve unnormalized totals. Apply statistical comparison at the
+independent instance/window level; sample events inside a profile are not independent trials.
+
+If matching is impossible during an incident, state the comparison as exploratory and list
+the confounders. A profile can still identify investigation targets without proving the deploy
+caused the outcome.
+
+## Alerting
+
+Alert on the system's ability to provide evidence:
+
+- expected targets missing or stale;
+- collector/profile session inactive;
+- event rate outside calibrated bounds conditional on workload;
+- lost/dropped/throttled events above budget;
+- context-present ratio or cardinality guardrail breach;
+- exporter queue age/bytes and disk free-space risk;
+- backend rejection/ingest lag/query freshness;
+- unresolved stack/JIT-symbol ratio;
+- collection overhead/latency budget exceeded.
+
+Do not page directly because a method's share of normalized samples changed by 20%. Resource
+or SLO guardrails page; profiles provide attribution. A statistically calibrated automated
+regression decision belongs in `performance-regression-ci`.
+
+## Retention, deletion, and incident hold
+
+Test retention with synthetic profiles and clock advancement. Verify deletion removes raw,
+indexes, replicas, caches, and derived exports according to policy. Incident holds need a
+legal/security owner, immutable manifest, checksum, reason, access log, expiry, and explicit
+release; they must not silently defeat tenant deletion obligations.
+
+Plan for backend disaster recovery: restore should preserve stack IDs/schema/version mapping,
+or historical queries can return plausible but wrong aggregates.
+
+## Operational test matrix
+
+| Test                           | Required evidence                                                            |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| Collector starts late/restarts | gap is observable; no identity/PID confusion                                 |
+| Target scales 1→N→0            | expected-target inventory converges; no orphan series                        |
+| Backend unavailable            | local resources bounded; drop/spool policy and recovery observed             |
+| Disk fills                     | application stays within failure contract; incident evidence status explicit |
+| High-cardinality input         | rejected/coarsened before export; security event visible                     |
+| Async context handoff          | correct logical attribution; no stale cross-request leakage                  |
+| Profiler/JDK upgrade           | new epoch; old/new not silently diffed                                       |
+| Injected hot stack             | appears above minimum detectable contribution                                |
+| Allocation/thread burst        | overhead and file/export volume remain within budget                         |
+| Unresolved symbols             | alert fires and raw addresses/build metadata survive                         |
+
+## Authoritative references
+
+- [JFR consumer package](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/consumer/package-summary.html)
+- [`RecordingStream`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/consumer/RecordingStream.html)
+- [JDK 25 `jfr` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)
+- [JDK 25 `jcmd` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+- [Grafana Pyroscope Java source](https://github.com/grafana/pyroscope-java) — API and context
+  behavior must be read from the pinned tag.
+- [OpenTelemetry Profiles data model](https://github.com/open-telemetry/opentelemetry-proto/tree/main/opentelemetry/proto/profiles) — inspect stability/version before adopting the schema.

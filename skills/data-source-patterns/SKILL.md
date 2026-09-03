@@ -119,8 +119,9 @@ Read path of an application whose write path uses a mapper
 - Data Mapper's real cost is the mapping layer: code to write, code to test, and a place
   for bugs that neither the model nor the schema exhibits alone. It is worth paying when
   the shapes genuinely differ and wasteful when they do not.
-- **A JPA entity annotated into a shape the ORM likes is Active Record wearing a mapper's
-  clothes.** If the model has an `Integer` where the domain means an enum, a flattened
+- A JPA entity without persistence methods remains part of a Data Mapper-style unit of work, even
+  when persistence constraints distort its design; call that **persistence leakage**, not Active
+  Record. If the model has an `Integer` where the domain means an enum, a flattened
   address because `@Embeddable` was awkward, or a bidirectional association that exists
   only for a mapping, the schema is already shaping the model — decide deliberately whether
   that is acceptable here.
@@ -134,9 +135,10 @@ Read path of an application whose write path uses a mapper
   row object with no business logic. When a "domain object" has only accessors and
   persistence, that is what it is, and calling it that clarifies the design
   (`domain-logic-organization`).
-- Different patterns may coexist in one application, and usually should. What must not
-  happen is two patterns writing the same table, because then two mechanisms own its
-  invariants and its optimistic locking (`offline-concurrency-control`).
+- Different patterns may coexist. Multiple mechanisms can write one table during migrations or for
+  deliberately partitioned operations, but they must share invariant, versioning and transaction
+  rules with explicit write authority. Uncoordinated writers are the defect
+  (`offline-concurrency-control`).
 - SQL is not a failure of abstraction. Reporting, bulk updates and set-based rules are
   clearer, faster and more maintainable as SQL owned by a gateway than as object graphs
   loaded to be looped over.

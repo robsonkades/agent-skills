@@ -26,24 +26,20 @@ method), so nothing changes at runtime — but a reader who expects `invokespeci
 private call will misclassify a site, and a tool that rewrites private calls to
 `invokespecial` produces a class the verifier accepts on 55+ only within the same nest.
 
-## The four stages of an inline cache
+## Dispatch state is implementation and tier specific
 
-1. **Unlinked** — the first execution has no cache; a full vtable lookup on the receiver's real
-   type.
-2. **Monomorphic** — the site is rewritten to point straight at the resolved method, guarded by
-   a fast klass-pointer check (`if klass == X, jump to X.method`). If the guard always holds,
-   the JIT can inline the body and remove the call entirely.
-3. **Bimorphic** — a second concrete type appears; the guard becomes a two-way check. Still
-   inlinable on both arms, but the branch remains.
-4. **Megamorphic** — above a small number of distinct types, HotSpot gives up on the polymorphic
-   cache and falls back to a real vtable/itable lookup: indexed, uninlinable, and with a branch
-   the processor cannot predict, on every call.
+Do not model every virtual call as one universal four-state cache. HotSpot has interpreter
+dispatch/caches, profiling data, compiled guarded calls and shared virtual/interface stubs;
+their transitions and type-width limits are internal policies that change by tier and release.
+A monomorphic profile may let a compiler guard one receiver class, inline the target and
+deoptimize if the assumption fails. A polymorphic site may inline selected hot types. A broad
+or incomplete profile may retain indirect dispatch. “Megamorphic” therefore does not prove
+that every execution performs one particular lookup or that the CPU cannot predict it.
 
-The type profile driving that decision is collected by the interpreter and by C1, which count
-the concrete klasses seen per call site. Megamorphic cost is therefore a property of code
-shape, not of the language: reduce the number of concrete types reaching a hot site — for
-example by specialising the hot path — rather than avoiding polymorphism as a policy. Which
-inlining verdict a site actually received is `compilation-and-inlining-logs`' subject.
+Treat receiver diversity as a call-site hypothesis. Confirm it with compilation/inlining logs,
+deoptimization evidence and, only when material, assembly/profile data. Prefer redesign only
+when the measured site contributes meaningfully to the objective; stable specialization can
+help, but type switches can increase coupling and become slower as the hierarchy evolves.
 
 ## Branch and switch instructions
 
@@ -51,23 +47,23 @@ inlining verdict a site actually received is `compilation-and-inlining-logs`' su
 ifeq / ifne      // branch on top-of-stack == / != 0
 if_icmpeq        // branch on two ints equal
 goto             // unconditional
-tableswitch      // contiguous case range — O(1), indexed
-lookupswitch     // sparse cases — O(log n), binary search
+tableswitch      // dense integer-key table encoding
+lookupswitch     // sorted key/offset-pair encoding
 ```
 
-The choice between `tableswitch` and `lookupswitch` is made by `javac` from a size-and-time
-cost formula (`com.sun.tools.javac.jvm.Gen`), not by the runtime, and not simply from density:
-two contiguous cases compile to `lookupswitch`, three to `tableswitch` (verified). Do not read
-a `lookupswitch` as evidence of sparse cases.
+The choice is made by javac from a size/cost heuristic, not simply density: in the tested JDK
+25 output, two contiguous cases used `lookupswitch` and three used `tableswitch`. The JVMS
+defines bytecode semantics and encodings, not steady-state complexity after JIT lowering; do
+not infer nanosecond cost or generated machine-code strategy from the opcode alone.
 
 ## What javac desugars, and what it does not
 
-javac is not an optimising compiler. It folds compile-time constants (`CONST * 2 + 1` becomes
-`bipush 15`), removes `if (false)` branches, and otherwise emits the source shape one construct
-at a time. Every other transformation belongs to the JIT — but the JIT reads the **bytecode**
-javac produced, and two of its decisions look only at that bytecode: `MaxInlineSize` (35
-bytecode bytes at a cold site) and `DontCompileHugeMethods` (8000 bytes; never compiled). The
-desugarings below are where a one-line method grows past 35 bytes without anyone noticing.
+javac primarily lowers language constructs and performs limited folding/simplification; its
+exact output is release-dependent. HotSpot then applies tier-, profile- and release-specific
+policies to that bytecode. A tested build reported a 35-byte cold-site inline threshold and an
+8,000-byte huge-method policy, but neither number is a Java contract and hot paths can follow
+different policies. Use the table to find candidate code growth, then confirm the deployed
+compiler's decision.
 
 | Source construct                                  | Bytecode on javac 25 (verified)                                                                                                                                                                                       | Size / cost note                                                                             |
 | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -75,18 +71,18 @@ desugarings below are where a one-line method grows past 35 bytes without anyone
 | `s = s + p + ","` in a loop                       | One `makeConcatWithConstants` per iteration — still no `StringBuilder`, so grepping for it finds nothing                                                                                                              | The quadratic copy is inside the linked handle; grep `makeConcatWithConstants` inside a loop |
 | `synchronized (lock) { … }`                       | `monitorenter`, body, `monitorexit`, `goto`; plus a handler `any` covering the body that does `monitorexit; athrow`, and a second `any` entry covering the handler itself                                             | 28 bytes for a one-line body; two `Exception table` rows are the tell                        |
 | `synchronized void m()`                           | No monitor instructions: `flags: (0x0020) ACC_SYNCHRONIZED`, the interpreter and JIT lock around the body                                                                                                             | 11 bytes for the same body; invisible in `-c`, visible in `-v`                               |
-| `try { return 1; } finally { c.close(); }`        | The `finally` body is **duplicated**: once inline on the normal path, once in an `any` handler that rethrows                                                                                                          | Every `finally` doubles its code; nested `finally` multiplies it                             |
-| `try (c) { return 1; }`                           | Null check, `close()` on the normal path, a `Throwable` handler that calls `close()` again inside its own handler feeding `Throwable.addSuppressed`; no `$closeResource` helper on 25                                 | 38 bytes for a one-line body — already over `MaxInlineSize`                                  |
+| `try { return 1; } finally { c.close(); }`        | In this javac 25 shape, the `finally` body is duplicated on normal and exceptional paths                                                                                                                              | Duplication varies with exits/control flow; nested cleanup can expand sharply                |
+| `try (c) { return 1; }`                           | Null check, `close()` on the normal path, a `Throwable` handler that calls `close()` again inside its own handler feeding `Throwable.addSuppressed`; no `$closeResource` helper on 25                                 | 38 bytes here; above one tested cold threshold, not proof that it cannot inline              |
 | `switch (enumInSameNest)`                         | `invokevirtual ordinal()` then `lookupswitch`/`tableswitch` on the ordinal directly                                                                                                                                   |                                                                                              |
 | `switch (enumFromAnotherClass)`                   | `getstatic Sw$1.$SwitchMap$Top:[I`, `ordinal()`, `iaload`, then the switch — a synthetic `Sw$1` class maps ordinals so a recompiled enum does not break the caller                                                    | One extra class per switching class; an `iaload` per dispatch                                |
 | `switch (string)`                                 | `hashCode()`, `lookupswitch` on the hash, `equals()` per candidate to guard collisions, then a second `lookupswitch`/`tableswitch` on a synthetic index                                                               | 94 bytes for two cases                                                                       |
 | `switch (sealed)` with type patterns              | `Objects.requireNonNull`, `invokedynamic typeSwitch(LShape;I)I` (`SwitchBootstraps`), `lookupswitch` over the returned index, `checkcast` per arm — and a synthetic `default` that throws `MatchException` (JDK 21+)  | 93 bytes for two arms; the `MatchException` arm exists even when the switch is exhaustive    |
 | `case Circle(double r)` record pattern            | Same `typeSwitch`, then `checkcast` and accessor `invokevirtual r()` per component                                                                                                                                    | 143 bytes for two arms                                                                       |
-| `assert x > 0 : "x"`                              | `getstatic $assertionsDisabled`, `ifne` skip, `new AssertionError`; the field is set in `<clinit>` from `Class.desiredAssertionStatus()`                                                                              | Never free: the `getstatic` and branch remain when assertions are off                        |
-| `Integer i; i++`                                  | `intValue`, `iadd`, `Integer.valueOf` — an allocation above the `Integer` cache range                                                                                                                                 | The boxing nobody wrote                                                                      |
+| `assert x > 0 : "x"`                              | `getstatic $assertionsDisabled`, `ifne` skip, `new AssertionError`; the field is set in `<clinit>` from `Class.desiredAssertionStatus()`                                                                              | Branch exists in bytecode; compiled code may fold the stable condition                       |
+| `Integer i; i++`                                  | `intValue`, `iadd`, `Integer.valueOf`; values outside the configured cache may require a wrapper                                                                                                                      | Actual allocation may still be removed by escape analysis                                    |
 | `for (Integer x : list) s += x`                   | `iterator()`, `hasNext()`, `next()`, `checkcast Integer`, `intValue` per element                                                                                                                                      |                                                                                              |
 | `inner.read()` touching the outer's private field | Plain `getfield Lab.counter` — `NestHost`/`NestMembers` attributes (JEP 181) replaced the `access$000` synthetic accessors of class files < 55                                                                        | No accessor call to inline any more                                                          |
-| `record Circle(double r)`                         | `final class … extends java.lang.Record`, a `Record` attribute, and `toString`/`hashCode`/`equals` each a single `invokedynamic` bootstrapped by `ObjectMethods.bootstrap` with a `REF_getField` handle per component | Three call sites that link on first use; nothing to read in the record itself                |
+| `record Circle(double r)`                         | `final class … extends java.lang.Record`, a `Record` attribute, and `toString`/`hashCode`/`equals` each a single `invokedynamic` bootstrapped by `ObjectMethods.bootstrap` with a `REF_getField` handle per component | Three dynamic call sites; inspect bootstrap data and runtime linkage                         |
 | `obj instanceof String s`                         | `instanceof`, `ifeq`, `aload`, `checkcast`, `astore` — **identical** to `instanceof` followed by an explicit cast                                                                                                     | The pattern form is not a bytecode optimisation; prefer it for the scope rule, not the cost  |
 
 The last row corrects a widespread claim: on javac 25 both forms are 19 bytes with one
@@ -109,9 +105,10 @@ BootstrapMethods:
       #278 ()V                                              // instantiated method type
 ```
 
-On the first execution the JVM calls `LambdaMetafactory.metafactory`, which spins a class
-implementing the target functional interface. The result is cached in a real `CallSite`; every
-later execution of that site reuses the linked handle. Since JDK 15 (JEP 371) that generated
+Resolution invokes `LambdaMetafactory.metafactory`, which commonly defines a class implementing
+the target functional interface, and installs a linked `CallSite`. Concurrent bootstrap
+invocations and failure caching follow JVMS 5.4.3.6, so “the bootstrap runs exactly once” is
+not a safe operational invariant. Since JDK 15 (JEP 371) that generated
 class is a **hidden class**, created through `MethodHandles.Lookup::defineHiddenClass` rather
 than the old `Unsafe::defineAnonymousClass`. Consequences worth knowing when auditing:
 
@@ -158,18 +155,19 @@ this is a `LambdaMetafactory` decision, not a JVMS guarantee. Measure with `-pro
   `PermittedSubclasses`, yet javac **still emits** a `default` arm that throws
   `MatchException` (verified: `new MatchException(null, null); athrow`), because a permitted
   subclass added and compiled separately would otherwise fall through. A `MatchException` in
-  production is therefore a build-consistency bug, not a logic bug.
+  production usually indicates binary evolution or an inconsistent runtime class path/module
+  path; distinguish stale artifacts from generated/adversarial class files before remediation.
 
 ## Choosing an abstraction
 
-| Abstraction                                    | Bytecode                                                | After JIT                                                                                                                                                             | Prefer when                                |
-| ---------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Direct method (`invokestatic`/`invokespecial`) | No dispatch                                             | Trivially inlinable when small                                                                                                                                        | The abstraction is not needed              |
-| Interface with few implementors                | `invokeinterface`                                       | Good while the site stays monomorphic or bimorphic in practice                                                                                                        | Polymorphic APIs with low type cardinality |
-| Non-capturing lambda                           | `invokedynamic`, generally one reused instance          | Generally equivalent to a method call                                                                                                                                 | Stateless callbacks                        |
-| Capturing lambda                               | `invokedynamic` plus possible per-invocation allocation | Depends on escape analysis removing the allocation                                                                                                                    | Avoid creating in hot loops unmeasured     |
-| Reflection (`Method.invoke`)                   | Indirect call with an access check                      | Since JDK 18 (JEP 416) implemented on method handles — there is no `MethodAccessor` inflation threshold any more; still boxes arguments and return into an `Object[]` | Outside hot paths                          |
-| `MethodHandle`                                 | `invokedynamic` / `invokeExact`                         | Can approach a direct call when held `static final` so the JIT treats it as a constant                                                                                | Low-overhead alternative to reflection     |
+| Abstraction                                    | Bytecode                                                | After JIT                                                                                                              | Prefer when                             |
+| ---------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Direct method (`invokestatic`/`invokespecial`) | No receiver dispatch                                    | Often easy to inline, subject to size, tier, profile and compiler policy                                               | No polymorphic substitution is required |
+| Interface call                                 | `invokeinterface`                                       | Can inline profiled targets or retain indirect dispatch; implementor count alone does not determine one site's profile | Substitution improves design            |
+| Non-capturing lambda                           | `invokedynamic`, commonly one reused instance           | Can optimize toward a direct call when linkage/profile are visible                                                     | Stateless callbacks                     |
+| Capturing lambda                               | `invokedynamic` plus possible per-invocation allocation | Depends on escape analysis removing the allocation                                                                     | Avoid creating in hot loops unmeasured  |
+| Reflection (`Method.invoke`)                   | Source call is ordinary invocation of reflection API    | JDK 18+ uses method handles internally; access, adaptation and varargs/boxing costs depend on usage                    | Dynamic metadata-driven integration     |
+| `MethodHandle.invokeExact`                     | Signature-polymorphic `invokevirtual` in class file     | A stable/constant handle and exact types can expose the target to optimization; mutable/adapted chains cost more       | Typed dynamic linkage                   |
 
 "Reflection is 10-100x slower" is meaningless without a stated baseline: against an already
 inlined `invokevirtual`, on the same JDK, at the same call site, after warm-up. Compared cold,
@@ -238,8 +236,18 @@ that deoptimisation is the cause.
 java -jar benchmarks.jar BytecodeCostBenchmark -prof perfasm -f 1 -wi 5 -i 5
 ```
 
-`perfasm` (which needs hsdis for the JDK in use) annotates the real x86/aarch64 assembly C2
-generated, with the share of time samples per instruction. That is the only legitimate basis
-for "instruction X costs about Y", because the number then arrives with hardware, JDK and
-workload attached. Use `-prof gc` when the question is allocation and `-prof perfnorm` for
-hardware counters.
+`perfasm` (which needs compatible disassembly support) can annotate generated assembly with
+sample locations. Use it as one link in an evidence chain: a representative benchmark,
+compiler logs, enough samples, counter multiplexing checks and the deployed architecture/JDK.
+Use `-prof gc` for allocation hypotheses and suitable hardware counters for stalls/branches;
+validate any optimization on the production objective, especially tail latency and throughput.
+
+## Primary references
+
+- [JVMS 25, instruction set](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html)
+- [JVMS 25, method and dynamic-call-site resolution](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-5.html#jvms-5.4.3)
+- [JEP 181: Nest-Based Access Control](https://openjdk.org/jeps/181)
+- [JEP 280: Indify String Concatenation](https://openjdk.org/jeps/280)
+- [JEP 371: Hidden Classes](https://openjdk.org/jeps/371)
+- [JEP 416: Reimplement Core Reflection with Method Handles](https://openjdk.org/jeps/416)
+- [JEP 441: Pattern Matching for `switch`](https://openjdk.org/jeps/441)

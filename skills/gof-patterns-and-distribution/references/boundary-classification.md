@@ -89,10 +89,10 @@ redesign and not a refactor:
 ```text
                 In-process              Over a broker
 thread          the publisher's         the consumer's, elsewhere
-transaction     the publisher's         separate; needs an outbox
-ordering        unspecified             per partition only
-delivery        best effort, in memory  at-least-once, durable
-failure         breaks the publisher    invisible to the publisher
+transaction     API/context-defined     usually separate; needs an explicit bridge
+ordering        implementation-defined broker/protocol/topology-specific
+delivery        in memory               configured broker semantics
+failure         policy-defined          acknowledgement/retry/terminal policy
 schema          a Java type             a versioned contract
 ```
 

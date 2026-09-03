@@ -1,20 +1,15 @@
 schemaVersion: 1
 
 name: graalvm-native-image
-version: 1.2.0
+version: 2.0.0
 description: >-
-  GraalVM Native Image: the closed-world assumption and reachability analysis, reflection
-  and resource metadata, build-time versus run-time initialisation and heap snapshotting,
-  the peak-throughput trade against the JIT, PGO, and measuring the real startup and memory
-  win. Use when deciding whether a service should be a native binary, when a build succeeds
-  but ClassNotFoundException or NoSuchMethodException appears at run time, when a static
-  initializer captured a build-environment value, when --pgo or --gc=G1 fails on the
-  installed distribution, when a copied -H: option does nothing, when the binary exits at
-  startup naming CPU features the host lacks, when the CI build step dies with exit 137,
-  when native RSS grows for hours with no leak, when a "5-10x less memory" claim needs
-  checking, or when JFR events are missing from a native binary. Does not cover Graal as a
-  JIT inside the JVM (graalvm-jit), the JVM-preserving startup strategies
-  (startup-cds-crac-leyden), or JVM warm-up (jit-compilation).
+  GraalVM Native Image: closed-world reachability, dynamic-feature metadata,
+  class initialization and image-heap state, CPU targeting, GC and PGO choices,
+  observability, and fair comparison with HotSpot. Use when deciding whether AOT
+  fits a workload, diagnosing build or runtime-only failures, or validating startup,
+  footprint, latency, throughput, build-cost, portability, and security trade-offs.
+  Does not cover Graal as a JVM JIT (graalvm-jit), JVM-preserving startup strategies
+  (startup-cds-crac-leyden), or HotSpot warm-up mechanics (jit-compilation).
 
 license: Apache-2.0
 

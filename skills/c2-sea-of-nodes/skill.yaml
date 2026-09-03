@@ -1,10 +1,10 @@
 schemaVersion: 1
 
 name: c2-sea-of-nodes
-version: 1.3.0
+version: 1.4.0
 description: >-
   How HotSpot actually executes and compiles: the runtime-generated template interpreter,
-  C2's sea-of-nodes IR, the seven compilation phases and their order, and why a given
+  C2's sea-of-nodes IR, a release-scoped diagnostic map of compilation phases, and why a given
   transformation fired or did not. Use when a method is believed to be "not optimised", when
   an allocation that looks eliminable still shows up in allocation profiling, when a hot
   call site reports `too large` or stays non-inlined, when `made not entrant` repeats on the

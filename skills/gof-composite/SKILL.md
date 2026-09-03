@@ -3,7 +3,7 @@ name: gof-composite
 description: >
   Composite in modern Java: treating a leaf and a tree of leaves through one interface, and the
   hazards that come with a recursive structure. Covers the transparent-versus-safe trade-off and
-  why a sealed interface with exhaustive pattern matching now beats both, unbounded depth and
+  when a sealed interface with exhaustive pattern matching changes that trade-off, unbounded depth and
   StackOverflowError, cycles introduced by parent pointers and the infinite recursion they cause
   in equals, hashCode and toString, mutation during traversal, and why a tree whose children live
   in other services is not this pattern. Use when a part-whole hierarchy is being modelled, when
@@ -53,8 +53,9 @@ rules and specifications, UI component trees.
   evidence that the operation is not indifferent — model the difference instead of hiding it.
 - **The children are remote.** A uniform interface over local and remote children hides N network
   calls behind a loop (`gof-patterns-and-distribution`).
-- **The structure is a graph, not a tree.** Composite's operations assume termination; shared
-  nodes double-count and cycles never return.
+- **The structure is an unrestricted graph with undefined visit semantics.** Composite can
+  represent DAGs or cyclic graphs only when each operation defines visited-node identity,
+  duplicate handling and termination. Without those policies, tree-style recursion is unsafe.
 
 ## Transparent, safe, or sealed
 
@@ -68,17 +69,18 @@ Safe
   only Composite declares add/remove; clients downcast to mutate
   → honest types, but clients test and cast
 
-Sealed + pattern matching (modern default)
+Sealed + pattern matching (closed-world option)
   sealed interface Node permits Leaf, Branch
   → the shared operation stays on the interface; structural operations
     live on Branch; a switch over the closed set is exhaustive and the
     compiler finds every site when a variant is added
 ```
 
-The sealed form resolves the trade-off the GoF text had to choose between: clients that only
-evaluate use the interface and never mention the variants; clients that manipulate structure
-switch exhaustively, with no downcast and no unreachable `throw`. Prefer it whenever you own
-every node type (`java-composition-over-inheritance`).
+The sealed form shifts the trade-off: clients that only evaluate use the interface, while
+structural clients switch exhaustively without unchecked casts. In exchange, the hierarchy is
+closed and adding a permitted subtype can force changes in exhaustive clients. Prefer it when
+closed-world control and compiler-assisted evolution outweigh plugin extensibility
+(`java-composition-over-inheritance`).
 
 ## Decision rules
 
@@ -88,9 +90,9 @@ THEN recursion is a denial-of-service surface. Bound the depth on
      construction, and traverse iteratively with an explicit deque.
 
 IF nodes hold parent pointers
-THEN the structure has cycles. equals, hashCode and toString must not
-     follow them — implement by identity, or exclude the parent, or the
-     first log line recurses until the stack ends.
+THEN bidirectional traversal has cycles. Ensure equals, hashCode, toString,
+     serializers and walkers do not recursively follow both directions—use identity,
+     exclude back-references, or track visited nodes.
 
 IF the tree is mutable and may be traversed concurrently
 THEN a walk can see a half-applied change or throw
@@ -100,9 +102,10 @@ THEN a walk can see a half-applied change or throw
 IF a leaf must implement an operation that has no meaning for it
 THEN the interface is wrong. Move that operation to the composite type.
 
-IF the same node instance appears in two places in the tree
-THEN it is a DAG. Aggregations double-count and identity-based logic
-     breaks; either forbid sharing or make operations idempotent over it.
+IF the same node instance appears in two places
+THEN it is a DAG. Decide whether aggregation is per edge/path or per node identity;
+     neither is universally correct. Forbid sharing or track visited identity when
+     the chosen semantics require it.
 
 IF an operation over the tree needs to know each node's concrete type
 THEN it is a Visitor or a pattern-matched fold, not a method on
@@ -116,18 +119,20 @@ THEN a walk is an N+1 query. Load the subtree in one query, or do not
 ## Cross-cutting checks
 
 - **Concurrency.** Nothing about the pattern is thread-safe. The realistic hazards are a
-  traversal running while a child is added — `ConcurrentModificationException` at best, a walk
+  traversal running while a child is added — `ConcurrentModificationException` in some
+  collection implementations, a walk
   that silently skips a subtree at worst — and a "total" computed across a mutation, which is
   arithmetically consistent with no state the tree ever had. Immutable nodes with a copy-on-write
-  root reference remove both, and make caching a computed aggregate safe.
+  root reference remove both only when the reachable nodes are deeply immutable, and then make
+  caching a computed aggregate safe.
 - **Distribution.** A composite is process-local. Where children are references into another
   service, the uniform interface turns one call into a fan-out whose latency is the slowest
   branch and whose failure semantics are partial (`scatter-gather`). Where trees are transmitted,
   depth is an attack surface — deeply nested JSON or XML exhausts the parser's stack or the
   serialiser's, so a depth limit belongs at the boundary, not in the domain.
-- **Performance.** Per-node object overhead dominates for wide shallow trees: a million-node tree
-  of small objects costs far more in headers and references than the data it holds. Recursive
-  traversal also allocates stack frames the JIT cannot always eliminate. Where a tree is walked
+- **Performance.** Per-node object overhead can dominate wide shallow trees of small payloads;
+  measure layout rather than infer it from node count. Recursive traversal consumes native
+  thread-stack space and HotSpot generally does not perform tail-call elimination. Where a tree is walked
   in a hot path, consider computing an aggregate incrementally at mutation time, or flattening to
   an array-backed representation — after measuring (`allocation-profiling`).
 - **Testing.** Trees are where property-based tests pay: generate random structures and assert

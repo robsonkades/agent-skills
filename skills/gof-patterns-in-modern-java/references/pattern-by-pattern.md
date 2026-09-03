@@ -8,10 +8,10 @@ still be written, and the residual case where it should.
 | Pattern              | Modern mechanism                                                   | Write the classical form?                                                                         |
 | -------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
 | **Abstract Factory** | One `@Configuration` per profile; a record of suppliers in a `Map` | **Sometimes.** When the family is chosen per request/tenant, or when third parties contribute one |
-| **Builder**          | Record + compact constructor + named static factories              | **Past four components, or with optional ones.** Staged builders for published API                |
-| **Factory Method**   | Injected `Supplier`; `Map<Key, Supplier>`; sealed `switch`         | **Only when a framework constructs your subclass** — no injection point exists                    |
-| **Prototype**        | Immutability; copy constructors; `withX`                           | **Rarely.** Configured templates duplicated at runtime; never via `Cloneable`                     |
-| **Singleton**        | The container's singleton scope                                    | **Almost never.** JVM-wide agents, `ServiceLoader` providers, enum constants                      |
+| **Builder**          | Record + compact constructor + named factories                     | When positional construction is ambiguous, staged, or one process builds multiple representations |
+| **Factory Method**   | Injected `Supplier`; `Map<Key, Supplier>`; sealed `switch`         | When inherited creation is a real framework/extension hook                                        |
+| **Prototype**        | Immutability; copy constructors; explicit/generated withers        | Configured runtime templates or polymorphic copies; avoid introducing new `Cloneable` APIs        |
+| **Singleton**        | Container lifecycle scope or explicit owned instance               | Rare bridges where process/class-loader scoped global access is a real constraint                 |
 
 Notes worth carrying:
 
@@ -44,19 +44,19 @@ Notes:
 
 ## Behavioural
 
-| Pattern                     | Modern mechanism                                                  | Write the classical form?                                                                         |
-| --------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| **Chain of Responsibility** | Servlet filters, interceptor chains; a `List<Handler>` iterated   | **For domain pipelines.** Never re-implement the transport chain                                  |
-| **Command**                 | A record; `Runnable`/`Callable`; a sealed set + `switch` dispatch | **Yes, when something queues, stores, retries or undoes it**                                      |
-| **Interpreter**             | Sealed AST + folds; or CEL/JSONLogic/a rules engine               | **For a small grammar you must control** — especially when the AST is translated                  |
-| **Iterator**                | `Iterable`, `Stream`, `Spliterator`, Gatherers                    | **Implement `Spliterator`, not `Iterator`.** Hand-written iterators only for two-handed traversal |
-| **Mediator**                | Nothing supplies it                                               | **Yes, bounded.** Its distributed form is an orchestrator                                         |
-| **Memento**                 | Immutable state behind one reference; records                     | **When the originator is genuinely mutable.** Otherwise share the reference                       |
-| **Observer**                | `ApplicationEventPublisher`; reactive streams; brokers            | **Rarely by hand.** Use the framework's, and know which of the three levels you are on            |
-| **State**                   | Sealed states + one transition function                           | **Yes, in the modern form.** A class per state only when each has real behaviour                  |
-| **Strategy**                | A lambda; a domain functional interface; DI-selected map          | **When it needs a name, a key, metadata or injection**                                            |
-| **Template Method**         | A `final` class taking composed steps                             | **Framework extension points and contract test base classes**                                     |
-| **Visitor**                 | Sealed interface + exhaustive `switch`                            | **Only for types you do not compile, or an `accept`-based API**                                   |
+| Pattern                     | Modern mechanism                                                  | Write the classical form?                                                              |
+| --------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **Chain of Responsibility** | Servlet filters, interceptor chains; a `List<Handler>` iterated   | For domain pipelines or when framework chains cannot express the required contract     |
+| **Command**                 | A record; `Runnable`/`Callable`; a sealed set + `switch` dispatch | **Yes, when something queues, stores, retries or undoes it**                           |
+| **Interpreter**             | Sealed AST + folds; or CEL/JSONLogic/a rules engine               | **For a small grammar you must control** — especially when the AST is translated       |
+| **Iterator**                | `Iterable`, `Stream`, `Spliterator`, Gatherers                    | Implement the smallest pull/stream/splitting contract consumers actually need          |
+| **Mediator**                | Nothing supplies it                                               | **Yes, bounded.** Its distributed form is an orchestrator                              |
+| **Memento**                 | Immutable state behind one reference; records                     | **When the originator is genuinely mutable.** Otherwise share the reference            |
+| **Observer**                | `ApplicationEventPublisher`; reactive streams; brokers            | **Rarely by hand.** Use the framework's, and know which of the three levels you are on |
+| **State**                   | Sealed states + one transition function                           | **Yes, in the modern form.** A class per state only when each has real behaviour       |
+| **Strategy**                | A lambda; a domain functional interface; DI-selected map          | **When it needs a name, a key, metadata or injection**                                 |
+| **Template Method**         | A `final` class taking composed steps                             | **Framework extension points and contract test base classes**                          |
+| **Visitor**                 | Sealed interface + exhaustive `switch`                            | **Only for types you do not compile, or an `accept`-based API**                        |
 
 Notes:
 

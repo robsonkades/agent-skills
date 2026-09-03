@@ -16,7 +16,8 @@ description: >
 
 ## Purpose
 
-Concentrate defence at trust boundaries and remove it everywhere else. The two failure
+Concentrate each defence at the boundary or state transition that owns its invariant, then remove
+only checks proven redundant. The two failure
 modes this skill prevents are opposites: the unguarded boundary that lets bad data deep
 into the system before anything fails, and the codebase where every private method
 re-checks every argument — noise that buries the checks that matter and asserts that
@@ -28,40 +29,47 @@ nobody knows where validation actually happened.
    deserialised requests, message payloads, file and database reads, configuration,
    and every public entry point of a published library. When unsure whether a seam is a
    boundary, read [references/trust-boundaries.md](references/trust-boundaries.md).
-2. **At each boundary, normalise first, then validate**: strip, canonicalise case and
-   form once, then check — each check naming the violated expectation and the offending
-   value. Reject; never repair.
+2. **Bound before expensive work.** Limit bytes, nesting, collection counts and decompressed
+   expansion; decode strictly; then apply only contract-defined canonicalization and validate
+   semantics. Preserve raw input separately only when audit/legal needs justify its risk.
 3. **Make the validated state a type.** Parse raw input into a record whose compact
    constructor enforces the checks. Inside the boundary, `CustomerId` circulating means
    the null- and format-checks are _unnecessary_, not merely skipped.
-4. **Delete the now-redundant interior checks.** Hardening a boundary without removing
-   the duplicate checks inside it delivers the noise without the safety.
-5. **Guard interior invariants with `assert`** where a broken one would fail far from
-   its cause — and only there.
+4. **Delete only proven-redundant checks.** Keep constructor invariants, authorization,
+   concurrency/transaction rechecks and checks protecting a different state transition.
+5. **Use assertions diagnostically, never as required enforcement.** If disabling a check could
+   permit corruption, disclosure or an invalid side effect, use an explicit runtime check.
 
 ## Rules
 
-- Every precondition names its expectation: `Objects.requireNonNull(customerId,
-"customerId")`; range and state checks report expected and actual — "quantity must be
-  > 0, was -3", not "invalid quantity".
-- Fail fast. A detected-but-tolerated bad state fails later, further from the cause,
-  after possibly writing corrupt data. Distance from cause to failure is the cost being
-  managed.
-- Never silently correct: clamping a negative amount to zero, substituting a default
-  currency, or swallowing an unparseable date hides the caller's bug and turns it into
-  wrong data. Correction is only acceptable as _documented normalisation_ of
-  representation (whitespace, case, Unicode form) — never of meaning.
-- `assert` is for internal invariants only. It is disabled by default (enabled with
-  `-ea`), so an assert on untrusted input or a public-API precondition is a check that
-  does not run in production. Public preconditions throw; asserts state what the code
-  itself guarantees.
+- Preconditions identify the field/expectation with a stable error code. Include actual values only
+  when they are bounded and non-sensitive; otherwise redact/hash and retain a correlation id.
+- Fail fast before irreversible effects for one invalid operation. Batch/stream boundaries may
+  isolate bad items and return an aggregate report, but must not acknowledge invalid work as
+  successful or continue with corrupted shared state.
+- Do not silently change meaning. Defaults, clamping and migration coercions are acceptable only as
+  an explicit, versioned compatibility policy with telemetry and a removal/ownership decision.
+  Representation normalization is likewise contract-specific: case, whitespace and Unicode changes
+  can alter identifiers, signatures or user-visible text.
+- `assert` is disabled by default (enabled with `-ea`) and must have no required side effects. Use it
+  for diagnostic internal claims whose removal does not change correctness. Public/trust-boundary
+  preconditions and corruption-prevention invariants require ordinary control flow/exceptions.
 - Do not null-check what cannot be null by construction. A record that
   `requireNonNull`s its components makes every downstream reader of those components
   null-free; a check there implies a falsehood about where nulls can occur.
 - No catch-all "just in case" wrappers around interior calls. Exception handling
   strategy — what to catch where — belongs to java-exception-design.
-- A published library's public methods are a boundary even when all current callers are
-  "your own" code: validate them like external input.
+- A published library's public methods are compatibility/trust boundaries even when current callers
+  are internal. Enforce the documented contract; do not mechanically check every parameter when a
+  natural operation already provides the same stable failure and the performance/API policy says
+  so.
+- Defend availability as well as value correctness: cap input/body/collection sizes, nesting,
+  decompression ratios, regex/parser work, numeric ranges and per-request concurrency before
+  allocating proportional state. Apply deadlines/cancellation at blocking boundaries. A syntactically
+  valid payload can still be a resource-exhaustion attack.
+- Validation is not authorization and escaping is sink-specific. Revalidate tenant/resource access
+  at the operation, and parameterize/escape where data enters SQL, HTML, shells, paths or logs;
+  java-application-security-basics and java-strings-and-text own those controls.
 
 ## References
 

@@ -2,22 +2,24 @@
 
 ## What `parallel()` actually does
 
-`stream.parallel()` and `collection.parallelStream()` split the source with a `Spliterator`,
-run the pipeline as fork/join tasks on **`ForkJoinPool.commonPool()`**, and combine the
-partial results. Three facts follow, and each is a production hazard on its own:
+`stream.parallel()` and `collection.parallelStream()` split the source with a `Spliterator`
+and normally execute fork/join tasks using **`ForkJoinPool.commonPool()`**. Pool inheritance
+inside a custom fork/join computation is an implementation-sensitive technique, not a portable
+per-pipeline executor API. Three facts follow:
 
-1. **The pool is process-wide and small.** Its parallelism defaults to
-   `availableProcessors() - 1`, plus the calling thread. Every parallel stream in the JVM —
-   yours, your libraries', a framework's — shares it. In a container with a CPU limit of 1,
-   parallelism is effectively 1 and the machinery is pure overhead (container-awareness).
+1. **The normal pool is process-wide.** Its default target parallelism is derived from processors
+   visible to the JVM and can be changed by common-pool properties/runtime configuration. Calling
+   threads may also help. Treat exact worker counts as something to observe, not a constant. In a
+   low-CPU container, splitting and coordination can easily cost more than they save
+   (container-awareness).
 2. **Blocking work occupies those threads.** An HTTP call, a JDBC query, a lock or a
    `Thread.sleep` inside a parallel pipeline holds a common-pool thread for its whole duration.
    With a handful of threads, a few blocking pipelines starve every other parallel stream in
    the process, including ones in code you did not write.
-3. **Order and identity of threads are not yours to control.** There is no timeout, no
-   cancellation, no priority, and no way to size the pool per call site. Submitting the
-   pipeline inside your own `ForkJoinPool` changes which pool is used but keeps every other
-   limitation.
+3. **Order and identity of threads are not yours to control.** The stream API has no per-pipeline
+   executor, deadline or structured cancellation policy. Wrapping a pipeline in a custom
+   `ForkJoinPool` is not a specified ownership mechanism and still leaves failure/cancellation
+   policy implicit.
 
 The decision rule: parallel streams are for **CPU-bound** work over a **cheaply splittable**
 source, with **enough total work** to amortise the coordination, verified by a **measurement**.
@@ -26,21 +28,23 @@ structured concurrency, or an executor sized for that dependency.
 
 ## When it can pay
 
-Sources that split well: arrays, `ArrayList`, `IntStream.range`, `HashMap`/`HashSet` (over
-their internal tables), and anything with a `SIZED`/`SUBSIZED` spliterator. Sources that split
-badly or not at all: `LinkedList`, `Stream.iterate`, `BufferedReader.lines`, most
-`Iterator`-based sources — and for these, parallelism adds cost with no speedup.
+Sources that commonly split well: arrays, `ArrayList`, `IntStream.range`, and spliterators with
+accurate size and balanced `trySplit` behaviour. Linked structures, generated streams,
+`BufferedReader.lines`, and iterator-backed sources often split less cheaply or less evenly.
+`SIZED`/`SUBSIZED` help planning but do not prove useful speedup; element cost, locality and split
+balance still matter.
 
-Operations that parallelise well: stateless `map`/`filter`, primitive reductions, and
-`collect` into a concurrent collector. Operations that fight it: `limit` (it must respect
-encounter order), `findFirst` (as opposed to `findAny`), `sorted` on an ordered stream, and
-any stateful lambda.
+Operations that can parallelise well: stateless `map`/`filter`, primitive reductions, and
+collectors with associative, compatible combination. A collector need not be `CONCURRENT`:
+ordinary collectors can safely accumulate isolated partial containers and combine them.
+Operations that fight parallelism include ordered `limit`, `findFirst` (as opposed to
+`findAny`), `sorted` on an ordered stream, and any stateful lambda.
 
-A rough entry criterion before measuring at all: the source has at least tens of thousands of
-elements, or each element costs enough that the total is milliseconds rather than microseconds.
-Below that, the fork/join overhead dominates. Then measure with JMH (jmh-microbenchmarks) on
-the real data shape — a parallel pipeline that is faster on a synthetic array of `int` and
-slower on a list of domain objects is the normal outcome, not an anomaly.
+There is no portable element-count threshold: a few expensive elements can benefit while millions
+of trivial or poorly splitting elements may not. Estimate total useful work versus splitting,
+scheduling, merging and memory-traffic cost, then measure with JMH (jmh-microbenchmarks) on the real
+data shape and production-like CPU quotas. A result on a synthetic `int[]` does not transfer to a
+list of pointer-heavy domain objects.
 
 ## Failure shapes to recognise
 
@@ -49,14 +53,15 @@ slower on a list of domain objects is the normal outcome, not an anomaly.
   in socket reads; concurrency-diagnostics covers reading it.
 - **A `ConcurrentModificationException` or lost updates** from a lambda mutating shared state
   that was safe sequentially.
-- **Non-deterministic results** from a pipeline using `findFirst`/`forEach` where the code
-  assumed order. `forEachOrdered` restores order at the cost of the parallelism that motivated
-  the change.
+- **Non-deterministic observation order** from `forEach`, whose contract does not preserve
+  encounter order in parallel. `findFirst` preserves encounter-order semantics but may constrain
+  execution; `findAny` trades that semantic for more freedom. `forEachOrdered` restores ordering
+  at a synchronization/throughput cost that must be measured.
 - **Worse throughput on a bigger machine**, because more common-pool threads contend on the
   same downstream dependency or lock.
 - **A parallel stream inside a request handler on a virtual thread.** The pipeline still runs
   on common-pool platform threads, so the "cheap threads" property does not apply, and the
-  request now depends on a shared, unbounded-queueing resource.
+  request now depends on a shared resource with workload coupling outside the request scope.
 
 ## Gatherers: the supported extension point
 
@@ -90,8 +95,8 @@ timeout, a retry policy, or partial-failure handling — one failing mapper fail
 fan-out where those matter, use structured concurrency (structured-concurrency) and keep the
 policy explicit; concurrency-limiting-and-bulkheads covers choosing the limit.
 
-Writing a custom `Gatherer` is worthwhile for a genuinely reusable stateful operation
-(deduplicate-consecutive, rate-limit, chunk-by-predicate). Prefer it to a custom `Spliterator`,
+Writing a custom `Gatherer` is worthwhile for a genuinely reusable stream transformation
+(deduplicate-consecutive or chunk-by-predicate). Prefer it to a custom `Spliterator`,
 which is far harder to get right, and prefer both to a `peek`-plus-external-state hack, which
 is neither.
 
@@ -102,7 +107,9 @@ is neither.
 - [ ] The source splits cheaply and is sized.
 - [ ] There is a benchmark on realistic data showing the improvement, and it was run on
       hardware resembling production (including the container CPU limit).
-- [ ] Nothing in the pipeline mutates shared state; collectors are concurrent-safe.
+- [ ] Nothing in the pipeline mutates shared state; collector identity/associativity and
+      accumulator-combiner compatibility hold. `CONCURRENT` is declared only when accumulation
+      into one result container really is thread-safe.
 - [ ] The result does not depend on encounter order, or `forEachOrdered`/`toList` is used
       deliberately.
 - [ ] The call site is not on a request path where common-pool contention would couple

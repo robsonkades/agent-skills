@@ -6,11 +6,12 @@ the smells these fix is java-code-smells; sizing judgement is java-clean-code.
 ## Extract Method / Inline Method
 
 **Extract** when a block sits at a lower abstraction level than its neighbours or is
-duplicated. Steps: copy block to a new method; pass live locals as parameters, return the
-one written value (two written values means extract twice or introduce a record); replace
-block with the call. Make it `static` when it reads no instance state — that documents
-that it depends only on its parameters (not a purity claim: a static method can still
-mutate its arguments or perform I/O). **Inline** is the inverse and equally legitimate: when the name
+duplicated. Steps: copy block to a new method; pass live locals as parameters, return one
+written value when practical (multiple outputs may justify smaller extractions or a cohesive
+result record); replace the block with the call. Make it `static` when it needs no instance
+receiver — that documents absence of instance-state coupling, not dependence only on parameters
+or purity: static code can read global state, mutate arguments or perform I/O. **Inline** is the
+inverse and equally legitimate: when the name
 restates the body, the method has one caller and shares state awkwardly, inline it.
 Cost: each extraction adds a name and a hop; each inline lengthens a method. Neither
 direction is "cleaner" per se.
@@ -39,9 +40,10 @@ rendering method — sometimes the envy is the lesser evil).
 
 ## Rename
 
-Highest value per unit of risk — but only via tooling: an IDE rename finds overrides,
+Often high value per unit of risk. Prefer semantic tooling: an IDE rename finds overrides,
 overloads and Javadoc links that a text search misses. It does **not** find string-reached
-names — JPQL, `@Qualifier`, JSON properties, JPA discriminator values — and no tool does;
+names — JPQL, `@Qualifier`, JSON properties, JPA discriminator values — unless a specialized
+tool understands that configuration;
 closing that half of the caller set is `behaviour-preservation.md`'s, and the exhaustive
 list is refactoring-automation's. Renaming anything published is API evolution
 (java-api-design), not a refactoring. Naming itself — what a good name is — also lives
@@ -49,7 +51,7 @@ there.
 
 ## Introduce Parameter Object
 
-For Data Clumps and long signatures. The Java 25 form is a record with a validating
+For Data Clumps and long signatures. A record with a validating
 compact constructor, which moves an inter-parameter invariant out of every caller:
 
 ```java
@@ -77,7 +79,7 @@ Both eliminate repeated type dispatch; they place code on opposite axes:
   behaviour lives outside them, or when exhaustiveness checking is the point: adding a
   variant must produce a compile error at every dispatch site.
 
-Never write `default` in a switch over a sealed type — it converts every future
+Prefer no `default` in a switch that intentionally relies on sealed exhaustiveness — it converts future
 compile-time "you missed a case" into a silent wrong branch. The one exception is a
 deliberately partial handler that documents why all unknown variants share one behaviour
 (java-code-smells' modern-java reference). Guarded patterns keep the
@@ -111,9 +113,8 @@ formats keep the raw code, so mapping stays at the edge — do not leak the enum
 ## Encapsulate Collection
 
 When a getter hands out the mutable collection that backs an invariant. Return a copy —
-`List.copyOf(stops)` returns the argument unchanged when it is already a
-`List.of`/`List.copyOf` instance, though it does copy a `Collections.unmodifiableList`
-wrapper, whose fast path it does not share. **Precondition: no element is null** —
+`List.copyOf(stops)` may avoid copying an already unmodifiable implementation, but callers must
+not rely on that implementation optimization. **Precondition: no element is null** —
 `List.copyOf` throws `NullPointerException`, so a getter that returned a list containing a
 null changes behaviour. The copy is shallow: mutable elements still leak the invariant.
 Add mutators that enforce it (`addStop` rejecting duplicates). Cost: copying on every read
@@ -126,7 +127,7 @@ immutability trade-offs is java-immutability's.
 **Factory** when construction grows policy: a static factory names the intent
 (`LedgerEntry.settlement(...)`), can return cached or subtype instances, and gives Replace
 Conditional a home for variant selection. **Strategy** when an algorithm varies
-independently of its host: in Java 25 a strategy with one method is a functional
+independently of its host: a strategy with one abstract method can be a functional
 interface — accept a lambda before defining a class hierarchy, and define a new interface
 only when the standard functional shapes obscure intent. Cost: every factory/strategy is
 indirection; introduced speculatively they are the Speculative Generality smell.

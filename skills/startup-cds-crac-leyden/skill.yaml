@@ -1,15 +1,15 @@
 schemaVersion: 1
 
 name: startup-cds-crac-leyden
-version: 2.0.0
+version: 2.1.0
 description: >-
   Cutting JVM startup and warm-up while staying on the JVM: CDS and AppCDS, the Leyden AOT
   cache (JEP 483/514/515), CRaC checkpoint and restore and its constraints, what each mechanism
   actually accelerates, verifying the cache is really in use, and measuring
   time-to-first-good-response instead of time-to-port-open. Use when cold start hurts a
   serverless or autoscaled deployment, when a CI pipeline pays for hundreds of JVM launches,
-  when a CRaC flag fails with Unrecognized VM option, when an AppCDS archive is silently
-  ignored after a JAR changes, when old code runs from -XX:AOTCache after a rebuild, when
+  when a CRaC flag fails with Unrecognized VM option, when an AppCDS archive is
+  ignored after a JAR changes, when an outdated -XX:AOTCache is suspected after a rebuild, when
   -XX:AOTCacheOutput is in the production start command, when spring-boot:build-image is
   expected to yield a CRaC image, or when a startup speedup percentage is quoted without a
   source. Does not cover the warm-up curve and traffic gating (jit-compilation), loading,

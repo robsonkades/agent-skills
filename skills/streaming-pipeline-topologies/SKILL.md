@@ -2,11 +2,9 @@
 name: streaming-pipeline-topologies
 description: >
   Composable stage shapes for event-driven pipelines — copier, filter, splitter, sharder,
-  merger — each with the ordering it preserves or destroys, whether it is safe above
-  concurrency 1, the state it needs and how it fails; a stage parallelises safely only when
-  stateless or partitioned by its input key, so re-partitioning is where ordering and
-  exactly-once end; the unbounded-state join; watermarks and a named late-data policy; lag
-  as backpressure; and replay, which wall-clock windows destroy. Use when a stage is
+  merger — with ordering, semantic parallelism, state, shuffle and recovery boundaries;
+  exactly-once scope across source, state and sinks; bounded joins and windows; watermarks,
+  late-data policy, backlog versus flow control, and reproducible replay. Use when a stage is
   parallelised, when a join grows state without bound, when a stage re-keys the stream, when
   late events arrive after a window closed, when a windowed test uses wall-clock, or when
   reprocessing gives a different answer. Not whether to be event-driven
@@ -25,39 +23,43 @@ The shapes are small: **copier** (fan-out to independent consumers), **filter** 
 predicate), **splitter** (one input, many outputs), **sharder** (re-partition by a new key),
 **merger/join** (combine streams, which needs state).
 
-One rule decides all of them. **A stage is safe to parallelise if it is stateless, or if it is
-partitioned by the same key as its input and each partition has one owner.** Anything else must
-re-partition first, and re-partitioning is the dangerous operation: it breaks the per-key order
-the input carried, and it ends whatever exactly-once boundary the input was inside, because a
-different writer now produces the output. The two failures this prevents are the stage
+Semantic parallelism is safe when operations commute/order does not matter, or keyed state and
+effects have one current owner with recovery/fencing. Stateless code can still emit ordered or
+non-idempotent effects; stateful frameworks can safely parallelize by key. Repartitioning is a
+shuffle boundary: old-key order no longer defines order among records sharing a new key, state
+must migrate/rebuild and skew changes. It does **not** inherently end exactly-once—some engines
+include repartition topics/state in one transaction or checkpoint. The two failures prevented are the stage
 parallelised because it "looked stateless", and the join that retains every key it has ever
 seen — which passes every load test and dies in week three of memory, not of throughput.
 
 ## Workflow
 
-1. **Name each stage by shape** before drawing arrows. A stage that is two shapes at once —
-   filter and sharder in one operator — is where the reasoning breaks down; split it.
+1. **Name each stage by shape** before drawing arrows. If an operator combines shapes, model
+   each semantic step even when the implementation fuses them; this exposes separate ordering,
+   state and failure boundaries without forcing an unnecessary network hop.
 2. **For each stage, answer four questions:** what ordering does it preserve, is it safe above
    concurrency 1, what state does it hold, and how does it fail. The table is
    `references/stage-catalogue.md`.
-3. **Mark every re-partition explicitly.** Each is a boundary: per-key ordering restarts, the
-   guarantee restarts, the key's cardinality changes (`message-ordering-and-partitioning`).
+3. **Mark every shuffle/repartition explicitly.** State old/new key, partitioner/count/epoch,
+   ordering semantics, framework transaction/checkpoint boundary and recovery. Never inherit an
+   exactly-once label across a sink the engine does not control.
 4. **For any stateful stage, bound the state.** A window, a retention, or a key-space bound —
    and a metric on state size before it is a heap dump. See `references/stateful-stages.md`.
 5. **Write the late-data policy down** — drop, side stream, or correction. Not deciding is
    deciding to drop silently.
-6. **Decide how backpressure is expressed.** In a log-based pipeline it is lag, bounded by
-   retention rather than memory — past that boundary it is data loss.
-7. **Check the pipeline is replayable**: process on event time, and test windows with
-   controlled time rather than the wall clock.
+6. **Trace flow control and backlog separately.** Operator queues/credits can backpressure
+   upstream within a job; a durable log usually decouples producers, so consumer lag measures
+   backlog without slowing production. Bound both internal buffers and log retention/replay.
+7. **Specify replay semantics**: use event time when historical event-time answers are required,
+   pin timestamp/watermark/late-data rules, and test with controlled time rather than sleeping.
 
 ## Decision block
 
 ```text
 Run a stage above concurrency 1 when:
-- it is stateless per record — filter, map, copier — and downstream needs no ordering, or
-- its state is keyed and the input is already partitioned by that same key, with exactly
-  one owner per partition
+- records/effects commute or sequence/version checks tolerate completion reordering, or
+- state is keyed by the partition key, one current owner is enforced, and checkpoint,
+  rebalance and stale-owner behavior are defined
 
 Keep a stage at one worker per partition when:
 - downstream state is order-sensitive per key: a state machine, a CDC apply, an
@@ -77,9 +79,10 @@ Split into separate pipelines instead when:
 
 ## Rules
 
-- Parallelism is safe when the stage is stateless or key-partitioned with exclusive ownership.
-  Any other parallelisation reorders the stream, and the reordering is invisible until a
-  downstream aggregate disagrees with its source.
+- Statelessness alone does not make effects order-insensitive. Parallelize freely only when
+  output/effect composition tolerates completion order and duplicates; otherwise preserve a
+  serial lane or version/sequence guard. Stateful keyed ownership also needs checkpoint,
+  rebalance and stale-task fencing semantics.
 - **A filter is cheap per record and expensive per pipeline.** Dropping 99% after the record was
   fetched, decompressed and deserialised means 99% of that I/O and deserialisation bought
   nothing (`serialization-performance`). Push the predicate to the source when the source can
@@ -87,37 +90,58 @@ Split into separate pipelines instead when:
 - A **splitter** raises one question and it is transactional: are the N outputs atomic? If not,
   a crash after output 1 leaves consumers of output 2 with a gap they must tolerate. What a
   transaction covers, and what it does not, is `delivery-semantics`.
-- A **sharder** is the only stage that changes the key, and it invalidates three things at once:
-  per-key ordering (records sharing a new key may arrive from partitions with no relative
-  order), the guarantee boundary (a new producer writes the output), and the skew profile (a new
+- A **sharder/shuffle** changes the key and forces three reviews:
+  per-key ordering (records sharing a new key may arrive from inputs with no relative order),
+  the guarantee/checkpoint scope (which may or may not include the shuffle), and skew profile (a new
   key is a new distribution — `hot-partitions-and-rebalancing`).
-- **A merger or join without a window retains every key it has ever seen.** Growth is in
-  _distinct keys_, not throughput, so an hour at 10× traffic proves nothing about a month. Size
-  every join's window from how late the other side can legitimately arrive.
-- A **copier** — a second consumer group on the same log — is the cheapest decoupling available,
-  costing the producer and the first consumer nothing. Prefer it over a splitter whenever the
-  two consumers are independent.
-- **Say which window you mean, and price it.** Tumbling holds one bucket per key per interval;
-  sliding holds each record in `size / step` windows at once, a real multiplier on state;
-  session holds state until a gap, so a stream with no gaps has no bound at all.
-- **A watermark is a decision about how long to wait for stragglers**; the late-data policy is a
+- A stream-stream join without eviction can retain unmatched records indefinitely. Table/latest-
+  value joins may retain current state per live key and tombstones may remove it; fixed-size
+  aggregates need less per-key bytes than raw-event joins. Bound by semantic retention and
+  measure distinct keys, unmatched events, bytes and compaction/checkpoint amplification.
+- A **copier**—a second consumer group—decouples offsets/failure but adds broker read/network/
+  cache and downstream cost. Prefer it over producer fan-out when independent replay/retention
+  semantics and infrastructure capacity justify it.
+- **Say which window and implementation you mean.** Naive sliding windows replicate each record
+  across `size/step` windows; pane/incremental aggregation can reduce storage/CPU depending on
+  whether the function is algebraically mergeable. Continuous sessions may never finalize,
+  but state growth depends on accumulator versus raw-event/join storage.
+- A watermark is an engine/source assertion about event-time progress, commonly the minimum
+  across active partitions plus out-of-orderness/idleness policy—not a guarantee. It encodes how
+  long to wait for stragglers; the late-data policy is a
   separate decision about the one that arrives anyway. Name both — "it probably won't happen" is
   silent, unattributable data loss, and it happens on every replay.
-- **In a log-based pipeline, backpressure is lag** — a slow stage reads later and the log holds
-  the buffer. That is bounded by _retention_, not memory, so the failure mode is not OOM but
-  unrecoverable loss once lag exceeds retention: alert on lag in time against the retention, not
-  only against the SLO. In-process demand signalling — `request(n)`, bounded buffers, overflow
+- **In a log-based boundary, lag is durable backlog, not backpressure to producers.** A slow
+  consumer reads later while producers may continue. Retention can make old input unavailable;
+  internal queues/state can still OOM before that. Alert on age/bytes/catch-up capacity against
+  SLO and effective retention. In-process demand signalling—`request(n)`, credits, bounded buffers
   strategies — is a different mechanism inside one JVM (`reactive-backpressure`).
-- **Wall-clock windows are not replayable.** Bucketing by processing time gives a different
-  answer on every run, so reprocessing can neither reproduce nor correct history. Use event
-  time, carry the timestamp in the payload, and treat processing-time windows as a deliberate
-  accuracy trade.
+- Processing-time windows generally produce different buckets on replay; use them only when
+  current processing behavior is the intended semantics. Event time improves reproducibility
+  only with stable timestamp extraction, watermark/idleness rules, late policy, input snapshot
+  and deterministic operators/sinks.
 - Replay of a stateful pipeline is not "start at offset 0": window state must be reset or
   rebuilt, the output must land somewhere that tolerates a rewrite, and downstream consumers see
   the whole history again (`idempotency`). Decide where replay output lands before you need it.
 - Never size a state store from the average key: size it from distinct keys × per-key state ×
   window multiplicity, and export the real number as a metric. A store whose size is visible
   only in a heap dump has already taken the outage.
+
+## Exactly-once scope
+
+For each engine, enumerate source offsets, shuffle topics, state changelog/checkpoint and sinks
+inside one atomic recovery boundary. Kafka Streams `exactly_once_v2` can transactionally couple
+Kafka input/output/state changelog, but an external database call is outside. Flink checkpoints
+need a replayable source and checkpoint-aware/idempotent/transactional sink; checkpoint success
+does not make an arbitrary side effect exactly once. Upgrades, rescaling and savepoint/state-
+serializer compatibility are part of the contract.
+
+## Security and operability
+
+- Authenticate/authorize internal topics/state stores and protect replay tools; topology
+  duplication can bypass the API's tenant controls.
+- Minimize PII in repartition keys/changelogs and apply retention/deletion to derived copies.
+- Expose topology version, partition/key distribution, watermark per input, idle partitions,
+  late/drop/correction count, state bytes/entries, checkpoint duration/failure and restore time.
 
 ## References
 

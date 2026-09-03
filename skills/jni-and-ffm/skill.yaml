@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jni-and-ffm
-version: 1.2.0
+version: 1.3.0
 description: >-
   Crossing into native code: JNI call overhead, critical sections and what they block, the
   FFM downcall and upcall path, `Linker` and method handles, why a native frame pins a

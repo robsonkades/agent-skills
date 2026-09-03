@@ -3,21 +3,23 @@
 ## The algebra a combiner must satisfy
 
 A distributed reduce splits the input into partitions, folds each one, then combines the
-partial results. Two properties make that legal:
+partial results. The required laws depend on the execution contract:
 
 - **Associativity** — `combine(combine(a, b), c) == combine(a, combine(b, c))`. Without it,
   the answer depends on how the input was split.
-- **Commutativity** — `combine(a, b) == combine(b, a)`. Without it, the answer depends on
-  the order partial results arrive in, which no system guarantees across partitions
-  (`message-ordering-and-partitioning`).
+- **Identity** — combining with the empty state is equivalent to the original state.
+- **Commutativity** — `combine(a, b) == combine(b, a)`. It is required when the engine may
+  reorder partials or the result is declared unordered, but not for an ordered reduce whose
+  engine preserves encounter order.
 
-Retry makes both non-negotiable rather than merely desirable: a re-executed task re-enters
-the combination at a different point, so an aggregation that is only correct in one order is
-an aggregation that is only correct when nothing fails.
+These laws do **not** make duplicate attempts safe. `sum(a, a)` is not `sum(a)`. The engine
+must select one output per logical partition/attempt lineage, or the aggregate itself must be
+idempotent under duplicate contribution (for example set union). Ordering, regrouping and
+duplicate suppression are separate proof obligations.
 
 | Operation                 | Associative       | Commutative | Distributed form                                      |
 | ------------------------- | ----------------- | ----------- | ----------------------------------------------------- |
-| sum of integers, count    | yes               | yes         | sum the partials                                      |
+| bounded integer sum/count | yes modulo width  | yes         | use checked/exact arithmetic if overflow is invalid   |
 | min, max                  | yes               | yes         | min/max of the partials                               |
 | bitwise OR/AND, set union | yes               | yes         | fold the partials                                     |
 | sum of doubles            | **no** (rounding) | yes         | see below — fix or fix the type                       |
@@ -29,9 +31,10 @@ an aggregation that is only correct when nothing fails.
 | "first" / "last"          | no                | no          | needs an explicit ordering key, then min/max on it    |
 | subtraction, division     | no                | no          | rewrite as a pair of reducible terms                  |
 
-`java.util.stream.Collector` states the same requirement on its combiner, and a parallel
-stream will exercise it. A non-associative combiner in a sequential stream produces the
-right answer for as long as nobody parallelises it.
+`java.util.stream.Collector` requires identity and associativity; ordered collectors can
+preserve encounter order, while `UNORDERED` changes the equivalence relation. A parallel
+stream is a useful local probe but not a substitute for property tests over arbitrary
+partitioning.
 
 ## Floating-point addition is not associative
 
@@ -49,10 +52,11 @@ report will not tie out twice.
 
 Three fixes. Name the one in use, in the code:
 
-1. **Fixed point.** `BigDecimal` with an explicit scale and `RoundingMode` on every division,
-   or a `long` of minor units. Addition on both is exact, therefore associative. **Money is
-   never a `double`, `float` or `Double`** — that is not a performance trade, it is the
-   difference between an exact and an approximate total.
+1. **Exact decimal or fixed point.** `BigDecimal.add` is exact when no finite-precision
+   `MathContext` rounds intermediate results. Integer minor units are exact only until
+   overflow, so use checked arithmetic or a wider representation and carry currency and
+   scale. These are normally required for contractual monetary amounts; binary floating
+   point remains legitimate for explicitly approximate analytics.
 2. **Compensated summation** (Kahan, or Neumaier for wide-magnitude inputs). Carry a running
    correction term alongside the sum. This bounds the error; it does **not** make addition
    associative, so two partitionings may still differ — the difference is merely smaller.
@@ -67,13 +71,13 @@ summation algorithm both move the result.
 
 ```java
 // Average: reduce the pair, divide once at the end.
-record SumCount(BigDecimal sum, long count) {
+record SumCount(BigDecimal sum, BigInteger count) {
     SumCount merge(SumCount other) {                     // associative and commutative
-        return new SumCount(sum.add(other.sum), count + other.count);
+        return new SumCount(sum.add(other.sum), count.add(other.count));
     }
-    BigDecimal average(int scale) {
-        return count == 0 ? BigDecimal.ZERO
-                          : sum.divide(BigDecimal.valueOf(count), scale, RoundingMode.HALF_UP);
+    Optional<BigDecimal> average(int scale) {
+        return count.signum() == 0 ? Optional.empty()
+                : Optional.of(sum.divide(new BigDecimal(count), scale, RoundingMode.HALF_UP));
     }
 }
 ```
@@ -89,18 +93,18 @@ record SumCount(BigDecimal sum, long count) {
 
 ## Mergeable summaries and what each trades
 
-| Summary                 | Answers                                | Memory                         | Error                                                              | Merge                |
-| ----------------------- | -------------------------------------- | ------------------------------ | ------------------------------------------------------------------ | -------------------- |
-| Exact set / sorted list | distinct, quantiles                    | proportional to cardinality    | none                                                               | union, unbounded     |
-| HyperLogLog             | distinct count                         | fixed, small                   | a stated relative error that grows as the sketch shrinks           | per-register maximum |
-| Count-min sketch        | frequency of a key                     | fixed                          | over-estimates only; never under-estimates                         | element-wise sum     |
-| t-digest                | quantiles, accurate at the tails       | fixed                          | relative, best near 0 and 1                                        | merge centroids      |
-| HdrHistogram            | latency quantiles over a bounded range | fixed for the configured range | fixed relative, values above the range are not recorded truthfully | add                  |
+| Summary                 | Answers                           | Memory                      | Error                                                                 | Merge                     |
+| ----------------------- | --------------------------------- | --------------------------- | --------------------------------------------------------------------- | ------------------------- |
+| Exact set / sorted list | distinct, quantiles               | proportional to cardinality | none                                                                  | union, unbounded          |
+| HyperLogLog             | distinct count                    | fixed by precision          | estimator/precision-specific error                                    | compatible-register max   |
+| Count-min sketch        | non-negative frequencies          | fixed by width/depth        | one-sided error under its hash assumptions                            | sum compatible tables     |
+| t-digest                | approximate quantiles             | compression-dependent       | implementation/data/order-dependent, often tail-oriented              | merge compatible digests  |
+| HdrHistogram            | quantiles over a configured range | fixed by range/precision    | quantization; out-of-range behavior is implementation/config-specific | add compatible histograms |
 
-The property that matters is the last column. **A summary you cannot merge forces every
-record through one node**, which becomes the throughput ceiling and the single point of
-failure for the whole job. Choosing a sketch is choosing a stated error in exchange for
-keeping the aggregation distributed; choosing an exact structure is choosing that node.
+Compatibility is part of every merge contract: precision, bounds, hash functions/seeds,
+normalization and implementation version must match. A non-mergeable result may force raw
+data retention, repartitioning or a centralized final step; a mergeable sketch bounds that
+state in exchange for a quantified estimator error.
 
 ## The determinism test
 
@@ -108,7 +112,7 @@ keeping the aggregation distributed; choosing an exact structure is choosing tha
 @RepeatedTest(20)
 void aggregateIsIndependentOfPartitionOrder() {
     List<Partition> partitions = new ArrayList<>(fixedInput());
-    Collections.shuffle(partitions);                    // the shuffle a cluster gives free
+    Collections.shuffle(partitions, seededRandom());
     Result actual = partitions.stream()
         .map(Aggregator::fold)
         .reduce(Result.identity(), Result::merge);      // exercises combine in a new order
@@ -116,6 +120,8 @@ void aggregateIsIndependentOfPartitionOrder() {
 }
 ```
 
-Assert **exact** equality. A test written with a tolerance passes with a non-associative
-combiner and therefore tests nothing that matters here. Run the same shape with a parallel
-stream to catch a combiner that is only correct sequentially.
+Exact equality is appropriate only when the contract promises exact deterministic output.
+Approximate sketches and floating-point analytics instead need documented error invariants
+and a trusted oracle; a loose arbitrary tolerance proves little. Add generated tests for
+empty input, singleton, extreme magnitudes, overflow, NaN/infinity policy, regrouping,
+allowed reorderings, duplicate attempts and incompatible summary metadata.

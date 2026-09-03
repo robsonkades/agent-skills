@@ -1,117 +1,245 @@
 ---
 name: jmh-advanced
 description: >
-  JMH beyond the basics: the built-in profilers (`perfasm`, `xperfasm`, `perfnorm`, `gc`,
-  `stack`, `jfr`, `async`), `@State` scope and asymmetric benchmarks with
-  `@Group`/`@GroupThreads`, `@Param` combinatorics, `@Setup` levels, the real `@Fork`
-  attributes, `@CompilerControl`, and diagnosing a benchmark whose variance will not settle.
-  Use when `Error` exceeds roughly 10% of `Score`, when `@Fork(1)` is still in place before
-  publishing a number, when someone writes `@Fork(jvmVersion = ...)`, when a concurrent
-  structure is benchmarked under `Scope.Thread`, when `@Setup(Level.Invocation)` sits on a
-  high-frequency benchmark, when `-prof xperfasm` is attempted on Linux, or when `perfasm`
-  produces no assembly. Does not cover the introductory rules — forks, `Blackhole`,
-  benchmark boundaries and reading `Score` and `Error` (jmh-microbenchmarks) — turning
-  results into a build gate (performance-regression-ci), or interpreting the emitted
-  assembly in depth (reading-jit-assembly).
+  Designing advanced JMH experiments: shared and asymmetric state topologies, groups,
+  parameter matrices, auxiliary counters, fixture arbitration, fork/JVM controls, profilers,
+  hardware counters, annotated assembly, compiler controls, cold-state protocols, and
+  multi-modal variance diagnosis. Uses runtime capability discovery and separates diagnostic
+  profiled runs from decision runs. Use when a benchmark is concurrent, fork-dependent,
+  profiler-sensitive, cold/startup-oriented, or produces unexplained clusters. Basic benchmark
+  validity, statistical gates, assembly interpretation, and load tests have separate owners.
 ---
 
-# JMH Advanced
+# JMH advanced
 
 ## Purpose
 
-Make a benchmark measure the scenario that was actually asked about, and make its number
-survive being published. A JMH result that is technically flawless can still answer the
-wrong question: `@State` scope, not measurement precision, decides which question gets
-answered.
+Design experiments in which JVM compilation, state topology, fixture lifecycle, hardware, and
+instrumentation are explicit factors. Advanced annotations do not create realism automatically;
+they make it possible to represent and distinguish mechanisms.
 
-The failure this prevents is the plausible number. Nothing errors, nothing looks absurd —
-`Scope.Thread` gives each thread its own map so the contention being compared never
-happens; `@Fork(1)` hides the inter-JVM variance in exactly the 3–10% band where real
-regressions live; `-prof xperfasm` on a Linux host fails while `perfasm` without hsdis
-silently returns a number with no annotation.
+## Ownership boundary
 
-## Workflow
+- `jmh-microbenchmarks` owns semantic validity, observable work, basic modes/forks, uncertainty,
+  and production extrapolation.
+- This skill owns groups/topologies, parameters, auxiliary counters, profilers, compiler controls,
+  cold-state protocols, and difficult variance.
+- `reading-jit-assembly` owns instruction-level interpretation.
+- `performance-regression-ci` owns automation and baseline governance.
+- `concurrency-testing` owns correctness and schedule exploration; JMH is not a linearizability
+  proof.
 
-1. **State the question the benchmark answers** — "what does X cost", not "can the system
-   handle Y" — then pick the mode from it: `AverageTime`/`Throughput` for a comparison,
-   `SampleTime` for tail latency, `SingleShotTime` for cold or non-repeatable operations.
-2. **Choose `Scope` from the real production access pattern**, before writing anything
-   else. Shared structure under concurrency → `Scope.Benchmark` with `@Threads(N)`.
-   Per-thread or partitioned data → `Scope.Thread`. Asymmetric roles such as producer and
-   consumer → `Scope.Group` with `@Group`/`@GroupThreads`.
-3. **Set the `@Setup` level from whether the fixture is mutated during measurement.**
-   Read-only fixtures belong at `Level.Trial`; `Level.Invocation` on a high-frequency
-   benchmark makes setup the dominant cost.
-4. **Pin the environment so the measurement is not measuring the environment.**
-   `-Xms` equal to `-Xmx`, `-XX:+AlwaysPreTouch`, an isolated machine with the CPU
-   governor on performance.
-5. **Confirm the profilers exist before a long run.** `java -jar benchmarks.jar -prof list`
-   reports what this environment can actually load, which is where a missing hsdis or
-   async-profiler shows up cheaply.
-6. **Check the number against an analytical expectation** — complexity, cost per
-   operation — before accepting it, then read `Error` as a fraction of `Score` and the
-   per-fork scores for agreement (jmh-microbenchmarks covers why `Cnt` overstates them).
-7. **Restore `@Fork` to 5 (or the default) before comparing or publishing**, with the same
-   JDK, same flags and same hardware on both sides of the comparison.
+## Advanced experiment contract
 
-## Rules
+```text
+hypothesis and competing mechanisms:
+state ownership and sharing graph:
+actor roles, ratios, threads, CPU/NUMA placement:
+input/key/access distribution and mutation lifecycle:
+success/failure/retry/drop counters and invariant oracle:
+JVM/JDK/JMH factors and compiler context:
+profiler/counter question, adequacy, overhead and control run:
+cold/steady/transition cache and process state:
+fork/block/randomization design and practical effect:
+```
 
-- JMH's default without `@Fork` is already **5** forks (`Defaults.MEASUREMENT_FORKS`).
-  `@Fork(1)` is always an explicit trade of rigour for iteration speed, never "what
-  happens when you configure nothing".
-- More iterations never substitutes for more forks. Iterations inside a fork capture
-  environment noise (GC, scheduling, cache); separate forks capture the JIT's structural
-  variance, which is invisible from inside a single JVM.
-- `@Fork` has no `jvmVersion` attribute. Its six attributes are `value`, `warmups`, `jvm`,
-  `jvmArgs`, `jvmArgsPrepend`, `jvmArgsAppend`. Pin a JDK with `jvm = "/path/to/bin/java"`,
-  or `-jvm <path>` on the command line.
-- JMH's reported `Error` is a **99.9%** Student's-t confidence interval, not 95% and not a
-  standard deviation. A relatively wide `Error` is not by itself an unstable benchmark.
-  Investigate above roughly 10% of `Score`; below roughly 5% is usually stable.
-- A benchmark comparing concurrent data structures under `Scope.Thread` measures
-  single-threaded access N times over. The `synchronized` never contends and the
-  concurrent structure's coordination overhead never pays for itself.
-- `@Setup(Level.Invocation)` runs before every single invocation. On a benchmark at
-  1M ops/s that is 1M setups per second, and the setup becomes the measurement.
-- A `final` field feeding the measured expression invites constant folding — the
-  computation can become a literal. Assign the value in `@Setup(Level.Trial)` to a
-  non-final field instead.
-- Fix the heap with `@Fork(jvmArgsAppend = {"-Xms2g", "-Xmx2g", "-XX:+AlwaysPreTouch"})`
-  whenever the benchmark is GC-sensitive. Heap expansion commits and zeroes pages, which
-  contaminates precisely the early warmup iterations.
-- `@Param` values are run as a full cartesian product, one reported row per combination —
-  never averaged. Two parameters of four values each with `@Fork(5)` is 20 complete
-  warmup-plus-measurement runs.
-- `-prof perfasm` is **Linux-only** — it drives `perf record` — and `-prof xperfasm` is the
-  **Windows** profiler, collecting through ETW/Xperf. Neither is a more detailed version of
-  the other; on macOS the equivalent is `-prof dtraceasm`, which needs root for `dtrace`.
-- `Mode.SampleTime` is a closed loop that times a _subset_ of invocations; its own javadoc
-  says it "may omit some pauses which missed the sampling measurement". Its percentiles
-  are service-time percentiles of an isolated operation, not latency under load, and they
-  are not immune to omission. A p99 that must hold under a request rate is `load-testing`
-  with `coordinated-omission` in mind.
-- `perfasm`, `xperfasm` and `-XX:+PrintAssembly` all need hsdis, which does not ship with
-  the JDK. Its source is `src/utils/hsdis` in `openjdk/jdk` — **not** in
-  `AdoptOpenJDK/jitwatch`. A mismatched build loads and produces unreadable or absent
-  annotation while the benchmark still prints its number.
-- `Throughput` and `AverageTime` are not strict reciprocals — one is a harmonic mean of
-  per-operation times, the other arithmetic. A visible divergence is a diagnostic signal
-  that per-operation cost has real variance; run `Mode.SampleTime` before reporting a
-  single number.
-- Apply `@CompilerControl` surgically, only where asymmetric inlining between compared
-  variants is actually suspected. Applying it to every helper by default introduces more
-  bias than it removes.
-- A number that looks impossibly good (1000×, 1,000,000×) is dead-code elimination until
-  proven otherwise. Check that first, not last.
+## State topology before annotations
+
+| Production relationship                      | JMH shape                       | Common false conclusion                      |
+| -------------------------------------------- | ------------------------------- | -------------------------------------------- |
+| independent state per worker                 | `Scope.Thread`                  | using it for a shared map removes contention |
+| one shared object                            | `Scope.Benchmark`               | throughput hides role fairness or failures   |
+| repeated independent producer/consumer cells | `Scope.Group` + groups          | aggregate rate hides asymmetric starvation   |
+| partitioned/sharded state                    | explicit shard mapping in state | random sharing measures a different topology |
+
+Thread count is a workload factor. Sweep across meaningful concurrency and topology points rather
+than publishing only the best saturation point. Record logical CPUs, SMT siblings, sockets/NUMA,
+cpuset/quota, and whether worker placement changes between forks.
+
+## Asymmetric groups
+
+`@Group` and `@GroupThreads` model roles that share a `Scope.Group` instance. Define:
+
+- actor ratio and whether it reflects arrivals or merely continuously looping workers;
+- operation result and counters for success, miss, retry, full/empty, timeout, or failed CAS;
+- initial occupancy and whether it drifts during an iteration;
+- fairness/starvation per actor, not only total throughput;
+- shutdown/progress behavior when one role stops or throws.
+
+A `1 producer : 3 consumers` closed loop is not automatically a production 1:3 arrival ratio.
+Backpressure and actor speed determine realized operations. Use `@AuxCounters` or returned results
+to observe the realized mix.
+
+## Parameters and experimental matrices
+
+`@Param` expands combinations. Estimate run cost before launching:
+
+```text
+cells = product(parameter cardinalities) * benchmark methods * modes * JVM variants
+approximate time = cells * forks * (warm-up + measurement + lifecycle overhead)
+```
+
+Avoid a full Cartesian product when impossible combinations, redundant dimensions, or insufficient
+replication make it wasteful. Split experiments, generate a justified design, or use command-line
+parameter subsets. Keep one primary factor per causal comparison when interactions are not the
+question; use a factorial design when they are.
+
+Input distributions need semantic names and reproducible generation. A fixed seed aids replay but
+does not provide population diversity; use multiple predeclared seeds/data cohorts when input
+variance matters and retain cohort identity.
+
+## Fixture arbitration and mutable state
+
+`Level.Trial`, `Iteration`, and `Invocation` describe lifecycle, not whether costs are harmless.
+With shared state, helper invocation and teardown thread ownership can differ. `Level.Invocation`
+requires per-invocation timing and may require synchronization on the critical path; official JMH
+documentation also warns about overlap and coordinated omission.
+
+For mutable structures, establish:
+
+- reset point and whether reset is outside timing;
+- cache/branch/type-profile/heap consequences of reset;
+- data exhaustion, wraparound, ABA/version, and overflow behavior;
+- invariant verification after an iteration/fork;
+- whether reset creates an unrealistically pristine state.
+
+Prebuilding a finite pool removes construction from the boundary but introduces reuse, cache
+locality, index coordination, memory footprint, and exhaustion. Measure or vary those factors.
+
+## Fork and JVM controls
+
+Forks isolate JVM history and expose compilation/environment variation. Select counts from pilot
+variance and decision power, not a universal number. Warm-up forks, iteration warm-up, and
+measurement forks answer different lifecycle questions.
+
+`@Fork`/CLI can select a JVM and append/prepend/replace arguments. Confirm the pinned JMH API and
+effective command; do not invent attributes such as `jvmVersion`. Run candidate JDKs as explicit
+blocks with otherwise controlled factors and retain vendor/build, flags, feature status, and
+hardware.
+
+Controls such as equal `-Xms/-Xmx`, `AlwaysPreTouch`, fixed collector, affinity, performance
+governor, disabled turbo, or isolated host can reduce selected variability while changing the
+phenomenon. Use two layers when necessary:
+
+1. mechanism experiment under controlled conditions;
+2. representative experiment with production ergonomics and variance.
+
+## Profiler selection
+
+Discover the pinned harness/environment:
+
+```bash
+java -jar benchmarks.jar -lprof
+java -jar benchmarks.jar -prof <profiler>:help
+```
+
+Profiler names, options, prerequisites, and availability change. See
+`references/profilers-and-hsdis.md`. Separate:
+
+- **decision runs**: minimal necessary instrumentation;
+- **diagnostic runs**: profiler enabled to explain the mechanism;
+- **calibration runs**: same workload with/without profiler to quantify interaction.
+
+A profiler can change compilation, scheduling, allocation, cache pressure, timing, or the winner.
+Agreement is evidence; disagreement is a finding to reconcile.
+
+## Counters and denominators
+
+Use secondary results only after defining their collection boundary and denominator:
+
+- normalized allocation may reflect compiled escape context, TLAB accounting, rounding, and
+  operations-per-invocation;
+- hardware counters may multiplex, lack PMU support, include/exclude kernel/harness activity, and
+  suffer skid;
+- `@AuxCounters` are application observations whose update cost and sharing can perturb the path;
+- total throughput can improve while successes per operation fall.
+
+Report coverage/multiplex ratio, raw and normalized units, unsupported counters, and whether the
+counter population matches the timed operations.
+
+## Annotated assembly and compiler controls
+
+Assembly profilers require a compatible OS collection path plus enough code/symbol/disassembly
+support. Annotation may be absent or partial while the numeric benchmark still succeeds. Validate:
+
+- target compiled method/version and code-cache address mapping;
+- sample coverage and unknown/unmapped share;
+- compilation level, inlining, deoptimization, and multiple nmethods;
+- hardware-counter event and sampling skid;
+- architecture-specific disassembler/tool compatibility.
+
+Use `@CompilerControl` only to answer a compiler-context hypothesis. Forcing or preventing
+inlining changes optimization scope, escape analysis, vectorization, register pressure, and call
+shape; it does not automatically make two variants fair. Preserve an unforced representative run.
+
+## Cold and transition experiments
+
+`SingleShotTime` does not define “cold.” Declare which layers reset between observations:
+
+```text
+fresh invocation / iteration / JVM / container / host
+class initialization and compilation state
+CDS and code/data/page cache
+heap/allocator/GC state
+connection/TLS/DNS/dependency state
+CPU frequency and storage state
+```
+
+If reset cannot be proven, call the result first-use-under-specified-state rather than cold start.
+Startup questions often require process-level orchestration and JFR from launch, with JMH used only
+for the isolated mechanism.
+
+## Variance diagnostic tree
+
+```text
+fork clusters
+  -> compilation/deoptimization/type profile? inspect compilation/JFR/assembly
+  -> host/core/NUMA/frequency/throttle? inspect OS placement/counters
+  -> data/seed/state drift? compare cohort and invariant artifacts
+  -> GC/heap lifecycle? compare allocation/occupancy/GC per fork
+
+profiled and unprofiled winner differs
+  -> profiler overhead/engine/compiler interaction? calibrate and separate claims
+  -> inadequate samples/unknown symbols? validate coverage
+
+thread sweep scales unexpectedly
+  -> realized success/mix changed? auxiliary counters
+  -> contention/coherence/false sharing? topology + counters/profile
+  -> quota/SMT/NUMA placement changed? OS evidence
+  -> correctness/progress failure? dedicated concurrency tests
+```
+
+Do not respond to unexplained variance by only lengthening iterations. More observations of a
+confounded state improve precision around the wrong mixture.
+
+## Anti-patterns
+
+| Anti-pattern                          | Why dangerous                    | Better alternative                                    | Narrow exception                  |
+| ------------------------------------- | -------------------------------- | ----------------------------------------------------- | --------------------------------- |
+| `Scope.Thread` for shared structure   | removes coordination             | model ownership graph explicitly                      | per-thread production shard       |
+| Fixed five-fork publishing rule       | ignores effect/power/runtime     | pilot, power, raw fork analysis                       | documented local convention       |
+| Force fixed heap/pre-touch everywhere | removes real lifecycle effects   | declared mechanism and representative layers          | isolating a specific compute path |
+| Trust profiler availability by name   | initialization/coverage can fail | `-lprof`, help, positive control, artifact validation | none                              |
+| Add every profiler at once            | interaction and attribution      | one discriminating profiler or calibrated combination | transient that cannot be replayed |
+| Force inlining to “fairness”          | changes optimization context     | measure representative and forced hypotheses          | compiler mechanism experiment     |
+| JMH percentiles as service SLO        | closed-loop isolated population  | load/system test                                      | isolated invocation distribution  |
+
+## Definition of done
+
+- [ ] State topology, actor mix, success counters, mutation, and invariants are explicit.
+- [ ] Parameter matrix is feasible and interaction/seed strategy justified.
+- [ ] Lifecycle/reset and environmental controls match the estimand.
+- [ ] Fork/block/randomization and practical effect design are documented.
+- [ ] Profiler/counter support, adequacy, overhead, and artifact integrity are validated.
+- [ ] Diagnostic and decision runs are separated or combined with calibrated justification.
+- [ ] Clusters, drift, and profiler sensitivity are explained, not averaged away.
+- [ ] The claim is bounded and handed to the correct production/load/concurrency validation.
 
 ## References
 
-- [Profilers, hsdis and the command line](references/profilers-and-hsdis.md) — the
-  `-prof` catalogue with platform and prerequisites, hsdis sourcing and failure modes,
-  CLI flags with their defaults, and how to read the standard output block. Read before
-  running with a profiler or when `perfasm` produced nothing.
-- [Configuration recipes and variance diagnosis](references/configuration-recipes.md) —
-  the scenario-to-configuration matrix, ready templates, `@Fork` attributes, `@Param`,
-  `@State` scopes including `Scope.Group`, `@CompilerControl`, `warmups`, and the checks
-  to run when `Error` will not settle. Read when configuring a benchmark or when its
-  variance is too high to publish.
+- [Configuration recipes and variance diagnosis](references/configuration-recipes.md)
+- [Profilers and annotated assembly](references/profilers-and-hsdis.md)
+- [OpenJDK JMH project](https://github.com/openjdk/jmh)
+- [JMH profiler sample](https://github.com/openjdk/jmh/blob/master/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_35_Profilers.java)
+- [JMH asymmetric benchmark sample](https://github.com/openjdk/jmh/blob/master/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_15_Asymmetric.java)
+- [JMH `Level` API warnings](https://javadoc.io/doc/org.openjdk.jmh/jmh-core/latest/org/openjdk/jmh/annotations/Level.html)

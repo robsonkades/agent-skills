@@ -1,19 +1,16 @@
 schemaVersion: 1
 
 name: tail-latency-analysis
-version: 1.2.0
+version: 1.3.0
 description: >-
-  Where tail latency comes from and how to attack it: decomposing p99.9 into its
-  contributors, tail amplification across fan-out and chained calls, hedged requests and
-  their load cost, tail-tolerant design, and telling a systematic tail from a rare event.
-  Use when p99 is fine but p99.9 is not, when each service meets its own SLO yet the
-  user-facing request misses it, when per-stage p99s do not add up to the end-to-end p99,
-  when a p99 spike needs to be attributed to GC, safepoint, cold start or throttling, when
-  someone proposes hedging or an aggressive timeout-plus-retry, when a p50 optimisation
-  made the tail worse, or when latency degrades for the first minutes after every deploy.
-  Does not cover percentiles, histogram aggregation or sample adequacy
-  (latency-statistics), the queueing contribution to the tail (queueing-models), or
-  turning the analysis into a capacity decision (capacity-planning).
+  Diagnosing and mitigating end-to-end latency tails: defining the latency population,
+  decomposing stage and queue time with per-request evidence, quantifying fan-out under
+  dependence, attributing correlated JVM/OS/network/dependency events, and selecting
+  bounded tail-tolerance mechanisms such as deadlines, partial results, hedging and
+  load-aware routing. Use when p99/p99.9 regresses, stage percentiles do not explain an
+  end-to-end percentile, deploys create cold tails, wide fan-out amplifies rare stragglers,
+  or a hedge/retry is proposed. Percentile estimation belongs to latency-statistics;
+  queueing models to queueing-models; collector and OS mechanisms to their owning skills.
 
 license: Apache-2.0
 

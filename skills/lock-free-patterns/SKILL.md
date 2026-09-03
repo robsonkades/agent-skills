@@ -1,110 +1,176 @@
 ---
 name: lock-free-patterns
 description: >
-  Lock-free algorithm patterns: CAS retry loops and how they fail, the ABA problem and when
-  it is actually reachable in Java, lock-free versus wait-free versus obstruction-free
-  progress, spin backoff, LongAdder-style striping, lock-free queues and stacks, and
-  deciding when a plain lock is the better answer. Use when a CAS loop spins without
-  backoff, when AtomicLong stops scaling with thread count, when CPU is high but throughput
-  is flat and jstack shows no BLOCKED threads, when a node pool is added to a lock-free
-  structure, when someone plans to hand-roll a structure that java.util.concurrent already
-  ships, or when a lock-free rewrite is justified by "biased locking" or measured with a
-  System.nanoTime loop. Does not cover the access modes and barriers the algorithms are
-  built from (varhandles-and-memory-ordering), happens-before and safe publication
-  (java-memory-model), or what a contended monitor actually costs (lock-inflation).
+  Designing and reviewing nonblocking Java algorithms: linearization points, lock-free,
+  wait-free and obstruction-free progress, CAS/RMW loops, success/failure ordering, contention
+  collapse, backoff/helping, ABA/version wrap, node reuse and reclamation, publication,
+  linearizability, starvation and shutdown. Requires comparison with JDK/library and lock-based
+  alternatives plus retry and topology measurement. Use when implementing or diagnosing atomics,
+  striped counters, queues, stacks or ring buffers—not as a synonym for “fast.”
 ---
 
-# Lock-Free Patterns
+# Lock-free patterns
 
 ## Purpose
 
-Decide whether an algorithm should be lock-free at all, and if so, get the retry loop, the
-progress guarantee and the contention profile right. The failure this skill prevents is the
-lock-free rewrite that is slower than the lock it replaced — because CAS under contention
-pays the same cache-coherency cost that made the lock expensive, and the rewrite added a
-spin loop on top.
+Prove safety and progress of a nonblocking algorithm and establish that its complexity buys a
+decision-relevant benefit. Lock-free means system-wide progress under defined assumptions; one
+thread may retry/starve indefinitely, cache lines still contend, and external blocking can remain.
 
-"Lock-free" is a _system_ progress guarantee: at least one contending thread completes per
-round. It does not mean nobody waits, it does not mean no contention, and it does not mean
-no cache-line bouncing. Individual starvation is explicitly permitted.
+## Entry gate
 
-## Workflow
+Before custom code:
 
-1. **Check `java.util.concurrent` first.** `ConcurrentLinkedQueue`, `LongAdder`,
-   `ConcurrentHashMap` and the rest already implement the published algorithms. Hand-rolling
-   one is a decision that needs a reason.
-2. **Confirm the symptom is CAS contention.** High CPU with flat throughput and no `BLOCKED`
-   threads is the signature; allocation, GC and I/O produce similar-looking graphs. Confirm
-   with hardware counters before rewriting anything. See
-   `references/measuring-cas-contention.md`.
-3. **State the progress guarantee you need.** Wait-free (every thread finishes in bounded
-   steps), lock-free (at least one finishes), or obstruction-free (only in isolation).
-   Composite operations are rarely wait-free; do not claim a guarantee the retry loop does
-   not deliver.
-4. **Write the retry loop with the ordering anchor in the right place.** Fields of the new
-   node are written _before_ the publishing CAS, never after. Add `Thread.onSpinWait()` to
-   the failure path.
-5. **Ask whether ABA is reachable here.** It is not for object references the algorithm
-   never recycles; it is for pooled nodes and for CAS over primitives that cycle. Only then
-   reach for `AtomicStampedReference`.
-6. **Pick the structure to the contention profile.** Simple atomics at low contention,
-   striping for cumulative counters at high contention, a ring buffer for a
-   high-throughput pipeline. See `references/lock-free-structures.md`.
-7. **Validate the mechanism, not just the number.** CAS attempts per successful operation
-   must fall, and the fix must not have introduced false sharing between the new fields.
+1. Check `java.util.concurrent`, atomics and maintained libraries.
+2. State the missing semantic/performance property.
+3. Compare against a clear lock/immutable/confinement design.
+4. Define linearization point, progress guarantee and scheduler/preemption assumptions.
+5. Budget proof, testing, operability and future-maintainer cost.
 
-## Rules
+Custom lock-free code is justified by requirements, not by absence of `BLOCKED` threads.
 
-- Never write an unbounded CAS retry loop without `Thread.onSpinWait()` on the failure path.
-  It emits `PAUSE` on x86 and reduces the energy and pipeline cost of spinning.
-- Do not justify a lock-free rewrite with "locks have zero overhead only thanks to biased
-  locking". Biased locking was disabled by default in JDK 15 (JEP 374) and removed from the
-  source in JDK 18 (JDK-8256425). On a JDK 25 baseline the low-contention fast path is
-  `LM_LIGHTWEIGHT` fast-locking, default since JDK 23.
-- Prefer the lock until measurement proves it limits throughput under the real load profile.
-  A lock is simpler, correct more often, and can be elided entirely by the JIT; CAS pays a
-  cost even uncontended.
-- Never benchmark CAS contention with a `System.nanoTime()` loop in `main()`. Without an
-  isolated fork the JIT state of the previous benchmark contaminates this one; without
-  separate warmup the interpreter, C1, deoptimisation and C2 recompilation are all folded
-  into the number; without a `Blackhole` or a consumed return value, dead-code elimination
-  inflates it. Use JMH with `@Fork`, separate `@Warmup`/`@Measurement`, and a consumed result.
-- Vary the thread count (1, 2, 4, 8, 16+) in any contention benchmark. CAS contention is not
-  linear in the number of competitors, so a single thread count proves nothing.
-- Report CAS attempts per successful operation alongside throughput. A throughput rise with
-  an unchanged attempt rate means something else changed.
-- "Lock-free" says nothing about memory layout. Two adjacent `AtomicLong` fields written by
-  different threads at high frequency contend on one cache line even though they share no
-  logical state. Check for false sharing after any striping change.
-- ABA is not automatically impossible in Java. The guarantee is reference identity, not
-  address stability — G1, ZGC and Shenandoah all move objects and reuse addresses. ABA is
-  unreachable for live object references the algorithm never recycles; it returns with an
-  explicit node pool, and with CAS over primitives that legitimately cycle back to a prior
-  value.
-- Use `AtomicStampedReference` when ABA is reachable — the stamp only ever increases, which
-  makes ABA arithmetically impossible within the stamp space. `AtomicMarkableReference`
-  carries one bit instead and solves a narrower case.
-- `AtomicLong` is for low contention; a heuristic threshold is fewer than about four threads
-  writing the same field, and the real threshold depends on write rate and cache topology,
-  so measure it. Above that, use `LongAdder` — but only for cumulative operations, never
-  where an arbitrary CAS on the value is needed.
-- There is no JFR event for CAS failure. Nothing corresponds to `jdk.JavaMonitorEnter` here,
-  so diagnosis is hardware profiling and comparative measurement, not an event filter.
-- Do not attribute a ring-buffer pipeline's throughput to "being lock-free". Pre-allocation
-  (no per-message GC pressure) and contiguous-array cache locality typically weigh as much
-  or more. The published LMAX figure is about 5x over `ArrayBlockingQueue` — roughly 26M
-  against 5M ops/s in a 1-producer/1-consumer unicast benchmark on that benchmark's own
-  hardware — not the orders of magnitude often quoted.
+## Algorithm contract
+
+```text
+abstract object semantics and linearizable operations:
+state representation and invariants:
+linearization point per success/failure operation:
+publication/access modes and immutable-after-publish fields:
+progress class and assumptions:
+CAS retry, helping, backoff, cancellation and shutdown:
+ABA/version wrap/node reuse/reclamation:
+memory retention and allocation policy:
+fairness/starvation and overload behavior:
+target JDK/architecture/topology evidence:
+```
+
+## Progress vocabulary
+
+| Guarantee        | Meaning                                                        | Caveat                                                   |
+| ---------------- | -------------------------------------------------------------- | -------------------------------------------------------- |
+| blocking         | a delayed owner can delay others                               | may offer fairness, simple invariants, efficient parking |
+| obstruction-free | an operation completes if it eventually runs alone             | contention manager/backoff required for system progress  |
+| lock-free        | infinitely often, some operation completes in finite own steps | individual starvation allowed                            |
+| wait-free        | each operation completes in bounded own steps                  | bound/operation/participants must be specified           |
+
+GC pauses, OS descheduling, blocking callbacks and resource waits affect observed progress even if
+the in-memory algorithm is lock-free. Do not extend the claim across the whole service.
+
+## CAS loop
+
+```java
+for (int failures = 0; ; failures++) {
+    State current = state.getAcquire();
+    State next = derivePure(current);
+    if (state.compareAndSet(current, next)) return;
+    contentionPolicy.onFailure(failures); // spin/yield/backoff/park/help/cancel by policy
+}
+```
+
+This is a shape, not complete code. The selected VarHandle/atomic modes must publish `next` and
+observe `current` correctly. Derivation can repeat, so it cannot perform irreversible effects.
+Allocation on every failure can create a retry/GC feedback loop.
+
+`Thread.onSpinWait()` is a processor hint, not a progress policy, cancellation point, yield, or
+bound. Use short spinning when expected owner latency/topology justifies it, then yield/back off/
+park/help/fail according to the algorithm. Measure tail latency, CPU and starvation.
+
+## Linearization and failure semantics
+
+Identify where each operation takes effect in the abstract history. A failed `poll`, `contains`,
+or CAS-derived operation also needs a point/interval and consistency contract. Multi-step methods
+may need helping/descriptors; “each field update is atomic” does not make the operation linearizable.
+
+Use history/model tests in addition to invariants. Define behavior on exceptions, interruption,
+cancellation, close, empty/full state, counter/version overflow and thread death between preparation
+and publication.
+
+## ABA and reclamation
+
+ABA occurs when the compared state returns to a value/reference that compares equal while relevant
+intermediate history is lost. Moving GC does not itself cause reference ABA: Java reference identity
+is preserved across relocation. ABA becomes reachable through:
+
+- the same node/object being removed, reset and reinserted;
+- pooled/recycled nodes;
+- primitive indices, sequence numbers or tagged states wrapping/repeating;
+- a compound state represented by too-small a comparison key.
+
+Stamped/tagged references only enlarge the state space; finite stamps can wrap. Prove maximum reuse/
+lag or use a reclamation/version design that remains safe. GC keeps reachable Java objects alive,
+which simplifies memory reclamation compared with manual memory, but off-heap/native structures and
+explicit pools restore use-after-free/reuse hazards.
+
+## Structures and trade-offs
+
+- **Atomic counter:** exact linearizable updates, one coherence hotspot under write contention.
+- **Striped adder:** distributed updates and scalable approximate/non-atomic aggregate read; suitable
+  for metrics, not unique sequences, balances, or exact limit enforcement.
+- **Treiber stack:** compact CAS head; contention/ABA/reclamation and LIFO semantics.
+- **Michael–Scott-style queue:** linked-node enqueue/dequeue with helping; allocation/retention,
+  sentinel and tail-lag proof complexity.
+- **Ring buffer:** bounded contiguous storage and sequence protocol; capacity/full policy, wrap,
+  gating, wait strategy, producer/consumer topology and false sharing dominate correctness/cost.
+
+Preallocation/locality/batching may explain a ring buffer's gain independently of progress class.
+Measure mechanisms separately.
+
+## Diagnosis
+
+High CPU plus flat throughput and no blocked monitors is not a CAS signature. Competing causes include
+application compute, GC/JIT, polling, serialization, logging, kernel work and measurement scope.
+
+Use aligned evidence:
+
+- CPU profile showing retry/RMW/spin path and owning operation;
+- attempts/failures/help/backoff per successful useful operation;
+- thread-count and key/state contention distribution;
+- compiled code or supported hardware counter evidence with multiplex/topology caveats;
+- GC/allocation from failed attempts;
+- throughput, tail, fairness/starvation and deadline-abandoned work.
+
+No standard JFR event universally counts CAS failure; application counters and diagnostic builds are
+often the discriminating evidence. See `references/measuring-cas-contention.md`.
+
+## Validation
+
+- sequential oracle and representation invariants;
+- linearizability/history testing over bounded models;
+- jcstress for memory-ordering/atomic litmus patterns;
+- schedule/stress/fault tests including stalled/preempted actors;
+- wrap/reuse/empty/full/shutdown/cancellation cases;
+- JMH/component load over thread/topology/contention distributions;
+- comparison with library and lock-based baseline;
+- memory retention, allocation, power/CPU and observability review.
+
+Finite tests do not prove lock-free or wait-free progress. The algorithmic proof states the guarantee;
+tests challenge assumptions and integration.
+
+## Anti-patterns
+
+| Anti-pattern                        | Failure                            | Better approach                                 | Narrow exception                 |
+| ----------------------------------- | ---------------------------------- | ----------------------------------------------- | -------------------------------- |
+| Add `onSpinWait` to unbounded loop  | burns CPU/starves without recovery | adaptive policy with progress/cancel metrics    | very short bounded handoff       |
+| “ABA impossible with GC”            | same object/value can be reused    | analyze identity reuse/wrap/reclamation         | immutable never-reinserted nodes |
+| Stamp only increases                | finite stamp wraps                 | prove horizon or stronger state/reclamation     | bounded lifetime below wrap      |
+| AtomicLong threshold “four writers” | hardware/rate/topology vary        | sweep and retry counters                        | local heuristic, non-decisive    |
+| Lock-free means faster              | coherence/retry/complexity ignored | measured baseline and total cost                | hard progress requirement        |
+| Throughput only                     | starvation/failures hidden         | successes, retries, tail, fairness, correctness |
+
+## Definition of done
+
+- [ ] Semantics, invariants and linearization points cover success and failure.
+- [ ] Progress class is scoped with scheduler/participant assumptions.
+- [ ] Publication and CAS success/failure modes have a JMM proof.
+- [ ] ABA, wrap, reuse, reclamation and off-heap lifetime are handled.
+- [ ] Retry/backoff/help/cancel/shutdown are bounded and observable.
+- [ ] Library and lock-based alternatives are compared under representative topology.
+- [ ] Safety/history/stress plus performance/fairness/memory evidence support the claim.
 
 ## References
 
-- [Lock-free structures](references/lock-free-structures.md) — the progress-guarantee table,
-  the Treiber stack and Michael-Scott queue with the CAS anchors marked, the
-  `AtomicStampedReference` ABA fix, and the Disruptor ring buffer with its five distinct
-  causes of throughput and its wait strategies. Read when implementing or reviewing a
-  lock-free structure.
-- [Measuring CAS contention](references/measuring-cas-contention.md) — the symptom-to-tool
-  table with the `perf` and async-profiler invocations, the CAS hardware cost ladder from
-  uncontended to cross-socket, the approach-selection matrix, and the investigation and
-  validation checklists. Read before concluding that CAS contention is the problem, or that
-  a change fixed it.
+- [Lock-free structures and proof obligations](references/lock-free-structures.md)
+- [Measuring CAS contention](references/measuring-cas-contention.md)
+- [Java atomics API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/package-summary.html)
+- [Java VarHandle API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/VarHandle.html)
+- [OpenJDK jcstress](https://github.com/openjdk/jcstress)

@@ -1,100 +1,242 @@
-# Reading eBPF output against a JVM
+# Interpretation and correlation
 
-## Environment prerequisites
+## Evidence envelope
 
-| Requirement                                                  | Why it matters                                                                                                             |
-| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| Linux kernel 5.8+                                            | `CAP_BPF` / `CAP_PERFMON` exist as separate capabilities from full root; older kernels need `CAP_SYS_ADMIN`                |
-| root, or `CAP_BPF` + `CAP_PERFMON`                           | Loading and attaching a BPF program; `kernel.unprivileged_bpf_disabled` is irrelevant once the capability is held          |
-| tracefs at `/sys/kernel/tracing` (or the debugfs path)       | Tracepoint discovery and the `args` struct layout for `tracepoint:` probes                                                 |
-| BTF at `/sys/kernel/btf/vmlinux`                             | Kernel struct types for `kprobe:` arguments without headers (CO-RE); not needed for `tracepoint:` or `usdt:`               |
-| Host PID namespace, when run from a pod                      | `pid`, `/proc/<pid>/task` and `-p` all refer to host PIDs; a pod in its own PID namespace sees none of the JVM's           |
-| Docker seccomp: `bpf`/`perf_event_open` need `CAP_SYS_ADMIN` | The default profile has no `CAP_BPF`/`CAP_PERFMON` rule; `--cap-add BPF` alone still fails with `EPERM`                    |
-| `bpftrace`, `linux-tools-common`, `linux-perf`               | `apt-get` on Ubuntu 20.04+; `dnf install bpftrace` on Fedora 32+                                                           |
-| JVM built with DTrace/SDT support                            | Prerequisite for any `usdt:` probe, independent of the JDK version — `readelf -n libjvm.so \| grep -c stapsdt` is the test |
+Every result should carry:
 
-## PID versus TID
+```text
+collector/script source digest and parameters
+kernel/release/config, architecture, bpftrace/libbpf versions
+probe type/name and discovered format/ABI
+target membership rule and PID/cgroup lifecycle
+clock, UTC start/end, host/node/pod/process start identity
+event opportunities where knowable; entered/paired/unmatched/lost/evicted counts
+histogram count/sum/unit and stack-symbol coverage
+overhead trial and privilege used
+```
 
-The kernel's internal naming is inverted relative to user space: in `task_struct`, `pid`
-identifies the **thread** and `tgid` identifies the **process**. bpftrace translates this for
-its builtins but not for raw tracepoint fields.
+Without coverage and loss, an empty histogram means “no retained observations,” not “the
+event never happened.”
 
-| Reference                                                   | Source                                       | What it actually is                            |
-| ----------------------------------------------------------- | -------------------------------------------- | ---------------------------------------------- |
-| builtin `pid`                                               | `bpf_get_current_pid_tgid() >> 32`           | tgid — the process id user space means         |
-| builtin `tid`                                               | `bpf_get_current_pid_tgid() & 0xffffffff`    | the kernel's internal `pid` — the thread's TID |
-| `args->pid` on `sched:sched_wakeup`                         | tracepoint format field (`task_struct->pid`) | TID of the woken thread, **not** the process   |
-| `args->next_pid` / `args->prev_pid` on `sched:sched_switch` | same                                         | TIDs of the threads being switched             |
+## PID/TID/cgroup semantics
 
-Consequence: `/pid == $1/` is correct on `tracepoint:syscalls:sys_enter_futex`, and
-`/args->next_pid == $1/` on `tracepoint:sched:sched_switch` silently narrows the trace to the
-main thread.
+Linux uses:
 
-## Futex operation bitmask
+| Concept                 | Kernel task field | User-facing meaning |
+| ----------------------- | ----------------- | ------------------- |
+| `pid` in `task_struct`  | per-task ID       | thread ID (TID)     |
+| `tgid` in `task_struct` | thread-group ID   | process ID (PID)    |
 
-`args->op` is a bitmask: the low 7 bits carry the operation, bit `0x80` is
-`FUTEX_PRIVATE_FLAG`, set by glibc's `pthread_mutex` — which is what `synchronized` and
-`ReentrantLock` end up using.
+bpftrace builtins and tracepoint fields are separate APIs. For a current-task probe, builtin
+`pid` may represent the process and `tid` the thread. A scheduler tracepoint's `prev_pid`,
+`next_pid`, or wakeup `pid` names subject TIDs encoded by that tracepoint. A raw tracepoint may
+have different arguments. Always use `-lv`/tracefs format and the matching documentation.
 
-| Raw `args->op` | `args->op & 0x7f` | Constant             | Context                           |
-| -------------- | ----------------- | -------------------- | --------------------------------- |
-| 0              | 0                 | `FUTEX_WAIT`         | Non-private futex — rare in Java  |
-| 128            | 0                 | `FUTEX_WAIT_PRIVATE` | The common Java lock case         |
-| 1              | 1                 | `FUTEX_WAKE`         | Non-private                       |
-| 129            | 1                 | `FUTEX_WAKE_PRIVATE` | Waking a waiter on a private lock |
+PID/TID values can be reused. Add process start identity, cgroup generation, or a bounded
+collection window/cleanup strategy when stale map entries could cross lifetimes.
 
-## USDT probe activation
+Cgroup scoping avoids chasing dynamic threads but introduces its own semantics: which cgroup
+hierarchy/version, whether the subject task can be queried at that hook, task migration, pod
+sidecars, and cgroup-ID reuse. Verify membership against `/proc/<tid>/cgroup`/runtime metadata
+during the capture.
 
-| Probe                                                                                                                                       | Fires by default | Flag that enables it (JDK 25 product flag) | Cost of the flag                                              |
-| ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------------------------------ | ------------------------------------------------------------- |
-| `vm__init__begin/end`, `thread__start/stop`, `class__loaded/unloaded`, `gc__begin/end`, `mem__pool__gc__*`, `compiled__method__load/unload` | Yes              | —                                          | None beyond the probe itself                                  |
-| `monitor__contended__enter/entered/exit`, `monitor__wait/waited`, `monitor__notify`                                                         | No — dormant     | `-XX:+DTraceMonitorProbes`                 | A check per monitor event; tolerable for a reproduction run   |
-| `method__entry`, `method__return`                                                                                                           | No — dormant     | `-XX:+DTraceMethodProbes`                  | Runtime call on every method entry/exit — never in production |
-| `object__alloc`                                                                                                                             | No — dormant     | `-XX:+DTraceAllocProbes`                   | Runtime call per allocation — never in production             |
+## Time semantics
 
-`-XX:+ExtendedDTraceProbes`, the umbrella that used to switch all three on, was deprecated
-in JDK 19 (JDK-8279629) and obsoleted in JDK 20 (JDK-8279913); JDK 25 exits with
-`Unrecognized VM option 'ExtendedDTraceProbes'`. `tplist` lists what exists in the binary,
-not what emits. A dormant probe produces no events and no error.
+`bpf_ktime_get_ns`/bpftrace `nsecs` generally use a monotonic kernel clock; JFR and application
+events expose timestamps through their own mapping. Align with start/end markers captured in
+both systems and retain clock metadata. Wall-clock/NTP steps should not change monotonic
+durations but can shift displayed UTC alignment.
 
-## Signal to next step
+Do not sum independently observed durations unless their interval boundaries define disjoint
+parts of the same operation. Usually they overlap or nest:
 
-| Signal                                             | Probable cause                                                                                  | Next step                                                                                                                                    |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Futex latency above 1 ms                           | `synchronized` / `ReentrantLock` contention                                                     | Correlate with `asprof -e lock`                                                                                                              |
-| Run queue latency above 5 ms                       | Saturated CPU, CFS throttling, or poor affinity                                                 | `cpu.stat` `nr_throttled`/`throttled_usec` first — the quota is the cause when they rise with the histogram; then `mpstat -P ALL`, `taskset` |
-| Run queue histogram flat while p99 is bad          | Only `sched_wakeup` recorded — preemption re-queues (`prev_state == TASK_RUNNING`) were dropped | Use recipe 4's three-event form; compare `nr_throttled` again                                                                                |
-| Rising major page faults                           | Heap being paged out                                                                            | Check `free -h` / `vmstat`; compare `-Xmx` with available memory                                                                             |
-| High context switches leaving the process          | Threads blocking on I/O or locks frequently                                                     | Resize the pool, or reconsider virtual threads                                                                                               |
-| Disk latency above the JFR `jdk.FileRead` duration | Kernel buffering, scheduler and copy overhead                                                   | Candidate for Direct I/O or io_uring                                                                                                         |
+```text
+application request duration
+  contains user work, queues, syscalls, scheduling, remote waits
+one read syscall duration
+  contains kernel work and possible blocking/scheduling
+block request duration
+  may overlap the syscall, occur asynchronously, or belong to writeback
+run-queue sample
+  may occur inside any of the above
+```
 
-## Checklist before a production PID
+Use temporal co-occurrence to generate hypotheses; use identifiers/state machines or a causal
+experiment to claim attribution.
 
-Before running:
+## Interpreting common signals
 
-- [ ] Is the filter scoped to the whole process (`/proc/$PID/task` map) or to one thread —
-      and is that what the probe's fields actually give you?
-- [ ] Did `bpftrace -lv` confirm each `args->` field on this kernel build?
-- [ ] If futex is involved, is `& 0x7f` applied to `args->op`?
-- [ ] Does the production JVM binary have the DTrace/SDT support (`readelf -n … | grep -c
-stapsdt`) and the `DTrace*Probes` flag any `usdt:` probe needs — not just the
-      development one?
-- [ ] If the pod is not in the host PID namespace, is the PID you are filtering the host's?
+| Signal                       | Supports                                         | Does not establish                          | Corroborate                                                         |
+| ---------------------------- | ------------------------------------------------ | ------------------------------------------- | ------------------------------------------------------------------- |
+| Futex wait syscall tail      | kernel futex wait behavior for selected commands | Java lock identity or full lock wait        | JFR monitor/park events, async-profiler lock stacks, owner evidence |
+| Wakeup→schedule delay        | selected runnable task waited before executing   | why it waited; all requeue paths            | cgroup quota/PSI, host run queue, affinity, preemption-aware tool   |
+| Cgroup throttled time/events | CPU controller enforced quota in interval        | user impact or which code demanded CPU      | CPU profiles, runnable demand, latency/throughput                   |
+| Block request latency        | device/block-layer request lifetime              | submitting JVM/request or file-read latency | filesystem/cgroup I/O, device stats, JFR file events, workload      |
+| Major fault                  | fault needed I/O                                 | heap swap                                   | fault address/VMA/file, memory pressure and reclaim evidence        |
+| Context switches             | scheduling transitions                           | harmful contention or right pool size       | voluntary/involuntary reason, state, CPU/wait profiles              |
+| TCP retransmit/drop          | network stack event                              | remote service root cause                   | socket tuple/cgroup ownership, packet/host/remote telemetry         |
+| USDT hit                     | target JVM emitted that semantic probe           | complete event population or low overhead   | flag/config, expected control count, lost-event metrics             |
+| Kernel stack sample          | sampled kernel path                              | time exclusively caused by leaf function    | sample total, event semantics, off-CPU/application outcome          |
 
-While developing:
+Never attach universal remediation thresholds such as “run queue >5 ms means resize” or “futex
 
-- [ ] Did the script produce non-empty output against a synthetic load with known contention?
-- [ ] Is `ksym()` absent from anything that is not a memory address?
-- [ ] Is the installed async-profiler `asprof`, and is the command written for it?
+> 1 ms means a lock bug.” Compare with SLO, workload, CPU quota, service time, and baseline for
+> that system.
 
-When reading results:
+## Scheduler reasoning
 
-- [ ] Are the histogram buckets non-overlapping powers of two? Overlapping buckets are a
-      transcription error, not bpftrace output.
-- [ ] Is the overhead figure labelled as an estimate unless measured here, with and without
-      the script?
-- [ ] Are kernel-side and JVM-side durations kept as separate quantities rather than summed?
+Distinguish:
 
-Running:
+- host CPU saturation/competition;
+- cgroup quota throttling;
+- affinity/cpuset constraints or imbalance;
+- priority/scheduling-policy effects;
+- stop-the-world or JVM-coordinated suspension;
+- blocked threads incorrectly classified as runnable by the chosen observation;
+- virtual-thread carrier availability versus logical task pinning/parking.
 
-- [ ] Is there a stop plan — killing the `bpftrace` process — if overhead exceeds budget?
+Evidence chain:
+
+```text
+latency window
+  -> target runnable demand and run-queue distribution
+  -> cgroup cpu.stat/pressure deltas and cpuset/quota
+  -> per-CPU utilization/run queue and migrations
+  -> target CPU stacks and JFR safepoint/GC/task evidence
+  -> controlled quota/affinity/load change
+```
+
+A change that reduces queue delay but also reduces offered work or increases errors is not a
+capacity fix.
+
+## I/O reasoning
+
+Separate layers:
+
+```text
+application queue/serialization
+  -> Java/JFR operation
+  -> libc/JNI/syscall
+  -> VFS/filesystem/page cache
+  -> block scheduler/device
+  -> remote/network storage if present
+```
+
+Choose probes around the suspected boundary. For buffered reads, a cache hit may never reach
+block I/O. For dirty writes, completion can happen after the application returns. For direct or
+async I/O, submission/completion occurs through different tasks and identifiers. For sockets,
+block-I/O tracepoints are irrelevant.
+
+Do not recommend direct I/O or `io_uring` from a block/JFR duration mismatch. First quantify
+copy/cache/syscall/device/queue costs and evaluate correctness, buffering, batching, and
+operational complexity under `blocking-and-nonblocking-io` or `io-uring-and-zero-copy`.
+
+## Memory-fault reasoning
+
+Fault classification needs:
+
+- minor versus major and success/error;
+- address→VMA at the relevant time;
+- anonymous/file/shared mapping and file identity;
+- cgroup memory current/max/events/pressure;
+- reclaim, swap, page-cache, NUMA migration where relevant;
+- JVM heap/metaspace/code cache/native map context.
+
+Major faults can reflect normal demand paging of mapped binaries after startup, cold page
+cache, or memory pressure. A rising count alone does not identify the heap or justify changing
+`-Xmx`.
+
+## Stack evidence
+
+Report:
+
+```text
+event that selected the stack
+sample/event weight and total
+user/kernel/native/JIT frame coverage
+unresolved/truncated/lost fraction
+unwind method and flags
+symbol/JIT map source, timestamp, build IDs
+virtual-thread/carrier limitation
+```
+
+Sampling bias differs by event. A CPU-stack percentage cannot be compared numerically with a
+wall or futex-stack percentage. A stack tells where the sampled thread was, not necessarily
+the owner of the resource or request that caused another thread to wait.
+
+## Empty-output decision tree
+
+```text
+no output
+  -> program failed to compile/load/attach? inspect stderr/verifier/audit
+  -> probe exists in this kernel/binary? list and inspect format/notes
+  -> target membership matches subject fields/namespaces? verify live
+  -> positive control emits this exact event/command/path? run it
+  -> runtime flag enables the semantic probe? verify effective flags
+  -> filters/constants/ABI decode correct? count before filtering
+  -> maps/buffers/rate limits losing data? inspect counters
+  -> event really absent within a bounded, sufficiently long window? report that scope
+```
+
+Add progressively: first count all probe hits briefly in an authorized test, then target scope,
+then command/state predicates, then aggregation. This identifies which condition empties the
+population.
+
+## Plausible-but-wrong decision tree
+
+```text
+histogram looks plausible
+  -> entries approximately equal exits/paired + unmatched?
+  -> key supports concurrent/nested lifecycle?
+  -> map high-water/eviction/loss acceptable?
+  -> target includes dynamic threads and excludes non-targets?
+  -> units/clock and bucket count/sum consistent?
+  -> tracepoint subject attribution correct at both ends?
+  -> positive/negative controls produce expected directional change?
+```
+
+Synthetic validation should include two processes with distinguishable behavior. Otherwise a
+host-wide result can accidentally look like the target.
+
+## Security review
+
+Before production collection:
+
+- enumerate exact BPF program/map types, helpers, tracepoints/functions, filesystem and perf
+  access required;
+- run under a controlled collector identity rather than arbitrary application-supplied code;
+- bound stack/string data and prevent arguments/payloads/secrets from export;
+- restrict node/tenant scope and query access;
+- sign scripts/objects and log who activated them, where, why, and for how long;
+- test detach/cleanup and confirm no pinned program/map/link remains;
+- restore sysctl/capability/seccomp/host changes and verify the previous state.
+
+`CAP_BPF` is not harmless: combined with other rights and helpers, BPF can observe sensitive
+host activity. Kernel lockdown and LSM policy may intentionally deny a technically possible
+probe.
+
+## Report template
+
+```text
+Question:
+Scope and population:
+Probe/schema/tool/kernel:
+Window and workload:
+Counts: entered / paired / unmatched / lost / evicted:
+Distribution and units:
+Stack/symbol coverage:
+Correlated JVM/cgroup/application evidence:
+Interpretation:
+Alternative explanations:
+Overhead and privileges:
+Next discriminating experiment:
+```
+
+## Authoritative references
+
+- [Linux scheduler tracepoints source](https://github.com/torvalds/linux/blob/master/include/trace/events/sched.h) — inspect the running kernel tag/config.
+- [Linux block tracepoints source](https://github.com/torvalds/linux/blob/master/include/trace/events/block.h)
+- [Linux futex UAPI](https://github.com/torvalds/linux/blob/master/include/uapi/linux/futex.h)
+- [Cgroup v2 CPU controller](https://docs.kernel.org/admin-guide/cgroup-v2.html)
+- [PSI documentation](https://docs.kernel.org/accounting/psi.html)
+- [BPF security and verifier](https://docs.kernel.org/bpf/verifier.html)

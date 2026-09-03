@@ -1,13 +1,13 @@
 schemaVersion: 1
 
 name: task-queues-and-competing-consumers
-version: 1.2.0
+version: 1.3.0
 description: >-
   Distributing work to a pool of interchangeable workers through a queue: the lease and
   visibility-timeout model, and why an expired lease duplicates work instead of failing it;
-  sizing the timeout from the processing-time distribution; heartbeats and their failure
-  mode; bounding the queue; priority starvation; and oldest-message-age rather than queue
-  depth as the autoscaling signal. Use when two workers process one message although nothing
+  sizing the timeout from processing plus prefetch wait; heartbeats and their failure mode;
+  admission and retention bounds; priority starvation; and age, backlog, arrival and drain
+  rate as autoscaling signals. Use when two workers process one message although nothing
   retried or failed, when a lease is relied on for mutual exclusion, when a handler outlives
   its lease, when a queue has no maximum depth, when autoscaling is driven by queue depth,
   or when a poll loop feeds an unbounded executor. Not ack placement (delivery-semantics),

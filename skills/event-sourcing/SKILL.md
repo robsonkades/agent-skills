@@ -1,18 +1,11 @@
 ---
 name: event-sourcing
 description: >
-  Storing a sequence of immutable events as the source of truth and deriving current state
-  from it: deciding whether the system needs it, designing events and streams, concurrency
-  through expected stream version, building and rebuilding projections, and the problems that
-  have no clean answer — event schema change, personal-data erasure, and read-your-own-write.
-  Use when event sourcing is proposed or already in place, when auditability is the stated
-  driver, when a projection has drifted from its stream, when an event needs a field it never
-  had, or when a user reports data that "disappeared" after saving. Does not cover event-driven integration
-  between services (event-driven-architecture), broker delivery guarantees
-  (delivery-semantics), cross-service workflow compensation
-  (distributed-transactions-and-sagas), optimistic locking over a mutable row
-  (offline-concurrency-control), or what a client may observe across replicas
-  (consistency-models).
+  Event streams as authoritative state: adoption criteria, stream boundaries, expected-version
+  appends, command idempotency, snapshots, projection correctness/rebuild, temporal replay,
+  schema evolution and erasure. Use when event sourcing is proposed, projections drift, old
+  payloads must evolve, or write/read visibility surprises users. Integration messaging,
+  delivery, sagas, mutable-row locking and replica consistency remain separate skills.
 ---
 
 # Event Sourcing
@@ -23,11 +16,11 @@ Decide, and then correctly operate, a system whose durable truth is an append-on
 facts rather than a mutable row. State is a fold over that sequence; the row you used to
 update becomes a derived view you can throw away and rebuild.
 
-This buys things nothing else buys as cleanly: a complete and non-negotiable history, the
-ability to ask what the state was at any past moment, and the freedom to build new views of
-old facts. It costs a permanent obligation — **events are immutable and forever, but
-requirements are not** — and that obligation is the reason most systems that adopt it should
-not have.
+This can preserve a sequenced decision history, reconstruct state under a specified model and
+build new views from retained facts. It does **not** automatically make history complete,
+tamper-evident, legally immutable or semantically reproducible: missing external inputs,
+changed projection code and retention/redaction policies still matter. The durable obligation
+is to keep event meaning, replay tooling and governance compatible for the declared horizon.
 
 The two failures this exists to prevent: adopting event sourcing for auditability, which an
 audit table delivers at a hundredth of the cost; and adopting it without designing for schema
@@ -37,18 +30,20 @@ and have no clean solution retrofitted.
 ## Workflow
 
 1. **State the driver, and check it against the cheaper alternative.** Audit? A history
-   table. Debugging? Structured logs. Temporal queries? Bitemporal columns. Only when the
+   table. Debugging? Structured logs. Temporal queries? Bitemporal columns. When the
    business genuinely reasons in events — ledgers, trading, workflow, anything where the
    sequence _is_ the domain — does the cost become proportionate.
-2. **Fix the stream boundary.** A stream is the consistency and concurrency unit, and it should
-   be one aggregate. Getting this wrong is not tunable later.
+2. **Fix the stream boundary.** It is usually one aggregate's ordering/concurrency unit. Model
+   maximum length, contention, invariant scope and migration strategy; changing it later is a
+   data migration, not literally impossible.
 3. **Design events as facts, in past tense, in the business's language.** `FundsWithdrawn`,
    not `BalanceUpdated`. An event named after a data change is a row update wearing a hat.
 4. **Decide concurrency before writing code.** Appends carry an expected version; a mismatch
    is a conflict the caller must resolve. This is optimistic locking with a different name
    (`offline-concurrency-control`).
-5. **Design the read models first, not last.** Nothing queries the event store; every screen
-   is a projection, and projections are eventually consistent by construction.
+5. **Design reads and consistency explicitly.** Separate asynchronous projections are common
+   and stale by lag; inline projections, direct stream reads or same-transaction read models
+   have different semantics. CQRS deployment is optional, not implied by event sourcing.
 6. **Write the rebuild before you need it.** A projection you cannot rebuild is a database you
    cannot migrate. Time it against production volume now, not during the incident.
 7. **Answer the three hard questions up front** — event versioning, personal-data erasure, and
@@ -78,8 +73,8 @@ Three consequences follow, and they are the whole of the trade:
 
 - **You cannot change the past.** A wrong event is corrected with a compensating event, never
   with an `UPDATE`. This is a feature for a ledger and an obstacle for a typo.
-- **Every query goes through a projection**, so every query is a little stale, and every new
-  query is a new projection built from history.
+- **Queries need a state representation.** It may be a direct fold, snapshot or projection;
+  only asynchronously maintained projections are necessarily stale.
 - **The write model and the read model diverge on purpose.** That divergence is what makes
   both simple; it is also the divergence a team must be willing to operate.
 
@@ -87,7 +82,7 @@ Three consequences follow, and they are the whole of the trade:
 
 ```text
 The driver is "we need an audit trail"
-        → do not event source. An append-only history table, or the
+        → first compare an append-only history table, temporal tables and
           database's temporal tables, gives auditability without making
           every query a projection.
 
@@ -113,15 +108,15 @@ Event sourcing is proposed for the WHOLE system
         → almost certainly wrong. Apply it per aggregate. Most systems
           have one or two aggregates that deserve it and many that do not.
 
-Personal data must be erasable on request
-        → resolve before adopting. An immutable log and a legal erasure
-          obligation conflict; crypto-shredding is the usual answer and
-          must be designed in from the first event.
+Personal data has erasure or retention obligations
+        → resolve with privacy/legal owners before adopting. Minimise data;
+          redaction, segregated mutable data or cryptographic deletion each
+          has assumptions and derived-copy obligations.
 
 The stream for one aggregate will grow without bound (a device feed,
 a long-lived account)
-        → either snapshot, or the stream boundary is wrong. Unbounded
-          streams make every load slower forever.
+        → use indexed incremental reads and measure replay; snapshot, close
+          on a business boundary, or redesign when the SLO requires it.
 ```
 
 ## Rules
@@ -140,9 +135,10 @@ a long-lived account)
   concurrent writer; it cannot catch a retry after an _unknown_ outcome, which re-decides and
   appends a second legitimately-versioned copy of the same command. Expected version is
   concurrency control, not idempotency (`idempotency`).
-- **Never mutate or delete an event.** Correct with a compensating event. The moment a system
-  edits history, every projection rebuild becomes non-deterministic and the audit property —
-  the reason for the whole exercise — is gone.
+- Treat committed events as immutable in normal business flow and correct with new facts.
+  Exceptional redaction/repair may be legally or operationally required; use a controlled,
+  auditable stream-rewrite/version migration and rebuild every dependent projection. Append-
+  only storage alone is not tamper evidence.
 - Projections are derived and disposable, and must claim each event with an **atomic
   conditional advance of their position**, not a read-then-skip. Two workers reading the same
   watermark both apply a non-idempotent fold; this is the check-then-act that `idempotency`
@@ -151,23 +147,32 @@ a long-lived account)
   before an incident forces a rebuild. When it exceeds the acceptable window the answers are
   snapshots, a parallel rebuild with a cut-over, or a carry-forward event that bounds the
   stream — never simply truncating history, which makes the snapshot the source of truth.
-- Snapshots are an optimisation, never a source of truth: deleting every snapshot must still
-  produce correct state.
+- In classic event sourcing, snapshots are rebuildable optimization: deleting them must still
+  permit correct replay from retained events. If a design compacts/deletes the prefix and makes
+  a checkpoint authoritative, name that different retention/audit contract explicitly.
 - **Read-your-own-writes is the user-visible cost**, and it is decided per screen rather than
   per system. The mitigations differ in what they cost and what they can actually deliver
   (`references/projections-and-evolution.md`, `consistency-models`).
-- **Event schema evolution has no free option.** Additive fields with defaults are the only
-  cheap change. Anything else is upcasting on read, a new event type alongside the old, or a
-  rewritten stream — all forever, because the old events are still there.
-- **Publish to other services from a catch-up subscription over the store, never from the
-  command handler.** An append followed by a broker publish in the same method is a dual write
-  and loses the message on any crash between them. The log is already the outbox — one of the
-  few operational advantages event sourcing buys (`distributed-transactions-and-sagas`).
+- **Event schema evolution has no free option.** Format-compatible additive changes are often
+  cheapest, but legality depends on format, defaults and compatibility mode. Alternatives are
+  upcasting, parallel event types, migration or a bounded legacy reader over the retention
+  horizon (`schema-evolution-and-compatibility`).
+- **Publish integration events from a durable subscription/CDC or an explicitly atomic append-
+  and-publish mechanism.** An ordinary append followed by broker send in the command handler is
+  a dual write. Treat the event log as the source for a replayable relay, while translating
+  internal events at the boundary (`distributed-transactions-and-sagas`).
 - **Internal events are not integration events.** Publishing an aggregate's internal events to
   other services couples them to your write model's evolution. Translate at the boundary
   (`event-driven-architecture`, `rpc-and-api-contracts`).
+- Auditability needs more than append-only APIs: authorize appends per stream/tenant, protect
+  administrator mutation paths, record actor/causation, define hash/signature or WORM controls
+  when tamper evidence is required, and test backup restore plus projection reconciliation.
 
 ## References
+
+- [KurrentDB Java client: expected-state and atomic append](https://docs.kurrent.io/clients/java/v1.2/appending-events)
+- [Apache Kafka log and retention design](https://kafka.apache.org/41/implementation/log/)
+- [GDPR Article 17 — right to erasure](https://eur-lex.europa.eu/eli/reg/2016/679/art_17/oj)
 
 - [Deciding and designing](references/deciding-and-designing.md) — the honest comparison
   against audit tables, temporal tables and change-data-capture; choosing stream boundaries and

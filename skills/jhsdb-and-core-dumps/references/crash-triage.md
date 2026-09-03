@@ -5,13 +5,15 @@
 ```
 Java process died
 ├── hs_err_pid*.log exists
-│   ├── core dump exists  -> native crash with a core: read hs_err first,
-│   │                        then jhsdb/GDB on the core for detail
-│   └── no core dump      -> native crash without a core: fix ulimit -c and
-│                            core_pattern before the next one
+│   ├── read header: signal, VM fatal error, or CrashOnOutOfMemoryError
+│   ├── usable core exists -> verify completeness/build IDs, then jhsdb + GDB
+│   └── no core            -> inspect JVM flag, RLIMIT_CORE, core_pattern handler,
+│                             coredump_filter, storage and handler limits
 └── no hs_err
-    ├── application log shows OutOfMemoryError -> Java OOM: heap dump path
-    └── no log at all -> suspect a Linux OOM kill: dmesg / journalctl -k
+    ├── application/runtime log shows OutOfMemoryError -> normal Java OOM/termination path;
+    │                                                    look for attempted heap dump
+    └── exit 137 / abrupt loss -> SIGKILL hypothesis; distinguish cgroup/kernel OOM,
+                                  orchestrator grace expiry and manual/node action externally
 ```
 
 ## hs_err anatomy
@@ -48,13 +50,13 @@ exhausted region, or a start-up misconfiguration — before any core is opened.
 
 ### Problematic frame letters
 
-| Letter | Meaning                                                 | What it suggests                                                                                                                     |
-| ------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `J`    | JIT-compiled Java; the tier (C1/C2) is on the same line | Candidate JIT compiler bug — rare, worth reporting upstream if it reproduces and disappears under `-Xint`                            |
-| `j`    | Interpreted bytecode                                    | No compilation involved, so more likely heap corruption from native code writing out of bounds, or a runtime bug independent of tier |
-| `V`    | JVM internal                                            | A JVM bug — or, if the pattern varies randomly between crashes, hardware. Check EDAC/mcelog before blaming the application           |
-| `v`    | JVM-generated stub                                      | Same neighbourhood as `V`                                                                                                            |
-| `C`    | Native code                                             | JNI bug                                                                                                                              |
+| Letter | Meaning                                                 | What it suggests                                                                                                 |
+| ------ | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `J`    | JIT-compiled Java; the tier (C1/C2) is on the same line | Investigate compiler/runtime defect, prior native corruption and hardware; `-Xint` is a discriminator, not proof |
+| `j`    | Interpreted bytecode                                    | Compilation is less likely causal; native/Unsafe corruption, runtime defect and hardware remain                  |
+| `V`    | JVM internal                                            | JVM defect, corrupted VM state or hardware; compare failing address/stacks across cores and builds               |
+| `v`    | JVM-generated stub                                      | Inspect stub purpose plus caller/native state; do not classify from the letter alone                             |
+| `C`    | Native code                                             | Identify the actual library/build/symbol; JNI/FFM code is one possibility, not the only one                      |
 
 ### Thread state
 
@@ -69,13 +71,13 @@ without any further investigation.
 
 ## Java `OutOfMemoryError` versus Linux OOM Killer
 
-|                   | Java `OutOfMemoryError`                     | Linux OOM Killer                                |
-| ----------------- | ------------------------------------------- | ----------------------------------------------- |
-| Who kills it      | The JVM throws the exception                | The kernel sends SIGKILL                        |
-| hs_err written    | No — not a fatal native signal              | No                                              |
-| Heap dump written | Yes, with `-XX:+HeapDumpOnOutOfMemoryError` | Never                                           |
-| Application log   | Stack trace visible                         | Process disappears silently                     |
-| Evidence          | Application log                             | `dmesg`, `journalctl -k`, exit code 137 (128+9) |
+|                   | Java `OutOfMemoryError`                                                         | Linux OOM Killer                                     |
+| ----------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Immediate action  | JVM throws; code may catch it or the process may terminate if uncaught          | Kernel sends uncatchable SIGKILL                     |
+| hs_err written    | No for an ordinary thrown OOME; yes if `CrashOnOutOfMemoryError` turns it fatal | No                                                   |
+| Heap dump written | Attempted for supported VM-raised OOMs when the flag/path/resources permit      | Not by the killed JVM                                |
+| Application log   | Only if caught/uncaught handling or logging records it                          | May end abruptly; external runtime records may exist |
+| Evidence          | Application log                                                                 | `dmesg`, `journalctl -k`, exit code 137 (128+9)      |
 
 ```bash
 sudo dmesg | grep -i "out of memory"
@@ -88,7 +90,9 @@ sudo journalctl -k | grep -i "oom"
 
 SIGKILL cannot be intercepted by any handler. The JVM's handlers are registered for
 SIGSEGV/SIGBUS/SIGILL/SIGFPE — signals that permit a handler — so an OOM kill terminates the
-process before any JVM code runs. Absence of every artefact is the evidence.
+process before any JVM code runs. Absence of JVM artefacts is compatible with SIGKILL but
+does not distinguish kernel OOM from a manual/orchestrator kill; correlate cgroup
+`memory.events`/`oom_kill`, kernel journal and workload-orchestrator events.
 
 ## Before blaming the container limit
 
@@ -129,8 +133,8 @@ at the moment of death.
 ### Analysis
 
 - [ ] hs_err read first: frame letter, thread state, heap section
-- [ ] `V` frame with a random pattern across crashes: hardware checked (EDAC/mcelog) before
-      an application bug is assumed
+- [ ] Variable `V`/`J` failures: native/Unsafe/FFM corruption, JVM build and hardware RAS
+      evidence assessed rather than selecting one from the frame letter
 - [ ] Core analysed with the correct `jhsdb` build for Java objects and threads, and GDB
       for native registers and memory
 - [ ] If virtual threads are involved: unmounted ones are invisible to both `jstack` and

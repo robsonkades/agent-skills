@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: domain-logic-organization
-version: 1.3.0
+version: 1.3.1
 description: >-
   Choosing where business rules live — Transaction Script, Domain Model or Table Module —
   from the shape of the logic rather than from convention, and recognising when the choice

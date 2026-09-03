@@ -1,17 +1,18 @@
 schemaVersion: 1
 
 name: compilation-and-inlining-logs
-version: 1.1.0
+version: 2.0.0
 description: >-
-  Reading what the JIT actually did: the six columns of -XX:+PrintCompilation and its flag
-  characters, -XX:+PrintInlining and its refusal categories, -XX:+LogCompilation with
-  JITWatch, targeted compiler directives, and turning a refusal into a code change. Use when
-  a hot method is suspected of not reaching tier 4, when a call site shows "too large" or
-  another inlining refusal, when a method never appears in the compilation log at all, when
-  someone prescribes -XX:CompileThreshold or -Xlog:jit, when a script greps the compilation
-  log and returns nothing, or when raising FreqInlineSize globally is proposed to fix one
-  method. Does not cover the tiered pipeline, warm-up and the code cache as concepts
-  (jit-compilation), the design rules about inlining and escape
+  Reading what the JIT actually did: the columns of -XX:+PrintCompilation and its flag
+  characters, -XX:+PrintInlining and its verdict strings, -XX:+LogCompilation with JITWatch,
+  the -Xlog:jit+compilation and JFR forms, targeted compiler directives, and turning a
+  refusal into a code change. Use when a hot method is suspected of not reaching tier 4, when
+  a call site shows "too big" or another inlining refusal, when a method never appears in the
+  compilation log at all, when someone prescribes -XX:CompileThreshold or -Xlog:jit, when a
+  script greps the compilation log and returns nothing, when a directive added with jcmd
+  changed nothing, when JFR shows no compilation events, or when raising FreqInlineSize
+  globally is proposed to fix one method. Does not cover the tiered pipeline, warm-up and the
+  code cache as concepts (jit-compilation), the design rules about inlining and escape
   (jit-inlining-and-escape-analysis), recompilation and uncommon traps (deoptimization), or
   C2's internal representation (c2-sea-of-nodes).
 
@@ -35,6 +36,7 @@ keywords:
   - printcompilation
   - jitwatch
   - c2
+  - compiler-directives
 
 files:
   - SKILL.md
@@ -45,7 +47,13 @@ dependencies:
   - name: jit-compilation
     version: ^1.0.0
   - name: jit-inlining-and-escape-analysis
-    version: ^1.0.0
+    version: ^2.0.0
+
+suggests:
+  - c2-sea-of-nodes
+  - code-cache-segments
+  - deoptimization
+  - unified-logging
 
 capabilities:
   - reads-source

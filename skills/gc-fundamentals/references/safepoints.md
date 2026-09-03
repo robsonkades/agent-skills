@@ -17,28 +17,34 @@ TTSP is the time between the VM requesting a safepoint and the **last** thread r
 one. Every thread must arrive; one slow thread stalls all the others, and none of that
 time appears in the GC log.
 
-So: if the GC log says 12 ms and the client felt 200 ms, the collector is not the problem.
+So: if the GC log says 12 ms and the client felt 200 ms, that GC event alone does not
+explain the observation. Check TTSP, request queueing, scheduling and timestamp alignment
+before exonerating or blaming the collector.
 
 ```bash
 -Xlog:safepoint:file=safepoint.log:time,uptime
 ```
 
-Enable it alongside `-Xlog:gc*`. It costs almost nothing and separates two investigations
-that otherwise look identical. On 25.0.3 each line reads
+Enable it alongside `-Xlog:gc*` after checking the logging volume and retention budget. It
+is normally low overhead, but production policy still requires measuring the chosen tags,
+decorators and sink. On 25.0.3 each line reads
 
 ```
 Safepoint "G1CollectForAllocation", Time since last: 48521900 ns, Reaching safepoint: 4700 ns, At safepoint: 496200 ns, Leaving safepoint: 2100 ns, Total: 503000 ns, Threads: 0 runnable, 11 total
 ```
 
 `Reaching safepoint` is TTSP; `At safepoint` is the operation the GC log reports;
-`Total` is what the application saw. Read the maximum of `Reaching safepoint` over the
-window, never its mean. The JFR equivalents are `jdk.SafepointBegin`,
+`Total` is what the application saw. Read the tail and maximum of `Reaching safepoint`
+over the window together with event count; a mean hides rare stalls, while a single
+maximum may be an outlier or a different operating regime. The JFR equivalents are
+`jdk.SafepointBegin`,
 `jdk.SafepointStateSynchronization` (the TTSP part) and `jdk.SafepointEnd`.
 
 ## Causes of high TTSP, ranked by measurement
 
-The classic answer — a counted loop with no safepoint poll — is obsolete on a current
-baseline. Loop strip mining (JDK-8186027, JDK 10) made `UseCountedLoopSafepoints` the
+The classic answer — assume every counted loop has no safepoint poll — is usually obsolete
+on a current baseline. Loop strip mining (JDK-8186027, JDK 10) made
+`UseCountedLoopSafepoints` the
 default with a poll every `LoopStripMiningIter` (1000) iterations, and long-counted loops
 have been counted loops with the same treatment since JDK-8223051 (JDK 16). Executed on
 25.0.3 with a thread requesting a safepoint every 150 ms while another thread ran each
@@ -57,14 +63,16 @@ The causes that remain on 25 are therefore:
   of a large array, large-array allocation, and any intrinsic that processes a whole
   buffer. The pause scales with the buffer: a 256 KB copy is invisible, a 256 MB one is
   the whole p99.9. Bound the buffer or split the operation.
-- **VM runtime code, not native code.** A thread _in native_ (JNI, an FFM downcall) is
-  already safe — it blocks on the way back into Java and never delays a safepoint. A thread
-  _in the VM_ — inside a runtime call such as a large allocation, class loading or a
+- **Distinguish native state, VM runtime work and GC-critical access.** A thread that has
+  completed the Java-to-native transition is normally safepoint-safe and checks on
+  re-entry; do not generalize that to every transition or critical region. A thread _in
+  the VM_ — inside a runtime call such as a large allocation, class loading or a
   `jcmd` handler — must finish that call first. What native code delays is the
   **collection**, not the safepoint: a `GetPrimitiveArrayCritical` region or an FFM
-  `Linker.Option.critical()` downcall that touches the heap holds the GC-locker, threads
-  that need memory stall until it exits, and the log shows `GCLocker Initiated GC`. With
-  G1 since JEP 423 (JDK 22) the region is pinned instead and nothing waits. The boundary
+  `Linker.Option.critical()` downcall that touches the heap can constrain collection or
+  pin heap access. With G1 since JEP 423 (JDK 22), relevant regions are pinned instead of
+  blocking the whole collector; pinned regions still affect evacuation choices and may
+  contribute to allocation pressure. The boundary
   and its measurement are jni-and-ffm.
 - **CPU starvation in a container.** A throttled thread cannot reach a safepoint. Check
   `nr_throttled / nr_periods` on the cgroup — linux-for-jvm, and container-awareness for

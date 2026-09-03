@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: numa-and-cpu-affinity
-version: 1.1.0
+version: 1.2.0
 description: >-
   Placing a JVM on real hardware topology: reading the NUMA topology, numactl and taskset
   pinning strategies, interpreting numastat, which collectors UseNUMA actually governs, how

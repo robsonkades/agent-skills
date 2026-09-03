@@ -69,24 +69,26 @@ message is redelivered. It _is_ a duplicate-work window, which is why the handle
 
 ## The autoscaling signal
 
-| Signal                                 | What it tracks                 | Verdict                                                     |
-| -------------------------------------- | ------------------------------ | ----------------------------------------------------------- |
-| **Oldest-message-age / time-in-queue** | The queue's actual latency     | **Scale on this.** It is the SLO, in the SLO's unit         |
-| Queue depth                            | A stock, no rate               | Capacity and retention only — never the scaling target      |
-| Messages received per second           | Arrival rate                   | Input to sizing, not a controller signal                    |
-| Worker CPU                             | Lags, and misleads on I/O work | Wrong signal; see rate-limiting-and-load-shedding           |
-| In-flight count vs limit               | Saturation of the pool         | Good alert, poor scaling target — it saturates at the limit |
+| Signal                                 | What it tracks                                           | Verdict                                              |
+| -------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------- |
+| **Oldest-message-age / time-in-queue** | Latency proxy; may be approximate/reset/poison-dominated | SLO signal; combine with backlog and rates           |
+| Visible + in-flight depth              | Stock and hidden work                                    | Capacity/recovery input, not sufficient alone        |
+| Arrival and successful drain rate      | Offered load and effective service                       | Predicts whether backlog grows and catch-up time     |
+| Service-time distribution              | Per-item demand and task mix                             | Converts rate to required concurrency                |
+| In-flight count vs safe limit          | Worker/downstream saturation                             | Prevents scaling beyond the dependency's capacity    |
+| Worker CPU                             | CPU demand only                                          | Useful for CPU-bound tasks, misleading alone for I/O |
 
-The same depth alert is a false page on a fast queue and a missed SLO breach on a slow one;
-only age is denominated in the unit the SLO is written in. Two consequences:
+No single signal is a stable autoscaler. Age is denominated like the SLO, but can remain high
+after capacity is added, disappear during redelivery, or reflect one poison message. Depth needs
+arrival/drain rate to become catch-up time. Consequences:
 
 - **Set the scaling target to a fraction of the deadline.** Items due within 60 s with a 5 s
   handler need a target well below 55 s — the controller needs room to add workers and for
   those workers to start.
-- **Age is also the correct alert.** Age rising while depth is flat means workers are stuck or
-  a lease is being renewed forever (`lease-model.md`); depth rising while age is flat means the
-  producer sped up and the pool absorbed it. An empty queue with a rising age is the naive
-  loop: the backlog moved into worker heap where the broker cannot see it.
+- Alert on SLO age and **diagnose** with visible/in-flight depth, redelivery, extension count,
+  accepted/completed rate and handler phase. Add scale-up prediction and cooldown/hysteresis;
+  cap replicas at downstream capacity. Test the controller with step, burst, poison-item and
+  dependency-slowdown traces to avoid oscillation or an overload feedback loop.
 
 ## Priority and ageing
 
@@ -120,3 +122,8 @@ Two fault-injecting tests. Neither is a happy path.
 Also assert shutdown behaviour: send N messages, close the worker while they are in flight, and
 check that `N` items are either completed or still visible in the queue. `N − k` is data loss
 and means the ack moved ahead of the side effect.
+
+Add broker-specific cases: partial batch-ack/visibility failures, stale receipt handle, duplicate
+inside the nominal visibility period where the broker permits it, FIFO group head-of-line
+blocking, extension outage, DLQ transfer and redrive under tenant quotas. Observe eventual state;
+do not assert exactly one handler invocation when the contract only promises one durable effect.

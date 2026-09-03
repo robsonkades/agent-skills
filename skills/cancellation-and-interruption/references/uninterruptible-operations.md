@@ -1,139 +1,68 @@
-# Uninterruptible operations and what stops them
+# Blocking operations and cancellation adapters
 
-## The table to check the path against
+## Capability inventory
 
-| Blocking operation                                                   | Interrupt does what                                            | What actually stops it                     |
-| -------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------ |
-| `Thread.sleep`, `Object.wait`, `Thread.join`                         | throws `InterruptedException`                                  | interrupt                                  |
-| `BlockingQueue.put/take/poll(t)`                                     | throws `InterruptedException`                                  | interrupt                                  |
-| `CountDownLatch.await`, `Semaphore.acquire`, `Condition.await`       | throws `InterruptedException`                                  | interrupt                                  |
-| `Future.get`, `ExecutorService.awaitTermination`                     | throws `InterruptedException`                                  | interrupt                                  |
-| `HttpClient.send` (synchronous)                                      | throws `InterruptedException`                                  | interrupt                                  |
-| `ReentrantLock.lock`                                                 | **nothing** — the flag stays set                               | `lockInterruptibly()` instead              |
-| `Semaphore.acquireUninterruptibly`, `Condition.awaitUninterruptibly` | nothing, by contract                                           | nothing — do not use on a cancellable path |
-| entering a `synchronized` block                                      | **nothing**                                                    | shorten the critical section               |
-| `CompletableFuture.join()`                                           | **keeps waiting**, restores the flag on exit                   | `get()`, or completing the future          |
-| `Socket` / `InputStream` reads (`java.io`)                           | **nothing**                                                    | `socket.close()` from another thread       |
-| `FileInputStream.read` and friends                                   | **nothing**                                                    | close the stream                           |
-| `FileChannel` / any `InterruptibleChannel`                           | throws `ClosedByInterruptException` **and closes the channel** | interrupt — once                           |
-| JDBC `executeQuery`                                                  | driver-dependent; usually nothing                              | `setQueryTimeout` + `Statement.cancel()`   |
-| a native (JNI/FFM) call                                              | nothing until it returns to Java                               | whatever the native API offers             |
+For each call record from the exact API/provider/JDK:
 
-The rows with "nothing" in the middle column are where a cancellation policy that looks
-complete on paper silently stops working.
+| Call | Thread/blocking mechanism | Interrupt behavior | Other cancel/close | Resource consequence | Positive control |
+| ---- | ------------------------- | ------------------ | ------------------ | -------------------- | ---------------- |
+|      |                           |                    |                    |                      |                  |
 
-## `CompletableFuture.join()` is the trap in the middle of that table
+Avoid class-wide claims. Overloads/providers, platform versus virtual threads, channel versus
+stream, multiplexed versus dedicated connections, and JDK versions can differ.
 
-```java
-// get(): interruptible. It declares the exception because it can throw it.
-String a = future.get();                                  // throws InterruptedException
+## Families to verify
 
-// join(): waits through the interrupt, remembers it, restores the flag when it finally
-// returns. Cancellation is not delivered — only deferred until the work completes anyway.
-String b = future.join();
+- monitor entry versus `Lock.lockInterruptibly`/timed `tryLock`;
+- `Object.wait`, `Condition.await`, `Thread.sleep`, `join`;
+- `Future.get` versus `join`, queue/semaphore/latch methods;
+- socket streams, NIO selectors/channels and async channels;
+- JDBC acquisition/query and driver `Statement.cancel`/socket timeout;
+- HTTP future/body/transport cancellation and connection reuse;
+- file I/O, network mounts and DNS/TLS;
+- native/foreign calls and library-specific abort handles;
+- reactive subscription cancellation.
+
+## Adapter state machine
+
+When a callback/handle API completes a Future:
+
+```text
+PENDING -> SUCCEEDED | FAILED | CANCELLING -> CANCELLED(underlying terminal/released)
 ```
 
-`join()` is convenient precisely because it does not force a checked exception, and that
-convenience is what removes the cancellation point. On any path that must be cancellable use
-`get()` — or better, do not have an unbounded wait at all (`get(timeout, unit)`, `orTimeout`).
+Retain the underlying request handle. Invoke cancel once, complete the public stage only once, and
+resolve late completion versus cancellation. A cancelled public future does not prove underlying
+resource release.
 
-## Closing the resource is the cancellation mechanism
+## Close as cancellation
 
-For anything in `java.io` and for classic sockets there is no interrupt path. The only way to
-release a thread blocked in `read()` is to close the thing it is reading.
+Close is appropriate when the task exclusively owns the resource and the API says close wakes it.
+For pooled/shared/multiplexed resources, close can abort unrelated work. Prefer request/stream-level
+cancel. Test completion racing close, close failure, return-to-pool before old work exits, and remote
+commit after local close.
 
-```java
-class CancellableFetch implements Runnable {
-    private final Socket socket;
+## JDBC and remote calls
 
-    @Override public void run() {
-        try (var in = socket.getInputStream()) {
-            readEverything(in);
-        } catch (SocketException e) {         // this is what a close looks like from inside
-            if (Thread.currentThread().isInterrupted()) return;  // expected: we were cancelled
-            throw new UncheckedIOException(e);                   // unexpected: a real failure
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
+JDBC behavior is driver/database-specific. Retain handles, configure deadlines at the owning layer,
+and verify server-side query/locks stop. Remote cancellation is a fallible protocol message; side-
+effect outcome remains unknown until idempotent status/reconciliation.
 
-    void cancel() {
-        closeQuietly(socket);                 // this is what wakes the blocked read
-    }
-}
-```
+## Process isolation
 
-Two consequences worth stating: the wake-up arrives as an ordinary `IOException`, so the task
-needs a way to tell "cancelled" from "the peer died" — the interrupt flag is the usual carrier
-— and the resource is destroyed rather than returned, so this is a connection-level event that
-a pool has to be told about.
+For uncooperative native/tool code, a separately owned process may be the only forcible boundary.
+Define TERM/grace/KILL, child tree, pipes/temp files/locks, cleanup and external side effects. Java
+thread force-stop is not a safe fallback.
 
-## `FileChannel` closes itself when you interrupt it
+## Test harness
 
-`FileChannel` is an `InterruptibleChannel`. Interrupting a thread blocked on it throws
-`ClosedByInterruptException` **and leaves the channel closed**, which surprises code that
-expected to retry the read. If a file handle must survive cancellation, do the I/O on a thread
-that is never interrupted and cancel by other means, or treat reopening as part of the
-recovery path.
+Use a controllable fake/server signaling entry, cancel received, underlying operation terminated,
+resource released/reusable, and post-deadline side effect/reconciliation. Assert termination, not
+only exceptional completion of the caller future.
 
-## Cancelling a database call
+## Authoritative references
 
-```java
-try (PreparedStatement ps = conn.prepareStatement(sql)) {
-    ps.setQueryTimeout(3);          // seconds; enforced by driver or server, not by the JVM
-    ...
-}
-```
-
-`setQueryTimeout` is the only portable bound, and it is enforced outside the JVM — which is
-why it works when nothing else does, and also why a driver may implement it by opening a
-second connection. `Statement.cancel()` from another thread is the explicit form and is
-equally driver-dependent. Interrupting the calling thread typically does nothing at all. That
-is why a request deadline that only interrupts leaves database work running long after the
-client gave up, still holding the connection the next request needs.
-
-## Cancelling an HTTP call
-
-```java
-CompletableFuture<HttpResponse<String>> f =
-        client.sendAsync(request, BodyHandlers.ofString());
-
-f.orTimeout(2, TimeUnit.SECONDS);   // bounds the CALLER; not by itself a stop for the exchange
-```
-
-Prefer `HttpRequest.newBuilder().timeout(Duration)`, which bounds the exchange itself, and the
-synchronous `send()` on a virtual thread, which is interruptible. When a response is abandoned
-rather than consumed, the connection may not return to the pool until the server has finished
-writing — an abandoned call is not a free call.
-
-## Proving cancellation released something
-
-A test that asserts only "the future is cancelled" tests the wrapper. Assert the effect:
-
-```java
-@Test
-void cancellingReleasesTheConnection() throws Exception {
-    int before = pool.getIdleConnections();
-    Future<?> f = executor.submit(this::slowQuery);
-    awaitStarted();
-
-    f.cancel(true);
-
-    await().atMost(Duration.ofSeconds(2))          // the bound is the point of the test
-           .untilAsserted(() -> assertEquals(before, pool.getIdleConnections()));
-}
-```
-
-The same shape works for a file handle, a lease or a permit. If the resource does not come
-back, the cancellation did not happen — whatever the `Future` says.
-
-## Reviewer checklist
-
-- [ ] Every blocking call on a cancellable path checked against the table above
-- [ ] No `join()` on a path that must respond to cancellation
-- [ ] `lockInterruptibly()` wherever a lock is taken on a cancellable path
-- [ ] Classic socket and stream reads have a close-based cancellation, and the task can tell
-      cancellation from failure
-- [ ] Every JDBC statement on a request path sets `setQueryTimeout`
-- [ ] Every HTTP request has a request-level timeout, not only a caller-side one
-- [ ] A test asserts the released resource, not the cancelled future
+- [Java concurrency APIs](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
+- [InterruptibleChannel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/InterruptibleChannel.html)
+- [JDBC `Statement.cancel`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Statement.html#cancel()>)
+- [Java HTTP client](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpClient.html)

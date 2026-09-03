@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: mvc-and-request-handling
-version: 1.2.0
+version: 1.3.0
 description: >-
   How a web request is routed and handled: MVC's actual division of responsibilities, Page
   Controller versus Front Controller, and Application Controller for flows whose next step

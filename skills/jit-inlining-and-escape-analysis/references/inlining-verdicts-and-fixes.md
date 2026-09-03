@@ -2,8 +2,8 @@
 
 Every default and verdict string below was read off Temurin 25.0.3 (`-XX:+PrintFlagsFinal`,
 `-XX:+PrintInlining`) and cross-checked against the JDK 25 sources named in each section.
-Confirm the numbers on the runtime you are reasoning about; the structure is stable, the
-values are not.
+Confirm numbers, flag classes and verdict interpretation on the runtime you are reasoning
+about; neither values nor policy structure are public contracts.
 
 ## The limits, and what each one measures
 
@@ -11,7 +11,7 @@ values are not.
 | --------------------------------- | ------------- | ---------- | --------------------------------------------------------------------- |
 | `MaxInlineSize`                   | 35            | product    | Bytecode bytes; ceiling at a **cold** call site                       |
 | `FreqInlineSize`                  | 325           | product    | Bytecode bytes; ceiling at a **hot** call site                        |
-| `MaxTrivialSize`                  | 6             | product    | Bytecode bytes; trivial callees inlined regardless of hotness         |
+| `MaxTrivialSize`                  | 6             | product    | Bytecode-size threshold used by trivial-callee policy paths           |
 | `InlineSmallCode`                 | 2500          | product    | **Machine-code** bytes of a callee that already has an nmethod        |
 | `MaxInlineLevel`                  | 15            | product    | Nesting depth of the inline tree (9 on older releases, not verified)  |
 | `MaxRecursiveInlineLevel`         | 1             | product    | How many times a method may be inlined into itself                    |
@@ -21,7 +21,7 @@ values are not.
 | `MaxNodeLimit`                    | 80000         | product    | Ideal-graph nodes per compilation; overridable per method             |
 | `NodeLimitFudgeFactor`            | 2000          | product    | Reserve below `MaxNodeLimit` that some optimisations keep             |
 | `LiveNodeCountInliningCutoff`     | 40000         | product    | Live nodes above which further inlining stops                         |
-| `HugeMethodLimit`                 | 8000          | develop    | Bytecode bytes above which a method is **never compiled**             |
+| `HugeMethodLimit`                 | 8000          | develop    | Huge-method cutoff when `DontCompileHugeMethods` policy applies       |
 | `DontCompileHugeMethods`          | true          | product    | The switch for the previous line                                      |
 | `TypeProfileWidth`                | 2             | product    | Receiver types recorded per call site; the rest fall into one counter |
 | `TypeProfileMajorReceiverPercent` | 90            | product    | Share one receiver needs for C2 to inline it behind a type guard      |
@@ -31,14 +31,11 @@ and passing one is `Unrecognized VM option`. So `DesiredMethodLimit` and `HugeMe
 cannot be raised in production; the code has to change. Declarations: `opto/c2_globals.hpp`,
 `runtime/globals.hpp`, `compiler/compiler_globals.hpp`.
 
-**What "hot" means.** C2 computes `freq = call-site count / caller invocation count`
-(`opto/bytecodeInfo.cpp`, `InlineTree::should_inline`). At or above `InlineFrequencyRatio`
-the site is judged against `FreqInlineSize`; below it, against `MaxInlineSize`; below
-`MinInlineFrequencyRatio` it is refused as `low call site frequency`. Hotness is relative to
-the caller, so a call inside a loop that runs a thousand times per invocation is hot at
-frequency 1000, and a call guarded by a branch taken once per million invocations is cold no
-matter how hot the caller is. Unboxing methods and constructors under escape analysis are
-treated as hot regardless.
+**One input to "hot" in this build.** C2 computes a call-site/caller frequency in
+`InlineTree::should_inline` and uses it with profile state and other policy checks. Frequency
+gates help select hot/cold size budgets and can produce `low call site frequency`, but do not
+fully determine inlining: intrinsic/annotation rules, receiver profile, depth, node budget
+and compiler state also apply.
 
 ## Verdict to fix
 
@@ -57,11 +54,11 @@ policy` in particular only means C1 declined to inline a callee that already has
 | `already compiled into a medium method` | Cold site and callee nmethod > 625 bytes (`InlineSmallCode / 4`) | As `too big`: the site is cold                                                                                                              |
 | `inlining too deep`                     | Tree deeper than `MaxInlineLevel`                                | Flatten the chain (a builder or fluent API that delegates fifteen levels deep); raising the limit rarely pays                               |
 | `recursive inlining is too deep`        | Method inlined into itself more than once                        | Expected for recursion. Convert the hot recursion to a loop if it is on the critical path                                                   |
-| `virtual call`                          | Receiver profile megamorphic, or no receiver at 90%              | Reduce the types seen at **this** site (see below). A guard-inlined major receiver is the fallback                                          |
+| `virtual call`                          | No usable guarded/static target under current profile/policy     | Inspect types at **this** site; isolate a stable hot site only if design remains sound                                                      |
 | `no static binding`                     | Interface or abstract call with no usable profile                | Same as `virtual call`; often a call on a `default` method or through a generic helper with a polluted profile                              |
 | `low call site frequency`               | Site below `MinInlineFrequencyRatio`                             | Nothing: it is cold                                                                                                                         |
 | `never executed`                        | Callee has no counters and no code                               | Nothing; the path did not run during profiling                                                                                              |
-| `call site not reached`                 | Profile says the site is unreachable                             | Nothing; if it later runs, an uncommon trap recompiles                                                                                      |
+| `call site not reached`                 | Current profile/graph treats the site as unreachable             | Exercise representative paths; later execution may trap and recompile                                                                       |
 | `size > DesiredMethodLimit`             | Compilation unit already holds 8000 inlined bytes                | Something upstream is too big to be inlined at all; shrink the caller's inline tree rather than the refused callee                          |
 | `NodeCountInliningCutoff`               | Live nodes above `LiveNodeCountInliningCutoff`                   | Same: the compilation unit is enormous. Split the caller                                                                                    |
 | `not inlineable` after `(not loaded)`   | Callee class not loaded when the caller compiled                 | Warm the path before it matters, or accept: the recompilation after loading fixes it                                                        |
@@ -77,9 +74,9 @@ greps for them returns nothing and the silence reads as "everything inlined".
 
 ## Polymorphism: what the profile can express
 
-The interpreter and C1 record `TypeProfileWidth` (2) receiver types per call site; a third
-type increments an overflow counter. C2 then chooses among four outcomes, measured on 25.0.3
-with an interface call in a loop:
+The tested build recorded up to `TypeProfileWidth=2` receiver types plus overflow
+information. C2 produced these outcomes for one interface-call benchmark; they illustrate
+policy, not a universal “third type” rule:
 
 | Types seen at the site | Outcome                                                            |
 | ---------------------- | ------------------------------------------------------------------ |
@@ -89,29 +86,30 @@ with an interface call in a loop:
 | 3+, no receiver ≥ 90%  | `virtual call`, size never considered                              |
 
 95% Circle / 5% split between two others inlined Circle; 85/10/5 and 50/45/5 were `virtual
-call`. The threshold is `TypeProfileMajorReceiverPercent`; lowering it globally trades a
-guard-miss deoptimisation risk at every site for the one you are looking at, so change the
-site instead.
+call`. The tested threshold was `TypeProfileMajorReceiverPercent`. Changing it globally
+alters guarding and code size across the process; use it only to test a hypothesis, then
+prefer a source/design fix supported by the profile.
 
 The site is the **bytecode**, not the method. A helper called from ten places with ten
 receiver types has one profile, and every caller sees a megamorphic site even when each
 caller alone is monomorphic. The fix is a separate call site per hot caller — duplicate the
-small helper, or move the loop into the type-specific code — not a flag. `final` on the
-class or method does not create a profile; it lets C2 bind statically without one, which is
-why it helps only when the receiver's static type is already the concrete one.
+small helper, or move the loop into type-specific code—only if the design supports it.
+`final`/sealed hierarchy information can aid static binding or class-hierarchy speculation,
+but the result still depends on the caller graph, loaded classes and current assumptions.
 
 A sealed hierarchy switched over with pattern matching turns one `invokeinterface` into
 `instanceof` chains with direct calls, which sidesteps the profile entirely; it is a design
 change and worth it only when the profile shows the site.
 
-## `@ForceInline` and `@DontInline` are not available to application code
+## Internal inlining annotations are not an application contract
 
 Both live in `jdk.internal.vm.annotation`, which `javac` refuses without
 `--add-exports java.base/jdk.internal.vm.annotation=ALL-UNNAMED`, and HotSpot honours them
 only on classes from the boot or platform loader (`classfile/classFileParser.cpp`,
 `privileged`). Measured on 25.0.3: a 468-byte `@ForceInline` method on the class path was
-still `hot method too big`, and a 4-byte `@DontInline` method was inlined. A PR that adds them
-to application code changes nothing and looks like it did.
+still `hot method too big`, and a 4-byte `@DontInline` method was inlined. Ordinary
+application use changed nothing in this build; that unsupported behavior can change and must
+not become an application dependency.
 
 The application-level equivalents, all verified on 25.0.3:
 
@@ -121,28 +119,28 @@ The application-level equivalents, all verified on 25.0.3:
 | Keep one method out of line          | `-XX:CompileCommand=dontinline,pkg.Class::method` → `disallowed by CompileCommand`               |
 | Raise the node budget for one method | `-XX:CompileCommand=MaxNodeLimit,pkg.Class::method,160000` (listed by `-XX:CompileCommand=help`) |
 | Same, in a running JVM               | `jcmd <pid> Compiler.directives_add file.json` with `"inline": ["+pkg.Class::method"]`           |
-| Same, in a benchmark                 | JMH `@CompilerControl(Mode.INLINE                                                                | DONT_INLINE | EXCLUDE)` |
+| Same, in a benchmark                 | JMH `@CompilerControl` with `INLINE`, `DONT_INLINE`, or `EXCLUDE`                                |
 
 `inline` and `dontinline` are product options: no diagnostic unlock is needed for them, only
 for `PrintInlining` to see the result. None of these is a production fix — they pin a
 decision the profile should be making — but `dontinline` is the right tool for the lab
 question "what does this allocation cost when the callee is opaque?"
 
-## The method that never compiles
+## Huge-method exclusion
 
-A method above `HugeMethodLimit` (8000 bytecode bytes) is never submitted to either compiler
-(`CompilationPolicy::can_be_compiled`). On 25.0.3 a 22 368-byte method produced **no line at
+A method above the tested `HugeMethodLimit=8000` was excluded while
+`DontCompileHugeMethods=true`. On 25.0.3 a 22,368-byte method produced **no line at
 all** in `PrintCompilation` or `-Xlog:jit+compilation`, no `jdk.CompilationFailure` event,
-and 432 of 436 `jdk.ExecutionSample` frames in it were `Interpreted`. The symptom is
-therefore a hot method that a profiler shows as interpreted frames, with nothing in the
+and 432 of 436 `jdk.ExecutionSample` frames in it were `Interpreted`. One possible symptom is
+therefore a hot method shown as interpreted, with nothing in the
 compiler logs to explain it, and a callee that PrintInlining lists as `not inlineable`
 because it has no code to inline.
 
-Generated code is where this happens — large `switch` tables, static initialisers turned
-into methods, serialisers, and test fixtures. Split the method. `-XX:-DontCompileHugeMethods`
-compiles it (measured: tier 3 then tier 4 on the same run) and is a stopgap for a deploy you
-cannot change, at the cost of a compilation that can take seconds and may hit
-`MaxNodeLimit` anyway.
+Generated code is where this occurs—large switches, generated serializers or initializers.
+Splitting is usually safer. Disabling `DontCompileHugeMethods` made this example compile, but
+is a process-wide experiment, can create long/failed compilations, and has known JDK/tier
+policy interactions (including JDK-8366118 in JDK 17–25). Check the exact release and
+whole-process effect before using it as a stopgap.
 
 `DesiredMethodLimit` is the same number applied to the **sum** of inlined bytecode in one
 compilation unit; a caller that inlines many medium callees reaches it without any single
@@ -153,33 +151,29 @@ last.
 
 | Change                              | Scope                         | What it costs                                                                                                        |
 | ----------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Refactor so the hot part fits       | One method                    | Engineering time; nothing at runtime                                                                                 |
+| Refactor so the hot part fits       | One source area               | Engineering/semantic risk; may improve or worsen runtime and must be measured                                        |
 | `CompileCommand=inline` / directive | One call site                 | A decision pinned outside the code; must ship with the launch config and be re-validated on every JDK upgrade        |
 | `-XX:FreqInlineSize=<n>` globally   | Every hot site in the process | Larger nmethods, more code cache, longer C2 compiles, more `MaxNodeLimit` bailouts, worse I-cache locality elsewhere |
 | `-XX:MaxInlineSize=<n>` globally    | Every cold site too           | The same, for code that was not hot enough to justify it                                                             |
 | `-XX:MaxInlineLevel=<n>`            | Every deep chain              | Rarely the real cause; deep trees are usually a `DesiredMethodLimit` problem in waiting                              |
 | `-XX:InlineSmallCode=<n>`           | Every already-compiled callee | Duplicates large machine code into every caller                                                                      |
 
-A global limit is a process-wide bet that the gain at one site outweighs the bloat at all the
-others; it needs a whole-process measurement (throughput, p99, code cache occupancy), not a
-microbenchmark of the target method. In practice the refactoring
-is the fix nearly every time, because the method that failed to inline was also the one that
-was too big to read.
+A global limit is a process-wide bet that the gain at one site outweighs bloat elsewhere. It
+needs whole-process throughput/tails, compilation CPU/time, code-cache and instruction-cache
+evidence. Extracting a cold part is often the narrowest fix; sometimes accepting the call is
+better than reshaping a clear API for one compiler heuristic.
 
 ## How this behaves in production
 
-- **The profile is a snapshot of warm-up.** A site that saw one type while the JVM warmed
-  up and a third type an hour later deoptimises (`made not entrant: uncommon trap`) and
-  recompiles as a virtual call — every allocation that depended on that inlining comes back
-  at the same moment. The reverse trap is a benchmark that exercised one implementation and
-  reported an inlined result production will never get.
-- **The rare branch fires once, then costs forever.** A branch never taken during
-  profiling is pruned with an uncommon trap, so an object it would have leaked is still
-  `NoEscape`; measured 0 B/op. The first time the branch runs, the method deoptimises and
-  recompiles with the branch present, and from then on the object escapes on **every**
-  iteration; measured 24 B/op with the branch taken once per 262 144 iterations. A benchmark
-  that never triggers the rare event reports the number production will lose at the first
-  incident. Build the object inside the branch, or pass its fields to a method that does.
+- **Profiles evolve.** A later receiver/path can invalidate speculative code and trigger
+  deoptimization/recompilation. The new compilation may inline a dominant receiver, retain a
+  virtual call or change again; correlate allocation changes with actual compile ids/events.
+  A benchmark with one implementation is not representative of a production mix.
+- **Rare escapes are profile-sensitive.** An unobserved branch may be absent behind an
+  uncommon trap in the current compilation. When it executes, the VM may deoptimize and a
+  later graph that retains the escape can allocate on common executions. This happened in
+  the measured example; “once, then forever” is not a VM guarantee. Exercise rare paths and,
+  where clear, construct the object only on the path that needs it.
 - **Profile pollution comes from start-up and tests.** A helper exercised with many types
   by an initialiser, a warm-up routine or a test suite in the same JVM carries that profile
   into production. Per-caller call sites are the durable fix.
@@ -190,3 +184,11 @@ was too big to read.
   (not verified here); `ReduceAllocationMerges` arrived in 22 (JDK-8287061); verdict strings
   are compiler-internal text. Re-run the measurement on the new runtime rather than the old
   conclusion.
+
+## Primary references
+
+- [HotSpot C2 inlining policy (`bytecodeInfo.cpp`)](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/bytecodeInfo.cpp)
+- [HotSpot compiler globals](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compiler_globals.hpp)
+- [HotSpot C2 globals](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/c2_globals.hpp)
+- [HotSpot compiler control documentation](https://docs.oracle.com/en/java/javase/25/vm/compiler-control.html)
+- [JDK-8366118: huge-method policy interaction](https://bugs.openjdk.org/browse/JDK-8366118)

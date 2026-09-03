@@ -3,38 +3,39 @@
 ## Why `2f+1`
 
 A majority quorum is `floor(N/2) + 1`. Any two majorities of the same `N` share at least one
-member — that intersection is the whole mechanism. A decision taken by one majority is visible
-to every later majority, because whichever nodes fail, the next majority contains a node that
-witnessed the last one.
+member. Protocol rules for terms, ballots and log prefixes use that intersection so a later quorum
+cannot safely choose a conflicting committed value. Intersection alone does not make a read fresh
+or survive Byzantine/corrupt members.
 
 To keep a majority available while `f` nodes are down you need `N - f > N/2`, which is
 `N > 2f`, which is `N = 2f+1` at minimum.
 
-| N   | Majority | Tolerated failures `f` | Worth choosing? |
-| --- | -------- | ---------------------- | --------------- |
-| 1   | 1        | 0                      | Only for dev    |
-| 2   | 2        | 0                      | Never           |
-| 3   | 2        | 1                      | Yes             |
-| 4   | 3        | 1                      | Never           |
-| 5   | 3        | 2                      | Yes             |
-| 6   | 4        | 2                      | Never           |
-| 7   | 4        | 3                      | Rarely          |
+| N   | Majority | Tolerated failures `f` | Worth choosing?                                                 |
+| --- | -------- | ---------------------- | --------------------------------------------------------------- |
+| 1   | 1        | 0                      | Dev or explicitly non-HA                                        |
+| 2   | 2        | 0                      | No availability gain; possible transitional/replication purpose |
+| 3   | 2        | 1                      | Yes                                                             |
+| 4   | 3        | 1                      | Same failure tolerance as 3; justify another purpose            |
+| 5   | 3        | 2                      | Yes                                                             |
+| 6   | 4        | 2                      | Same failure tolerance as 5; justify another purpose            |
+| 7   | 4        | 3                      | Rarely                                                          |
 
-**The even row is the counter-intuitive one.** Four nodes tolerate the same single failure as
-three, cost a third more, add a node to every commit's acknowledgement set, and introduce a
-2-2 split in which neither side can proceed. `N = 2` is worse than `N = 1`: it tolerates no
-failures _and_ doubles the probability that some node is down.
+**The even row is the counter-intuitive one.** Four nodes tolerate the same single unavailable
+voter as three, with a quorum of three instead of two; six tolerates the same two as five. Two
+voters still require both for progress, though they may add a durable copy. Even counts can be
+transitional during reconfiguration, but need a purpose other than majority availability.
 
-Seven is defensible only when node failures are genuinely frequent and independent — a fleet
-of spot instances, say. Otherwise the extra two nodes buy tolerance you never use and pay for
-it on every decision.
+Seven is defensible only when failure-domain analysis and recovery objectives require three
+simultaneous unavailable voters. Do not model nodes in one provider/control plane as independent
+merely because their instance lifecycles differ.
 
 ## Adding capacity without changing the quorum
 
-Read capacity and quorum size are separable. etcd learners and ZooKeeper observers receive the
-replicated stream and serve reads but do not vote, so adding them raises read capacity and
-leaves `f` and commit latency untouched. Adding _voting_ members does the opposite: more
-tolerance, slower commits, no extra write throughput.
+Read capacity and quorum size can be separable, but non-voter behavior is product/version-specific.
+ZooKeeper observers serve clients without voting. Current etcd learners primarily stage safe
+membership changes and accept only serializable reads/status; client routing and learner limits
+matter. Every non-voter still consumes leader replication resources. Adding voters does not shard
+the single leader's write path and increases replication/quorum work.
 
 ## `R + W > N` — what it gives and what it does not
 
@@ -64,16 +65,17 @@ Three things intersection does **not** give you:
 
 ## Placement and the cost per decision
 
-Commit latency is the round trip to the slowest member of the fastest majority — not the
-average, and not the slowest node overall. With `N = 3` that is the second-fastest peer; with
-`N = 5`, the third.
+The network component is governed by a fastest quorum rather than the slowest member overall, but
+the commit path also includes leader routing, log processing, durable-write policy, batching and
+queueing. With a stable Raft leader, one follower response can complete a three-voter quorum only
+after the leader's own durability requirements are met.
 
-| Placement               | Typical RTT to the deciding peer | Consequence                                                                                 |
-| ----------------------- | -------------------------------- | ------------------------------------------------------------------------------------------- |
-| One AZ, 3 nodes         | sub-millisecond                  | Fastest decisions; an AZ failure takes the whole cluster                                    |
-| Three AZs, one region   | low single-digit ms              | Survives one AZ; every decision pays a cross-AZ hop, so keep decisions off the request path |
-| Three regions           | tens of ms                       | Survives a region; a lease renewal or lock acquisition now costs more than most SLOs allow  |
-| Two AZs, any node count | —                                | **Broken by construction**: no split of an even number of failure domains holds a majority  |
+| Placement                  | Typical RTT to the deciding peer | Consequence                                                                                 |
+| -------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------- |
+| One AZ, 3 nodes            | sub-millisecond                  | Fastest decisions; an AZ failure takes the whole cluster                                    |
+| Three AZs, one region      | low single-digit ms              | Survives one AZ; every decision pays a cross-AZ hop, so keep decisions off the request path |
+| Three regions              | tens of ms                       | Survives a region; a lease renewal or lock acquisition now costs more than most SLOs allow  |
+| Two AZs, asymmetric voters | topology-dependent               | Can survive loss of the smaller side, not the larger; maintenance/failover is asymmetric    |
 
 Measure your own RTTs rather than trusting the column; the shape is what matters. The rule that
 follows is the useful one: **the further apart the voters, the fewer decisions per second the
@@ -92,16 +94,16 @@ Split a five-node cluster 3/2:
 Split 3-node cluster 2/1: same shape, and the singleton is useless. Split it 1/1/1: nothing
 proceeds anywhere, which is correct behaviour and total unavailability at the same time.
 
-The design question is never "how do we keep the minority working" — it cannot, safely. It is
-"what does a client attached to the minority do": fail fast, serve a cached decision with a
-stated staleness bound, or degrade to a defined read-only mode. Choose one and write it down.
+The minority cannot safely commit new consensus decisions. A client there may fail fast, serve a
+versioned/stale read under an explicit contract, or route elsewhere. Choose and test the product's
+actual semantics.
 
 ## Sizing checklist
 
-- [ ] `N` is odd, and 3 or 5 unless a stated failure rate justifies 7.
-- [ ] Nodes occupy at least three independent failure domains, or the cluster tolerates zero
-      domain failures regardless of node count.
+- [ ] Majority size and voter count follow a stated simultaneous-failure objective; even voters
+      have a documented transitional or placement purpose.
+- [ ] Placement is evaluated for loss of **each** failure domain, including asymmetric two-domain outcomes.
 - [ ] Measured commit latency at the chosen placement is below the budget of the fastest
       caller that waits on it.
-- [ ] Read capacity growth uses non-voting members, not extra voters.
+- [ ] Read scaling uses a product-supported mode whose staleness and leader replication cost were tested.
 - [ ] A documented behaviour exists for clients on the minority side of a partition.

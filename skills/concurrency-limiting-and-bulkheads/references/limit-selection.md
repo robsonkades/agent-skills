@@ -1,148 +1,124 @@
-# Choosing and placing the limit
+# Limit selection and implementation
 
-## Which limit does this requirement need
+## Requirements table
 
-| Requirement, as stated                                   | Mechanism                                        | Not this                |
-| -------------------------------------------------------- | ------------------------------------------------ | ----------------------- |
-| "No more than 20 calls in flight to the pricing service" | `Semaphore(20)` at the client                    | a rate limiter          |
-| "The vendor allows 600 requests per minute"              | token bucket (Resilience4j, Guava `RateLimiter`) | a semaphore             |
-| "Never hold more than 500 pending jobs"                  | bounded queue + rejection policy                 | a semaphore             |
-| "One tenant must not starve the others"                  | a limit **per tenant** (bulkhead)                | one bigger global limit |
-| "Shed load before the heap does"                         | queue limit, sized in bytes not items            | a concurrency limit     |
-| "Only one instance of this job at a time, cluster-wide"  | a distributed lease                              | anything in this file   |
+| Requirement                                       | Local mechanism                            | Additional question                              |
+| ------------------------------------------------- | ------------------------------------------ | ------------------------------------------------ |
+| no more than N calls simultaneously at dependency | process-local semaphore/client pool        | is N local or aggregate across replicas/clients? |
+| no more than R calls per time interval            | route to rate limiter                      | burst allowance and cluster coordination?        |
+| no more than B waiting bytes/tasks                | weighted admission/bounded queue           | expiry, rejection and durability?                |
+| tenant A cannot consume tenant B's share          | partitioned bulkhead                       | long-tail cardinality and borrowing?             |
+| only one job cluster-wide                         | route to distributed lease/leader election | fencing and lease-loss semantics?                |
 
-A system that says "we rate-limit with a semaphore" is describing a concurrency limit and
-will discover the difference the first time the dependency slows down: at constant
-concurrency, a dependency that gets 5× slower receives 5× _fewer_ requests per second, which
-is either exactly the protection you wanted or exactly the collapse in throughput you did
-not — and you should know which before it happens.
+## Capacity experiment
 
-## Sizing, worked through
+At representative data and co-tenancy, sweep offered concurrency and record completed throughput,
+service/tail latency, errors, resource occupancy, CPU, allocations/GC and downstream saturation.
+Repeat with slow-tail and partial-failure injection. The useful ceiling is normally before the point
+where added concurrency stops increasing useful throughput or violates a protected SLO.
 
-The limit is the smallest of three numbers:
+Use `L = λW` to cross-check averages over a stable interval. If measurements disagree materially,
+inspect population boundaries, retries, dropped/cancelled work, non-steady traffic and whether `W`
+includes queue time. Do not substitute p99 into the average identity and call the result capacity.
 
-```text
-1. What the dependency can take            e.g. 100 concurrent, per its documentation
-2. What our share of it is                 100 ÷ 6 replicas ≈ 16
-3. What we need                            L = λ × W = 200 rps × 0.04 s = 8
-```
+## Scoped permit wrapper
 
-Take 8, not 16, and certainly not 100. Sizing to what the dependency _allows_ rather than
-what the service _needs_ is how a limit stops being a protection and becomes a licence to
-overwhelm something else downstream of it.
-
-Then sanity-check the implied rate at both ends of the latency distribution:
-
-| Latency | Rate at 8 permits |
-| ------- | ----------------- |
-| 10 ms   | 800 rps           |
-| 40 ms   | 200 rps ← normal  |
-| 400 ms  | 20 rps            |
-| 2 s     | 4 rps             |
-
-The bottom row is the important one. When the dependency degrades, the limit throttles you
-to 4 rps automatically — good, if the callers get a fast rejection; catastrophic, if they
-queue behind `acquire()` with no timeout, because now the queue holds every request that
-arrived in the last minute.
-
-## Where the limit goes
-
-| Resource                         | Limit lives                                                  | Notes                                                  |
-| -------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
-| Database                         | the connection pool (`maximumPoolSize`)                      | already a semaphore; do not add a second one           |
-| One HTTP dependency              | a `Semaphore` in that client's adapter                       | or the client's own per-route connection cap           |
-| All outbound HTTP                | **nowhere** — this is the anti-pattern                       | one slow host consumes every other host's budget       |
-| CPU-heavy work                   | a fixed executor sized to cores                              | the pool is the limit; adding a semaphore is redundant |
-| Memory-heavy work (large bodies) | a semaphore whose permits represent **megabytes**, not tasks | permit count should track the scarce unit              |
-| Inbound requests                 | the server's own accept/worker configuration + shedding      | the edge, and only the edge                            |
-
-Placing it in the adapter — the class that owns the client — is what makes it testable and
-what makes "which limit was hit?" answerable from a metric name.
-
-## The wrapper worth writing once
+Hide unowned semaphore operations from application code:
 
 ```java
-final class BoundedPricingClient implements PricingClient {
-    private final PricingClient delegate;
+final class ConcurrencyGate {
     private final Semaphore permits;
-    private final Duration waitBudget;
-    private final Counter rejections;
 
-    @Override
-    public Price price(Sku sku) {
-        boolean acquired;
-        try {
-            acquired = permits.tryAcquire(waitBudget.toMillis(), TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();          // the caller was cancelled
-            throw new CancellationException("cancelled waiting for a pricing permit");
-        }
-        if (!acquired) {
-            rejections.increment();                       // the shedding decision, counted
-            throw new DependencyOverloadedException("pricing");   // maps to 503 + Retry-After
-        }
-        try {
-            return delegate.price(sku);
-        } finally {
-            permits.release();                            // finally, unconditionally
+    ConcurrencyGate(int limit, boolean fair) {
+        if (limit <= 0) throw new IllegalArgumentException("limit must be positive");
+        this.permits = new Semaphore(limit, fair);
+    }
+
+    Lease tryAcquire(Duration budget) throws InterruptedException {
+        long nanos = budget.isNegative() ? 0L : saturatingNanos(budget);
+        if (!permits.tryAcquire(nanos, TimeUnit.NANOSECONDS)) return null;
+        return new Lease(permits);
+    }
+
+    static final class Lease implements AutoCloseable {
+        private final Semaphore permits;
+        private final AtomicBoolean open = new AtomicBoolean(true);
+
+        Lease(Semaphore permits) { this.permits = permits; }
+
+        @Override public void close() {
+            if (open.compareAndSet(true, false)) permits.release();
         }
     }
 }
 ```
 
-Four properties to preserve in any variant: the wait is bounded, interruption is honoured
-and re-asserted, the rejection is a distinguishable exception rather than a generic failure,
-and `release()` is in a `finally` with nothing between it and the acquire that can return
-early.
-
-## Bulkheads: partitioning the budget
-
-A single limit of 30 shared by three tenants means one tenant can hold all 30. Partitioning
-converts a shared failure into a contained one.
+`saturatingNanos` is an application helper that converts very large durations without overflow.
+Returning `null` is illustrative; a result type can distinguish timeout, interruption, shutdown and
+policy rejection. `AtomicBoolean` makes accidental double-close harmless but does not solve leaked
+leases—ownership still must be lexical and observed.
 
 ```java
-// Per-tenant partition, with a small shared reserve so a quiet tenant is never starved
-Map<TenantId, Semaphore> perTenant = …;   // 8 permits each
-Semaphore overflow = new Semaphore(6);    // borrowed only when a tenant's own permits are gone
+ConcurrencyGate.Lease lease = gate.tryAcquire(remainingBudget);
+if (lease == null) throw new DependencyBusyException("pricing admission expired");
+try (lease) {
+    return client.price(sku, remainingBudget);
+}
 ```
 
-Choose the partition key by the failure you are containing:
+Provider timeout/cancellation remains necessary. The permit protects local concurrency and should
+usually be held until the provider operation has actually released the scarce resource, not merely
+until the caller's future timed out.
 
-- **By dependency** — one slow service cannot exhaust the budget of the others. This is the
-  default and the highest value per unit of complexity.
-- **By tenant** — one customer's traffic spike cannot deny the rest. Needed in multi-tenant
-  systems; requires a story for unknown/new tenants.
-- **By operation class** — cheap reads separated from expensive writes, so a batch job
-  cannot starve interactive traffic.
+## Weighted admission
 
-The cost is utilisation: partitioned budgets sit idle while another partition rejects. That
-is the trade being made, and it is usually worth it — but say the number out loud, because a
-partition scheme with 12 partitions of 2 permits each behaves nothing like one pool of 24.
+Java `Semaphore.acquire(int)` can model coarse units such as memory MiB. Define rounding and maximum
+weight; reject one request whose weight exceeds total capacity instead of waiting forever. Large
+multi-permit acquisition can block behind fragmented availability and interact with fairness.
 
-## Under virtual threads
+For actual memory, validate weight estimates against retained/native allocation and concurrent
+phases. A body that grows after admission breaks the bound; stream/chunk it or acquire additional
+weight through a deadlock-safe protocol.
 
-```java
-// Before: the pool was the limit, whether or not anyone decided that
-ExecutorService pool = Executors.newFixedThreadPool(20);
+## Hierarchical acquisition
 
-// After: the executor cannot reject and has no size. The limit must be re-declared.
-ExecutorService vt = Executors.newVirtualThreadPerTaskExecutor();
-Semaphore downstream = new Semaphore(20);      // ← the line the migration usually forgets
-```
+When a request needs global, tenant and dependency permits:
 
-Audit every place the old pool size was implicitly protecting something: outbound HTTP,
-database calls that bypass the pool's own bound, file handles, third-party clients with
-internal buffers. Each one now needs its own limit, and each one is a separate decision.
+1. define one global acquisition order;
+2. use one shared remaining deadline, not a fresh timeout per gate;
+3. release in reverse order;
+4. avoid holding a scarce downstream connection while waiting for another gate;
+5. record which gate rejected and how long preceding permits were held.
 
-## Metrics that make the limit operable
+Independent code paths that acquire A→B and B→A can deadlock even though each semaphore allows more
+than one permit.
 
-```java
-Gauge.builder("limit.available", permits, Semaphore::availablePermits).tag("dep", "pricing")…
-Timer.builder("limit.wait")…            // time spent in tryAcquire — rises first
-Counter.builder("limit.rejected")…      // the shedding rate
-Gauge.builder("limit.max", () -> configured)…   // so a dashboard can compute saturation
-```
+## Partition design
 
-Alert on wait time, not on rejections: by the time rejections appear the dependency is
-already the bottleneck. And export the configured maximum, or nobody reading the dashboard a
-year from now can tell 18 available permits from 18 out of 20 versus 18 out of 200.
+| Shape                                      | Benefit                                      | Failure/cost                                         |
+| ------------------------------------------ | -------------------------------------------- | ---------------------------------------------------- |
+| fixed per dependency                       | clear failure isolation                      | idle capacity cannot serve another dependency        |
+| dedicated major tenants + shared long tail | bounded state and important-tenant isolation | classification/config lifecycle                      |
+| hashed cells                               | bounded cardinality                          | unrelated tenants collide                            |
+| fixed shares + shared reserve              | better utilization                           | borrowing policy can recreate starvation             |
+| priority queues before gate                | service differentiation                      | starvation, cancellation and queue memory complexity |
+
+Fairness must be tested with adversarial service-time variance. Report wait/hold distributions per
+partition and total useful utilization, not only rejection counts.
+
+## Tests
+
+- action throws before/after provider acquisition;
+- interruption while waiting and after acquiring;
+- double close and forgotten close detection;
+- zero/negative/overflowing duration and weight greater than capacity;
+- slow dependency and caller timeout with residual provider work;
+- replica overlap and another client consuming the same dependency;
+- tenant skew, reserve exhaustion and high partition churn;
+- limit decrease while more work is already in flight.
+
+## References
+
+- [Java 25 `Semaphore`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html)
+- [Java 25 `Duration`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html)
+- [Java 25 virtual threads: do not pool to limit concurrency](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html#GUID-704A6A35-6A18-47C9-A272-1A3BC4972391)

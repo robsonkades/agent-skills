@@ -18,14 +18,14 @@ The claim about why it is usually the only option available:
 > "We recommend you hone the skill of performing qualitative analysis, as few opportunities for
 > true quantitative analysis exist in architecture."
 
-Read the first quotation precisely. It says **cross-architecture comparison** cannot be numeric.
-It does not say your system cannot be measured. Those are different claims, and conflating them is
-how teams end up either refusing to measure anything or benchmarking two things that are not
-comparable.
+The quotation makes a strong methodological claim, not a physical impossibility. Competing
+architectures can be compared numerically under a controlled workload and cost model; what cannot be
+claimed without further evidence is equivalent implementation maturity or broad external validity.
+Distinguish “measurable in this experiment” from “universally better.”
 
 ## The route from qualitative to quantitative
 
-There is exactly one sanctioned route, and it is not a better matrix:
+The authors' preferred route is experimentation, not a more elaborate matrix:
 
 > "Testing with objective outcomes allows our trade-off analyses to go from qualitative to
 > quantitative—from speculation to engineering."
@@ -46,9 +46,10 @@ The dimension that separates the options is a quantity
 
 The dimension that separates the options is a quantity
         BUT measuring it requires building both architectures
-                → you cannot measure it. Two architectures "will always differ
-                  enough to prevent true quantitative comparisons". Model
-                  domain scenarios instead and say the answer is ordinal.
+                → decide whether the value of information justifies representative
+                  prototypes. If not, model domain scenarios and state that the
+                  answer remains ordinal. If yes, control workload, maturity and
+                  environment and report uncertainty and validity limits.
 
 The options differ on several dimensions at once, none dominant
                 → qualitative. A number on one dimension would decide the
@@ -84,8 +85,9 @@ The technique that converts a generic comparison into a decision.
 - A **scenario** is a change applied to both candidate topologies to see which dimensions move —
   "update credit card processing", "add a new payment type", "use several payment types in one
   payment". It is not a user story and not a use case.
-- Model until a scenario **inverts** the apparent winner, or until new scenarios stop changing the
-  ranking. In the authors' example the third scenario reverses the first two.
+- Seek disconfirming and boundary scenarios, including one that could invert the apparent winner.
+  Stop when additional material scenarios are unlikely to change the decision enough to justify
+  their analysis cost; failure to find an inversion is not evidence that none exists.
 - Scenarios are also the cheap substitute for building: _"scenario analysis is one of an
   architect's most powerful tools to allow iterative design without building whole systems."_
 

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: off-heap-memory
-version: 1.2.0
+version: 1.3.0
 description: >-
   Memory outside the Java heap: direct `ByteBuffer` and its Cleaner-driven release,
   `MemorySegment` and `Arena` in the FFM API, lifetime and thread confinement, when off-heap

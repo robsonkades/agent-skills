@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-testing-strategy
-version: 1.0.0
+version: 1.0.1
 description: >-
   Choosing which test level earns its cost for a given change: what a unit, integration,
   contract or end-to-end test can and cannot prove, pushing each test to the narrowest scope

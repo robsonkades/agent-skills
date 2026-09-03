@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-law-of-demeter
-version: 1.1.0
+version: 1.2.0
 description: >-
   Navigation coupling: what the Law of Demeter actually constrains — structure exposure, not
   dot-counting — and how to tell a train wreck from a legitimate chain. Use when reviewing
@@ -38,6 +38,10 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - java-tell-dont-ask
+  - orm-fetch-and-batching-performance
 
 capabilities:
   - reads-source

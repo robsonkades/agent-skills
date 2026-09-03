@@ -1,94 +1,117 @@
 ---
 name: universal-scalability-law
 description: >
-  The Universal Scalability Law: the contention coefficient (sigma, Gunther's alpha), the
-  coherency coefficient (kappa, Gunther's beta), fitting the model to measured throughput,
-  N_max as the throughput peak, and why throughput falls beyond it. Use when adding pods or
-  threads stopped increasing throughput or made it worse, when a scale-out is being proposed
-  without evidence it will help, when a benchmark shows throughput peaking and then
-  declining, when someone extrapolates scalability from N = 1, 2, 4 only, or when deciding
-  between attacking a lock and eliminating shared state. Does not cover the N = lambda x R
-  law, utilisation rules of thumb or pool sizing (littles-law-and-queueing), choosing and
-  fitting a queueing model (queueing-models), or turning a model into an infrastructure
-  decision (capacity-planning).
+  Fitting and falsifying the Universal Scalability Law (USL): load/resource definition,
+  the scale coefficient gamma, contention alpha, coherency/retrograde beta, peak conditions,
+  identifiability, uncertainty and held-out validation. Use when throughput saturates or falls
+  as threads, users, cores or pods increase; when scale-out is proposed from too few points;
+  or when comparing architectural scalability curves. Does not cover `L = λW`, queue/pool
+  sizing (littles-law-and-queueing), latency-at-load models (queueing-models), or capacity/SLO
+  decisions (capacity-planning).
 ---
 
 # Universal Scalability Law
 
 ## Purpose
 
-Decide, with two measured numbers, whether more hardware will help this system, do almost
-nothing, or actively make it slower. The failure this skill prevents is the scale-out that
-degrades production: throughput was already past its peak, every added pod cost more in
-coordination than it contributed in work, and the response to the resulting slowdown was to
-add more pods.
+Quantify one homogeneous system's throughput curve over a declared load/resource variable and
+decide whether more of that variable adds useful capacity. USL is an empirical rational model, not
+a profiler: its coefficients can suggest contention-like and pairwise/coordination-like scaling,
+but do not identify a lock, protocol or database without independent evidence.
 
-The model is `X(N) = N / (1 + sigma(N-1) + kappa·N(N-1))`. Sigma is a per-unit cost and
-grows linearly; kappa is a per-_pair_ cost and grows quadratically. That difference in order
-is the whole point: an O(N) term in the denominator can only saturate growth, while an O(N²)
-term eventually overwhelms the O(N) numerator and turns the curve downwards. Amdahl is the
-special case kappa = 0; linear scaling is the special case sigma = 0 too.
+Use the three-parameter throughput form:
+
+```text
+X(N) = γN / [1 + α(N−1) + βN(N−1)]
+```
+
+`γ` is the fitted single-unit scale, `α` the linear contention term and `β` the quadratic
+retrograde term in the standard interpretation. Relative capacity is `C(N)=X(N)/γ`. With `β=0`,
+the normalized form matches Amdahl-style saturation; with `α=β=0`, it is linear.
 
 ## Workflow
 
-1. **Name the unit of N and the throughput metric** before measuring anything. Threads,
-   pods, processes or connections — one of them, not a mixture. Throughput is TPS/RPS, never
-   latency.
-2. **Collect open-loop, across a range that reaches past the suspected peak.** Six points
-   minimum, eight to ten preferred, running to at least 2 x the estimated `N_max`. Closed-loop
-   generators throttle themselves as the system slows and will hide the regression entirely.
-   See `references/data-collection-and-fitting.md`.
-3. **Fit sigma and kappa non-linearly** (`scipy.optimize.curve_fit` with bounds `[0,0]` to
-   `[1,1]`) against throughput normalised by the N = 1 baseline. The classic linearisation
-   `y = N/X_norm` is a teaching device, not the production method.
-4. **Run the validity gates before reading any coefficient**: R² > 0.95, sigma >= 0 and
-   kappa >= 0, and the predicted `X_peak` must be >= the largest measured throughput. A fit
-   that fails a gate is a bad fit, not a strange system.
-5. **Diagnose from the pair, not from either alone.** Sigma high means serialisation —
-   scaling still pays, with diminishing returns. Kappa high means coordination — scaling
-   makes it worse. See `references/coefficient-diagnosis.md`.
-6. **Compute `N_max = sqrt((1 - sigma) / kappa)`** and compare it with the N you are running
-   and the N you were about to move to. Beyond `N_max` you are paying for infrastructure that
-   is degrading the service.
-7. **Re-fit after any architectural change.** Sigma and kappa are properties of the design,
-   not of the machine; an optimisation is worth reporting as a shift in the coefficients and
-   in `N_max`, not as one throughput number.
+1. **Define `N` and the experiment.** `N` is exactly one axis: concurrent closed users, runnable
+   workers, cores, JVMs or pods. State what stays fixed—hardware, per-unit hardware, dataset,
+   offered workload, routing and request mix. Never combine users and pods in one curve.
+2. **Define capacity throughput.** For every `N`, ensure the driver offers enough work to expose
+   the service ceiling without turning rejected/dropped work into “throughput”. Closed saturation
+   and validated open offered-load sweeps can both work; fixed open load below every ceiling cannot.
+3. **Design informative points and replication.** Include baseline, curvature and—when safe—the
+   suspected saturation/retrograde region. Choose repetitions from run-level variance and practical
+   prediction precision. There is no universal six-point, 120-second or 2×-peak rule.
+4. **Control/record state.** Keep versions, topology, per-unit resources, workload mix, data/cache,
+   JIT/GC and downstream limits comparable. Explicitly model cold/ramp behavior if it is the target;
+   otherwise define sustained state by observable criteria.
+5. **Fit `γ`, `α`, `β` jointly.** Do not divide every observation by one noisy `X(1)`. Fit raw
+   throughput with an error model/weights matching heteroscedastic run variance; preserve run-level
+   observations and obtain coefficient/prediction intervals.
+6. **Check identification and residuals.** Plot runs and fit, coefficient covariance/profile,
+   bootstrap stability and held-out predictions. A high R² is neither required nor sufficient;
+   systematic residuals, wide intervals or parameter trade-off mean the curve is not decision-ready.
+7. **Compute the peak only when defined.** For the standard constrained model with `β>0` and
+   `α<1`, continuous `N* = sqrt((1−α)/β)`. Evaluate feasible neighbouring integers and prediction
+   intervals. If `N*≤1` (equivalently `α+β≥1`), the feasible curve is already non-increasing after one
+   unit. With `β=0` there is no finite retrograde peak; with `α≥1`, it likewise does not rise
+   beyond the baseline under the standard interpretation.
+8. **Attribute and validate causally.** Compare denominator terms at the operating `N`, form a
+   mechanism hypothesis, measure it directly, change one mechanism, and refit/hold out. Coefficient
+   movement without mechanism evidence is correlation.
 
 ## Rules
 
-- Never fit USL to data collected only in the linear range. With no points beyond `N_max`,
-  nothing in the data contradicts kappa = 0, the fit returns kappa ~ 0, and the projection to
-  high N is optimistic by orders of magnitude.
-- Never extrapolate more than 2 x the largest N actually measured.
-- Never collect with a closed-loop generator (fixed VUs that wait for the response). Use
-  `constant-arrival-rate` in k6, `constantUsersPerSec` in Gatling, or wrk2.
-- The conclusive evidence that closed-loop distorted a run is the **sample count**: requests
-  issued versus requests the plan intended to issue. The shape of the latency curve is not
-  evidence.
-- Discard at least the first 60–120 s of every measurement point. Code still being compiled
-  by the JIT produces artificially high sigma and kappa.
-- Reject any fit with R² < 0.95 as a homogeneity problem first: mixed machine generations,
-  NUMA, per-pod CPU throttling and uneven JVM warm-up all break the "all N units are
-  identical" assumption. A curve with visible steps is heterogeneous data, not a noisy system.
-- Reject any fit whose predicted peak sits below an already-measured point. Redo the
-  regression; do not act on the coefficients.
-- Do not treat sigma and kappa as interchangeable severities. Compare the two denominator
-  terms at your actual operating N — `sigma(N-1)` against `kappa·N(N-1)` — and attack the
-  larger one. At sigma = 0.15, kappa = 0.001, N = 20 the contention term is roughly 7.5x the
-  coherency term, so optimising kappa there is nearly invisible.
-- Reducing kappa by 10x moves `N_max` by only ~3.2x — the square root of the reduction.
-  Budget the work accordingly.
-- Note the symbol convention before reading any external output: this model is sigma/kappa in
-  the CRAN `usl` package up to 1.8.x, and alpha/beta (plus gamma) from 2.0.0 onwards and in
-  Gunther's own writing. Map sigma to alpha and kappa to beta; the mathematics is identical.
-- Efficiency `E(N) = X(N) / (N · X(1))` above 1.0 is not super-linear scaling in steady
-  state — it is a warm-up or cache artefact in the measurement.
+- `X(N)` must use useful completed work per unit time plus errors/rejections as guardrails. Offered
+  rate, accepted rate and completion throughput are different. Keep coordinated omission and
+  generator saturation evidence (`coordinated-omission`).
+- A closed workload is not forbidden: Gunther's queueing derivation is a synchronous machine-
+  repairman bound. It is appropriate when `N` is closed users/threads and think time/state are
+  controlled. An open experiment is appropriate when `N` is resources and capacity at each point
+  is found with a validated offered-load sweep.
+- Standard physical interpretation normally constrains `α≥0`, `β≥0` and `γ>0`; do not force those
+  bounds merely to hide superlinear data or a bad fit. Negative estimates mean the standard regime
+  is unsupported—check cache/partition effects, heterogeneity and measurement, then segment or use
+  another model.
+- Do not require measured points beyond an estimated peak when crossing it would violate safety.
+  Without retrograde-region evidence, report `β/N*` as weakly identified and make only bounded
+  predictions; run a targeted breakpoint test if the decision permits.
+- Do not extrapolate by a universal multiple. Limit claims to the range where workload/topology
+  invariants and prediction uncertainty remain defensible; label scenario sensitivity outside it.
+- R² does not test coefficient sign, independence, heteroscedasticity, extrapolation or causal
+  interpretation. Use residuals, intervals, held-out predictions and repeated-run error.
+- `α` and `β` are not additive fractions of lock time, GC pause or network bytes. Their denominator
+  contributions at operating `N` are model terms; map them to mechanisms only with profiles,
+  wait/traffic metrics and intervention evidence.
+- Coefficients describe the measured system **and workload/environment**. JDK, hardware, dataset,
+  request mix, routing, quotas and downstream topology can change them without an application-code
+  change.
+- Superlinear scaling can be real over a range when partitioning shrinks working sets or unlocks
+  vector/parallel resources. It signals a regime change that the standard nonnegative USL does not
+  represent; do not dismiss it as warm-up or extrapolate it indefinitely.
+- USL predicts throughput capacity, not latency at an arrival rate, tail probability, queue size,
+  cost, reliability or safe autoscaling behavior. Feed capacity scenarios into the owning skills.
+
+## Required model card
+
+```text
+Decision:        marginal unit, peak, architecture comparison or scenario bound
+N definition:    users/threads/cores/JVMs/pods; feasible integer range
+Invariants:      hardware per unit, workload/data/mix, topology/routing, state
+Throughput:      useful-completion definition; offered/admitted/error/drop guardrails
+Design:          N points, randomisation/blocking, independent run unit, state criterion
+Fit:             γ, α, β intervals/covariance; error model; residuals; held-out results
+Peak/marginal:   integer candidates and prediction interval; cost/guardrail context
+Attribution:     direct evidence for suspected contention/coordination mechanism
+Limits:          supported range, regime changes, sensitivity and re-fit triggers
+```
 
 ## References
 
-- [Data collection and fitting](references/data-collection-and-fitting.md) — the measurement
-  protocol, the open-loop collection recipe, the Python fit with its validity gates, and the
-  R alternative. Read before collecting a single data point, and when a fit fails a gate.
-- [Coefficient diagnosis](references/coefficient-diagnosis.md) — the sigma/kappa decision
-  matrix and the mapping from each coefficient to the concrete Java mechanism that produces
-  it. Read once the fit is valid and you need to decide what to change.
+- [Data collection and fitting](references/data-collection-and-fitting.md) — experimental designs
+  for closed-user and resource-scaling curves, joint nonlinear fit, uncertainty, identifiability,
+  residual/held-out validation and the current CRAN package interface.
+- [Coefficient diagnosis](references/coefficient-diagnosis.md) — interpreting denominator terms as
+  hypotheses, mechanism evidence, interventions and before/after refits without treating
+  coefficients as profilers.
+- [Limits and troubleshooting](references/limits-and-troubleshooting.md) — latency boundary,
+  closed-loop response relation, phase changes, marginal decisions, extrapolation and responses to
+  production disagreement.

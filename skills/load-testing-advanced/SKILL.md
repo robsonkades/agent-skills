@@ -1,102 +1,191 @@
 ---
 name: load-testing-advanced
 description: >
-  Load-test designs beyond a steady rate: ramp, step, spike, soak and breakpoint profiles
-  and what each one can actually prove, multi-stage weighted scenarios, correlating
-  generator output with server-side telemetry, and characterising a saturation point instead
-  of reporting one load level. Use when a capacity number is quoted from a single run, when
-  a breakpoint and a stress result are being published interchangeably, when a threshold is
-  set against a synthetic distribution without checking its CDF, when a parser reads
-  percentiles out of k6 --out json, when summaryTrendStats is left at the default, when
-  maxVUs was sized from mean latency, when a soak lasts five minutes, or when a script calls
-  jcmd Thread.count. Does not cover open versus closed loop, warm-up, dataset or basic run
-  validity (load-testing), the omission mechanism itself (coordinated-omission), or deciding
-  whether two resulting numbers differ (latency-statistics).
+  Selecting and executing advanced load profiles—baseline, capacity-envelope,
+  breakpoint, stress, spike, ramp, soak and recovery—using bracketed boundaries,
+  scenario-specific validity, phase isolation and server-side evidence. Use when one
+  steady run is presented as capacity, when overload and SLO boundaries are conflated,
+  when burst/recovery or long-duration resource retention must be tested, or when
+  automation parses generator output. Basic workload validity belongs to load-testing;
+  coordinated omission to coordinated-omission; statistical inference to
+  latency-statistics; provisioning to capacity-planning.
 ---
 
 # Advanced Load Testing
 
 ## Purpose
 
-Design a load test whose result answers a stated question, and know which question each
-profile answers. A steady rate at one level cannot characterise saturation; a stress run
-cannot produce a capacity number; a five-minute run cannot find a leak.
+Choose a load profile that identifies the decision variable without confusing:
 
-The failure this prevents is the well-architected test that still reports a wrong number:
-the test is correctly open-loop, the theory is understood, and the automation reads a field
-that does not exist in that output format, or asserts a threshold that is impossible by
-construction. A script that always passes is more dangerous than one that fails, because it
-silently confirms the bias of whoever wrote it.
+- SLO boundary with physical saturation or collapse;
+- a tested passing point with an exact maximum;
+- steady-state capacity with burst/recovery behavior;
+- retained resources with normal cache/pool growth;
+- application failure with generator or dependency failure.
 
-## Workflow
+Every published number is conditional on workload, version, resources, topology, state,
+duration and SLO semantics.
 
-1. **State the question, then pick the profile.** Failure behaviour is a stress test;
-   maximum req/s under an SLO is a breakpoint test; infrastructure cost at a traffic level
-   is a capacity test; leaks are a soak. See `references/test-profiles.md`.
-2. **Record an analytical prediction before running.** Little's Law or a queueing model
-   gives a range for where the breakpoint should fall. A result off by more than an order
-   of magnitude indicts the script, not the system.
-3. **Size the generator from the worst tolerable latency**, not the mean: `VUs = λ_target ×
-W_worst`. Under-sizing `maxVUs` reintroduces omission underneath an open-loop executor.
-4. **Model the traffic mix from real access logs**, with weights per endpoint, payload-size
-   distribution, and any temporal pattern a constant rate cannot reproduce.
-5. **Verify the output format against one real run** before any parser or threshold enters
-   a pipeline. Look at the number and confirm it matches what the tool reported.
-6. **Run the profile with server-side telemetry correlated by NTP-synchronised
-   timestamps** — GC log, thread counts, pool state — not the generator's numbers alone.
-7. **Validate the run before reading it.** `dropped_iterations == 0`, `vus` below `maxVUs`,
-   error rate within bounds. Then reproduce the headline number in a second run before
-   publishing it.
+## Profile selection
 
-## Rules
+| Profile             | Question                                         | Required output                                  | Does not prove               |
+| ------------------- | ------------------------------------------------ | ------------------------------------------------ | ---------------------------- |
+| baseline            | what is normal at a controlled operating point?  | distribution and run variance                    | maximum capacity             |
+| envelope/breakpoint | where does a specific guardrail cross?           | highest passing and lowest failing tested load   | universal capacity           |
+| stress/overload     | how does useful work fail and recover?           | rejection/collapse/recovery behavior             | safe operating point alone   |
+| spike/impulse       | can finite headroom and controls absorb a burst? | queues, deadlines, shedding and recovery         | sustained capacity           |
+| ramp                | how do transitions and controllers track growth? | lag, hysteresis, warm-capacity response          | one steady boundary          |
+| soak                | what changes with elapsed time/cycles?           | retained-resource slope/change points            | leak merely from rising heap |
+| failure scenario    | what survives topology/dependency loss?          | useful capacity and recovery under named failure | normal peak                  |
 
-- Never publish a breakpoint number from a single run. Reproduce it, and document the
-  failure behaviour separately from the capacity number — a system can have a low
-  breakpoint with graceful degradation, or a high one with total collapse 5% above it.
-- Never extrapolate a single-instance breakpoint linearly to a cluster. Shared resources —
-  database pool, central cache, a downstream rate limit — saturate before the sum of the
-  instances does. Validate the extrapolation against the whole system.
-- Compute the CDF of any synthetic distribution before asserting a threshold against it. If
-  `F(x) = q` exactly at the threshold value, `p(q) < x` is impossible by construction at
-  any sample size; move the threshold above the jump and below the next distribution value.
-- Declare `summaryTrendStats` explicitly for every percentile any downstream consumer uses.
-  Relying on the k6 default is relying on unversioned behaviour from inside your own script.
-- `--summary-export` aggregates percentiles; `--out json=...` writes one event per sample
-  and aggregates nothing. Reading a percentile from the raw event stream fails silently,
-  because the field simply does not exist in that format.
-- `--latency` is mandatory on wrk2 to get the percentile distribution block at all.
-- Make `dropped_iterations` a threshold (`['count<1']`), not something read afterwards.
-  Any value above zero invalidates the run; a threshold turns that into an explicit failure.
-- Size `maxVUs`/`preAllocatedVUs` from the worst tolerable latency. Mean latency
-  systematically under-sizes, and the shortfall bites exactly during the degradation the
-  test exists to observe.
-- Never use `constant-vus` where the real client is a set of independent arrivals. When the
-  server slows, the closed loop lowers its own rate.
-- Derive traffic-mix weights from access logs. A heavy endpoint at 10% of request count can
-  contribute half the load on a shared resource.
-- Set soak duration from the slowest cycle in the system under test — log rotation, cache
-  expiry, periodic full GC — never a fixed convention. Five minutes finds no leak, and a
-  leak is a positive slope on the **after-collection** floor across two cycles at constant
-  load — not a rising heap-used line.
-- Always instrument GC during the run: `-Xlog:gc*,safepoint:file=gc.log:time`, correlated to
-  the generator's latency series by synchronised timestamps.
-- `jcmd <pid> Thread.count` does not exist in any JDK. Count platform threads with `jcmd
-<pid> Thread.print | grep -c 'tid='`; unmounted virtual threads need `jcmd <pid>
-Thread.dump_to_file -format=json`.
-- Any analysis script must fail loudly — assert or raise — when the expected datum is
-  missing, rather than reporting zero or empty.
-- Run each breakpoint step long enough (30–60 s at steady state) for deoptimisation
-  transients to dissolve: near saturation, error and rejection paths execute in volume for
-  the first time and can trigger uncommon traps exactly at the transition point.
+Combine profiles only when phases remain separately tagged and prior overload cannot
+contaminate the next phase. Randomize or use fresh environments when order effects matter.
 
-## References
+## Breakpoint and capacity-envelope procedure
 
-- [Test profiles and the breakpoint procedure](references/test-profiles.md) — what each
-  profile proves, the stress/breakpoint/capacity distinctions, the soak design that can
-  tell a leak from a cache filling, the stepped `ramping-arrival-rate` search with its
-  recovery stage and analytical prediction, and the pre-publication checklist. Read when
-  choosing a profile, planning a soak, or running a breakpoint search.
-- [Generator configuration and output formats](references/generator-configuration.md) — k6,
-  Gatling and wrk2 open-loop syntax, generator sizing by Little's Law, the output-format
-  traps, and the JVM-side commands to correlate during a run. Read before writing or
-  reviewing a generator script or any parser that consumes its output.
+1. Define a pass predicate over the full evaluation window: latency, errors/correctness,
+   useful throughput, resource guardrails and stability.
+2. Establish a clearly passing load and a reproducibly failing load with an arrival model
+   matching production.
+3. Search between them using discrete steps or adaptive bracketing. Keep workload/state
+   constant and use independent repetitions near the decision boundary.
+4. Report an interval: highest tested reproducible pass to lowest tested reproducible fail.
+   The “last passing step” is not an exact breakpoint.
+5. Classify why the upper point failed and verify the generator still produced its intended
+   process.
+6. Repeat recovery after load removal; overload that leaves queues, breakers, caches or
+   instances unhealthy is a separate finding.
+
+Analytical predictions choose search bounds and detect unit/topology mistakes. Divergence
+does not prove the script is wrong: it can reveal model-assumption failure, variable demand,
+hidden resources or generator bias. Diagnose rather than applying an order-of-magnitude
+rule.
+
+Do not assume every offered rate above nominal service capacity creates an unbounded queue.
+Finite admission, deadlines, abandonment and shedding can stabilize waiting while rejecting
+work. Measure offered, admitted and useful rates.
+
+## Spike and ramp design
+
+Specify the arrival trajectory, duration, synchronized tenant/key composition and whether
+connections/caches arrive cold. A spike's integral deficit matters:
+
+\[
+B(t)=\max\left(0,B(0)+\int_0^t[\lambda_a(u)-\mu(u)]du\right)
+\]
+
+This fluid estimate can bound expected backlog only under its assumptions; validate
+partition skew, priorities, abandonment and variable service cost with observation or
+simulation.
+
+For autoscaling, correlate metric windows, controller reconciliation, scheduling, startup,
+readiness, routing and useful warmup. “Pod ready” is not necessarily “full capacity.”
+
+## Stress and recovery design
+
+Continue far enough beyond the SLO boundary to observe the intended overload policy, within
+safety limits. Record:
+
+- accepted, rejected, timed-out, cancelled and successful useful work;
+- queue age/depth and in-flight work;
+- retry/fan-out amplification;
+- resource exhaustion, crash/health-check and dependency feedback;
+- degradation quality and fairness by tenant/priority;
+- time and intervention required to return to baseline.
+
+A high attempted throughput with collapsing useful throughput is failure, not capacity.
+Use a separately authorized abort criterion for data corruption, uncontrolled external
+impact or unsafe resource exhaustion.
+
+## Soak and retention design
+
+Choose duration and checkpoints from hypothesized cycles and expected growth rate:
+credentials, cache expiry, rotations, compaction, class loading/unloading, scheduled jobs,
+connection lifetimes and GC cycles. There is no universal multiple of the slowest cycle;
+the run must contain enough independent observations and elapsed time to distinguish the
+decision-relevant slope from noise and bounded transients.
+
+Track the right state:
+
+- heap occupancy after comparable GC phases plus live-set evidence;
+- metaspace/class-loader counts;
+- native-memory categories and RSS;
+- platform/virtual-thread lifecycle;
+- file descriptors, connections, queues and pool leases;
+- storage/temp files and telemetry buffers.
+
+Do not trigger periodic full GC merely to make points “comparable” unless that intervention
+is explicitly part of the experiment; it changes latency, reference processing and
+collector behavior. A positive linear fit alone does not prove a leak. Look for monotonic
+retention across cycles, failure to plateau, ownership paths, time-to-limit and reproduction.
+
+## Automation and output contracts
+
+- Pin tool/version/extensions and validate output against a real fixture.
+- Treat raw event output and aggregated summaries as different schemas.
+- Fail loudly on missing fields, empty populations, histogram overflow or changed units.
+- Define every consumed statistic explicitly when tool configuration controls aggregation.
+- Preserve raw timestamps and outcome tags; summary-only exports can prevent reanalysis.
+- Size/preallocate generator concurrency through a pilot and monitor dropped scheduled
+  starts plus generator resources.
+- Separate scenario acceptance thresholds from run-validity and safety-abort thresholds.
+
+Tool-specific commands and current caveats belong in
+[generator configuration](references/generator-configuration.md).
+
+## Failure modes
+
+| Symptom                        | Distinguish with                                         | Response                                      |
+| ------------------------------ | -------------------------------------------------------- | --------------------------------------------- |
+| boundary moves between runs    | state/order/dependency drift; interval overlap           | randomize/block and report uncertainty        |
+| step passes briefly then fails | window too short, backlog/GC/controller cycle            | extend based on stabilization and SLO window  |
+| load drops at high latency     | scheduled vs started arrivals, generator headroom        | qualify/correct generator before target claim |
+| heap rises throughout soak     | after-GC state, allocation rate, cache bound, dominators | extend, reproduce and attribute ownership     |
+| recovery remains slow          | queue age, retries, breaker/pool/cache/instance state    | report recovery defect separately             |
+| only some tenants fail         | key/partition skew, priority/admission fairness          | preserve cohort metrics; do not average away  |
+
+## Anti-patterns
+
+**Single-run capacity number:** one passing point gives scenario evidence, not a maximum or
+between-environment uncertainty.
+
+**Fixed-duration folklore:** 30–60-second steps and eight-hour soaks are examples, not
+validity rules. Duration follows SLO windows, system dynamics and estimation precision.
+
+**Any dropped iteration invalidates everything:** it invalidates the configured-arrival
+claim for that interval, but remains useful generator evidence and may not affect a
+different earlier phase. Scope the consequence.
+
+**Forced-GC leak proof:** an intervention can create behavior unlike production and still
+does not identify retained ownership.
+
+**Error rate as validity:** errors are often the response variable in stress tests.
+Correctness and generator fidelity determine validity; the SLO determines acceptance.
+
+## Publication checklist
+
+- [ ] claim, workload unit, SLO population/window and profile are explicit
+- [ ] offered, started, admitted, attempted and useful work are reconciled
+- [ ] environment, dependency state and generator headroom are valid
+- [ ] passing/failing boundary is bracketed with run-level uncertainty
+- [ ] failure cause and recovery are characterized
+- [ ] output parser and units are fixture-tested
+- [ ] timeout/censoring/graceful-stop treatment is disclosed
+- [ ] raw artifacts, configuration and analysis are reproducible
+- [ ] safety, privacy and external-impact controls were followed
+
+## Cross-skill routing
+
+- load-testing: workload model, environment and base validity.
+- coordinated-omission: lost scheduled arrivals and correction limits.
+- latency-statistics: histogram, quantile and comparison inference.
+- capacity-planning: scenario/configuration selection and cost.
+- heap-dump-analysis or allocation-profiling: memory attribution after a soak signal.
+
+## Authoritative references
+
+- [Grafana k6: scenarios](https://grafana.com/docs/k6/latest/using-k6/scenarios/)
+- [Grafana k6: arrival-rate allocation](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/arrival-rate-vu-allocation/)
+- [Gatling: injection](https://docs.gatling.io/concepts/injection/)
+- [Apache JMeter component reference](https://jmeter.apache.org/usermanual/component_reference.html)
+- [Google SRE: Addressing cascading failures](https://sre.google/sre-book/addressing-cascading-failures/)

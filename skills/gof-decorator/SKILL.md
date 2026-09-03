@@ -46,15 +46,16 @@ The addition is cross-cutting and the interface is stable
 ## When it is not
 
 - **The wrapper changes the interface.** That is an Adapter (`gof-adapter`).
-- **The wrapper controls access rather than adding behaviour** — lazy loading, remoting, access
-  checks. That is a Proxy, and the distinction matters because a Proxy's caller believes it holds
-  the real object (`gof-proxy`).
-- **Only one combination is ever used.** Then the "stack" is a fixed pipeline; write it as one
-  class and keep the call graph readable.
+- **The primary intent is substituting for another object while controlling access** — lazy
+  loading, remoting or access checks. That is usually Proxy. Both patterns commonly implement the
+  same interface and may be structurally identical, so classify by responsibility (`gof-proxy`).
+- **Only one stable combination is ever used.** A composed class may make the call graph easier to
+  inspect, but separate decorators can remain worthwhile for independent ownership, testing or
+  framework integration. Compare change coupling rather than counting combinations.
 - **The framework already provides it.** Servlet filters, `HandlerInterceptor`, Spring AOP
   advice, `RestClient` request interceptors, Micrometer instrumentation and Resilience4j
-  decorators are all this pattern with ordering, configuration and observability already solved.
-  Hand-rolling beside them puts the policy in two places.
+  decorators already provide composition mechanisms. Verify their ordering, async-context and
+  observability semantics; hand-rolling beside them otherwise puts policy in two places.
 - **Behaviour differs by the object's state.** That is State (`gof-state`).
 
 ## Ordering is semantics
@@ -84,20 +85,22 @@ Read a stack outermost-first. Each layer sees the one below it as
 | Cache **inside** Retry         | Each attempt consults the cache — usually pointless      | Almost never                                             |
 | Breaker **outside** Retry      | The breaker sees logical operations                      | Normal                                                   |
 | Breaker **inside** Retry       | Retries beat on an open breaker, failing fast N times    | Only with a deliberate reason                            |
-| Metrics **outside** everything | Latency includes retries — the caller's true experience  | Always have this one                                     |
+| Metrics **outside** everything | Latency includes retries — the caller's true experience  | Usually retain as logical-operation telemetry            |
 | Metrics **inside** Retry       | Per-attempt counts and error rates                       | In addition, under a different metric name               |
 
-The safest default for a service with a request deadline: **Metrics → Breaker → Retry → Timeout
-→ Client**, with a second, separately named metric inside the retry if attempt-level data is
-needed. Whichever you choose, the order belongs in a comment beside the wiring, because nothing
-in the type system records it.
+A common starting point is **logical metrics → propagated deadline/budget → breaker → retry →
+per-attempt timeout → client**, with separate attempt telemetry. It is not universal: breaker
+placement decides whether it counts attempts or logical failures, and the retry must derive each
+attempt budget from remaining time. Document and test the selected semantics because the type
+system does not record them.
 
 ## Decision rules
 
 ```text
 IF retries exist at more than one layer of the system
-THEN attempts multiply: 3 at the client × 3 at the gateway = 9 requests
-     to a struggling dependency. Retry at exactly one layer
+THEN attempts can multiply: 3 at the client × 3 at the gateway = 9 requests
+     to a struggling dependency. Prefer one owner per failure domain; multiple layers
+     require a shared attempt/deadline budget and evidence that they do not amplify
      (retries-and-backoff, cascading-failures).
 
 IF a retry decorator wraps a non-idempotent operation
@@ -116,9 +119,9 @@ IF the framework has a mechanism for this concern
 THEN use it. A hand-rolled chain is invisible to the framework's
      ordering, metrics and tracing.
 
-IF the stack is more than four or five deep
-THEN stack traces and debugging get expensive. Consider one composed
-     class for the fixed part.
+IF the stack obscures call order, context propagation or failure attribution
+THEN make wiring observable, collapse inseparable policies, or use a framework chain.
+     Depth alone is not the decision criterion.
 
 IF a decorator swallows or translates the delegate's exceptions
 THEN it is changing the contract, not decorating it. State that
@@ -137,8 +140,8 @@ THEN it is changing the contract, not decorating it. State that
   across layers, which converts a partial outage into a full one; and a timeout placed so that
   the total call time exceeds the caller's deadline, so the caller gives up while the work
   continues (`timeouts-and-deadlines`, `cascading-failures`).
-- **Performance.** Each layer is one more virtual call, and the JIT inlines a short chain over a
-  monomorphic call site well. The costs that actually show up are allocation per call inside a
+- **Performance.** Each layer adds a dispatch opportunity that HotSpot may inline at stable call
+  sites. Costs that often matter more are allocation per call inside a
   layer (a new context object, a lambda capturing state, a `String` built for a log line that is
   then discarded), and lost inlining once the call site is megamorphic
   (`jit-inlining-and-escape-analysis`).
@@ -151,11 +154,12 @@ THEN it is changing the contract, not decorating it. State that
 
 - [ ] The wrapper implements the same interface as what it wraps
 - [ ] The stacking order is deliberate and documented at the wiring site
-- [ ] Retry exists at exactly one layer in the whole call path
+- [ ] Retry ownership and the shared attempt/deadline budget prevent cross-layer amplification
 - [ ] Any retried operation is idempotent or carries an idempotency key
 - [ ] The total time of the stack fits the caller's deadline
 - [ ] Stateful layers state their thread-safety guarantee
-- [ ] Identity-sensitive callers have an unwrap path, or none exist
+- [ ] Identity-sensitive behavior is eliminated, explicitly delegated, or exposed through a
+      constrained standard unwrap contract rather than concrete-type assumptions
 - [ ] No decorator silently swallows or reclassifies the delegate's failures
 - [ ] A test asserts the composed order, not only each layer alone
 

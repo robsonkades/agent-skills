@@ -6,16 +6,16 @@ version in your build rather than trusting a snippet.
 
 ## Parameters and the failure each wrong value produces
 
-| Role                         | Resilience4j key                        | Too low                                                       | Too high                                                            |
-| ---------------------------- | --------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Window kind                  | `slidingWindowType`                     | `COUNT_BASED` on a bursty endpoint measures a stale minute    | `TIME_BASED` on a rare endpoint holds too few calls to decide       |
-| Window size                  | `slidingWindowSize`                     | trips on a momentary blip                                     | reacts minutes after the dependency broke                           |
-| Minimum calls to evaluate    | `minimumNumberOfCalls`                  | 1 failure in 2 reads as 50% and trips                         | never reached on a low-traffic endpoint, so the breaker never trips |
-| Failure-rate threshold       | `failureRateThreshold`                  | trips on the dependency's normal error rate                   | stays closed through a real outage                                  |
-| Slow-call duration           | `slowCallDurationThreshold`             | healthy p99 calls count as slow                               | a 30 s dependency is never "slow"                                   |
-| Slow-call rate threshold     | `slowCallRateThreshold`                 | trips on tail latency                                         | the slow-but-succeeding outage is never detected                    |
-| Wait before probing          | `waitDurationInOpenState`               | probes a dependency that has not restarted, reopening at once | stays open long after the dependency recovered                      |
-| Probes admitted in half-open | `permittedNumberOfCallsInHalfOpenState` | one unlucky probe reopens a healthy dependency                | the recovering instance takes a burst and fails again               |
+| Role                         | Resilience4j key                        | Too low                                                       | Too high                                                                  |
+| ---------------------------- | --------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Window kind                  | `slidingWindowType`                     | Count window spans too much wall time at low rate             | Time window contains too few calls at low rate                            |
+| Window size                  | `slidingWindowSize`                     | trips on a momentary blip                                     | reacts minutes after the dependency broke                                 |
+| Minimum calls to evaluate    | `minimumNumberOfCalls`                  | 1 failure in 2 reads as 50% and trips                         | never reached on a low-traffic endpoint, so the breaker never trips       |
+| Failure-rate threshold       | `failureRateThreshold`                  | trips on the dependency's normal error rate                   | stays closed through a real outage                                        |
+| Slow-call duration           | `slowCallDurationThreshold`             | healthy tail calls count as slow                              | threshold exceeds timeout/deadline, so no completed call is recorded slow |
+| Slow-call rate threshold     | `slowCallRateThreshold`                 | trips on tail latency                                         | the slow-but-succeeding outage is never detected                          |
+| Wait before probing          | `waitDurationInOpenState`               | probes a dependency that has not restarted, reopening at once | stays open long after the dependency recovered                            |
+| Probes admitted in half-open | `permittedNumberOfCallsInHalfOpenState` | one unlucky probe reopens a healthy dependency                | the recovering instance takes a burst and fails again                     |
 
 Two behaviours that surprise people:
 
@@ -25,6 +25,8 @@ Two behaviours that surprise people:
   the **next call after the wait duration**, not on a timer. On a low-traffic path the breaker
   therefore reports open long after it would have closed, and the first caller after the quiet
   period pays the probe.
+- Automatic transition uses background monitoring so breakers can enter half-open without traffic;
+  account for its implementation/threading cost and do not confuse state transition with a probe.
 
 ```yaml
 resilience4j.circuitbreaker:
@@ -34,7 +36,7 @@ resilience4j.circuitbreaker:
       slidingWindowSize: 60 # seconds, because the window is TIME_BASED
       minimumNumberOfCalls: 50 # ≈ the calls this endpoint makes in 60 s
       failureRateThreshold: 50
-      slowCallDurationThreshold: 2s # above the dependency's measured p99
+      slowCallDurationThreshold: 2s # above healthy tail, below the effective timeout/deadline
       slowCallRateThreshold: 60
       waitDurationInOpenState: 30s
       permittedNumberOfCallsInHalfOpenState: 5
@@ -50,19 +52,20 @@ never reached, and the breaker is decoration.
 The predicate is the decision that decides whether the breaker works. Configure it by type
 and by status class, never by message text.
 
-| Outcome                                       | Counts | Why                                                                        |
-| --------------------------------------------- | ------ | -------------------------------------------------------------------------- |
-| Connect timeout, read timeout                 | yes    | the dependency is not answering within the bound                           |
-| Connection refused or reset, DNS failure      | yes    | transport-level, dependency-wide                                           |
-| 500, 502, 503, 504                            | yes    | server-side; correlated across callers                                     |
-| Slow call above the slow-call threshold       | yes    | the resource cost is the same as a failure                                 |
-| 400, 401, 403, 404, 405, 422                  | **no** | caller's fault; fails identically forever and trips for every client       |
-| 409 conflict                                  | no     | a business outcome, not a dependency fault                                 |
-| 429 too many requests                         | decide | the dependency is asking for less load — see below                         |
-| Domain exception carried over a 200           | **no** | insufficient funds is an answer, not a fault                               |
-| `CancellationException` from a caller timeout | decide | count it only if the deadline was the dependency's fault, not the caller's |
+| Outcome                                       | Counts     | Why                                                                        |
+| --------------------------------------------- | ---------- | -------------------------------------------------------------------------- |
+| Connect/read timeout                          | usually    | count when attributable to this dependency/scope, not caller cancellation  |
+| Connection refused/reset, DNS failure         | decide     | may be backend-wide, local resolver/network, endpoint- or zone-specific    |
+| 500, 502, 503, 504                            | usually    | exclude payload-specific failures; split endpoint/failure domains          |
+| Slow call above the slow-call threshold       | yes        | the resource cost is the same as a failure                                 |
+| 400, 401, 403, 404, 405, 422                  | usually no | validation/domain misses; shared credential/routing faults are exceptions  |
+| 408 request timeout                           | decide     | origin, proxy or caller may own the timeout                                |
+| 409 conflict                                  | no         | a business outcome, not a dependency fault                                 |
+| 429 too many requests                         | decide     | the dependency is asking for less load — see below                         |
+| Domain exception carried over a 200           | **no**     | insufficient funds is an answer, not a fault                               |
+| `CancellationException` from a caller timeout | decide     | count it only if the deadline was the dependency's fault, not the caller's |
 
-**429.** Counting it makes the breaker the backoff mechanism: the caller stops entirely for
+**429.** Counting it can make the breaker a coarse backoff mechanism: the caller stops for
 the wait duration, which protects a rate-limited dependency but converts a partial throttle
 into a total local outage. Not counting it leaves backoff to the retry policy honouring
 `Retry-After` (`retries-and-backoff`), which is usually the better division of labour. Decide
@@ -104,8 +107,9 @@ A breaker's window lives in the JVM that owns it. Consequences worth stating exp
 - After a deploy every breaker starts closed with an empty window, so a rollout re-probes a
   dependency the previous pods had already given up on.
 
-Sharing state across replicas (a distributed counter) buys uniformity and costs a round trip
-plus a new dependency on the path a breaker exists to protect — and that store's own outage
-must then fail open. Per-instance breakers plus server-side shedding
+Sharing state across replicas via a distributed counter buys uniformity and costs coordination
+plus another failure mode. A pushed control-plane decision avoids a per-call round trip but has
+propagation/staleness semantics. Define whether control-plane loss preserves the last state or
+fails open. Per-instance breakers plus server-side shedding
 (`rate-limiting-and-load-shedding`) is the usual answer; a client-side breaker is not the
 place to enforce a fleet-wide decision.

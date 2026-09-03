@@ -1,7 +1,7 @@
 ---
 name: java-tell-dont-ask
 description: >
-  Decision ownership: the object that has the data makes the decision. Use when a service
+  Decision ownership: the type that owns an invariant or policy makes the decision. Use when a service
   reads state with getters, decides, and writes state back (if (acct.getBalance() > x)
   acct.setBalance(...)), when the same rule is re-derived from the same getters in several
   places, when an invariant exists but no type enforces it, when a domain model is all
@@ -18,8 +18,10 @@ description: >
 `if (account.getBalance().compareTo(amount) >= 0) account.setBalance(...)` is a rule that
 lives nowhere: the invariant "balance never goes below the limit" is enforced only at call
 sites that remember to check, and the read–decide–write gap makes it race-prone. This skill
-moves such decisions to the object that owns the data — and, just as deliberately, refuses
-to move the ones that do not belong there. An anemic model over simple CRUD data is a
+moves such decisions to the type that owns the invariant and has enough authoritative state
+to enforce it — and, just as deliberately, refuses to move the ones that do not belong there.
+Possessing data is not sufficient ownership: pricing, authorization and cross-aggregate policy
+often belong to a policy object or application service. An anemic model over simple CRUD data is a
 legitimate architecture; anemia is a problem only when invariants exist and no type owns
 them.
 
@@ -31,31 +33,36 @@ them.
    the decision and the mutation move into the object as one command, and the setter that
    enabled the bypass is removed. If there is no invariant — the code just shovels data —
    leave it; a transaction script over data is fine.
-3. **Check the decision has a single owner.** A rule needing data from several aggregates
-   has no single owner; it stays in the service, which asks each object questions the
-   object can answer. Use `references/placement-decision.md` when ownership is unclear.
-4. **Apply command–query separation.** Commands change state and return `void` or the
-   outcome of the command; queries answer without side effects. A getter that mutates —
-   lazily initialising a collection, touching a timestamp — is a bug factory: it makes
-   reads unrepeatable and order-dependent.
+3. **Identify the authority and change owner.** A rule spanning aggregates may belong to
+   a domain policy, process manager or application service; no participating entity becomes
+   the owner merely because it holds one input. Use `references/placement-decision.md`.
+4. **Apply an explicit command/query convention.** Strict CQS makes mutating commands
+   return `void`; pragmatic command-query separation permits a command to return its own
+   outcome. Queries must be observationally side-effect-free. Private, thread-safe memoization
+   may preserve that contract; touching externally visible state on read does not.
 5. **Verify**: the invariant is unenforceable to bypass through the public API, the rule
    exists in exactly one type, and its tests target that type directly.
 
 ## Rules
 
-- The object with the data decides; callers say what they want done, not how.
-- Every public getter exports a decision point. Add getters for boundaries, queries and
-  reporting — never so a caller can decide something the object should decide.
-- A command may return its own outcome (a result object, the new state it produced) —
-  that is not a CQS violation. Answering an unrelated question while mutating is.
-- Records and DTOs are data carriers: tell-don't-ask does not apply to them. Applying it
-  turns contracts into objects and mappers into collaborators.
+- Put a decision with the type that owns its invariant or policy and can enforce it from
+  authoritative state. Callers express intent; data proximity alone does not establish ownership.
+- Public queries expose information that callers can couple policy to. Keep queries needed for
+  boundaries, observability and legitimate decisions; remove raw mutation paths and duplicated
+  external derivations instead of treating every getter as a defect.
+- Under strict CQS, commands return `void`. If the codebase adopts the pragmatic variant, a
+  command may return its own result or updated representation; document that convention and do
+  not mix unrelated answers or externally visible read effects into it.
+- A record may be a boundary DTO, a value object or an immutable domain type with behavior.
+  Tell-don't-ask applies according to ownership and invariant, not the `record` keyword.
 - Moving a decision in-process does not serialise concurrent writers by itself. The
   check-then-act race narrows but persistence still needs its own concurrency control
   (optimistic locking, constraints). Say so in the refactoring, or someone will delete the
   version column.
-- Never inject services into domain objects to feed a moved decision; pass the needed
-  values into the command method instead.
+- Keep infrastructure clients and ambient mechanisms out of entities. Pass a validated policy
+  input when it is merely data; use a domain policy interface/value object when the behavior has
+  its own domain ownership. A long list of fetched inputs is evidence the decision may belong
+  outside the entity.
 - Asking is correct at boundaries — mappers, serialisation, rendering — in queries and
   reports, and in orchestration across aggregates where no single object can own the rule.
 

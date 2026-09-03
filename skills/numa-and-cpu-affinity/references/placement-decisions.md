@@ -2,39 +2,40 @@
 
 ## Does `UseNUMA` do anything on this collector?
 
-| Collector       | Effect                                                                   | Mechanism                                                                                                                                               |
-| --------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Parallel GC** | Yes — the original, most mature implementation                           | TLABs allocated on the requesting thread's local node; young gen split per node                                                                         |
-| **G1**          | Yes, since JDK 14 (JEP 345, Linux only)                                  | Each region (1–32 MB) gets a preferred node at allocation; any thread may still allocate from any region — partial awareness, not physical partitioning |
-| **Serial**      | Accepted, no effect                                                      | Single-threaded; no parallelism to distribute                                                                                                           |
-| **ZGC**         | Accepted, but not the mechanism governing the collector's NUMA behaviour | ZGC has its own internal handling not exposed through this flag                                                                                         |
-| **Shenandoah**  | Accepted                                                                 | Exact JDK 25 behaviour unconfirmed — do not presume parity with G1; check `PrintFlagsFinal` and the release notes                                       |
+| Collector       | Effect                                                                   | Mechanism                                                                                                         |
+| --------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| **Parallel GC** | Yes — the original, most mature implementation                           | TLABs allocated on the requesting thread's local node; young gen split per node                                   |
+| **G1**          | Yes, since JDK 14 (JEP 345, Linux only)                                  | Regions used for young allocation get preferred nodes; this is awareness, not hard physical partitioning          |
+| **Serial**      | Accepted, no effect                                                      | Single-threaded; no parallelism to distribute                                                                     |
+| **ZGC**         | Accepted, but not the mechanism governing the collector's NUMA behaviour | ZGC has its own internal handling not exposed through this flag                                                   |
+| **Shenandoah**  | Accepted                                                                 | Exact JDK 25 behaviour unconfirmed — do not presume parity with G1; check `PrintFlagsFinal` and the release notes |
 
 The flag's default is `false`. The JVM does not enable NUMA awareness automatically even on
 detected NUMA hardware.
 
 ## What `UseNUMA` does not fix
 
-It improves locality of **new** allocation only. It leaves untouched:
+It primarily changes allocation placement for supported collectors; do not assume it fixes:
 
-- **Promoted objects** — the old-gen destination region can sit on a different node from the
-  thread that first allocated the object.
+- **Object lifetime movement** — collector evacuation/relocation semantics vary by collector
+  and JDK and can change the original locality.
 - **Migrating threads** — the Linux scheduler knows nothing about Java heap locality, so a
   thread that was local at allocation time can be remote minutes later.
-- **GC workers** — they are scheduled like any other thread; nothing keeps the worker
-  sweeping a region on that region's node.
+- **GC worker scheduling** — workers are still Linux tasks unless the collector implements
+  additional NUMA-aware work placement.
 
-That is why the production combination is `-XX:+UseNUMA` for the allocator **plus**
-`numactl --cpunodebind` or `taskset` to stop the scheduler spreading the threads.
+This does not imply one mandatory production combination. Compare unbound first-touch,
+collector NUMA support, CPU-node binding, preferred/fallback memory, interleave, and one JVM
+per node under the same workload.
 
 ## Strategy matrix
 
-| Situation                                                           | Strategy                                                                     | Trade-off                                                                         |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Heap fits in one node                                               | `--cpunodebind=N --membind=N`                                                | Maximum locality; wastes the other nodes' cores and memory if only one JVM runs   |
-| Heap larger than a node, collector supports `UseNUMA`               | `-XX:+UseNUMA`, no restrictive `numactl`                                     | Partial locality; threads still migrate between nodes without CPU affinity        |
-| Heap larger than a node, collector does not (ZGC/Shenandoah/Serial) | `--interleave=all`                                                           | No hot node, no locality — each access has a remote probability set by node count |
-| Application tolerates multiple instances                            | One JVM per node, each `--cpunodebind=N --membind=N`, behind a load balancer | Highest achievable locality; operational cost of N processes instead of one       |
+| Situation                                                    | Strategy                                                                     | Trade-off                                                                       |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Heap fits in one node                                        | `--cpunodebind=N --membind=N`                                                | Maximum locality; wastes the other nodes' cores and memory if only one JVM runs |
+| Heap larger than a node, collector supports `UseNUMA`        | `-XX:+UseNUMA`, no restrictive `numactl`                                     | Partial locality; threads still migrate between nodes without CPU affinity      |
+| Heap larger than a node, collector support is absent/unclear | Compare interleave, preferred fallback and unbound first-touch               | Interleave avoids one-node exhaustion but deliberately sacrifices some locality |
+| Application tolerates multiple instances                     | One JVM per node, each `--cpunodebind=N --membind=N`, behind a load balancer | Highest achievable locality; operational cost of N processes instead of one     |
 
 Working order of questions: how many nodes → does the required heap fit in one node → does
 the collector implement `UseNUMA` → does the application tolerate multiple instances.
@@ -54,16 +55,12 @@ NPS setting presents the socket as 1, 2 or 4 logical nodes.
 
 ## Sizing the CPU set
 
-Available CPUs must satisfy:
-
-```
-nCPU >= GC threads + JIT threads + concurrently active application threads
-```
-
-Pinning below that line makes GC pauses longer, because GC workers compete with application
-threads for the same few CPUs. `--cpunodebind` restricts to a whole node — typically dozens
-of CPUs. `taskset -c` or `--physcpubind` on a handful of CPUs suits fine-grained isolation
-of a critical thread (paired with `isolcpus`), not a whole JVM.
+Thread counts are not additive CPU requirements. Size from runnable demand and interference:
+measure application CPU saturation, run-queue delay, GC worker utilization/pause time, JIT
+activity and sibling/SMT topology. `--cpunodebind` chooses node CPUs;
+`--physcpubind`/`taskset` can constrain the whole process or selected threads. When the JVM's
+detected processor count differs from the intended capacity, set `ActiveProcessorCount`
+explicitly and revalidate ergonomics.
 
 ## Validation checklist
 
@@ -76,7 +73,7 @@ Before investigating:
 
 While observing:
 
-- [ ] Systemic `numastat` collected and the miss ratio computed
+- [ ] Systemic `numastat` collected as allocator/host-pressure context, not remote accesses
 - [ ] `numastat -p <pid>` collected for the process's heap distribution
 - [ ] `perf stat -e node-loads,node-load-misses,node-stores,node-store-misses -p <pid>` run —
       not `-e numa_miss`
@@ -92,6 +89,6 @@ While measuring:
 
 While validating:
 
-- [ ] Miss ratio fell **and** the business metric (latency, GC pause) fell with it
+- [ ] Predicted placement/access evidence changed **and** business metrics improved
 - [ ] No `OutOfMemoryError` introduced by a `--membind` too tight for the configured heap
 - [ ] Change documented as a single variable with a before/after baseline

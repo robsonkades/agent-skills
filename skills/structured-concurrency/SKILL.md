@@ -32,7 +32,7 @@ baseline.
 ## Workflow
 
 1. **Confirm the JDK first, and the preview cost.** `StructuredTaskScope` is a preview API
-   on every released JDK, including 25 (LTS) and 26. It requires `--enable-preview` at
+   on every released JDK through 26. It requires `--enable-preview` at
    compile _and_ run time, and preview class files run only on the **exact** JDK version
    that compiled them. Decide whether the deployment can accept that before designing
    around it.
@@ -79,9 +79,10 @@ baseline.
   wrapper.
 - `Joiner` instances are **single use**. Reusing one across scopes, or after a scope closes,
   is undefined; construct a new one per `open`.
-- Subtasks **inherit `ScopedValue` bindings** from the owner with no copying. This is the
-  only inheritance mechanism the platform offers — a plain `Thread.ofVirtual().start()`
-  inherits nothing.
+- A scope captures the owner's **current `ScopedValue` bindings when it is opened**;
+  threads subsequently started by `fork` inherit that captured set. HotSpot can implement
+  this essentially as pointer copying, but that is an implementation property. A plain
+  `Thread.ofVirtual().start()` does not inherit scoped-value bindings.
 - Scope timeout is configuration, not a joiner:
   `open(joiner, cf -> cf.withTimeout(d).withName("checkout"))`. In JDK 25 that parameter is
   a `Function<Config, Config>`; in 26 it is a `UnaryOperator<Config>`.
@@ -89,9 +90,10 @@ baseline.
   adapted into one. It is a scope for one operation, not a place to put background work; a
   daemon loop, a scheduler or a queue consumer needs an executor with a lifecycle of its
   own.
-- Structured concurrency does not bound concurrency. Forking 10 000 subtasks starts 10 000
-  virtual threads against a downstream that may allow 20. The limit is still a semaphore or
-  a pool next to the resource.
+- Structured concurrency does not bound concurrency. With the default configuration,
+  forking 10 000 subtasks creates 10 000 virtual threads against a downstream that may
+  allow 20. Put admission control next to the constrained resource; changing the scope's
+  thread factory changes execution policy but does not infer a safe downstream limit.
 - Observability is a real feature, not a slogan: `jcmd <pid> Thread.dump_to_file
 -format=json` renders the scope hierarchy, with each scope's subtasks nested under their
   owner and a reference to the parent scope. Naming the scope makes that dump readable.

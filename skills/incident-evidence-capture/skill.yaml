@@ -1,19 +1,16 @@
 schemaVersion: 1
 
 name: incident-evidence-capture
-version: 1.2.0
+version: 1.3.0
 description: >-
-  What to collect from a degrading JVM before someone restarts it, in what order, and what the
-  restart destroys: the artefacts that already exist and survive, three spaced thread dumps
-  rather than one, the heap dump as the last and most disruptive item, capturing to a path that
-  outlives the container, and the timestamps that make any of it correlatable afterwards. Use
-  when a service is degrading right now and the instinct is to restart, when an incident is over
-  and nobody captured anything, when a runbook says "restart the pod" with no collection step,
-  when a dump was taken and made the outage worse, when jcmd or jmap hangs against a wedged JVM,
-  or when evidence was written inside a container that was then replaced. Owns the order and the
-  budget; each tool's own use belongs elsewhere — heap-dump-analysis, concurrency-diagnostics,
-  jfr-and-async-profiler, jhsdb-and-core-dumps, gc-log-analysis. Not diagnosis (java-performance)
-  or postmortem writing (engineering-communication).
+  Preserving decision-grade JVM incident evidence before remediation destroys it: setting an
+  explicit recovery/evidence budget, selecting representative and control instances, copying
+  existing telemetry first, capturing repeated low-risk state, escalating to JFR, heap, or core
+  evidence only by symptom and approval, surviving containers/restarts, and recording integrity,
+  clocks, provenance, privacy, and capture failures. Use during live degradation, impending
+  restart/OOM, an unresponsive JVM, or runbook design. Owns ordering and safety;
+  artifact-specific analysis belongs to heap-dump-analysis, concurrency-diagnostics,
+  jfr-and-async-profiler, gc-log-analysis, and jhsdb-and-core-dumps.
 
 license: Apache-2.0
 

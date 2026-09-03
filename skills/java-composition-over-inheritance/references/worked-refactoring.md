@@ -68,12 +68,14 @@ final class FeeSchedule {
 
     BigDecimal feeFor(PaymentMethod method, BigDecimal amount) {
         BigDecimal fee = switch (method) {           // no default: exhaustive on purpose
-            case Card(_, boolean international) -> {
+            case Card card -> {
                 var base = amount.multiply(CARD_RATE);
-                yield international ? base.add(amount.multiply(INTERNATIONAL_SURCHARGE)) : base;
+                yield card.international()
+                        ? base.add(amount.multiply(INTERNATIONAL_SURCHARGE))
+                        : base;
             }
-            case Boleto _ -> BOLETO_FLAT;
-            case Pix _ -> BigDecimal.ZERO;
+            case Boleto ignored -> BOLETO_FLAT;
+            case Pix ignored -> BigDecimal.ZERO;
         };
         return adjustment.apply(fee).setScale(2, RoundingMode.HALF_EVEN);
     }
@@ -84,12 +86,17 @@ final class FeeSchedule {
 being a subclass and became a composed `FeeAdjustment`. The former product of axes is now
 a sum of variants plus one strategy field.
 
+The rewritten switch uses only Java 21-final language features. Unnamed patterns (`_`) became
+final in Java 22, so using them here without a version label would silently raise the example's
+minimum JDK. Production code must additionally validate non-null/non-negative amounts, factor
+ranges, currency and scale; this example isolates dispatch equivalence rather than defining a
+complete monetary contract.
+
 ## Trade-offs — what got worse
 
-- **New variants are now loud.** Adding `ApplePay` means editing `permits` and every
-  switch over `PaymentMethod`. That is the design working (the compiler lists the sites),
-  but a change that used to be "one new file" now touches shared files — worse for a team
-  that ships variants independently.
+- **New variants are loud on recompilation.** Adding `ApplePay` means editing `permits` and every
+  source switch over `PaymentMethod`. Already compiled consumers are not repaired by that
+  property and can fail with `MatchException`; coordinated deployment/versioning still matters.
 - **Closed to outsiders.** A partner module can no longer add a payment method. If the
   variant set is genuinely open, this refactoring is wrong — keep an interface.
 - **Behaviour moved away from data.** Fee logic for all methods now lives in one switch

@@ -11,16 +11,18 @@
 | Behaviour varies on 2+ independent axes                          | One axis as types, others as composed strategies                                      | N×M subclasses otherwise; N+M objects instead                                   |
 | Cross-cutting add-on behaviour (retry, metrics, caching)         | Decorator over a shared interface                                                     | Stackable at runtime; base type untouched                                       |
 
-Sealed hierarchies are the middle ground the older advice predates: closed polymorphism
+Sealed hierarchies are a middle ground the older advice predates: closed polymorphism
 gives exhaustive checking that open inheritance cannot, and variant-specific data that a
 flat strategy field cannot. The residual trade is the expression problem in one sentence —
-a sealed set makes _new operations_ cheap (one more switch) and _new variants_ loud (every
-switch fails to compile until updated); an open hierarchy makes new variants cheap and new
-operations expensive. Pick by which kind of change your domain actually produces.
+a sealed set makes _new operations_ local (one more switch) and _new variants_ loud when all
+consumers are recompiled; separately evolved binaries may reach a synthetic fallback and throw
+`MatchException`. An open hierarchy makes new variants local and new operations expensive.
+Pick by which kind of change and deployment boundary the domain actually produces.
 
 ## Fragile-base risk heuristics
 
-Score an existing `extends` against these; two or more is a restructuring candidate.
+Use these as evidence dimensions, not a score threshold. One severe contract violation can
+justify change; several low-risk signals in a closed stable hierarchy may not.
 
 - **Self-use of overridable methods.** Base methods call other overridable methods. A
   subclass overriding one silently changes the behaviour of the others — the classic
@@ -47,14 +49,15 @@ Score an existing `extends` against these; two or more is a restructuring candid
   module, same maintainer, shared state genuinely common — the coupling is confined and
   the compiler knows the whole set. Dismantling it into delegation adds forwarding for no
   risk reduction.
-- **Interface extension.** `interface A extends B` inherits contract only; none of the
-  implementation-coupling arguments apply.
+- **Interface extension.** `interface A extends B` primarily extends a contract and carries no
+  instance representation. Default methods can still introduce self-use, conflict and binary
+  evolution concerns, so inspect them rather than assuming implementation-free inheritance.
 - **Exception hierarchies.** `DomainException extends RuntimeException` and its children
   carry no algorithmic self-use; the hierarchy exists for `catch` selection.
-- **Stable, closed, working hierarchies.** A hierarchy that has not caused a bug and has
-  not changed in a year is not a refactoring target because a principle exists. The cost
-  of migration is real; the benefit is speculative (java-dry-kiss-yagni owns that
-  economics).
+- **Stable, closed, working hierarchies.** Low change pressure and no defect evidence reduce the
+  expected payoff, but do not excuse a security, integrity or substitutability violation whose
+  failure is merely rare. Compare demonstrated risk with migration cost
+  (java-dry-kiss-yagni owns that economics).
 
 ## Costs of the composition side — check before recommending
 
@@ -71,3 +74,16 @@ Score an existing `extends` against these; two or more is a restructuring candid
 
 If these costs dominate and the base contract is stable and documented, keeping
 inheritance is the correct engineering decision — record it as such.
+
+## Language constraints that affect the decision
+
+- A direct permitted subtype of a sealed type must be in the same named module; in the unnamed
+  module it must be in the same package. Sealing is therefore also a release/ownership choice.
+- Exhaustive switches are source checks at compilation time, not a promise that independently
+  deployed old clients understand a newly added subtype.
+- Records are implicitly final and are useful leaves, but mutable record components still leak
+  mutability; sealed + record does not itself establish value semantics.
+
+See [JLS §8.1.6](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.1.6),
+[JLS §13.4.2](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.4.2), and
+[JLS §8.10](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.10).

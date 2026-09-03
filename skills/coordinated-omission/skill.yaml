@@ -1,15 +1,14 @@
 schemaVersion: 1
 
 name: coordinated-omission
-version: 1.2.0
+version: 1.3.0
 description: >-
-  Coordinated omission in depth: the exact mechanism (missing samples, never wrong values),
-  the closed-loop ceiling lambda_max = N/R, detection by reconciling issued against planned
-  requests and by the MAX/p99 ratio, correction at recording time versus at generation time,
+  Coordinated omission in depth: response-coupled sampling, open/closed/semi-open workload
+  models, scheduled-versus-actual clocks, generator saturation, correction at recording time versus at generation time,
   HdrHistogram's recordValueWithExpectedInterval semantics, what wrk2, k6, Gatling, JMeter
   and Locust each actually do, and the effect on capacity numbers. Use when a load test's
-  p99 is far better than production's for the same endpoint, when a histogram holds fewer
-  samples than rate x duration, when MAX is 20x-100x the p99, when someone proposes applying
+  p99 is far better than production's for the same endpoint, when a generator misses its
+  planned schedule, when someone proposes applying
   recordValueWithExpectedInterval to open-loop data, when a latency dashboard improves as a
   system saturates, or when a benchmark's numbers are about to become an SLO. Does not cover
   the introductory treatment or the general statistics of latency (latency-statistics), or

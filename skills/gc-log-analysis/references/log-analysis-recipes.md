@@ -14,13 +14,17 @@ awk '/Pause/ && match($0, /[0-9]+\.[0-9]+ms/) {
 | awk '{ v[n++] = $1; total += $1 }
        END {
          if (n == 0) { print "no pauses found"; exit 1 }
-         printf "pauses=%d  p50=%.2fms  p99=%.2fms  max=%.2fms  total=%.1fms\n",
-                n, v[int(n * 0.50)], v[int(n * 0.99)], v[n-1], total
+         r50 = int(0.50 * n); if (r50 < 0.50 * n) r50++
+         r99 = int(0.99 * n); if (r99 < 0.99 * n) r99++
+         printf "pauses=%d  p50_nearest_rank=%.2fms  p99_nearest_rank=%.2fms  max=%.2fms  total=%.1fms\n",
+                n, v[r50-1], v[r99-1], v[n-1], total
        }'
 ```
 
-`total` divided by the log's wall-clock span is the GC overhead — the number that catches
-the "many short pauses" case that per-pause alerting never fires on.
+`total` divided by the log's wall-clock span is the logged stop-the-world pause share. It
+does not include concurrent GC CPU or barrier cost. The sample count is essential: under
+nearest-rank estimation, p99 is the maximum until at least 100 observations and remains a
+noisy tail estimate for small windows.
 
 ## Counts by type and by cause
 
@@ -35,7 +39,7 @@ grep -oE '\([A-Za-z0-9 ]+\)' gc.log | sort | uniq -c | sort -rn | head
 ```
 
 ```bash
-grep -c "Pause Full" gc.log     # zero is the expected number in healthy production
+grep -c "Pause Full" gc.log     # investigate unplanned events in an online SLO window
 grep -i humongous gc.log        # humongous allocations
 ```
 
@@ -64,9 +68,10 @@ rises after every complete cycle is retention.
 -Xlog:gc+age=trace:file=age.log:time,uptime
 ```
 
-A `new threshold` below `max threshold` means objects are being promoted before they had
-a chance to die in the young generation. The usual fix is a larger young generation, not a
-lower pause target — lowering `MaxGCPauseMillis` shrinks young and makes it worse.
+A `new threshold` below `max threshold` means adaptive tenuring selected an earlier age; it
+does not by itself prove harm. Correlate age-table bytes with promotion/old pressure and
+downstream pause cost. When survivor pressure is causal, a larger young/survivor budget is
+one candidate; lowering `MaxGCPauseMillis` can instead shrink young and worsen it.
 
 ## When the log cannot answer: who allocated
 

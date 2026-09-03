@@ -28,9 +28,9 @@ far from the code that caused it.
 
 ## Workflow
 
-1. **Name the owner.** Exactly one scope acquires and releases. A method that receives an
-   open resource as a parameter does not close it — the caller does. Write the ownership
-   in the Javadoc; it is the part no signature expresses.
+1. **Name the lifetime authority.** Prefer one owner that acquires/releases. Borrowed,
+   reference-counted or shared resources need an explicit protocol instead. A method receiving an
+   open resource normally borrows it; consuming/closing must be named and documented.
 2. **Make the scope lexical.** Acquire in a `try`-with-resources header. If the resource
    must outlive the method, the method is not the owner — return it, and let the owner's
    scope hold it.
@@ -49,25 +49,27 @@ far from the code that caused it.
 
 ## Rules
 
-- `try`-with-resources over `try`-`finally`, always, including for several resources and for
-  a resource that may be null-checked around. Resources close in reverse declaration order,
+- Prefer `try`-with-resources for lexically owned `AutoCloseable`s. Application-lifecycle,
+  conditional-transfer and asynchronous ownership may need an explicit state machine/finally.
+  Resources close in reverse declaration order,
   and an exception from `close` is _suppressed_ onto the body's exception rather than
-  replacing it — `getSuppressed()` recovers it. `finally` inverts that: the body's exception
-  is lost and the diagnosis starts from the wrong stack trace.
+  replacing it—`getSuppressed()` recovers it. A naive `finally { close(); }` can replace the body
+  exception unless it manually implements equivalent suppression.
 - Since Java 9 an existing effectively-final variable can be used directly:
-  `try (existingResource)`. There is no reason left to write `try (var r = existingResource)`
-  and then wonder who owns it.
-- Implement `Closeable` (which is `AutoCloseable` narrowed to `IOException`) when the
-  resource is I/O; implement `AutoCloseable` otherwise, and declare the narrowest exception
-  the close can actually throw — never `throws Exception`, which forces every caller to
-  catch it.
-- Make `close` idempotent. `Closeable` requires it; `AutoCloseable` only advises it, and
-  decorators, pools and error paths all call it twice sooner or later.
+  `try (existingResource)`. This does not transfer aliases or make ownership obvious; choose a
+  local name/Javadoc when it clarifies that the scope closes a borrowed-looking value.
+- Implement `Closeable` when its stronger idempotence and `IOException` contract fit; implement
+  `AutoCloseable` otherwise. I/O association alone is not decisive—JDBC resources implement
+  `AutoCloseable`. Declare the narrowest failure type; avoid `throws Exception` in a public
+  implementation unless callers genuinely need that generality.
+- Make custom `close` idempotent where feasible. `Closeable` requires it and `AutoCloseable`
+  strongly advises it, but third-party/reference-counted release protocols may reject double
+  release. Never infer idempotence from use in a pool or decorator.
 - `close` must not block indefinitely and must not do work that can fail after the point of
   no return. A `close` that flushes over a network needs the same timeout discipline as any
   other remote call — see timeouts-and-deadlines.
-- Most streams need no closing; the ones backed by an I/O resource do — `Files.lines`,
-  `Files.walk`, `Files.list`, `Files.newDirectoryStream`. A method that returns such a
+- Most streams need no closing; the ones backed by an I/O resource do—`Files.lines`,
+  `Files.walk`, `Files.find`, `Files.list`, and `Files.newDirectoryStream`. A method that returns such a
   stream has handed the caller a resource, and its Javadoc must say so.
 - `ExecutorService` has been `AutoCloseable` since Java 19, and its `close()` initiates an
   orderly shutdown and then _blocks until all submitted tasks finish_. In
@@ -80,10 +82,16 @@ far from the code that caused it.
   `close()` on a pooled `Connection` gives it back. Holding one beyond the operation is the
   same defect as leaking it, because the pool is the real bound; connection-pool-sizing owns
   the arithmetic.
-- Never let a resource escape into an asynchronous stage without moving ownership with it.
+- Before closing a JDBC `Connection`, explicitly commit or roll back an active transaction; JDBC
+  does not define portable close behaviour with one active. Reset failures can cause a pool to
+  evict rather than reuse the physical resource.
+- Never let a resource escape into an asynchronous stage without moving ownership and cancellation
+  policy with it.
   `try (var conn = pool.get()) { return async(conn); }` closes the connection before the
   future completes; the stage then fails with a closed-resource error under load and not in
-  the test. Either block inside the scope, or make the completion stage do the closing.
+  the test. Acquire inside the actual task where possible. A `whenComplete(close)` callback is
+  insufficient if cancellation completes the exposed future before underlying use stops; release
+  only after actual use terminates and propagate/suppress close failure deliberately.
 - Do not use finalizers, and do not reach for `Cleaner` as the primary release mechanism —
   it is a safety net that logs a leak, if it runs at all. java-reference-types-and-leaks
   covers when a safety net is justified and how to write one that can actually fire.
@@ -92,6 +100,10 @@ far from the code that caused it.
   `newVirtualThreadPerTaskExecutor` it is bounded by nothing until the pool refuses. The
   bound must become explicit — a semaphore or the pool's own limit; see
   concurrency-limiting-and-bulkheads.
+- `StructuredTaskScope` remains a preview API in Java 25 and changed across previews. Java 25
+  `close()` cancels unfinished subtasks, waits for their threads, and reports missing `join()` or
+  structural misuse. Cancellation is cooperative; a subtask that ignores interruption can delay
+  close indefinitely. Pin the JDK/preview contract and do not transplant examples across releases.
 
 ## References
 

@@ -2,14 +2,17 @@
 
 ## Proving it is a leak first
 
-A leak is a _rising floor_: the live set after a full collection grows monotonically with
-cumulative traffic. Three observations settle it before any dump is taken:
+A defect is not proven by a rising floor alone. More reachable state after equivalent
+reclamation points is a retention signal; decide whether it violates an ownership, expiry
+or capacity contract. Three observations strengthen or falsify the hypothesis before a
+dump is taken:
 
 - **Post-GC heap occupancy over hours**, from the GC log (`gc-log-analysis` has the parsing).
   Sawtooth with a flat floor is normal; sawtooth with a climbing floor is retention.
-- **Whether a forced full collection recovers it.** `jcmd <pid> GC.run` followed by
-  `GC.heap_info`. If the floor holds, the objects are reachable — no collector setting will
-  help, and the investigation is about references, not about GC.
+- **Whether an equivalent complete reclamation point recovers it.** A forced
+  `jcmd <pid> GC.run` is a high-impact intervention and should be used only on a drained or
+  controlled instance. If the floor holds, reachability/collector policy/capture timing
+  still need separation; a heap flag cannot fix an application ownership defect.
 - **Correlation with a deploy or a traffic shape**, not with load alone. A leak proportional
   to _requests served_ points at request-scoped retention; one proportional to _time_ points
   at a scheduler or a listener registry; one proportional to _redeploys_ points at class
@@ -17,7 +20,7 @@ cumulative traffic. Three observations settle it before any dump is taken:
 
 Then get the retaining path. In a heap dump, that is the dominator tree plus "path to GC
 roots" excluding weak/soft references — heap-dump-analysis. On a live process,
-`jdk.OldObjectSample` samples objects that survived long enough to be old. On JDK 25 it is
+`jdk.OldObjectSample` samples retained old objects. On JDK 25 it is
 enabled in both shipped settings files, but `default.jfc` records **no stack trace** for
 it and `profile.jfc` does (`old-objects-stack-trace`), so a recording started with the
 defaults names the object and not the allocation site. The reference chain to a GC root is
@@ -25,13 +28,13 @@ computed only when the recording is written with `path-to-gc-roots=true`
 (`jcmd <pid> JFR.dump filename=leaks.jfr path-to-gc-roots=true`, or the same option on
 `JFR.start`); that walk is itself a stop-the-world heap traversal, so ask for it once at
 dump time, not on a continuous recording. With those two settings the event answers the
-same question as a dump without a multi-gigabyte file. **Under ZGC it is disabled from 25.0.4, 26.0.2 and
-27** — the event's weak-handle implementation costs too much in generational ZGC
-(JDK-8382740, fixVersion 27, backported to 26.0.2 and 25.0.4; release note JDK-8386620).
-26.0.0 and 26.0.1 are unaffected. Note the update-release scoping: a JDK 25 baseline is
-affected from 25.0.4 onward, so "we are on 25" does not exempt you — check the update.
-Under an affected build the view is **empty, not an error**, so treat an empty
-`memory-leaks-by-site` under ZGC as "not measured" and fall back to a heap dump.
+same broad question as a dump, but sampled and with different completeness. Under
+generational ZGC, OpenJDK issue JDK-8375615 (still unresolved, targeted to 27 when checked
+2026-09-03) reports that the event's weak handles can retain sampled young objects until an
+old collection and cause allocation stalls. Do not invent update-release disablement from
+an open issue: inspect the exact build/settings, measure with and without the event, and
+treat an empty view as “no samples observed,” not proof of no retention. Use a controlled
+heap dump when completeness is required.
 
 ## The catalogue
 
@@ -107,14 +110,17 @@ scheduler.scheduleAtFixedRate(page.refreshTask(), ...);   // the whole page is n
 ```
 
 Fix: make the nested class `static` (a static nested class has no enclosing reference) and
-pass only the values it needs — `long id = this.pageId; return () -> reload(id);`.
+pass only the values/services it needs. Merely copying `pageId` and then calling the
+instance method `reload(id)` still captures `this`; call a deliberately retained service,
+for example `var loader = this.loader; long id = pageId; return () -> loader.reload(id);`.
 
 ### 6. Class-loader retention
 
 Diagnosis: Metaspace grows across redeploys, `jcmd <pid> VM.classloader_stats` shows loaders
 for old application versions, and the heap contains several instances of the "same" class
-whose `getClassLoader()` differ. The retaining reference always lives in a _longer-lived_
-loader: a static registry in a shared library, a `ThreadLocal` on a container thread, a JDBC
+whose `getClassLoader()` differ. The retaining path crosses into a _longer-lived_ owner/root,
+which may belong to another loader or to native/runtime state: a static registry in a shared
+library, a `ThreadLocal` on a container thread, a JDBC
 driver registered with `DriverManager`, an unremoved shutdown hook, a JMX/MBean registration,
 or a thread the application started and never joined. Fix each explicitly on undeploy — this
 is one of the few places where "unregister everything you registered" is a hard requirement.
@@ -149,5 +155,7 @@ For each finding, the fix names the owner and the removal point:
 | Class loader        | deregister drivers, hooks, MBeans, thread locals | Metaspace flat across three redeploys                                    |
 | Unbounded queue     | bounded queue + rejection/backpressure policy    | load test that shows rejection rather than growth                        |
 
-The acceptance criterion is always the same and always quantitative: same load profile, same
-duration, and the post-full-collection live set no longer trends upward.
+Acceptance is quantitative but pattern-specific: normalize load/duration/topology, show the
+unwanted retaining path or unbounded count has disappeared, and verify the replacement's
+capacity, latency and cleanup behavior. Post-reclamation floor is one signal, not the sole
+oracle.

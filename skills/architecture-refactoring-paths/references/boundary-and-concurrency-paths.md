@@ -19,9 +19,10 @@ scaling, fault isolation, team ownership. Not "microservices".
                      acceptable over a network. Measure it
                      (remote-facade-and-dto).
 
-4. Observe           Run for at least a month. Any change requiring both
-                     sides edited in one commit means the boundary is
-                     WRONG — and correcting it now costs a refactor.
+4. Observe           Run for a period that covers representative releases,
+                     load and failure modes. Repeated lockstep edits are
+                     evidence that the boundary may be misplaced or its
+                     contract too fine-grained; investigate before extraction.
 
 5. Remote adapter    Same interface, remote implementation. Route a small
                      percentage of traffic; compare.
@@ -29,8 +30,9 @@ scaling, fault isolation, team ownership. Not "microservices".
 6. Move the data     Last. Until now, rollback is a configuration change.
 ```
 
-**Rollback story:** through step 5, switching back is a flag. After step 6 it is a data
-migration — which is why step 4's month is not optional.
+**Rollback story:** through step 5, switching back can be a flag if writes remain compatible and
+the old implementation is still deployable. After step 6 it is a data migration, which is why the
+observation period must cover the risks that actually drive the extraction.
 
 **Verification that it is real:** can each side be deployed alone, today? If a release still
 requires an order, the extraction produced a distributed monolith
@@ -49,9 +51,10 @@ replica breaks a flow (`session-state-strategies`).
 2. Delete derived    Anything recomputable. Usually the largest share and
                      it needs no replacement. SHIP.
 
-3. Identity out      Move the principal and claims to a signed token.
-                     Independent of everything else and it delivers most
-                     of the disposability. SHIP.
+3. Identity out      Move only stable, bounded identity claims to a signed
+                     token, or use an opaque reference when revocation,
+                     confidentiality or claim freshness requires server-side
+                     lookup. Define expiry and key rotation. SHIP.
 
 4. Valuable state    In-progress work to a table with an expiry, a
                      version and a sweeper. SHIP per flow.

@@ -2,8 +2,8 @@
 name: idempotency
 description: >
   Making an operation safe to apply more than once: natural idempotency versus an
-  idempotency key plus a dedup store; choosing and scoping the key, and why a broker message
-  id is the weakest source; the concurrent in-flight duplicate that a check-then-act read
+  idempotency key plus durable operation state; choosing and scoping the key, and why a
+  broker message id covers only one redelivery scope; the concurrent in-flight duplicate
   cannot handle; replaying the stored response instead of returning a conflict; and why
   idempotent is not commutative. Use when a retry produces a second row, charge or email,
   when a handler starts with an exists() check before a write, when an Idempotency-Key
@@ -17,10 +17,10 @@ description: >
 
 ## Purpose
 
-Make an operation produce the same observable outcome whether it is applied once or five
-times, and know which of the two available mechanisms — natural or synthetic — the
-operation admits. Duplicates are a given; why they arrive is `delivery-semantics`. This
-skill is only about surviving them.
+Make an operation preserve its declared state, effect and response invariants whether it is
+attempted once or five times. Choose natural state idempotence, a conditional domain
+transition, a durable operation key, or a combination. Duplicates are a given; why they
+arrive is `delivery-semantics`. This skill is only about surviving them.
 
 The failure this prevents is the almost-idempotent handler: a dedup check written as a read
 followed by a write, which passes every sequential test and duplicates under the exact
@@ -30,21 +30,27 @@ error, so a client that retried after a timeout is told its request conflicts wi
 
 ## Workflow
 
-1. **Ask whether the operation is naturally idempotent.** A full-representation PUT, an
-   absolute `SET x = v`, a delete, an insert on a natural unique key — these need no
-   machinery. `balance = 100` is naturally idempotent; `balance += 10` is not.
-2. **If not, decide whether the guard is a key or a state.** State-machine transitions
-   guard on the current state (`if state == PENDING then → CONFIRMED`), and need no dedup
-   store. Only reach for a key when there is no state that discriminates.
-3. **Choose the key source and its scope** before writing code. Client request id,
-   deterministic hash of the business payload, or broker message id, in that order of
-   strength. See `references/key-selection.md`.
-4. **Make the claim a conditional insert, never a read-then-write.** `INSERT … ON CONFLICT
-DO NOTHING`, a unique constraint plus a caught violation, or `SET key NX`. This is the
-   only shape that is correct with two copies in flight.
-5. **Store the response, not just the fact.** A duplicate must return the original answer,
-   with the original status. Returning 409 to a retry is a bug that surfaces as a client
-   error you cannot reproduce.
+1. **Define the equivalence contract.** Separate final business state, external effects and
+   protocol response. A full-representation PUT or delete can be state-idempotent while the
+   second response has a different version/status. An insert guarded by a natural unique key
+   prevents a second row but still needs duplicate recognition if retries must receive the
+   original result. `balance = 100` is naturally state-idempotent; `balance += 10` is not.
+2. **Choose state predicate, operation key, or both.** A conditional transition
+   (`PENDING → CONFIRMED`) prevents an illegal second transition, but an operation key is
+   still needed to distinguish a retry from a competing command, replay its result, and
+   deduplicate external effects.
+3. **Choose the key source, namespace and lifetime** before writing code. Prefer a stable
+   business-operation identifier or a caller-generated identifier created once per intent.
+   Payload hashes identify content, not intent; broker delivery IDs cover only the broker's
+   redelivery scope. See `references/key-selection.md`.
+4. **Make the claim and local mutation one atomic state transition.** A conditional insert
+   or compare-and-set chooses one owner under concurrency. When the business mutation is in
+   the same database, commit claim, mutation and response atomically. For an external effect,
+   persist intent first and call downstream with the same idempotency key; otherwise a crash
+   necessarily leaves an ambiguous state that requires status lookup/reconciliation.
+5. **Persist the stable outcome needed by the contract.** It may be the exact status/body,
+   a resource identifier and version from which a response is rebuilt, or a terminal
+   business rejection. Do not persist secrets, one-time credentials or unbounded bodies.
 6. **Set the retention from the client's retry horizon and the business record**, and say
    what happens after it expires. See `references/idempotency-key-filter.md`.
 7. **Test the concurrent case specifically** — two threads, one key, one barrier, assert
@@ -53,9 +59,10 @@ DO NOTHING`, a unique constraint plus a caught violation, or `SET key NX`. This 
 
 ## Rules
 
-- Idempotent means the _observable outcome_ is unchanged by repetition, not that the code
-  takes the same branch. A second call that skips the work and returns the stored response
-  is idempotent; a second call that returns a different status is not.
+- State idempotence means repeating the operation does not change the resulting state after
+  the first application. API retry equivalence is stronger: it may require the same resource
+  identity and semantically equivalent response, not necessarily byte-for-byte replay.
+  State which guarantee the interface offers.
 - **Idempotent is not commutative.** Idempotency says `f(f(x)) = f(x)`; commutativity says
   `f(g(x)) = g(f(x))`. At-least-once delivery gives you duplicates _and_ reordering across
   keys, so a path that repeats safely can still converge wrongly when two different
@@ -65,25 +72,50 @@ DO NOTHING`, a unique constraint plus a caught violation, or `SET key NX`. This 
 - Never write the guard as `if (repo.existsById(key)) return;` followed by an insert. Two
   concurrent copies both read absent, both proceed, both apply the side effect. The check
   and the claim must be one atomic operation.
-- The conditional insert must be **in the same transaction as the side effect** when both
+- The conditional claim must be **in the same transaction as the side effect** when both
   are in the same store. Claim-then-crash-before-side-effect otherwise leaves a key that
   suppresses the retry forever — a lost operation with no error anywhere.
-- Return the stored response for a duplicate, replaying status and body. Only return a
-  conflict when the same key arrives with a _different_ payload — that is a client bug and
-  is worth surfacing (a payload fingerprint stored beside the key detects it).
-- A broker message id is the weakest key: it identifies a _delivery_, not a _request_. An
+- Return or reconstruct the original semantic outcome for a completed duplicate. Reject the
+  same key with a materially different operation fingerprint without revealing another
+  tenant's result. Canonicalization must include every field that changes semantics and the
+  relevant API/tenant scope.
+- A broker message id usually identifies a _delivery_, not a business request. An
   upstream that republishes after its own crash produces a new message id for the same
   business intent, and the dedup store sees two distinct keys.
-- A key with a TTL shorter than the client's retry horizon deduplicates nothing at the
-  moment it matters. A key retained longer than its business record leaves a marker that
-  suppresses a legitimate re-submission. Both are decisions with stated conditions — the
-  table is in `references/key-selection.md`.
-- Increment and append are not idempotent and no wrapper makes them so. Either record the
-  delta under its own key and sum, or convert to an absolute write.
+- A key retained for less than the maximum replay horizon re-enables old operations. Longer
+  retention costs storage and may retain sensitive data, but does not suppress a legitimate
+  new intent when clients generate a new key per intent. Define post-expiry semantics,
+  archival/DLQ replay limits and legal retention explicitly.
+- Increment and append are not naturally idempotent, but an atomic dedup record plus mutation
+  can make an operation keyed by intent idempotent. Alternatives are a uniquely keyed delta,
+  conditional version transition or absolute target write.
 - **Idempotency belongs in durable storage.** A cache is not a dedup store: eviction under
   memory pressure silently re-enables the duplicate, and the cache's own consistency
   becomes part of the guarantee. A cache in front of the durable table is fine;
   `caching-strategies` for that.
+
+## State machine for external effects
+
+```text
+ABSENT --atomic claim--> PENDING(attempt, fingerprint)
+PENDING --downstream confirms same operation key--> COMPLETED(outcome)
+PENDING --definite pre-dispatch rejection--> RETRYABLE or terminal REJECTED
+PENDING --timeout/disconnect/crash--> UNKNOWN --status lookup/reconcile--> COMPLETED/RETRYABLE
+```
+
+Never delete or reopen `PENDING` merely because the caller received an exception. Cancellation
+and timeout describe the caller, not the effect. If a lease allows a new worker to take over,
+use an attempt epoch for ownership of local completion and still reuse the stable downstream
+operation key. A lease alone cannot prevent the first external attempt from completing late.
+
+## Security and abuse controls
+
+- authenticate before idempotency lookup and namespace by principal/tenant plus operation;
+- cap key/body lengths and validate key entropy/format to prevent index and hot-key abuse;
+- never reveal whether another tenant used a key; authorize replayed resource/result again;
+- encrypt or minimize stored response data and apply retention/redaction requirements;
+- rate-limit new claims separately from cheap completed replays, and protect one key from an
+  unbounded number of in-flight waiters.
 
 ## References
 

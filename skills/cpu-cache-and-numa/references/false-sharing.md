@@ -2,14 +2,14 @@
 
 ## Distinguishing it from lock contention
 
-|                         | False sharing                           | Lock contention                                |
-| ----------------------- | --------------------------------------- | ---------------------------------------------- |
-| Synchronisation in code | none                                    | `synchronized` / explicit `Lock`               |
-| Correctness             | correct and deterministic               | correct, but serialised                        |
-| Signal in `perf`        | high cache misses and coherency traffic | high context switches and `futex`              |
-| Signal in a profiler    | time on the access instruction          | time in `park` / `monitorenter`                |
-| Signal in JFR           | **none**                                | `jdk.JavaMonitorEnter`, `jdk.ThreadPark`       |
-| Fix                     | separate the data physically            | shrink the lock scope, partition, go lock-free |
+|                         | False sharing                                  | Lock contention                                    |
+| ----------------------- | ---------------------------------------------- | -------------------------------------------------- |
+| Synchronisation in code | none                                           | `synchronized` / explicit `Lock`                   |
+| Correctness             | correct and deterministic                      | correct, but serialised                            |
+| Signal in `perf`        | cache-to-cache/HITM evidence on supported PMUs | may show futex/parking; spin locks may stay on CPU |
+| Signal in a profiler    | time on the access instruction                 | time in `park` / `monitorenter`                    |
+| Signal in JFR           | **none**                                       | `jdk.JavaMonitorEnter`, `jdk.ThreadPark`           |
+| Fix                     | separate the data physically                   | shrink the lock scope, partition, go lock-free     |
 
 The JFR row is the most useful in practice: **false sharing generates no event at all**. If
 throughput is poor and every blocking tool says the system is healthy, this is the
@@ -35,11 +35,11 @@ read is served from L1 when the line is valid. Getting this wrong leads to the w
 
 ## Detection procedure
 
-- [ ] Scaling efficiency `(thr_N / thr_1) / N` measured, and below 0.5
-- [ ] Throughput **worsens** as threads are added (capacity limits never do this)
+- [ ] Full scaling curve and competing CPU/GC/lock/queue hypotheses captured
+- [ ] Throughput worsens as independent writers are added in a controlled comparison
 - [ ] Lock contention and true sharing ruled out first
 - [ ] MPKI compared against the **application's own baseline**, not a published threshold
-- [ ] Stack located with `asprof -e LLC-load-misses`
+- [ ] Coherence evidence collected with a supported PMU/`perf c2c`; LLC misses not used alone
 - [ ] Layout proven with JOL, not calculated mentally
 - [ ] Fix validated with JMH at the same thread count
 
@@ -49,8 +49,8 @@ read is served from L1 when the line is valid. Getting this wrong leads to the w
 System.out.println(ClassLayout.parseClass(ConnectionPool.class).toPrintable());
 ```
 
-`long` and `double` align to 8 bytes. Which offset they land on depends on the header, so
-state the mode before doing any arithmetic:
+Which offset a field occupies depends on HotSpot layout policy and VM mode, so state the
+environment and trust the measured listing rather than the following common examples:
 
 - **12-byte header** (the default through JDK 26): the first `long` lands at offset 16, and
   the 12–15 hole is filled by a 4-byte field if one exists.
@@ -65,11 +65,10 @@ Re-run JOL if you enable it.
 
 ## Correction options, in order of preference
 
-1. **Move the metric to a separate object.** Resolves the conflict and improves cache
-   density of the hot state. Almost always better than padding.
-2. **`LongAdder` instead of `AtomicLong`** for contended counters. Its `Cell`s are already
-   padded and it needs no internal API. With few threads `AtomicLong` wins; with many, the
-   order reverses.
+1. **Move the metric to a separate object.** Often resolves the conflict and improves cache
+   density of hot state; validate the extra indirection and allocation/lifetime cost.
+2. **`LongAdder` instead of `AtomicLong`** for contended statistics when a non-linearizable
+   aggregate is acceptable. It does not replace an atomic sequence/value contract.
 3. **`@Contended`** as a last resort. It pads to 128 bytes because of the adjacent-line
    prefetcher, and in application code it requires `--add-exports` **and**
    `-XX:-RestrictContended` — without the second it is silently ignored. If the object is
@@ -88,8 +87,9 @@ Long[] prices = new Long[1_000_000];
 long[] prices = new long[1_000_000];
 ```
 
-The difference is not only boxing. The prefetcher cannot anticipate the next address,
-because it is only known after the reference arrives.
+The difference is not only boxing. The reference array is contiguous and can be prefetched,
+but referenced objects need not be adjacent, adding dependent loads and less predictable
+locality than a primitive array.
 
 - [ ] Primitive arrays instead of object arrays where possible
 - [ ] Sequential rather than random traversal over large collections

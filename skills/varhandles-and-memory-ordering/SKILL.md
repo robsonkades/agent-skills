@@ -1,106 +1,197 @@
 ---
 name: varhandles-and-memory-ordering
 description: >
-  VarHandle access modes and explicit memory ordering: plain, opaque, acquire/release and
-  volatile, choosing the weakest sufficient mode, compareAndSet versus weakCompareAndSet and
-  compareAndExchange, the four hardware barrier kinds, and what each mode costs on x86
-  versus aarch64. Use when replacing volatile with setRelease and getAcquire, when a field
-  is both declared volatile and accessed through a VarHandle, when the same field is written
-  plain on one path and release on another, when a concurrency bug appears only on Graviton
-  or Apple Silicon and never on x86, when compareAndExchange is assigned to a boolean, or
-  when someone proposes -XX:+StressGCM to expose an ordering race. Does not cover
-  happens-before, safe publication and the correctness contract (java-memory-model), the
-  algorithms built on these primitives (lock-free-patterns), or cache coherency and
-  cache-line effects (cpu-cache-and-numa).
+  Designing and proving low-level Java variable access with VarHandle plain, opaque,
+  acquire/release and volatile modes; compare-and-set/exchange, weak CAS, read-modify-write,
+  fences, coordinates, signature-polymorphic typing, supported modes, and mixed-access hazards.
+  Connects each mode to an algorithmic synchronization edge, allowed outcomes, jcstress model,
+  generated-code evidence and target-specific performance measurement. Use only when ordinary
+  volatile, atomics, locks or concurrent utilities do not express the required protocol.
 ---
 
-# VarHandles and Memory Ordering
+# VarHandles and memory ordering
 
 ## Purpose
 
-Pick the weakest access mode that still makes the algorithm correct, and prove the choice
-rather than assume it. The failure this skill prevents is the ordering downgrade that
-compiles, passes every test on x86, and corrupts data on aarch64 — because x86's Total
-Store Order masks exactly the reordering that `acquire`/`release` no longer forbids.
+Use VarHandle as a low-level, dynamically typed-by-call-site variable-access mechanism with explicit
+atomicity and ordering. The goal is the weakest **proven sufficient** protocol only when its measured
+benefit justifies a more fragile correctness argument.
 
-`VarHandle` introduces no new memory model. It exposes finer control over the same one, so
-each mode buys a specific guarantee rather than generic speed: opaque buys atomicity
-without ordering; acquire/release buys ordering between one write and one read of the same
-variable; volatile buys that plus a total synchronisation order.
+VarHandle does not replace the JMM. Start with `java-memory-model`; route ABA, progress and
+reclamation to `lock-free-patterns`.
 
-## Workflow
+## Entry gate
 
-1. **Classify the access pattern before choosing a mode.** Single writer with a data
-   handoff, single writer with a bare flag, multiple concurrent writers, a high-contention
-   counter, or two variables each read by the thread that did not write it — the pattern
-   selects the mode. See `references/access-mode-selection.md`.
-2. **Ask whether the algorithm needs a total order across different variables.** If two
-   threads each write one variable and read the other, acquire/release is not enough and
-   never will be. That case needs volatile mode on both sides.
-3. **Anchor the data on both sides.** The producer writes the data _before_ `setRelease`;
-   the consumer reads the anchor with `getAcquire` _before_ the data. Inverting either side
-   breaks the chain and both the JIT and the hardware are free to reorder again.
-4. **Make the mode consistent per field.** Ordering is a property of the operation, not of
-   the field. One plain write path defeats every release write path to the same field.
-5. **Handle the CAS return value correctly.** `compareAndSet` reports success as a boolean;
-   `compareAndExchange*` returns the witnessed value instead. Check which one the call site
-   is using before treating the result as a success flag.
-6. **Prove the ordering with jcstress**, enumerating the possible outcomes on paper before
-   marking one `FORBIDDEN`. Confirm the emitted barrier with `-XX:+PrintAssembly`. See
-   `references/proving-ordering.md`.
-7. **Measure the gain on the target architecture** with JMH before keeping the weaker mode.
-   On x86 the gain exists only on writes; on aarch64 it usually does not exist at all.
+Prefer a volatile field, `Atomic*`, lock, immutable snapshot or concurrent collection unless all
+hold:
 
-## Rules
+- the required variable/coordinate or access mode is not expressed cleanly by a higher-level API;
+- allowed outcomes and single/multiple-writer assumptions are written;
+- every access path can follow one reviewed protocol;
+- jcstress/model tests and target-JDK integration exist;
+- assembly/performance evidence shows a decision-relevant benefit where optimization is the reason.
 
-- Never publish data with a plain `set` on the anchor. `data = 42; VH.set(this, true);`
-  followed by a plain-read spin loop is unsafe; the pair is `setRelease` on the write and
-  `getAcquire` on every read.
-- Never declare a field `volatile` and also access it through `setRelease`/`getAcquire`/
-  `setVolatile`/`getVolatile`. It is redundant, and it hides which guarantee is actually in
-  force. Pick one mechanism per field.
-- Every write path to an ordered field must use the ordered mode. A `setRelease` on path A
-  guarantees nothing about path B's plain `set` to the same field.
-- Do not substitute acquire/release for volatile in a store-buffering shape. With
-  `setRelease`/`getAcquire` on both sides, the `(0, 0)` outcome remains legal — acquire and
-  release create a pairwise happens-before chain, not a total order across variables.
-- Under x86 TSO the only permitted reordering is **StoreLoad**: a _later load_ from a
-  different address may be observed _before_ an earlier store, because the store sits in
-  the store buffer while the load completes from cache. Stating it as "a store can move
-  ahead of an earlier load" inverts the mechanism and predicts the barrier on the wrong
-  side — the StoreLoad barrier is always emitted on the **write**.
-- Consequently, on x86 an `acquire` or `volatile` read and a `release` write compile to a
-  plain `mov`; only the `volatile` write pays `lock addl $0x0,(%rsp)` or `mfence`. On
-  aarch64 the asymmetry vanishes — `ldar` and `stlr` carry the barrier, so acquire/release
-  and volatile cost the same. Do not claim a win on aarch64 without measuring it.
-- Treat the x86 "free release" as a HotSpot C2 implementation detail, not a specification
-  guarantee. The JLS promises happens-before, not a cost. Another JDK build or another JIT
-  may codegen differently and still be correct.
-- Never quote third-party cycle counts for barriers as fact. They vary with CPU generation,
-  cache-line temperature and inter-core contention. Measure on the target machine.
-- `compareAndExchange*` returns the **witnessed value**, not a boolean — success is
-  `witness == expected`. Only `compareAndSet` returns success directly. Assigning
-  `compareAndExchangeAcquire` to a `boolean` does not compile.
-- `weakCompareAndSetPlain` is not a cheaper `compareAndSet`. It may fail spuriously, which
-  a retry loop handles, and its _success_ establishes no ordering at all, which a retry
-  loop does not handle. A lock acquisition needs at least `weakCompareAndSetAcquire`.
-- Document the single-writer assumption explicitly wherever a pattern depends on it
-  (Seqlock, ring buffer). Concurrent writers there corrupt data silently — no exception, no
-  log entry.
-- `-XX:+StressGCM` randomises Global Code Motion inside one compiled method. It does not
-  simulate inter-thread reordering and verifies nothing about the memory model. It is not
-  evidence about an ordering bug either way; jcstress is.
-- In an incident, remember JFR shows contention, not races. An ordering bug can produce no
-  contention at all.
+## Protocol contract
+
+```text
+variable type and coordinates (field/array/segment/layout):
+supported read/write/update modes:
+writer count and ownership:
+data/invariant carried by the synchronization variable:
+read and write mode on every path, including initialization/reset/error:
+CAS success and failure ordering requirements:
+wraparound/version/ABA and reclamation:
+legal/interesting/forbidden outcomes:
+progress and contention/backoff policy:
+JDK/JIT/architecture measurement scope:
+```
+
+## Access-mode lattice
+
+Use the target JDK API specification as authoritative:
+
+| Mode                         | Atomicity/order provided                                                                        | Typical use                                                              |
+| ---------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| plain `get/set`              | ordinary access; limited bitwise atomicity caveat for 64-bit primitives on 32-bit platforms     | confined or already ordered access                                       |
+| opaque                       | bitwise atomic and coherently ordered for the same variable; no general cross-variable ordering | state polling/version observation where coherence alone is proven enough |
+| acquire read / release write | opaque properties plus one-way ordering around matching publication/consumption                 | one-direction handoff                                                    |
+| volatile                     | volatile semantics and total order among volatile operations                                    | protocols requiring stronger global volatile order                       |
+
+Opaque is not merely “atomic with no ordering”: coherent ordering of accesses to the same variable
+is part of its contract. Acquire/release is not a total order over all synchronization variables.
+
+Access modes override ordering from the declaration. A VarHandle plain `get` of a field declared
+`volatile` has plain mode semantics. Mixing direct volatile and weaker VarHandle accesses may be
+intentional in a proven algorithm, but is a high-risk review point—not categorically illegal.
+
+## Release/acquire publication
+
+```java
+private State data;
+private int version;
+private static final VarHandle VERSION = /* findVarHandle */;
+
+// single writer
+void publish(State next, int nextVersion) {
+    data = next;
+    VERSION.setRelease(this, nextVersion);
+}
+
+State readAfterVersion(int expected) {
+    int observed = (int) VERSION.getAcquire(this);
+    return observed == expected ? data : null;
+}
+```
+
+The proof requires the consumer's acquire to observe/match the relevant release relationship and
+dependent reads to follow it. Version wrap, skipped versions, reuse, multiple writers, object
+mutation after publication and initial sentinel collisions need separate treatment. A plain write
+on another publisher path does not carry the data.
+
+## Atomic updates
+
+- `compareAndSet` returns boolean and has volatile read/write semantics in the API contract.
+- `compareAndExchange*` returns the witnessed value; success is witness equal to expected according
+  to the API's comparison semantics.
+- weak CAS can fail spuriously and has plain/acquire/release/volatile variants. A retry loop handles
+  spurious failure but does not add missing ordering.
+- acquire update variants have acquire semantics for the read and plain semantics for the write;
+  release variants have plain read and release write semantics. Confirm exact method docs.
+- `getAndAdd`, bitwise and exchange variants are only supported for applicable variable types/modes.
+
+Every VarHandle is signature-polymorphic. The symbolic call-site descriptor, coordinates, variable
+type and return type must match; failures can be `WrongMethodTypeException`, `ClassCastException`,
+or `UnsupportedOperationException`. Check `isAccessModeSupported` when building generic adapters.
+Write access to read-only/final variables is unsupported for relevant handles.
+
+## CAS-loop correctness
+
+```text
+read witness
+derive candidate without irreversible side effects
+attempt update with sufficient success/failure ordering
+on mismatch/spurious failure: refresh, backoff/help/retry or fail
+on success: publish/observe dependent state as proven
+```
+
+The update function may execute repeatedly. Do not put billing, I/O, callbacks or non-idempotent
+mutation in it. Bound or instrument retry; lock-free system progress can coexist with starvation of
+one thread. Handle interruption/shutdown if the loop can run indefinitely.
+
+## Fences
+
+VarHandle provides acquire, release, full, load-load and store-store fences with precise API
+reordering guarantees. A fence is not a magic inter-thread handoff: the algorithm still needs a
+communication variable and a proof connecting writer and reader. Prefer access modes because the
+ordering is attached to the variable operation. Use standalone fences only for established
+algorithms whose proof and platform mapping are reviewed.
+
+## Architecture and generated code
+
+Do not hard-code `mov`, `mfence`, `lock add`, `ldar`, or `stlr` as contracts. HotSpot C1/C2/Graal,
+JDK version, CPU features, surrounding operations and compiler optimization can coalesce or select
+different instructions. x86 TSO often needs fewer explicit instructions for acquire/release than
+weaker architectures, but compiler ordering still matters and measured cost can be dominated by
+cache-line ownership/contention.
+
+Validate the compiled method/version, tier, inlining, surrounding barriers and target architecture.
+Then benchmark representative contention/topology, not only a single-thread access loop.
+
+## Proof and validation
+
+1. Draw the JMM/VarHandle edges and enumerate outcomes before code.
+2. Write minimal jcstress actors and results; avoid synchronization from test infrastructure.
+3. Add negative controls by weakening one edge and confirm the test has opportunity/sensitivity,
+   without requiring a forbidden outcome to appear on every machine.
+4. Inspect compiled code when the claimed optimization depends on it.
+5. JMH the real access pattern across target JDKs/architectures, including contention/retry/
+   false-sharing counters.
+6. Run semantic, wraparound, multiwriter violation, cancellation and shutdown tests.
+
+`-XX:+StressGCM` can perturb compiler scheduling and help stress compiler behavior; it does not
+simulate all hardware/inter-thread executions or prove a protocol. Treat it as one stress mode.
+
+## Troubleshooting
+
+```text
+stale/partial data after version observed
+  -> wrong mode/order, acquire did not observe intended release, plain alternate path, mutation
+CAS loop CPU high
+  -> contention, false sharing, spurious/mismatch rate, no backoff/help, stalled owner
+works on one architecture/JIT
+  -> missing language proof or codegen assumption; jcstress and exact compiled method
+WrongMethodType/ClassCast
+  -> coordinate/variable/call-site descriptor mismatch
+UnsupportedOperationException
+  -> factory/type/read-only handle does not support selected mode
+rare corruption after wrap/reuse
+  -> ABA/version overflow/reclamation/lifetime protocol
+```
+
+## Anti-patterns
+
+| Anti-pattern                                        | Failure                           | Better approach                              | Narrow exception                          |
+| --------------------------------------------------- | --------------------------------- | -------------------------------------------- | ----------------------------------------- |
+| Weaker mode because x86 instruction is cheaper      | nonportable/unproven              | derive mode from outcomes, then measure      | architecture-specific internal with proof |
+| Opaque described as plain atomic                    | coherence contract missed         | quote exact VarHandle API                    |
+| Retry loop makes weak CAS ordered                   | spurious retry != fence           | choose sufficient CAS variant                |
+| Volatile declaration plus plain VH assumed volatile | access mode overrides declaration | audit each path                              |
+| Fence without carrier protocol                      | no communication edge             | release/acquire variable or proven algorithm |
+| Single-writer protocol undocumented                 | future writer corrupts silently   | enforce/document owner or serialize writers  |
+
+## Definition of done
+
+- [ ] Higher-level alternatives were rejected for stated reasons.
+- [ ] Coordinates/types/supported modes and every access path are inventoried.
+- [ ] Writer count, publication data, CAS success/failure, ABA/wrap/reclamation are proven.
+- [ ] Outcomes plus jcstress positive/negative controls exist.
+- [ ] Codegen and JMH claims are scoped to exact JDK/JIT/architecture/topology.
+- [ ] Retry/progress/contention and lifecycle failure modes are observable and tested.
 
 ## References
 
-- [Access mode selection](references/access-mode-selection.md) — the decision tree from
-  access pattern to mode, the situation-to-mode matrix with the reason for each row, the
-  correct API surface and return types, and the release/acquire publication template. Read
-  when choosing or reviewing an access mode.
-- [Proving ordering](references/proving-ordering.md) — the jcstress harness for a
-  publication chain, the `-XX:+PrintAssembly` recipe and the exact instructions to look
-  for per architecture, the JMH access-mode benchmark, and the code-review and incident
-  checklists. Read before claiming an ordering change is safe or that a weaker mode is
-  faster.
+- [Access-mode selection and API matrix](references/access-mode-selection.md)
+- [Proving ordering and measuring cost](references/proving-ordering.md)
+- [Java 25 `VarHandle`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/VarHandle.html)
+- [JLS 17.4](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4)
+- [OpenJDK jcstress](https://github.com/openjdk/jcstress)

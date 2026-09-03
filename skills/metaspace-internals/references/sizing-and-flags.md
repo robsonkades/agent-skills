@@ -5,12 +5,12 @@
 | Flag                              | Default                           | What it actually is                                                                                           |
 | --------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `-XX:MetaspaceSize`               | 22020096 bytes (≈ 21.0 MB)        | Threshold that triggers the first metaspace-driven collection — **not** a size cap                            |
-| `-XX:MaxMetaspaceSize`            | 18446744073709551615 (`SIZE_MAX`) | The real ceiling. Unlimited by default; always set it outside local development                               |
+| `-XX:MaxMetaspaceSize`            | 18446744073709551615 (`SIZE_MAX`) | Overall commitment limit on this build; effectively unbounded by default                                      |
 | `-XX:MinMetaspaceFreeRatio`       | 40                                | Minimum % free after a metaspace collection, below which metaspace expands                                    |
 | `-XX:MaxMetaspaceFreeRatio`       | 70                                | Maximum % free above which metaspace may shrink                                                               |
 | `-XX:MinMetaspaceExpansion`       | 327680 bytes (320 KB)             | Minimum increment per expansion                                                                               |
 | `-XX:MaxMetaspaceExpansion`       | 5439488 bytes (≈ 5.19 MB)         | Maximum increment per expansion                                                                               |
-| `-XX:CompressedClassSpaceSize`    | 1073741824 bytes (1024 MB)        | Separate, fixed ceiling for the compressed class space                                                        |
+| `-XX:CompressedClassSpaceSize`    | 1073741824 bytes (1024 MB)        | Requested reservation/limit for compressed class metadata; verify the effective value                         |
 | `-XX:+UseCompressedClassPointers` | `true` (`lp64_product`)           | Independent of `UseCompressedOops`; stays `true` above a 32 GB heap. Deprecated in JDK 25, obsolete in JDK 27 |
 
 **`-XX:MetaspaceExpansionSize` does not exist.** `java -XX:MetaspaceExpansionSize=5m -version`
@@ -30,40 +30,46 @@ claims.
 
 ## Which ceiling does the error name?
 
-| `OutOfMemoryError` text       | Ceiling reached    | Flag to change                 |
-| ----------------------------- | ------------------ | ------------------------------ |
-| `Metaspace`                   | `MaxMetaspaceSize` | `-XX:MaxMetaspaceSize`         |
-| `Compressed class space`      | 1 GB class space   | `-XX:CompressedClassSpaceSize` |
-| _(no JVM error, `OOMKilled`)_ | the cgroup limit   | set `MaxMetaspaceSize` at all  |
+| Symptom                                    | Failed domain / next check                                   | Relevant control                                                 |
+| ------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------------------------------- |
+| `OutOfMemoryError: Metaspace`              | overall metadata allocation; confirm usage and unloading     | `MaxMetaspaceSize`, only after diagnosing growth                 |
+| `OutOfMemoryError: Compressed class space` | compressed class metadata reservation                        | `CompressedClassSpaceSize` and class cardinality/lifetime        |
+| exit 137 / Kubernetes `OOMKilled`          | cgroup or node kill; inspect `memory.events` and all domains | container budget; a metaspace cap is only one possible guardrail |
 
 Raising `MaxMetaspaceSize` against a `Compressed class space` error has no effect whatsoever.
-The class space holds `InstanceKlass` structures only; applications that mint many dynamic
+The class space holds Klass metadata; applications that mint many dynamic
 proxies (CGLIB, ByteBuddy, Hibernate) or many reflective classes exhaust it while the
 metaspace total still looks comfortable.
 
 ## Sizing `MaxMetaspaceSize`
 
-1. Run in staging **without** `MaxMetaspaceSize`, under representative load, for 30–60
-   minutes.
-2. Measure steady-state metaspace: the `committed` field of the `Both` section of
-   `jcmd <pid> VM.metaspace`, or the periodic `jdk.MetaspaceSummary` event.
-3. Set `MaxMetaspaceSize = steady_state × 1.5` as the starting point. The margin covers
-   normal load variation, not a leak.
-4. Validate by repeating the same measurement under the same load. A plateau at the expected
-   value means the sizing is right. Continued growth means retention, not undersizing — the
-   fix is in the loader lifetime, not in the flag.
+1. Exercise every relevant regime: startup, warm-up, peak feature mix, runtime generation,
+   rolling redeploy overlap and the longest expected uptime. A fixed 30-minute soak is not
+   representative when distinct tenants, scripts or plugins accumulate over days.
+2. Capture distributions and correlated peaks for non-class/class used and committed,
+   loaders, loaded/unloaded classes, RSS and cgroup `memory.current`; use metaspace summaries
+   at GC boundaries rather than treating them as a wall-clock sampler.
+3. Explain the growth model. Loader retention, increasing distinct generator keys and normal
+   warm-up require different remedies. A plateau is evidence only for the inputs observed.
+4. Allocate headroom from measured high-water marks, uncertainty, fragmentation, redeploy
+   overlap and the complete native-memory budget. There is no portable `× 1.5` constant.
+5. Decide whether a JVM fail-fast limit improves recovery. A cap must leave cgroup headroom,
+   yet a cap that is too low converts healthy variation into an avoidable outage.
+6. Replay the same and adversarial regimes, then verify both capacity and lifecycle signals.
 
-Never copy a value from another service. `MaxMetaspaceSize=64m` because it worked elsewhere
-produces `OutOfMemoryError: Metaspace` at startup in a typical Spring Boot application, which
-loads tens of thousands of classes.
+Never copy a value from another service. Framework graph, instrumentation, proxy generation,
+JDK build, feature mix and redeploy model determine the class population; measure the target
+artifact and deployment topology.
 
 ## The container rule
 
-In a container, never leave `MaxMetaspaceSize` unset. Unbounded, a loader leak consumes the
-container's memory until the kernel OOM killer fires: no `OutOfMemoryError`, no stack trace,
-no heap dump, the process simply disappears. Setting the limit does not remove the leak; it
-converts a silent failure into a diagnosable one, and lets
-`-XX:+HeapDumpOnOutOfMemoryError` capture the evidence.
+In a container, account explicitly for metaspace whether or not a cap is set. An effectively
+unbounded limit lets metadata compete with heap, code cache, thread stacks, direct buffers and
+native libraries; it does not prove that a loader leak will reach the kernel before a JVM
+allocation failure. A derived cap can create an earlier, observable failure boundary, but it
+does not reserve cgroup memory or protect against correlated native peaks. Preserve JFR/NMT,
+class-loader statistics and cgroup evidence; a heap dump may help find loader retainers but is
+not itself a metaspace-contents dump.
 
 ## Operational checklist
 
@@ -71,19 +77,19 @@ Before investigating:
 
 - [ ] Heap confirmed healthy — otherwise the hypothesis is not metaspace
 - [ ] Symptom classified: `OutOfMemoryError` with a message, or a silent `OOMKilled`
-- [ ] `MaxMetaspaceSize` and `CompressedClassSpaceSize` confirmed as explicitly configured
+- [ ] Effective `MaxMetaspaceSize`, `CompressedClassSpaceSize` and compressed-pointer mode recorded
 
 While observing:
 
 - [ ] `jcmd <pid> VM.metaspace` captured **before** any configuration change
-- [ ] The same measurement repeated over time — monotonic growth is the signal, not one value
+- [ ] Time series correlates used/committed with classes, loaders, unloading, load and GC boundaries
 - [ ] Non-class and class space read separately, including `waste`
 - [ ] `jcmd <pid> VM.classloader_stats` captured if a loader leak is suspected
 
 When validating the fix:
 
 - [ ] The same measurement, under the same load, as at the start of the investigation
-- [ ] Growth confirmed stopped, not merely slower
+- [ ] Growth model is bounded for the tested cardinality, duration and redeploy scenarios
 - [ ] If the fix was raising a ceiling against runtime class generation, that is recorded
-      explicitly as mitigation — the structural fix is caching generated classes so the same
-      expression reuses one class instead of minting a new one per execution
+      explicitly as mitigation — structural fixes may bound/cache generation, shorten loader
+      lifetime, interpret rather than compile, reject excessive cardinality, or isolate tenants

@@ -29,16 +29,16 @@ log line, a path).
 1. **Ask whether it should be a `String` at all.** An id, a status, a currency code, a
    compound key or a phone number wants a type with validation; a `String` there means every
    consumer re-validates or none does.
-2. **Pin the encoding at every boundary.** `getBytes(UTF_8)`, `new String(bytes, UTF_8)`,
-   `Files.readString(path, UTF_8)`, explicit charset on readers, writers and HTTP bodies.
+2. **Pin the encoding at every boundary.** Use the charset required by the protocol or storage
+   contract—often UTF-8—on byte/string conversions, readers, writers and HTTP bodies.
 3. **Pin the locale wherever text is transformed for a machine.** `toLowerCase(Locale.ROOT)`,
    `String.format(Locale.ROOT, …)` for protocol text; the user's locale only for what a human
    reads.
 4. **Choose the composition mechanism by shape**: a single expression → `+`; a loop →
    `StringBuilder`; a collection → `String.join`/`Collectors.joining`; multi-line literal →
    a text block; user-facing formatting → `formatted`/`MessageFormat` with a locale.
-5. **Hoist every `Pattern`** to a `static final`, and check what happens when the input is
-   hostile — length bound, nesting, backtracking.
+5. **Reuse stable, repeated `Pattern`s**, and check what happens when input is hostile—length
+   bound, nesting, backtracking. Dynamic or one-shot expressions do not belong in global state.
 6. **Check every place text is embedded into another language** and replace concatenation with
    the parameterised mechanism that language provides.
 
@@ -57,50 +57,61 @@ log line, a path).
   `codePointCount`/`offsetByCodePoints` when the unit is a character, and `BreakIterator` when
   the unit is what a user perceives as a character (an emoji with a skin-tone modifier is
   several code points and one grapheme).
-- Always pass the charset. `String.getBytes()`, `new String(byte[])`, `FileReader`,
+- Pass the contract's charset. `String.getBytes()`, `new String(byte[])`, `FileReader`,
   `InputStreamReader` and `PrintWriter` without one use a default that has changed across
-  versions (UTF-8 since Java 18, JEP 400) and can still be overridden by `file.encoding` or the
-  environment. Explicit `StandardCharsets.UTF_8` everywhere is the only portable answer, and it
-  is a one-word change.
+  versions. Since Java 18 it is UTF-8 by default, while `-Dfile.encoding=COMPAT` selects the
+  native encoding; other overrides have unspecified behaviour. Explicit UTF-8 is portable only
+  when UTF-8 is actually the boundary contract—legacy files and protocols may require another
+  explicit charset.
 - Pass a `Locale` to every case conversion and format call whose result is consumed by a
   machine. `"TITLE".toLowerCase()` is `"tıtle"` in a Turkish locale — the dotless ı — so a
   case-insensitive comparison of a header, a code or an enum name fails on a machine whose
-  locale differs from the developer's. Use `Locale.ROOT` for protocol text, or better,
-  `equalsIgnoreCase` for comparison. The same applies to `String.format("%.2f", …)`, which
-  emits a comma decimal separator in many locales.
-- Concatenation in a single expression is fine — javac compiles `a + b + c` through
-  `StringConcatFactory` into an efficient single operation. Concatenation **in a loop** is
-  quadratic: each `+=` copies the whole accumulated string. Use `StringBuilder` in loops,
-  `String.join` or `Collectors.joining` for collections.
+  locale differs from the developer's. Use `Locale.ROOT` for protocol-defined case mapping.
+  `equalsIgnoreCase` avoids allocation but is locale-independent simple Unicode comparison, not
+  human-language collation or a universal identifier canonicalizer. The same applies to
+  `String.format("%.2f", …)`, which emits a comma decimal separator in many locales;
+  `String.formatted` also uses the default formatting locale.
+- Concatenation in a single expression is fine. Modern `javac` commonly uses
+  `StringConcatFactory`; the language specification intentionally leaves the implementation to
+  the compiler. Repeated `result += fragment` in a loop can copy an ever-growing prefix and
+  become quadratic. Use a locally owned `StringBuilder` in loops, `String.join` or
+  `Collectors.joining` for collections.
 - Do not micro-optimise concatenation outside loops, and do not replace readable expressions
   with `StringBuilder` chains on a hunch. If string building appears in a profile, that is
   evidence; otherwise it is noise (performance-methodology).
-- Compile a `Pattern` once, as a `private static final`. `String.matches`, `split`, `replaceAll`
-  and `Pattern.compile` inside a method recompile the pattern on every call — the standard
-  example of the "unnecessary object" cost being real and easy to remove.
+- Reuse a `private static final Pattern` when the same non-trivial expression is matched
+  repeatedly. `matches` and regex replacement convenience methods compile their expressions;
+  `split` is specified in terms of pattern compilation although implementations may optimize
+  simple delimiters. Do not retain data-dependent patterns forever, and measure before building
+  a pattern cache—unbounded cardinality merely changes an allocation cost into a leak.
 - A regex applied to untrusted input is an availability risk. Nested quantifiers over
   alternation (`(a+)+`, `(\w+\s?)*`) can backtrack exponentially, and Java's engine has no
   timeout: one request pins a CPU core until it finishes. Bound the input length, avoid nested
   quantifiers, prefer possessive quantifiers or atomic groups, and prefer a real parser for
   structured input. Where a regex must run on user input, run it with a bounded input size and
   treat a hang as a possible ReDoS, not a slow query.
-- Never build SQL, shell commands, HTML, LDAP filters, paths or log lines by concatenating
+- Never build SQL, shell commands, HTML or LDAP filters by concatenating
   user text. Use prepared statements with parameters, `ProcessBuilder` with an argument list,
-  a templating engine that escapes, `Path.resolve` with normalisation and containment checks,
-  and structured logging with fields rather than interpolated messages — a newline in a
-  concatenated log message forges a log entry (structured-logging).
+  and a templating engine with contextual escaping. For paths, lexical `normalize`/`startsWith`
+  checks do not defeat symlinks or races: resolve against a trusted real base, constrain allowed
+  names, and use filesystem-specific secure traversal where the threat model requires it.
+  Structured logging preserves field boundaries, but the encoder/sink must still escape control
+  characters to prevent log forging (structured-logging).
 - Use text blocks for multi-line literals — SQL, JSON, HTML — instead of escaped concatenation.
   They preserve readable indentation and remove the escaping mistakes; they do not make
   embedded user input safe, so parameters still go through the mechanism above. String
   templates were previewed and then withdrawn from the JDK; do not design around them.
-- Do not call `String.intern()` on data from outside the process. Interning is a shared table:
-  it makes lookups slower as it grows and turns attacker-controlled input into a memory
-  concern. A bounded cache is the tool when repeated strings genuinely cost memory
+- Do not use `String.intern()` as an unmeasured deduplication strategy for unbounded external
+  data. It adds shared-table lookup/coordination and couples retention/GC behaviour to the JVM
+  implementation. First prove duplicate strings dominate the heap; then compare G1 string
+  deduplication, bounded caches with real eviction, or representation changes
   (java-reference-types-and-leaks).
-- Normalise Unicode before comparing or storing identifiers that people type. The same visible
+- Define and version a Unicode canonicalization policy before comparing or storing identifiers
+  that people type. The same visible
   text can be several code-point sequences (`é` composed or decomposed);
-  `Normalizer.normalize(s, NFC)` at the boundary keeps equality, uniqueness constraints and
-  cross-system comparisons consistent.
+  `Normalizer.normalize(s, NFC)` is a common preservation-oriented policy, but protocols,
+  search and security-sensitive identifiers may require case folding, NFKC, script restrictions
+  or no normalization. Java and the database must enforce the same rule.
 - Byte length and character length are different limits. A `VARCHAR(50)` may mean 50 bytes or
   50 characters depending on the database and collation, so validation written in Java
   characters can pass while the insert fails. Validate against the real constraint.

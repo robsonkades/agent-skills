@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: framework-coupling-and-independence
-version: 1.1.0
+version: 1.2.0
 description: >-
   Deciding how much of a system may depend on its framework, and pricing that dependency
   honestly: which couplings are cheap and correct, which are expensive and reversible, which are

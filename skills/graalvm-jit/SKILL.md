@@ -55,8 +55,10 @@ shared library` is libgraal, `loaded from class files` is jargraal. The JFR
    application's allocation pattern.
 5. **A/B inside one binary.** `-XX:-UseJVMCICompiler` on the GraalVM build gives C2 on the
    same class library, the same GC build and the same machine, so the compiler is the only
-   variable. Pin the GC explicitly on both runs and warm up until the score stabilises —
-   variation under roughly 5% between the last iterations, verified with `-v EXTRA`.
+   intended treatment. Pin the GC and all non-compiler flags on both runs. Use independent
+   forks, inspect per-iteration convergence, retain confidence intervals/raw results, and
+   compare both steady state and time-to-steady-state; a fixed “last iterations within 5%”
+   rule can accept drift or reject normal noise.
 6. **Read the result against the workload shape and the compiler version,** not against
    expectation. GraalVM Community 25.3 gained loop vectorisation and a new default inliner;
    a prior formed on 25.0 is stale. See `references/workload-fit-and-migration.md`.
@@ -95,9 +97,10 @@ find option X` — so never carry a flag across versions unlisted: `-XX:+JVMCIPr
   split by `-XX:JVMCINativeLibraryThreadFraction` (0.66 since GraalVM for JDK 24,
   JDK-8337493): a lower fraction trades warm-up for lower peak RSS.
 - Partial escape analysis is the central conceptual advantage. C2's escape analysis is
-  all-or-nothing: if an object escapes on **any** path — including a rarely taken error branch
-  — it is heap-allocated on 100% of executions. PEA virtualises per path and materialises only
-  where the object genuinely escapes.
+  flow-insensitive for this decision: an object classified as escaping because of one path is
+  not scalar-replaced only on the non-escaping path. Graal PEA can keep it virtual across
+  paths and materialise it where required. Inlining, identity use, synchronization, array
+  limits and compiler heuristics still constrain both compilers; prove the allocation change.
 - Cite PEA correctly: Lukas Stadler, Thomas Würthinger, Hanspeter Mössenböck, CGO 2014. It is
   **not** Christian Wimmer, PLDI 2013 — that attribution is a common error.
 - Graal's inlining budget is measured in **graph nodes** (`TrivialInliningSize=10`,
@@ -121,11 +124,14 @@ find option X` — so never carry a flag across versions unlisted: `-XX:+JVMCIPr
   "Numeric loops favour C2" was true of CE through 25.2, which had no auto-vectorisation
   (Oracle-only `Vectorization`); CE 25.3 enables `VectorizeLoops` by default. Reproduce on
   the exact GraalVM line before it informs a migration decision.
-- Short-lived workloads (Lambda functions, CLIs, jobs measured in seconds) rarely benefit: the
-  more expensive compilation never has time to repay itself. C2 or native image is the correct
-  choice for that profile.
-- Never compare each side under its own default GC; pin it explicitly so the compiler is the
-  only variable.
+- Short-lived workloads (functions, CLIs, jobs measured in seconds) are weak candidates when
+  added compilation cost exceeds the runtime saving. Measure cold start, warm-up CPU, total
+  job duration and invocation reuse; C2, HotSpot AOT caches, CRaC or native image are competing
+  choices with different compatibility and operational costs.
+- Do not compare each side under different default GC or security/compiler option sets. Pin
+  non-treatment flags, record ergonomically selected values, and include options such as
+  `jdk.graal.SpectrePHTBarriers` in the equivalence review: changing a mitigation changes both
+  security posture and generated-code cost.
 - The two distributions are Oracle GraalVM (GFTC, Oracle JDK base) and GraalVM CE (GPLv2 with
   Classpath Exception, OpenJDK base). Since September 2025 GraalVM is detached from the Java
   SE release train: Oracle JDK 24 was the last Oracle JDK with a bundled Graal JIT, GraalVM
@@ -141,6 +147,9 @@ runtime` and interprets. Since GraalVM 25.1 jargraal on plain OpenJDK is unsuppo
   C2-versus-Graal throughput question.
 
 ## References
+
+The release-line facts below were checked against GraalVM 25.3.4.1 (2026-08-25). Consult the
+current official release calendar and target build properties before a new migration.
 
 - [Workload fit and the migration decision](references/workload-fit-and-migration.md) — the
   workload-shape table with the reason each way and the GraalVM line it was true on, the

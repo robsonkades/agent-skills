@@ -2,19 +2,19 @@
 
 ## Mapping contract elements to language mechanisms
 
-| Contract element                                                     | First choice                                                                                                                                                                               | When that is impossible                                                                                             |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| Precondition on a value's _shape_ (positive, non-empty, well-formed) | A validating type: record with compact-constructor checks — the precondition disappears from every signature that uses the type                                                            | Explicit check at method entry, throwing `IllegalArgumentException`/`NullPointerException` with expected and actual |
-| Precondition on the _receiver's state_ ("must be open")              | Model states as types (sealed `Open`/`Closed` with the method only on `Open`)                                                                                                              | `IllegalStateException` at entry, named in `@throws`                                                                |
-| Class invariant                                                      | Constructor establishes it; immutability preserves it for free. JEP 513 (Java 25) lets subclass constructors validate _before_ `super(...)`, so no object ever exists in a violating state | Every mutator re-establishes it before returning; an `assert` at mutator exit                                       |
-| Postcondition                                                        | A test per documented guarantee                                                                                                                                                            | `assert` at the return point, for guarantees whose violation would surface far away                                 |
-| Contract of an operation with several _expected_ outcomes            | Sealed result type; each variant is one outcome's postcondition; exhaustive `switch` (no `default`) makes adding a variant a compile error at every caller                                 | —                                                                                                                   |
+| Contract element                                                     | First choice                                                                                                                                                                                       | When that is impossible                                                                                             |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Precondition on a value's _shape_ (positive, non-empty, well-formed) | A validating type: record with compact-constructor checks — the precondition disappears from every signature that uses the type                                                                    | Explicit check at method entry, throwing `IllegalArgumentException`/`NullPointerException` with expected and actual |
+| Precondition on the _receiver's state_ ("must be open")              | Model states as types (sealed `Open`/`Closed` with the method only on `Open`)                                                                                                                      | `IllegalStateException` at entry, named in `@throws`                                                                |
+| Class invariant                                                      | Constructor/factory establishes it; immutable state prevents ordinary mutators from violating it. JEP 513 (Java 25) permits argument checks before `super(...)` but does not prevent `this` escape | Every mutator prepares then commits valid state; assertion or unconditional internal check according to consequence |
+| Postcondition                                                        | A test per documented guarantee; unconditional check where unsafe continuation would corrupt durable/security-critical state                                                                       | `assert` for cheap diagnostics in controlled runs                                                                   |
+| Contract of an operation with several _expected_ outcomes            | Sealed result type; each variant is one outcome's postcondition; exhaustive `switch` (no `default`) makes adding a variant a compile error at every caller                                         | —                                                                                                                   |
 
-A type-carried invariant is strictly stronger than a checked one: it cannot be forgotten
-at a second construction site, and it documents itself in every signature. Its costs: one
-more type to name and maintain, allocation per wrap (usually negligible; measure before
-arguing), and friction at serialisation and mapping edges where frameworks want bare
-primitives.
+A type-carried invariant is stronger across ordinary typed construction paths: it cannot be
+forgotten at a second call site and documents itself in signatures. It is not absolute proof
+across unsafe reflection, custom deserialization, ORM hydration or corrupted persisted data.
+Its costs: one more type and mapping/versioning surface; wrapping may allocate, though escape
+analysis can eliminate some short-lived objects, so measure a performance-sensitive path.
 
 ## The Javadoc contract
 
@@ -31,14 +31,15 @@ The contract is the promise, not a description of the current code:
  */
 ```
 
-- `@throws` for every exception a _caller is expected to anticipate_ — that list is API.
-  Adding a new `@throws` condition later is a contract narrowing (callers that used to
-  succeed now fail): treat it as a breaking change, not a doc fix.
+- `@throws` for failures a caller is expected to anticipate is API. Adding a new failure
+  condition to behavior narrows the contract; documenting an already observable unchecked
+  failure may instead be a clarification, while adding a checked exception is source-breaking.
+  Classify the behavioral and compatibility change separately.
 - Do not document incidental behaviour (iteration order, an accidental tolerance for
   null) unless you intend to promise it forever; once written, callers may rely on it.
-- Silence is also a contract: an undocumented parameter is conventionally non-null in a
-  JSpecify `@NullMarked` scope — adopt it so the convention is checkable rather than
-  folklore.
+- In a JSpecify `@NullMarked` scope, unannotated type uses are non-null by default for compliant
+  tooling; outside such a declared convention, silence is ambiguity, not a portable non-null
+  contract.
 
 ## Behavioural subtyping — the rules and their concrete violations
 
@@ -93,9 +94,9 @@ Violations that compile cleanly:
   redundant defence: the constructor is establishing its own invariant, independent of
   any particular caller's discipline. Where boundary validation itself belongs is
   java-defensive-programming's territory.
-- **Documented weakening in a subtype used directly** (never through the supertype) is
-  tolerable in application code you control end-to-end — record that the type must not
-  be handed out as its supertype, and expect the constraint to rot.
+- **A subtype used only concretely** can hide a violation in current call sites, but remains a
+  broken substitutability claim. Prefer composition or a narrower honest supertype rather than a
+  comment saying it must never be upcast.
 
 ## When not to apply
 
@@ -109,3 +110,10 @@ Violations that compile cleanly:
   that sorts a list to check sortedness changes timing under `-ea` and hides races.
 - Private helpers inside a class share the class's invariant; contracting them
   individually is paperwork. The contract surface is the public API.
+
+## Runtime and language references
+
+- [JEP 513: Flexible Constructor Bodies](https://openjdk.org/jeps/513)
+- [JLS §8.8.7: constructor bodies](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.8.7)
+- [JLS §14.10: assertions](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.10)
+- [JSpecify nullness specification](https://jspecify.dev/docs/spec/)

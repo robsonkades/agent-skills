@@ -46,21 +46,40 @@ Every layer defends, yet nothing is defended:
 
 ## After
 
-One boundary, one parse, proof-carrying types. Checks live in the compact constructors
-(compiled and verified on Java 25):
+One boundary, one parse, proof-carrying types. Input failures expose stable field/code metadata,
+not raw values or internal exception messages:
+
+```java
+public final class RefundInputException extends IllegalArgumentException {
+    private final String field;
+    private final String code;
+
+    public RefundInputException(String field, String code) {
+        super(field + ": " + code);
+        this.field = field;
+        this.code = code;
+    }
+
+    public String field() { return field; }
+    public String code() { return code; }
+}
+```
 
 ```java
 public record AccountId(String value) {
+    private static final Pattern SHAPE = Pattern.compile("[A-Z]{2}\\d{2}[A-Z0-9]{1,30}");
+
     public AccountId {
-        Objects.requireNonNull(value, "value");
-        if (!value.matches("[A-Z]{2}\\d{2}[A-Z0-9]{1,30}")) {
-            throw new IllegalArgumentException("malformed IBAN: " + value);
+        if (value == null) throw new RefundInputException("account", "required");
+        if (!SHAPE.matcher(value).matches()) {
+            throw new RefundInputException("account", "malformed");
         }
     }
 
     public static AccountId parse(String raw) {
-        Objects.requireNonNull(raw, "raw");
-        return new AccountId(raw.strip().toUpperCase(Locale.ROOT)); // normalise, then validate
+        if (raw == null) throw new RefundInputException("account", "required");
+        if (raw.length() > 128) throw new RefundInputException("account", "too_long");
+        return new AccountId(raw.strip().toUpperCase(Locale.ROOT));
     }
 }
 ```
@@ -73,30 +92,35 @@ not its completeness.
 
 public record Money(BigDecimal amount, Currency currency) {
     public Money {
-        Objects.requireNonNull(amount, "amount");
-        Objects.requireNonNull(currency, "currency");
-        if (amount.signum() < 0) {
-            throw new IllegalArgumentException("amount must be >= 0, was " + amount);
+        if (amount == null) throw new RefundInputException("amount", "required");
+        if (currency == null) throw new RefundInputException("currency", "required");
+        if (amount.signum() <= 0) {
+            throw new RefundInputException("amount", "must_be_positive");
         }
     }
 }
 
 public record RefundRequest(AccountId account, Money amount, String reason) {
     public RefundRequest {
-        Objects.requireNonNull(account, "account");
-        Objects.requireNonNull(amount, "amount");
-        reason = Objects.requireNonNull(reason, "reason").strip();
+        if (account == null) throw new RefundInputException("account", "required");
+        if (amount == null) throw new RefundInputException("amount", "required");
+        if (reason == null) throw new RefundInputException("reason", "required");
+        if (reason.length() > 1_000) throw new RefundInputException("reason", "too_long");
+        reason = reason.strip();
         if (reason.isEmpty()) {
-            throw new IllegalArgumentException("reason must not be blank");
+            throw new RefundInputException("reason", "must_not_be_blank");
+        }
+        if (reason.codePoints().anyMatch(Character::isISOControl)) {
+            throw new RefundInputException("reason", "contains_control_character");
         }
     }
 }
 ```
 
-The controller converts DTO → `RefundRequest` (its exception handler maps
-`IllegalArgumentException`/`NullPointerException` from the parse to a 400 with the
-message — which is why the messages name field and value). Then the interior sheds its
-armour:
+The controller converts DTO → `RefundRequest`; its boundary handler maps only
+`RefundInputException` to a documented 400 body containing `field`, `code` and a correlation id.
+Unexpected `IllegalArgumentException`/`NullPointerException` elsewhere remain defects (500), and
+raw values/stack traces stay internal. Then the interior sheds its armour:
 
 ```java
 // service — no null checks, no repairs
@@ -140,8 +164,8 @@ replaced by rejections.
   own invariant or to a distinct interior invariant (balance, state) — not to re-checks
   of the boundary.
 - Tests at the boundary, not per layer: `" gb82WEST12345698765432 "` normalises and
-  passes; `"###"`, missing amount, negative amount, blank reason each yield a 400 naming
-  the field — and _no_ ledger write. The negative-amount test asserts rejection, where
+  passes; `"###"`, missing/zero/negative amount, blank/oversized/control-bearing reason each yield
+  the documented field/code without echoing input—and _no_ ledger write. The negative-amount test asserts rejection, where
   the old suite asserted the sign-flip.
 - The interior tests construct `RefundRequest` directly and no longer test null
   permutations — deleted tests are evidence of deleted noise, not lost coverage.

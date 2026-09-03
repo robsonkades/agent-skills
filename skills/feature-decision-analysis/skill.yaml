@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-decision-analysis
-version: 1.0.0
+version: 1.1.0
 description: >-
   Keeping the decision log for a feature and, before each entry, answering the two questions that
   make it trustworthy: where the decision came from — the user, the repository, an organisational

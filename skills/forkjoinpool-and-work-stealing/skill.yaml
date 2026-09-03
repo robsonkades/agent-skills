@@ -1,19 +1,13 @@
 schemaVersion: 1
 
 name: forkjoinpool-and-work-stealing
-version: 1.0.0
+version: 1.1.0
 description: >-
-  ForkJoinPool and work stealing: the per-worker deque, submission versus worker queues,
-  the pseudorandom stealing scan, the join-time help mechanism, the common pool and
-  everything that shares it, ManagedBlocker and compensation, parallel-stream behaviour,
-  task-granularity calibration, and diagnosing a starved or over-subscribed pool. Use
-  when a parallelStream or CompletableFuture stalls, when blocking I/O runs inside a
-  ForkJoinPool task, when effective parallelism silently drops under load, when 256 is
-  quoted as a pool ceiling, when fork has no matching join, when a division threshold was
-  copied from another project, or when sibling tasks write shared mutable state. Does not
-  cover platform versus virtual threads and general pool sizing
-  (thread-sizing-and-virtual-threads), the sizing arithmetic itself
-  (littles-law-and-queueing), or reactive stream backpressure (reactive-backpressure).
+  Design and diagnose ForkJoinPool workloads using work-stealing topology, task graphs,
+  granularity, common-pool interference, managed blocking, compensation limits and approximate
+  pool telemetry. Use when parallel computation underutilizes CPUs, parallel streams interfere,
+  joins stall, blocking collapses effective parallelism, or copied thresholds and pool constants
+  are being treated as universal policy. Includes Java 25 API changes with version labels.
 
 license: Apache-2.0
 
@@ -46,6 +40,10 @@ dependencies:
     version: ^1.0.0
   - name: thread-sizing-and-virtual-threads
     version: ^1.0.0
+
+suggests:
+  - java-concurrency
+  - jmh-microbenchmarks
 
 capabilities:
   - reads-source

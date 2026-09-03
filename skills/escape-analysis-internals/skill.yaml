@@ -1,20 +1,16 @@
 schemaVersion: 1
 
 name: escape-analysis-internals
-version: 1.1.0
+version: 2.0.0
 description: >-
-  How C2's escape analysis actually works: the connection graph and its node and edge kinds,
-  the three escape states and how they propagate to a fixed point, flow insensitivity and
-  what it costs, macro expansion as the point where the decision becomes code, scalar
-  replacement limits, lock elision, rematerialisation on deoptimisation, and reading the
-  analysis output. Use when an object that should be eliminated still allocates, when
-  PrintInlining shows "too big" or "not inlineable" on the path, when someone raises
-  MaxBCEAEstimateSize expecting less allocation, when -XX:CompileCommand=PrintEscapeAnalysis
-  produces no output, when zero jdk.ObjectAllocationInNewTLAB events are read as proof, or
-  when a hot method both eliminates many objects and deoptimises repeatedly. Does not cover
-  the introductory design rules and the gc.alloc.rate.norm measurement
-  (jit-inlining-and-escape-analysis), the surrounding compiler phases (c2-sea-of-nodes), or
-  partial escape analysis as an alternative (graalvm-jit).
+  C2 escape-analysis internals: connection graphs, escape-state propagation, flow
+  insensitivity, bytecode escape summaries, scalar replacement and allocation merges,
+  lock elimination, macro expansion, and deoptimization rematerialization. Use when a hot
+  object still allocates, an inlining boundary changes EA, a product-build diagnostic is
+  misleading, a disabled JFR allocation event is treated as proof, or recurring deoptimization
+  makes eliminated objects costly. Does not cover introductory design/measurement rules
+  (jit-inlining-and-escape-analysis), general C2 phases (c2-sea-of-nodes), or Graal partial
+  escape analysis (graalvm-jit).
 
 license: Apache-2.0
 
@@ -44,9 +40,14 @@ files:
 
 dependencies:
   - name: jit-inlining-and-escape-analysis
-    version: ^1.0.0
+    version: ^2.0.0
   - name: c2-sea-of-nodes
     version: ^1.0.0
+
+suggests:
+  - compilation-and-inlining-logs
+  - deoptimization
+  - graalvm-jit
 
 capabilities:
   - reads-source

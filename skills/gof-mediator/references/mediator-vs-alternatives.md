@@ -31,8 +31,8 @@ A mediator has failed when any two of these are true:
 - **Methods that share no state.** `onPaymentSettled` and `onCatalogueImported` touching disjoint
   fields are two protocols in one class.
 - **Participants injected but used by one method each.** The hub is a namespace, not a coordinator.
-- **The test needs more than four fakes.** Interaction tests scale with participants; past four
-  the test is describing the class's size rather than its behaviour.
+- **Tests repeatedly require unrelated fakes and setup.** Interaction tests scale with protocol
+  participants; unrelated setup is stronger evidence of mixed protocols than any fixed count.
 - **Every feature touches it.** Merge conflicts concentrate there because it is the application.
 
 ### Splitting

@@ -2,10 +2,10 @@
 
 ## toString is a diagnostic contract with a disclosure risk
 
-`toString` is called by code you did not write: logging frameworks on every argument,
-exception messages, assertion failures, debuggers, `String.valueOf`, string concatenation,
-`Collection.toString` on any collection containing the object. That reach is what makes it
-useful and what makes it dangerous.
+`toString` is called by code you did not write: enabled log formatting, exception messages,
+assertion failures, debugger renderers, `String.valueOf`, concatenation and collection
+rendering. Parameterized logging may defer it when a level is disabled, but once formatting
+occurs the object's disclosure/cost policy is in play.
 
 **Include** what identifies the instance in an incident: the identity fields, the state that
 decides behaviour, and the correlation-bearing fields (order id, tenant, request id). A
@@ -30,11 +30,11 @@ record Credentials(String username, String password) {
 }
 ```
 
-Prefer a dedicated wrapper type for secrets (`record Secret(char[] value)` with a redacting
-`toString`) so the redaction cannot be forgotten at each use site. structured-logging covers
-what a log event should carry and how it should be structured; the rule here is that the
-redaction belongs in the _type_, because you cannot audit every call site that might
-interpolate it.
+Prefer a dedicated secret type with a redacting `toString` so the policy cannot be forgotten at
+each use site. A record with a `char[]` component is insufficient unless it defensively copies on
+construction/access, defines content equality deliberately, and controls erasure; arrays remain
+mutable and copies limit rather than guarantee memory clearing. structured-logging covers event
+design; the rule here is that defense belongs at both the type and sink.
 
 **Exclude** anything expensive or lazy. A `toString` that iterates a large collection, or
 touches a lazily loaded association, turns a log statement into a query or an O(n) scan —
@@ -64,9 +64,10 @@ assert on, and then adding a component changes every such assertion. Assert on c
 - `Object.clone` creates a **shallow** copy by field-by-field assignment. Every mutable
   referenced object is shared with the original — the standard source of "modifying the copy
   changed the original".
-- `final` fields **cannot** be reassigned in a `clone` implementation, so a class that is
-  correctly written with final fields cannot deep-copy them. Cloneable and immutability
-  are structurally incompatible.
+- `final` reference fields cannot be reassigned by ordinary Java clone code, so a shallow clone
+  shares their referents. That is safe for deeply immutable referents and wrong when “copy” means
+  independent mutable state; immutability and cloning are not structurally incompatible, but an
+  immutable object normally needs no copy.
 - A class that supports cloning constrains every subclass: `super.clone()` must be called, or
   the subclass silently produces an object of the wrong class. Constructors are not run, so
   invariants established in a constructor are not established in a clone.
@@ -81,7 +82,7 @@ The replacements, in the order to prefer them:
 | A copy of a value type             | make it immutable and share it — no copy needed (java-immutability)                                   |
 | A modified variant of a value type | a wither: `order.withStatus(SHIPPED)` returning a new instance                                        |
 | A copy of a mutable class          | a copy constructor `Foo(Foo other)` or a static factory `Foo.copyOf(other)`                           |
-| A copy of a collection             | `List.copyOf`, `new ArrayList<>(other)`, `Map.copyOf`                                                 |
+| A shallow collection snapshot      | `List.copyOf`/`Map.copyOf` (unmodifiable, reject nulls) or mutable `new ArrayList<>(other)`           |
 | A copy of an array                 | `array.clone()` or `Arrays.copyOf` — the one place clone is idiomatic                                 |
 | A deep copy of a graph             | an explicit copy method, or serialise/deserialise if the cost is acceptable and the format is trusted |
 
@@ -109,9 +110,17 @@ deliberate (a builder, an accumulator, a JPA entity).
 
 ## Deep copy across a serialisation boundary
 
-"Serialise and deserialise to deep-copy" works, and it is the wrong default for two reasons:
-it is orders of magnitude more expensive than field copying, and with Java serialisation it
-drags in the security surface of `readObject` on a graph the code did not intend to expose.
+“Serialize and deserialize to deep-copy” works only for graphs and semantics represented by the
+format, and it is a poor default: it is usually much more expensive than explicit copying, may
+lose concrete types/identity sharing, and Java serialization introduces the `readObject` attack
+surface.
 If a deep copy really is needed across a boundary, use the format the boundary already uses
 (JSON, protobuf) and treat it as a conversion, not a clone; serialization-performance covers
 the cost and java-serialization-hardening covers the trust boundary.
+
+## Authoritative references
+
+- [Object.clone contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#clone()>)
+- [Cloneable API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Cloneable.html)
+- [Record toString contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html)
+- [List.copyOf contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>)

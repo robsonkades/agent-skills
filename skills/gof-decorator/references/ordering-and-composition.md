@@ -67,8 +67,8 @@ Service mesh    2 attempts
                 18 requests reach the failing dependency per user action
 ```
 
-A dependency degrading to 50% error rates then receives an order of magnitude more traffic
-precisely when it can least handle it — the standard shape of a retry storm
+A dependency degrading to 50% error rates can receive up to the product of nested attempt limits
+precisely when it can least handle it—the standard amplification shape of a retry storm
 (`cascading-failures`). Rules:
 
 - **Retry at exactly one layer**, chosen deliberately, usually the one closest to the dependency

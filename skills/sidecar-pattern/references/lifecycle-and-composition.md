@@ -30,8 +30,9 @@ spec:
 
 `restartPolicy: Always` on an init container is what makes it a sidecar rather than a
 one-shot init step. Alpha in Kubernetes 1.28, enabled by default from 1.29, **stable in
-1.33**. On a cluster older than 1.29 the field is not honoured and the container must be an
-ordinary one, with all the ordering problems below.
+1.33**. In 1.28 it required an explicitly enabled alpha feature gate; older or incompatible
+API servers may reject the field. Test admission and node support rather than assuming it is
+silently ignored, especially during mixed-version upgrades.
 
 Sidecar containers accept `startupProbe`, `readinessProbe` and `livenessProbe` like any other
 container; what each probe should answer is `kubernetes-service-lifecycle`, not this skill.
@@ -85,19 +86,21 @@ HttpRequest req = HttpRequest.newBuilder(URI.create("http://127.0.0.1:15001/v1/t
         .build();
 ```
 
-A connection pool pointed at the peer must validate on borrow, because a sidecar restart
-silently invalidates every pooled socket while the app keeps holding them. General pool
-arithmetic is `connection-pool-sizing`.
+A pool pointed at the peer must discard failed/closed connections and reconnect within the
+request deadline after a sidecar restart. Validation on borrow can detect stale connections
+earlier but adds work; protocol health checks, max lifetime and failure eviction are alternatives.
+General pool arithmetic is `connection-pool-sizing`.
 
 ## Resources: per container, consequences per pod
 
-- `requests` and `limits` are declared per container, and the CPU throttling and OOM kill they
-  cause are enforced per container.
-- The **QoS class is per pod**: Guaranteed only if every container sets CPU and memory
-  requests equal to limits. One container without limits demotes the whole pod to Burstable.
-- **Node pressure eviction ranks pods**, comparing a pod's total usage against its total
-  requests. A sidecar with no requests contributes usage but no request, which pushes the pod
-  up the eviction order — the app is evicted for the sidecar's appetite.
+- Resources are traditionally declared per container; newer clusters can also enable Pod-level
+  resources. Inspect the resulting cgroup hierarchy rather than assuming only one model.
+- The **QoS class is per pod**. With container-level resources, Guaranteed requires matching
+  positive CPU and memory requests/limits for every container. With Kubernetes 1.34+ Pod-level
+  resources enabled, matching Pod-level requests/limits can establish Guaranteed QoS instead.
+- Under node pressure, QoS, priority and usage relative to requests all matter. A sidecar with
+  no request makes the pod's total request underestimate its usage and can increase eviction
+  risk; it does not define a universal deterministic rank by itself.
 - A native sidecar's requests count towards the pod's effective requests for scheduling, so
   adding one can make a previously schedulable pod pending on a full node.
 - Sidecar memory is paid per replica. Before merging, multiply by the replica count at peak
@@ -108,7 +111,7 @@ arithmetic is `connection-pool-sizing`.
 | Event                        | Kubernetes sees           | The application sees                          | What to do about it                                                                |
 | ---------------------------- | ------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------- |
 | Sidecar crashes and restarts | `RESTARTS` climbs, events | Connection refused, then stale pooled sockets | Validate connections on borrow; alert on restart rate, not on restart count        |
-| Sidecar OOM-killed           | Container exit 137        | Same as above, recurring under load           | Its limit is wrong, or its workload scales with the app's — size it under load     |
+| Sidecar suspected OOM-killed | Termination reason/events | Same as above, recurring under load           | Confirm `OOMKilled` and cgroup/node evidence; exit 137 alone is only `SIGKILL`     |
 | Sidecar up but broken        | **Nothing**               | Wrong answers, or latency with no errors      | Its own readiness probe; the app's own error rate against `localhost` as an alert  |
 | App crashes                  | App container restarts    | Sidecar keeps running with no traffic         | Usually fine; a sidecar holding a lease must expire it, not depend on its own exit |
 | Sidecar cannot start         | Pod stuck in `Init`       | App never starts at all (native sidecar)      | This is the intended trade: a native sidecar makes its failure a pod failure       |

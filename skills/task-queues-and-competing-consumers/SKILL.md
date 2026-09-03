@@ -3,9 +3,9 @@ name: task-queues-and-competing-consumers
 description: >
   Distributing work to a pool of interchangeable workers through a queue: the lease and
   visibility-timeout model, and why an expired lease duplicates work instead of failing it;
-  sizing the timeout from the processing-time distribution; heartbeats and their failure
-  mode; bounding the queue; priority starvation; and oldest-message-age rather than queue
-  depth as the autoscaling signal. Use when two workers process one message although nothing
+  sizing the timeout from processing plus prefetch wait; heartbeats and their failure mode;
+  admission and retention bounds; priority starvation; and age, backlog, arrival and drain
+  rate as autoscaling signals. Use when two workers process one message although nothing
   retried or failed, when a lease is relied on for mutual exclusion, when a handler outlives
   its lease, when a queue has no maximum depth, when autoscaling is driven by queue depth,
   or when a poll loop feeds an unbounded executor. Not ack placement (delivery-semantics),
@@ -35,18 +35,20 @@ takes, and losing the bet duplicates the work.**
 
 1. **Run the decision block below** before designing anything: independent items, stateless
    workers, no ordering requirement across items.
-2. **Measure the handler's duration distribution**, then set the visibility timeout from its
-   p99.9 — never its mean. Reading the distribution is `latency-statistics`; the selection
-   arithmetic is `references/lease-model.md`.
+2. **Measure lease exposure**, not just handler time: prefetch/permit wait + queue client work +
+   handler + acknowledgement, under degraded dependencies and pauses. Select an explicit
+   premature-redelivery versus crash-recovery objective; there is no universal percentile.
 3. **Pick one of the three responses to lease expiry** and write down which: size from the
    tail, extend by heartbeat while working, or make the handler repeat-safe (`idempotency`)
    and accept the overlap. Most systems need the third regardless.
-4. **Bound the queue and decide what the producer sees** when it is full — a rejection the
-   producer handles, not a silent block (`rate-limiting-and-load-shedding`).
+4. **Bound accepted backlog by age, bytes/items, retention and recovery capacity.** If the
+   managed broker cannot reject at a depth, enforce admission upstream and specify what the
+   producer sees (`rate-limiting-and-load-shedding`).
 5. **Bound worker concurrency at the poll**, not after it: acquire the permit before fetching
    the message. The limit itself is `concurrency-limiting-and-bulkheads`.
-6. **Scale and alert on oldest-message-age.** Depth is a stock, the SLO is a time;
-   `references/worker-loop-and-scaling.md` has both, plus the priority/ageing policy.
+6. **Scale from a signal set.** Age is closest to a latency SLO, but combine it with depth,
+   arrival/drain rate, in-flight saturation and startup delay; broker age can be approximate or
+   reset by redelivery. `references/worker-loop-and-scaling.md` gives the control model.
 7. **Prove it by killing a worker mid-lease** and asserting redelivery, one observable side
    effect, and no lost item. A happy-path test proves nothing here.
 
@@ -54,15 +56,15 @@ takes, and losing the bet duplicates the work.**
 
 ```text
 Use a task queue with competing consumers when:
-- items are mutually independent, or all items for one entity are produced by one writer
-  that waits for completion before producing the next
+- items commute, or ordering is explicitly enforced by a broker group/partition and the
+  worker preserves that lane's ownership
 - the worker is stateless and any worker can take any item
 - producer and consumer rates differ over time and a bounded buffer absorbs the difference
 - the work is retryable and its side effect can be made repeat-safe
 
 Avoid a task queue when:
-- items for the same entity must be applied in production order — N competing consumers
-  have no ordering between them, whatever the broker orders internally
+- correctness needs an order the queue cannot express or preserve through retry/redelivery;
+  FIFO/message-group queues can serialize a key, but head-of-line blocking is the cost
 - the same item must be consumed independently by several subscribers with their own
   positions, or must be replayable after it succeeded; here an acked message is gone
 
@@ -70,9 +72,9 @@ Prefer a partitioned log instead when:
 - per-key ordering, replay, or several independent consumer groups are required
   (kafka-consumers-in-java)
 
-Prefer leader election instead when:
-- exactly one instance may run the work and correctness depends on that. A queue gives
-  at-least-once assignment, never mutual exclusion (leader-election)
+Prefer fenced ownership or resource-side concurrency control when:
+- stale concurrent execution would violate correctness. Neither a queue lease nor leader
+  election alone proves exactly one effect (leader-election)
 
 Prefer an in-process executor instead when:
 - the work need not survive the process (executors-and-task-lifecycle)
@@ -84,15 +86,17 @@ Prefer an in-process executor instead when:
   nobody, and two workers holding one item is the model working as designed. Mutual exclusion
   needs a fencing token the _resource_ checks (`leader-election`) — a lease alone does not
   survive a GC pause on its holder.
-- Size the timeout from measured handler duration at p99.9, and re-derive it when the handler
-  changes. A timeout set from the mean redelivers a predictable share of traffic forever, and
-  that share appears in no error metric.
+- Size from the measured **receive-to-ack** distribution plus safety/resolution margin, against
+  a stated premature-redelivery error budget and maximum crash-recovery delay. Segment by task
+  class; censored timings from already-expired work do not reveal the unseen tail.
 - A heartbeat that extends the lease has its own failure mode: a heartbeat thread that keeps
   renewing while the work thread is wedged means the item is **never** redelivered. Cap total
   lease time, and drive the heartbeat from observable progress, not from thread liveness.
-- **A batch fetch starts every lease at once.** Receiving ten messages and processing them
-  serially means the tenth has been leased for nine handler durations before it is touched.
-  Size the prefetch so `batch × handler_p99 < timeout`, or fetch one at a time.
+- **A batch fetch starts every lease at receive time.** For `B` records processed serially, the
+  last sees the sum of preceding durations; with `C` handler slots it waits behind roughly
+  `ceil(B/C)-1` waves, but correlated tails and scheduling matter. Measure receive-to-start and
+  receive-to-ack, reduce prefetch, or extend per message—do not multiply one percentile and call
+  it a probabilistic bound.
 - `nack` with immediate requeue and no delay is a hot loop: the same message returns
   instantly, fails again, and the pool spends its capacity on one item. Requeue with a delay
   and a delivery counter, and route it to `poison-messages-and-dlq` at the threshold.
@@ -100,10 +104,10 @@ Prefer an in-process executor instead when:
   unbounded executor. It drains the broker's queue into the heap: the queue's backpressure
   disappears, depth reads zero while the process is overloaded, and every in-flight lease is on
   the clock at once. Acquire the permit before `poll`.
-- **Queue depth alone is the wrong autoscaling signal.** It says nothing about arrival or drain
-  rate: 10 000 items draining at 50 000/s is 200 ms of backlog, 100 items at 0.1/s is over an
-  hour. Scale and alert on **oldest-message-age** — the queue's actual latency — and keep depth
-  as a capacity signal only. The depth/rate/wait arithmetic is `littles-law-and-queueing`.
+- Queue depth alone cannot predict wait, while oldest-message-age alone can be stale,
+  approximate, reset by retry, or dominated by one poison item. Use age for SLO alerting and a
+  controller signal set—visible/in-flight depth, arrival/drain rate, service-time distribution,
+  saturation, startup delay and downstream capacity. Validate stability and scale-down hysteresis.
 - A single shared queue _is_ work stealing: workers pull, so heterogeneous task cost
   self-balances. Per-worker queues with push assignment do not, and need explicit stealing; the
   in-JVM mechanics are `forkjoinpool-and-work-stealing`.
@@ -113,9 +117,25 @@ Prefer an in-process executor instead when:
 - On shutdown, stop polling **first**, then finish or return what is held. Returning an
   unfinished item (nack, or letting the lease lapse) beats being killed mid-handler with the
   lease running; the sequence and grace-period budget are `kubernetes-service-lifecycle`.
-- An unbounded queue converts a throughput problem into an out-of-memory or unbounded-latency
-  one. Bound it, and make the producer's rejection a designed path
-  (`rate-limiting-and-load-shedding`).
+- A durable broker may intentionally have no hard depth rejection, but accepted backlog is never
+  economically unbounded. Set maximum useful age, retention/storage quotas and catch-up/recovery
+  objectives; shed or defer admission before work becomes guaranteed-expired.
+
+## Security and tenant isolation
+
+- Authenticate producers/workers and authorize queue, task type and tenant; never trust a
+  priority, callback URL, class name or serialized payload merely because it came from a queue.
+- Validate size/schema before leasing expensive capacity. Encrypt sensitive payloads, minimize
+  DLQ copies and define deletion/retention for primary, retry and dead-letter queues.
+- Apply per-tenant concurrency/quotas so one tenant cannot consume every worker or age another
+  tenant past its deadline. Preserve trace, task, attempt and idempotency identifiers without
+  putting secrets or raw PII in metric labels.
+
+## Primary references
+
+- [Amazon SQS visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html) — redelivery, in-flight limits, FIFO groups and extension limits.
+- [RabbitMQ consumer acknowledgements](https://www.rabbitmq.com/docs/confirms) — delivery acknowledgement and requeue semantics, which are not identical to SQS visibility.
+- [JMS acknowledgement modes](https://jakarta.ee/specifications/messaging/3.1/jakarta-messaging-spec-3.1) — session and acknowledgement semantics.
 
 ## References
 

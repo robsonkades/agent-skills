@@ -1,116 +1,90 @@
-# Alerting design
+# Alerting Design
 
-## Symptom versus cause
-
-A symptom is something a user is experiencing. A cause is a mechanism that sometimes produces
-one. Pages are for symptoms, because causes are both false-positive-prone (present with no
-impact) and false-negative-prone (absent during a real outage).
-
-| Signal                                        | Kind    | Route                                                        |
-| --------------------------------------------- | ------- | ------------------------------------------------------------ |
-| SLI burning budget fast                       | Symptom | **Page**                                                     |
-| Error ratio above the SLO for the fleet       | Symptom | **Page**                                                     |
-| Latency SLI ratio falling                     | Symptom | **Page**                                                     |
-| Business outcome rate collapsing (orders/min) | Symptom | **Page** — detects what health checks miss                   |
-| CPU above 90%                                 | Cause   | Dashboard. A well-utilised service looks like this           |
-| Heap above 80%                                | Cause   | Dashboard, unless it is the SLI's cause and is unrecoverable |
-| Connection pool saturated                     | Cause   | Ticket if sustained; dashboard otherwise                     |
-| Disk filling at the current rate              | Cause   | **Ticket** — predictable, slow, and fixable in hours         |
-| Certificate expiring in 14 days               | Cause   | **Ticket** — deterministic deadline                          |
-| One pod is unhealthy                          | Cause   | Neither. Replace it; that is the orchestrator's job          |
-| A scrape target has disappeared               | Meta    | **Page** — no data reads as no errors                        |
-
-The last row is the one most often missing. An error-ratio rule over a target that stopped
-reporting evaluates to "no errors", and the alert that should have fired is exactly the one
-that goes quiet.
-
-## Multi-window, multi-burn-rate
-
-**Burn rate** is how fast the budget is being consumed, relative to the rate that would exactly
-exhaust it at the end of the period:
+## Routing decision
 
 ```text
-burn_rate = observed error ratio / (1 − SLO target)
-
-budget consumed over a window = burn_rate × window / period
-time to exhaustion            = period / burn_rate      (at a constant rate)
+Is harm or irreversible risk credible?
+  no -> dashboard/investigation
+  yes -> can automation safely contain it?
+           yes -> automate and alert only on automation failure
+           no  -> is action required before business-hours response?
+                    yes -> page
+                    no  -> ticket
 ```
 
-Burn rate 1 exhausts the budget precisely at the period's end. Burn rate 10 exhausts it in a
-tenth of the period.
+Severity depends on urgency, blast radius, confidence and available action—not whether a
+signal is called a symptom or cause.
 
-The single-window versions both fail, in opposite ways:
+## Page contract
 
-- **One long window** (say, the full 30 days) detects a severe outage far too late — a total
-  outage takes hours to move a 30-day ratio enough to trip a threshold.
-- **One short window** is noisy, and worse, it does not _reset_: after a five-minute spike the
-  window keeps the alert firing for its whole length, so the on-call sees a resolved incident
-  still paging.
+Every page names:
 
-The technique combines two windows per condition and two conditions per SLO:
+- affected user journey and current evidence;
+- SLO/hazard and population;
+- owner and escalation;
+- first discriminating checks with direct queries;
+- safe mitigations, prerequisites and blast radius;
+- stop/rollback conditions;
+- related/dependent alerts and recent changes;
+- missing-data behavior and incident timeline link.
 
-```text
-Fast burn  → PAGE
-    long window:  hours          high burn rate     "a lot of budget, right now"
-    short window: ~1/12 of the long one, same rate  "and it is still happening"
-Slow burn  → TICKET
-    long window:  a day or more   low burn rate     "steady erosion"
-    short window: ~1/12, same rate                  "and it has not stopped"
-```
+Avoid static “first three steps” when topology varies; encode a short decision tree with
+the highest-information checks.
 
-Both windows must hold for the alert to fire. The **long** window sets sensitivity and
-false-positive rate; the **short** window is a reset condition — once the burn stops, the short
-window clears within minutes and the alert resolves without waiting for the long one to
-decay.
+## Multi-window burn alerts
 
-Choosing your own pairs is two decisions, and they trade against each other:
+For ratio SLOs, pair a longer window (budget significance) with a shorter window (condition
+is still active). Both must exceed the same burn threshold. Multiple pairs cover fast and
+slow burns.
 
-1. _How much budget am I willing to spend before someone is woken?_ That fixes
-   `burn_rate × window` — the product, not either factor.
-2. _How long am I willing to wait for detection?_ That fixes the window, and the burn rate
-   falls out: `burn_rate = budget_fraction × period / window`.
+Choose:
 
-Worked, for a 30-day period: to page after 2% of the budget is gone, with a one-hour detection
-window, `burn_rate = 0.02 × (30 × 24) / 1 = 14.4`. A different budget fraction, period or
-detection target gives a different number — which is why copying a factor from a document
-written about someone else's SLO is a coincidence rather than a configuration. Compute it.
+1. objective period \(T\);
+2. budget fraction \(f\) worth action;
+3. long window \(w_l\) satisfying detection needs;
+4. burn \(b=fT/w_l\);
+5. short window long enough for stable data and short enough to reset promptly.
 
-Two constraints on the fast-burn window: it must be at least a few multiples of the scrape
-interval so the ratio is not one sample, and its detection time must be shorter than the
-time the remaining budget would take to disappear.
+Canonical Google Workbook values are tested starting points for a 30-day event SLO, not
+laws. Recompute for different periods/policies and validate with replay.
 
-## Every page needs a runbook
+## Low traffic
 
-The runbook is part of the alert, not documentation about it. Minimum contents:
+At small denominators, one event dominates a ratio. Options:
 
-- **What the user is experiencing**, in one sentence — so the responder can judge severity
-  without reconstructing it.
-- **The first three checks**, each a link to a specific dashboard or query, in order.
-- **The known mitigations** and their blast radius: roll back, fail over, shed, scale.
-- **Escalation**: who, and after how long.
-- **The last time this fired and what it turned out to be.** The cheapest debugging aid there
-  is, and it accumulates for free if the alert links to its own incident history.
+- measure a larger meaningful journey/population;
+- use synthetic transactions where representative;
+- lengthen windows or reduce paging sensitivity;
+- use direct critical-event alerts;
+- page only on consecutive/clustered user failures with explicit risk;
+- review low-volume outcomes manually.
 
-An alert with no runbook is a page that starts with the responder reading source code at
-03:00. If nobody can write the three checks, the alert does not yet describe an actionable
-condition, and shipping it means shipping the noise.
+Do not hide actual user harm by adding fake denominator traffic solely to dilute failures.
 
-## Alert review checklist
+## Missing data
 
-Run this on a schedule — monthly is typical — over every rule that can page:
+Distinguish:
 
-- [ ] It fired at least once in the review period. If never: is it still meaningful, or has
-      the system changed underneath it? An alert that has never fired is an untested
-      hypothesis
-- [ ] Every firing produced a human action. Acknowledged-and-ignored is a deletion candidate
-- [ ] It is a symptom, not a cause, or there is a written reason why the cause is paged
-- [ ] It measures the fleet, not one instance
-- [ ] It has a runbook, and someone followed it the last time
-- [ ] Its threshold was derived (from a burn rate and a budget), not chosen by eye — a static
-      threshold set against last year's traffic is now measuring something else
-- [ ] It does not duplicate another rule that fires at the same time. During a real incident
-      duplicates arrive together and bury the one that names the cause
-- [ ] It cannot fire for a condition that resolves itself within the response time
-- [ ] Its "no data" behaviour is defined and tested
-- [ ] Someone has verified it by injecting the failure — latency, errors, a stopped scrape.
-      An alert never triggered on purpose is a hypothesis about a query language
+- scrape/telemetry pipeline failure;
+- service or edge unavailable;
+- upstream stopped sending traffic;
+- legitimate scheduled quiet;
+- query label/schema mismatch.
+
+Use independent telemetry health and edge/synthetic demand where needed. An absent-series
+alert itself can be noisy for ephemeral workloads; scope expected presence.
+
+## Lifecycle metrics
+
+Review:
+
+- pages per shift and correlated storms;
+- precision: pages requiring action;
+- recall through incident/postmortem comparison;
+- time to detect/acknowledge/mitigate;
+- runbook correctness;
+- automation opportunities;
+- untested rules and routing;
+- alerts whose source/query changed.
+
+Never delete a rare safety alert merely because it did not fire; test it and reassess risk.

@@ -5,20 +5,20 @@
 Three incidents look the same on a top-level error-rate graph. They need opposite responses,
 and the distinguishing evidence is cheap to collect.
 
-| Observation                                 | Dependency outage      | Under-provisioning       | Cascade                              |
-| ------------------------------------------- | ---------------------- | ------------------------ | ------------------------------------ |
-| Dependency inbound request rate             | flat or falling        | rising with traffic      | **rising while success rate falls**  |
-| Goodput as offered load rises               | flat                   | rises, then plateaus     | **falls**                            |
-| Attempts ÷ logical calls                    | ~1.0                   | ~1.0                     | climbs toward the attempt multiplier |
-| Pool utilisation in services not calling it | normal                 | normal                   | **pinned at 100%**                   |
-| Queue depth / time-in-queue                 | normal                 | rising, bounded          | rising without bound                 |
-| Errors after the trigger is removed         | stop                   | stop                     | **continue** (metastable)            |
-| Blast radius                                | matches the call graph | matches the hot endpoint | **wider than the call graph**        |
+| Observation                                 | Dependency outage         | Under-provisioning       | Cascade                                   |
+| ------------------------------------------- | ------------------------- | ------------------------ | ----------------------------------------- |
+| Attempts at dependency vs logical calls     | may rise if clients retry | ~1 absent retry policy   | **ratio rises across one or more layers** |
+| Goodput as offered load rises               | flat                      | rises, then plateaus     | **falls**                                 |
+| Attempts ÷ logical calls                    | ~1.0                      | ~1.0                     | climbs toward the attempt multiplier      |
+| Pool utilisation in services not calling it | normal                    | normal                   | **pinned at 100%**                        |
+| Queue depth / time-in-queue                 | normal                    | rising, bounded          | rising without bound                      |
+| Errors after the trigger is removed         | may decay with timeout    | persist while undersized | **continue from feedback/backlog**        |
+| Blast radius                                | matches the call graph    | matches the hot endpoint | **wider than the call graph**             |
 
-Two of these are decisive on their own. _Inbound rate rising while success rate falls_ can
-only be retry amplification — organic growth raises both. _Pool utilisation at 100% in a
-service that does not call the failing dependency_ proves the failure has propagated through
-a shared resource rather than through a call.
+Treat rows as correlated evidence, not signatures. Rising attempts with falling success can be
+retry amplification, traffic shift or health-based routing; a pinned pool on an apparently
+unrelated path may expose shared executors, connection pools or infrastructure. Use traces,
+attempt/logical-call identifiers and a timeline to distinguish them.
 
 The metric to add before the next incident, if it is missing: **goodput** — responses
 delivered within the caller's deadline — plotted next to throughput. Their divergence is the
@@ -40,7 +40,8 @@ Work top to bottom. Each step reduces offered load; stop when goodput starts ris
 4. **Cap concurrency at the saturated resource.** A bound in front of the pool converts an
    unbounded wait into a countable rejection. Mechanism:
    `concurrency-limiting-and-bulkheads`.
-5. **Reduce per-hop timeouts on the failing dependency** so threads return sooner. This is
+5. **Reduce per-attempt timeouts on the failing dependency** so resources return sooner, while
+   disabling or budgeting retries so faster failures do not increase attempt rate. This is
    the one timeout change that helps: it lowers concurrency at the dependency by shortening
    `W` in `L = λ × W` (`littles-law-and-queueing`).
 6. **Disable non-critical work on the request path** — enrichment calls, recommendation
@@ -49,7 +50,7 @@ Work top to bottom. Each step reduces offered load; stop when goodput starts ris
 
 ## What deepens it
 
-- **Adding replicas.** New instances start with cold caches, unfilled pools and uncompiled
+- **Adding replicas blindly.** New instances start with cold caches, unfilled pools and uncompiled
   code, take a full share of the backlog immediately, saturate, and become another source of
   timeouts and retries against the same dependency. Capacity helps before the loop closes,
   not after.
@@ -71,18 +72,17 @@ level, and the system is still failing. Waiting does not exit this state.
 1. **Stop the input.** Reject at the edge, or scale the consumer group to zero, or drain the
    ingress. Full rejection is a legitimate and often the fastest step: it is the only way to
    let a backlog burn down without new work replacing it.
-2. **Destroy the backlog deliberately, and say what was destroyed.** Purge the queue, skip to
-   the head of the log, or expire the requests whose deadline has passed. Work older than its
-   caller's deadline is already waste; completing it is strictly worse than dropping it (that
-   pattern is `distributed-failure-catalogue`, the queue semantics are
-   `task-queues-and-competing-consumers`). If the work is not discardable, move it to a
-   separate queue and process it after recovery at a rate you choose.
+2. **Classify the backlog before changing it.** Expire read/request work whose propagated deadline
+   has passed; coalesce superseded refreshes; preserve accepted writes, ordered events and jobs
+   whose contract outlives the caller. Purge/skip only with authorization, an auditable range and
+   a replay/reconciliation plan (`task-queues-and-competing-consumers`). Quarantine durable work
+   and replay it later at a controlled rate when immediate processing would sustain the outage.
 3. **Restart cold components in stages**, not all at once, with jitter between instances.
 4. **Ramp admission back**, e.g. 10% of normal, then double while goodput keeps rising. The
    ramp is the mechanism that prevents the thundering herd on recovery — the backlogged
    clients all retry the instant the first success appears.
-5. **Watch goodput and the dependency's inbound rate**, not error rate. Error rate falls as
-   soon as you reject fast, which looks like recovery and is not.
+5. **Watch goodput, attempts/logical call, queue age and dependency saturation** alongside error
+   and shed rates. Fast rejection can lower latency while availability remains degraded.
 
 ## Recording it
 

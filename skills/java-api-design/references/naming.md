@@ -13,7 +13,9 @@
   (`reserveStock`, `emitReceipt`). Accessors are the value's name — record style `amount()`
   — unless the surrounding API family uses `getAmount()`; match the family.
 - **Booleans**: `is`/`has`/`can` + positive form. `isActive`, `hasRemainingRetries`,
-  `canSettle`. Negated names force double negation at call sites
+  `canSettle`; a record component may naturally be `active()`. JavaBeans introspection has its
+  own constraints—`isX()` conventionally recognizes primitive `boolean`, while boxed `Boolean`
+  tooling may expect `getX()`—so match the framework contract. Negated names force double negation at call sites
   (`if (!isNotExpired(...))`) and eventually a bug.
 - **Collections are plural**, and the element type is in the name only when the type
   system does not already say it: `lineItems()`, not `lineItemList()`.
@@ -52,3 +54,8 @@ compatibility.md). The non-breaking route: add the well-named method, implement 
 as a delegating `@Deprecated(since, forRemoval = true)` wrapper naming the replacement,
 remove at the next major version. Budget for the old name living for years; that price is
 why names deserve review before first publication, not after.
+
+## Authoritative references
+
+- [JavaBeans Introspector API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/beans/Introspector.html)
+- [Java API design guidelines](https://www.oracle.com/java/technologies/javase/codeconventions-namingconventions.html)

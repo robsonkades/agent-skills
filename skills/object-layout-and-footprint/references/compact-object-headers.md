@@ -46,7 +46,8 @@ array intuition is the opposite of the instance one:
 | **Instance** saves     | 8   | 0   | 0   | 0   | 0   | 8   | 8   | 8   |
 | **Array** saves        | 0   | 8   | 8   | 8   | 8   | 0   | 0   | 0   |
 
-There is no third answer — the saving is never 4, and never more than 8 for a single object.
+Under these 8-byte-aligned HotSpot modes there is no third answer: the shallow-size saving is
+0 or 8. Different alignment or future layouts require recomputation.
 
 **Do not add a padding term to `p`.** Holes are an output of the layout, not an input to it,
 and adding them breaks the rule. `class SuperLong { long only; }` carries a 4-byte hole at
@@ -287,7 +288,7 @@ costs, and what else on that command line to distrust, are all `jvm-performance-
 
 ## 5. How to evaluate the flag for footprint, honestly
 
-`-XX:+UseCompactObjectHeaders` is a trade, never a default worth recommending unmeasured.
+`-XX:+UseCompactObjectHeaders` is a trade to evaluate from the target class/object mix.
 This section covers only the **footprint** side of that trade.
 
 **Nothing on this page is a performance measurement; every number here is footprint.** What
@@ -300,9 +301,10 @@ sharing, is `false-sharing-and-contended`'s.
 **What would prove it helped on footprint.** Not an object count times eight. Run the same
 workload twice on the same build and measure:
 
-1. `GraphLayout.totalSize()` over the actual live population, both modes — the honest
-   a-priori answer, and the one this skill can give you before the code exists; or
-2. live heap after a full GC (`jcmd <pid> GC.run` then `GC.heap_info`), both modes; or
+1. `GraphLayout.totalSize()` over a representative, bounded population, both modes — useful
+   for design-time comparison but not a substitute for whole-heap retention; or
+2. live heap after a deliberately scheduled full GC (`jcmd <pid> GC.run` then
+   `GC.heap_info`), both modes, only where that disruption is acceptable; or
 3. a heap-dump histogram diff across the flag — but read it as a **layout** delta, never as a
    code change. `heap-dump-analysis` owns that reading.
 

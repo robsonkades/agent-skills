@@ -17,8 +17,9 @@ description: >
 
 ## Purpose
 
-Decide which layer owns an observed pause before anything is tuned. The application feels a
-single number; the GC log publishes only one term of it. Between the two sit the time threads
+Decide which layer owns an observed pause before anything is tuned. Endpoint latency mixes
+execution, queueing and downstream time; a JVM safepoint is only one candidate interval. The
+GC log publishes one term of a safepoint cycle. Between the sources sit the time threads
 took to reach the safepoint, the cleanup after the operation, and whatever the host did to the
 process — and each of those is a different fix with a different owner.
 
@@ -30,23 +31,21 @@ the default, and tuning the pause that was logged — leave the real cause untou
 
 ## Workflow
 
-1. **Write down the decomposition before collecting anything.** Application-visible STW =
-   time to reach the safepoint + operation time + leaving (disarm and wake-up). The GC log
-   publishes only the operation. Anything left over after those three is not a safepoint
-   at all — a per-thread stall (deoptimisation, class loading, allocation stall, monitor)
-   or a host effect — and `references/layer-decision-table.md` is how it gets a layer.
+1. **Write down the decomposition before collecting anything.** Safepoint `Total` = time to
+   reach + operation + leaving (disarm/wake-up). Do not call an endpoint p99 “application-
+   visible STW” until aligned thread/request evidence shows process-wide loss of progress.
+   Residual latency can be queueing, a per-thread stall, a downstream wait or a host effect.
 2. **Enable the safepoint log with decorators the analyser expects.**
    `-Xlog:safepoint=info:file=safepoint.log:time,uptime,level,tags`, and validate any parser
    against a small sample of the real log before trusting an aggregate report.
-3. **Read `Total`, never `Reaching + At`.** The manual sum omits `Leaving safepoint` and
+3. **Read `Total`; do not reconstruct it as `Reaching + At`.** The manual sum omits `Leaving safepoint` and
    understates the real STW event after event.
 4. **Split the pause at the sync/operation boundary.** Large `Reaching safepoint` with small
    `At safepoint` is a time-to-safepoint problem — a specific thread, not the collector. The
-   reverse is a collector problem and belongs to the GC skills.
+   reverse is the named VM operation; only GC operations belong to the GC skills.
 5. **Cross-check `Total` against JFR** by correlating `jdk.SafepointBegin` and
-   `jdk.SafepointEnd` on `safepointId`. Two independent instrumentations converging is the
-   criterion for trusting the number; a large systematic divergence means one capture is
-   wrong. See `references/correlating-the-evidence.md`.
+   `jdk.SafepointEnd` on `safepointId`. Agreement detects parser/window mistakes, but both
+   expose the same JVM mechanism and are not independent proof of user-visible impact.
 6. **Name the thread and the operation together.** `-XX:+SafepointTimeout` logs the name and
    state of the slow thread (not its stack — that needs a wall-clock profile of that thread
    over the same window); `jdk.ExecuteVMOperation` says what was waiting on it. One without
@@ -58,25 +57,25 @@ the default, and tuning the pause that was logged — leave the real cause untou
 
 ## Rules
 
-- Never present a GC-log pause duration as the pause the application experienced. It is the
-  operation term only.
+- Do not present a GC-log pause duration as endpoint impact without timestamp-aligned request
+  evidence. It normally represents the GC operation term, not TTSP or arbitrary queueing.
 - Capture the `Total` field directly. On JDK 25 the line carries three terms —
   `Reaching safepoint`, `At safepoint`, `Leaving safepoint` — and `Total` is exactly their
   sum (executed, 25.0.3, zero mismatches over 1,169 lines). An analyser that sums the first
   two is systematically optimistic by the third, and the error compounds with safepoint
   frequency — negligible at a few safepoints per second, not negligible at thousands.
-- A safepoint-log parser written for one decorator set silently matches nothing against
-  another. A report of "0 events found" is a parser bug until proven otherwise; so is a
-  partial one. Validate the regex against a sample first.
-- High TTSP in a counted loop never means "the poll was removed". The poll moved to the back
-  edge of the strip-mining outer loop. The three real causes are an expensive loop body per
-  strip, a loop C2 does not recognise as counted, or JNI/FFM code outside strip mining's reach.
+- A safepoint-log parser written for one decorator set can silently match nothing against
+  another. A report of "0 events found" requires checking that events actually occurred,
+  rotation/loss, level/tags and parser coverage before drawing a runtime conclusion.
+- High TTSP can arise from long intervals between polls, compiler/runtime/native regions,
+  thread transitions, page faults or OS descheduling. Counted-loop strip mining is one common
+  model, not an exhaustive catalogue; prove the delayed thread and stack/time window.
 - `-XX:+UseCountedLoopSafepoints` is a fix only under Parallel or Serial, where it is `false`
   by default and counted loops carry **no poll** (executed, 25.0.3). Under G1, ZGC and
-  Shenandoah it is already `true` with `-XX:LoopStripMiningIter=1000`, and prescribing it
-  changes nothing. There the real tuning parameter is `LoopStripMiningIter`, and reducing it
-  trades vectorisation and throughput for a lower TTSP ceiling; measure the trade-off rather
-  than assuming it.
+  Shenandoah it is already `true` with `-XX:LoopStripMiningIter=1000` on the verified 25.0.3
+  build, and prescribing it changes nothing. Prefer reducing per-strip work or restructuring
+  the code; a global `LoopStripMiningIter` experiment can trade optimisation/throughput for
+  TTSP and requires target-build workload validation.
 - The opposite error is equally real: a `-XX:-UseCountedLoopSafepoints` left in a config from
   an old throughput benchmark disables strip mining entirely. Check the effective value in the
   running process before concluding anything about TTSP.
@@ -100,6 +99,16 @@ the default, and tuning the pause that was logged — leave the real cause untou
 jdk.SafepointBegin,jdk.SafepointEnd,jdk.SafepointLatency` — before depending on one. Field
   names have changed between JDK versions.
 
+## Acceptance criteria
+
+- Preserve raw safepoint, GC/JFR, request and OS evidence on aligned clocks, including
+  recording loss/rotation metadata.
+- Reproduce the attributed component under the triggering workload; change one mechanism at
+  a time and show the target term falls without regressing throughput, CPU or correctness.
+- Treat `SafepointTimeout` as escalation instrumentation: its threshold and logging overhead
+  must be scoped to a diagnostic window, and thread identity/state still needs time-aligned
+  stacks from a sampler or dump.
+
 ## References
 
 - [Correlating the evidence](references/correlating-the-evidence.md) — the safepoint log
@@ -112,8 +121,15 @@ jdk.SafepointBegin,jdk.SafepointEnd,jdk.SafepointLatency` — before depending o
   pinning and host, each with the artefact that proves it and the skill that owns the fix.
   Read once `Total` is trusted and the pause must be handed to an owner, or when the
   safepoint log is clean and the latency is still there.
-- [Attributing time to safepoint](references/attributing-time-to-safepoint.md) — the three real
-  causes of high TTSP with the arithmetic that discriminates between them, the
+- [Attributing time to safepoint](references/attributing-time-to-safepoint.md) — common causes
+  of high TTSP and arithmetic used as a falsifiable loop hypothesis, the
   `LoopStripMiningIter` trade-off, and the sampling-mechanism comparison for when the profiler
   itself is suspect. Read when `Reaching safepoint` dominates `Total`, or when a profiler's
   hot path is in doubt.
+
+Authoritative sources for version-sensitive claims:
+
+- [JEP 518: JFR Cooperative Sampling](https://openjdk.org/jeps/518)
+- [JEP 509: JFR CPU-Time Profiling (Experimental)](https://openjdk.org/jeps/509)
+- [JEP 374: Disable and Deprecate Biased Locking](https://openjdk.org/jeps/374)
+- [JDK unified logging documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#enable-logging-with-the-jvm-unified-logging-framework)

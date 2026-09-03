@@ -1,100 +1,161 @@
-# Histograms, sample adequacy and aggregation
+# Histograms, quantile resolution and aggregation
 
-## Why percentiles cannot be averaged
+## Start with the representation contract
 
-The error has no predictable direction. With the same two latency values, averaging
-per-window p99s can overestimate the true p99 by two orders of magnitude or underestimate
-it by one, depending only on how the volume was distributed across the windows. There is
-no correction factor, because the operation discards the information needed to compute
-the answer.
+A histogram is a lossy distribution representation. Before trusting a derived quantile, record:
 
-The only valid aggregation is over the source histograms:
+| Property                                | Failure when omitted                                                                          |
+| --------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Value unit and clock endpoints          | nanoseconds merged as milliseconds; client and server durations compared as if identical      |
+| Lowest/highest trackable value          | underflow, clamping, exception, saturation or dropped observations masquerades as a good tail |
+| Bucket boundaries or exponential schema | interpolation error is larger than the regression being discussed                             |
+| Significant digits/resolution           | quantisation is mistaken for workload stability                                               |
+| Window and reset semantics              | cumulative lifetime data, rotating client windows and range-vector deltas are compared        |
+| Outcome policy                          | errors and timeouts disappear from the “successful request” distribution                      |
+| Library/backend/version                 | defaults and native-histogram support change independently of application code                |
+
+Inspect overflow/error counters and reconcile histogram `_count` with the independently counted
+terminal outcomes. A histogram that cannot represent the deadline must not be used to prove the
+deadline was met.
+
+## Why quantiles cannot be averaged
+
+A quantile is nonlinear. Per-instance/window p99 values and their traffic weights do not contain
+enough information to recover the union's p99; averaging them can err in either direction. Merge
+compatible observations or histogram counts first, then query the combined distribution.
 
 ```java
-// HdrHistogram: combine, then read
-Histogram fleet = new Histogram(3);
+// Target range and precision must cover every source.
+Histogram fleet = new Histogram(highestTrackableNanos, 3);
 fleet.add(instanceA);
 fleet.add(instanceB);
-long p99 = fleet.getValueAtPercentile(99.0);
+long p99Nanos = fleet.getValueAtPercentile(99.0);
 ```
 
 ```promql
-# Prometheus: sum the buckets first, quantile last
-histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))
+# Classic cumulative buckets: rate first, preserve `le` while aggregating, quantile last.
+histogram_quantile(
+  0.99,
+  sum by (le) (rate(http_server_request_duration_seconds_bucket[5m]))
+)
 ```
 
-## Sample adequacy
-
-A percentile is only defined once enough observations exist above it. A p99 over 200
-samples is the second-slowest observation in the set — a single event, not a statistic.
-During an incident this bites hardest, because throughput usually collapses at the same
-time: 10 req/s for 20 seconds is 200 samples.
-
-```
-✅ "During the incident (14:30-14:45): p99 = 500 ms over 9,000 samples"
-❌ "p99 = 500 ms during the incident"
+```promql
+# Native histogram samples: no `le` label.
+histogram_quantile(
+  0.99,
+  sum(rate(http_server_request_duration_seconds[5m]))
+)
 ```
 
-## HdrHistogram
+Filter/group by dimensions required by the decision (`route`, `region`, outcome policy) before
+removing labels. Do not merge populations with different clocks or semantics merely because their
+metric names match.
 
-O(1) insertion, constant memory, fixed _relative_ error, against O(n log n) time and
-unbounded memory for the naive "keep every sample and sort" approach. Footprint depends on
-the range **and its unit**: at three significant digits, 1 µs to 1 h is 188,928 bytes and
-1 ns to 1 h is 270,848 bytes (`getEstimatedFootprintInBytes()`, HdrHistogram 2.2.2). The
-widely quoted "~185 KB" figure is the microsecond-unit case.
+## Sample quantiles and resolution
+
+A sample quantile is an estimator based on order statistics. Multiple interpolation conventions
+exist (Hyndman–Fan enumerate nine), so small-sample results can differ across tools. For empirical
+CDF/type-1 semantics, p99 over 200 observations is near the second-largest observation: it is a
+valid sample statistic, but a noisy estimate of a population tail.
+
+`n(1-p)` is the expected count beyond population quantile `p`, useful as a resolution warning—not
+a pass/fail threshold. Report:
+
+- total and terminal-outcome counts, plus the quantile convention;
+- distribution-free order-statistic rank bounds or an interval justified for the sampling design;
+- dependence and effective experimental unit, not only request count;
+- censoring/timeouts and the histogram's representation error.
+
+If the required tail lies beyond available resolution, prefer a threshold fraction such as
+`P(T ≤ 300 ms)`, collect a longer valid window, pool exchangeable windows, or explicitly report
+the bound. Do not rename a maximum or bucket edge “p99.99”.
+
+## HdrHistogram engineering
+
+HdrHistogram uses a fixed relative-precision bucket structure with bounded memory and effectively
+constant-time recording over a configured range. Its quantisation is intentional; it does not
+preserve raw values.
 
 ```java
-DistributionStatisticConfig.builder()
-    .percentileHistogram(true)
-    .minimumExpectedValue(Duration.ofMillis(1).toNanos())
-    .maximumExpectedValue(Duration.ofSeconds(30).toNanos())
-    .build();
+Timer timer = Timer.builder("http.server.duration")
+    .publishPercentileHistogram()
+    .minimumExpectedValue(Duration.ofMillis(1))
+    .maximumExpectedValue(Duration.ofSeconds(30))
+    .register(registry);
 ```
 
-- `numberOfSignificantValueDigits = 3` gives ±0.1% error.
-- `highestTrackableValue` must exceed the client timeout, with margin — values above it
-  are not recorded truthfully.
-- Measure the real cost with `getEstimatedFootprintInBytes()` for the range you chose;
-  do not assume.
-- **`Histogram` is not thread-safe.** Use `ConcurrentHistogram`, `Recorder` or
-  `SingleWriterRecorder` wherever recording is concurrent.
+- Three significant decimal digits provide roughly 0.1% value resolution across the configured
+  dynamic range; confirm the exact equivalent-value bounds for the library version.
+- Range, unit and precision jointly determine footprint. Use
+  `getEstimatedFootprintInBytes()` on the actual configuration rather than copying a universal
+  kilobyte figure.
+- Plain `Histogram` has a single-writer contract. Use `Recorder`, `SingleWriterRecorder` or a
+  concurrent variant according to ownership, and obtain interval histograms without racing reset.
+- Adding can fail or lose the intended precision when the destination cannot represent a source
+  value/configuration. Pre-size the destination, test merge compatibility, and count failures;
+  auto-resize trades bounded memory for resilience.
+- Values beyond range, negative values and unit mistakes need tests at the instrumentation edge.
 
-## Merging across instances
+Micrometer's `publishPercentiles(...)` exports client-computed quantiles with a local rotating
+window. Those values are not aggregable. `publishPercentileHistogram()` exports a mergeable
+histogram where supported. Expiry, buffer length, bucket defaults and base units depend on meter,
+registry and Micrometer version; inspect effective configuration rather than assuming “2 minutes”.
 
-Every backend merges histograms by adding bucket counts. That is only valid when the bucket
-boundaries are the same on every side, which each format guarantees differently:
+## Classic, native and exponential histograms
 
-| Format                               | Merge rule                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| HdrHistogram                         | `a.add(b)` throws `ArrayIndexOutOfBoundsException` when `b` holds a value above `a`'s `highestTrackableValue` (verified, 2.2.2). Precision may differ — a 2-digit histogram adds into a 3-digit one. Size the fleet histogram for the largest instance range, or `setAutoResize(true)`.                                                                                                                                      |
-| Prometheus classic (`_bucket`, `le`) | `sum by (le)` is only meaningful when every instance exposes the same `le` set. During a rolling deploy that changes buckets, the overlap window mixes two ladders and `histogram_quantile` over it is undefined. Change buckets rarely and read the quantile only after the fleet converges.                                                                                                                                |
-| Prometheus native histograms         | Exponential buckets with a per-histogram `schema`; the upper bound of bucket `i` is `(2^(2^-schema))^i`, so schema 3 is a ×2^(1/8) ≈ 1.09 ladder. Merging different schemas downscales to the coarser one, so instances need not agree. Query as `histogram_quantile(0.99, sum(rate(m[5m])))` — no `le`, no `by (le)`. Needs protobuf scrape; stable in Prometheus 3.8, `scrape_native_histograms` from 3.9, default from 4. |
-| OpenTelemetry exponential histogram  | Base-2 `scale` with the same downscale-to-merge property; select it with `OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION=base2_exponential_bucket_histogram` (default is `explicit_bucket_histogram`).                                                                                                                                                                                                             |
-| Micrometer `publishPercentiles(...)` | One number per instance from a rotating window (2 min, 3 buffers by default). Not mergeable in any backend — the fleet p99 does not exist. `publishPercentileHistogram()` exports buckets instead; the bucket counts per range are in `metrics-and-cardinality`.                                                                                                                                                             |
+| Representation                       | Decision properties                                           | Migration/production hazards                                                                                    |
+| ------------------------------------ | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Raw observations                     | Maximum analytical freedom                                    | high volume/privacy/storage; sampling can bias tails                                                            |
+| HdrHistogram                         | known range/relative precision; cheap local recording         | configured range, unit, concurrency and reset/merge ownership                                                   |
+| Prometheus classic histogram         | aggregable fixed cumulative buckets                           | one series per label-set/bucket; linear interpolation; all sources must expose compatible boundaries            |
+| Prometheus summary/client quantiles  | local quantile accuracy chosen at instrumentation             | quantiles and windows fixed client-side and not aggregable                                                      |
+| Prometheus native standard histogram | mergeable exponential schemas, adaptive sparse representation | scrape/remote-write enablement and backend/library support are version-specific; downscaling reduces resolution |
+| OpenTelemetry exponential histogram  | mergeable base-2 scales with downscaling                      | aggregation temporality, collector/backend translation and scale limits must be verified end-to-end             |
 
-The rolling-deploy trap also applies to a client-library upgrade that changes the default
-bucket set: the exporter, not the code, changed the ladder.
+For classic histograms, place boundaries at decision thresholds (for example, exactly 300 ms) so
+the compliant fraction is a bucket-count ratio without quantile interpolation. Add boundaries
+around expected quantiles only when the storage/cardinality cost is justified. A rolling deploy
+that changes classic bucket sets creates a mixed population whose cumulative buckets no longer
+describe one common ladder; dual-publish a new metric/schema or wait for convergence before
+comparing.
 
-## Prometheus bucket configuration
+Prometheus native histograms became stable in Prometheus 3.8, but scraping remains explicitly
+configured in v3; the specification says scrape and remote-write defaults change in v4. Verify
+the deployed server, ingestion protocol, remote-write receiver and query path. Standard schemas
+can downscale to merge; custom-boundary native histograms generally require compatible boundaries.
 
-The client's default buckets are `[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5,
-10]` seconds. For a service whose typical latency is 200 ms, p99 lands in the
-`(0.25, 0.5]` bucket, and linear interpolation inside it has a maximum error equal to the
-bucket width — 250 ms, larger than the service's own typical latency.
+## Interpolation and error budget
 
-That default belongs to the Prometheus client libraries. A Micrometer `Timer` with no
-distribution configuration exports **no buckets at all** — only `_count`, `_sum` and
-`_max` — so `histogram_quantile` against it returns `NaN` rather than a wrong number.
+`histogram_quantile` estimates within the bucket containing the requested quantile. Classic
+histograms generally interpolate linearly; standard native exponential buckets use exponential
+interpolation for nonzero buckets. The result's resolution cannot be better than its bucket model.
+If a proposed 10 ms improvement lies inside a 250 ms classic bucket, the dashboard cannot decide
+the regression even when request count is enormous.
 
-Set the bucket range from the service's measured range, or use
-`percentileHistogram(true)` with explicit min/max as above.
+Separate three uncertainties:
 
-## Alerting
+1. **Sampling/process variation** — which requests, runs, hosts and time windows occurred.
+2. **Representation error** — quantisation, bucket interpolation, range truncation and export.
+3. **Causal uncertainty** — whether treatment rather than traffic, placement or restart caused
+   the difference.
 
-- The SLO expression uses a percentile, never a mean.
-- `for:` of at least 5 minutes, so a single spike does not page.
-- A separate p99.9 alert alongside the p99 one — the tail is a different question from
-  the typical case.
-- Track jitter (`p99 − p50`) separately from the absolute level.
-- Test the alert by injecting artificial latency. An alert that has never fired is a
-  hypothesis.
+More samples reduce only the first, and only under the sampling/dependence assumptions.
+
+## SLOs and alerting
+
+When the objective is “99% under 300 ms”, alert on the count fraction above/below a bucket at
+300 ms and on burn rate, not on an interpolated p99 if avoidable. Include errors and timeouts in
+the SLI's denominator according to its contract. Choose evaluation windows and `for`/burn-rate
+logic from detection and recovery objectives; no universal five-minute rule exists. Validate
+queries with synthetic boundary values, counter resets, absent series, mixed schemas and a known
+slow/error cohort.
+
+## Sources
+
+- [Prometheus: Histograms and summaries](https://prometheus.io/docs/practices/histograms/)
+- [Prometheus native histogram specification](https://prometheus.io/docs/specs/native_histograms/)
+- [Micrometer: Histograms and percentiles](https://docs.micrometer.io/micrometer/reference/concepts/histogram-quantiles.html)
+- [HdrHistogram project and Java API notes](https://github.com/HdrHistogram/HdrHistogram)
+- [OpenTelemetry exponential histogram data model](https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponentialhistogram)
+- [Hyndman and Fan, “Sample Quantiles in Statistical Packages” (1996)](https://robjhyndman.com/publications/quantiles/)

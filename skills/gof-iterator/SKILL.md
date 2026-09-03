@@ -3,7 +3,7 @@ name: gof-iterator
 description: >
   Iterator in modern Java: traversing an aggregate without exposing it, and choosing between
   Iterator, Stream and Spliterator — external pull versus internal lazy pipeline versus the
-  parallel decomposition primitive. Covers why implementing Spliterator gives you both, what fail-fast
+  parallel decomposition primitive. Covers when a Spliterator can adapt to both, what fail-fast
   really promises and how weakly consistent iterators differ, streams that hold a resource and
   must be closed, remote pagination as iteration with page drift, and the characteristics that
   decide whether a stream can be sized or split. Use when exposing a collection from a type, when
@@ -41,9 +41,10 @@ Spliterator<T>    the primitive underneath Stream: tryAdvance for one
                   Implement this and you get both of the above.
 ```
 
-The practical rule: **expose `Iterable`/`Stream`, implement `Spliterator`.** A hand-written
-`Iterator` gives the least and costs the most; `StreamSupport.stream(spliterator, false)` and
-`Spliterators.iterator(...)` derive the other two from it.
+Choose the smallest contract consumers need. `Spliterator` is useful when splitting or stream
+characteristics are meaningful, and adapters can derive an `Iterator` or `Stream` from it. A
+direct `Iterator` is often simpler for stateful pull protocols and must not be replaced merely to
+follow a universal rule.
 
 ## When it is the answer
 
@@ -67,8 +68,9 @@ Traversal must be parallel
   `Collections.unmodifiableList` is simpler than a custom traversal.
 - **The caller needs random access, size or repeated traversal.** A `Stream` is single-use and a
   custom `Iterator` gives none of these; return a collection.
-- **You are writing an `Iterator` by hand for a finite in-memory structure.** Build the list, or
-  implement `Spliterator`.
+- **You are writing an `Iterator` for an existing collection with an adequate iterator.** Delegate
+  or expose an immutable view. For a custom structure, Iterator may remain the simplest correct
+  traversal; add Spliterator only for useful stream/splitting semantics.
 - **The "iteration" is a remote query.** Paging through a remote API is iteration in shape only —
   it has server-side state, latency per page, and consistency questions the interface hides.
 
@@ -99,12 +101,12 @@ THEN its characteristics must be true. Claiming SIZED or DISTINCT when
      it is not produces wrong results, not slow ones.
 
 IF trySplit cannot split evenly, or the source is a linked structure
-THEN parallel streams will not help and often hurt; measure before
+THEN parallel streams may not amortize splitting/coordination; measure before
      using them.
 
 IF iteration crosses a network boundary
-THEN it is pagination: choose keyset over offset, define what happens
-     when the underlying data changes mid-walk, and bound the total.
+THEN it is pagination: compare cursor, keyset and offset semantics; define snapshot,
+     duplicate/skip behavior under mutations, cancellation and a total/deadline bound.
 
 IF an Iterable is returned from a type whose state may change
 THEN say whether the traversal is a snapshot or live. Callers will
@@ -134,21 +136,23 @@ Two-handed traversal (merge, diff)   Iterator, explicitly — this is the
 
 ## Cross-cutting checks
 
-- **Concurrency.** No `Iterator` is thread-safe, and none of the three abstractions makes a
-  traversal atomic. The three semantics available are fail-fast (best effort, an exception
+- **Concurrency.** Do not assume an iterator can be driven concurrently unless its contract says
+  so, and none of the three abstractions inherently makes traversal atomic. Common semantics are fail-fast (best effort, an exception
   _usually_), weakly consistent (no exception, unspecified visibility of concurrent changes), and
   snapshot (`CopyOnWriteArrayList` — an exact view of the moment it started, at the cost of a copy
   per mutation). Choose deliberately, and document which one a returned traversal offers.
 - **Distribution.** Remote iteration is pagination, and the interface hides three things: latency
   per page, server-side cursor state that leaks if the caller abandons the walk, and consistency —
-  with offset pagination, rows inserted or deleted mid-walk cause items to be skipped or repeated.
-  Keyset pagination removes the drift; a bounded total and a deadline remove the unbounded walk
+  with offset pagination, rows inserted or deleted mid-walk can cause items to be skipped or repeated.
+  Keyset pagination avoids offset drift for a stable unique ordering but is not a snapshot: updates
+  to sort keys and isolation level still matter. A cursor/snapshot token may be required
   (`rpc-and-api-contracts`).
-- **Performance.** `Iterator<Integer>` boxes every element; `IntStream` and primitive spliterators
-  do not. Correct `Spliterator` characteristics matter more than they look: `SIZED` lets the
+- **Performance.** An `Iterator<Integer>` exposes boxed values; whether boxing allocates during
+  traversal depends on the source. `IntStream` and primitive spliterators preserve primitive
+  representation. Correct `Spliterator` characteristics matter: `SIZED` can let the
   pipeline pre-allocate, `SUBSIZED` enables balanced splitting, `SORTED` and `DISTINCT` let
-  operations be elided. A per-loop iterator allocation is usually removed by escape analysis and
-  is not worth avoiding (`jit-inlining-and-escape-analysis`).
+  operations be optimized. Treat iterator-allocation elimination as a compilation hypothesis and
+  verify it only on a measured hot path (`jit-inlining-and-escape-analysis`).
 - **Testing.** The cases that break: empty sequence, single element, exhaustion (`next()` after
   `hasNext()` returns false must throw `NoSuchElementException`), `hasNext()` called twice with no
   `next()` between, and — for resource-backed traversals — that abandoning the stream halfway
@@ -163,7 +167,7 @@ Two-handed traversal (merge, diff)   Iterator, explicitly — this is the
 - [ ] No code depends on `ConcurrentModificationException` being thrown
 - [ ] Custom `Spliterator` characteristics are accurate
 - [ ] Parallel use is justified by a measurement, not by the source being large
-- [ ] Remote iteration uses keyset paging, is bounded, and defines mid-walk consistency
+- [ ] Remote paging strategy is justified, bounded, cancellable, and defines mid-walk consistency
 - [ ] `hasNext()` is side-effect-free and repeatable
 - [ ] Primitive streams are used where boxing would otherwise dominate
 

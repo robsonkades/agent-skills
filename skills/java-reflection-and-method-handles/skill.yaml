@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: java-reflection-and-method-handles
-version: 1.3.0
+version: 1.4.0
 description: >-
   Runtime access to code the compiler cannot check: what reflection costs beyond speed — no
   compile-time checking, invisible to refactoring and dead-code analysis, blocked by module
-  encapsulation, unsupported without configuration under AOT and native image — the
+  encapsulation, and constrained by closed-world native-image analysis — the
   alternatives that keep the checking (interfaces, ServiceLoader, annotation processing,
   code generation), MethodHandles and VarHandles for genuinely dynamic access, and the
   security boundary around resolving a name that came from outside. Use when reflection
@@ -45,6 +45,9 @@ files:
 dependencies: []
 
 suggests:
+  - graalvm-native-image
+  - java-serialization-hardening
+  - jvm-class-loading
   - varhandles-and-memory-ordering
 
 capabilities:

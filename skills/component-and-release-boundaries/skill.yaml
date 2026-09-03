@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: component-and-release-boundaries
-version: 1.1.0
+version: 1.2.0
 description: >-
   Deciding what becomes an independently releasable component — a Maven module, a JPMS module, a
   published library — and what that costs: the tension between reusing code and being able to

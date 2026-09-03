@@ -1,99 +1,144 @@
-# Happens-before rules and safe publication
+# Happens-before and publication proofs
 
-## The rules that create an edge
+## Build the graph
 
-| Rule                   | Edge                                                             |
-| ---------------------- | ---------------------------------------------------------------- |
-| Program order          | earlier statement hb later statement, **within one thread only** |
-| Monitor lock           | `unlock(m)` hb subsequent `lock(m)` — **same `m`**               |
-| Volatile               | write to `v` hb subsequent read of `v`                           |
-| Thread start           | `t.start()` hb everything in `t`                                 |
-| Thread termination     | everything in `t` hb `t.join()` returning                        |
-| Interruption           | `t.interrupt()` hb `t` detecting the interrupt                   |
-| Final field            | construction of final fields hb publication of the reference     |
-| `java.util.concurrent` | actions before placing an item hb actions after taking it        |
+For each execution sketch:
 
-Everything the JMM guarantees comes from composing these. Where no chain connects a write
-to a read, there is no guarantee — regardless of how the code reads.
+1. Name actions: ordinary/volatile reads/writes, locks/unlocks, start/join, interrupts, external
+   actions, and API synchronization actions.
+2. Add program-order edges within each thread.
+3. Add only synchronization edges guaranteed by JLS or exact API documentation.
+4. Take transitive closure where needed.
+5. For every read, enumerate candidate writes under JLS allowed-to-see rules.
+6. Check the state invariant, not only individual values.
 
-## Piggyback publication
+Do not infer an edge from real time, thread names, executor choice, CPU coherence, safepoints, method
+calls, logging, exceptions, or “the writer finished first” unless a specified lifecycle action
+communicates that fact.
 
-```java
-// The anchor is volatile; the data field is not, and does not need to be
-Config config;
-volatile boolean initialized;
+## Publication patterns
 
-// Writer                          // Reader
-config = new Config();             if (initialized) {      // read anchor first
-initialized = true;                    config.get("k");    // then the data
-                                   }
-```
-
-The volatile write publishes everything that preceded it on that thread. This works only
-if the order is respected on both sides: data before anchor when writing, anchor before
-data when reading.
-
-Marking the _data_ field volatile instead is the common inversion, and it does not
-establish the edge you need.
-
-## Safe publication idioms
+### Volatile immutable snapshot
 
 ```java
-// Build locally, publish once
-volatile Map<String, Handler> handlers = Map.of();
-void init() {
-    Map<String, Handler> tmp = new HashMap<>();
-    tmp.put("GET", new GetHandler());
-    handlers = Map.copyOf(tmp);
+private volatile State state = State.empty();
+
+void replace(Input input) {
+    State next = buildImmutable(input);
+    state = next;
 }
 
-// Genuinely concurrent mutation
-final Map<String, Handler> handlers = new ConcurrentHashMap<>();
-```
-
-```java
-// Do not let this escape — publish from a factory instead
-final class EventListener {
-    final String name;
-    private EventListener(String name) { this.name = name; }
-
-    static EventListener create(String name) {
-        EventListener l = new EventListener(name);
-        Registry.register(l);
-        return l;
-    }
+Result read() {
+    State snapshot = state;
+    return snapshot.result();
 }
 ```
 
-## Lazy initialisation
+One volatile read selects one internally consistent immutable version. This can replace a lock for
+read-dominated replace-whole-state semantics; writes may still need serialization/CAS to avoid lost
+updates.
+
+### Lock-guarded invariant
 
 ```java
-// Double-checked locking: the field MUST be volatile
+synchronized (lock) {
+    balance -= amount;
+    sequence++;
+}
+```
+
+Every access participating in the invariant—including reads—must follow the same guard protocol.
+Escaping a mutable reference allows access outside the lock and breaks the proof.
+
+### Concurrent handoff
+
+Queues, futures, executors and concurrent collections publish according to their documented
+memory-consistency effects. Quote the exact API clause and ensure the operations used are the ones
+forming the handoff. For example, a side channel that reads a field before obtaining the queued
+element does not benefit retroactively.
+
+### Class initialization
+
+Static holder initialization is synchronized by JVM class-initialization rules. It is useful for
+lazy static state when initialization failure/recursive initialization/class-loader scope are
+acceptable. “No hot-path lock” is not “zero cost”; class init and first use still have lifecycle
+cost/failure semantics.
+
+## Double-checked initialization
+
+```java
 private volatile Resource resource;
-Resource get() {
+
+Resource resource() {
     Resource r = resource;
     if (r == null) {
-        synchronized (this) {
+        synchronized (lock) {
             r = resource;
-            if (r == null) resource = r = new Resource();
+            if (r == null) {
+                r = create();
+                resource = r;
+            }
         }
     }
     return r;
 }
-
-// Static holder: no volatile, no lock, no cost on the hot path
-private static final class Holder { static final Resource INSTANCE = new Resource(); }
-static Resource get() { return Holder.INSTANCE; }
 ```
 
-Prefer the holder unless the initialisation genuinely depends on runtime state.
+The volatile publication is required. Also define initialization exception/retry, reentrancy,
+shutdown and whether duplicate speculative construction is permitted in alternative CAS designs.
+Prefer eager or holder initialization when lifecycle permits.
 
-## x86 versus aarch64
+## Final-field freeze versus publication
 
-Under TSO (x86) the only permitted reordering is **StoreLoad**: a later load can move ahead
-of an earlier store. The consequence for cost is asymmetric — a volatile _read_ on x86 is
-practically free, while the _write_ is not. On aarch64 both sides cost.
+Final-field semantics provide special visibility for correctly constructed objects even in some
+racy publication executions. They do not create a generic synchronizes-with/happens-before edge.
+They do not guarantee non-final fields, later mutations, or that a reader sees a non-null reference.
 
-This is why migrating from x86 to aarch64 is an involuntary audit of your memory model.
-The defects were always there; the weaker model reveals them. Validate every concurrency
-fix on both.
+Review reachable mutable objects separately:
+
+```java
+final List<String> values;
+```
+
+The final reference is fixed. If the list mutates after construction, those mutations need a
+concurrency protocol. Use an immutable copy when immutable semantics are intended.
+
+## Common litmus shapes
+
+### Message passing
+
+```text
+Writer: data = 1; volatileReady = true
+Reader: if (volatileReady) observe data
+```
+
+With volatile access on the anchor and order as shown, observing ready true establishes the chain to
+the earlier data write. Plain anchor accesses do not.
+
+### Store buffering
+
+```text
+T1: x = 1; r1 = y
+T2: y = 1; r2 = x
+```
+
+Allowed outcomes depend on access modes and JMM rules. Acquire/release operations that do not pair
+through an observed synchronization may not establish the total ordering the algorithm expects.
+Use `varhandles-and-memory-ordering` and a jcstress test; do not reason solely from x86 instructions.
+
+### Check-then-act
+
+```java
+if (!map.containsKey(k)) map.put(k, create());
+```
+
+Thread-safe individual methods do not make the sequence atomic. Use an operation whose contract
+matches the semantics (`putIfAbsent`, `computeIfAbsent`, lock, immutable update), noting that mapping
+functions may run under library-specific contention/retry constraints and must obey their contract.
+
+## Authoritative references
+
+- [JLS 17.4.5: Happens-before order](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5)
+- [JLS 17.5: Final field semantics](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5)
+- [Java concurrency package memory-consistency properties](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html#MemoryVisibility)
+- [OpenJDK jcstress](https://github.com/openjdk/jcstress)

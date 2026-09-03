@@ -1,20 +1,16 @@
 schemaVersion: 1
 
 name: code-cache-segments
-version: 2.0.0
+version: 2.1.0
 description: >-
-  The segmented code cache as three independent CodeHeaps: non-nmethods, profiled and
-  non-profiled nmethods, the GC-driven unloading that replaced the sweeper in JDK 20,
-  fragmentation that no aggregate metric shows, sizing each segment consistently, and
-  reading jcmd Compiler.codecache and CodeHeap_Analytics. Use when CPU rises with no load
-  change while an aggregate "Code Cache usage" dashboard looks healthy, when doubling
-  ReservedCodeCacheSize fixed one incident and not the next, when setting
-  ProfiledCodeHeapSize or NonProfiledCodeHeapSize makes the JVM refuse to start, when GC
-  logs show a CodeCache GC Threshold cause, when an OutOfMemoryError says "Out of space in
-  CodeCache", when a long-running service degrades with the cache reportedly not full, or
-  when only one unnamed CodeHeap appears in the output. Does not cover the introductory
-  code-cache exhaustion signature (jit-compilation), the code cache's share of the container
-  memory budget (jvm-memory-regions), or Metaspace internals (metaspace-internals).
+  The JDK 17-25 segmented code cache, GC-driven unloading, fragmentation, segment sizing,
+  and jcmd Compiler.codecache/CodeHeap_Analytics. Use when aggregate usage looks healthy but
+  one CodeHeap is exhausted, compilation stops or restarts, GC logs show a CodeCache cause,
+  startup rejects manual heap sizes, an OutOfMemoryError reports "Out of space in CodeCache",
+  or a long-running service degrades while aggregate free space remains. Covers runtime-shape
+  discovery so tools do not assume exactly three heaps on every mode or release. Excludes the
+  introductory exhaustion signature (jit-compilation), container memory budgeting
+  (jvm-memory-regions), and Metaspace internals (metaspace-internals).
 
 license: Apache-2.0
 

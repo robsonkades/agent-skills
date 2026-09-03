@@ -6,14 +6,15 @@ Production sees intermittent NPEs in `TotalsService`, three calls away from any 
 ## Before
 
 ```java
+public record InvoiceLineDto(String sku, BigDecimal amount) {}
 public record InvoiceDto(String id, String customerId,
-                         List<InvoiceLine> lines, Instant issuedAt) {}
+                         List<InvoiceLineDto> lines, Instant issuedAt) {}
 
 public class InvoiceService {
     public void register(InvoiceDto dto) {
         store.put(dto.id(), dto);                    // dto.id() may be null
     }
-    public List<InvoiceLine> linesFor(String invoiceId) {
+    public List<InvoiceLineDto> linesFor(String invoiceId) {
         InvoiceDto invoice = store.get(invoiceId);
         return invoice != null ? invoice.lines() : null;   // null for two reasons
     }
@@ -22,7 +23,7 @@ public class InvoiceService {
 public class TotalsService {
     public BigDecimal total(String invoiceId) {
         BigDecimal sum = BigDecimal.ZERO;
-        for (InvoiceLine line : invoiceService.linesFor(invoiceId)) {  // NPE here
+        for (InvoiceLineDto line : invoiceService.linesFor(invoiceId)) {  // NPE here
             sum = sum.add(line.amount());            // line.amount() may also be null
         }
         return sum;
@@ -53,6 +54,14 @@ One conversion at the adapter; `@NullMarked` domain types enforce their own cont
 
 ```java
 @NullMarked
+public record InvoiceLine(String sku, BigDecimal amount) {
+    public InvoiceLine {
+        Objects.requireNonNull(sku, "sku");
+        Objects.requireNonNull(amount, "amount");
+    }
+}
+
+@NullMarked
 public record Invoice(String id, String customerId,
                       List<InvoiceLine> lines, Instant issuedAt) {
     public Invoice {
@@ -63,25 +72,53 @@ public record Invoice(String id, String customerId,
     }
 }
 
-static Invoice fromDto(InvoiceDto dto) {          // the only place wire-null exists
-    if (dto.id() == null || dto.customerId() == null || dto.issuedAt() == null) {
-        throw new IllegalArgumentException("invoice payload missing required fields");
+final class InvalidInvoicePayload extends IllegalArgumentException {
+    private final String field;
+    private final String code;
+
+    InvalidInvoicePayload(String field, String code) {
+        super(field + ": " + code);
+        this.field = field;
+        this.code = code;
     }
-    return new Invoice(dto.id(), dto.customerId(),
-            dto.lines() == null ? List.of() : dto.lines(), dto.issuedAt());
+
+    String field() { return field; }
+    String code() { return code; }
 }
 
-public List<InvoiceLine> linesFor(String invoiceId) {
-    Invoice invoice = store.get(invoiceId);
-    return invoice == null ? List.of() : invoice.lines();   // empty, never null
+// The following mapper methods live in the inbound adapter.
+static <T> T required(@Nullable T value, String field) {
+    if (value == null) throw new InvalidInvoicePayload(field, "required");
+    return value;
+}
+
+static Invoice fromDto(InvoiceDto dto) {          // the only place wire-null exists
+    if (dto == null) throw new InvalidInvoicePayload("body", "required");
+    String id = required(dto.id(), "id");
+    String customerId = required(dto.customerId(), "customerId");
+    Instant issuedAt = required(dto.issuedAt(), "issuedAt");
+    List<InvoiceLineDto> rawLines = required(dto.lines(), "lines");
+    List<InvoiceLine> lines = IntStream.range(0, rawLines.size())
+        .mapToObj(i -> {
+            InvoiceLineDto line = required(rawLines.get(i), "lines[" + i + "]");
+            return new InvoiceLine(
+                required(line.sku(), "lines[" + i + "].sku"),
+                required(line.amount(), "lines[" + i + "].amount"));
+        })
+        .toList();
+    return new Invoice(id, customerId, lines, issuedAt);
+}
+
+public Optional<Invoice> findInvoice(String invoiceId) {
+    return Optional.ofNullable(store.get(Objects.requireNonNull(invoiceId, "invoiceId")));
 }
 ```
 
-`TotalsService` is now correct **unchanged**: it iterates a list that exists and adds
-amounts that exist. The nulls did not get handled better; they stopped existing past the
-adapter. An unknown invoice now totals to zero — if "unknown" must be distinguishable
-from "empty", that is an absence the API should state, with an Optional return or a
-domain exception (the choice is java-optional's territory).
+`InvalidInvoicePayload` and `required` are boundary helpers that expose stable field/code data and
+do not echo sensitive values. `TotalsService.total(Invoice)` now receives a proven domain object;
+its caller handles `findInvoice` absence explicitly. An existing invoice with no lines legitimately
+totals zero, while an unknown invoice does not silently become one. Optional mechanics belong to
+java-optional.
 
 ## Trade-offs
 
@@ -101,8 +138,13 @@ domain exception (the choice is java-optional's territory).
 
 - Tests feeding a DTO with each required field null: rejected at `fromDto` with a message
   naming the payload problem — not an NPE from deeper in.
-- A test for the unknown-invoice path asserting an empty total, pinning the chosen
-  semantics.
+- A test for the unknown-invoice path asserting `Optional.empty`, distinct from an invoice whose
+  line list is empty and total is zero.
 - NullAway (or the IDE checker) over the `@NullMarked` domain package: zero findings;
   the DTO package deliberately stays unmarked — it is the one place null is legal.
 - The production NPE's stack trace path re-run as a test: green.
+
+## Authoritative references
+
+- [Objects.requireNonNull API, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Objects.html#requireNonNull(T,java.lang.String)>)
+- [Optional API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html)

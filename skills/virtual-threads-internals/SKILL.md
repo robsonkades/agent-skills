@@ -1,104 +1,152 @@
 ---
 name: virtual-threads-internals
 description: >
-  Virtual thread internals: the continuation freeze algorithm, mount and unmount and
-  StackChunk copying, forced deoptimisation of non-freezable frames, the dedicated
-  ForkJoinPool scheduler and its automatic compensation, what jdk.VirtualThreadPinned
-  actually measures, the heap cost of suspended stacks per collector, and the residual
-  pinning cases on the current baseline. Use when pinning is suspected, when
-  -Djdk.tracePinnedThreads appears in a runbook, when ForkJoinPool worker threads grow
-  past the configured parallelism, when a JNI or FFM call sits on the hot path, when
-  someone proposes replacing synchronized with ReentrantLock to stop pinning, when
-  virtual threads run CPU-bound work, or when GC marking time rose after adopting them.
-  Does not cover the introductory adoption and sizing treatment
-  (thread-sizing-and-virtual-threads), happens-before and correctness
-  (java-memory-model), or work-stealing pool mechanics in general
-  (forkjoinpool-and-work-stealing).
+  Diagnose HotSpot virtual-thread mounting, heap stack chunks, FIFO work-stealing scheduling,
+  carrier capture, residual native/foreign pinning after JEP 491, scheduler compensation boundaries
+  and memory/GC effects without treating implementation details as API guarantees. Use when pin
+  events, scheduler queue/pool growth, native calls, CPU-ready virtual threads or retained suspended
+  stacks explain a scalability regression on Java 21–25.
 ---
 
 # Virtual Threads Internals
 
 ## Purpose
 
-Tell pinning, starvation and compensation apart. All three look the same from outside —
-low throughput, carriers busy — and each needs a different fix, so confusing them means
-correcting the wrong cause. This skill exists for the case where the introductory
-treatment has already been applied and the numbers still do not add up.
+Distinguish four mechanisms that look like “carriers are busy” but require different decisions:
 
-The second failure it prevents is measuring the wrong thing. A pinned task still
-completes successfully; a completion counter therefore proves nothing about pinning. Only
-the `jdk.VirtualThreadPinned` event, at a threshold low enough to see the pins, answers
-that question.
+- CPU-ready virtual threads waiting for scheduler capacity;
+- normal unmounted waiting, with pressure at a dependency/resource;
+- carrier capture by a blocking operation that cannot unmount but for which the runtime may compensate;
+- pinning by native/foreign execution, for which scheduler expansion is not a promised remedy.
 
-## Workflow
+Introductory adoption belongs to `thread-sizing-and-virtual-threads`; evidence collection to
+`concurrency-diagnostics`; work-stealing in general to `forkjoinpool-and-work-stealing`.
 
-1. **Confirm virtual threads are actually in use.** No popular web framework enables them
-   without opt-in except Helidon Nima. Spring Boot 3.2+ needs
-   `spring.threads.virtual.enabled=true`; Quarkus needs `@RunOnVirtualThread` per method.
-   Assuming the wrong default means measuring a platform pool and calling it Loom.
-2. **Instrument the pinning event, not a counter.** Consume `jdk.VirtualThreadPinned`
-   through `RecordingStream` with an explicit threshold — the default is 20 ms and hides
-   short, frequent pins. Recipe in `references/pinning-diagnostics.md`.
-3. **Read the stack trace of the event.** It names the cause: a native frame (JNI/FFM) or
-   a `<clinit>` in progress. Anything else is an unverified assumption.
-4. **Separate the three effects.** Pinning: carriers held, events present. Starvation:
-   virtual threads `RUNNABLE` waiting for a free carrier, no pinning events. Legitimate
-   waiting on a downstream resource: neither.
-5. **Check whether compensation is running.** Count `ForkJoinPool-<n>-worker-<m>` threads
-   in a JSON thread dump over time. Sustained growth towards `maxPoolSize` is compensation
-   happening now.
-6. **Fix by isolating the blocking native call** into a dedicated, Little's-Law-sized
-   platform executor. Raising `maxPoolSize` only postpones the same ceiling and buys it
-   with memory.
-7. **If the GC profile moved, reduce concurrently suspended virtual threads**, not a
-   collector flag. Fewer suspended stacks means less live `StackChunk` to scan.
+## Diagnostic workflow
 
-## Rules
+1. Record exact JDK/vendor/build, effective CPU, scheduler properties and whether tasks truly execute
+   as virtual threads (`Thread.currentThread().isVirtual()`).
+2. Define the regression: throughput, scheduler queue, dependency wait, CPU, memory/GC or tail latency.
+3. Read `VirtualThreadSchedulerMXBean` time series (Java 24+): parallelism, pool size, mounted and
+   queued estimates.
+4. Capture JFR with inspected settings and thread dumps; classify pin/native/foreign stacks, file or
+   other captured-carrier operations, CPU-ready tasks and ordinary parked dependency waits.
+5. Correlate event duration/rate with scheduler queue and useful completion. A pin that has no capacity
+   impact is not automatically worth a rewrite.
+6. Test one mechanism-specific intervention: update/isolate native code, bound CPU phase, change I/O
+   path, reduce admission or tune scheduler only with proven headroom.
 
-- The only source of truth on pinning is the JFR event `jdk.VirtualThreadPinned`.
-  `-Djdk.tracePinnedThreads` was removed in JDK 24: it is still accepted on the command
-  line and does absolutely nothing. It must not appear in any runbook.
-- Never infer pinning from task completion counts. A pinned task completes too — it just
-  held a whole carrier while doing so.
-- Set an explicit threshold on the event (1 ms is a reasonable floor) before concluding
-  "there is no pinning".
-- On JDK 24+ (JEP 491) `synchronized` does not pin. Migrating `synchronized` to
-  `ReentrantLock` for that reason has zero effect. Choose on semantics: `tryLock` with
-  timeout, `lockInterruptibly`, fairness, multiple `Condition`s, or introspection.
-- Two residual pinning causes remain, and neither is fixed by changing lock type: a native
-  frame on the stack (JNI or FFM downcall), and a `<clinit>` in progress. Compression,
-  cryptography and legacy driver libraries are the usual suspects.
-- `jdk.internal.vm.Continuation`, not `java.lang.Continuation`. It is internal and must not
-  be used by application code.
-- The virtual-thread scheduler is a **dedicated** `ForkJoinPool` instance, never the same
-  reference as `commonPool()`, running `asyncMode = true` (FIFO). Configure it through
-  `jdk.virtualThreadScheduler.*`, not through a constructor.
-- Treat `jdk.virtualThreadScheduler.maxPoolSize` as a memory budget, not a safety net:
-  `maxPoolSize × ThreadStackSize` of reserved address space, plus per-thread kernel
-  overhead. Set it deliberately and alarm on its saturation.
-- CPU-bound work on virtual threads has no unmount point. It is identical to a fixed pool
-  of N carriers plus scheduling overhead, with no gain.
-- `Thread.sleep()` unmounts correctly and is still not a coordination primitive. Use
-  `CountDownLatch`, `Semaphore` or `StructuredTaskScope.join()`.
-- No collector has a "virtual thread mode" flag. G1, generational ZGC (default since
-  JDK 23, JEP 474) and generational Shenandoah (product since JDK 25, JEP 521) each gained
-  a dedicated `StackChunk` scan path; the lever is the volume of live chunks, measured by
-  comparing `-Xlog:gc*` before and after.
-- `StructuredTaskScope` is still preview on every released JDK (JEP 505 in 25, JEP 525 in 26),
-  built around `open(Joiner)`. `ShutdownOnFailure` and `ShutdownOnSuccess` were **removed**,
-  not renamed — code copied from pre-2025 material will not compile.
-- Use `jcmd <pid> Thread.dump_to_file -format=json`. `jstack` does not list virtual
-  threads.
+## Stable execution model
+
+A virtual thread is a Java `Thread` scheduled M:N over platform carrier threads. Mounting associates a
+virtual thread with a carrier for execution; unmounting suspends it and frees that carrier. There is no
+carrier affinity: native OS thread identity can differ between calls, and carrier ThreadLocal state is
+not virtual-thread state.
+
+The JDK scheduler is a work-stealing `ForkJoinPool`, distinct from the common pool, operating in FIFO
+mode. Its target parallelism defaults from available processors and is configurable via
+`jdk.virtualThreadScheduler.parallelism`. The scheduler does not currently promise time-sharing of
+CPU-bound virtual threads, so long CPU tasks can delay other ready virtual threads.
+
+These scheduler choices are implementation facts documented by JEP 444, not Java Language/JVM
+Specification semantics. Applications must not depend on internal pool identity, queue fields or
+carrier names.
+
+## Continuations and stack chunks
+
+HotSpot represents an unmounted virtual-thread continuation stack with heap `StackChunk` objects.
+Stacks grow/shrink; locals and references retained across a wait remain live through the virtual
+thread. The exact freeze/thaw copying, barriers, frame encoding and deoptimization paths are
+release/architecture/collector implementation details. Do not teach a made-up “every optimized frame
+is deoptimized before unmount” rule or infer it from one profile.
+
+Heap stacks change accounting:
+
+- millions of suspended threads imply at least millions of thread/task objects plus retained request
+  state and stack chunks;
+- deep stacks, large locals and ThreadLocals increase live heap and collector scanning work;
+- fewer allocations than an async pipeline are possible, but not guaranteed;
+- stack/request memory must be measured with the chosen collector and workload, not estimated only
+  from virtual-thread count.
+
+Correlate heap dominators/class histograms, live virtual-thread lifecycle, allocation/JFR and GC phase
+times before attributing a GC regression to `StackChunk`. There is no generic collector flag that
+turns on “virtual-thread mode.”
+
+## Unmounting, capture and pinning
+
+Many blocking JDK operations integrate with virtual threads and unmount. Some OS/JDK operations,
+notably many file-system paths, may capture a carrier and cause the scheduler to temporarily expand
+platform-thread count up to its configured maximum. This compensation is not the same as pinning.
+
+Java 24 JEP 491 removed pinning caused by `synchronized` monitor ownership/acquisition and
+`Object.wait`. Residual documented pinning occurs while executing a native method or foreign
+function. If such a virtual thread blocks, it retains its carrier. JEP 444 explicitly states the
+scheduler does not compensate for pinning by expanding parallelism; do not claim automatic
+`ManagedBlocker` compensation for native pins.
+
+`jdk.VirtualThreadPinned` reports pin durations crossing its active threshold. It is strong evidence
+that pinning occurred, not that pinning caused the SLO. Sampling/profile/JFR settings can miss events,
+and application/library instrumentation may provide additional evidence. The old
+`jdk.tracePinnedThreads` property was removed with JDK 24 behavior changes; an arbitrary `-D` property
+can still be accepted without any runtime consumer, so silence is meaningless.
+
+## Scheduler capacity and compensation
+
+On Java 24+, prefer `VirtualThreadSchedulerMXBean` to thread-name counting. Its counts are estimates
+and may be unavailable (`-1`). Interpret:
+
+| Evidence                                                                | Candidate mechanism                           | Do not conclude yet                                                   |
+| ----------------------------------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------- |
+| queued rises, CPU saturated/throttled                                   | CPU-ready demand beyond effective parallelism | that increasing parallelism creates CPU                               |
+| pool size exceeds target, file/native blocking stacks but no pin events | carrier capture/compensation                  | that every extra carrier is pinning                                   |
+| pin events and queued rise                                              | pinning may constrain carriers                | that every pin is causal without time alignment                       |
+| many parked VTs, scheduler queue low                                    | normal unmounted wait at resource             | that more carriers help                                               |
+| submit-failed events                                                    | start/unpark resource failure                 | exact exhausted resource without associated exception/system evidence |
+
+`jdk.virtualThreadScheduler.maxPoolSize` bounds platform threads available to the scheduler for cases
+that expand the pool; it is not an admission limit for virtual threads. Raising it consumes native
+thread/address-space/kernel resources and cannot increase dependency or CPU capacity. Size/tune only
+after a capture mechanism and resource headroom are demonstrated.
+
+## Decision guide
+
+Prefer updating/reconfiguring a library or isolating work on a bounded platform executor when a
+blocking native/foreign call is frequent, causal and cannot be changed. The isolation size must still
+respect dependency/CPU/native-thread capacity and cancellation.
+
+Prefer resource-local admission when many normally unmounted threads retain too much state or
+overwhelm a dependency. Prefer a bounded CPU executor/gate for long CPU phases. Prefer observation
+when pin volume is low and scheduler queue/SLO remain healthy.
+
+Do not replace `synchronized` with `ReentrantLock` for Java 24+ pinning. Lock choice still affects
+contention, timeouts, interruption, fairness and conditions; route that decision to concurrent locks.
+
+## Failure modes
+
+| Failure                                    | Evidence                                                         | Remediation/validation                                                  |
+| ------------------------------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| native pin bottleneck                      | pin stacks + scheduler queue/latency aligned                     | update/isolate call; verify queue and throughput under same load        |
+| captured file I/O expands carriers         | pool above target + file stacks/events, no equivalent pin signal | isolate/change I/O path or bound it; validate native memory and latency |
+| CPU starvation                             | CPU-ready VT stacks, CPU/throttling high, queued estimate rises  | bound/isolate CPU phase; validate fairness and useful CPU               |
+| suspended-stack memory pressure            | heap dominators/GC correlated with live waiting VTs              | reduce admission/depth/state; validate retained heap and GC phase       |
+| scheduler tuning masks dependency overload | more carriers increase downstream in-flight/errors               | restore resource-local limit; revert unsupported tuning                 |
+
+## Review checklist
+
+- [ ] Pinning, carrier capture, CPU starvation and ordinary waiting are not conflated.
+- [ ] Claims are scoped to exact Java/JDK implementation version.
+- [ ] Scheduler MXBean replaces carrier-name heuristics where Java 24+ is available.
+- [ ] JFR settings and time alignment are recorded; event absence is not overinterpreted.
+- [ ] Native/foreign stack is identified before isolation or scheduler tuning.
+- [ ] Heap/GC attribution uses retained-object and phase evidence.
+- [ ] Intervention validates useful completion, tail SLO, scheduler queue and resource health.
 
 ## References
 
-- [Continuation mechanics](references/continuation-mechanics.md) — the freeze algorithm
-  step by step, why a native frame stops it, the forced deoptimisation of non-freezable
-  frames, how the scheduler differs from an application `ForkJoinPool`, and what each
-  collector does with a `StackChunk`. Read when you need the mechanism to explain an
-  observation, or before reasoning about the heap cost of suspended stacks.
-- [Pinning diagnostics](references/pinning-diagnostics.md) — the `jdk.VirtualThreadPinned`
-  field reference, the `RecordingStream` instrumentation, the compensation-counting
-  command, the wall-clock flame-graph signature, the `maxPoolSize` budget matrix, and the
-  pre-production and incident checklists. Read when collecting evidence or sizing the
-  scheduler.
+- [Continuation and scheduler mechanics](references/continuation-mechanics.md)
+- [Pinning and carrier diagnostics](references/pinning-diagnostics.md)
+- [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)
+- [JEP 491: Synchronize Virtual Threads without Pinning](https://openjdk.org/jeps/491)
+- [Java 25 virtual threads](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
+- [Java 25 `VirtualThreadSchedulerMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html)

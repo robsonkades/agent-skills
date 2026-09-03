@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: container-awareness
-version: 1.1.0
+version: 1.2.0
 description: >-
   What the JVM actually detects inside a container: cgroup v1 versus v2 detection,
   ActiveProcessorCount and how a CPU quota becomes a processor count, MaxRAMPercentage and

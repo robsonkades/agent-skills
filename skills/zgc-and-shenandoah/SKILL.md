@@ -17,10 +17,10 @@ description: >
 
 ## Purpose
 
-Run a concurrent collector with its real cost budgeted. Sub-millisecond pause is not zero
-cost — it is cost moved out of the pause and into two places that no pause histogram shows:
-CPU burned by concurrent GC threads while the application runs, and a barrier on every
-reference access that is present even when no cycle is in flight.
+Run a concurrent collector with its real cost budgeted. Short pauses are not zero cost: work
+moves into concurrent phases, barriers and metadata, with collector/application CPU and
+memory-bandwidth contention that a pause histogram does not quantify. Barrier shape and when
+its slow path runs differ by collector, generation and cycle state.
 
 The failure this prevents is the migration that meets its p99 target and is then reverted,
 because the CPU and heap headroom the concurrent phases need were never budgeted, or because
@@ -31,24 +31,25 @@ the pod had no spare cores to pay for them in the first place.
 1. **Separate the three cost axes before reading any number.** STW pause, concurrent work
    (CPU while the application runs), and per-access barrier overhead. Conflating them is the
    most common source of a wrong conclusion about these collectors.
-2. **Check the CPU quota of the target environment, not the dev box.** On 1-2 cores the
-   concurrent phases compete directly with application threads, and G1 can beat both on
-   throughput because it concentrates its cost in a pause that ends.
+2. **Check effective CPU quota, throttling and topology in the target environment.** Small
+   quotas increase contention, but no core-count threshold selects a collector. Compare
+   throughput and tail latency under the actual quota and overload policy.
 3. **Declare the mode explicitly.** ZGC has exactly one mode since JDK 24 and needs only
    `-XX:+UseZGC`. Shenandoah still defaults to single-generation; generational is opt-in via
-   `-XX:ShenandoahGCMode=generational`. Confirm what is actually active with
-   `jcmd <pid> VM.flags`.
-4. **Strip the dead flags left over from G1.** `-XX:MaxGCPauseMillis`,
-   `-XX:G1HeapRegionSize` and their neighbours are largely ignored by both collectors; a
-   retained G1 tuning set is dead configuration, not a carried-over optimisation.
-5. **Capture logs per generation and per phase** with `-Xlog:gc*,gc+phases=debug`, and read
+   `-XX:ShenandoahGCMode=generational`. Confirm what is actually active with startup
+   `gc+init` logs and `jcmd <pid> VM.flags -all`; plain `VM.flags` can omit defaults.
+4. **Audit every carried flag.** G1-specific flags may remain accepted yet be inert under
+   another collector, while global flags can still apply. Prove effective relevance from
+   startup logs/flag metadata and remove only with a before/after launch and workload check.
+5. **Capture logs per cycle/generation (where applicable) and phase** with
+   `-Xlog:gc*,gc+phases=debug`, and read
    pauses separately from concurrent phase durations. See
    `references/reading-concurrent-gc-logs.md`.
-6. **Treat `Allocation Stall` as the tail-latency root cause it is.** It means allocation
-   rate exceeded concurrent collection capacity. The fix is more heap or less allocation —
-   no flag makes either collector immune.
-7. **Budget CPU and heap headroom before the migration, not after.** Expect measurable extra
-   CPU from the concurrent phases and extra heap headroom for collector working pages.
+6. **Treat allocation stalls/failures as capacity evidence, then classify why.** Heap/live-set
+   headroom, allocation spikes, concurrent-worker CPU, cycle-start prediction, fragmentation,
+   large allocations and collector fallback paths imply different remedies.
+7. **Budget CPU, memory bandwidth and heap/native headroom before migration.** Verify cgroup
+   charge/RSS, not merely `-Xmx`, and preserve room for allocation while relocation completes.
 
 ## Rules
 
@@ -63,23 +64,35 @@ the pod had no spare cores to pay for them in the first place.
   omission it pits Shenandoah's default single-generation mode against ZGC's only mode,
   which is generational — structurally unbalanced on any metric sensitive to the
   generational hypothesis.
-- Call Shenandoah's barrier the **Load Reference Barrier (LRB)**, not a read or write
-  barrier. It always dereferences the Brooks forwarding pointer; ZGC's load barrier is a
-  conditional fast-path check that usually passes without a branch. That difference is why
-  Shenandoah's per-access cost tracks reference-load volume more closely.
-- Shenandoah costs 8 bytes of forwarding pointer **per object**, always, GC cycle or not. On
-  a heap of tens of millions of small objects that is a double-digit percentage of heap;
-  measure it with JOL before dismissing it in a footprint investigation.
+- Shenandoah's load-reference barrier resolves forwarded references; its fast/slow paths and
+  barrier set depend on mode and GC state. ZGC uses colored pointers and load/store barriers.
+  Avoid universal branch/cycle claims: inspect generated code/profiles on the target build.
+- Classic Shenandoah layouts reserve forwarding metadata per object in the heap. Quantify the
+  effective heap/live-set cost from collector accounting and the target object mix; JOL's
+  ordinary shallow instance size need not include collector-private allocation overhead.
 - ZGC generational adds a **store barrier** on top of the load barrier, to maintain
   per-page remembered sets for old→young references. That is real extra per-access cost
   traded for young-allocation throughput.
-- Do not size a ZGC container from RSS reported by `ps`/`top` under the old assumption of
-  inflated numbers. Multi-mapping was removed with the non-generational mode in JDK 24, and
-  the RSS inflation artefact went with it.
-- Beyond heap size and `-XX:ConcGCThreads`, resist tuning ZGC. It self-calibrates from the
-  observed allocation rate; further flags are rarely necessary or recommended.
-- Benchmark these collectors open-loop (wrk2 or equivalent) and report p50/p99/p99.9/max.
-  Isolate barrier overhead with JMH rather than inferring it from published numbers.
+- Do not size a ZGC container from one `ps`/`top` RSS sample or from folklore about legacy
+  heap multi-mapping. Multi-mapping history is not the same change as JEP 490's JDK 24 removal
+  of non-generational ZGC. Reconcile target-build RSS/PSS, cgroup `memory.current`, heap
+  committed/used and native domains over time.
+- Prefer ergonomics first for ZGC, then tune only a measured constraint. Heap/soft max,
+  `ConcGCThreads`, CPU quota and allocation spikes interact; a copied knob can trade mutator
+  CPU for fewer stalls or merely hide a capacity defect.
+- Use an arrival model that represents production and correct coordinated omission when
+  relevant. Report throughput, offered/achieved load, CPU throttling, allocation rate,
+  pause/stall distributions and p50/p99/p99.9/max. A JMH comparison can expose workload cost
+  but cannot isolate “barrier overhead” merely by changing collectors.
+
+## Production acceptance
+
+- Exercise steady state, burst, live-set growth, large allocation, redeploy and CPU-throttle
+  scenarios; verify no ZGC allocation stalls or Shenandoah pacing/degeneration/full fallback.
+- Compare equivalent collector modes and effective flags on the same JDK build/quota; include
+  warm-up and confidence/repetition rather than a single run.
+- Set rollback on SLO, achieved throughput, CPU throttling and memory headroom. Preserve GC,
+  safepoint and OS/cgroup evidence for every failed run.
 
 ## References
 
@@ -91,3 +104,7 @@ the pod had no spare cores to pay for them in the first place.
   the ZGC and Shenandoah log shapes, the allocation-stall signature, and where barrier cost
   shows up in a profile. Read when diagnosing latency or throughput on a running concurrent
   collector.
+
+Authoritative sources: [JEP 474](https://openjdk.org/jeps/474),
+[JEP 490](https://openjdk.org/jeps/490), [JEP 521](https://openjdk.org/jeps/521), and
+[Oracle JDK 25 ZGC guide](https://docs.oracle.com/en/java/javase/25/gctuning/z-garbage-collector.html).

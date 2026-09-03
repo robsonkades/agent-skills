@@ -24,6 +24,9 @@ were current.
 | Salt and hash with a suitable password hashing scheme            | SHALL     |
 | Salt at least 32 bits                                            | SHALL     |
 | Additional keyed-hash iteration with a verifier-only secret      | SHOULD    |
+| Rate-limit failed authentication attempts                        | SHALL     |
+| Allow password managers and autofill                             | SHALL     |
+| Permit paste                                                     | SHOULD    |
 
 The blocklist requirement is specific: commonly used, breached and context-specific values,
 and "entire password SHALL be subject to comparison, not substrings". The pepper key "SHALL be
@@ -32,6 +35,14 @@ hardware-protected area".
 
 Note the salt floor. NIST says ≥ 32 bits; every modern KDF default is 128. Treat 32 as a
 legacy floor, never a target.
+
+Unicode introduces a policy decision that simplistic summaries omit. NIST says each Unicode
+code point counts as one character and **SHOULD** be NFC-normalised before hashing. It also
+**MAY** allow narrowly defined mistyping transformations. ASVS v5.0.0-6.2.8 instead requires
+verification exactly as received, without truncation or case transformation. Do not introduce
+normalisation only on login: registration, breach-list comparison, change and verification must
+use one versioned rule, and a change can strand existing hashes. If ASVS conformance binds,
+prefer exact verification and document why the NIST SHOULD was not adopted.
 
 ## OWASP ASVS 5.0.0 (published May 2025)
 
@@ -83,9 +94,11 @@ Do not resolve this by quietly picking the stricter or the more convenient numbe
 3. **If neither binds**, say so and pick 15 as the default with 8 as the MFA path — you are
    then choosing, not claiming compliance.
 
-Both standards agree on everything else that matters: no composition rules, no periodic
-rotation, at least 64 characters permitted, and a breached-password check. Those go in
-regardless of which length rule you adopt.
+Both standards align on the direction of the other major controls: no composition rules, no
+periodic rotation, support for at least 64 characters, and a breached-password check. Preserve
+the normative distinction when claiming compliance — for example, NIST's maximum-length rule
+is a SHOULD — and add NIST's mandatory failed-attempt rate limiting and password-manager
+support rather than treating password policy as a registration-regex problem.
 
 ## The trap for anyone summarising from memory
 
@@ -102,3 +115,10 @@ For the breach check, Spring Security has shipped
 — in spring-security-**web**, `@since` **6.3**, implementing `CompromisedPasswordChecker`
 (spring-security-core, also 6.3). It does not require Spring Security 7. `UNVERIFIED:` its
 constructor signature; module, package and `@since` are confirmed from the 7.1.1 sources jars.
+
+## Authoritative sources
+
+- [NIST SP 800-63B-4, password verifiers](https://pages.nist.gov/800-63-4/sp800-63b.html#passwordver)
+- [NIST SP 800-63B-4 change log](https://pages.nist.gov/800-63-4/sp800-63b/changelog/)
+- [OWASP ASVS v5.0.0 repository and stable artifacts](https://github.com/OWASP/ASVS/tree/v5.0.0_release)
+- [Spring Security compromised-password checking](https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/compromised.html)

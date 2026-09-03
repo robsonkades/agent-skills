@@ -2,13 +2,13 @@
 
 ## Symptom, hypothesis, instrument
 
-| Symptom in the log                                           | Hypothesis                                                                     | Instrument that confirms it                                                                                           |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| Recurring `Concurrent Mark Restart for Mark Stack Overflow`  | The SATB buffers and queue cannot keep up with the reference mutation rate     | `-Xlog:gc+marking=debug`; measure store rate on the hot path with allocation profiling                                |
-| `Pause Full` shortly after incomplete marking cycles         | The trigger fires too late for the real promotion rate                         | Trend the occupancy at each `Pause Young (Concurrent Start)` over time; a rising series means the predictor is behind |
-| `Concurrent Mark From Roots` growing longer cycle over cycle | Old generation growing faster than concurrent scan capacity                    | `ConcGCThreads` too low for the heap, or CPU contended with the application — check container CPU limits and affinity |
-| Frequent `Humongous allocation`, no associated `Pause Full`  | Eager reclaim is working; the objects die before accumulating a remembered set | `-Xlog:gc+humongous`: count humongous regions allocated against regions freed per young GC                            |
-| Frequent `Humongous allocation` **with** `Pause Full`        | Humongous objects surviving long enough to become ineligible for eager reclaim | Larger `G1HeapRegionSize`, or redesign the allocation so the payload falls below the threshold                        |
+| Symptom in the log                                           | Hypothesis                                                                                                                    | Instrument that confirms it                                                                                           |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Recurring `Concurrent Mark Restart for Mark Stack Overflow`  | Discovered-object frontier exceeds the expandable mark stack; broad/live graph, insufficient marking progress or native limit | `-Xlog:gc+marking=debug`; effective `MarkStackSizeMax`; live-set/graph and concurrent CPU evidence                    |
+| `Pause Full` shortly after incomplete marking cycles         | Insufficient end-to-end reclamation headroom; late trigger is one candidate                                                   | Effective IHOP, old-allocation rate, marking + mixed-phase duration, evacuation/fallback chronology                   |
+| `Concurrent Mark From Roots` growing longer cycle over cycle | Old generation growing faster than concurrent scan capacity                                                                   | `ConcGCThreads` too low for the heap, or CPU contended with the application — check container CPU limits and affinity |
+| Frequent `Humongous allocation`, no associated `Pause Full`  | Eager reclaim is working; the objects die before accumulating a remembered set                                                | `-Xlog:gc+humongous`: count humongous regions allocated against regions freed per young GC                            |
+| Frequent `Humongous allocation` **with** `Pause Full`        | Humongous objects surviving long enough to become ineligible for eager reclaim                                                | Larger `G1HeapRegionSize`, or redesign the allocation so the payload falls below the threshold                        |
 
 ## The SATB invariant, and why the old value
 
@@ -82,27 +82,19 @@ while a new cycle wrote into "next". TAMS provides that stability without a seco
 ## Mark stack overflow
 
 ```
-Application thread:
-  local SATB buffer (fixed capacity) fills, or crosses its enqueueing threshold
-  -> flushed to the shared global queue
-
-Concurrent mark threads:
-  drain the global queue continuously, treating each old_value as an extra root to mark
+Concurrent mark threads discover live objects and push objects whose fields remain to be
+scanned onto the global/local mark-stack work structures.
 
 "Concurrent Mark Restart for Mark Stack Overflow (iteration #N)"   [tag gc,marking]
-  the global queue or the internal mark stack reaches capacity before marking
-  finished processing it. G1 cannot discard entries — that would lose the SATB
-  invariant — so it resets the marking state and restarts the cycle from scratch,
-  usually under more time pressure than the first attempt.
+  the mark stack reaches its maximum expansion and overflows before tracing completes.
+  G1 marks the overflow condition, completes a synchronization/restart protocol and repeats
+  marking work so no reachable object is lost. SATB queues remain a distinct source of roots.
 ```
 
-Order-of-magnitude reasoning for whether mutation rate is plausibly the cause: 40 million
-barrier-eligible stores per second across 16 threads is 2.5 million per thread per second;
-with a local buffer around 1000 entries that is an upper bound of ~2500 flushes per second per
-thread. The real figure is much lower, because TAMS filters stores into objects allocated
-during the cycle and the null check filters more. The point of the calculation is not the
-number — it is that under heavy mutation the global queue is a resource under genuine
-pressure.
+Mutation/SATB pressure can extend marking and indirectly worsen headroom, but it is not the log
+line's identity. Diagnose mark-stack overflow from stack expansion/limit and object-graph work;
+diagnose SATB contribution from remark/SATB processing, eligible store rate and cycle CPU. Never
+change the SATB buffer flags solely because the message contains “Mark Stack”.
 
 ## Evacuation failure and why it takes the snapshot with it
 
@@ -119,11 +111,10 @@ pressure.
    address" was violated by an evacuation that partially failed midway
 ```
 
-This is the structural reason — not a timing coincidence — that evacuation failures under an
-active marking cycle correlate so strongly with `Concurrent Mark Restart for Mark Stack
-Overflow` and then a full GC. The collector cannot partially trust a snapshot whose
-consistency was broken underneath it. Treat step 5 as the conceptual effect; the exact
-reconciliation mechanism is internal and changes between releases.
+Evacuation failure can require marking metadata reconciliation and is a strong capacity signal,
+but it does not establish a universal `evacuation failure → mark-stack overflow → full GC`
+sequence. Reconstruct the actual GC-id chronology. Treat step 5 as a conceptual risk; the exact
+reconciliation/restart mechanism changes between releases.
 
 ## Humongous: the strict threshold
 

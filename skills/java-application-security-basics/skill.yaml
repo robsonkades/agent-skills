@@ -1,20 +1,17 @@
 schemaVersion: 1
 
 name: java-application-security-basics
-version: 1.2.0
+version: 1.3.0
 description: >-
-  Application-level security judgement in Java 21+ code: password storage with a memory-hard
-  KDF at current parameters, constant-time comparison, cryptographically secure randomness,
-  authorisation as a precondition of the domain operation rather than an annotation on the
-  controller, the adversarial half of input validation, and secrets that never reach source,
-  config, toString() or an error message. Use when a password, hash, salt, token, API key or
-  pepper appears in a diff; when MessageDigest, SecureRandom, Random, UUID or a
-  PasswordEncoder is called; when @PreAuthorize sits on a controller while a scheduler or
-  consumer calls the same service method; when the acting user's id is read from the path
-  not the principal; when a CryptoUtils wrapper is proposed "to swap algorithms later"; or
-  when reviewing "is this secure enough to ship". Code-level only — layered validation is
-  java-defensive-programming, redaction is structured-logging, ReDoS is
-  java-strings-and-text, deserialisation is java-serialization-hardening.
+  Application-security judgement for Java 21+: password storage with current memory-hard KDF
+  parameters, constant-time verification, secure randomness, authorisation inside the protected
+  operation, adversarial validation, reversible-cryptography boundaries, and secret-safe types.
+  Use when a password, hash, salt, token, API key or pepper appears in a diff; when
+  MessageDigest, SecureRandom, Random, UUID, Cipher, Mac or PasswordEncoder is called; when a
+  controller annotation is the only authorisation check; when identity comes from the request
+  instead of the principal; or when a generic CryptoUtils wrapper is proposed. Code-level only:
+  layered validation is java-defensive-programming, redaction is structured-logging, ReDoS is
+  java-strings-and-text, and deserialisation is java-serialization-hardening.
 
 license: Apache-2.0
 
@@ -36,6 +33,7 @@ keywords:
   - bcrypt
   - authorization
   - secrets
+  - cryptography
   - owasp
 
 files:

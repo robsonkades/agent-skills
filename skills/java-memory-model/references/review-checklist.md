@@ -1,48 +1,73 @@
-# Concurrency review checklist
+# Concurrency review and incident checklist
 
-## Reviewing concurrent code
+## Correctness review
 
-- [ ] Does every field written by one thread and read by another have a happens-before
-      edge established by one of the rules?
-- [ ] Are control flags between threads `volatile`?
-- [ ] Do read-modify-write operations (`++`, `+=`, check-then-act) use `Atomic*`,
-      `LongAdder` or a lock?
-- [ ] Are invariants spanning more than one field under a **single** lock rather than
-      per-field `volatile`?
-- [ ] Are objects published between threads published via `volatile`, `synchronized`,
-      `Atomic*`, or do they have only `final` fields?
-- [ ] Does any constructor let `this` escape — including `new Thread(this)` or
-      registration in a static collection?
-- [ ] If double-checked locking exists, is the field `volatile`? (Or has it been replaced
-      by a static holder?)
-- [ ] Do `synchronized` blocks protecting the same data use the same monitor?
-- [ ] Have shared `long`/`double` fields without `volatile` been reviewed for atomicity
-      (JLS §17.7)?
-- [ ] Are SpotBugs and Error Prone in CI, failing the build, with no suppressions in the
-      concurrent classes?
+- [ ] Shared variables and conflicting accesses are inventoried, including callbacks and mutable
+      objects reachable through fields.
+- [ ] Required state invariants and atomic transitions/snapshots are stated.
+- [ ] Each access follows the same guard/publication/access-mode protocol.
+- [ ] Read-modify-write and check-then-act use one atomic operation or lock/protocol.
+- [ ] Safe publication is explicit; final-field freeze is not mistaken for later mutation safety.
+- [ ] No constructor escape, unsafe listener registration or overridable call exposes partial state.
+- [ ] Executor/queue/future handoff relies on documented API memory effects.
+- [ ] Wait/condition code loops on predicates and defines spurious wakeup, interrupt and timeout.
+- [ ] Shutdown/cancel/error paths preserve ordering and do not publish partial state.
+- [ ] Long/double nonvolatile atomicity and word-tearing concerns are checked against JLS when
+      relevant, not assumed from one VM.
+- [ ] Reflection/serialization/native/unsafe mechanisms that mutate finals or bypass construction
+      are identified.
 
-The static-analysis line is not a formality: `IS2_INCONSISTENT_SYNC`, `DC_DOUBLECHECK` and
-`VO_VOLATILE_INCREMENT` alone cover three of the most common defects here, in seconds of CI.
+Static analyzers can find suspicious inconsistent synchronization, volatile increments, escape and
+lock patterns, but rule availability/names change. Record tool/version/configuration and review
+suppression rationale; no analyzer proves the whole JMM contract.
 
-## Investigating an incident
+## Incident workflow
 
-- [ ] Is the symptom visibility (never sees it), atomicity (loses updates), or ordering
-      (sees it half-built)?
-- [ ] Did the tested mitigation only reduce the frequency? If so, suspect a narrowed race
-      window, not a closed one.
-- [ ] Thread dump collected with `jcmd <pid> Thread.dump_to_file -format=json` (required if
-      virtual threads are in use)?
-- [ ] JFR collected — remembering that it shows **contention, not races**, and that the
-      default threshold hides short events?
-- [ ] Was static analysis run over the suspect code before the elaborate hypothesis?
-- [ ] Was the suspect pattern reduced to a jcstress test?
-- [ ] Was the fix validated on x86 **and** aarch64?
+```text
+wrong outcome/invariant
+  -> preserve exact values, request/task identity, version, inputs and timing
+  -> separate visibility/order/atomic compound operation/lifecycle ownership hypotheses
+  -> map conflicting actions and synchronization edges
+  -> minimize to a litmus/jcstress model
+  -> fix protocol and validate integration under target schedules/load
 
-## The measurement trap
+no progress/latency only
+  -> likely liveness/contention/queueing path; route to concurrency-diagnostics
+  -> still inspect state race if progress predicate/publication may be stale
+```
 
-A service that is wrong because of a missing `volatile` looks perfectly healthy in every
-tool that measures blocking. There is no event, no wait, no contention — the code runs at
-full speed and produces the wrong answer occasionally.
+Thread dumps can identify where threads are parked/blocked, not which ordinary write a read
+observed. JFR can show events/contention with configured thresholds, not general data races. Hardware
+race detectors and sanitizers have coverage/runtime limitations in managed/native mixed code.
 
-This is the reason the review checklist above exists: for this defect class, review and
-static analysis are the detection mechanism. Observability is not.
+## jcstress outcome design
+
+Before writing annotations, enumerate:
+
+```text
+acceptable: required by correct executions
+acceptable-interesting: legal but exposes mechanism/performance concern
+forbidden: impossible under the claimed protocol
+unknown/unmodeled: requires expanding actors/arbiter/state
+```
+
+Use enough actors to represent the minimal relation, an arbiter for final state when appropriate,
+and avoid adding synchronization through test infrastructure. A result not observed is not proven
+forbidden; jcstress evidence complements the JMM proof.
+
+## Fix validation
+
+- run the minimized jcstress test across supported JDKs/architectures/configurations;
+- run semantic concurrency tests and production-like load/failure/shutdown;
+- verify no new deadlock/starvation/contention or allocation regression;
+- review compatibility/serialization/public API if state representation changed;
+- preserve the proof/outcome model with the code so later “optimizations” do not remove the edge.
+
+Architecture diversity is useful integration coverage, not a mandatory two-machine proof. Correct
+Java code is portable by specification; racy code may fail nowhere in finite tests.
+
+## Authoritative references
+
+- [JLS 17](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
+- [OpenJDK jcstress repository and samples](https://github.com/openjdk/jcstress)
+- [Java concurrency APIs](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)

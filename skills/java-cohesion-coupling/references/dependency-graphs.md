@@ -16,9 +16,9 @@ edges, which the compiler enforces and which cannot form cycles.
 
 A cycle is broken by removing one edge. Rank the candidates:
 
-1. **The edge carried by the fewest class-level dependencies.** `jdeps
--verbose:class` shows exactly which classes create each package edge; an edge
-   that exists because of one method is cheap to remove.
+1. **The edge with the cheapest safe migration.** `jdeps -verbose:class` shows which classes
+   create bytecode edges; fewer sites can be cheaper, but public contracts, reflection, data
+   formats and ownership may dominate the count.
 2. **The edge that points against policy flow** — from the package that decides
    less towards the package that decides more.
 3. **The edge caused by a misplaced class.** Ask of each contributing class:
@@ -128,3 +128,9 @@ module inv.pricing {
     exports inv.pricing;
 }
 ```
+
+## Tool and module references
+
+- [`jdeps` for JDK 25](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jdeps.html)
+- [JPMS module declarations, JLS §7.7](https://docs.oracle.com/javase/specs/jls/se25/html/jls-7.html#jls-7.7)
+- [`Module` exports, opens and readability](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Module.html)

@@ -44,8 +44,10 @@ pod that no cluster-level dashboard is watching.
 3. **Fix the localhost contract**: one listener per upstream, or one listener routed by the
    `Host`/`:authority` header. Write down which, because it decides whether the app's URLs
    change and whether the proxy must parse anything.
-4. **Move each policy entirely.** Retry, timeout, circuit breaking and TLS each live in
-   exactly one layer. Half-moved policy is the multiplication case above.
+4. **Compose policy as one end-to-end budget.** Name the owner of each retry decision,
+   propagate the caller deadline, cap total attempts and document any deliberate layered retry
+   (for example, a transport reconnect below a business retry). Uncoordinated layers create the
+   multiplication case above.
 5. **Recompute the pool arithmetic.** The app's pool is now to loopback; the ambassador holds
    the pool to the real upstream, so the upstream's inbound connection count is
    `pods × ambassador pool`, not `pods × app pool`. The sizing itself is
@@ -73,8 +75,9 @@ Avoid an ambassador when:
 - the routing decision depends on application state the proxy cannot see — per-tenant
   entitlements, a business-level idempotency key, anything inside an encrypted body.
 Prefer a service mesh instead when:
-- a mesh is already installed, or more than a handful of services need this: a mesh gives the
-  same behaviour with one control plane instead of N hand-maintained proxy configs.
+- a compatible mesh is already installed, or centralized policy/discovery and fleet-wide
+  operations outweigh the control-plane complexity and resource cost. Service count alone is
+  not a sufficient threshold.
 Prefer a client library instead when:
 - the policy is genuinely application-specific and changes with the same release as the code
   that calls it. Externalising a policy nobody changes independently buys nothing.
@@ -82,9 +85,10 @@ Prefer a client library instead when:
 
 ## Rules
 
-- **The app must not retry if the ambassador retries.** Attempts multiply, they do not add:
-  3 × 3 is 9 requests to a dependency that is already failing. Pick the layer, disable the
-  other, and assert it in a test. The backoff theory itself is `retries-and-backoff`.
+- **Retries need one end-to-end attempt budget.** Independent 3-attempt layers can multiply to
+  nine requests. Prefer one owner; when layered retries are justified, constrain the combined
+  budget, retry only safe failure classes, propagate attempt/deadline context and test the
+  maximum amplification. The backoff theory itself is `retries-and-backoff`.
 - A retry in the ambassador changes the delivery semantics of the call. A retried `POST` is
   **at-least-once**, not at-most-once, including for requests the server received and
   processed before the connection broke. Only idempotent operations, or operations carrying a
@@ -106,18 +110,19 @@ Prefer a client library instead when:
   mirror target must be structurally unable to write production state — a separate datastore
   or credentials without write permission. Mirroring into a service that shares the primary's
   database is a duplicate-write generator, not a test.
-- A percentage split is not a per-user-stable split: the same user can get A, then B, on
-  consecutive requests. If the experiment requires stability, split on a hash of a
-  user-identifying header, and say which one in the config.
-- Availabilities multiply on the critical path. A 99.9% ambassador in front of a 99.9%
-  dependency yields about 99.8%. If the ambassador is not more available than what it fronts,
-  it is a net loss.
+- A percentage split is not necessarily per-user-stable. If the experiment requires stability,
+  hash a trusted, privacy-reviewed subject key with an experiment salt; do not expose raw user
+  identifiers in proxy logs/metrics, and define behavior for missing or forged keys.
+- For independent hard dependencies, availabilities multiply: two 99.9% components yield about
+  99.8%. Real failures may be correlated and fail-open/degraded behavior changes the model, so
+  state assumptions and measure proxy-attributable unavailability rather than quoting the
+  product as a universal result.
 - State per route whether the ambassador **fails open or fails closed**. Failing closed turns
   an upstream's partial outage into a total one; failing open silently removes the policy you
   deployed it for. Both are defensible; neither is defensible by accident.
-- Routing configuration must be hot-reloadable. If changing a weight requires restarting the
-  pod, the ambassador has not decoupled deployment from routing — it has just moved the
-  restart.
+- Prefer validated, observable hot reload when routing changes frequently. A controlled rolling
+  restart can be safer for rare changes; either path needs atomic config validation, version
+  visibility, convergence monitoring and rollback.
 - Never describe the app as "unaware of the network". It still sees latency, errors and its
   own deadline; what it no longer sees is topology. Claim that, and nothing wider.
 

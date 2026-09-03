@@ -19,9 +19,9 @@ sides of the loopback hop.
 
 | Policy           | Put it in                                                         | What double-configuration produces                                       |
 | ---------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Retry            | The ambassador, once the ambassador exists                        | Multiplication: `app_attempts × proxy_attempts` requests upstream        |
+| Retry            | Prefer one owner; otherwise one shared end-to-end attempt budget  | Multiplication: `app_attempts × proxy_attempts` requests upstream        |
 | Timeout          | Both, but as a **budget hierarchy**: app deadline > proxy timeout | Proxy still retrying after the app gave up — work with no consumer       |
-| Circuit breaking | The ambassador (it sees all pods' traffic to that upstream)       | Two breakers with different views; one open, one closed, flapping        |
+| Circuit breaking | Match the desired scope; a per-pod ambassador sees only that pod  | Two breakers with different views; one open, one closed, flapping        |
 | TLS / mTLS       | The ambassador                                                    | Two handshakes, or an app that thinks it is encrypted and is not         |
 | Load balancing   | The ambassador                                                    | Client-side LB over a single loopback endpoint — a no-op that looks fine |
 | Idempotency key  | The **application** — only it knows business identity             | A proxy-generated key is per attempt, which defeats deduplication        |
@@ -70,8 +70,10 @@ and cap its own upstream timeout _and its retry budget_ by it. A proxy retrying 
 caller's deadline is doing work no one will read while holding a connection someone else
 needs. Deadline semantics are `timeouts-and-deadlines`.
 
-For gRPC the deadline is already on the wire and a proxy that terminates and re-originates the
-call must copy it; do not assume it survives by itself.
+For gRPC, deadlines are encoded as a remaining timeout to avoid clock-skew problems. Some
+language stacks propagate them automatically for child calls (Java does), while a proxy that
+terminates and re-originates traffic must be verified to preserve and decrement the budget.
+Do not assume an arbitrary proxy/filter chain keeps the semantics intact.
 
 ## Testing it
 
@@ -84,8 +86,10 @@ Three tests, each proving something a config review cannot:
   a status for a fraction of requests. Turn on 100% 503 for one upstream and assert the app
   degrades the way you claimed — fails open or fails closed, with the right user-visible
   result — rather than hanging.
-- **Kill the container mid-load.** Run an open-loop client, delete the ambassador container,
-  and count errors until recovery. This exercises pooled-socket invalidation and the app's
+- **Crash the proxy process mid-load.** Run an open-loop client, terminate PID 1 inside the
+  ambassador container or use the platform's supported fault-injection mechanism, and count
+  errors until restart recovery. Kubernetes does not expose deletion of one container as a
+  standalone workload operation. This exercises pooled-socket invalidation and the app's
   reconnection path; a closed-loop client hides the outage by throttling itself, which is
   `coordinated-omission`.
 

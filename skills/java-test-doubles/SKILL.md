@@ -65,8 +65,8 @@ executed the code that was actually wrong.
   not matter to the assertion; used everywhere it turns `verify` into "something was called".
 - More than about three stubs to set up one test is a message about the class under test, not
   about the test: it has too many collaborators (java-cohesion-coupling).
-- Spring: `@MockitoBean` and `@MockitoSpyBean` (Boot 3.4+). `@MockBean` was deprecated in 3.4
-  and removed in Boot 4. Each distinct set of mocked beans is a separate cached application
+- Spring Framework 6.2+: `@MockitoBean` and `@MockitoSpyBean`. Spring Boot deprecated
+  `@MockBean` and `@SpyBean` in 3.4 for removal in Boot 4. Each distinct set of mocked beans is a separate cached application
   context — mocking one bean differently in ten test classes buys ten context startups.
 
 ## References

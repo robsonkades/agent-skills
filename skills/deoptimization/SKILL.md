@@ -22,9 +22,10 @@ description: >
 Decide whether a deoptimisation is the JIT working correctly or a method that will never
 reach stable optimised code. Speculation is what makes C2 fast: it bets on a profiled
 assumption, embeds a check, and unwinds without ever producing a wrong result when the bet
-fails. The bet is recorded in the method's profile, and the next compilation does not make
-it again — so a single unwind followed by a recompilation that stays is the design working,
-and it is the overwhelmingly common outcome.
+fails. The trap is recorded in method profiling data and can change later compilation
+decisions. A bounded burst that decays after recompilation is the design working; continued
+events at the same site require diagnosis rather than an assumption that all deoptimisation
+is benign.
 
 The failure this prevents is both directions of the same mistake — alerting on every
 `jdk.Deoptimization` event until the alert is ignored, and raising a recompilation cutoff so
@@ -74,23 +75,25 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
   `make_not_entrant`, `make_not_compilable`. Only the last three invalidate the nmethod. All
   five deoptimise the frame that hit the trap.
 - Reason names come from `_trap_reason_name[]` in `deoptimization.cpp`, not from any
-  specification. On a JVMCI-enabled build — every Temurin build — three are suffixed:
+  specification. On the tested JVMCI-enabled Temurin 25.0.3 build, three are suffixed:
   `intrinsic_or_type_checked_inlining`, `bimorphic_or_optimized_type_check`,
   `null_assert_or_unreached0`. Confirm any name a script matches against a real collection.
 - A method converges because the MDO records every trap and C2 does not speculate again at a
   bci that has trapped (`Compile::too_many_traps`, `compile.cpp`). An oscillating `if`
   therefore yields **one** `unstable_if` per bci, after which both sides are compiled
   (executed: a branch flipped sixty times produced one event). Do not split it into methods.
-- The limits on Temurin 25.0.3: `PerBytecodeTrapLimit=4`, `PerMethodTrapLimit=100`,
+- The observed defaults on Temurin 25.0.3 are `PerBytecodeTrapLimit=4`, `PerMethodTrapLimit=100`,
   `PerMethodSpecTrapLimit=5000` (experimental), `PerBytecodeRecompilationCutoff=200`,
   `PerMethodRecompilationCutoff=400`. C2 stops recompiling — emitting traps with action
   `none` — once a method has decompiled `PerMethodRecompilationCutoff/2+1` = 201 times or a
-  bci has 25 overflow recompiles. That storm, not the cutoff, is what "never stabilises"
-  looks like, and raising the cutoff moves neither number in a useful direction.
+  bci has 25 overflow recompiles under those defaults. These are HotSpot implementation
+  details, not Java contracts; verify flags and source on the deployed build. A sustained
+  same-site storm is the signal to investigate, not a magic count copied from this baseline.
 - `make_not_compilable` from the cutoff is at C2 level only. `PrintCompilation` prints
   `made not compilable on level 4 … give up compiling` and the method is recompiled by C1 —
   tier 1, no profiling — not interpreted (executed; `jcmd <pid> Compiler.codelist` shows
-  it). Permanent until restart.
+  it). Treat the exclusion as lasting for that loaded method; redefinition/reloading and
+  another JVM release can alter the lifecycle.
 - `made zombie` no longer exists (JDK 20, JDK-8290025). JDK 25 prints the reason after
   `made not entrant:` — `not used` and `OSR invalidation of lower level` are tier
   promotion, `uncommon trap` is a trap, `marked for deoptimization` is a dependency
@@ -116,10 +119,14 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
   to care about recurrence, not to disable `EliminateAllocations`.
 - `-XX:+TraceDeoptimization` is `diagnostic` since JDK 18 (JDK-8154011) and needs
   `-XX:+UnlockDiagnosticVMOptions` **before** it; it prints one `VFrame` per inlined level
-  and is a one-off deep session, never continuous production. JDK 28 moves it to unified
-  logging (JDK-8287010; not verified here).
+  and is a one-off deep session, not a default continuous-production setting. Do not describe
+  a proposed or mainline change as released behavior; inspect the target JDK's `java -Xlog:help`
+  and flags.
 
 ## References
+
+All numeric thresholds and output shapes in these references are JDK 25 HotSpot observations.
+Confirm them against the exact vendor build before automation or production tuning.
 
 - [Reasons, actions and mitigations](references/reasons-and-actions.md) — the reason and
   action tables with the strings JDK 25 prints and the action observed for each, why a

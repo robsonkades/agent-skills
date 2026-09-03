@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-cohesion-coupling
-version: 1.1.0
+version: 1.2.0
 description: >-
   Cohesion and coupling in Java at class, package and module level: cohesion types
   (functional, communicational, temporal, logical), coupling types in real code,

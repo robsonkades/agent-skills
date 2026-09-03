@@ -2,8 +2,8 @@
 name: humble-objects-and-functional-core
 description: >
   Splitting a component into the part that decides and the part that acts, so the decision is
-  pure, deterministic and cheap to test while the effectful part stays too thin to be worth
-  testing — the Humble Object pattern and the functional core / imperative shell shape of the
+  pure, deterministic and cheap to test while the effectful part stays thin enough for a small
+  set of boundary/integration tests—the Humble Object pattern and the functional core / imperative shell shape of the
   same idea. Use when a rule can only be exercised by standing up the framework because the
   decision lives inside the component that performs the effect, when logic sits in a
   controller, scheduler, message listener or UI component, when a test needs a mocking
@@ -45,8 +45,9 @@ pipeline of indirection.
 3. **Move the decision to a function of those inputs.** No fetching, no writing, no clock, no
    randomness — those become parameters. The result is a pure function or a small class with
    no collaborators.
-4. **Leave the shell humble.** What remains fetches, calls the decision, and performs the
-   result. If it still has a branch worth testing, the extraction is not finished.
+4. **Leave the shell humble.** What remains fetches, calls the decision, and performs the result.
+   Branches expressing infrastructure policy may remain, but test them at the cheapest level that
+   observes their effects rather than forcing every branch into a pure core.
 5. **Represent the outcome as data where the shell must act on it.** "Retry after 200 ms",
    "reject with this reason" — an outcome the shell interprets, not an effect the core
    performs.
@@ -120,18 +121,18 @@ core pure
 
 ## Rules
 
-- **The test for humility is blunt: if the remaining component still deserves a test, it is
-  not humble yet.** A controller worth testing beyond its binding and status codes still
-  contains a decision.
+- Humility minimizes logic in the hard-to-test boundary; it does not make boundary tests worthless.
+  Binding, authentication, transaction demarcation, serialization and failure translation can all
+  deserve focused integration tests even when business decisions live in the core.
 - Extract the decision, not the I/O. Wrapping a repository in an interface does not make the
   logic testable if the logic still lives in the shell; it only adds a seam
   (`java-dependency-inversion`).
-- **A mocking framework in a test is a signal about the code under test**, not a tool choice.
-  Needing a mock to reach a branch means the branch is coupled to a collaborator it does not
-  need. Prefer removing the coupling to configuring the mock.
-- Pass the clock. `Instant.now()`, `LocalDate.now()`, `UUID.randomUUID()` and
-  `Math.random()` inside a decision each convert a deterministic assertion into a flaky one
-  or an unwritable one. `Clock` is in the JDK for exactly the two time calls; the id and the
+- Heavy interaction mocking can signal that a decision is entangled with collaborators, but mocks
+  are also legitimate for protocols, failure injection and orchestration. Inspect whether the test
+  asserts stable outcomes or incidental call order before changing the design.
+- Pass controllable ambient inputs when exact outcomes or boundary cases matter. Direct time/random
+  calls do not automatically make every property test flaky, but they obstruct replay and precise
+  failure diagnosis. `Clock` is in the JDK for the time calls; the id and the
   random source are supplied the same way, by the shell.
 - **Purity is about observable effect, not about avoiding assignment.** A core that builds a
   local `ArrayList` and returns an unmodifiable view is pure; nobody outside sees the
@@ -140,9 +141,9 @@ core pure
 - The core is where records and sealed types pay for themselves: inputs as records, outcomes
   as a sealed hierarchy, the shell's handling as an exhaustive `switch` the compiler checks
   when a new outcome is added (`java-composition-over-inheritance`).
-- **In a distributed system the policies are the pure part.** Whether to retry, how long to
-  back off, whether the breaker opens, which replica to route to, whether to shed — each is a
-  function of observed state and configuration. Separating them from the call they govern is
+- Many distributed policies have a pure decision kernel, but breakers, adaptive limits and routing
+  depend on concurrent, time-varying state. Model transitions explicitly and test both deterministic
+  policy and thread-safe state/effect integration. Separating them from the call they govern is
   what makes them testable without a network, and what stops policy from being reimplemented
   slightly differently at each call site.
 - Do not push effects into the core disguised as parameters. A `Runnable`, a `Consumer` or a

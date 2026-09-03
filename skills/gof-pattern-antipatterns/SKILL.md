@@ -32,13 +32,13 @@ answered, it is a candidate for removal (`gof-pattern-thinking`).
 Signals you can grep for or count
   an interface with exactly one implementation (+ a test double)
   a class whose body differs from its siblings only in literals
-  a constructor with more than seven parameters
+  a constructor whose parameters form unrelated clusters or are repeatedly miswired
   a *Factory with methods whose products share no call site
   getInstance() anywhere
   a listener registered with no corresponding removal
   a class named *Manager, *Helper, *Processor, *Handler with no
     stated responsibility
-  a test that constructs more than four mocks for one subject
+  a test dominated by mocks and incidental interaction setup
   a wrapper whose every method is `return delegate.same()`
   @Order(100), @Order(200) with no comment
 
@@ -84,9 +84,10 @@ THEN it is a removal candidate. Removal is a change like any other:
      propose it, measure the diff, and check the tests.
 
 IF an interface has one implementation and one mock
-THEN the mock is not a second implementation. For internal code,
-     inline it. For an external dependency, the port earns its place
-     by bounding a foreign model — say so in a comment.
+THEN the mock is not evidence of runtime variability. Keep the interface
+     when it enforces dependency direction, narrows a volatile/foreign API,
+     marks an ownership boundary or enables a deliberate test seam; otherwise
+     consider inlining it.
 
 IF variants differ only in literals
 THEN the fix is configuration, and it also removes a deploy from the
@@ -96,9 +97,10 @@ IF a class name is Manager, Helper, Util, Processor or Handler
 THEN ask what it is responsible for in one sentence. If the sentence
      needs "and", split it.
 
-IF a test needs more than four mocks
-THEN the subject coordinates more than one thing. That is a design
-     finding, not a testing inconvenience (java-test-doubles).
+IF a test needs many mocks and asserts their call order
+THEN inspect whether the subject has unrelated responsibilities or the
+     test is coupled to implementation. Count alone is not a finding
+     (java-test-doubles).
 
 IF the design is over-abstracted AND under-tested
 THEN add the characterisation tests before removing anything. Removing
@@ -126,16 +128,16 @@ Guarding against the opposite error, which this skill can otherwise encourage:
   are the framework's design, not yours.
 - **A contract test base class.** Inheritance is correct there: the subclass supplies a value and
   inherits a specification.
-- **An abstraction with two real implementations today.** Two is the threshold, and it has been
-  met.
+- **An abstraction with a named present force.** Multiple implementations are one justification;
+  dependency inversion, protocol translation, security policy and ownership can justify one too.
 
 ## Review checklist
 
-- [ ] Every interface has ≥2 real implementations, or a stated boundary reason
+- [ ] Every interface has runtime variability or a stated boundary/ownership/policy reason
 - [ ] No class differs from its siblings only in literals
 - [ ] No `getInstance()`, and no test needs a `reset()`
 - [ ] Every listener registration has a deregistration with a named owner
-- [ ] No coordinator has more than about seven dependencies
+- [ ] Coordinators with many dependencies have one coherent use case and manageable test/change cost
 - [ ] Wrapper stacks document their order at the wiring site
 - [ ] No getter triggers a network call or a database query
 - [ ] No `Cloneable`; copying is a constructor or a factory

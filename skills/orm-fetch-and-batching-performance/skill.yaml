@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: orm-fetch-and-batching-performance
-version: 1.1.0
+version: 1.2.0
 description: >-
   Making JPA and Hibernate stop issuing the statements you did not ask for, and making the ones
   they do issue cheap: statement count as the primary number, N+1 from an association and from a

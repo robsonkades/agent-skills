@@ -26,15 +26,18 @@ line nobody checked.
 
 ## Workflow
 
-1. **Establish the safety net.** Run the existing tests; they must be green before the
-   first step. If the code to change has no meaningful coverage, write
+1. **Establish and record the baseline.** Run the affected tests. They should be green;
+   if unrelated failures already exist, quarantine or record them precisely and require the
+   same baseline after each step rather than claiming an all-green suite. If the changed path
+   has no meaningful coverage, write
    characterisation tests first — read `references/safety-workflow.md`, which includes
    a worked example. No net, no refactoring. The one exception is the step that makes the
    net possible at all: when the class cannot be constructed or the method cannot be
    reached, breaking that dependency is done without tests, under the constraints in
    `java-legacy-code-testing`.
-2. **Classify the boundary.** Private or package scope: free rein — unless a framework
-   reaches the name at runtime (JPA field access, Jackson, JPQL, reflective config), in
+2. **Classify the boundary.** Private or package scope lowers source-compatibility risk, but
+   does not remove concurrency, reflection, persistence or serialization contracts. If a
+   framework reaches the name at runtime (JPA field access, Jackson, JPQL, reflective config), in
    which case it is case 4 of `references/compatibility.md` whatever the modifier says.
    Public within the codebase: every caller moves in the same change. Exported from a
    module or published to external clients: read `references/compatibility.md` before
@@ -66,15 +69,17 @@ line nobody checked.
 
 - A refactoring commit contains no behaviour change. A bug discovered mid-refactoring
   is recorded and fixed in its own commit, before or after — never inside.
-- Every step is revertible on its own: if a step cannot be undone by reverting one
-  commit, it was two steps.
-- Tests red at the start means the task is "fix or characterise", not "refactor". Tests
-  red after a step means revert the step, not patch the test.
-- Never weaken an assertion to make a refactoring pass. A test whose assertions had to
-  change is evidence the behaviour changed — which needs a decision, not an edit.
-  Mechanical edits to call a renamed member are expected and are not that.
-- Renaming or reshaping anything exported from a module, published as a library, or
-  serialised is API evolution, not refactoring — hand over to java-api-design.
+- Each commit is coherent, buildable and revertible in reverse order. If rollback needs an
+  unrelated semantic repair or data recovery, the step crossed more than a code-refactoring boundary.
+- A new failure after a step is diagnosed against the recorded baseline. Revert when the step
+  caused it; do not patch production or dismiss a flaky/external failure without evidence.
+- Do not weaken a contract assertion merely to get green. Implementation-coupled assertions may
+  need mechanical updates while externally observable behavior stays fixed; explain why the
+  assertion was not part of the contract and retain stronger outcome evidence.
+- Renaming or reshaping anything exported, published, persisted or serialized crosses an
+  evolution boundary. Java signatures route to java-api-design, wire schemas to
+  rpc-and-api-contracts/schema-evolution-and-compatibility, and native Java serialization
+  to java-serialization-hardening.
 - Do not justify a refactoring by performance without a measurement. Restructuring
   changes allocation and dispatch patterns in both directions; claim readability, or
   bring a benchmark.
@@ -108,3 +113,11 @@ line nobody checked.
 - [Compatibility](references/compatibility.md) — which changes break binary, source or
   behavioural compatibility, and where a refactoring must stop. Read before any step
   that touches a public or exported signature.
+
+## Primary sources
+
+- [JLS 13 — Binary Compatibility](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html)
+- [JLS 17 — Threads and Locks](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
+- [JEP 441 — Pattern Matching for switch](https://openjdk.org/jeps/441)
+- [JEP 513 — Flexible Constructor Bodies](https://openjdk.org/jeps/513)
+- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)

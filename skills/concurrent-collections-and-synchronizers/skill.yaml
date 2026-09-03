@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: concurrent-collections-and-synchronizers
-version: 1.1.0
+version: 1.2.0
 description: >-
   Choosing between the members of java.util.concurrent once the family is settled, and the
   parameter that makes it correct: which BlockingQueue and which of its four insert and

@@ -1,19 +1,13 @@
 schemaVersion: 1
 
 name: event-sourcing
-version: 1.1.0
+version: 1.2.0
 description: >-
-  Storing a sequence of immutable events as the source of truth and deriving current state from
-  it: deciding whether the system needs it, designing events and streams, concurrency through
-  expected stream version, building and rebuilding projections, and the problems that have no
-  clean answer — event schema change, personal-data erasure, and read-your-own-write. Use when
-  event sourcing is proposed or already in place, when auditability is the stated driver, when a
-  projection has drifted from its stream, when an event needs a field it never had, or when a
-  user reports data that "disappeared" after saving. Does not cover event-driven integration
-  between services (event-driven-architecture), broker delivery guarantees (delivery-semantics),
-  cross-service workflow compensation (distributed-transactions-and-sagas), optimistic locking
-  over a mutable row (offline-concurrency-control), or what a client may observe across replicas
-  (consistency-models).
+  Event streams as authoritative state: adoption criteria, stream boundaries, expected-version
+  appends, command idempotency, snapshots, projection correctness/rebuild, temporal replay,
+  schema evolution and erasure. Use when event sourcing is proposed, projections drift, old
+  payloads must evolve, or write/read visibility surprises users. Integration messaging,
+  delivery, sagas, mutable-row locking and replica consistency remain separate skills.
 
 license: Apache-2.0
 
@@ -57,6 +51,7 @@ suggests:
   - offline-concurrency-control
   - retries-and-backoff
   - rpc-and-api-contracts
+  - schema-evolution-and-compatibility
   - serialization-performance
 
 agentOverrides:

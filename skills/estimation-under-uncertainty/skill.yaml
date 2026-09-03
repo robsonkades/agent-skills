@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: estimation-under-uncertainty
-version: 1.0.0
+version: 1.1.0
 description: >-
   Producing a software estimate that carries its own uncertainty instead of hiding it: a range
   with a confidence level rather than a single number, decomposition, PERT and why summing

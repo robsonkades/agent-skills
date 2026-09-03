@@ -1,18 +1,15 @@
 schemaVersion: 1
 
 name: universal-scalability-law
-version: 1.1.0
+version: 1.2.0
 description: >-
-  The Universal Scalability Law: the contention coefficient (sigma, Gunther's alpha), the
-  coherency coefficient (kappa, Gunther's beta), fitting the model to measured throughput,
-  N_max as the throughput peak, and why throughput falls beyond it. Use when adding pods or
-  threads stopped increasing throughput or made it worse, when a scale-out is being proposed
-  without evidence it will help, when a benchmark shows throughput peaking and then
-  declining, when someone extrapolates scalability from N = 1, 2, 4 only, or when deciding
-  between attacking a lock and eliminating shared state. Does not cover the N = lambda x R
-  law, utilisation rules of thumb or pool sizing (littles-law-and-queueing), choosing and
-  fitting a queueing model (queueing-models), or turning a model into an infrastructure
-  decision (capacity-planning).
+  Fitting and falsifying the Universal Scalability Law (USL): load/resource definition,
+  the scale coefficient gamma, contention alpha, coherency/retrograde beta, peak conditions,
+  identifiability, uncertainty and held-out validation. Use when throughput saturates or falls
+  as threads, users, cores or pods increase; when scale-out is proposed from too few points;
+  or when comparing architectural scalability curves. Does not cover `L = λW`, queue/pool
+  sizing (littles-law-and-queueing), latency-at-load models (queueing-models), or capacity/SLO
+  decisions (capacity-planning).
 
 license: Apache-2.0
 
@@ -43,6 +40,13 @@ files:
 dependencies:
   - name: littles-law-and-queueing
     version: ^1.0.0
+  - name: load-testing-advanced
+    version: ^1.0.0
+
+suggests:
+  - capacity-planning
+  - queueing-models
+  - coordinated-omission
 
 capabilities:
   - reads-source

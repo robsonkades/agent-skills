@@ -1,122 +1,160 @@
-# An idempotency-key filter, and the four cases it must handle
+# An idempotency-key protocol
 
-Four cases, not two: first request, duplicate of a completed request, duplicate of a
-request still in flight, and duplicate with a different payload under the same key.
+There are five states to reason about: first request, concurrent duplicate, completed
+duplicate, key reused for a different operation, and an attempt whose external outcome is
+unknown. A boolean `processed` flag cannot represent the last case.
 
-## The store
+## Durable record
 
 ```java
-// One row per key. status distinguishes "claimed" from "answered".
-// PRIMARY KEY (scope, key) — the uniqueness is what makes the claim atomic.
 record IdempotencyRecord(
-        String scope, String key, String payloadHash,
-        Status status, Integer httpStatus, String responseBody,
-        Instant createdAt, Instant expiresAt) {
-    enum Status { IN_FLIGHT, COMPLETED }
+        String scope,
+        String key,
+        String fingerprint,
+        Status status,
+        long attemptEpoch,
+        String downstreamOperationId,
+        Integer httpStatus,
+        String resultReference,
+        Instant leaseUntil,
+        Instant createdAt,
+        Instant expiresAt) {
+    enum Status { PENDING, UNKNOWN, COMPLETED, REJECTED }
 }
 ```
 
-## The claim — conditional insert, not check-then-act
+The primary key is `(scope, key)`. Keep an operation fingerprint to reject key reuse with
+different semantics. `resultReference` may identify the created resource or durable business
+result; persist an exact body only when it is bounded, non-secret and valid to replay.
+
+## Case 1: local mutation in the same database
+
+This is the strongest and simplest form. One database transaction:
+
+1. conditionally inserts the idempotency row or locks/reads the existing row;
+2. verifies the fingerprint;
+3. applies the business mutation and any transactional outbox record;
+4. stores the terminal result;
+5. commits everything together.
 
 ```java
-// Returns true iff this caller won the claim. One statement, no read first.
-boolean claim(String scope, String key, String payloadHash, Instant expiresAt) {
-    int inserted = jdbc.update("""
-        INSERT INTO idempotency (scope, key, payload_hash, status, created_at, expires_at)
-        VALUES (?, ?, ?, 'IN_FLIGHT', now(), ?)
-        ON CONFLICT (scope, key) DO NOTHING
-        """, scope, key, payloadHash, Timestamp.from(expiresAt));
-    return inserted == 1;
+@Transactional
+Response handleLocal(Command command) {
+    var key = scoped(command);
+    var claimed = records.insertIfAbsent(key, fingerprint(command));
+    if (!claimed) return replayOrWait(records.currentForUpdate(key), command);
+
+    var result = domain.apply(command); // same transaction and database
+    outbox.add(eventsFrom(result));      // same commit, if an external publication follows
+    records.complete(key, stableResult(result));
+    return response(result);
 }
 ```
 
-`ON CONFLICT DO NOTHING` returns an affected-row count of 0 for the loser. A store without
-upsert syntax gives the same shape by catching the unique-constraint violation — a caught
-`DuplicateKeyException` is a _result_ here, not an error. Redis:
-`SET scope:key <token> NX PX <ttl>` returns nil to the loser.
+The insert must be a unique constraint/conditional write, never `exists()` followed by
+`insert()`. Do not place the claim in a `REQUIRES_NEW` transaction: claim-then-crash would
+suppress work that never committed. A transaction rollback removes both claim and mutation.
 
-## The filter
+## Case 2: external side effect
+
+No local transaction can atomically commit a remote charge, email or entitlement. Use a
+durable operation state machine:
+
+1. atomically claim `(scope, key)` as `PENDING` and allocate a stable downstream operation
+   ID;
+2. call downstream with that same ID on every retry;
+3. on confirmed success, persist `COMPLETED` and the stable result;
+4. on a definite pre-dispatch rejection, persist `REJECTED` or make the operation retryable;
+5. on timeout, disconnect, cancellation or crash, persist/retain `UNKNOWN` and query or
+   reconcile downstream by operation ID;
+6. only retry an unknown call when downstream deduplicates that same operation ID or when
+   reconciliation proves it did not apply.
 
 ```java
-public ResponseEntity<?> handle(String key, Request request) {
-    String hash = sha256(canonical(request));
-    Instant expiry = Instant.now().plus(RETENTION);
-
-    if (store.claim(SCOPE, key, hash, expiry)) {
-        try {
-            var response = service.execute(request);          // the side effect
-            store.complete(SCOPE, key, response.status(), response.body());
-            return response;
-        } catch (RuntimeException e) {
-            store.release(SCOPE, key);   // let the retry through; see "the crash case"
-            throw e;
-        }
-    }
-
-    var existing = store.get(SCOPE, key).orElseThrow();
-    if (!existing.payloadHash().equals(hash)) {
-        return ResponseEntity.status(422).body(problem("key reused with a different body"));
-    }
-    return switch (existing.status()) {
-        case COMPLETED -> ResponseEntity.status(existing.httpStatus())
-                                        .body(existing.responseBody());   // replay
-        case IN_FLIGHT -> ResponseEntity.status(409)
-                                        .header("Retry-After", "1")
-                                        .body(problem("original request still in flight"));
-    };
+try {
+    var result = payments.charge(request, record.downstreamOperationId());
+    records.completeIfOwner(key, attemptEpoch, stableResult(result));
+} catch (DefinitePreDispatchFailure e) {
+    records.markRetryableIfOwner(key, attemptEpoch, evidence(e));
+} catch (TimeoutException | IOException | CancellationException e) {
+    records.markUnknownIfOwner(key, attemptEpoch, evidence(e));
+    reconciliation.enqueue(key);
 }
 ```
 
-Notes on the four cases:
+**Never delete the claim merely because `execute()` threw.** The peer may have applied the
+effect before its acknowledgement was lost. Releasing the row turns ambiguity into a second
+charge on the next retry.
 
-- **Completed duplicate** replays the original status and body — no re-execution, no
-  conflict. The client that timed out and retried gets its answer.
-- **In-flight duplicate** justifies the whole design. It cannot be answered (the answer
-  does not exist yet) and must not execute. `409` with `Retry-After` is the honest reply;
-  blocking until the winner finishes is the alternative and costs a held request thread.
-- **Different payload, same key** is a client defect; the payload hash makes it detectable.
+## Concurrent duplicates
 
-## The crash case
+After losing the conditional claim:
 
-If the process dies between `claim` and `complete`, the row is left `IN_FLIGHT` and every
-retry gets a conflict until the row expires. Two mitigations, and they are different
-decisions:
+- reject a different fingerprint without leaking another tenant's data;
+- replay/reconstruct the terminal outcome for `COMPLETED` or `REJECTED`;
+- for `PENDING`/`UNKNOWN`, return a documented processing response (often `202` plus an
+  operation-status URI), ask the client to retry, or wait through a bounded notification
+  mechanism;
+- do not hold a database lock or platform thread while waiting on remote work.
 
-- **Bound `IN_FLIGHT`** with a short lease (seconds, from the operation's p99.9) separate
-  from the record's retention, and treat an expired lease as reclaimable. This admits a
-  duplicate side effect if the original was merely slow, not dead.
-- **Claim and side effect in one transaction** when both are in the same database. Then the
-  crash rolls the claim back with the work, and there is no stale `IN_FLIGHT` at all. This
-  is strictly better and is unavailable only when the side effect is external.
+An HTTP `409` can be an API choice, but it is not inherently the one correct status and may
+mislead clients into treating an in-progress retry as terminal conflict. Whatever contract is
+chosen must preserve the same resource/operation identity and publish retry guidance.
 
-## When the dedup store is unavailable — make it a decision
+## Leases and takeover
+
+A lease elects the current worker; it does not make the external effect exactly once. Size it
+from a deadline plus scheduling/GC/storage margin, renew it conditionally, and increment an
+`attemptEpoch` on takeover. Completion writes compare the epoch so a paused old worker cannot
+overwrite newer local state. Both workers still use the same downstream operation ID because
+the old attempt may finish late.
+
+Takeover is safe only when one of these holds:
+
+- local mutation and claim share one rolled-back transaction;
+- downstream enforces the stable idempotency key;
+- status lookup proves no effect before retry;
+- a compensating/reconciliation process can tolerate both outcomes.
+
+TTL expiry is not a takeover protocol. Do not physically delete a live `PENDING`/`UNKNOWN`
+row merely because wall-clock retention elapsed.
+
+## Dedup-store outage decision
 
 ```text
-Fail closed (reject the request) when:
-- the side effect moves money, issues an entitlement, or is externally visible and
-  irreversible
-- a duplicate requires manual reconciliation
-- the caller can retry (a queue consumer, a client with a retry policy)
+Fail closed when:
+- the effect is irreversible/high value, or a duplicate violates a safety invariant;
+- the caller can retry/status-check and availability loss is preferable to ambiguity.
 
-Fail open (execute without deduplication) when:
-- the side effect is naturally idempotent anyway, and the key is defence in depth
-- unavailability of the whole endpoint is a worse outcome than a rare duplicate
-  (a duplicated notification, an analytics event)
-- and only if a duplicate is detectable downstream
-
-Neither is a default. An unstated choice is fail-open by accident, because an exception
-from the dedup store usually propagates to a 500 in one deployment and is swallowed in
-another.
+Fail open only when:
+- the operation is independently idempotent downstream, or duplicates are explicitly
+  acceptable, detectable and repairable;
+- the business owner accepted that semantic degradation.
 ```
 
-## Testing
+A Redis `SET NX` can coordinate concurrent attempts, but eviction, failover and expiry mean
+it is not by itself a durable exactly-once boundary. A database unique constraint only guards
+effects committed in that same transaction. Name the guarantee actually provided.
 
-- **Concurrency, not repetition.** Two virtual threads, one `CyclicBarrier`, one key;
-  assert exactly one side effect and two responses with the same status and body. A
-  sequential double-call test passes against a check-then-act implementation and is
-  therefore worthless here.
-- **Crash between claim and complete.** Testcontainers with the real database, abort the
-  process (or throw from a test-only hook) after `claim`, restart, retry, and assert the
-  side effect happened exactly once across both runs.
-- **Expiry.** Advance an injected `Clock` past the retention and assert the retry executes
-  again — this is the behaviour retention actually buys, and it is usually untested.
+## Testing and observability
+
+- race many requests with the same key and assert one business effect plus equivalent
+  outcomes; also race the same key with different fingerprints;
+- crash after claim, after remote apply/before acknowledgement, and after acknowledgement/
+  before local completion; verify downstream state after restart;
+- pause the first worker past lease expiry, let a second take over, then release the first;
+  assert epoch fencing and one downstream operation ID;
+- test expiry, DLQ/operator replay beyond expiry, rolling-version fingerprint compatibility,
+  dedup-store failover and cleanup competing with live claims;
+- measure new claims, completed replays, in-flight duplicates, fingerprint conflicts,
+  unknown age, reconciliation outcomes, takeovers and rows/bytes by status.
+
+Mocks that merely throw before the side effect cannot reproduce an unknown outcome. Use a
+proxy or test dependency that applies the operation and then drops the acknowledgement.
+
+## Primary references
+
+- [RFC 9110 §9.2.2: Idempotent Methods](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.2)
+- [IETF HTTPAPI Idempotency-Key header draft](https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/)
+- [Stripe API: idempotent requests](https://docs.stripe.com/api/idempotent_requests)
+- [PostgreSQL unique constraints](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS)

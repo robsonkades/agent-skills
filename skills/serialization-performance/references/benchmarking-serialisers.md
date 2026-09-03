@@ -1,145 +1,135 @@
-# Benchmarking and profiling serialisers
+# Benchmarking and profiling serializers
 
-## Which tool answers which question
+## Corpus manifest
 
-| Question                                              | Tool           | Event or flag                                                   |
-| ----------------------------------------------------- | -------------- | --------------------------------------------------------------- |
-| Where is CPU going during serialise/deserialise?      | async-profiler | `-e cpu`                                                        |
-| How many bytes are allocated per operation?           | JMH            | `-prof gc`, metric `gc.alloc.rate.norm`                         |
-| Which types are allocated under real production load? | JFR            | `jdk.ObjectAllocationSample`                                    |
-| Is the format causing measurable GC pressure in prod? | JFR            | `jdk.GCPhasePause` correlated with `jdk.ObjectAllocationSample` |
+Build immutable, privacy-reviewed cohorts rather than one “typical” object:
 
-## The harness
-
-```java
-@BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Warmup(iterations = 5, time = 1)
-@Measurement(iterations = 5, time = 1)
-@Fork(value = 2, jvmArgsAppend = {"-Xms512m", "-Xmx512m", "-XX:+AlwaysPreTouch"})
-@State(Scope.Thread)
-public class SerializationBenchmark {
-
-    static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-    static final ThreadLocal<Kryo> KRYO = ThreadLocal.withInitial(() -> { /* registered */ });
-
-    OrderPojo sampleOrder;
-    byte[] jsonBytes;
-    byte[] kryoBytes;
-
-    @Setup
-    public void setup() throws Exception {
-        sampleOrder = createSampleOrder();
-        jsonBytes = JSON_MAPPER.writeValueAsBytes(sampleOrder);
-        try (Output out = new Output(512, -1)) {
-            KRYO.get().writeObject(out, sampleOrder);
-            kryoBytes = out.toBytes();
-        }
-    }
-
-    @Benchmark public byte[] jsonSerialize() throws Exception { … }
-    @Benchmark public OrderPojo jsonDeserialize() throws Exception { … }
-    @Benchmark public byte[] kryoSerialize() { … }
-    @Benchmark public OrderPojo kryoDeserialize() { … }
-}
+```yaml
+schema_versions: []
+producer_consumer_versions: []
+payload_count_and_digest: ''
+encoded_size_quantiles: ''
+nesting_collection_string_numeric_distributions: ''
+optional_unknown_default_enum_map_cases: []
+compressibility_and_entropy_cohorts: []
+malformed_truncated_oversized_bomb_cases: []
 ```
 
-Four separately named methods, not two round-trip ones: a round-trip figure hides which
-direction is expensive, and the two directions rarely move together between formats.
+Keep object construction outside an encode benchmark only when production also receives the object
+already built. For decode, use immutable source bytes and ensure buffer position/state is reset.
 
-```bash
-java -jar target/benchmarks.jar SerializationBenchmark -prof gc -rf json -rff results.json
+## Benchmark cells
+
+Measure dimensions independently enough to localize cost:
+
+| Cell                           | Boundary                              | Outputs                                    |
+| ------------------------------ | ------------------------------------- | ------------------------------------------ |
+| encode to new byte array       | codec + growth/copy/result ownership  | time, allocation, bytes                    |
+| encode to caller stream/buffer | codec plus selected sink              | time, allocation, written bytes/calls      |
+| decode to full model           | parse + object materialization        | time, allocation, semantic result          |
+| selective/lazy access          | validation/view + accessed fields     | time, allocation, retained buffer lifetime |
+| round trip                     | encode + transfer-copy model + decode | time, allocation, semantic equality        |
+| compressed/framed              | real codec pipeline                   | CPU, bytes, allocation, tail               |
+
+Do not compare one library's streaming API to another's new-array convenience API without calling
+that boundary difference the experimental factor.
+
+## JMH protocol
+
+Follow `jmh-microbenchmarks` and `jmh-advanced`:
+
+- observe the semantic output and verify equality outside timing;
+- use `@State` matching codec thread safety and production sharing;
+- preserve multiple payload cohorts and raw fork identity;
+- choose warm-up from compilation/allocation/GC trajectories;
+- report JMH/JDK/library versions, flags, hardware, mode/unit/threads and operations semantics;
+- run profiler diagnostics separately when profiler changes the decision path;
+- use normalized allocation only with its exact profiler/denominator semantics.
+
+Fixed heap and pre-touch are not universal validity requirements. They may isolate heap expansion or
+page faults while changing startup, NUMA, RSS, and GC ergonomics. Use controlled and representative
+runs when those factors matter.
+
+GC during measurement does not automatically invalidate a serialization benchmark. It may be a
+real consequence of allocation. Report GC CPU/pause/throughput and use additional mechanism runs to
+separate codec execution from collector consequences.
+
+## Avoid mutable-buffer traps
+
+For each invocation verify:
+
+- input buffer position/limit/order and source bytes are reset;
+- output writer index/position is reset without exposing stale tenant data;
+- returned bytes remain valid after buffer reuse/release;
+- growth/oversize path is exercised and included/excluded deliberately;
+- pooled codec state, references, class registrations, dictionaries and caches do not leak between
+  payloads or forks;
+- checksum/semantic oracle consumes the correct number of bytes.
+
+A benchmark that returns a view into a buffer immediately reused by the next invocation may be fast
+and semantically invalid.
+
+## Production evidence map
+
+| Question            | Evidence                                                     | Limitation                                |
+| ------------------- | ------------------------------------------------------------ | ----------------------------------------- |
+| CPU location        | CPU profile, work normalized                                 | sampling and inclusive/context ambiguity  |
+| elapsed wait/copy   | wall/JFR/trace + buffer/queue metrics                        | thread time is not request critical path  |
+| allocation source   | JFR/async allocation or JMH GC profiler                      | creation is not retention                 |
+| GC consequence      | GC logs/JFR with workload timeline                           | correlation alone is not causation        |
+| wire/storage impact | bytes/message, compression ratio, network/storage counters   | protocol framing/retries must be included |
+| buffer pressure     | pool acquire/wait/miss, capacity retained, direct/native use | cardinality and instrumentation cost      |
+
+Run positive controls and validate event settings, weights, loss, and target population. Comparing
+two codecs simultaneously inside one JVM does not remove environment: order, compilation, GC,
+caches, and shared resource interactions remain.
+
+## Component and load experiment
+
+Use realistic concurrency, arrival rate and backpressure. Include:
+
+- connection/framing/TLS/compression/checksum as deployed;
+- message-size and schema-version mixture;
+- batch formation and flush policy;
+- buffer-pool size, miss/fallback and direct-memory limit;
+- consumer processing and acknowledgement/retry behavior;
+- CPU quota, memory limit, network bandwidth and downstream bottlenecks;
+- open-loop or corrected workload generation for latency claims.
+
+Measure successful useful messages/s, end-to-end percentile distribution, CPU/message, allocated
+and retained memory, GC, wire bytes, errors/retries/drops, queue depth, and pool pressure.
+
+## Failure tests
+
+- truncated, corrupt, invalid tag/offset/length and unsupported schema/version;
+- deeply nested, huge array/map/string and decompression expansion;
+- pool exhaustion, direct/native OOM and output buffer growth failure;
+- timeout/cancellation/partial stream and peer disconnect;
+- schema registry unavailable/stale/authorization failure;
+- rolling old-new producers/consumers, replay old bytes, rollback;
+- unknown enum/field/default/map-order and deterministic-byte requirements;
+- codec throws mid-write/read and instance is returned to pool;
+- shutdown while buffers/messages are in flight.
+
+## Comparison report
+
+```text
+decision and practical threshold:
+corpus and schema/version matrix:
+API/boundary per candidate:
+JMH effects with fork-level uncertainty:
+bytes/compression/allocation/copies and buffer retention:
+component/load SLO/capacity results:
+compatibility/security/failure outcomes:
+operational/tooling/migration cost:
+selected candidate, rejected alternatives and residual risks:
 ```
 
-Read two numbers from the output, not one:
+## Authoritative references
 
-- **`gc.alloc.rate.norm`** — bytes allocated per operation. This is the comparable figure across
-  formats, and the one a time-only comparison silently omits.
-- **`gc.count`** — collections triggered during measurement. With a fixed heap and
-  `-XX:+AlwaysPreTouch` this should be zero or near it. A high value means part of the measured
-  time is collection pause, and the timing comparison is not valid.
-
-## Attributing the cost in a running system
-
-```bash
-java -XX:StartFlightRecording=filename=serialization.jfr,settings=profile -jar app.jar
-jfr print --events jdk.ObjectAllocationSample serialization.jfr | head -100
-```
-
-`jdk.ObjectAllocationSample` (low-overhead sampling, in `profile.jfc` since JDK 16, and the modern
-replacement for the `ObjectAllocationInNewTLAB`/`OutsideTLAB` pair) answers "which types does this
-pipeline allocate" without guessing. Aggregating by `objectClass` and summing `weight` through
-`jdk.jfr.consumer.RecordingFile` lets two formats be compared in the _same_ process under the
-_same_ load — the only comparison that removes environment as a variable.
-
-```bash
-asprof -d 30 -e cpu   -f flame.html     <pid>
-asprof -d 30 -e alloc -f alloc-flame.html <pid>
-```
-
-Frames worth looking for: `ObjectMapper.readValue`, `Kryo.readObject`/`writeObject`,
-`CodedInputStream.readXxx`. `ObjectMapper.readValue` dominating sampled CPU in a high-rate
-consumer is the finding that justifies a migration; anything less is intuition.
-
-Expected patterns when comparing, to be confirmed against your own payload rather than assumed:
-unpooled, unregistered Kryo tends to show `byte[]` from unreused `Output`/`Input` buffers plus
-extra `String`s for class names; Protobuf tends to concentrate allocation in `CodedOutputStream`
-and generated builder objects.
-
-## Taking allocation out of the hot path
-
-Protobuf — reuse the working buffer, and prefer writing straight to the stream:
-
-```java
-private final byte[] BUFFER = new byte[64 * 1024];
-
-byte[] serialize(Order order) {
-    int size = order.getSerializedSize();
-    if (size > BUFFER.length) return order.toByteArray();   // fallback
-    CodedOutputStream cos = CodedOutputStream.newInstance(BUFFER, 0, size);
-    order.writeTo(cos);
-    return Arrays.copyOf(BUFFER, size);   // still allocates the result, not the workspace
-}
-
-void serializeToStream(Order order, OutputStream out) throws IOException {
-    order.writeTo(out);                   // no intermediate array at all
-}
-```
-
-Kryo — pool the instances, since they are not thread-safe and are expensive to rebuild:
-
-```java
-KryoPool kryoPool = new KryoPool.Builder(() -> {
-    Kryo kryo = new Kryo();
-    kryo.register(Order.class, 10);
-    kryo.register(ArrayList.class, 11);
-    kryo.setReferences(false);            // no reference tracking — faster, if the graph is a tree
-    kryo.setRegistrationRequired(true);   // no silent reflection fallback
-    return kryo;
-}).softReferences().build();
-
-public byte[] serialize(Object obj) {
-    Kryo kryo = kryoPool.borrow();
-    try {
-        Output output = new Output(256, -1);
-        kryo.writeClassAndObject(output, obj);
-        return output.toBytes();
-    } finally {
-        kryoPool.release(kryo);
-    }
-}
-```
-
-`setReferences(false)` is safe only when the object graph has no shared or cyclic references;
-turning it off on a graph that has them changes the data, not just the speed.
-
-## Before publishing a number
-
-- [ ] JMH, never a hand-written loop around `System.nanoTime()`.
-- [ ] Each `@Benchmark` unambiguously named as round-trip or single-direction.
-- [ ] `-prof gc` run, and `gc.alloc.rate.norm` reported next to the time.
-- [ ] Fixed heap plus `-XX:+AlwaysPreTouch` in the forks, and `gc.count` near zero.
-- [ ] The payload is the real one, at a realistic size — not a three-field sample standing in for
-      a production message.
-- [ ] Wire size reported alongside CPU: a format that wins on CPU and doubles the bytes may lose
-      once the network is in the picture.
+- [OpenJDK JMH](https://github.com/openjdk/jmh)
+- [JFR runtime guide](https://docs.oracle.com/en/java/javase/25/jfapi/flight-recorder-runtime-guide/index.html)
+- [async-profiler](https://github.com/async-profiler/async-profiler)
+- [Protocol Buffers Java generated code](https://protobuf.dev/reference/java/java-generated/)
+- [Apache Avro Java API](https://avro.apache.org/docs/current/api/java/)
+- [Kryo documentation](https://github.com/EsotericSoftware/kryo)

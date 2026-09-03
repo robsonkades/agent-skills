@@ -1,143 +1,184 @@
 ---
 name: tail-latency-analysis
 description: >
-  Where tail latency comes from and how to attack it: decomposing p99.9 into its
-  contributors, tail amplification across fan-out and chained calls, hedged requests and
-  their load cost, tail-tolerant design, and telling a systematic tail from a rare event.
-  Use when p99 is fine but p99.9 is not, when each service meets its own SLO yet the
-  user-facing request misses it, when per-stage p99s do not add up to the end-to-end p99,
-  when a p99 spike needs to be attributed to GC, safepoint, cold start or throttling, when
-  someone proposes hedging or an aggressive timeout-plus-retry, when a p50 optimisation
-  made the tail worse, or when latency degrades for the first minutes after every deploy.
-  Does not cover percentiles, histogram aggregation or sample adequacy
-  (latency-statistics), the queueing contribution to the tail (queueing-models), or
-  turning the analysis into a capacity decision (capacity-planning).
+  Diagnosing and mitigating end-to-end latency tails: defining the latency population,
+  decomposing stage and queue time with per-request evidence, quantifying fan-out under
+  dependence, attributing correlated JVM/OS/network/dependency events, and selecting
+  bounded tail-tolerance mechanisms such as deadlines, partial results, hedging and
+  load-aware routing. Use when p99/p99.9 regresses, stage percentiles do not explain an
+  end-to-end percentile, deploys create cold tails, wide fan-out amplifies rare stragglers,
+  or a hedge/retry is proposed. Percentile estimation belongs to latency-statistics;
+  queueing models to queueing-models; collector and OS mechanisms to their owning skills.
 ---
 
 # Tail Latency Analysis
 
 ## Purpose
 
-Decide what is producing the tail and what will actually shrink it. The failure this skill
-prevents is attacking the tail with the wrong lever: adding replicas when the cause is a
-stop-the-world pause shared by every in-flight request, or enabling hedging when the cause
-is a saturated shared resource that duplication makes worse.
+Identify which requests are slow, where their elapsed time went, what condition caused it,
+and which intervention improves user outcomes without destabilizing the system.
 
-The tail is not a worse version of the median. It is governed by the maximum, and in
-fan-out it composes multiplicatively: N independent calls each meeting p99 give the user
-`1-(1-0.01)^N`, so ten calls deliver roughly p90 and a hundred deliver roughly p37 — Dean
-and Barroso's 63% (computed: 0.634). Every per-service SLO in a fan-out architecture has
-to be derived backwards from the user-facing one, never copied from it.
+Tail latency is conditional on endpoint, outcome, tenant, payload, time, load, topology and
+deadline. A global p99 can move because the mixture changed even when every cohort stayed
+constant (or hide a cohort regression). Start from a precisely scoped population.
 
 ## Workflow
 
-1. **State the tail you are targeting and its budget.** Two percentiles minimum — p99 and
-   p99.9 — plus the absolute max, which is a real stuck user, not a statistic. At a roughly
-   constant arrival rate, an error budget of `x%` of requests is `x%` of the month:
-   1% is ~7.2 h of a 30-day month, and that cross-check catches arithmetic errors.
-2. **Establish whether the tail is systematic or a rare event.** Fit the shape: a dominant
-   fast component plus one small slow component is one slow path; three or more stable
-   components mean several distinct rare causes, and acting on one of them alone will not
-   move the number. A smear with no second mode is queueing, not a cause.
-3. **Check the temporal pattern before the amplitude.** The tail is not constant across the
-   day — peak traffic, off-peak GC behaviour and post-deploy cold start each produce a
-   different tail. Break p99 down per hour and per deployment before hypothesising.
-4. **Decompose per stage before attributing.** Stage histograms first: if one stage's
-   p99.9 matches the end-to-end p99.9, it owns the tail. If none does, the tail is
-   correlated stages or a queue between them, and only per-request data — traces of the
-   slow requests, a thresholded per-request event, exemplars — can say which. See
-   `references/decomposing-the-tail.md`.
-5. **Attribute the spike to a cause by duration, correlation and evidence.** Match the
-   duration band, check whether every stage moved together (a shared pause) or one did,
-   then confirm with the JFR or OS signal that names the cause, and hand it to the skill
-   that owns it. See `references/attributing-the-tail.md`.
-6. **Rule out cold start first.** Post-deploy tail degradation is uncompiled code, not a
-   disabled JIT, and it resolves itself. Confirm or exclude it before investigating
-   anything more exotic.
-7. **Compute the fan-out amplification before blaming a single service.** With N parallel
-   calls, `P(at least one exceeds) = 1-(1-p)^N`; the per-service budget is
-   `1-(1-p_user)^(1/N)`. If the composite explains the number, no individual service is at
-   fault. Chained calls share the probability formula but their latency is a sum, and a
-   percentile of a sum is not a sum of percentiles.
-8. **Choose the mitigation from the cause, then validate it on the same percentiles used
-   to diagnose — and state its behaviour under an incident.** A hedge or retry that costs
-   5% at nominal latency costs up to 100% when the callee degrades. See
-   `references/hedging-and-tail-tolerance.md` for which lever fits which cause, hedging,
-   tied requests, bounding and latency-aware balancing.
+### 1. Define the user objective
 
-## Rules
+State latency start/end events, population, success/error treatment, deadline/censoring,
+window and aggregation. Select quantiles from user impact and available sample precision;
+do not mandate p99, p99.9 and maximum for every service. Maximum is highly sample-size and
+duration dependent and is useful as an incident exemplar, not a stable SLO statistic.
 
-- Never state an SLO at a single percentile. p99 alone leaves 1% unmeasured — at 1e9
-  requests/day that is 10 million bad requests every day. Carry p99, p99.9 and the max.
-- Never accept a per-service SLO that equals the user-facing SLO when there is fan-out.
-  Derive each service's budget backwards from `1-(1-p)^N` — and state whether the calls
-  are independent, because a shared host, pool or synchronised pause breaks the formula
-  in both directions.
-- Never add or subtract percentiles across stages. Independent stages give
-  `p99(A+B) < p99(A)+p99(B)`; a shared cause gives roughly the sum. Per-stage p99s that
-  "do not add up" are the normal state, and the discrepancy is itself the evidence of
-  whether the tail is correlated.
-- Always report the p99 and p99.9 impact of a p50 optimisation. A change that moves p50
-  from 20 ms to 12 ms while moving p99 from 25 ms to 200 ms is a regression. Measure it
-  with JMH `@BenchmarkMode(Mode.SampleTime)`, which reports percentiles; the default
-  average mode cannot see this.
-- Never discard latency outliers before analysis — no `> 2σ` filter, no silent trim. The
-  outliers are the thing being measured. If data is genuinely invalid (clock skew,
-  instrumentation bug), fix the cause rather than dropping the points.
-- A tail measured by a closed-loop generator, or by a timer that records only completed
-  calls, is under-counted precisely during the events under investigation; confirm the
-  source is free of coordinated omission (`coordinated-omission`) before decomposing it.
-- Use `jdk.GarbageCollection` with the `sumOfPauses` field to correlate GC with the tail,
-  and `jdk.SafepointBegin` / `SafepointEnd` joined on `safepointId`, with
-  `jdk.ExecuteVMOperation` for the operation name, for time-to-safepoint.
-  `jdk.SafepointStateSynchronization` is disabled in both stock `.jfc` profiles, and
-  `jdk.SafepointCleanup`, `jdk.GCPauseL3` and `jdk.SafepointWait` do not exist on JDK 25
-  (`jfr metadata`, 25.0.3) — a runbook naming them was never executed. The phase events
-  are `jdk.GCPhasePause` and `GCPhasePauseLevel1` to `4`.
-- `-Xlog:gc` shows the GC's own work, not the time spent waiting for threads to reach the
-  safepoint. A long TTSP is invisible there and can exceed the collection itself;
-  `pause-attribution` assigns the missing milliseconds, `safepoints` owns the mechanism.
-- Never describe post-deploy slowness as "the JIT is disabled". The JIT is never off by
-  default; the interpreter and the compilers coexist under tiered compilation, and the
-  early tail is code C1/C2 have not compiled yet.
-- Set the hedge trigger from the overhead table, not by feel: triggering at p50 costs 50%
-  extra backend load (1.5x total); p95–p99 costs 1–5%. State the chosen percentile and its
-  cost in the change — and the hedge rate under the callee's worst observed degradation,
-  because a fixed-millisecond trigger hedges every request once the callee is slow.
-  Bound it with a hedge budget or an adaptive trigger; never ship the nominal 5% alone.
-- Do not enable hedging when the slowness comes from a saturated shared resource — an
-  exhausted connection pool, a downstream near capacity — or when it is correlated
-  across replicas. Duplication adds load exactly where it already hurts. Hedging assumes
-  a local, uncorrelated cause, an idempotent operation (`idempotency`), one hedging layer,
-  and no retry policy on the same call.
-- Retries are a tail lever only while budgeted: attempts multiply across layers (three
-  layers at four attempts each reach the bottom as 64), and a per-client retry budget as a
-  fraction of successful traffic is the only bound that survives an incident.
-  `retries-and-backoff` owns the policy, `cascading-failures` the loop it feeds.
-- Do not treat `least_conn` / `leastconn` as equivalent to P2C. Envoy `least_request`
-  (default `choice_count` 2) and HAProxy `random(2)` sample two backends per decision;
-  HAProxy `leastconn` and Nginx `least_conn` consult every backend and, across independent
-  balancers or on a stale load signal, converge on the same "least loaded" one. Pick
-  deliberately.
+Record offered, admitted and successful work. Closed-loop or completion-only measurements
+can underrepresent the worst intervals; check coordinated omission and timed-out/abandoned
+requests first.
 
-## References
+### 2. Segment before attributing
 
-- [Decomposing the tail](references/decomposing-the-tail.md) — the amplification table
-  with verified numbers and the backward budget derivation, why a percentile of a sum is
-  not a sum of percentiles in either direction, stage histograms versus per-request
-  traces and the order to use them, systematic tail versus rare event, and the
-  coordinated-omission trap. Read at step 4, or when per-stage dashboards disagree with
-  the end-to-end number.
-- [Attributing the tail](references/attributing-the-tail.md) — the duration taxonomy, the
-  cause catalogue with signature, discriminator, measurement and owning skill for each
-  JVM, OS and network source of tail, the real JFR event names and stock thresholds on
-  JDK 25, the thresholded per-request event that joins to them, and the mitigation and
-  validation metric per cause. Read when a p99 or p99.9 spike needs a named cause rather
-  than a hypothesis.
-- [Hedging and tail tolerance](references/hedging-and-tail-tolerance.md) — which lever
-  fits which cause, the hedge trigger cost table and the incident failure mode that turns
-  5% into 100%, tied requests as the paper defines them, budgeted timeout-plus-retry and
-  retry amplification, the paper's cross-request adaptations, synchronising background
-  work behind a fan-out, and P2C versus deterministic least-connections. Read before
-  enabling hedging, tightening a timeout, or changing a load-balancing policy for tail
-  reasons.
+Compare distributions by endpoint/operation, payload or work size, tenant/partition,
+outcome, instance/node/zone, cache state, deployment age, load and time. Keep cardinality
+bounded in metrics; use traces/exemplars or offline joins for high-cardinality dimensions.
+
+Mixture decomposition distinguishes:
+
+- a larger fraction of an existing slow cohort;
+- an unchanged fraction whose conditional latency worsened;
+- a new slow path;
+- a global correlated event;
+- estimator/instrumentation change.
+
+Multimodality can suggest distinct paths, but the absence of modes does not prove queueing,
+and a component count does not identify causes.
+
+### 3. Decompose per request, not by percentile arithmetic
+
+For one request:
+
+\[
+T_{end}=T_{client}+T_{network}+T_{admission}+T_{queue}
++T_{service}+T_{downstream}+T_{serialization}
+\]
+
+The exact terms depend on instrumentation boundaries and can overlap in asynchronous
+systems. Reconstruct critical-path spans and waits for sampled slow requests. Per-stage
+histograms localize candidates, but neither matching stage p99 nor summing stage p99 proves
+ownership: different requests can occupy each percentile and stages can correlate.
+
+Use [decomposing the tail](references/decomposing-the-tail.md).
+
+### 4. Quantify fan-out with dependence explicit
+
+For \(N\) identically distributed parallel leaves, if each independently exceeds threshold
+\(t\) with probability \(p\):
+
+\[
+P(\max_i T_i>t)=1-(1-p)^N
+\]
+
+For 100 leaves and \(p=0.01\), the probability is about 63.4%. Independence is a scenario,
+not a default: shared dependencies, synchronized pauses and common requests create positive
+dependence; load balancing and mutually exclusive paths can change it differently.
+
+Estimate joint behavior from request-level traces or bounds. A user budget can be allocated
+backward only after topology, quorum/partial-result rule and dependence assumptions are
+declared. Sequential latency is a sum; parallel latency may be a maximum, order statistic
+or deadline-limited partial result.
+
+### 5. Correlate candidate causes
+
+Build a common timeline of slow requests, queue/admission, useful load, JVM events,
+process/container scheduling, network/storage and dependencies. Evidence must overlap the
+affected interval and instance. Co-occurrence alone is not causation; compare unaffected
+instances/cohorts and perform a controlled change when possible.
+
+Use [attributing the tail](references/attributing-the-tail.md).
+
+### 6. Select a mechanism from cause and topology
+
+Prefer source removal—reduce contention, queueing, pauses, skew or expensive work—when
+feasible. Tail-tolerance mechanisms trade extra work, completeness, errors, state and
+complexity:
+
+| Cause/topology                                   | Candidate                              | Key risk                             |
+| ------------------------------------------------ | -------------------------------------- | ------------------------------------ |
+| local transient straggler, spare diverse replica | delayed hedge                          | incident-time load amplification     |
+| wide fan-out permits partial answer              | quorum/k-of-N by deadline              | incomplete/biased results            |
+| persistent slow replica                          | bounded outlier ejection/probation     | correlated ejection removes capacity |
+| head-of-line blocking                            | classes, fair scheduling, work slicing | starvation/complexity                |
+| hot key/partition                                | repartition or selective replication   | consistency/rebalance cost           |
+| saturated shared dependency                      | admission, shedding, capacity repair   | hedge/retry worsens it               |
+| cold rollout instance                            | warm-capacity routing/slow start       | rollout duration/cost                |
+
+See [hedging and tail tolerance](references/hedging-and-tail-tolerance.md).
+
+### 7. Validate system-wide
+
+Reproduce the original population and load, then compare user tail, success/completeness,
+attempt rate, useful throughput, downstream utilization and recovery under normal and
+degraded scenarios. A nominal 1% hedge rate is not sufficient evidence; bound and test the
+rate when the callee is broadly slow.
+
+## Diagnostic rules
+
+- Percentiles of components cannot generally be added, subtracted or ordered to obtain the
+  percentile of their sum.
+- A stage percentile equal to end-to-end p99 does not prove the same requests drove both.
+- A faster p50 with worse p99 may be a regression, but decision weights come from the SLO
+  and user impact—not a universal preference for tails.
+- Never silently trim slow observations. Exclude only proven measurement corruption with a
+  recorded rule and sensitivity analysis.
+- Post-deploy slowness can be JIT/cache/classloading/TLS/connection/data warmup, placement,
+  dependency or rollout routing. “JIT disabled” and “always JIT” are both unsupported
+  without evidence.
+- GC logs show collector activity; safepoint, scheduling and allocation stalls require
+  their own evidence. Verify JFR event names/configuration against the exact JDK recording.
+- Fixed duration bands are triage hints only. Retransmission timers, cgroup periods,
+  storage and GC behavior are configurable and layered.
+
+## Failure modes
+
+| Symptom                                        | Discriminator                                    | Next step                                       |
+| ---------------------------------------------- | ------------------------------------------------ | ----------------------------------------------- |
+| every in-process stage shifts together         | aligned pause/scheduling/client boundary         | correlate JFR, safepoint and OS timeline        |
+| one dependency span dominates only slow traces | dependency cohort/outcome/instance               | inspect its queue, retries and topology         |
+| tail grows with fan-out width                  | leaf exceedance correlation and completion rule  | reduce width, partial results or safe tolerance |
+| tail begins after rollout                      | age since readiness, compilation/cache/placement | measure warm-capacity ramp                      |
+| spikes at high load                            | admitted load, queue age, throttling, pools      | queue/resource diagnosis before hedging         |
+| periodic spikes                                | aligned GC/jobs/rotation/network/control cycles  | identify phase and test causal disable/shift    |
+| timeout boundary pile-up                       | censored durations and remaining work            | propagate deadlines/cancellation                |
+
+## Anti-patterns
+
+**One percentile per service copied end to end:** ignores topology, population and
+dependence. Allocate a user objective through the actual critical path and completion rule.
+
+**Stage-percentile accounting:** hides request identity and covariance. Use per-request
+critical paths or joint distributions.
+
+**Hedge at historical p95 and call it 5% overhead:** when the distribution shifts, almost
+all calls can cross the fixed delay. Enforce a rolling budget/pushback and test degradation.
+
+**Retry and hedge at multiple layers:** attempts multiply, deadlines reset and cancellation
+is lost. Choose one owning layer and one end-to-end deadline.
+
+**Correlation by dashboard eyeballing:** different clocks/windows and mixture changes
+produce false matches. Align raw events and compare controls.
+
+## Cross-skill routing
+
+- latency-statistics: estimator, histogram and sample uncertainty.
+- distributed-tracing-design: span boundaries, sampling and exemplars.
+- queueing-models / coordinated-omission: waiting and missing arrivals.
+- pause-attribution / safepoints / gc-log-analysis: JVM pause mechanism.
+- linux-for-jvm / ebpf-for-jvm / tcp-tuning: scheduling and network evidence.
+- timeouts-and-deadlines / retries-and-backoff / scatter-gather: policy ownership.
+
+## Authoritative references
+
+- [Dean and Barroso: The Tail at Scale](https://research.google/pubs/the-tail-at-scale/)
+- [gRPC: Request hedging](https://grpc.io/docs/guides/request-hedging/)
+- [gRPC: Deadlines](https://grpc.io/docs/guides/deadlines/)
+- [Google SRE: Addressing cascading failures](https://sre.google/sre-book/addressing-cascading-failures/)
+- [OpenJDK JFR event metadata](https://github.com/openjdk/jdk/blob/master/src/jdk.jfr/share/conf/jfr/default.jfc)

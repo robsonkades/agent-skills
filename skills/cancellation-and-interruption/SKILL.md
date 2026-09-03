@@ -1,102 +1,173 @@
 ---
 name: cancellation-and-interruption
 description: >
-  Cancellation in Java as a cooperative protocol: interruption as a request rather than a
-  stop, the two legal responses to InterruptedException, the blocking operations that
-  ignore interruption and what stops them instead, why Future.cancel(false) and
-  CompletableFuture.cancel never stop running work, and why a timeout is not a
-  cancellation. Use when a catch block logs InterruptedException and continues, when
-  Thread.interrupted() is called and its result discarded, when a timed-out request leaves
-  work running, when cancel is expected to free a connection, when shutdownNow leaves
-  threads alive, when a task blocks on a plain Socket or a native call, when
-  Thread.stop is proposed, or when a StructuredTaskScope takes far longer to close than to
-  fail. Does not cover choosing the bound itself (timeouts-and-deadlines), what to do after
-  it fires (retries-and-backoff), executor shutdown mechanics
-  (executors-and-task-lifecycle), or scope join policies (structured-concurrency).
+  Designing cooperative cancellation in Java across interruption, Future/CompletableFuture,
+  executor/scope shutdown, deadlines, resource close/abort, CPU loops, blocking APIs, native calls,
+  partial side effects and cleanup. Covers multiple cancellation sources, signal ownership,
+  propagation/translation/restoration, noninterruptible regions, residual work, idempotency and
+  bounded termination tests. Use when timeout/cancel returns but work or resources remain, or when
+  `InterruptedException` handling is ambiguous. Timeout selection and retry policy are separate.
 ---
 
-# Cancellation and Interruption
+# Cancellation and interruption
 
 ## Purpose
 
-Make "stop doing that" actually stop it. Java has no way to abort a thread from outside;
-every cancellation is a request that the target must be written to observe. Code that does
-not observe it is not slow to cancel — it is uncancellable, and the difference shows up as
-a hung shutdown, a connection pool that never recovers after a timeout storm, or a scope
-that fails in 10 ms and closes in 30 s.
+Make abandonment observable and bounded across the whole work graph. Interruption is one cooperative
+signal; resource close, protocol abort, cancellation tokens, deadlines and process isolation may be
+needed. Returning a timeout/cancelled result while work continues is a semantic and capacity state,
+not necessarily successful cancellation.
 
-The two failures this prevents: the swallowed `InterruptedException`, which converts a
-cancellation request into a silent no-op; and the timeout that returns to the caller while
-the work it was bounding continues to hold everything it acquired.
+## Cancellation contract
 
-## Workflow
+```text
+work owner and terminal states:
+sources: caller, deadline, sibling failure, shutdown, overload, admin
+winner/precedence when sources race:
+signal per execution/blocking/resource layer:
+observation/check points and maximum cancellation latency:
+downstream propagation and residual work:
+partial side effects, commit point, compensation/idempotency:
+resource cleanup and ownership:
+result/error/context exposed to caller and telemetry:
+grace, escalation, process shutdown and test bound:
+```
 
-1. **Name the owner.** Exactly one place decides to cancel — a request deadline, a scope, a
-   shutdown hook. Cancellation initiated from two places independently is a race, not a
-   policy.
-2. **Walk the blocking points on the path** and classify each: interruptible, not
-   interruptible, or cancellable only by closing a resource. The uninterruptible ones are
-   where cancellation actually fails.
-3. **Make the task observant.** Check `Thread.currentThread().isInterrupted()` on every
-   loop iteration of long CPU work, and handle `InterruptedException` at every blocking
-   call by propagating or restoring.
-4. **Propagate outward.** Cancelling a task must cancel the downstream calls it made; a
-   cancelled caller with a live HTTP request behind it has leaked, not recovered.
-5. **Pair every timeout with a cancellation.** A bound on waiting without a bound on
-   working is a resource leak wearing a recovery costume.
-6. **Test it**: start the work, cancel mid-flight, assert termination inside a bound and
-   assert the resource was released.
+Multiple sources are normal. Cancellation should be idempotent and converge on one state machine;
+“exactly one place may cancel” is not a realistic requirement.
 
-## Rules
+## Interruption protocol
 
-- Interruption is one bit plus a wake-up. `interrupt()` sets the flag; a thread blocked in
-  an interruptible method throws `InterruptedException` **and the flag is cleared** on the
-  way out. The exception carries the whole signal — losing it loses the cancellation.
-- There are exactly two correct responses to `InterruptedException`: **propagate it**, or
-  **restore the flag** (`Thread.currentThread().interrupt()`) and return promptly. Catching
-  it, logging, and carrying on is a bug in every context.
-- `Thread.interrupted()` **clears** the flag; `isInterrupted()` does not. Calling
-  `interrupted()` in a condition and ignoring a `true` result discards the request.
-- These do **not** respond to interruption: reads on `java.net.Socket` streams (close the
-  socket), classic `java.io` file reads, entering a `synchronized` block (use
-  `lock.lockInterruptibly()`), `CompletableFuture.join()`, and anything inside a native
-  frame. `InterruptibleChannel` operations do respond — by closing the channel and throwing
-  `ClosedByInterruptException`, which leaves the channel unusable, so that is a
-  once-per-connection event, not a retry point.
-- `Future.cancel(false)` stops a task **only if it has not started**; it otherwise just
-  makes `get()` throw `CancellationException` while the task runs on. `cancel(true)`
-  interrupts, which stops only tasks that observe interruption.
-- **`CompletableFuture.cancel(mayInterruptIfRunning)` ignores its argument** — it never
-  interrupts anything. It completes the future exceptionally for downstream stages and the
-  supplier keeps running to completion, holding whatever it holds. `orTimeout` behaves the
-  same way: the caller is released, the work is not.
-- A timeout is not a cancellation. `get(timeout)` bounds the caller's wait. If nothing
-  cancels the callee, a timeout under load multiplies in-flight work instead of shedding
-  it — the classic shape behind a pool that never recovers.
-- `StructuredTaskScope` makes cancellation structural: a failure, a success under a racing
-  joiner, or a scope timeout interrupts the remaining subtasks. `close()` then waits for
-  every one of them **regardless**. The guarantee is "no thread outlives the scope", not
-  "close returns quickly" — an uninterruptible subtask delays it indefinitely.
-- Swallowing `InterruptedException` breaks `shutdownNow()` and process shutdown: the
-  interrupt was the only mechanism either had.
-- `Thread.stop()` throws `UnsupportedOperationException` on the current baseline, and
-  `suspend`/`resume` are gone. There is no forcible termination to fall back on; there was
-  never a safe one.
-- Virtual threads change nothing here. Interruption semantics are identical, and a leaked
-  virtual thread is cheap in stack terms while still holding its scoped bindings, its
-  connection and its downstream request.
-- Cancellation must leave state consistent. "Where can this task be interrupted?" is a
-  correctness question about the work, not a threading detail — the answer for a
-  half-written batch is different from a read.
+`Thread.interrupt()` sets interrupt status and may cause an interruptible blocking operation to
+terminate according to its API. Many methods throwing `InterruptedException` clear status when they
+do so. `Thread.interrupted()` reads and clears the current thread's status; `isInterrupted()` does
+not clear it.
+
+Choose handling by boundary:
+
+| Boundary                                                | Appropriate handling                                                                   |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| method can declare interruption                         | cleanup then propagate `InterruptedException`                                          |
+| API cannot declare but caller must observe cancellation | restore status, translate/return promptly under documented contract                    |
+| top-level task/thread owner                             | cleanup and terminate; restoration may be unnecessary if no outer owner remains        |
+| non-cancellable atomic section                          | defer observation briefly, preserve signal, complete/rollback invariant, then honor it |
+| interruption is not this API's cancellation signal      | preserve/translate according to framework contract; do not silently erase              |
+
+There are more than “exactly two legal responses.” The invariant is that an owned signal is handled,
+propagated or deliberately consumed at its terminal owner, with cleanup and semantics preserved.
+Logging and continuing ordinary work is usually a bug.
+
+## CPU and polling loops
+
+Check cancellation at a cadence derived from maximum allowed latency and per-iteration cost—not
+necessarily every iteration. Avoid allocating/logging on every check. Include nested library work,
+parallel subtasks and safepoint behavior in the bound. `Thread.onSpinWait()` does not check interrupt
+or relinquish ownership.
+
+## Blocking and resource cancellation
+
+Interrupt behavior is exact-API/provider/thread/version-specific. Classify each blocking point:
+
+- specified interruptible wait throwing `InterruptedException`;
+- channel operation that closes/wakes with channel-specific exception;
+- operation whose owning socket/stream/session must be closed/aborted;
+- API with its own cancel handle/deadline (`Statement.cancel`, HTTP request future, subscription);
+- native/foreign call with library-specific interruption or no cooperative path;
+- monitor acquisition, lock acquisition, future join/get, sleep/park and condition wait, each with
+  distinct semantics.
+
+Do not use a timeless table saying every classic socket/native call ignores interruption. Virtual
+threads and JDK/provider implementations have evolved. Read the exact API contract, run a positive
+control on the target, and prefer owner-initiated close only when close semantics and connection
+reuse are acceptable.
+
+## Futures and stages
+
+- `Future.cancel(false)` can prevent execution before start; if already running, it does not request
+  interruption and work may continue even though the Future is cancelled.
+- `Future.cancel(true)` requests interruption when implementation can identify a running task;
+  termination still depends on task/API cooperation.
+- `CompletableFuture.cancel(boolean)` treats cancellation as exceptional completion; its
+  `mayInterruptIfRunning` argument has no effect in the class contract. It is not automatically a
+  handle to the computation that will complete it.
+- wait timeouts such as `get(timeout)` bound the waiter, not the producer. `orTimeout` completes the
+  stage exceptionally but does not universally stop underlying work.
+
+Bridge cancellation explicitly when adapting callback/client APIs: retain the underlying handle,
+propagate terminal state both directions once, and resolve completion-versus-cancel races.
+
+## Structured ownership
+
+Executors/scopes can track tasks and signal unfinished work during shutdown/failure, but cannot make
+noncooperative operations terminate. Structured-concurrency APIs are versioned preview/finalization
+work; verify target API. Define join/deadline/failure policy, scope close behavior, subtask
+interruptibility and what resource aborts are triggered.
+
+## State consistency
+
+Mark cancellation points around semantic commit:
+
+```text
+before side effect -> abandon safely
+during staged local mutation -> rollback/complete invariant
+after external request sent -> outcome may be unknown; cancellation cannot undo it
+after durable commit -> return cancellation may hide success; reconcile/idempotency needed
+```
+
+Never assume interruption rolls back a database transaction, remote call, file write or message.
+Cancellation can produce an unknown outcome and must compose with idempotency/recovery.
+
+## Observability
+
+Measure by operation/resource:
+
+```text
+cancellation requested / acknowledged / terminated
+request-to-observation and request-to-resource-release latency
+reason/source and race winner (bounded labels)
+work completed after caller deadline/cancel
+resources still held and downstream request still active
+cleanup failures and forced shutdown/escalation
+```
+
+Do not count `Future` exceptional completion as task termination without a terminal-work signal.
+
+## Tests
+
+- cancel before start, during CPU work, at each blocking point and after semantic commit;
+- multiple sources racing with normal completion/failure;
+- swallowed/cleared interrupt and task/framework boundary translation;
+- noninterruptible provider/native call and owner close/abort;
+- resource released/reusable versus deliberately closed;
+- partial write/transaction/message/remote unknown outcome;
+- executor/scope shutdown and process grace expiry;
+- virtual/platform thread and supported JDK/provider variants;
+- cancellation storm under load, ensuring residual work does not amplify overload.
+
+## Anti-patterns
+
+| Anti-pattern                                  | Failure                                                               | Better approach                                    | Narrow exception                   |
+| --------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------- |
+| “Always restore and return”                   | top-level owner may leak meaningless status; invariant may be partial | handle by boundary and ownership                   | library boundary that cannot throw |
+| Check every CPU iteration                     | unnecessary overhead                                                  | derive polling cadence from latency bound          | coarse expensive iterations        |
+| Timeout means work stopped                    | residual work holds resources                                         | explicit downstream cancel/abort + terminal metric |
+| `cancel(true)` is force-stop                  | cooperation/provider required                                         | test observation and release                       |
+| Close any shared socket to cancel one request | disrupts multiplexed/pooled users                                     | request-level cancel or ownership-safe close       | dedicated connection               |
+| Retry cancelled unknown outcome               | duplicates side effects                                               | idempotency/reconciliation                         |
+
+## Definition of done
+
+- [ ] All sources/races converge on one idempotent terminal-state model.
+- [ ] Every CPU/blocking/native/resource layer has a tested stop/abort path or explicit bound.
+- [ ] Interrupt propagation/translation/restoration is correct at each ownership boundary.
+- [ ] Partial/unknown side effects and commit races have recovery semantics.
+- [ ] Termination and resource release—not only caller return—meet measured bounds.
+- [ ] Shutdown, load storm, target JDK/provider and residual-work tests pass.
 
 ## References
 
-- [The interrupt protocol in practice](references/interrupt-protocol.md) — the correct
-  handler for each context (library, task body, loop, `Runnable`, framework callback), the
-  restore-and-return idiom, and interruption during shutdown. Read when writing or
-  reviewing any `catch (InterruptedException)`.
-- [Uninterruptible operations and what stops them](references/uninterruptible-operations.md)
-  — the table of blocking operations by interruptibility, closing a resource as the
-  cancellation mechanism, cancelling JDBC and HTTP calls, and testing that cancellation
-  actually released something. Read when a task will not stop, or before relying on a
-  timeout to free a resource.
+- [Interrupt handling by boundary](references/interrupt-protocol.md)
+- [Blocking operations and cancellation adapters](references/uninterruptible-operations.md)
+- [`Thread` interruption API](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html#interrupt()>)
+- [`Future`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html)
+- [`CompletableFuture`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)

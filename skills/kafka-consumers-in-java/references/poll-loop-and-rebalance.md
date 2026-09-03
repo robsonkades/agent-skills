@@ -2,8 +2,8 @@
 
 ## The contract
 
-`poll()` does three jobs on one thread: it fetches records, it drives the client's group
-membership state machine, and it is the liveness proof that the member is still processing.
+`poll()` returns buffered/fetched records, advances client coordination work and proves the
+application is still making processing progress.
 The contract is therefore _temporal_: **call `poll()` again within `max.poll.interval.ms`.**
 Everything the handler does between two polls is spent against that budget.
 
@@ -27,25 +27,26 @@ in review.
 
 ## What each timeout bounds
 
-| Setting                 | Bounds                                                   | Exceeded when                               | Symptom                                             |
-| ----------------------- | -------------------------------------------------------- | ------------------------------------------- | --------------------------------------------------- |
-| `max.poll.interval.ms`  | Wall time between two `poll()` calls — i.e. your handler | The batch takes too long                    | Member evicted, group rebalances, batch redelivered |
-| `session.timeout.ms`    | Liveness of the **heartbeat thread**, not the handler    | The process is dead, wedged, or partitioned | Member removed after the timeout                    |
-| `heartbeat.interval.ms` | How often that background thread beats                   | —                                           | Set well below the session timeout                  |
-| `max.poll.records`      | Records returned per `poll()` — the batch size           | —                                           | The multiplier on handler time per poll             |
+| Setting                 | Bounds                                                                             | Exceeded when                                | Symptom                                                  |
+| ----------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------- | -------------------------------------------------------- |
+| `max.poll.interval.ms`  | Maximum delay between `poll()` calls before application is considered failed       | Processing/queueing blocks the poll loop     | Reassignment; static members have delayed-removal nuance |
+| `session.timeout.ms`    | Group membership heartbeat liveness                                                | Process/network/consumer coordination stalls | Member removed after timeout                             |
+| `heartbeat.interval.ms` | Classic protocol client heartbeat cadence; broker-managed in the consumer protocol | —                                            | Version/protocol-specific tuning                         |
+| `max.poll.records`      | Records returned per `poll()` — the batch size                                     | —                                            | The multiplier on handler time per poll                  |
 
-The consequence that catches teams: **since heartbeats moved to a background thread, a slow
-handler does not look dead.** The group keeps receiving heartbeats while the handler runs, so
-the session timeout never fires; what fires is the poll interval. Raising `session.timeout.ms`
-to "fix rebalances" therefore changes nothing. The budget to check before shipping:
+The common classic-client case is that a slow handler keeps heartbeating but violates the poll
+interval. Raising `session.timeout.ms` does not fix that. With static membership, a poll-
+interval breach stops heartbeats and reassignment waits for session timeout; the newer
+consumer group protocol also moves heartbeat timing to broker configuration. Check the
+deployed protocol. A first conservative budget for serial homogeneous work is:
 
 ```
-max.poll.records × handler p99.9  <  max.poll.interval.ms × safety factor
+poll-cycle tail (not p99.9 × N assumed independent) < max.poll.interval.ms - margin
 ```
 
-Both sides move. `max.poll.records` is yours; `handler p99.9` is largely the dependency's, and
-it is the term that changes during an incident — which is why rebalance storms start exactly
-when the system is already degraded.
+Measure actual batch tails because per-record latency is correlated and batch overhead,
+deserialization, retry and commit also consume the interval. `max.poll.records` limits records
+returned by one poll, not bytes already fetched into client buffers.
 
 ## Moving work off the poll thread
 
@@ -54,14 +55,14 @@ happens elsewhere. `pause()` stops records being returned for the given partitio
 leaving the group; `poll()` still runs, so the member stays alive.
 
 ```java
-// Conceptual: bounded executor and a single in-flight batch per partition.
+// Conceptual only: production code tracks records and offsets independently per partition.
 var records = consumer.poll(Duration.ofMillis(500));
 if (!records.isEmpty()) {
-    consumer.pause(consumer.assignment());              // stop fetching, keep polling
+    consumer.pause(consumer.assignment());              // stop returning assigned records
     inFlight = executor.submit(() -> process(records)); // bounded pool
 }
 if (inFlight != null && inFlight.isDone()) {
-    consumer.commitSync(offsetsOf(records));            // commit only what completed
+    consumer.commitSync(nextContiguousOffsets(records)); // commit next offset, per partition
     consumer.resume(consumer.assignment());
     inFlight = null;
 }
@@ -74,12 +75,16 @@ Three things this changes, all of which must be accepted deliberately:
 - **Concurrency above one worker per partition spends per-partition ordering.** Running one
   partition's records in parallel destroys ordering within it, whatever the broker delivered.
   That is a design decision belonging with `message-ordering-and-partitioning`.
+- Completion can be out of order even when submission was ordered. Maintain a per-partition
+  completion gap tracker and commit `lastContiguousCompletedOffset + 1`; committing the
+  maximum completed offset loses unfinished lower records on crash.
 - **The executor must be bounded**, and paused partitions are the backpressure. An unbounded
   executor with no pause turns the topic into heap.
 
-On rebalance, in-flight work for a revoked partition is no longer yours: the new owner starts
-from the last committed offset. Cancel it or let it finish idempotently — but never commit
-offsets for a partition you no longer own.
+On revocation, stop admission for those partitions, cancel/wait within a deadline, commit only
+safe contiguous completions while ownership is valid, and make late work idempotent. A commit
+can fail because the generation changed; never let an old worker mutate a non-idempotent sink
+after ownership moves.
 
 ## The rebalance sequence, and where duplicates enter
 
@@ -95,7 +100,7 @@ changes, or the group coordinator moves.
 4  onPartitionsRevoked → last chance to commit what has been processed
 5  assignment computed and distributed
 6  onPartitionsAssigned → members resume from the LAST COMMITTED OFFSET
-7  records processed after the last commit but before step 4 are delivered again
+7  records after the last committed next offset may be delivered again
 ```
 
 Step 7 is the duplicate source, and it exists with zero retries and zero broker faults. Two
@@ -112,10 +117,11 @@ copying numbers:
 - **Incremental cooperative assignment.** `CooperativeStickyAssignor` revokes only moving
   partitions, so a rebalance no longer stops the whole group. Switching from an eager assignor
   is itself a staged rolling change; do it as a planned migration.
-- **Static group membership** (`group.instance.id`). A member that restarts and rejoins within
-  the session timeout keeps its assignment, so a rolling deploy of N pods no longer causes N
-  group-wide rebalances. Cost: a genuinely dead static member is detected only after the
-  session timeout, so set that from how long a stalled partition is tolerable.
+- **Static group membership** (`group.instance.id`). A stable instance that disappears without
+  a graceful leave can rejoin before session expiry without immediate reassignment. A graceful
+  close can still leave the group; duplicate IDs fence one member. Cost: a genuinely dead
+  instance can stall partitions until session expiry, so align orchestrator identity and
+  shutdown behavior deliberately.
 - **Smaller `max.poll.records`** — the cheapest lever for a poll-interval eviction, and the
   first to try, because it changes no code. A poll interval, if raised, comes from the measured
   handler tail rather than a copied number, and raising it also delays reassignment of a
@@ -125,3 +131,21 @@ copying numbers:
   time rebalancing than consuming.
 - **Instrument it.** Rebalance rate, rebalance duration and time-since-last-rebalance per group
   turn "the consumer is slow sometimes" into a diagnosis in one look.
+
+## Shutdown and rebalance checklist
+
+1. stop accepting new lifecycle work, signal the consumer thread and call `wakeup()` from the
+   control thread;
+2. on the consumer thread, stop/pause admission and bound the wait for in-flight work;
+3. commit only contiguous completed offsets for partitions still owned;
+4. persist/route unfinished work according to the delivery contract; do not advance past it;
+5. close within the orchestrator grace period and observe commit/rebalance errors.
+
+Do not call arbitrary consumer methods from worker or shutdown-hook threads; `wakeup()` is the
+documented cross-thread escape hatch.
+
+## Primary references
+
+- [KafkaConsumer API (Kafka 4.1)](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
+- [Kafka consumer configuration](https://kafka.apache.org/documentation/#consumerconfigs)
+- [KIP-848: the next-generation consumer rebalance protocol](https://cwiki.apache.org/confluence/display/KAFKA/KIP-848%3A+The+Next+Generation+of+the+Consumer+Rebalance+Protocol)

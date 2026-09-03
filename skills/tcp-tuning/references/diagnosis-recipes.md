@@ -4,7 +4,7 @@
 
 ```
 High but stable latency on every small request ...... Nagle + delayed ACK
-Connection errors under burst, on the CLIENT ........ ephemeral port exhaustion
+Local connect errors under burst ..................... ports/source address/routing
 SYNs dropped at peak ................................ backlog (kernel and/or listen())
 One core pinned, the others idle, multi-core host ... no SO_REUSEPORT, single accept()
 Low throughput on a high bandwidth-delay link ....... autotuning ceiling below BDP
@@ -31,8 +31,10 @@ ss -tnp state established | wc -l
 netstat -s | grep -E "retransmit|error|timeout"
 ```
 
-Compare the TIME_WAIT depth against `new connections/s x 60 s` using the host's own
-`ip_local_port_range`, not a remembered range.
+Compare TIME_WAIT depth against active-close rate and tuple scope using the host's own
+`ip_local_port_range`, reserved ports and source addresses. Connections to different
+destinations can reuse a local port, so `rate × 60` is a scenario estimate, not a host-wide
+capacity equation.
 
 ## Catching Nagle in a capture
 
@@ -84,10 +86,10 @@ path. Confirm which algorithm is active before blaming it for anything.
 
 ## Incident checklist
 
-- [ ] The client error read literally first — `BindException` / `EADDRNOTAVAIL` means local
-      exhaustion, so the remote service is not the suspect.
+- [ ] The client error read literally first; local port/source/routing hypotheses separated
+      from remote refusal and timeout with capture and socket-state evidence.
 - [ ] TIME_WAIT depth collected and compared against the host's own port range and connection rate.
-- [ ] Capture taken if Nagle is suspected, and the ~40 ms gap either found or ruled out.
+- [ ] Capture taken if Nagle is suspected, and repeated small-write/ACK timing correlated.
 - [ ] `ss -ti` checked for retransmissions and an unexpectedly small `cwnd`.
 - [ ] Kernel backlog **and** the Java `listen()` backlog checked together, never in isolation.
 - [ ] Active congestion control confirmed by `sysctl` before it is blamed.

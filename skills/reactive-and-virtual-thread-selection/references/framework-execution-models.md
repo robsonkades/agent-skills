@@ -11,23 +11,24 @@ changes several things at once, which is why it deserves a checklist rather than
 
 | Component                            | Default (property off)                                        | With virtual threads on                                                 |
 | ------------------------------------ | ------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Tomcat/Jetty request handling        | a bounded worker pool (`max-threads`, default 200)            | a virtual thread per request — **no bound at all**                      |
+| Servlet request handling             | container-specific worker pool                                | supported embedded containers can use virtual-thread execution; verify  |
 | `applicationTaskExecutor` (`@Async`) | `ThreadPoolTaskExecutor`: 8 core threads, **unbounded queue** | `SimpleAsyncTaskExecutor` on virtual threads: **unbounded concurrency** |
 | `taskScheduler` (`@Scheduled`)       | `ThreadPoolTaskScheduler` (pool of 1 by default)              | `SimpleAsyncTaskScheduler`: a new virtual thread per execution          |
 | Kafka / AMQP listener containers     | platform threads                                              | virtual threads, where the starter supports it                          |
 
 Three consequences worth stating out loud before flipping it:
 
-- **`server.tomcat.threads.max` stops being the admission limit.** It was, whether or not
-  anyone designed it to be. Its replacement is an explicit limit next to each scarce
-  resource, plus shedding at the edge.
+- **A servlet worker-pool limit may stop being the admission limit.** Confirm the embedded
+  server and Boot version rather than generalising Tomcat behaviour to Jetty or Undertow.
+  Replace any removed bound with limits next to scarce resources and edge shedding.
 - **`@Async` becomes unbounded.** `SimpleAsyncTaskExecutor` will start as many virtual
   threads as it is given work. Set `spring.task.execution.simple.concurrency-limit`
   (and `spring.task.scheduling.simple.concurrency-limit`) unless unbounded is genuinely
   intended.
-- **`@Scheduled` executions no longer serialise.** A single-threaded `ThreadPoolTaskScheduler`
-  prevented overlapping runs of the same job as a side effect. `SimpleAsyncTaskScheduler`
-  does not; a job that relied on it now needs an explicit lock.
+- **Scheduling semantics need revalidation.** Pool settings are ignored by the simple
+  virtual-thread scheduler, and fixed-delay tasks have special handling. Test overlap for
+  each trigger type and add an explicit single-flight guard when the job requires it; do not
+  infer the guarantee from a historical pool size.
 
 Verify rather than assume:
 
@@ -53,9 +54,11 @@ Mono.fromCallable(() -> jdbcClient.query(...))
 ```
 
 and then decide, separately, whether `boundedElastic` should itself run on virtual threads
-(`reactor.schedulers.defaultBoundedElasticOnVirtualThreads=true`) — which removes that
-scheduler's `10 × cores` cap and its 100 000-item queue. If `boundedElastic` was the
-protection for that dependency, replace it with a semaphore in the same change.
+(`reactor.schedulers.defaultBoundedElasticOnVirtualThreads=true`). The virtual-thread
+implementation still uses the configured thread cap (default `10 × availableProcessors`)
+and bounded deferred-task capacity; it changes the thread-per-task machinery, not the fact
+that the scheduler is bounded. Those defaults are usually far too broad to protect a
+specific database, so keep a resource-local limiter when that is the real constraint.
 
 ## Quarkus
 
@@ -106,7 +109,7 @@ is experimental.
 # Which requests ran on virtual threads? The JSON dump lists them; jstack does not.
 jcmd <pid> Thread.dump_to_file -format=json /tmp/d.json
 
-# Are the platform worker pools still doing the work?
+# Are known platform worker pools still doing the work? Names are implementation/configuration evidence only.
 jcmd <pid> Thread.print | grep -c 'http-nio-.*exec'
 
 # Under load: virtual threads started per second (event disabled by default)
@@ -123,7 +126,7 @@ version that predates support. Confirm at runtime; the property being present in
 - [ ] The model each endpoint runs under is stated somewhere a reader will find it
 - [ ] Enabling virtual threads was accompanied by a replacement for the removed pool bound
 - [ ] `spring.task.execution.simple.concurrency-limit` set, or unbounded chosen deliberately
-- [ ] Jobs that relied on single-threaded scheduling have an explicit lock
+- [ ] Jobs requiring single-flight execution have an explicit guard and an overlap test
 - [ ] No blocking call reachable from a WebFlux/Vert.x event-loop thread
-- [ ] `boundedElastic` on virtual threads only where the removed cap is replaced
+- [ ] `boundedElastic` caps and queues are measured; downstream-specific limits remain local
 - [ ] Runtime verification performed, not just configuration review

@@ -48,9 +48,10 @@ Rules encoded there:
   `(int) (a.amount - b.amount)` all overflow and return a wrong _sign_ — the bug appears only
   for operands far apart, so it survives testing and corrupts a sort in production. Use
   `Integer.compare` / `Long.compare` / `Double.compare`, or the `comparing*` factories.
-- **Use the primitive-specialised factories** (`comparingInt`, `comparingLong`,
-  `comparingDouble`) when the key is primitive: `Comparator.comparing` boxes on every
-  comparison, and a sort calls the extractor O(n log n) times.
+- **Use primitive-specialised factories** (`comparingInt`, `comparingLong`,
+  `comparingDouble`) when a primitive key is hot: generic `comparing` requires a reference key
+  and may box/materialize values. A comparison sort invokes extraction O(n log n) times in the
+  usual case; profile before sacrificing a clearer domain comparator.
 - **Do not compare `float`/`double` with `<`/`>` when `NaN` is reachable.** `Double.compare`
   defines a total order over all values (`NaN` greater than everything, `-0.0` less than
   `0.0`); the relational operators do not, and a sort over data containing `NaN` becomes
@@ -64,18 +65,19 @@ Rules encoded there:
 
 ## "Comparison method violates its general contract!"
 
-`List.sort`, `Arrays.sort` (object overloads), `Collections.sort` and `Stream.sorted` use
-TimSort, which detects some — not all — inconsistent comparators and throws
-`IllegalArgumentException: Comparison method violates its general contract!`. Three
+OpenJDK's ordinary object-array/list sorting paths commonly use TimSort, which detects some—not
+all—inconsistent comparators and can throw
+`IllegalArgumentException: Comparison method violates its general contract!`; the Java API does
+not promise that every violation is detected or that every implementation uses that algorithm. Three
 properties of this failure make it expensive:
 
-- It is **input-dependent**. Small inputs run the binary-insertion path and never detect
-  anything, so unit tests pass and the production dataset fails.
+- It is **input-shape-dependent**. Small or convenient inputs may not expose a cycle, so example
+  tests pass and a production dataset fails.
 - It is **late**. The exception surfaces during the sort, far from the comparator's
   definition.
-- It means the comparator is wrong, **not** that the sort is buggy. Setting
-  `java.util.Arrays.useLegacyMergeSort=true` hides the detection and leaves a mis-sorted
-  list — never the fix.
+- It is strong evidence that the comparator or mutable data it observes violates the contract.
+  Switching algorithms or implementation properties can hide detection while leaving semantics
+  invalid; repair and property-test the comparison relation.
 
 The usual causes, in order of frequency:
 
@@ -94,8 +96,8 @@ of `if` branches.
 
 ## Total order is a distributed requirement, not a nicety
 
-Any ordering consumed by more than one process, or by more than one query, must break ties
-deterministically:
+Any ordering used for pagination/canonicalization across queries or processes needs a strict,
+deterministic tiebreaker, not merely the total preorder sufficient for `Comparator`:
 
 ```sql
 -- keyset pagination over a non-unique sort key
@@ -117,12 +119,11 @@ ORDER BY issued_at DESC, id DESC      -- id is the tiebreaker; without it, rows 
 
 ## Stability, and when it is load-bearing
 
-`List.sort` / `Arrays.sort` on objects are **stable**: equal elements keep their relative
-order. `Arrays.sort` on primitives (dual-pivot quicksort) is not, and stability is meaningless
-there since equal primitives are indistinguishable. `Stream.sorted` is stable for ordered
-streams; a parallel stream over an _unordered_ source has no such guarantee, and
-`Collectors.toMap`/`groupingBy` say nothing about encounter order unless you ask for a
-`LinkedHashMap`.
+`List.sort` / `Arrays.sort` on objects are specified as **stable**: comparator-equal elements keep
+their relative order. Primitive-array sort stability is not specified and equal primitive values
+are observationally indistinguishable. `Stream.sorted` is stable for ordered streams; an
+unordered source has no encounter-order promise. Default `groupingBy`/`toMap` do not promise map
+iteration order; supply an ordered map factory when that is part of the result contract.
 
 Stability is load-bearing whenever a multi-key sort is expressed as successive sorts (sort by
 name, then by department) — a technique that is correct only with a stable sort, and which a
@@ -130,10 +131,17 @@ single composed comparator expresses more clearly anyway.
 
 ## Locale and text
 
-`String.compareTo` compares UTF-16 code units. It is a total order, it is stable, and it is
+`String.compareTo` compares UTF-16 code units. It is a reproducible total order, and it is
 **not** alphabetical for any human language: it places `Z` before `a`, and it misorders every
 accented character. For anything a user reads, use `Collator.getInstance(locale)`; for
 anything a machine reads (keys, ids, canonical forms) keep the code-unit order precisely
 because it is locale-independent and reproducible. Mixing the two — sorting in the database
 under one collation and in Java under another — produces pages that disagree with themselves;
 pick the layer that owns the order and let the other one preserve it.
+
+## Authoritative references
+
+- [Comparable contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Comparable.html)
+- [Comparator contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Comparator.html)
+- [List.sort stability contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#sort(java.util.Comparator)>)
+- [SortedMap equality caveat, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/SortedMap.html)

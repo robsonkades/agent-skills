@@ -3,8 +3,8 @@ name: retries-and-backoff
 description: >
   Retry as a policy with a cost: classifying a failure as transient, permanent or ambiguous
   before retrying anything; why a timeout is ambiguous and safe to retry only under
-  idempotency; exponential backoff with full jitter; retry budgets rather than attempt
-  counts as the only real bound on amplification; retrying at exactly one layer; and
+  idempotency or reconciliation; capped jittered backoff; aggregate retry budgets plus
+  per-call limits; one layer owning the end-to-end policy; and
   honouring 429, Retry-After and the remaining deadline. Use when a catch block retries on
   Exception or on a message substring, when backoff has no jitter, when several layers each
   retry the same call, when a POST is retried after a timeout, when a dependency's inbound
@@ -31,20 +31,23 @@ operation is idempotent, which is idempotency's subject, not this skill's.
 
 ## Workflow
 
-1. **Classify before you retry.** Transient (the operation definitely did not happen),
-   permanent (it never will with this input), ambiguous (unknown). The classification must
-   come from the contract — a status code, a typed error, an explicit flag — never from
-   parsing a message.
-2. **Resolve the ambiguous class first.** If the operation is not idempotent, either make it
-   so or do not retry it. There is no third option that preserves correctness.
-3. **Choose one layer to retry at** — the layer that knows the operation's idempotency —
-   and set attempts to 1 explicitly everywhere else, so the decision is visible in config.
-4. **Use exponential backoff with full jitter**, capped. Then check the total against the
+1. **Classify before you retry.** Definite pre-dispatch/rejected, retryable transient,
+   terminal for the current intent, and ambiguous outcome need different handling. A typed
+   error/status is evidence interpreted with operation semantics—not a universal lookup table.
+2. **Resolve the ambiguous class first.** If the operation is not idempotent downstream, use
+   status lookup/reconciliation or surface a durable pending/unknown outcome; blind retry and
+   blind failure are both guesses.
+3. **Give one layer ownership of the end-to-end retry budget.** Transport connection retries,
+   proxy attempts and application retries may coexist only when their nested attempt/deadline
+   budget is explicit and safe; disable hidden defaults elsewhere.
+4. **Choose capped full, equal or decorrelated jitter deliberately.** Full jitter is a robust
+   default for large correlated fleets; then check total time and attempt timeout against the
    caller's remaining deadline before the policy ships.
 5. **Add a retry budget.** Cap retries as a fraction of successful traffic; attempt counts
    bound one call site, budgets bound the fleet.
-6. **Honour what the server said.** `Retry-After` on 429 and 503 overrides your backoff, and
-   a dependency shedding load must not be retried harder.
+6. **Respect server guidance within the deadline.** Do not retry before a valid `Retry-After`;
+   use at least the greater of local backoff and server delay, unless it cannot fit. Validate/
+   cap untrusted or absurd dates and do not assume another replica bypasses a shared quota.
 7. **Instrument ratios, not counts** — attempts per logical call, budget rejections, and
    the dependency's inbound rate against yours. See `references/retry-failure-modes.md`.
 
@@ -54,21 +57,24 @@ operation is idempotent, which is idempotency's subject, not this skill's.
   `if (e.getMessage().contains("timeout"))` is the shape to delete; rpc-and-api-contracts
   owns putting the flag in the contract and java-exception-design owns modelling it on the
   type.
-- By RFC 9110, GET, HEAD, PUT, DELETE, OPTIONS and TRACE are idempotent; POST and PATCH are
-  not. A POST retried after a timeout needs an idempotency key before it needs a policy.
-- Status classification: 408, 429, 502, 503 and 504 are retryable; 400, 401, 403, 404, 405
-  and 422 are not; 409 depends on the resource's semantics. **500 is a defect more often
-  than a blip** — retrying it amplifies a bug and rarely fixes anything.
+- RFC 9110 defines GET/HEAD/PUT/DELETE/OPTIONS/TRACE method semantics as idempotent, but a
+  concrete server may violate them and an idempotent state effect can still return a different
+  response. POST/PATCH can be made retry-safe by an operation key/conditional semantics.
+- Do not hard-code HTTP status as retryability. 408/425/429/5xx may be retryable for one safe
+  operation and ambiguous/terminal for another; 401 may succeed after one credential refresh,
+  404 may be eventual, and 409/412 may require reread/recompute rather than replay. The API
+  contract must say whether the request could have applied and whether retrying unchanged helps.
 - Full jitter is `sleep = random(0, min(cap, base × 2^attempt))` — a uniform draw over the
   whole window, not the window plus a small wobble.
 - Unjittered backoff synchronises clients. They all failed at the same instant, so they all
   wake at the same instant; the wave lands precisely while the dependency is recovering.
-- Attempt counts do not bound amplification across layers. L layers each retrying N times is
-  N^L requests at the bottom: three layers of three attempts is 27.
-- A retry budget does bound it: a token bucket refilled by successes, one token per retry,
-  sized at a fraction of success traffic (10% is a common starting point). Amplification is
-  then bounded near 1.1× whatever the failure rate. gRPC calls this retry throttling; Envoy
-  calls it a retry budget; Resilience4j's retry module has no equivalent.
+- Attempt counts do not bound amplification across hidden layers. L layers allowing N total
+  attempts each can produce up to `N^L` bottom calls: three layers × three attempts = 27.
+- A retry budget bounds retries over its scope/window according to refill plus initial burst.
+  A bucket earning `r` tokens per success permits roughly `r` retries per success in steady
+  state after burst—not universally 1.1×. Scope by dependency/operation/priority so one outage
+  cannot consume every retry token. gRPC throttling and proxy budgets have different formulas;
+  read the deployed implementation.
 - Before sleeping, check `backoff + expected attempt cost ≤ remaining deadline` and fail now
   if it does not fit. Sleeping in order to fail later spends the caller's budget on nothing.
   The budget is timeouts-and-deadlines'.
@@ -80,7 +86,7 @@ operation is idempotent, which is idempotency's subject, not this skill's.
 - Compose retry and breaker deliberately, and state which nesting you chose.
   `Retry(Breaker(call))` records **every attempt** in the breaker, so it trips after fewer
   logical calls than the threshold suggests — and once open the remaining attempts fail fast,
-  which is the property that makes this the usual choice. `Breaker(Retry(call))` records one
+  and breaker-open rejection must itself be non-retryable. `Breaker(Retry(call))` records one
   outcome per logical call, so the threshold means what it says, but the retries keep reaching
   a dependency the breaker would already have stopped calling. Tripping policy and the full
   trade-off are circuit-breakers.
@@ -88,6 +94,22 @@ operation is idempotent, which is idempotency's subject, not this skill's.
   independent transient faults, at the cost of extra load, extra latency inside the caller's
   own SLA, and duplicates whenever the ambiguous class is retried without idempotency. It
   makes nothing reliable.
+
+## Anti-patterns and edge cases
+
+| Anti-pattern                      | Failure                                   | Better alternative                                              |
+| --------------------------------- | ----------------------------------------- | --------------------------------------------------------------- |
+| Retry every exception/status      | permanent bugs and unknown writes amplify | typed evidence plus operation semantics                         |
+| Fixed synchronized backoff        | recovery thundering herd                  | capped jitter and server guidance                               |
+| Independent layer defaults        | exponential attempt multiplication        | one owner and traceable attempt budget                          |
+| Fresh idempotency key per attempt | duplicates remain possible                | one stable intent ID across all attempts                        |
+| Retry after deadline/cancel       | work nobody wants consumes capacity       | propagate remaining deadline and cancellation                   |
+| Retry while holding locks/tx/pool | resource exhaustion spreads failure       | close scope before delay/re-attempt                             |
+| Hedging writes                    | concurrent ambiguous duplicates           | restrict hedging to safe/read-equivalent operations with budget |
+
+Record logical operation ID, attempt ordinal, parent layer, endpoint, per-attempt timeout,
+backoff/server delay, classification evidence and final outcome. Keep metric labels bounded;
+high-cardinality IDs belong in traces/logs.
 
 ## References
 

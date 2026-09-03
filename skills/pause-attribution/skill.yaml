@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: pause-attribution
-version: 1.2.0
+version: 1.4.0
 description: >-
   Attributing an observed production pause to a layer: decomposing it across
   time-to-safepoint, safepoint operation, cleanup and host effects, correlating the GC log,
@@ -45,6 +45,23 @@ dependencies:
     version: ^1.0.0
   - name: gc-log-analysis
     version: ^1.0.0
+
+suggests:
+  - allocation-profiling
+  - blocking-and-nonblocking-io
+  - concurrency-diagnostics
+  - container-awareness
+  - cpu-cache-and-numa
+  - deoptimization
+  - epsilon-and-shenandoah-internals
+  - jni-and-ffm
+  - jvm-class-loading
+  - jvm-gc-tuning
+  - linux-for-jvm
+  - lock-inflation
+  - thread-sizing-and-virtual-threads
+  - virtual-threads-internals
+  - zgc-and-shenandoah
 
 capabilities:
   - reads-source

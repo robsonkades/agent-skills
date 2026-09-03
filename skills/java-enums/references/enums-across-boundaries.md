@@ -8,13 +8,15 @@ change.
 
 ## Persistence
 
-| Storage form                             | Rename a constant | Reorder constants | Add a constant | Verdict                              |
-| ---------------------------------------- | ----------------- | ----------------- | -------------- | ------------------------------------ |
-| `@Enumerated(ORDINAL)` — the JPA default | safe              | **corrupts data** | safe           | never                                |
-| `@Enumerated(STRING)`                    | **breaks reads**  | safe              | safe           | acceptable; renames need a migration |
-| Explicit code + `AttributeConverter`     | safe              | safe              | safe           | preferred for long-lived data        |
+| Storage form                                                              | Rename a constant | Reorder constants | Add a constant | Verdict                              |
+| ------------------------------------------------------------------------- | ----------------- | ----------------- | -------------- | ------------------------------------ |
+| Ordinal mapping (the fallback absent explicit mapping/`@EnumeratedValue`) | safe              | **corrupts data** | safe           | avoid for domain identity            |
+| `@Enumerated(STRING)`                                                     | **breaks reads**  | safe              | safe           | acceptable; renames need a migration |
+| Explicit code + `AttributeConverter`                                      | safe              | safe              | safe           | preferred for long-lived data        |
 
-`ORDINAL` is the default when `@Enumerated` is omitted, which is why the failure is so common:
+Jakarta Persistence 3.2 infers `STRING` when a final `String` field is annotated
+`@EnumeratedValue`; otherwise, with no converter/explicit annotation, it falls back to `ORDINAL`.
+Older versions lack that facility. Ordinal persistence is hazardous because
 someone inserts a constant in the middle of the declaration list, the code compiles, the tests
 pass, and every existing row now means something different. There is no error at any point.
 
@@ -43,9 +45,9 @@ field is worth the ten lines.
 - **Deserialising**, decide what an unknown value means _per direction_:
   - Inbound request from a client: an unknown value is a client error — reject with a 400 and
     the list of accepted values. Failing loudly is correct; the client sent something invalid.
-  - Inbound response from a dependency, or an event from another service: an unknown value is
-    a **version skew**, not an error. Rejecting it turns a peer's routine deploy into your
-    outage.
+  - Inbound response/event from a peer: an unknown value is usually version skew. Choose
+    preserve/map/quarantine/reject based on safety; fail-closed rejection can be correct for
+    authorization or financial semantics even though it affects availability.
 - Jackson's defaults deserve an explicit decision rather than acceptance:
   `READ_UNKNOWN_ENUM_VALUES_AS_NULL` and `READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE` (with
   `@JsonEnumDefaultValue`) exist precisely for the second case. Silence is not a policy —
@@ -61,14 +63,16 @@ throughout it.
   deploy consumers that tolerate the unknown value first, then deploy the producer that emits
   it. Reversing that order means every consumer sees a value it cannot map, and whether that is
   a dropped message, a poison message or a crash loop depends on code nobody looked at.
-- **Protobuf** enums require a zero value and are open by design: an unknown number is
-  preserved and surfaces as `UNRECOGNIZED`/the zero value depending on language and edition.
-  This is a feature — model the `UNKNOWN = 0` constant deliberately and handle it.
+- **Protobuf** enum rules and generated APIs vary by syntax/edition/language. Proto3 requires a
+  zero-valued first constant; Java APIs can preserve raw unknown numeric values and expose
+  `UNRECOGNIZED` in enum accessors. Do not conflate an absent/default zero with an unknown wire
+  number; test the generated version you ship.
 - **Avro** enums are closed unless the reader schema declares a default; without one, an
   unknown symbol fails the read. With Schema Registry, adding a symbol is a
   backward-compatible change for readers that have the new schema and a break for those that
   do not.
-- **Removing or renaming a constant is always breaking**, in every format. Deprecate it, stop
+- **Removing or renaming an externally represented constant is normally breaking** unless the
+  format/schema provides a compatible alias and all consumers honor it. Deprecate it, stop
   producing it, wait for retention to pass, then remove — the same discipline as any other
   field; rpc-and-api-contracts covers the general rules and poison-messages-and-dlq covers
   where the unhandleable message goes.
@@ -82,8 +86,8 @@ against the enum **as it was when the switch was compiled**:
   behaviour and the reason to omit `default`.
 - Different artefacts (the enum ships in a library, the switch in your service): adding a
   constant does not break your build — it is not recompiled. At runtime, a value with no
-  matching case reaches a synthetic fallback that throws rather than silently choosing a
-  branch. The failure is loud, which is right, but it happens in production rather than in CI.
+  matching case reaches compiler/JDK-version-specific synthetic failure behavior rather than a
+  source recompilation error. Test it; the failure moves to runtime.
 
 The practical rule: for enums crossing an artefact boundary, keep the exhaustive switch _and_
 pin the dependency version, or handle the unknown case explicitly at the boundary where the
@@ -107,7 +111,8 @@ business rule.
 
 ## Review checks
 
-- [ ] No `@Enumerated` left at its default, anywhere.
+- [ ] Every persistent enum has explicit Persistence-version-aware mapping (`@Enumerated`,
+      `@EnumeratedValue`, converter, or scalar code) and unknown-value policy.
 - [ ] No `ordinal()` outside `EnumSet`/`EnumMap` usage.
 - [ ] Enum values written to storage or the wire use an explicit, stable code.
 - [ ] Every deserialisation point states what an unknown value does, and the answer differs

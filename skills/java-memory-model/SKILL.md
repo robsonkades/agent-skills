@@ -1,86 +1,208 @@
 ---
 name: java-memory-model
 description: >
-  The Java Memory Model as a contract about reordering: happens-before as the only currency,
-  volatile piggyback publication, atomicity versus visibility versus ordering, safe
-  publication and final-field semantics, double-checked locking, and why x86 and aarch64
-  differ. Use when reviewing code where one thread writes a field another reads, when a flag
-  between threads is not volatile, when an invariant spans two fields, when a constructor
-  lets this escape, when two methods synchronise on different monitors, when Thread.sleep is
-  used as synchronisation, when a bug appears only after migrating to aarch64, or when a
-  mitigation only made a race rarer. Does not cover thread sizing and virtual threads
-  (thread-sizing-and-virtual-threads), cache-line effects and false sharing
-  (cpu-cache-and-numa), or lock contention profiling (jfr-and-async-profiler). Explicit
-  access modes are varhandles-and-memory-ordering and monitor cost under contention is
-  lock-inflation.
+  Proving inter-thread visibility, ordering and atomicity under the Java Memory Model. Covers
+  actions/executions, synchronization order, synchronizes-with and happens-before, data races,
+  sequential consistency for correctly synchronized programs, volatile publication, monitor and
+  lifecycle edges, final-field freeze semantics, safe publication, compound invariants, benign
+  races, constructor escape, wait/notify, and architecture/JIT independence. Use for shared-state
+  correctness reviews and intermittent outcomes. VarHandle modes, algorithms, locks and testing
+  mechanics have separate owners.
 ---
 
 # Java Memory Model
 
 ## Purpose
 
-Decide whether concurrent code is correct, rather than whether it currently appears to
-work. The JMM is a contract about **reordering** — the caches are already coherent; what
-has to be bought is order, from the JIT, from the processor and from the store buffer.
+Prove which values an execution is permitted to observe. The JMM constrains compiler, runtime and
+hardware transformations through actions and consistency rules; it is not merely a cache-coherence
+or processor-reordering explanation.
 
-The failure this prevents is the code that looks synchronised, passes review, passes
-tests, and has none of the guarantees it appears to have.
+The central review question is not “will the other thread probably see it?” It is: which rule orders
+each conflicting access, which atomic invariant is represented, and what outcomes remain legal if
+the program has a data race?
 
-## Workflow
+## Ownership boundary
 
-1. **For every field written by one thread and read by another, name the happens-before
-   edge.** If you cannot name the rule that establishes it, there is no guarantee, and no
-   amount of defensive code compensates.
-2. **Classify the symptom**: visibility (never sees it), atomicity (loses updates), or
-   ordering (sees it half-built). The three have different fixes.
-3. **Ask what the unit of atomicity must be.** If the invariant lives _between_ two
-   fields, no per-field `volatile` protects it — the answer is a single lock.
-4. **Run static analysis before elaborating a hypothesis.** SpotBugs and Error Prone catch
-   `IS2_INCONSISTENT_SYNC`, `DC_DOUBLECHECK` and `VO_VOLATILE_INCREMENT` in seconds of CI.
-5. **Reduce the suspect pattern to a jcstress test** if it survives that.
-6. **Validate the fix on x86 _and_ aarch64.** The bugs are not created by the migration;
-   they are revealed by it.
+- This skill owns the JLS memory-model proof and safe-publication contract.
+- `varhandles-and-memory-ordering` owns explicit access modes and fences.
+- `java-thread-safety-contracts` owns class-level guarantees and lock policy.
+- `lock-free-patterns` owns algorithms, progress, ABA and reclamation.
+- `concurrency-testing` owns jcstress/model/stress test construction.
+- `cpu-cache-and-numa` owns cache/coherence/locality cost, not language correctness.
 
-## Rules
+## Proof contract
 
-- Happens-before is not time. "A hb B" means that _if_ B happens, it sees A. `volatile`
-  does not make a change visible _sooner_; it makes it visible.
-- A `volatile` write publishes everything that preceded it on the same thread. This
-  piggyback is why one anchor variable can publish a whole structure — provided the order
-  is respected on both sides: write the data before the anchor, read the anchor before the
-  data. Mark **the anchor** volatile, not the data field.
-- `volatile` gives visibility and ordering, not read-modify-write atomicity. `counter++`
-  on a volatile field loses increments, and frequently loses more than a plain field would.
-- If the invariant spans two fields, no `volatile` protects it — there is no instant at
-  which both are read consistently. Use one lock.
-- The lock rule is `unlock(m)` hb `lock(m)` **for the same `m`**. Different monitors do not
-  communicate; a class with `synchronized put` (monitor `this`) and
-  `synchronized (data) get` has the full appearance of synchronisation and none of the
-  guarantees.
-- Never let `this` escape from a constructor — including the disguised form,
-  `new Thread(this).start()`, which publishes `this` before a subclass constructor has
-  run. Publish from a static factory after construction instead.
-- `Thread.sleep` establishes happens-before with nothing. Sleeping "long enough" only makes
-  the failure rare enough to reach production. Use `join()`, a `CountDownLatch` or a
-  `Future`.
-- Publish a collection by constructing it locally and assigning once through a `volatile`
-  (or `final`) field, or use a genuinely concurrent collection. Mutating a `HashMap` after
-  assigning it is unsafe publication.
-- `final` fields publish safely for free, even under unsafe publication — as long as `this`
-  did not escape the constructor.
-- Double-checked locking requires `volatile`; the static holder idiom requires nothing,
-  because class initialisation already provides the guarantee, at zero cost on the hot
-  path.
-- `Thread.onSpinWait` is a microarchitecture hint (`pause`/`isb`). It inserts no safepoint,
-  yields no CPU, and substitutes for nothing.
-- JFR measures **contention, not races**. A service broken by a missing `volatile` looks
-  perfectly healthy in JFR, and the monitor events still default to a 20 ms threshold.
+```text
+shared locations and conflicting reads/writes:
+threads/tasks and action lifecycle:
+state invariant and required atomic transition/snapshot:
+program-order actions per thread:
+synchronization actions and synchronizes-with edges:
+happens-before graph and read-allowed writes:
+final-field construction/freeze and reachability:
+publication and post-publication mutation:
+cancellation/interruption/shutdown edges:
+legal, interesting, forbidden and unacceptable outcomes:
+```
+
+If the claim depends on elapsed time, “eventually,” x86 behavior, debug logging, a safepoint, or a
+test never failing, it is not yet a JMM proof.
+
+## Core model
+
+- Two accesses conflict when they target the same variable, at least one is a write, and they are
+  not both reads. A data race exists when conflicting accesses are not ordered by happens-before.
+- Program order orders actions within a thread according to that thread's inter-thread semantics;
+  it is not a global wall-clock order.
+- Synchronization actions participate in a synchronization order. Specific pairs create
+  **synchronizes-with** edges; happens-before is program order plus synchronizes-with plus
+  transitivity.
+- A correctly synchronized program—sequentially consistent executions have no data races—has the
+  sequential-consistency guarantee described by JLS 17.4.5.
+- A racy execution is still constrained by the JMM, but ordinary sequential reasoning is not a
+  valid proof. “It works on this CPU” does not narrow the language-permitted executions.
+
+Happens-before is stronger than “earlier in time” and subtler than “read B sees the last write A.” A
+read is allowed to observe a write only under the JLS rules; intervening/unordered writes and races
+matter. Draw actual actions rather than using “visibility” as a magic word.
+
+## Synchronizes-with edges used in reviews
+
+| Source action                   | Destination action                         | Scope/caveat                                      |
+| ------------------------------- | ------------------------------------------ | ------------------------------------------------- |
+| monitor unlock                  | subsequent lock                            | same monitor                                      |
+| volatile write                  | subsequent volatile read                   | same variable, synchronization order              |
+| thread actions before `start()` | actions in started thread                  | correct `Thread` lifecycle                        |
+| actions in thread               | successful detection of termination        | for example `join()` return/isAlive false per JLS |
+| interrupt call                  | interrupted thread determines interruption | exact detection API/control flow matters          |
+| class initialization            | subsequent active use                      | class/interface initialization rules              |
+| concurrent utility handoff      | documented memory-consistency effect       | read the exact API contract                       |
+
+Default initialization also has a happens-before rule. Final-field semantics are special freeze/
+dereference rules and should not be mislabeled as a generic publication happens-before edge.
+
+## Volatile publication
+
+For immutable or safely isolated data built before publication:
+
+```java
+private Config config;
+private volatile boolean ready;
+
+void publish(Config next) {
+    config = next;      // ordinary writes before anchor
+    ready = true;       // volatile write
+}
+
+Config current() {
+    if (!ready) throw new IllegalStateException(); // volatile read first
+    return config;                                  // ordinary read after anchor
+}
+```
+
+The proof uses program order, volatile synchronizes-with, and transitivity. Every reader must read
+the anchor before dependent state, and every publishing path must perform the ordered anchor write.
+Post-publication mutation needs its own synchronization.
+
+`volatile` makes each access to that variable atomic and ordered as specified; it does not make a
+compound read-modify-write (`x++`) atomic, nor a multi-field invariant a snapshot. Multi-field state
+can use one lock, an immutable aggregate published through one volatile/atomic reference, or another
+formally proven protocol.
+
+## Final-field semantics
+
+At normal constructor completion, writes to final fields are frozen. If the object reference is
+later observed through a permitted execution and `this` did not escape during construction, special
+final-field rules provide stronger guarantees for the final values and referenced object/array state
+reachable through those finals as defined by JLS 17.5.
+
+This is not “safe publication for free”:
+
+- the reader can still fail to obtain the reference correctly or observe stale non-final fields;
+- mutation after the freeze is not covered;
+- constructor escape can break the guarantee;
+- reflection, deserialization and special mutation mechanisms have additional rules;
+- final fields do not make referenced mutable objects immutable or operations thread-safe.
+
+Prefer proper safe publication even for immutable objects: class initialization, volatile/atomic
+reference, monitor/lock handoff, thread start, or a concurrent collection/queue with documented
+memory effects.
+
+## Constructor escape and lifecycle
+
+Escape includes registering listeners, submitting/staring work with `this`, publishing to static or
+shared state, callbacks from overridable methods, and lambdas capturing `this`. Subclass fields may
+not be initialized when base-constructor escape invokes overridden behavior. Construct privately,
+then publish from a factory or owner after completion.
+
+Thread pools complicate `start()` intuition: submitting a task does not start a new worker per task.
+Rely on the executor/queue/Future API's documented memory-consistency effects, not the historical
+creation of the worker thread.
+
+## Wait, notification and conditions
+
+`wait()` atomically releases and later reacquires the monitor, but wakeups can be spurious and the
+condition can be consumed by another thread. Always wait in a predicate loop under the same lock:
+
+```java
+synchronized (lock) {
+    while (!condition()) lock.wait();
+    consumeState();
+}
+```
+
+Notification is not state; update the predicate under the lock. Define interruption, timeout,
+shutdown and `notify` versus `notifyAll` consequences. Prefer higher-level synchronizers/queues
+when their contract fits.
+
+## Architecture and code generation
+
+JLS guarantees do not depend on x86, AArch64, RISC-V, interpreter, C1, C2 or Graal. Stronger
+hardware ordering can make some racy outcomes hard to observe, while compiler optimizations remain
+legal. Conversely, an architecture migration does not guarantee a race will reproduce.
+
+Use assembly only to study implementation/cost after the language proof is complete. Do not encode
+specific instructions or “volatile reads are free” as portable correctness/performance rules.
+
+## Diagnosis and validation
+
+1. Preserve the wrong business outcome and relevant inputs/version; thread dumps/JFR may show
+   liveness/contention but usually not a data race.
+2. Minimize the state/action pattern and enumerate outcomes.
+3. Build a jcstress test with explicit acceptable/interesting/forbidden outcomes.
+4. Use static analysis and code review for inconsistent locking, unsafe publication and compound
+   operations, but verify tool rule limitations.
+5. Fix the proof, then run stress/load tests across target JDKs/architectures for integration—not as
+   proof that all executions are safe.
+
+## Anti-patterns
+
+| Anti-pattern                           | Why wrong                                        | Better approach                           | Narrow exception |
+| -------------------------------------- | ------------------------------------------------ | ----------------------------------------- | ---------------- |
+| Sleep as synchronization               | creates no edge                                  | latch/future/join/condition               |
+| Final reference means safe mutable map | freeze is not later mutation safety              | immutable snapshot or concurrent protocol |
+| Volatile each field in invariant       | no atomic snapshot/transition                    | immutable aggregate/lock/proven protocol  |
+| Test passed on x86                     | finite observations do not prove JMM correctness | formal hb graph + jcstress                |
+| Log statement fixed race               | timing/compiler perturbation only                | establish missing ordering/atomicity      |
+| Different locks for reader/writer      | no shared monitor edge                           | one guard or another explicit edge        |
+| JFR found no contention                | races need not block                             | outcome/model/static analysis             |
+
+## Definition of done
+
+- [ ] Every conflicting access is ordered or all racy outcomes are explicitly acceptable.
+- [ ] Compound invariants have one atomicity protocol, not per-field assumptions.
+- [ ] Publication, mutation and lifecycle edges use exact JLS/API contracts.
+- [ ] Final-field guarantees are separated from safe publication and immutability.
+- [ ] Constructor escape, interruption, timeout and shutdown paths are covered.
+- [ ] Legal/forbidden outcomes and jcstress/static/integration evidence are recorded.
+- [ ] Correctness does not depend on processor/JIT timing folklore.
 
 ## References
 
-- [Happens-before rules and safe publication](references/happens-before.md) — the rule
-  table, the safe-publication idioms, and the memory-ordering difference between x86 (TSO)
-  and aarch64. Read when establishing or auditing an edge.
-- [Concurrency review checklist](references/review-checklist.md) — what to check in a code
-  review and what to collect during a concurrency incident. Read before approving
-  concurrent code or when investigating an intermittent correctness failure.
+- [Happens-before and publication proofs](references/happens-before.md)
+- [Concurrency review and incident checklist](references/review-checklist.md)
+- [JLS 17: Threads and Locks](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
+- [JLS 17.4: Memory Model](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4)
+- [JLS 17.5: Final Field Semantics](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5)
+- [OpenJDK jcstress](https://github.com/openjdk/jcstress)

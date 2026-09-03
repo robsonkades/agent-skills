@@ -28,14 +28,15 @@ coupling, not reuse.
 
 ## Workflow
 
-1. **Classify the duplication.** If one copy changes, must the other change for the same
-   reason? Yes, for every plausible change → knowledge duplication. No, or only sometimes
-   → incidental. Read [references/decision-heuristics.md](references/decision-heuristics.md)
-   for the tests and the false positives before answering.
+1. **Classify the duplicated knowledge, not whole fragments.** Enumerate change reasons. If a
+   subset must change together under one authority, extract that nucleus while leaving
+   independently varying policy separate. Similar fragments need not be all-shared or all-
+   incidental. Read [references/decision-heuristics.md](references/decision-heuristics.md).
 2. **Price the abstraction that would remove it.** Every caller becomes coupled to the
    shared code, and to each other through it. Count the parameters — especially booleans —
-   the merged version needs to serve all callers today. Any flag that selects behaviour
-   per caller means the callers do not share one piece of knowledge.
+   the merged version needs to serve all callers today. A flag encoding caller identity or
+   unrelated policy is a warning; an explicit domain policy such as `RoundingMode` can be a
+   legitimate parameter.
 3. **Decide.**
    - Knowledge duplication → merge, with the mechanics from java-refactoring.
    - Incidental duplication → leave it.
@@ -54,8 +55,9 @@ coupling, not reuse.
   occurrence, once the copies have demonstrably changed together. The rule of three is a
   heuristic for gathering that evidence, not a law: merge two copies of a monetary or
   legal rule immediately, and never merge types across bounded contexts at all.
-- A boolean or mode parameter added to a shared method so that one caller behaves
-  differently is the wrong-abstraction signature. Do not add the flag; split the method.
+- A boolean/mode added because "caller A behaves differently" is a wrong-abstraction signal.
+  Split caller-specific policy; retain parameters that are genuine input to one coherent
+  operation and are named as domain choices rather than implementation branches.
 - Build for the requirement that exists. A type parameter with one instantiation, a config
   point never configured differently, or a hook nobody calls is speculative generality:
   untested, constraining, and usually wrong when the future arrives. (Its detection as a
@@ -65,6 +67,22 @@ coupling, not reuse.
   require is. Deleting essential complexity moves it into callers or into production
   incidents — it does not remove it.
 - KISS ranks the designs that meet the requirement; it never justifies missing it.
+
+## Safety and production constraints
+
+- One source of truth does not mean one execution point. Authorisation policy can be centralized
+  while checks occur at gateway and protected operation; validation can repeat structural
+  constraints at independently trusted boundaries. Remove duplicated **decisions**, not defense
+  in depth.
+- Never centralise context-sensitive output encoding or "sanitisation" behind a generic helper.
+  HTML, SQL, shell, LDAP and log sinks have different grammars; parameterization/contextual
+  encoding belongs at the sink.
+- Shared code creates a release and incident blast radius. Before merging across modules/teams,
+  define owner, compatibility policy, rollout order and rollback. A shared library that deploys
+  at different cadences can increase live version skew even while deleting source duplication.
+- Performance duplication may be intentional specialization. Merge only after profiles show the
+  abstraction preserves the required data layout, inlining/vectorization and allocation behavior;
+  otherwise share tests/specification and allow separate implementations.
 
 ## References
 

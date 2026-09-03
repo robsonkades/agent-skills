@@ -7,36 +7,36 @@ callers today, and what does each construction form cost the API tomorrow".
 
 | Situation                                                         | Use                                                               |
 | ----------------------------------------------------------------- | ----------------------------------------------------------------- |
-| ≤3 parameters, all required                                       | Constructor, or a record                                          |
-| 2–3 parameters, one optional                                      | Two constructors, or a named static factory per variant           |
+| Few cohesive required parameters with clear roles                 | Constructor, record, or named factory                             |
+| One optional mode/default and few combinations                    | Named factories or a delegating overload                          |
 | Same-typed adjacent parameters (two `BigDecimal`, two `String`)   | Small: static factory with a value type per role. Larger: builder |
-| ≥4 parameters, ≥2 optional                                        | Builder (mutable builder, immutable product)                      |
+| Many named options or invalid positional combinations             | Builder (mutable builder, immutable product)                      |
 | Optional parameters with meaningful defaults                      | Builder with defaults in the builder's fields                     |
 | Required subset must be unmissable, API has many external callers | Staged builder — after pricing the costs below                    |
 | Immutable object that callers derive varied copies from           | Wither methods (`withStatus(...)`) on the product                 |
-| Object graph assembled by a container (Spring, Guice)             | Neither — the container is the builder                            |
+| Service object graph assembled by a container (Spring, Guice)     | Constructor injection; do not add a product builder for wiring    |
 
 Two forms compose: a builder for construction plus withers for derivation is a normal
 pairing on configuration-like types.
 
 ## False positives — parameter lists that do not want a builder
 
-- **A record with a compact constructor.** Validation, normalisation and defensive copies
-  live in the compact constructor; three or four required components need nothing more. A
-  builder on top duplicates the canonical constructor and doubles the API surface.
-- **JPA entities and Jackson-bound DTOs.** The framework instantiates them — JPA requires a
-  no-arg constructor, Jackson binds via constructor annotations or setters. A hand-written
-  builder fights the instantiation path the framework owns; constrain the design to what the
-  framework instantiates, and keep builders for types you construct yourself.
+- **A record with a compact constructor.** Validation, normalisation and defensive copies can
+  live there. A few cohesive components often need nothing more; a wide public record remains a
+  positional API and may still deserve factories, role types or a builder.
+- **JPA entities and Jackson-bound DTOs.** JPA entity construction has its own no-arg/access
+  contract; Jackson can bind constructors, setters, records or configured builders. Do not add a
+  builder unless the actual framework path is configured and tested; a builder used only by
+  application code does not replace the persistence/serialization contract.
 - **A telescoping _pair_.** Two overloaded constructors at two to three parameters is
   ordinary overloading. The telescoping anti-pattern starts where overloads multiply to
   cover optional combinations — roughly the ≥4/≥2-optional line above.
 - **Test-data builders.** Different economics: in tests, optionality with defaults _is_ the
   point, so a builder pays even for a three-field type. Do not let a test-data builder's
   existence argue for one in production code.
-- **Two parameters, ever.** `Range.of(low, high)` beats `Range.builder().low(l).high(h)
-.build()` in every dimension. Same-typed transposition risk at two parameters is solved
-  with a factory name or a value type per role, not a builder.
+- **Two clear required parameters.** `Range.closed(low, high)` normally beats
+  `Range.builder().low(l).high(h).build()`. Distinct factories or role types usually solve
+  transposition; unusual staged/domain DSL requirements still need their own evidence.
 
 ## The staged builder's price list
 
@@ -63,8 +63,9 @@ The JVM resolves a method by its full descriptor, return type included. Conseque
 - Changing a chaining method's return type — concrete builder to interface, subtype to
   supertype — is **binary-incompatible even where it stays source-compatible**: existing
   compiled callers fail with `NoSuchMethodError` until recompiled.
-- Adding new setters to a final builder class is safe. Adding abstract methods to a
-  published stage interface is not.
+- Adding a uniquely named setter to a final builder is normally binary-compatible, but overloads
+  can introduce source ambiguity, erasure clashes or changed lambda resolution. Adding abstract
+  methods to a published stage interface breaks implementors.
 - Returning the concrete final builder type keeps evolution open (new methods are additive).
   Returning interfaces buys mockability and staging at the cost above. Decide per API, once.
 

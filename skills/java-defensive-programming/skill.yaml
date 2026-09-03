@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-defensive-programming
-version: 1.1.0
+version: 1.2.0
 description: >-
   Where to defend in Java and where defence becomes noise: trust boundaries as the
   organising idea, preconditions with Objects.requireNonNull and explicit range and state

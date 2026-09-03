@@ -29,16 +29,17 @@ Two consequences:
 The requirement is: stop fetching, finish the records already polled, commit their offsets,
 then leave the group.
 
-- Spring's listener containers are `SmartLifecycle`, so context close stops them; the
-  container finishes the in-flight batch and commits before `stop()` returns. Give it a
-  shutdown timeout that fits inside the pod's grace budget — if the container is still
-  stopping when the grace period ends, SIGKILL takes the uncommitted offsets with it.
+- Spring listener containers participate in `SmartLifecycle`, but whether an in-flight
+  record/batch finishes and commits depends on acknowledgement mode, transactions, listener
+  concurrency, container version and shutdown timeout. Test the configured mode and keep its
+  bound inside the pod grace budget; otherwise expect redelivery after forced termination.
 - Uncommitted offsets are **not** lost work: they are redelivered to another consumer. They
   are duplicate work. The guarantee is at-least-once and the handler must be repeat-safe —
   that is `idempotency`, and the ack-placement reasoning is `delivery-semantics`.
-- Never do slow shutdown work inside the poll loop's thread. Blocking it past
-  `max.poll.interval.ms` (default 300000 ms) makes the broker treat the consumer as dead and
-  rebalance, which produces exactly the duplicates the shutdown was trying to avoid.
+- Do not assume shutdown can exceed `max.poll.interval.ms` safely. If processing prevents
+  timely polling beyond the configured interval, the consumer can lose group membership;
+  static membership and protocol/version choices affect timing but do not remove the need to
+  finish or hand off predictably.
 - Calling `wakeup()` or interrupting the consumer without committing first converts an
   orderly stop into a redelivery. It is a valid last resort, not the plan.
 
@@ -96,9 +97,9 @@ if (!pool.awaitTermination(15, TimeUnit.SECONDS)) {
 
 A worker that took a lease (SQS visibility timeout, a database row locked with an expiry)
 should, in order: stop taking new items; finish or explicitly release the current one; then
-exit. Releasing is better than finishing when the item is large — the lease returns to the
-queue immediately instead of waiting for the timeout, which turns a redelivery delay of
-minutes into one of milliseconds.
+exit. Choose finish versus release from remaining work, idempotency, lease extension and
+redelivery cost. Explicit release can reduce delay, but immediate redelivery can also create
+a retry storm during a fleet rollout.
 
 ## Proving the drain works
 

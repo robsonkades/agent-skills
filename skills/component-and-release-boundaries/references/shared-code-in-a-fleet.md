@@ -4,7 +4,7 @@ Services are independently deployable exactly to the extent that they can be rel
 coordinating with anyone. A shared library is the most common thing that quietly removes that
 property, and it does so at build time, where no architecture diagram shows it.
 
-## A shared library is a synchronous coupling
+## A shared library creates build-time and release coupling
 
 The reasoning teams apply to runtime calls stops at the build boundary, and it should not.
 
@@ -17,6 +17,8 @@ A calls B synchronously             A compiles against lib v2
     → everybody prices it               → priced at zero
 ```
 
+Unlike a synchronous RPC, a pinned library does not make a consumer unavailable when its producer
+or publisher is down. The useful analogy is coordinated evolution, not runtime failure propagation.
 The failure mode is a **lockstep release**: a change to the shared library that everyone must
 take — a security patch, a Spring major upgrade, a serialisation change — becomes a
 coordinated release of every consumer. If that has happened even once, the fleet is coupled;
@@ -118,8 +120,10 @@ independent migration and independent deployment is gone: a column rename is a f
 release, and the database becomes the integration point
 (`distribution-boundaries`, `metadata-mapping`).
 
-Where two independently owned _services_ share an entity there is no version of this that
-works: one owns the data, and the other asks for it or receives it in an event. (Two processes
+Where two independently owned services share an entity, independent schema evolution and incident
+ownership become difficult. Prefer one data owner with an API/event contract. A consciously shared
+database can still work under joint ownership, backward-compatible migrations and explicit write
+authority, but it is not independent data ownership. (Two processes
 deployed from one service — an API and its batch worker — are a single owner and are not this
 case; they legitimately share the entity and the schema.)
 
@@ -148,10 +152,10 @@ support at least one previous version?
         yes → create it, versioned, with a compatibility policy.
 ```
 
-The rule of thumb that survives contact with production: **duplicate until the third
-consumer.** Two copies are cheap to reconcile and their differences teach you what the real
-abstraction is. Extracting at the second consumer routinely produces an abstraction shaped by
-one use case and wrong for the third.
+A useful default is to wait for evidence of a stable abstraction before extracting. Consumer count
+alone is not a threshold: two high-risk implementations may justify one governed library, while ten
+tiny coincidental helpers may remain duplicated. Price divergence defects, release coupling,
+ownership and compatibility support explicitly.
 
 ## Migrating off a `commons` jar
 

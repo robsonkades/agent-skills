@@ -14,26 +14,29 @@ final class TokenBucket {
     private long lastRefillNanos;
 
     TokenBucket(long capacity, double tokensPerSecond) {
+        if (capacity <= 0 || !Double.isFinite(tokensPerSecond) || tokensPerSecond <= 0) {
+            throw new IllegalArgumentException("positive finite capacity and rate required");
+        }
         this.capacity = capacity;                                  // burst — set it on purpose
         this.tokensPerNano = tokensPerSecond / 1_000_000_000d;     // sustained rate
         this.tokens = capacity;
         this.lastRefillNanos = System.nanoTime();                  // monotonic, not wall clock
     }
 
-    synchronized boolean tryConsume(long permits) {
+    record Decision(boolean admitted, Duration retryAfter) {}
+
+    synchronized Decision tryConsume(long permits) {
+        if (permits <= 0 || permits > capacity) {
+            throw new IllegalArgumentException("permits must be in [1, capacity]");
+        }
         refill();
         if (tokens >= permits) {
             tokens -= permits;
-            return true;
+            return new Decision(true, Duration.ZERO);
         }
-        return false;
-    }
-
-    /** Valid only immediately after a failed tryConsume, which has just refilled. */
-    synchronized Duration retryAfter(long permits) {
         double deficit = permits - tokens;
-        return deficit <= 0 ? Duration.ZERO
-                            : Duration.ofNanos((long) Math.ceil(deficit / tokensPerNano));
+        return new Decision(false,
+                Duration.ofNanos((long) Math.ceil(deficit / tokensPerNano)));
     }
 
     private void refill() {
@@ -43,6 +46,11 @@ final class TokenBucket {
     }
 }
 ```
+
+This pedagogical implementation uses floating point and one monitor. At very high rates/long
+uptime, production libraries use tested fixed-point/saturating arithmetic and define snapshot/
+distributed semantics. Return admission and retry delay from one atomic method; calculating
+them in separate synchronized calls lets another caller change the bucket between them.
 
 - **`capacity` is the policy, not a buffer size.** It is how much unused allowance a client may
   bank and spend at once. Equal to the rate means "no burst at all", which rejects traffic the
@@ -73,7 +81,7 @@ final class LeasedLimiter {
     private final SharedBudget shared;        // Redis or equivalent, off the request path
 
     boolean tryAcquire(String key, long cost) {
-        return local.tryConsume(cost);        // never blocks on the network
+        return local.tryConsume(cost).admitted(); // never blocks on the network
     }
 
     /** Runs on a schedule, e.g. every second. Never on the request path. */
@@ -86,15 +94,16 @@ final class LeasedLimiter {
 }
 ```
 
-- Over-admission is bounded by roughly `replicas × local burst` per reconciliation interval.
-  That is the honest guarantee: the fleet limit is enforced **approximately, within that
-  bound**, not exactly.
-- Shorter intervals tighten the bound and raise the load on the shared store. Choose the
-  interval from the bound you need, and write the resulting bound in the API documentation if
-  the limit is contractual.
+- This sketch is insufficient for a contractual global limit unless `SharedBudget` issues
+  non-overlapping, epoch-fenced grants whose total never exceeds the window budget. Merely
+  reporting local usage periodically can over-admit for the entire partition duration.
+- In escrow, short grant duration improves redistribution but increases allocator load and
+  dependence on clocks/renewal; unspent tokens strand capacity. In approximate reconciliation,
+  derive overage from all local refill/burst allowances and outage duration.
 - Decide the unavailability behaviour explicitly. Fail-open admits everything during a Redis
   outage; fail-closed rejects everything and makes the limiter an availability risk larger
-  than the abuse it prevents. Holding the last lease with decay is usually the least bad.
+  than the abuse it prevents. Holding a last grant is safe only until its explicit budget/
+  epoch validity ends; local emergency capacity must be reserved in the global contract.
 
 ## Admission control: shedding on queue time
 
@@ -136,20 +145,21 @@ final class AdmissionController {
 - Set `maxWaitNanos` from the caller's remaining budget, not from a round number: waiting
   longer than the caller will wait produces work nobody receives
   (`timeouts-and-deadlines`).
-- Size the servlet container's worker pool **above** this limit so that queuing happens at the
-  semaphore, where it is measurable, instead of in the connector's accept queue and the OS
-  backlog, where it is not.
+- Coordinate connector backlog, request workers/event loops and this limit so waiting occurs
+  in one bounded observable place. Making a platform-thread pool larger than the concurrency
+  limit can itself consume memory/context switches; virtual threads reduce thread cost but not
+  held connections or downstream demand.
 - The adaptive form replaces the fixed limit with a controller — additive increase while
   latency stays near its observed minimum, multiplicative decrease on timeouts or rejections.
   It removes a hand-tuned constant at the cost of a control loop that can oscillate; start
   fixed, measure, then adapt.
 
-## Dropping the oldest first
+## Deadline-aware queue handling
 
 FIFO under overload maximises the number of requests that time out just before completing.
 
 ```java
-// Conceptual: skip work that has already outlived its usefulness, and evict the head when full.
+// Conceptual: skip work whose explicit deadline has passed.
 record Job(Runnable work, long enqueuedNanos, long deadlineNanos) {}
 
 Job next = queue.pollFirst();
@@ -159,19 +169,18 @@ while (next != null && System.nanoTime() >= next.deadlineNanos()) {
 }
 ```
 
-- On a full queue, evict the **head** and accept the newcomer rather than rejecting the
-  newcomer: the head has the least remaining budget. This needs a deque
-  (`LinkedBlockingDeque` / `ArrayDeque` under a lock); `LinkedBlockingQueue` cannot express it.
-- Rejection must be cheap and early — before authentication, body deserialisation and any
-  database call. A rejection that costs as much as a success sheds no load, it only changes
-  the status code.
-- Never enforce a limit by sleeping the caller. A blocked request still holds a thread, a
-  connection and a queue slot; that is overload moved inside your process rather than refused.
+- On a full queue, tail-drop/reject-new is the safe default. Drop-head/LIFO can improve deadline
+  goodput only with trustworthy deadlines, no work started and explicit starvation/fairness
+  bounds. Do not infer cancellation merely from age.
+- Rejection must be early, but authenticate enough to determine protected tenant/priority.
+  Apply cheap global connection/size controls before expensive auth and business parsing.
+- A bounded asynchronous shaper may delay work deliberately. Do not sleep request workers or
+  create an unbounded wait queue; propagate cancellation and remaining deadline.
 
 ## The response contract
 
 ```java
-// 429 = you exceeded your quota. 503 = I am overloaded. Both carry Retry-After.
+// 429 = this policy budget was exceeded. Retry-After is sent only when meaningful.
 ProblemDetail body = ProblemDetail.forStatusAndDetail(
         HttpStatus.TOO_MANY_REQUESTS, "Rate limit exceeded for this API key");
 return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
@@ -179,11 +188,12 @@ return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
         .body(body);
 ```
 
-- `Retry-After` is delta-seconds or an HTTP date. Emit at least 1; `0` invites an immediate
-  retry, which is the behaviour the limiter exists to stop.
-- **Jitter the value per response.** Identical values synchronise every rejected client onto
-  the same instant, and the wave lands exactly when the service is recovering. The client-side
-  duty is `retries-and-backoff`; emitting a jittered, machine-readable value is yours.
+- `Retry-After` is delta-seconds or an HTTP date. It describes when retry might be appropriate,
+  not a reservation. Omit it when recovery/reset cannot be estimated; publish standard rate-
+  limit fields only if their semantics match the implementation.
+- Clients should apply jitter around server guidance without retrying before a strict quota
+  reset. Server-side randomized advice can spread load, but must not claim an earlier reset
+  than policy permits.
 - Never return 500 for a limit or a shed. It is indistinguishable from a defect, and a
   well-behaved client retries it. The error format itself belongs to `rpc-and-api-contracts`.
 - Document both statuses, the header, and the limit's unit and key in the API contract. An
@@ -200,3 +210,20 @@ return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
 - **The gateway or mesh** — an edge proxy can enforce coarse per-client limits before traffic
   reaches the JVM at all, which is the cheapest possible rejection. It cannot see your queue
   depth, so it can limit but it cannot shed on your behalf.
+
+## Verification matrix
+
+| Fault/load                    | Evidence to assert                                                        |
+| ----------------------------- | ------------------------------------------------------------------------- |
+| Same key, concurrent requests | atomic bucket/counter never exceeds declared burst error                  |
+| Replica scale up/down         | aggregate policy and grant conservation remain within contract            |
+| Allocator partition/failover  | no double-issued epoch; defined fail-open/closed behavior                 |
+| Cost underestimation          | expensive endpoint/tenant cannot monopolize bottleneck                    |
+| Queue overload                | bounded memory, deadline propagation, fairness and stable goodput         |
+| Recovery                      | controller does not oscillate or remain artificially low after load falls |
+
+## Primary references
+
+- [Java `Semaphore` API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html)
+- [Bucket4j reference documentation](https://bucket4j.com/)
+- [Resilience4j RateLimiter documentation](https://resilience4j.readme.io/docs/ratelimiter)

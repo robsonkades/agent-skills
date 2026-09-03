@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: sharding-and-partitioning
-version: 1.2.0
+version: 1.3.0
 description: >-
   Whether to split data across owners at all, and on which key: what sharding buys — write
-  capacity, data volume, blast-radius isolation — against what it permanently costs: no
-  cross-shard atomicity or joins, fan-out for any keyless query, rebalancing as standing
+  capacity, locality, data volume and isolation — against distributed transactions/indexes,
+  non-local query routing, rebalancing as standing
   work, and a shard map that is itself a distributed system; the alternatives that usually
   win; the shard-key scorecard and classic wrong keys. Use when sharding is proposed for
   future scale with no measured growth curve, when a table is called too big before

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-code-smells
-version: 1.3.0
+version: 1.4.0
 description: >-
   The detection catalogue for Java code smells: Long Method, God Object, Feature Envy,
   Primitive Obsession, Data Clumps, Shotgun Surgery, Divergent Change, Mysterious Name,

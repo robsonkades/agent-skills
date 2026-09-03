@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: java-optional
-version: 1.1.0
+version: 1.2.0
 description: >-
   Optional as designed: a return type for "no result is a normal outcome". Covers orElse
   versus orElseGet (eager versus lazy), orElseThrow over get, map/flatMap/filter chains
   versus a plain conditional, or(), ifPresentOrElse, stream() integration, why Optional does
-  not belong in fields, parameters or collections, and when Optional makes an API worse. Use
+  is usually costly in fields, parameters or collections, valid exceptions, and when Optional makes an API worse. Use
   when reviewing Optional.get() without a guard, orElse with a costly or side-effecting
   fallback, isPresent()+get() pairs, Optional-typed fields or parameters, or when deciding
   whether a lookup should return Optional, null or throw. Nullability contracts and

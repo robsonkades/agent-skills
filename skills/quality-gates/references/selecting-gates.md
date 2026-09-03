@@ -5,13 +5,13 @@
 Risk here is a product of three things: what breaks if it is wrong, how long before anyone
 notices, and how hard it is to undo.
 
-| Tier                                    | Examples                                                    | Gate set                                                                                        |
-| --------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| **Cosmetic** — no runtime effect        | Docs, comments, formatting, test names                      | Compile + format. Nothing else can be affected.                                                 |
-| **Local** — one component, reversible   | A pure-logic change under test, a new internal method       | Compile, lint, unit tests, static analysis                                                      |
-| **Integrating** — crosses a boundary    | A new endpoint, a new query, a message consumer             | The above + integration tests, architecture tests, contract tests                               |
-| **Irreversible** — hard or slow to undo | Schema migration, published API change, event schema change | The above + migration test from production-like state, compatibility check, staged rollout plan |
-| **Systemic** — affects everything       | Framework or JDK upgrade, dependency bump, config default   | Full suite + performance check + a rollback that has been tried                                 |
+| Tier                                    | Examples                                                    | Gate set                                                                                                      |
+| --------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Cosmetic** — no runtime effect        | Docs, comments, formatting, test names                      | Format and documentation checks; compile only when generated code, snippets, or build inputs can be affected. |
+| **Local** — one component, reversible   | A pure-logic change under test, a new internal method       | Compile, lint, unit tests, static analysis                                                                    |
+| **Integrating** — crosses a boundary    | A new endpoint, a new query, a message consumer             | The above + integration tests, architecture tests, contract tests                                             |
+| **Irreversible** — hard or slow to undo | Schema migration, published API change, event schema change | The above + migration test from production-like state, compatibility check, staged rollout plan               |
+| **Systemic** — affects everything       | Framework or JDK upgrade, dependency bump, config default   | Full suite + performance check + a rollback that has been tried                                               |
 
 The tier is set by the _change_, not by the file count. A one-character change to a default
 timeout is Systemic; a 900-line rename with a compiler proof is Local.
@@ -20,7 +20,7 @@ timeout is Systemic; a 900-line rename with a compiler proof is Local.
 
 ### A typo in a README
 
-**Tier:** cosmetic. **Gates:** format check.
+**Tier:** cosmetic. **Gates:** format and documentation/link checks configured for this repository.
 
 Running the integration suite here is not caution, it is the reason the integration suite is
 too slow to run when it matters. Path-based pipeline filters exist for this.
@@ -73,12 +73,12 @@ enough to be a pattern.
 incident record of which gates were skipped. Recording it is what stops "we skipped the suite
 for the hotfix" becoming the normal path.
 
-## What may never be skipped
+## What normally may not be skipped
 
-- **Compile.** There is no change small enough.
-- **The tests covering the code you changed.** Not the whole suite — the ones that would fail.
+- **Compile when executable code, generated sources, dependency metadata, or build configuration changed.** A prose-only change need not compile an unrelated product.
+- **The tests covering executable behaviour you changed.** Not the whole suite — the smallest set capable of falsifying the change.
 - **A gate protecting against a defect class that has already reached production once.** That
-  gate was bought with an incident.
+  gate was bought with an incident, unless the current change provably cannot affect that class.
 
 ## What is legitimately skipped
 

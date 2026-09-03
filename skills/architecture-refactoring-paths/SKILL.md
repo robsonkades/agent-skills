@@ -24,8 +24,9 @@ and each can be the last one. The alternative — a rewrite, or a long-lived bra
 for reasons that are structural rather than accidental: the business does not stop, the old
 system keeps changing, and the new one is compared against a moving target.
 
-The property that makes an architectural refactor safe is that **it can be abandoned at any
-step and leave the system better than it started**.
+The useful target is that an architectural refactor can be paused at documented checkpoints without
+leaving correctness dependent on completing the next step. Some migrations have an intentionally
+atomic cutover; make its recovery procedure, compatibility window and irreversible point explicit.
 
 ## The shape of every path here
 
@@ -84,11 +85,14 @@ Two mechanisms must coexist
           understands.
 
 The migration cannot be paused
-        → decompose it further. A step that must be completed within one
-          release will not be, and the half-state will be undefined.
+        → first try to decompose it further. If an atomic cutover is intrinsic,
+          rehearse it against production-scale data and define abort, forward-fix
+          and restore criteria instead of pretending it is reversible.
 
 Rolling back requires restoring a backup
-        → the step is too big. Split until rollback is a deploy.
+        → treat this as an irreversible migration boundary. Prefer a compatible
+          expand/contract path; where none exists, test restore time and data-loss
+          exposure against the recovery objectives before approving the cutover.
 ```
 
 ## Rules
@@ -101,16 +105,17 @@ Rolling back requires restoring a backup
 - **A step that has not shipped has not reduced risk.** Long-lived refactor branches conflict
   with feature work, and the conflict is resolved by whoever is under most pressure — which
   is never the refactor.
-- Data migration and code change are separate deploys, always. Deploying both at once means
-  a rollback of the code leaves the data ahead of it.
+- Prefer separate, compatibility-preserving schema and code deploys when independent rollback is
+  valuable. A transactional metadata change or tightly controlled maintenance-window cutover may
+  combine them, but then rollback, lock duration and mixed-version behavior must be proven.
 - **Backfills are chunked, restartable and observable.** A single `UPDATE` over a large table
   locks it and cannot be resumed (`enterprise-transactions`).
 - Keep a single source of truth at every moment. Dual-write periods are the exception, must
   be short, and need a reconciliation check — two writers with no comparison is how silent
   divergence starts.
-- **Do not mix a refactor with a behaviour change.** When both are in one commit, a failure
-  cannot be attributed, and the review cannot separate "is this correct?" from "is this the
-  same?".
+- Separate refactoring from intentional behavior changes when that produces independently
+  reviewable and deployable increments. If the seam cannot be introduced without changing
+  behavior, state both deltas and test the old and new contracts explicitly.
 - Delete the old path as a separate, explicit step. Migrations that stall do so at step 5,
   and a codebase with two mechanisms and no plan is worse than either.
 - Name the abandonment point. "If we stop after step 3, we have the aggregate under test and

@@ -1,10 +1,10 @@
 schemaVersion: 1
 
 name: littles-law-and-queueing
-version: 1.4.0
+version: 1.5.0
 description: >-
-  Sizing and capacity from Little's Law (N = λ × R) and queueing theory: separating service
-  time from queue time, why latency explodes above ~80% utilisation, thread pool and
+  Conservation checks from Little's Law (`L = λW`) and queueing decisions: measurement
+  boundaries, service demand versus residence time, utilisation curves, thread pool and
   executor sizing, bounded queues and rejection policy. Use when choosing a pool size, when
   latency is high while CPU is low, when latency grows over the duration of a run, when
   someone proposes adding threads to a CPU-bound path, or when a ThreadPoolExecutor is not
@@ -48,6 +48,9 @@ suggests:
   - cpu-cache-and-numa
   - queueing-models
   - thread-sizing-and-virtual-threads
+  - gc-fundamentals
+  - object-layout-and-footprint
+  - connection-pool-sizing
 
 capabilities:
   - reads-source

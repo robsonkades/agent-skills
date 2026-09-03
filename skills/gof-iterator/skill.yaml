@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: gof-iterator
-version: 1.1.0
+version: 1.2.0
 description: >-
   Iterator in modern Java: traversing an aggregate without exposing it, and choosing between
   Iterator, Stream and Spliterator — external pull versus internal lazy pipeline versus the
-  parallel decomposition primitive. Covers why implementing Spliterator gives you both, what
+  parallel decomposition primitive. Covers when a Spliterator can adapt to both, what
   fail-fast really promises and how weakly consistent iterators differ, streams that hold a
   resource and must be closed, remote pagination as iteration with page drift, and the
   characteristics that decide whether a stream can be sized or split. Use when exposing a
@@ -40,7 +40,7 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
+dependencies: []
 
 suggests:
   - gof-proxy

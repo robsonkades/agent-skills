@@ -1,6 +1,6 @@
 # Patterns and pitfalls
 
-Examples target **JDK 25** (the LTS) unless marked. `Joiner` name changes for 26 are in
+Examples target **JDK 25** unless marked. `Joiner` name changes for 26 are in
 `references/api-by-jdk-version.md`.
 
 ## The four policies, and what each one is for
@@ -30,7 +30,13 @@ List<Panel> render(List<Widget> widgets) throws InterruptedException {
                 .map(w -> scope.fork(() -> new Panel(w.id(), Optional.of(load(w)))))
                 .toList();
 
-        scope.join();                       // TimeoutException if the 800 ms elapses first
+        try {
+            scope.join();
+        } catch (StructuredTaskScope.TimeoutException expected) {
+            metrics.increment("dashboard.scope.timeout");
+            // Completed states remain inspectable; UNAVAILABLE means no result is
+            // available, not necessarily that already-sent remote work stopped.
+        }
 
         return tasks.stream()
                 .map(t -> t.state() == Subtask.State.SUCCESS
@@ -41,10 +47,12 @@ List<Panel> render(List<Widget> widgets) throws InterruptedException {
 }
 ```
 
-Note what the timeout does: it cancels the subtasks and makes `join` throw. It does **not**
-give you the partial results — for "everything that finished by T", use `awaitAll()` with a
-timeout and read each subtask's state, as above, catching `TimeoutException` around the
-`join` if a partial render is still worth returning.
+Note what the timeout does: it cancels the scope and makes `join` throw. It does **not**
+return a partial-result object. For "everything that finished by T", retain the `Subtask`s,
+catch `TimeoutException`, and inspect their states as above. Leaving the block still invokes
+`close()`, which waits for every subtask thread to terminate; an uninterruptible loser can
+therefore make the method return after the nominal 800 ms bound. Cancellation of a client
+thread also does not prove that a request already sent to a remote service stopped.
 
 ## Racing redundant sources
 
@@ -132,14 +140,16 @@ successes to answer.
 final class QuorumJoiner<T> implements Joiner<T, List<T>> {
     private final int needed;
     private final Queue<T> results = new ConcurrentLinkedQueue<>();
+    private final AtomicInteger successes = new AtomicInteger();
 
     QuorumJoiner(int needed) { this.needed = needed; }
 
     @Override public boolean onComplete(Subtask<? extends T> subtask) {
         if (subtask.state() == Subtask.State.SUCCESS) {
             results.add(subtask.get());
+            return successes.incrementAndGet() >= needed;
         }
-        return results.size() >= needed;      // true == cancel the scope
+        return false;
     }
 
     @Override public List<T> result() {
@@ -149,9 +159,13 @@ final class QuorumJoiner<T> implements Joiner<T, List<T>> {
 }
 ```
 
-`onComplete` is called from the subtask threads and must be thread-safe — a plain
-`ArrayList` here is a data race that will lose results under load. `result()` runs on the
-owner after all subtasks have settled or been cancelled.
+`onComplete` is called concurrently from subtask threads and must be thread-safe — a plain
+`ArrayList` here is a data race. It is not called for a subtask that completes after the
+scope has already been cancelled. `result()` runs on the owner after `join` has observed
+either completion or cancellation; cancelled sibling threads may still be winding down,
+and `close()` is what waits for their termination. A production quorum joiner must also
+define the zero-task case, impossible-quorum failure, ordering, and whether results beyond
+the threshold may be included during concurrent completion.
 
 ## Anti-patterns
 
@@ -168,9 +182,9 @@ owner after all subtasks have settled or been cancelled.
 - **Assuming close is fast.** It waits for every subtask. Measure it — the difference
   between "scope failed" and "scope returned" is exactly the uninterruptible work.
 - **Reusing a `Joiner`.** One per `open`, always.
-- **Using it to make CPU-bound work parallel.** Subtasks are virtual threads; the parallelism
-  ceiling is still the core count, and a fan-out of CPU work will not beat a
-  `ForkJoinPool`.
+- **Assuming virtual threads add CPU capacity.** They make blocking concurrency cheap; they
+  do not increase available cores. For fine-grained recursive CPU work, compare a dedicated
+  `ForkJoinPool`, batching, and sequential execution under a representative benchmark.
 
 ## Testing a scope
 

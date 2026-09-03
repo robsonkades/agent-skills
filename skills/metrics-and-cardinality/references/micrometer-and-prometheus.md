@@ -1,120 +1,98 @@
-# Micrometer and Prometheus specifics
+# Micrometer and Prometheus
 
-Read when the instrumentation is Micrometer exported to Prometheus: choosing between
-`Timer`, `DistributionSummary` and `LongTaskTimer`, deciding what a distribution exports and
-what it costs, and capping cardinality at runtime with a `MeterFilter` when the label cannot
-be fixed at the source. Measurements below are from Micrometer 1.17.1.
+## Verify versions and exposition
 
-## Which instrument
+Micrometer registries and Prometheus versions evolve, particularly native-histogram support,
+bucket generation and naming conventions. Pin versions and inspect one real scrape. Do not
+hardcode remembered counts such as “66 default buckets” into a durable design rule.
 
-| Need                                                  | Instrument                          | What decides it                                                                                                                                                                                     |
-| ----------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Duration of a completed operation                     | `Timer`                             | Records in the registry's base time unit; exports `_seconds_count`, `_seconds_sum`, `_seconds_max` to Prometheus. Default expected range **1 ms–30 s** — the histogram ladder is cut to it.         |
-| Size of something — bytes, batch size, items per page | `DistributionSummary`               | Same machinery, no time unit; set `baseUnit`. It has **no default range** (1 to ∞), so `publishPercentileHistogram()` on an unbounded summary emits the full 276-bucket ladder unless you bound it. |
-| Something long-running that is **in progress** now    | `LongTaskTimer`                     | Exports active count and the duration of tasks still running. A `Timer` records only on completion, so a stuck batch job is invisible to it until it finishes — the omission problem, in a metric.  |
-| A count or duration already maintained by a library   | `FunctionCounter` / `FunctionTimer` | Reads a monotonic source (pool statistics, a driver's counters) at scrape time instead of double-counting.                                                                                          |
-| The level of something right now                      | `Gauge`                             | Weak reference to the observed object — keep a strong field.                                                                                                                                        |
+## Micrometer distribution options
 
-`_max` is a **windowed** maximum (the same rotating window as the percentiles below), not
-the all-time maximum; it decays to the max of the last window.
+- A Timer records completed durations and count/total time; pair it with active/age metrics
+  for stuck work.
+- DistributionSummary records non-time amounts and needs a meaningful base unit/range.
+- LongTaskTimer observes active long tasks and their elapsed duration.
+- publishPercentiles creates client-calculated quantiles for each meter identity; they
+  cannot form a fleet quantile.
+- publishPercentileHistogram exports backend-aggregatable distribution data for supported
+  registries.
+- serviceLevelObjectives adds boundaries useful for exact threshold ratios.
+- minimum/maximum expected values influence histogram range/buckets and memory/series cost.
 
-## What each distribution option exports, and what it costs
+Confirm what the configured registry actually exports: names, units, buckets, +Inf,
+sum/count/max, temporality and native/classic form.
 
-| Configuration                                 | Series per meter (Prometheus)          | Mergeable across instances | Measured bucket count                                                                |
-| --------------------------------------------- | -------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------ |
-| none                                          | `_count`, `_sum`, `_max` — 3           | count and sum, yes         | 0 — `histogram_quantile` returns `NaN`                                               |
-| `publishPercentiles(0.95, 0.99)`              | + one `quantile="…"` series each       | **no**                     | 0 — computed per instance over a 2-minute, 3-slot ring                               |
-| `publishPercentileHistogram()`                | + one `_bucket` per boundary, + `+Inf` | yes                        | Timer default 1 ms–30 s: **66**; 1 ms–5 s: 55; 10 ms–2 s: 34; unbounded summary: 276 |
-| `serviceLevelObjectives(100ms, 250ms, 500ms)` | + one `_bucket` per SLO, + `+Inf`      | yes                        | exactly the SLOs — 3 here                                                            |
-| both                                          | ladder plus the SLO boundaries         | yes                        | the ladder, with the SLO values inserted                                             |
+## Gauge lifecycle
 
-The ladder is base-2 with four steps per octave (1.048576 ms, 1.398 ms, 1.748 ms,
-2.097 ms, …), so every bucket has the same _relative_ width: interpolation error is
-bounded at ~33% of the value anywhere in the range, against the client-default set whose
-`(0.25, 0.5]` bucket has 100% relative width at 250 ms.
+Micrometer documents weak-reference behavior for common gauge registration forms. Keep the
+observed object strongly owned for the intended meter lifecycle and avoid repeatedly
+registering equal meter IDs with different objects. Callback exceptions, NaN and object
+collection must be observable/tested.
 
-Two consequences for the budget:
+## URI templates
 
-- **`minimumExpectedValue` / `maximumExpectedValue` are the bucket-count lever.** Cutting the
-  Timer range from the 1 ms–30 s default to the service's measured 10 ms–2 s halves the
-  buckets (66 → 34) and therefore halves the metric's series count, with no loss of
-  resolution inside the range. Values outside the range still land in the edge buckets.
-- **SLO buckets answer the SLO question exactly.** With a boundary at the threshold,
-  `sum(rate(..._bucket{le="0.25"}[5m])) / sum(rate(..._count[5m]))` is the fraction within
-  250 ms with zero interpolation error. A service whose only latency question is "within
-  SLO or not" needs the SLO buckets and nothing else — 3–6 series instead of 68.
+Use matched route templates for server metrics and template-aware client APIs where
+available. A resolved URI with entity IDs is high-cardinality. Unmatched/unknown routes must
+collapse to a bounded value before labels are produced.
 
-Spring Boot exposes the same options as properties, matched by meter-name prefix:
-`management.metrics.distribution.percentiles-histogram.<name>=true`,
-`management.metrics.distribution.slo.<name>=100ms,250ms,500ms`,
-`management.metrics.distribution.minimum-expected-value.<name>` and
-`maximum-expected-value.<name>`. Setting `percentiles.<name>` re-creates the non-mergeable
-per-instance quantile; leave it unset when more than one instance exists.
+Framework behavior changes across instrumentations; assert tag values in an integration
+test rather than assuming Spring/Micrometer always normalizes a custom filter/client.
 
-## The `uri` tag on the client side
+## MeterFilter boundaries
 
-`http.server.requests` takes `uri` from the matched handler pattern and collapses unmatched
-requests. `http.client.requests` can only do the same when the client was given the
-**template**:
+Micrometer provides maximum-allowable-tag and metric filters, denial and tag replacement.
+Install filters before affected meters register. Verify:
 
-```java
-restClient.get().uri("/orders/{id}", id)     // uri="/orders/{id}"  — bounded
-restClient.get().uri("/orders/" + id)        // uri="/orders/12345" — one series per order
+- prefix/key matching;
+- whether overflow denies the full measurement or maps it to OTHER;
+- ordering with other filters;
+- visibility of overflow;
+- behavior after reload/registry recreation.
+
+A cap is a containment layer, not the cardinality design. Denial can make SLI denominators
+incorrect.
+
+## Prometheus distributions
+
+Classic histogram query:
+
+```promql
+histogram_quantile(
+  0.99,
+  sum by (le) (rate(http_request_duration_seconds_bucket[5m]))
+)
 ```
 
-The second form is the most common client-side explosion, and it is invisible in review
-because the string is built three lines earlier.
+Keep all desired cohort labels plus le in the aggregation. Compatible bucket schemas are
+required during aggregation. Native histograms use histogram samples and different PromQL,
+for example aggregating rate of the base histogram without le. Follow the deployed
+Prometheus documentation.
 
-## Capping cardinality at runtime
+Threshold ratios with a classic SLO bucket avoid percentile interpolation:
 
-A `MeterFilter` runs at meter registration, so it can refuse or rewrite a series before the
-backend ever sees it. It is the guard for labels whose value set is _meant_ to be bounded but
-is produced by code you do not control — a library's tag, a gateway's error code, a tenant
-id whose growth outran the budget.
-
-```java
-registry.config()
-    // After 100 distinct uri values on http.client.requests.*, deny further ones
-    .meterFilter(MeterFilter.maximumAllowableTags(
-        "http.client.requests", "uri", 100, MeterFilter.deny()))
-    // Or collapse the overflow into one series instead of dropping the meter
-    .meterFilter(MeterFilter.maximumAllowableTags(
-        "payments", "reason", 50,
-        MeterFilter.replaceTagValues("reason", v -> "OVERFLOW")))
-    // Global ceiling on unique name+tag permutations — the last line of defence
-    .meterFilter(MeterFilter.maximumAllowableMetrics(5_000))
-    // Rewrite before it becomes a series; "/" is exempt from the function
-    .meterFilter(MeterFilter.replaceTagValues("uri",
-        u -> u.startsWith("/orders/") ? "/orders/{id}" : u, "/"))
-    .meterFilter(MeterFilter.ignoreTags("pod"))
-    .meterFilter(MeterFilter.denyNameStartsWith("jvm.buffer"));
+```promql
+sum(rate(http_request_duration_seconds_bucket{le="0.3"}[5m]))
+/
+sum(rate(http_request_duration_seconds_count[5m]))
 ```
 
-Semantics that matter when reviewing one:
+Selectors/populations must match. Missing bucket series usually yields an empty expression,
+label mismatch or schema issue—not universally NaN.
 
-- `maximumAllowableTags(prefix, tagKey, max, onMaxReached)` counts distinct values of
-  `tagKey` seen on meters whose name starts with `prefix`; once `max` is reached, meters
-  carrying a **new** value go through `onMaxReached`. `deny()` drops that meter entirely,
-  which loses the request from the count as well as the tag — prefer a `replaceTagValues`
-  overflow when the count still matters.
-- `maximumAllowableMetrics(n)` refuses every new meter after `n` unique name/tag
-  permutations. Micrometer's own documentation says it does not discriminate between
-  critical and trivial metrics; it is a cost cap, not a policy. Set it above the computed
-  budget, and alert on approaching it.
-- Filters apply **in registration order** and only to meters registered after the filter.
-  Add filters before any meter is created — in Spring Boot, as `MeterFilter` beans, which are
-  applied to the auto-configured registry before instrumentation starts. A filter added late
-  leaves every already-registered series in place.
-- `management.metrics.enable.<prefix>=false` is a deny filter by property; it is the
-  reversible first step when a metric family is found to be unqueried.
+## Schema migration
 
-A runtime cap is a backstop for the design-time budget in `cardinality-budget.md`, not a
-substitute: the deny fires after the first `max` values have already become series for the
-retention period.
+When changing tags, units or bucket representation:
 
-## Exemplars
+1. introduce a versioned/new metric when populations cannot safely mix;
+2. dual-publish briefly and compare queries/cost;
+3. update recording rules, alerts, dashboards and autoscalers;
+4. roll out without aggregating incompatible schemas;
+5. remove old publication after consumer/retention review.
 
-The Prometheus registry attaches the current trace id as an exemplar to counter and
-histogram samples when a tracing bridge is present. That is the sanctioned path from an
-aggregate to one occurrence — the reason a request id belongs on the span and never on a
-label.
+## References
+
+- [Micrometer meters](https://docs.micrometer.io/micrometer/reference/concepts/meters.html)
+- [Micrometer histograms and percentiles](https://docs.micrometer.io/micrometer/reference/concepts/histogram-quantiles.html)
+- [Micrometer meter filters](https://docs.micrometer.io/micrometer/reference/concepts/meter-filters.html)
+- [Prometheus histograms and summaries](https://prometheus.io/docs/practices/histograms/)
+- [Prometheus metric types](https://prometheus.io/docs/concepts/metric_types/)

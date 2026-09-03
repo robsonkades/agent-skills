@@ -1,113 +1,64 @@
-# Fields, levels and volume
+# Fields, Levels and Schema
 
-## The standard field set
-
-Every event, from every service, carries these. A field that is present on only some events
-cannot be used as a filter, because "absent" and "not applicable" are indistinguishable.
-
-| Field                                              | Source                         | Why it is mandatory                                                                        |
-| -------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------ |
-| `timestamp`                                        | Appender, ISO-8601 with offset | Local time without an offset is unsortable across regions                                  |
-| `level`                                            | Logger                         | The routing key for alerting                                                               |
-| `logger` / `thread`                                | Logger                         | Locates the emitting code; thread names the pool                                           |
-| `service`, `version`, `env`                        | Resource / deployment config   | Answers "which build" without a deploy timeline lookup                                     |
-| `trace_id`, `span_id`                              | Tracing context                | The join to the trace and its spans                                                        |
-| `request_id`                                       | Ingress filter                 | Survives when the trace was sampled away                                                   |
-| `message`                                          | Call site, **constant**        | The event type; a variable message cannot be counted                                       |
-| `error.type`, `error.message`, `error.stack_trace` | Encoder, from the throwable    | Grouping failures by type rather than by message wording; a trace hash groups by call path |
-
-The names above follow ECS where ECS has a name (`@timestamp`, `log.level`, `log.logger`,
-`process.thread.name`, `service.name`, `service.version`, `service.environment`,
-`trace.id`, `span.id`, `error.*`), which is the schema Log4j2's default template and Spring
-Boot's `ecs` format emit. Adopting it is cheaper than inventing one; but the trace id key
-the MDC actually holds is set by the tracing instrumentation, not by the schema — see
-`references/java-logging-mechanics.md` before assuming `trace.id` is populated.
-
-Then per-domain keys — `order_id`, `tenant_id`, `payment_id`. Two rules make them usable:
-
-- **One name per concept, everywhere.** `tenant_id` in one service and `tenantId` in another
-  means no query spans both. Pick one case style and write it down; a shared logging module
-  that builds the event is how it is actually enforced.
-- **A field name is a public interface.** Once a dashboard, a saved query or an alert filters
-  on it, renaming it breaks them with an empty result rather than an error. Rename by
-  emitting both for one retention period, then dropping the old one.
-
-## Levels as a contract with the on-call
-
-| Level | The contract                                                      | Typical wrong usage                                   |
-| ----- | ----------------------------------------------------------------- | ----------------------------------------------------- |
-| ERROR | A human should look. Work was lost or a guarantee was broken      | A failure that was caught, retried and then succeeded |
-| WARN  | Degraded but handled; worth a trend, not a page                   | Expected business outcomes (a declined card is INFO)  |
-| INFO  | A state change someone outside the team would recognise           | One line per request, per layer, at full traffic      |
-| DEBUG | Detail for someone reading the code, off in production by default | Left on "temporarily" and never removed               |
-| TRACE | Per-item detail inside a loop or a protocol                       | Anything shipped enabled                              |
-
-The single most damaging defect is ERROR inflation. Once the ERROR rate is dominated by
-handled failures, three things follow: the on-call stops reading it, an alert built on the
-ERROR count needs a threshold chosen from noise rather than from meaning, and the real
-failure arrives as a small percentage change in a large number.
-
-The audit: list ERROR call sites, and for each ask _what would a human do about this right
-now?_ "Nothing, it retried" is a demotion to WARN. "Nothing, it is the client's fault" is a
-demotion to INFO, and the count belongs in a metric.
-
-## What must never be logged
-
-Credentials and tokens (`Authorization` headers, API keys, session ids, refresh tokens);
-personal identifiers beyond an opaque internal id; payment data; and **full request or
-response bodies**, which are the vehicle for all three. Also: anything whose size is
-unbounded — a stack of a downstream error body, a serialised collection, an uploaded
-document.
-
-The rule that makes this enforceable is that redaction is applied by the encoder, to field
-names and to a marker type, never by the call site. See
-`references/java-logging-mechanics.md`.
-
-Beyond the compliance argument there is an operational one: a log store containing personal
-data acquires an access-control and retention regime, which usually ends with the on-call
-losing direct query access to it.
-
-## Volume and sampling
-
-The bill and the ingestion limit are both:
+## Event schema template
 
 ```text
-events/s = requests/s × events per request
-bytes/s  = events/s × average event bytes
+event.name / event.version:
+producer and occurrence boundary:
+purpose and consumers:
+timestamp semantics:
+severity:
+required fields and types/units:
+optional fields:
+correlation fields and validity:
+outcome/error classification:
+sensitive/untrusted inputs:
+redaction/length/encoding:
+delivery/loss/order contract:
+retention/access/integrity:
 ```
 
-At 2,000 req/s, three INFO events per request at 600 bytes is ~3.6 MB/s, ~300 GB/day. That
-is usually the largest line item in an observability budget, and hitting a collector's
-ingestion rate limit drops events indiscriminately — the errors included.
+Use stable machine fields plus a concise human message. Do not force all services into
+fields that are meaningless; establish a common envelope and event-specific schemas.
 
-Use the JSON size, not the pattern-line size, and budget the exceptional path separately:
-an ERROR event with a full stack trace is tens of kilobytes, so a dependency outage that
-turns 5% of requests into exceptions multiplies the byte rate by more than the event rate
-does. Bounding the trace at the encoder is what keeps that multiplier finite — the levers
-are in `references/appenders-and-cost.md`.
+## Correlation
 
-Sampling rules:
+Possible identifiers:
 
-- **Sample by request, not by event.** Decide once at the edge (reusing the trace sampling
-  decision keeps logs and traces aligned) and propagate the decision. Independently sampled
-  events give a third of a story with no marker that the rest existed.
-- **Never sample WARN, ERROR, audit or security events.** Their volume is bounded by
-  failures rather than by traffic, which is exactly why they are affordable.
-- Record the sampling rate as a field on the retained events, or any count derived from logs
-  is wrong by an unknown factor.
-- Aggregate counting is `metrics-and-cardinality`'s job. Deriving a request rate by counting
-  log lines is a metric implemented at 600 bytes per data point.
+- trace_id/span_id when a valid active trace exists;
+- request/operation ID generated or validated at ingress;
+- business entity/workflow ID under privacy/access policy;
+- message destination/partition/offset or delivery ID;
+- deployment/instance/region.
 
-## Review checklist
+Do not trust caller-provided IDs without validation and length limits. Avoid credentials as
+correlation values. If traces are sampled, valid trace IDs can still exist without stored
+spans; runbooks need fallback business/request handles.
 
-- [ ] Every event carries `trace_id` and `request_id`, including on async paths
-- [ ] Messages are constants; all variability is in fields
-- [ ] Field names use one case style and one name per concept across services
-- [ ] No ERROR call site describes a failure that was handled and recovered
-- [ ] Every exception is logged as the throwable, never as `getMessage()` text
-- [ ] Each failure is logged exactly once, at the layer that handles it
-- [ ] Redaction and field-length limits are enforced at the encoder
-- [ ] No call site logs a whole request or response body
-- [ ] INFO volume per request is known, and the resulting bytes/s is written down
-- [ ] Sampling is per-request, and WARN/ERROR/audit are exempt
-- [ ] A test asserts the required fields on every event emitted at one boundary
+## Severity contract
+
+Define levels by outcome, expectedness, recoverability and consumer—not exception class
+alone. Include examples and counterexamples per service. Security severity may differ from
+operational level; separate event category/risk fields rather than overloading ERROR.
+
+Avoid logging the same expected validation/client error at stack-trace volume. Aggregate
+common outcomes with metrics and retain sampled/diagnostic examples as policy allows.
+
+## Schema evolution
+
+Field names and types are APIs. For breaking changes:
+
+1. add event schema version;
+2. dual-emit or dual-read old/new fields;
+3. update parsing, dashboards, detections and retention rules;
+4. test mixed-version deployment;
+5. remove old form after consumer confirmation.
+
+Avoid dynamic field names; put bounded keys in values or nested validated maps only when the
+backend schema supports them.
+
+## Data policy
+
+Classify fields by public/internal/confidential/restricted and map each class to masking,
+access, geography and retention. Test nested objects and exception chains. Record access to
+sensitive logs and protect integrity for security/audit evidence.

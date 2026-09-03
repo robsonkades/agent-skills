@@ -1,30 +1,26 @@
 ---
 name: architecture-trade-off-analysis
 description: >
-  The method for analysing an architectural decision, not the decision: entanglement and
-  coupling, MECE option sets, qualitative versus quantitative analysis, real domain cases,
-  and resisting evangelism — your own included. Use when a scorecard is being totalled to
-  pick a winner, when a comparison table would read identically at any company, when a case
-  study is cited as a general verdict, when a vendor presents no disadvantages, when the
-  candidates are not the same category of thing, when two advocates each hold an internally
-  consistent case and there is no agreed basis for choosing, when two architectures are
-  about to be benchmarked, or when a choice is defended by "best practice". Does not cover
-  record discipline or reversibility pricing (architecture-decision-making), pattern choice
-  once the forces are known (pattern-selection-and-composition), deliberate shortcuts
-  (technical-debt-decisions), uncertainty in numbers (estimation-under-uncertainty), or
-  structural smells (enterprise-architecture-smells).
+  Analysing architectural trade-offs through coupling, comparable options, domain scenarios,
+  qualitative evidence and controlled measurement. Use when a scorecard is being totalled, a
+  generic comparison or case study is offered as a verdict, candidates sit at different abstraction
+  levels, advocates disagree on the basis for choosing, or a benchmark is proposed. Produces a
+  recommendation with applicability conditions, costs and reversal signals. Does not own ADR
+  discipline (architecture-decision-making), pattern selection, deliberate technical debt,
+  estimation uncertainty or architecture-smell detection.
 ---
 
 # Architecture Trade-off Analysis
 
 ## Purpose
 
-Two laws (_Fundamentals_, 1st ed., ch. 1; a third is reported in the 2nd ed., ch. 27, wording
+Two practitioner heuristics (_Fundamentals_, 1st ed., ch. 1; a third is reported in the 2nd ed., ch. 27, wording
 unverified, so nothing rests on it). First: _"Everything in software architecture is a trade-off."_
 Corollary 1: _"If an architect thinks they have discovered something that isn't a trade-off, more
 likely they just haven't identified the trade-off yet."_ Second: _"Why is more important than
-how."_ From the first follows _"no best practices exist that can apply to real-world complex
-systems"_ (_The Hard Parts_, ch. 2): the deliverable is _"the least worst combination of trade-offs"_.
+how."_ The authors infer that no context-free best practice settles a complex system. Treat that as
+a challenge to unsupported defaults, not proof that transferable practices or dominant options
+never exist. The deliverable is a recommendation with its applicability conditions.
 
 **This skill holds no domain opinions**; it is the method other skills defer to. It never withholds
 an answer, though: every run ends in a recommendation carrying its winning conditions, its costs
@@ -49,17 +45,17 @@ Use it when dimensions are entangled: moving one moves others, and no option win
 **Which analysis mode does this situation warrant?** One dominates; they compose only as below.
 
 - **A — Decide now.** No dedicated analysis; state the choice and the trigger to revisit.
-- **B — Qualitative comparison.** A MECE set rated on this system's own entangled dimensions.
+- **B — Qualitative comparison.** A decision-complete set rated on this system's own entangled dimensions.
 - **C — Build and measure.** A spike or load test producing a number about _this_ system.
 - **D — Refuse to decide yet.** Name what you await and the event that ends the wait. Modes compose
   in sequence — B then C; A plus D's revisit trigger — but never blend into one hedged answer.
 
-| Mode  | Cost, and the confidence it produces                                  | Wins when                                                                      | Loses when                                                                                                           |
-| ----- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| **A** | minutes; no confidence beyond the decider's experience                | reversible in a day, one module, one owner                                     | the target is a published contract, a datastore engine, a process boundary                                           |
-| **B** | hours to days of others' time; ordinal, contestable, never a score    | two or more credible options, entangled dimensions, people who know the system | the deciding factor is a real quantity — throughput, unit cost, tail latency — nobody has measured                   |
-| **C** | days to weeks plus the build; one number, valid only for what you ran | one dimension dominates, is measurable, being wrong costs more than the spike  | the comparison spans two architectures, which _"will always differ enough to prevent true quantitative comparisons"_ |
-| **D** | ongoing carrying cost; buys optionality, not knowledge                | the option is genuinely open and delay costs less than a wrong turn            | delay itself forecloses options, or a team is blocked                                                                |
+| Mode  | Cost, and the confidence it produces                                                      | Wins when                                                                         | Loses when                                                                                         |
+| ----- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **A** | minutes; no confidence beyond the decider's experience                                    | reversible in a day, one module, one owner                                        | the target is a published contract, a datastore engine, a process boundary                         |
+| **B** | hours to days of others' time; ordinal, contestable, never a score                        | two or more credible options, entangled dimensions, people who know the system    | the deciding factor is a real quantity — throughput, unit cost, tail latency — nobody has measured |
+| **C** | days to weeks plus the build; estimates with stated uncertainty, valid for the experiment | deciding dimensions are measurable and being wrong costs more than the experiment | workloads, implementations or environments cannot be made representative enough for the decision   |
+| **D** | ongoing carrying cost; buys optionality, not knowledge                                    | the option is genuinely open and delay costs less than a wrong turn               | delay itself forecloses options, or a team is blocked                                              |
 
 What each charges even when right, how it goes wrong, what reverses it — and the deadline case:
 
@@ -71,7 +67,7 @@ What each charges even when right, how it goes wrong, what reverses it — and t
   dishonest when it ends an argument it did not answer. Exit: the spike grows a second question.
 - **D** — price: every later decision made blind. Fails as deferral rebranded as prudence;
   dishonest when dodging an unwelcome answer. Exit: the date passes unchanged — D has become A.
-- **Under a deadline**, run B short rather than skip it: the MECE set and one inverting scenario are
+- **Under a deadline**, run B short rather than skip it: a comparable option set and one inverting scenario are
   load-bearing; isolated ratings and the full matrix drop first. Ship that, plus what stays open.
 
 ## The method
@@ -86,8 +82,9 @@ runtime. Dimensions come from step 1: proposing candidates for the room to accep
 eliciting and is the job; filling in a borrowed list is importing (_"each architecture is unique"_).
 The coupling map may give the correlation directly; the matrix is one route to it. Then, in order:
 
-- **Make the option set MECE.** Mutually exclusive — a message queue and an ESB are not the same
-  category of thing. Collectively exhaustive — queues without Kafka is a hole. Recheck for arrivals.
+- **Make the option set decision-complete.** Compare candidates at the same abstraction level and
+  include credible status quo, hybrid and defer options. Literal exhaustiveness is usually
+  impossible in an open technology market; document exclusions and recheck material arrivals.
 - **Rate each option in isolation, then consolidate** into ordinal words, and **read the matrix for
   correlations, never for a total** — summing is the Out-of-Context Scorecard anti-pattern. Weighted
   scoring totals by design; side against it here because the weights are the advocate's ("Honest
@@ -112,7 +109,9 @@ analysis effort is this skill's extension, not the authors'. The columns list fo
 | Irreversibility (Fowler, _IEEE Software_ 2003 — not the books' term)                        | Reversible by one person in one commit              |
 | Blast radius spans teams, clients or data; entangled dimensions; an advocate with an answer | Blast radius is one module; cost of delay compounds |
 
-When both columns are heavy, the answer is mode C on the one separating dimension, not more B.
+When both columns are heavy, use B to identify separating dimensions and C where an experiment can
+materially reduce uncertainty. More measurement is not worthwhile when no plausible result changes
+the choice.
 
 ## Resisting evangelism, including your own
 
@@ -128,7 +127,8 @@ Read `references/bias-and-evidence.md` when an advocate is in the room or sunk c
 
 ## Fitness functions
 
-Encode the failure mode you accepted risk on. A metric with no tool, threshold or site is inert:
+Encode the failure mode you accepted risk on. A metric with no collection mechanism, threshold,
+evaluation site or consequence is inert:
 
 ```text
 Characteristic  Modularity — the monorepo decision accepted the risk of accidental coupling
@@ -148,7 +148,7 @@ The other two are the same shape: services per engineer, on-call pages per desti
 service registry and paging tool, reviewed weekly, alerting on a rising gradient over three
 months, not an absolute value. **Do not build a cabal** — the authors warn against _"an impossibly
 complex, interlocking set of fitness functions that merely frustrate developers and teams."_
-(`architecture-characteristics` and `architecture-fitness-functions` go deeper; neither exists yet.)
+(`architecture-characteristics` and `architecture-fitness-functions` go deeper.)
 
 ## Failure signature — of the analysis, not of any one choice
 

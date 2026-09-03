@@ -29,9 +29,9 @@ that judgement well is the skill.
 
 ## Workflow
 
-1. **Understand.** Read the code that exists before proposing a change to it. Find the callers,
-   the tests, and the last three commits that touched it — an unexplained line is usually a
-   defect someone fixed.
+1. **Understand.** Read the code that exists before proposing a change to it. Find relevant callers,
+   tests, ownership and history. Inspect commits when intent is unclear; “the last three” is not a
+   meaningful boundary when the change history has a different shape.
 2. **Clarify.** Ambiguities that change the work get asked; the rest get recorded as
    assumptions (requirements-and-acceptance). Batch the questions.
 3. **Establish the risk.** What breaks if this is wrong, how soon would anyone notice, how hard
@@ -40,9 +40,10 @@ that judgement well is the skill.
 4. **Decide the test approach** before implementing: which level, and whether the change is
    driven by tests or verified after (java-testing-strategy, tdd). For a bug, the reproduction
    comes first.
-5. **Implement in reversible steps**, each leaving the tree green. Separate commits for
-   refactoring and for behaviour — a mixed commit cannot be reviewed, and cannot be reverted
-   without taking the other half with it (java-refactoring).
+5. **Implement in reviewable, reversible steps**, keeping the tree green where practical. Separate
+   preparatory refactoring from behaviour when each is independently valid and testable. When a
+   safe refactoring exists only to enable the behaviour, preserve the distinction in the diff or
+   commit sequence without manufacturing invalid intermediate states (java-refactoring).
 6. **Verify.** Run the gates the risk warrants (quality-gates) and read the output. Not "the
    build should pass" — what it printed.
 7. **Review** at a depth set by the risk, not by the diff size (code-review).
@@ -59,9 +60,10 @@ that judgement well is the skill.
   (`references/workflow-by-risk.md`).
 - Do not start editing to understand. Read first; if the code is genuinely unreadable, that is a
   finding to report, not a reason to start rewriting it.
-- One logical change per commit, and never a refactoring in the same commit as a behaviour
-  change. This is the single highest-value habit here: it makes review possible, makes revert
-  safe, and makes `git bisect` meaningful (debugging).
+- Prefer one coherent change per commit. Separate refactoring from behaviour when the refactoring
+  stands on its own; otherwise optimise for a buildable, reviewable history and make the mechanical
+  and semantic portions explicit. Commit structure is evidence for review and bisection, not a
+  substitute for tests or a universal revert boundary (debugging).
 - Keep the tree green between steps. A sequence of green commits localises a regression to one
   step; a single large commit localises it to an afternoon.
 - Do not expand the change. Adjacent problems are reported, not fixed, unless the change makes

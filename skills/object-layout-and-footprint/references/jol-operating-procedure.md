@@ -4,11 +4,13 @@ Read at step 5, **before** the first JOL run — not after the first stack trace
 four failure modes below are hit on the very first attempt at the most likely subject of a
 modern layout question, which is a record.
 
-**Environment.** `org.openjdk.jol:jol-core:0.17` — the newest version published to Maven
-Central, so none of this is stale. Run against Temurin **25.0.3+9** (Windows x64) and
+**Environment.** `org.openjdk.jol:jol-core:0.17`, the version used for this audit. Recheck
+Maven Central/OpenJDK JOL before reuse rather than assuming it remains latest. Run against
+Temurin **25.0.3+9** (Windows x64) and
 **26.0.2+10** (Linux x64) `[executed]`.
 
-On every currently-shipping JDK, **JOL is the only way to read a field layout**.
+On the tested production JDKs, **JOL is the practical supported-build tool used here to read
+a field layout**.
 `-XX:+PrintFieldLayout` is a `develop` flag: the JVM refuses to start with it, with or
 without `-XX:+UnlockDiagnosticVMOptions` `[executed]` —
 
@@ -91,8 +93,9 @@ This is the natural response to JOL's own warning, printed on **every** run with
 ```
 
 The warning is telling you that JOL is **simulating** the layout from `Unsafe` field offsets
-rather than asking the VM. The fix is `-Djdk.attach.allowAttachSelf=true`, or the agent in §4
-— not passing `jol-core` as an agent.
+rather than asking the VM. One option is `-Djdk.attach.allowAttachSelf=true`, subject to the
+target's attach/security policy; the deterministic cross-check is the purpose-built agent in
+§4 — not passing `jol-core` as an agent.
 
 On Linux JOL additionally prints `Unable to attach Serviceability Agent` and then
 `Compressed references base/shifts are guessed by the experiment! … computed addresses are
@@ -197,9 +200,9 @@ java -javaagent:sizeagent.jar -cp "classes:sizeagent.jar" YourMain
 and the two mechanisms agreed on every one.** That is 44 data points, not a proof; it is
 enough to publish a number and cheap enough that there is no excuse for not doing it.
 
-`getObjectSize` is shallow, like `ClassLayout`. There is no deep equivalent — for a deep
-figure `GraphLayout.totalSize()` is the only tool, and it inherits whatever accuracy the
-shallow layouter has.
+`getObjectSize` is shallow, like `ClassLayout`. There is no `Instrumentation` deep-size API.
+`GraphLayout.totalSize()` is the JOL option used here for a bounded reachable graph, and it
+inherits the shallow layouter's assumptions.
 
 ## 5. What JOL does not measure
 

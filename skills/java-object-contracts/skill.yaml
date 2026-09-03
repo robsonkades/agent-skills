@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-object-contracts
-version: 1.1.0
+version: 1.2.0
 description: >-
   The four contracts every Java object inherits or opts into — equals, hashCode, toString,
   Comparable — plus why clone is not one of them. The equals properties and how inheritance

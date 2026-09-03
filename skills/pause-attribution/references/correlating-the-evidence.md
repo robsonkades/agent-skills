@@ -3,7 +3,7 @@
 ## The decomposition
 
 ```
-Application-visible STW = Reaching safepoint (sync) + At safepoint (operation) + Leaving safepoint
+Safepoint Total         = Reaching safepoint (sync) + At safepoint (operation) + Leaving safepoint
                           \___________________/       \__________________/       \_______________/
                            thread-side problem          collector or VM-op        disarm + wake-up,
                            (TTSP)                       problem                   small, real
@@ -12,14 +12,14 @@ Application-visible STW = Reaching safepoint (sync) + At safepoint (operation) +
 The GC log publishes the middle term only. Whatever remains after all three are accounted for
 is not a safepoint: a per-thread stall or a host effect — `layer-decision-table.md`.
 
-| Log field            | What it measures                                            | Answers "how long did the application stop"?   |
-| -------------------- | ----------------------------------------------------------- | ---------------------------------------------- |
-| `Time since last`    | Interval since the previous safepoint — frequency, not cost | No                                             |
-| `Reaching safepoint` | Sync time; the slowest thread's TTSP                        | Partly                                         |
-| `At safepoint`       | Duration of the operation (GC, dump, …)                     | Partly — this is what the GC log already shows |
-| `Leaving safepoint`  | Disarming the polls and waking the threads                  | Partly — the term a two-field sum drops        |
-| `Total`              | Sync + operation + leaving                                  | **Yes, directly**                              |
-| `Threads`            | `N runnable, M total` — how many had to be stopped          | No, but it scales the sync term                |
+| Log field            | What it measures                                            | Answers "how long did the application stop"?              |
+| -------------------- | ----------------------------------------------------------- | --------------------------------------------------------- |
+| `Time since last`    | Interval since the previous safepoint — frequency, not cost | No                                                        |
+| `Reaching safepoint` | Sync time; the slowest thread's TTSP                        | Partly                                                    |
+| `At safepoint`       | Duration of the operation (GC, dump, …)                     | Partly — this is what the GC log already shows            |
+| `Leaving safepoint`  | Disarming the polls and waking the threads                  | Partly — the term a two-field sum drops                   |
+| `Total`              | Sync + operation + leaving                                  | JVM safepoint interval; correlate to application evidence |
+| `Threads`            | `N runnable, M total` — how many had to be stopped          | No, but it scales the sync term                           |
 
 Worked example of why the manual sum is not the metric — a real `G1CollectFull` line from
 25.0.3 (executed):
@@ -74,9 +74,9 @@ EVENT_PATTERN = re.compile(
 )
 ```
 
-Report, per safepoint reason, the count and the p99 of both TTSP and `Total`, and list the
-events whose TTSP exceeds a threshold (10 ms is a reasonable starting flag) grouped by reason —
-that grouping is what turns a list of pauses into an attribution.
+Report, per safepoint reason, count and distributions of both TTSP and `Total`, plus events
+above an SLO-derived investigation threshold grouped by reason. A universal 10 ms threshold
+can be irrelevant to either a low-latency or batch workload.
 
 Before trusting any aggregate: run the analyser over twenty lines of the real log and check the
 event count against a manual `grep -c Safepoint`.
@@ -145,9 +145,9 @@ an anomaly — skip it rather than treating the missing end as zero.
 ## The cross-check, and why it is the acceptance criterion
 
 Run the JFR reconstruction against a recording taken over the same interval as the text log,
-and compare the ten largest `Total` values from each. The two measure the same quantity through
-completely independent instrumentation — unified logging text on one side, the binary recording
-and the event-consumption API on the other.
+and compare the ten largest `Total` values from each. The two expose the same JVM cycle through
+different encodings — unified logging text and JFR. Agreement is a strong parser/window
+consistency check, not independent proof of application impact.
 
 - **They converge (small rounding differences, ns versus ms, buffer flush timing):** the number
   is a property of the JVM, not an artefact of one parser.
@@ -156,17 +156,18 @@ and the event-consumption API on the other.
 
 ## Attributing the remainder
 
-Once `Total` is trusted, subtract it from the application-visible pause for the same timestamp:
+Once `Total` is trusted, compare it with request/thread progress over the same timestamp:
 
 1. `Total` accounts for the whole gap → the pause is a JVM pause. Split it at
    `Reaching` vs `At` and hand it to the owning layer.
 2. `At safepoint` dominates → the operation. `jdk.ExecuteVMOperation` names it; if it is a GC
    phase, the GC log for the same `GC(n)` is the continuation of the trail.
-3. `Reaching safepoint` dominates → a thread problem. Combine `-XX:+SafepointTimeout` (prints
-   the stack of the thread that did not arrive) with `jdk.ExecuteVMOperation` (says what was
-   waiting on it) to close both halves — which thread, and what it blocked.
-4. `Total` accounts for only part of the gap → the remaining time is host-side. Correlate by
-   wall-clock timestamp against OS signals; that layer is outside this skill.
+3. `Reaching safepoint` dominates → identify non-arrived thread(s) with timeout diagnostics,
+   then obtain their stacks from an aligned wall-clock profile/thread dump; the timeout log
+   itself is not assumed to contain a useful Java stack. Join the VM operation by ID/time.
+4. `Total` accounts for only part of a request gap → the residual can be host scheduling,
+   application queueing/blocking or a dependency, not automatically host-side. Follow the
+   per-thread/request evidence and OS signals.
 
 Alignment across sources is by absolute timestamp, which is why `time` belongs in the decorator
 set of every log involved. Uptime alone cannot be aligned with an external dashboard.
@@ -178,10 +179,10 @@ only safepoints with a real cause. Correlating against infrastructure metrics sa
 fixed interval, the missing background beat can read as an instrumentation gap when it is the
 correct behaviour: no safepoint happened in that interval.
 
-| Context                                                  | Value                 | Why                                                                                     |
-| -------------------------------------------------------- | --------------------- | --------------------------------------------------------------------------------------- |
-| Production, normal running                               | `0` (JDK 23+ default) | Removes the overhead of periodic safepoints with no purpose                             |
-| Short diagnostic window correlated with external metrics | `1000`, temporarily   | Restores a regular cadence that aligns the safepoint log with fixed-interval dashboards |
+| Context                                                                          | Value                 | Why                                                           |
+| -------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------- |
+| Production, normal running                                                       | `0` (JDK 23+ default) | Removes the overhead of periodic safepoints with no purpose   |
+| Short diagnostic experiment, only if a forced cadence answers a defined question | `1000`, temporarily   | Introduces safepoints; compare against an unmodified baseline |
 
 ```bash
 java -XX:GuaranteedSafepointInterval=1000 \
@@ -189,5 +190,5 @@ java -XX:GuaranteedSafepointInterval=1000 \
      -jar app.jar
 ```
 
-Leaving it on permanently reintroduces exactly the overhead JDK 23 removed, for a benefit that
-only exists during an active investigation.
+Do not leave the diagnostic change in production without measuring its effect and documenting
+why induced safepoints are required.

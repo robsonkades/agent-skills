@@ -27,7 +27,12 @@ public class GatewayImpl {
 ## After — v1.0
 
 ```java
-public record Money(BigDecimal amount, Currency currency) {}
+public record Money(BigDecimal amount, Currency currency) {
+    public Money {
+        Objects.requireNonNull(amount);
+        Objects.requireNonNull(currency);
+    }
+}
 
 public record SettlementRequest(String merchantId, Money amount, Duration settlementWindow) {
     public SettlementRequest {
@@ -54,28 +59,24 @@ without documentation.
 
 ## Evolving to v1.1
 
-Two requests arrive: look up a past receipt, and pass an idempotency key.
+Two requests arrive: look up a past receipt, and add caller-controlled idempotency.
 
-**Receipt lookup** — added as a `default` method so existing implementations keep
-compiling and linking:
+**Receipt lookup** must not pretend “unsupported” means “not found.” Returning empty from a
+default implementation would be behaviour existing implementors never authorized and could cause
+callers to settle twice. Add a separate capability:
 
 ```java
-public interface SettlementGateway {
-    SettlementReceipt settle(SettlementRequest request);
-
-    default Optional<SettlementReceipt> findReceipt(String settlementId) {
-        return Optional.empty();
-    }
+public interface ReceiptLookup {
+    Optional<SettlementReceipt> findReceipt(String settlementId);
 }
 ```
 
-The compatibility cost is behavioural, not binary: an old implementation now answers
-`findReceipt` with `Optional.empty()` — code its author never reviewed. Here "no receipt
-found" is an honest degraded answer, so the default is acceptable; a default that
-returned fabricated data would not be, and the method would have to wait for 2.0 or throw
-`UnsupportedOperationException` as a documented opt-in.
+This is additive for old binaries and implementations. Composition roots can expose an object that
+implements both capabilities; clients requiring lookup declare that requirement instead of probing
+or receiving a fabricated absence. A `default` method is appropriate only when one implementation
+is semantically correct for every existing implementation, not merely convenient.
 
-**Idempotency key** — the naive move breaks callers:
+**Idempotency key**—the naive record edit breaks more than its constructor:
 
 ```java
 // v1.1 draft — WRONG as the only constructor:
@@ -83,41 +84,50 @@ public record SettlementRequest(String merchantId, Money amount,
         Duration settlementWindow, String idempotencyKey) { ... }
 ```
 
-Adding a component changes the canonical constructor's signature: old binaries throw
-`NoSuchMethodError`, and old record-pattern deconstructions fail to compile
-(`incorrect number of nested patterns`). The compatible version keeps the old signature
-as a delegating constructor:
+Adding a component changes the canonical constructor, component shape, generated equality/hash and
+`toString`; old record-pattern deconstructions fail to compile. Retaining an old delegating
+constructor preserves that one binary entry point, not the whole record contract. Making the key
+nullable also weakens the new invariant, and generating a new key inside each call cannot deduplicate
+a client retry. Add an explicit opt-in request and capability instead:
 
 ```java
-public record SettlementRequest(String merchantId, Money amount,
-        Duration settlementWindow, String idempotencyKey) {
-    /** v1.0 signature; a key is generated when absent. */
-    public SettlementRequest(String merchantId, Money amount, Duration settlementWindow) {
-        this(merchantId, amount, settlementWindow, null);
+public record IdempotencyKey(String value) {
+    public IdempotencyKey { Objects.requireNonNull(value); }
+}
+
+public record IdempotentSettlementRequest(
+        SettlementRequest settlement, IdempotencyKey idempotencyKey) {
+    public IdempotentSettlementRequest {
+        Objects.requireNonNull(settlement);
+        Objects.requireNonNull(idempotencyKey);
     }
+}
+
+public interface IdempotentSettlementGateway extends SettlementGateway {
+    SettlementReceipt settleIdempotently(IdempotentSettlementRequest request);
 }
 ```
 
-Old constructor callers link and compile; clients that deconstruct the record with a
-pattern still break at their next recompile, and the release notes must say so. If the
-type is expected to grow again, this is the point to add a builder — mechanics in
-java-fluent-apis.
+Existing implementations and callers remain valid; implementations opt in when they can persist the
+key and result atomically enough for the documented retry semantics. The caller must reuse the key
+for the same logical operation. Idempotency owns the storage/failure protocol; this skill owns the
+compatible capability shape.
 
 ## Trade-offs
 
 - Three public records instead of loose parameters: more types to document and to hold
   compatible forever. `Money` in particular may belong to a shared module, not this
   library — publishing it here means two libraries can never disagree about it.
-- The `default` method makes the interface no longer a pure contract; implementors who
-  _should_ override `findReceipt` get no compiler nudge.
-- `idempotencyKey` as nullable `String` keeps v1.0 callers working at the cost of an
-  optional-shaped field; the honest modelling (a required key) is deferred to 2.0.
+- Capability interfaces add types and require composition/configuration; a client that needs both
+  must request both or use an aggregate facade.
+- A second request type avoids weakening v1.0 but duplicates part of the conceptual operation.
+  A major release may unify the model after a measured migration.
 
 ## Verification
 
-- japicmp (or Revapi) comparing v1.1 against v1.0 reports only additions — no removed or
-  changed signatures.
+- japicmp (or Revapi) comparing v1.1 against v1.0 reports only additions—no removed or changed
+  signatures.
 - The v1.0 test suite runs unmodified against v1.1 and passes.
-- The overload check: `settle` has no overloads, and none were added — a second
-  `settle(SettlementRequest, String key)` overload was rejected in favour of the record
-  component precisely to keep the call-site meaning unambiguous.
+- Representative v1.0 client binaries run without recompilation, and downstream sources recompile.
+- Contract tests prove that repeated calls with one caller-supplied idempotency key yield the
+  specified outcome; compilation checks alone cannot establish that behaviour.

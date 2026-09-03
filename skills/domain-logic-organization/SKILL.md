@@ -61,8 +61,9 @@ in the table class that owns the set.
    alone, procedures are cheaper and clearer.
 3. **Check the shape of the work.** Per-instance decisions favour a Domain Model.
    Set-shaped work — recalculate every line in a batch, apply a rate change to a million
-   rows — favours Table Module or plain SQL, and is where naive domain models lose by two
-   orders of magnitude (`architecture-and-performance`).
+   rows — favours Table Module or plain SQL. Object hydration can add major allocation and
+   round-trip cost; measure the workload rather than assuming a ratio
+   (`architecture-and-performance`).
 4. **Check the volatility.** Rules that change monthly reward the organisation that makes a
    change local. Rules that have not changed in five years reward the one with least
    ceremony.
@@ -111,9 +112,9 @@ Cannot tell yet, module is new and small
 
 ## Rules
 
-- Complexity is the criterion, and it is measurable before you decide: count the rules that
-  are conditional on other rules. Zero to a few means scripts; a dozen interacting rules
-  means a model. "The domain is complex" without that count is an assertion.
+- Rule interaction, invariant ownership, volatility and set/per-entity work are evidence—not a
+  universal count threshold. A dependency map or examples of duplicated decisions are stronger
+  than saying “the domain is complex,” but “a dozen rules” does not mechanically select a model.
 - **The anaemic domain model is a real cost, not a purity complaint** — but only where a
   domain model was the right choice. Entities of getters and setters plus a service holding
   the rules is a Transaction Script with an expensive mapping layer attached: you pay the
@@ -122,8 +123,9 @@ Cannot tell yet, module is new and small
 - A Transaction Script is not a lesser architecture. For non-interacting rules it is
   clearer, faster, easier to test and easier to delete. Choose it deliberately and say so,
   so the next reader knows it was a decision.
-- Transaction Scripts fail by duplication, and that is the signal to watch: the same rule
-  appearing in two scripts, then diverging. Two occurrences is a note; three is evidence.
+- Transaction Scripts often fail through duplicated or inconsistent rules. Even two occurrences
+  can be material when correctness or change frequency is high; use divergence and change cost,
+  not an occurrence threshold.
 - Domain Models fail in three ways worth watching for: aggregates too large to load, logic
   that leaked into services anyway, and read paths forced through the write model. All
   three are visible in the query log before they are visible in the design.
@@ -131,7 +133,7 @@ Cannot tell yet, module is new and small
   the platforms it was written for — but its idea survives as a gateway or a service that
   owns set-based SQL for one table, and that is frequently the right home for bulk work
   next to a domain model doing per-instance work.
-- Reads and writes may use different organisations, and usually should. Protect invariants
+- Reads and writes may use different organisations when their forces differ. Protect invariants
   through the model on the write path; serve reads with projections or SQL
   (`query-objects-and-specifications`).
 - Do not decide from the persistence pattern. Active Record does not compel Transaction

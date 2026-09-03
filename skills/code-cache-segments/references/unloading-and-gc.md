@@ -62,12 +62,12 @@ cache: X% of the non-profiled heap"; the code sums every heap. Trust the code.
 `Universe::heap()->collect(cause)` means whatever "a collection that unloads code" is for that
 collector. Verified on 25.0.3 with `-Xlog:gc`:
 
-| Collector | What a `CodeCache GC Threshold` request becomes                                     | Cost                                                                     |
-| --------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| G1        | `Pause Young (Concurrent Start) (CodeCache GC Threshold)` + a concurrent mark cycle | One young pause plus Remark/Cleanup pauses; unloading happens at Remark  |
-| Parallel  | `Pause Full (CodeCache GC Threshold)`                                               | **A stop-the-world Full GC**, whole heap                                 |
-| Serial    | `Pause Full (CodeCache GC Threshold)`                                               | Same                                                                     |
-| ZGC       | `Major Collection (CodeCache GC Threshold)`                                         | A full concurrent major cycle; pauses stay sub-millisecond, CPU does not |
+| Collector | What a `CodeCache GC Threshold` request becomes                                     | Cost                                                                                        |
+| --------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| G1        | `Pause Young (Concurrent Start) (CodeCache GC Threshold)` + a concurrent mark cycle | One young pause plus Remark/Cleanup pauses; unloading happens at Remark                     |
+| Parallel  | `Pause Full (CodeCache GC Threshold)`                                               | **A stop-the-world Full GC**, whole heap                                                    |
+| Serial    | `Pause Full (CodeCache GC Threshold)`                                               | Same                                                                                        |
+| ZGC       | `Major Collection (CodeCache GC Threshold)`                                         | A concurrent major cycle; measure pauses, concurrent CPU and headroom on the deployed build |
 
 This is the decision this reference exists for. A service on Parallel GC with a small code
 cache and a high compilation rate — warm-up, runtime class generation, a `MethodHandle`-heavy
@@ -104,7 +104,7 @@ All `product`, all present in `-XX:+PrintFlagsFinal` on 25.0.3:
 | Flag                        | Default | Meaning on JDK 20+                                                                                                                                                                                                                                                                |
 | --------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `UseCodeCacheFlushing`      | `true`  | Enables the cold heuristic and, on a full heap, _stopping_ compilation instead of _disabling it forever_. Off: `update_cold_gc_count` returns early, at most one threshold GC ever fires (the request flag is never cleared), and a full heap disables the compiler until restart |
-| `MethodFlushing`            | `true`  | Master switch for reclaiming compiled methods at all. Off: `is_cold` is always false; the lab run ended in `OutOfMemoryError` from the `main` thread                                                                                                                              |
+| `MethodFlushing`            | `true`  | Controls compiled-method reclamation in this HotSpot path. Disabling it prevents normal recovery of code-cache space and is a diagnostic experiment, not a production remedy                                                                                                      |
 | `NmethodSweepActivity`      | `4`     | Divisor on the time-to-aggressive estimate. Higher = shorter cold timeout = more recompilation churn; `0` disables cold unloading while keeping threshold GCs                                                                                                                     |
 | `SweeperThreshold`          | `15.0`  | Percentage of the total allocated since the last unloading that requests a threshold GC. "Threshold when a code cache unloading GC is invoked" is the flag's own description                                                                                                      |
 | `StartAggressiveSweepingAt` | `10`    | Percentage free (aggregate) below which the request is an aggressive GC and `cold_gc_count` drops to 2                                                                                                                                                                            |
@@ -143,10 +143,17 @@ follow-on, not a second fault.
 
 ## Decisions
 
-| Situation                                                                   | Decision                                                                                                                                         |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `CodeCache GC Threshold` appears more than a few times per hour             | Raise `ReservedCodeCacheSize`; confirm compilation rate is not itself the anomaly (`jdk.CompilerStatistics`, `jstat -compiler` `Compiled` slope) |
-| Same, on Serial or Parallel                                                 | Treat as a Full GC source first. A bigger cache is cheaper than any heap change                                                                  |
-| Per-heap `used` oscillating, `stopped_count` and `restarted_count` climbing | Thrashing: capacity, not flags. Do not set `-XX:-UseCodeCacheFlushing` to "stop the churn" — it converts oscillation into a permanent stop       |
-| Proposal to set `NmethodSweepActivity=0`                                    | Only with a measured recompilation cost and a cache sized so the aggressive threshold is never reached                                           |
-| `Compilation: disabled` for minutes, `restarted_count=0`                    | Check `UseCodeCacheFlushing`, then `CodeHeap_Analytics` for what cannot be freed — pinned by frames, or live and simply too much code            |
+| Situation                                                                   | Decision                                                                                                                                   |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Code-cache-triggered collections consume material CPU or pause budget       | Confirm expected compilation/class-generation demand and reclaimed bytes; then compare more capacity with reducing the source of churn     |
+| Same, on Serial or Parallel                                                 | Attribute the observed Full GC cost before changing heap or code-cache capacity; validate the selected change under representative load    |
+| Per-heap `used` oscillating, `stopped_count` and `restarted_count` climbing | Thrashing: capacity, not flags. Do not set `-XX:-UseCodeCacheFlushing` to "stop the churn" — it converts oscillation into a permanent stop |
+| Proposal to set `NmethodSweepActivity=0`                                    | Treat as a bounded diagnostic experiment; compare recompilation cost, GC cost, exhaustion risk and recovery behavior                       |
+| `Compilation: disabled` for minutes, `restarted_count=0`                    | Check `UseCodeCacheFlushing`, then `CodeHeap_Analytics` for what cannot be freed — pinned by frames, or live and simply too much code      |
+
+## Authoritative sources
+
+- [JDK-8290025: Remove the Sweeper](https://bugs.openjdk.org/browse/JDK-8290025)
+- [JDK 25 HotSpot `codeCache.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/codeCache.cpp)
+- [JDK 25 HotSpot `nmethod.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/nmethod.cpp)
+- [JDK 25 HotSpot `compileBroker.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compileBroker.cpp)

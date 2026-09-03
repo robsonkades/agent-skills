@@ -24,27 +24,31 @@ independent cost components — the thread-state transition, marshaling, and ver
 and almost every wrong decision here comes from collapsing them into one number, or from
 treating an option that addresses one of them as if it addressed another.
 
-The failure this prevents is the migration that fixes nothing. `Linker.Option.critical()`
-removes the safepoint transition cost, not pinning; swapping JNI for Panama changes the
-overhead, not the pinning either. Pinning is a property of the **native frame on the
-stack**, not of the API that produced it, and the only structural mitigation for a blocking
-native call under virtual threads is isolating it on a dedicated platform-thread pool.
+The failure this prevents is the migration that fixes nothing. FFM can improve safety and
+binding ergonomics without making a blocking foreign call unmountable. A native/foreign
+frame prevents virtual-thread unmounting in current HotSpot; `critical()` is a narrowly
+constrained optimization hint, not an asynchronous-native-call mechanism.
 
 ## Workflow
 
-1. **Ask what the call does before asking which API it uses.** Duration and blocking
-   behaviour decide everything downstream; the API choice decides only the fixed overhead.
+1. **Specify the native contract first.** ABI, ownership, lifetime, thread affinity,
+   reentrancy/upcalls, cancellation, error channel, blocking behavior and worst-case duration
+   decide correctness. API choice also affects checks, maintainability and deployment.
 2. **Amortise fixed cost by batching** when the call is short and frequent: one transition
    for the whole batch, with the work loop inside the native code. This is a throughput
    technique and does nothing for pinning.
-3. **Apply the `critical()` criteria as measurements, not impressions.** Sub-microsecond
-   duration measured with JMH under representative load, and proven absence of blocking. See
+3. **Apply the documented `critical()` preconditions.** The function must be extremely short
+   in every case and must not call back into Java. Prove bounded non-blocking behavior and
+   benchmark the complete service; do not invent a universal microsecond cutoff. See
    `references/critical-and-decision-matrix.md`.
-4. **Confirm pinning from the JFR event only.** `jdk.VirtualThreadPinned`, with the threshold
-   lowered to 1 ms before concluding there is no native pinning — `profile.jfc`'s 20 ms
-   default hides short frequent pinning.
-5. **Mitigate blocking native calls structurally:** dispatch them to a dedicated fixed
-   platform-thread pool sized by Little's Law, and let the virtual thread await the `Future`.
+4. **Diagnose carrier capture with multiple signals.** `jdk.VirtualThreadPinned` reports a
+   virtual thread attempting a blocking operation while pinned; it may not report C code
+   simply blocking inside a native frame. Combine JFR, thread dumps, wall/native profiles,
+   call-duration metrics and carrier saturation.
+5. **Isolate or redesign blocking native calls:** use a bounded dedicated platform-thread
+   pool, an asynchronous/non-blocking native API, process isolation or a Java alternative.
+   Size/admit the pool from latency, concurrency, resource limits and overload policy, then
+   let the virtual thread await the `Future`.
    Waiting on a `Future` is ordinary Java and unmounts normally. Allocate the call's
    segments on the pool thread, inside the task: a confined-arena segment created on the
    caller's thread fails the first downcall with `WrongThreadException`. See
@@ -56,57 +60,58 @@ native call under virtual threads is isolating it on a dedicated platform-thread
 
 ## Rules
 
-- Pinning is a property of the native frame on the stack, not of the API that produced it. JNI
-  and FFM downcalls — plain or `critical` — pin a virtual thread identically when the call
-  blocks. "Migrating from JNI to Panama eliminates pinning" is false.
+- Current virtual-thread implementations cannot unmount across a native method or foreign
+  function frame. JNI and FFM therefore both capture a carrier for blocking work; exact event
+  visibility and stub behavior differ, so diagnose rather than assuming identical telemetry.
 - `Linker.Option.isTrivial()` does not exist in the finalised FFM API. The final name, since
   JEP 454 (JDK 22 GA), is `Linker.Option.critical(boolean allowHeapAccess)`.
-- `critical()` addresses safepoint transition overhead, not pinning. It tells the linker not to
-  move the thread to `_thread_in_native`, which means the JVM cannot treat that thread as
-  safepoint-safe for the whole call. A long or blocking `critical()` call can delay safepoints
-  for the **entire JVM**, not just the calling thread — strictly worse than a plain downcall,
-  not merely equally bad.
+- `critical()` is an API hint that permits implementation optimizations valid only for an
+  extremely short, no-upcall function. HotSpot versions may omit normal transitions/checks,
+  increasing safepoint and crash risk if preconditions are violated. Do not encode a specific
+  `_thread_in_native` implementation as the portable contract.
 - Read `critical` as "critical section", not as "trivial" or "fast and always safe". That
   misreading is the most common error with this API.
-- `critical(true)` is the FFM equivalent of JNI's `GetPrimitiveArrayCritical`: it permits
-  passing a heap-backed array straight through via `MemorySegment.ofArray`, with no prior copy
-  to off-heap memory. What holds the array still differs: the FFM call blocks safepoints
-  for the whole JVM, while a JNI critical region on a 17 or 21 fleet defers collection
-  through the GC locker — `GCLocker Initiated GC` in the GC log and allocation stalls no
-  pause explains; G1 since JDK 22, ZGC and Shenandoah pin instead. See
+- `critical(true)` permits heap-backed segments as address arguments for the call. It is
+  conceptually related to JNI critical access but not an exact equivalence: JNI may return a
+  copy or pin, and FFM/collector implementation can evolve. Treat the address as temporary,
+  obey critical-section restrictions, and observe collector/safepoint behavior on the
+  deployed JDK. See
   `references/arenas-upcalls-and-gc.md`.
 - An exception escaping an upcall target terminates the JVM, per the `Linker` contract.
   Every upcall target catches `Throwable` and translates it into a return code, and no
   upcall may run from a `critical` downcall. See `references/arenas-upcalls-and-gc.md`.
-- The only structural mitigation for a blocking native call under virtual threads is a
-  dedicated platform-thread pool sized by Little's Law. Not a different interop API, not
-  `critical()`.
-- `-Djdk.tracePinnedThreads` was **removed in JDK 24**. The single source of truth on pinning
-  is the `jdk.VirtualThreadPinned` JFR event, via `RecordingStream` or `jfr print`. A runbook
-  still referencing that flag is broken.
-- Since JDK 24 (JEP 472), JNI and FFM emit a restricted-native-access warning by default unless
-  `--enable-native-access` is set. Treat that flag as mandatory production configuration now —
-  the JEP states an intent to make `deny` the default in a future release. Warnings appearing
-  in the log after a JDK upgrade are pending configuration, not noise.
-- The warning fires at link or load time — `System.loadLibrary`, `Linker.downcallHandle`,
-  `Linker.upcallStub`, `SymbolLookup.libraryLookup` — not on every subsequent segment access.
-  `jextract`-generated code triggers it too, attributed to the module that uses the binding.
+- Mitigate blocking native calls with bounded platform-thread isolation, a truly asynchronous
+  native interface, process isolation or replacement. `critical()` and a JNI-to-FFM rewrite
+  alone do not make the call unmountable.
+- `-Djdk.tracePinnedThreads` was removed in JDK 24. Use `jdk.VirtualThreadPinned` for Java
+  blocking attempts while pinned, plus wall/native profiles and carrier/call metrics for time
+  spent blocking inside native code.
+- JEP 472 brought JNI loading under the native-access restrictions already used by FFM in
+  JDK 24. On JDK 24/25, unauthorized restricted use warns by default and can be configured;
+  future policy is intended to deny. Declare `--enable-native-access` for the actual calling
+  modules and test with the exact release's `--illegal-native-access` policy.
+- Warnings are associated with restricted load/link operations such as native library loads,
+  downcall/upcall creation and library lookup, typically once per caller module—not each
+  segment read. Generated bindings do not inherit an exemption; attribution follows the
+  module that invokes the restricted operation.
 - FFM is final since JDK 22. No `--enable-preview` for FFM code; a start script that has it is
   out of date.
-- `jextract` does **not** ship with the GraalVM or any OpenJDK distribution. It is a standalone
-  project (github.com/openjdk/jextract) built against libclang, and it generates bindings, not
-  memory-ownership semantics.
-- Never leave an `Arena` unclosed — the FFM equivalent of leaking a JNI resource. In JNI the
-  same mistake is a missing `ReleaseByteArrayElements` or `ReleasePrimitiveArrayCritical`,
-  which leaves the array pinned or the copy never freed.
-- FFM downcalls tend to be cheaper than JNI even without `critical()`, because a downcall is a
-  `MethodHandle` the JIT can specialise and inline, while JNI goes through a runtime-resolved
-  `JNINativeInterface` table. That is a JIT specialisation difference, not a difference in
-  safepoint or pinning semantics.
-- `asprof` is the async-profiler binary in the 3.x/4.x series. `profiler.sh` means an outdated
-  installation.
+- `jextract` is an OpenJDK project/tool distributed separately from the standard JDK; vendor
+  bundles can differ. Pin its version/target ABI and review generated ownership/error policy.
+- Close confined/shared arenas according to the native ownership boundary. Automatic/global
+  arenas are not manually closeable; their lifetimes make them unsuitable for arbitrary
+  retained pointers. JNI critical/element APIs must be released on every path.
+- Do not assume FFM is faster than JNI. Descriptor shape, checks, marshaling, JIT compilation,
+  native work and copies dominate differently. Benchmark the same ABI/function/data path and
+  retain safety and maintainability in the decision.
 - An aggregate CPU overhead calculation is not a tail-latency prediction without an explicit
   queueing model connecting the two.
+- A `FunctionDescriptor` is executable ABI metadata. Wrong C width, signedness, struct layout,
+  variadic boundary, calling convention or callback lifetime can corrupt memory or crash the
+  JVM despite Java's static types. Test against headers on every target platform.
+- Native cancellation is cooperative: cancelling a `Future` or interrupting the Java caller
+  does not reliably stop C code. Define timeout, abandonment, resource ownership and late
+  completion behavior at the boundary.
 
 ## References
 

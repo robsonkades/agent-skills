@@ -1,102 +1,164 @@
 ---
 name: forkjoinpool-and-work-stealing
 description: >
-  ForkJoinPool and work stealing: the per-worker deque, submission versus worker queues,
-  the pseudorandom stealing scan, the join-time help mechanism, the common pool and
-  everything that shares it, ManagedBlocker and compensation, parallel-stream behaviour,
-  task-granularity calibration, and diagnosing a starved or over-subscribed pool. Use
-  when a parallelStream or CompletableFuture stalls, when blocking I/O runs inside a
-  ForkJoinPool task, when effective parallelism silently drops under load, when 256 is
-  quoted as a pool ceiling, when fork has no matching join, when a division threshold was
-  copied from another project, or when sibling tasks write shared mutable state. Does not
-  cover platform versus virtual threads and general pool sizing
-  (thread-sizing-and-virtual-threads), the sizing arithmetic itself
-  (littles-law-and-queueing), or reactive stream backpressure (reactive-backpressure).
+  Design and diagnose ForkJoinPool workloads using work-stealing topology, task graphs,
+  granularity, common-pool interference, managed blocking, compensation limits and approximate
+  pool telemetry. Use when parallel computation underutilizes CPUs, parallel streams interfere,
+  joins stall, blocking collapses effective parallelism, or copied thresholds and pool constants
+  are being treated as universal policy. Includes Java 25 API changes with version labels.
 ---
 
 # ForkJoinPool and Work Stealing
 
 ## Purpose
 
-Decide whether a `ForkJoinPool` is delivering the parallelism it was configured for, and
-what to change when it is not. The failure this prevents is silent: a task blocks on I/O
-without telling the pool, effective parallelism collapses below the configured value, and
-nothing in the logs says so — the symptom is throughput that stops responding to load.
+Use `ForkJoinPool` for decomposable task graphs where workers create enough independent work to
+steal. Its advantage is not “more threads”; it is distributed scheduling queues plus join-aware
+assistance for nested computations. Correctness still comes from task ownership and Java Memory
+Model synchronization, and throughput still depends on useful work per task and the real bottleneck.
 
-The second failure is inherited numbers. A division threshold that worked elsewhere, or
-256 copied from the common pool as if it were an architectural ceiling, are both decisions
-made without measuring this workload.
+This skill owns pool/task-graph behavior. General concurrency choice belongs to `java-concurrency`,
+pool capacity math to `thread-sizing-and-virtual-threads`, and benchmark validity to
+`jmh-microbenchmarks`.
 
-## Workflow
+## Decision workflow
 
-1. **Establish which pool is involved.** `parallelStream()` and executor-less
-   `CompletableFuture` both run on `ForkJoinPool.commonPool()`, shared with every other
-   subsystem and third-party library in the JVM. A dedicated pool is a different problem
-   from a polluted common one.
-2. **Read the pool's own state.** `pool.toString()` gives `parallelism`, `size`, `active`,
-   `running`, `steals`, `tasks` and `submissions` with no external tooling. The metrics are
-   plain instance methods — there is no `ThreadPoolMXBean` for this type.
-3. **Compare against a healthy baseline** before suspecting granularity.
-   `getStealCount()`, `getActiveThreadCount()` and `getQueuedTaskCount()` mean nothing in
-   isolation.
-4. **Separate "searching for work" from "doing work".** Run async-profiler in wall mode
-   and compare time in `ForkJoinPool.scan` / `runWorker` against `ForkJoinTask.doExec`. A
-   high ratio of the first is the signature of tasks that are too small.
-5. **Look for an unannounced block.** Any blocking call inside a task, without
-   `ManagedBlocker`, removes a worker from the pool with no signal and no compensation.
-   Check thread dumps for workers in `WAITING`/`BLOCKED` rather than `RUNNABLE`.
-6. **Fix by isolation first, mechanism second.** Move I/O to a dedicated executor composed
-   via `CompletableFuture`; use `ManagedBlocker` only for occasional blocking inside
-   otherwise CPU-bound tasks. See `references/diagnosing-and-sizing.md`.
-7. **Recalibrate the threshold with JMH**, against the real per-element cost, never with
-   `System.nanoTime()` around a loop.
+1. Identify the actual pool and entry path: `invoke`, external submission, `fork`, parallel stream,
+   or an executor-less async API.
+2. Describe the task DAG: parent/child dependencies, joins, exceptional paths, and unowned work.
+3. Establish workload character: CPU, memory bandwidth, allocation, lock contention, managed wait,
+   unmanaged I/O, or mixed phases.
+4. Capture pool estimates, thread state and CPU/wall profiles during the symptom.
+5. Vary one of task threshold, parallelism, data shape, blocking fraction or pool isolation, then
+   validate throughput, tail latency and resource use.
+6. Confirm shutdown and exception ownership. Daemon workers and unobserved tasks are not durability.
 
-## Rules
+## Choose the mechanism by workload
 
-- Never run a blocking call inside a `ForkJoinPool` task without `ManagedBlocker` or a
-  dedicated pool. Without the signal the pool cannot know a worker stopped progressing and
-  cannot compensate.
-- Never put long or blocking work on the common pool. It is shared by parallel streams,
-  every executor-less `CompletableFuture`, and any library that defaults to it.
-- 256 is the common pool's `maximumSpares` default
-  (`java.util.concurrent.ForkJoinPool.common.maximumSpares`), not a ceiling. The
-  architectural limit of any instance is `MAX_CAP = 32,767`. Size a dedicated pool's
-  `maximumPoolSize` from the workload's real blocking profile, using the nine-argument
-  constructor (Java 9+).
-- Every `fork()` needs a matching `join()`, or the work must be a `RecursiveAction` driven
-  by `invoke()`. A forked, never-joined task can be silently abandoned.
-- Use `left.fork(); rightResult = right.compute(); left.join();` — not two forks and two
-  joins. The second form wastes the calling thread while both joins wait.
-- `ForkJoinTask` guarantees happens-before on exactly two edges: fork → task, and task →
-  `join()` on that same task. There is **no** edge between sibling tasks. Sibling tasks
-  writing shared mutable state are a data race regardless of sharing a pool.
-- Combine results by returning them from `RecursiveTask` and merging in the parent's
-  `compute()`, never through a shared `static` accumulator.
-- Calibrate the threshold by _time per leaf task_ — low microseconds to a few
-  milliseconds — not by element count. A workload with a higher per-element cost needs
-  fewer elements per leaf.
-- Do not benchmark pool changes with `System.nanoTime()` around a loop. Use JMH with
-  `@Warmup`, `@Measurement` and `@Fork`; ad-hoc timing hides tiered compilation and
-  dead-code elimination.
-- `jdk.ThreadPark` and `jdk.JavaMonitorWait` default to a 20 ms threshold in
-  `default.jfc` and 10 ms in `profile.jfc`. Lower it
-  (`jfr configure jdk.ThreadPark#threshold=1ms`) before ruling out fine-grained waiting.
-- Stealing is a pseudorandom cyclic scan over **all** pool queues, not a neighbour lookup.
-  Steals concentrated on one queue mean that queue held large tasks, not that workers are
-  topologically adjacent.
-- Set `asyncMode = true` (FIFO) for stream-like or event-driven submissions with no nested
-  `join()`; `false` (LIFO) for classic recursive divide-and-conquer.
-- Java assertions need `-ea` at run time. A correctness check without it verifies nothing
-  while appearing to.
+| Workload                                                       | Prefer                                                                                        | Avoid when                                                                                     |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| recursive, CPU-heavy divide-and-conquer                        | default LIFO local scheduling and returned partial results                                    | leaves are tiny, skewed, stateful, or bounded by memory bandwidth                              |
+| many independent event-style tasks that are not joined         | dedicated pool with `asyncMode=true` can fit                                                  | durable queueing, admission control or per-task isolation is required                          |
+| occasional managed wait inside otherwise fork/join computation | `ManagedBlocker` around the precise wait                                                      | the whole workload is blocking I/O or the provider has better async/virtual-thread integration |
+| ordinary blocking request tasks                                | virtual-thread-per-task executor plus resource-local limits                                   | CPU parallelism rather than concurrency is the goal                                            |
+| parallel collection reduction                                  | parallel stream only after measuring source splitting, collector and common-pool interference | ordered/stateful operations, small data, blocking lambdas, or latency-sensitive shared process |
+
+The JDK describes the common pool as appropriate for many applications; isolation is a decision, not
+a universal commandment. Use a dedicated pool when fault/capacity ownership differs, predictable
+latency matters, or shared consumers interfere. A dedicated pool adds lifecycle, thread and tuning
+costs and does not by itself make blocking safe.
+
+## Task-graph rules
+
+- Fork one branch, compute another locally, then join is a useful binary-recursion pattern because it
+  keeps the current worker productive. It is not a law: `invokeAll`, `CountedCompleter`, irregular
+  DAGs and event-style tasks have different policies.
+- A forked task need not always be joined: async-mode event tasks are explicitly supported. But every
+  task still needs a lifetime, exception and shutdown owner. “Never joined” must be intentional.
+- Return partial results and combine after completion. Sibling tasks that mutate common non-thread-safe
+  state race; belonging to one pool does not establish ordering between them.
+- Do not claim a special fork-to-task happens-before rule that the `ForkJoinTask` API does not state.
+  Publication and result visibility follow the documented task/Future completion APIs and the JMM;
+  intermediate shared state still needs its own synchronization.
+- Cancellation is best effort. `ForkJoinTask.cancel` does not generally interrupt the executing
+  thread. Long computations need explicit cooperative checks where cancellation is a requirement.
+- Exceptions surface through `join`/`invoke`/`get`; an event task with no observer can fail without
+  reaching a request owner. Worker uncaught-exception handlers are not a substitute for observing
+  task outcomes.
+
+## Blocking and compensation
+
+The pool can compensate for joins and `ManagedBlocker`, subject to pool configuration, thread-factory
+success and resource limits. `managedBlock` _possibly_ activates/spawns a spare; it does not guarantee
+target parallelism, make the remote dependency healthy, or bound blocked calls. Unmanaged blocking
+gives the pool fewer scheduling signals, but implementation/runtime mechanisms may still observe
+some waits—diagnose rather than claiming the pool “cannot know” categorically.
+
+For the Java 9+ extended constructor:
+
+- `parallelism` is a target;
+- `maximumPoolSize` bounds compensation with documented transient caveats;
+- `minimumRunnable` influences replacement of managed blocked/joining workers;
+- `saturate` chooses rejection versus operating below target when replacement cannot be created;
+- `corePoolSize` is documented as ignored in current Java 25, a version-sensitive detail.
+
+The Java 25 implementation documents a maximum of 32,767 running threads and a common-pool default
+of 256 spare threads. Those are implementation/default facts, not architectural sizing targets.
+
+## Granularity and scaling
+
+Too-fine tasks pay allocation, queue, steal, completion and merge overhead. Too-coarse tasks expose
+too little parallel slack and amplify skew. JDK guidance gives rough computational-step ranges, but
+production thresholds must be calibrated for the operation, data distribution and hardware.
+
+Measure a threshold sweep with warmup and multiple forks. Include sequential baseline, allocation,
+CPU utilization, bandwidth/cache counters where relevant, steals, task imbalance and end-to-end
+latency. A faster microkernel can make the whole service slower through extra allocation or shared
+pool contention. Stop adding parallelism when the bottleneck is bandwidth, cache/NUMA traffic,
+serialization, locks, or downstream capacity.
+
+## Parallel streams
+
+Parallel stream APIs do not expose an executor parameter. The JDK implementation normally uses
+fork/join machinery and the common pool for ordinary external invocation, but custom-pool behavior
+observed by nesting a terminal operation inside another pool is not a portable stream API contract.
+Do not build isolation guarantees on that implementation trick. Prefer an explicit task API when
+executor ownership matters.
+
+Stream correctness additionally requires non-interfering/stateless behavioral parameters and an
+associative reduction. Encounter order and stateful operations can constrain parallel execution.
+
+## Production diagnosis
+
+Pool accessors—active/running threads, queued tasks/submissions, steals and quiescence—return estimates
+or snapshots. Compare time series to a known healthy workload; no single steal ratio proves either
+good balance or bad granularity.
+
+| Symptom                                        | Evidence to distinguish                                               | Candidate action                                                           |
+| ---------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| queued work, low running count                 | thread dump; blocked call sites; managed-block status                 | isolate/block via supported mechanism; validate compensation ceiling       |
+| high CPU, no throughput gain                   | CPU profile, bandwidth/cache counters, allocation/GC                  | increase leaf size, reduce allocation, or abandon parallelism              |
+| intermittent latency across unrelated features | pool identity and per-consumer tagged work                            | isolate capacity or remove executor-less/default consumers                 |
+| one worker owns most work                      | leaf duration distribution, input skew, steal trend                   | improve splitting/decomposition; avoid fixed midpoint assumptions          |
+| shutdown loses tasks                           | daemon-worker lifecycle and terminal observers                        | explicitly await owned work or move durable work to durable infrastructure |
+| pool stalls at compensation ceiling            | `maximumPoolSize`, `minimumRunnable`, rejection, blocked-thread count | reduce blocking, raise justified ceiling, or change executor model         |
+
+## Anti-patterns
+
+### Copied leaf threshold
+
+- **Why:** element count looks workload-independent.
+- **Symptoms:** either millions of tiny tasks or idle workers on skewed leaves.
+- **Better:** threshold sweep using real leaf cost and representative distributions.
+- **Sometimes acceptable:** a conservative default with runtime evidence and a revalidation trigger.
+
+### Common pool as invisible global capacity
+
+- **Why:** zero configuration.
+- **Symptoms:** one library's long tasks change unrelated stream/future latency.
+- **Better:** inventory consumers, make ownership explicit, isolate where SLO/failure domains differ.
+
+### Shared mutable accumulator
+
+- **Why:** avoids result objects/merge code.
+- **Symptoms:** nondeterministic wrong answers or contention that erases speedup.
+- **Better:** isolated partial results and associative merge; concurrent collector only when semantics fit.
+
+## Review checklist
+
+- [ ] Actual pool, effective parallelism and other consumers are known.
+- [ ] Task DAG, completion owner and exceptional/cancellation paths are explicit.
+- [ ] Leaf threshold was measured against representative size and skew.
+- [ ] Blocking calls are classified; compensation is treated as bounded/best effort.
+- [ ] Shared state has an independent JMM argument.
+- [ ] Pool estimates, CPU/wall profile and system bottleneck were correlated.
+- [ ] Version-sensitive constants and Java 25 APIs are labelled.
+- [ ] Daemon-worker/process-exit behavior cannot silently lose required work.
 
 ## References
 
-- [Pool internals](references/pool-internals.md) — the `WorkQueue` deque and why the owner
-  path needs no CAS, the stealing scan step by step, what `fork()` and `join()` actually
-  do including the help mechanism, and the happens-before guarantee in full. Read when you
-  need the mechanism to explain an observation, or when reconciling against documentation
-  that mentions `helpStealer()`.
-- [Diagnosing and sizing](references/diagnosing-and-sizing.md) — the `toString()` field
-  table, the instance-metric calls, the collection commands, threshold calibration, the
-  I/O sizing formula with `ManagedBlocker`, and the incident checklist. Read when
-  collecting evidence from a live pool or choosing a pool topology.
+- [Pool mechanics and contracts](references/pool-internals.md)
+- [Diagnosis and experiment design](references/diagnosing-and-sizing.md)
+- [Java 25 `ForkJoinPool`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinPool.html)
+- [Java 25 `ForkJoinTask`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinTask.html)
+- [Java 25 streams package](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/package-summary.html)

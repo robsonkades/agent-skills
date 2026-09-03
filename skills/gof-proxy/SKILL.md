@@ -67,15 +67,16 @@ Customer c = customerService.byId(id);      // a network call
 for (Order o : c.orders()) { ... }          // N more network calls
 ```
 
-A local method call cannot fail halfway, takes nanoseconds, and has no partial results. A remote
-call can fail after the work was done, takes milliseconds at best, may never return, and may
-succeed at the other end while the caller sees a timeout. A proxy that presents the second as the
-first invites callers to write loops that are correct locally and catastrophic remotely.
+An in-memory method normally has no network ambiguity, while local I/O can still block, fail and
+partially mutate state. A remote call adds independent failure, materially higher/variable
+latency, transport queues, deadlines and the possibility that work committed after the response
+was lost. A proxy that hides those differences invites locally plausible but operationally
+catastrophic loops.
 
 Rules for any proxy over a boundary:
 
 ```text
-The interface must carry a deadline or a documented bound.
+The call path must carry a deadline (parameter, request context, or equivalent) or a documented bound.
 Failure must be in the signature's vocabulary — a specific exception
   or a result type — not "the same as local, but sometimes".
 Granularity must suit a round trip: bulk operations, not per-item calls.
@@ -94,25 +95,29 @@ local object
 THEN the interface is wrong, not the proxy. Redesign the contract.
 
 IF a proxied method is called from inside the same object (this.x())
-THEN the proxy is not involved and the annotation does nothing —
-     @Transactional, @Cacheable, @Async all fail silently this way
+THEN ordinary Spring proxy-based advice is bypassed, so @Transactional, @Cacheable
+     and @Async semantics are not applied at that call. AspectJ weaving and explicit
+     programmatic mechanisms differ; verify the configured advice mode
      (java-dependency-inversion).
 
-IF the class or the method is final, or the method is private
-THEN a subclass-based proxy cannot intercept it. Spring reports some
-     cases and silently skips others.
+IF the class or method is final, or the method is private
+THEN a subclass-based proxy cannot override/intercept it. An interface-based JDK proxy
+     can proxy calls through an interface even when the implementation class is final;
+     verify proxy kind and framework diagnostics.
 
-IF callers use instanceof, ==, getClass() or read annotations
-reflectively
-THEN a proxy breaks them. Provide an unwrap path
-     (AopTestUtils.getTargetObject, Hibernate.unproxy).
+IF callers use concrete-class instanceof, ==, getClass() or raw reflection
+THEN behavior depends on proxy kind and equality delegation. Prefer interface/semantic
+     contracts; use framework-aware type/annotation utilities or a constrained unwrap
+     path only where infrastructure truly needs the target.
 
 IF a virtual proxy initialises lazily
-THEN the initialisation must be safely published, and must happen at
-     most once for a subject with side effects.
+THEN the target must be safely published. Exactly-once initialization is required only
+     when duplicate construction has observable effects or unacceptable cost; otherwise
+     benign duplicate creation may be a simpler policy.
 
-IF a lazy proxy loads from a database inside a loop
-THEN it is an N+1 query generator, and the loop looks innocent
+IF a lazy proxy may load from a database inside a loop
+THEN inspect executed statements: it can create N+1, while batch/subselect fetching or
+     an already-initialized persistence context can change the result
      (orm-behavioral-patterns).
 
 IF a protection proxy guards an object other code can obtain directly
@@ -137,8 +142,9 @@ THEN it fails on first use — LazyInitializationException is exactly
   caller did not ask for, partial failure presented as an exception indistinguishable from a
   local bug, and fan-out hidden inside a getter. Every remote proxy needs a timeout, a failure
   vocabulary and a granularity review (`timeouts-and-deadlines`, `failure-models`).
-- **Performance.** Dynamic proxies dispatch reflectively and defeat inlining, which is measurable
-  in tight loops but rarely dominant. The costs that matter are the hidden ones: a lazy proxy
+- **Performance.** JDK dynamic proxies route through an `InvocationHandler`; subclass proxies use
+  generated overrides. Either can inhibit optimizations depending on call-site profiles and
+  advice, but modern reflection internals are version-specific. Costs that usually matter are hidden ones: a lazy proxy
   triggering a query, a caching proxy whose keys are computed by reflection on every call, a
   logging proxy building a message before checking whether the level is enabled
   (`jit-inlining-and-escape-analysis`).
@@ -152,12 +158,12 @@ THEN it fails on first use — LazyInitializationException is exactly
 
 - [ ] The proxy controls access; it does not merely add stackable behaviour
 - [ ] Remoteness, if any, is visible in the interface: deadline, failure type, granularity
-- [ ] No annotated method is invoked through `this` from within the same object
-- [ ] No proxied class or method is `final` or `private` where interception is required
-- [ ] Lazy initialisation is safely published and happens at most once
+- [ ] Self-invocation behavior matches the configured proxy/weaving mode
+- [ ] Proxy kind is compatible with final/private/interface constraints where interception is required
+- [ ] Lazy initialization is safely published; duplicate-creation semantics are explicit
 - [ ] A protection proxy's subject cannot be obtained by another route
-- [ ] Identity-sensitive callers have an unwrap path, and tests use it explicitly
-- [ ] No lazy proxy is dereferenced inside a loop over a collection
+- [ ] Identity-sensitive infrastructure uses semantic/framework-aware APIs or a constrained unwrap
+- [ ] Lazy proxy loops are backed by query-count/fetch-plan evidence
 - [ ] Failure paths — denied, unavailable, uninitialised — are covered by tests
 
 ## References

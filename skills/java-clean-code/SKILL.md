@@ -21,8 +21,9 @@ three-line fragments that communicate through fields and can only be understood 
 reading all of them. Both are unreadable; only the first is commonly named. This skill
 decides where to split, where to merge, and when to leave code alone.
 
-Readability yields to correctness always, and to performance only with a measurement
-attached — a profile or benchmark, recorded in a comment at the site.
+Readability yields to correctness always, and to performance only with evidence. Keep the
+reproducible benchmark/profile and environment in the performance record; leave a short code
+comment only when a future maintainer could reasonably "simplify" a still-measured hot path.
 
 ## Workflow
 
@@ -40,6 +41,16 @@ attached — a profile or benchmark, recorded in a comment at the site.
 5. Re-run the tests. A change that alters behaviour is not a readability change; the
    safety workflow and mechanics for larger moves live in java-refactoring.
 
+## Split, keep or merge
+
+| Evidence                                                               | Default decision                                | Why                                                                  |
+| ---------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------- |
+| Policy and mechanics are interleaved; a block has a stable domain name | Extract the mechanics                           | The orchestration becomes the readable policy                        |
+| Linear code has one level, one lifecycle and few live concepts         | Keep it together                                | Line count alone does not pay for navigation                         |
+| Helpers communicate through mutable fields or wide parameter bundles   | Merge or introduce one explicit state value     | Fragmentation hid the data flow and often created reentrancy defects |
+| A branch is a distinct volatile policy with independent tests/owners   | Extract a policy object or function             | Change coupling, not size, justifies the boundary                    |
+| Performance evidence requires an unusual shape                         | Keep the measured shape and record the evidence | Readability must not erase a demonstrated constraint                 |
+
 ## Rules
 
 - One abstraction level per method: it either orchestrates named steps or implements
@@ -47,17 +58,38 @@ attached — a profile or benchmark, recorded in a comment at the site.
 - Every extraction has a price — a name to trust and a hop to follow. Do not keep a
   fragment that has one caller, needs fields or three-plus parameters to share state
   with that caller, and cannot be understood without reading it. Inline it back.
-- A method that needs comments to separate its sections is several methods. A comment
-  explains _why_; a comment that explains _what_ marks code that needs changing.
-- A method whose name promises a read must not write. Callers reorder and drop calls
-  to "getters"; a mutation hidden in one corrupts state at a distance. (Command–query
-  separation in full is java-tell-dont-ask's.)
+- Section comments are a diagnostic, not a verdict. Stable domain steps often deserve named
+  extractions; a dense algorithm, state machine or intentionally co-located hot loop may be
+  clearer with phase/invariant comments. A comment that merely paraphrases syntax is noise;
+  one that preserves rationale, invariant, units, protocol or measured constraint is design
+  evidence.
+- A method whose public contract promises an observational read must not expose a semantic
+  write. Internal memoisation may be acceptable when it preserves results, thread safety,
+  resource bounds and failure behavior; lazy I/O or externally visible mutation is not a
+  harmless getter implementation. (Command–query separation in full is
+  java-tell-dont-ask's.)
 - No unenforced call order: if `b()` is only valid after `a()`, merge them, pass what
   `b` needs as the return of `a`, or encode the order in a type. A Javadoc line saying
   "call a() first" is a defect scheduled for later.
 - No ambient reads in domain logic: `LocalDate.now()`, `Locale.getDefault()`, static
   configuration lookups belong at the boundary, passed in as `Clock`, `Locale`,
   values. Hidden inputs make behaviour untestable and irreproducible.
+
+## Production checks
+
+- **Concurrency:** extraction that promotes locals to fields can make a previously reentrant
+  operation race. Run concurrent calls when a refactor changes state lifetime; `final` on the
+  field does not make the referenced accumulator safe.
+- **Failure atomicity:** moving an effect into a helper does not make a workflow transactional.
+  List effects and retry boundaries before rearranging persistence, messages or remote calls.
+- **Observability:** preserve event names, correlation and error classification. Do not retain
+  logs merely to narrate newly fragmented control flow.
+- **Compatibility:** reflection, dependency injection, serialization and framework proxies may
+  observe constructors, visibility and annotations that ordinary callers do not. An internal
+  readability edit can still be a runtime contract change.
+- **Reviewability:** separate semantic movement from renaming/formatting when practical. A
+  smaller conceptual diff makes behavior preservation easier to establish than a lower line
+  count does.
 
 ## References
 

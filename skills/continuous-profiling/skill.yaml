@@ -1,19 +1,17 @@
 schemaVersion: 1
 
 name: continuous-profiling
-version: 1.2.0
+version: 1.3.0
 description: >-
-  Always-on profiling in production: collection architecture and its permanent overhead
-  budget, profile storage and retention, differential and time-windowed queries, business
-  labels, and correlating profiles with deploys and incidents. Use when an incident is
-  already over and nobody profiled it, when a regression must be attributed to a deploy,
-  when "which tenant is burning the CPU" cannot be answered from an aggregate, when
-  allocation profiling is enabled unconditionally in production, when two flame graphs from
-  incomparable load windows are being diffed, or when someone says continuous profiling
-  needs a third-party agent. Does not cover choosing and running a single profile
-  (jfr-and-async-profiler), JFR event configuration (jfr-advanced), profiler engines and
-  conversions (async-profiler-advanced), or reading the resulting graph
-  (flame-graph-analysis).
+  Designing and operating always-on production profiling: question-driven signal choice,
+  permanent overhead and coverage budgets, in-process versus host collection, context-label
+  propagation, profile schemas, storage and cardinality, retention and incident preservation,
+  deploy-aware comparisons, trust boundaries, and evidence-quality SLOs. Use when historical
+  CPU/allocation/lock evidence must survive an incident, when profile cost or tenant labels can
+  grow without bound, when a backend or agent is being selected, or when two time windows are
+  compared as a regression claim. Does not teach one-off capture mechanics
+  (jfr-and-async-profiler), async-profiler engines (async-profiler-advanced), JFR tuning
+  (jfr-advanced), or graph interpretation (flame-graph-analysis).
 
 license: Apache-2.0
 
@@ -49,6 +47,11 @@ dependencies:
 
 suggests:
   - metrics-and-cardinality
+  - jfr-and-async-profiler
+  - latency-statistics
+  - flame-graph-analysis
+  - ebpf-for-jvm
+  - performance-regression-ci
 
 capabilities:
   - reads-source

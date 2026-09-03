@@ -4,7 +4,7 @@ Every number here was read off Temurin 25.0.3 (`-XX:+PrintFlagsFinal`, `-Xlog:co
 or off `codeCache.cpp` / `compilerDefinitions.cpp` at the `jdk-25-ga` tag. Confirm against
 the runtime you are reasoning about before it becomes a production decision.
 
-## The three CodeHeaps
+## The JDK 17-25 CodeHeaps
 
 | Segment                 | What it stores                                                                                                            | Share of the total, tiered compilation on |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
@@ -12,8 +12,8 @@ the runtime you are reasoning about before it becomes a production decision.
 | `profiled nmethods`     | C1 **with** profiling: tiers 2 and 3                                                                                      | 50% of what remains                       |
 | `non-profiled nmethods` | C1 **without** profiling (tier 1), C2 (tier 4), and native wrappers (`CompLevel_none`)                                    | 50% of what remains                       |
 
-Every nmethod is a `CodeBlob`; not every `CodeBlob` is an nmethod. Each heap is a separate
-contiguous native region with its own free-block allocator and its own ceiling, so one can be
+Every nmethod is a `CodeBlob`; not every `CodeBlob` is an nmethod. In the JDK 25 baseline,
+each heap is a separate contiguous native region with its own free-block allocator and its own ceiling, so one can be
 exhausted while another is half empty. `initialize_heaps` lays them out in the order
 `profiled`, `non-nmethods`, `non-profiled` in one reservation, which is why `bounds` in
 `Compiler.codecache` are adjacent.
@@ -126,13 +126,13 @@ Measure under representative load, across at least one full warm-up window, befo
 Because of the fallback, "one heap high" reads as "one heap pinned at 100% and the other
 climbing faster than its own tier mix explains".
 
-| Sustained observation via `jcmd`                             | Action                                                                                                                                                                                              |
-| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `profiled` pinned at ~100%, `non-profiled` < 40% and rising  | High call-site churn or constant warm-up (frequent deploys, aggressive autoscaling, class generation at runtime). Consider `ProfiledCodeHeapSize` larger than `NonProfiledCodeHeapSize`             |
-| `non-profiled` pinned at ~100%, `profiled` < 40% and rising  | Stable long-lived workload dominated by mature C2, or many trivial methods going straight to tier 1. Consider a larger `NonProfiledCodeHeapSize`; cross-check `deoptimization` churn first          |
-| Both below 60% even at peak, no `CodeCache GC` causes        | The default split is fine. Do not touch it                                                                                                                                                          |
-| Both above 85% at once, or `CodeCache GC Threshold` frequent | Not an imbalance — insufficient total. Raise `ReservedCodeCacheSize` and keep the 50/50. Under Serial/Parallel this also removes Full GCs (`unloading-and-gc.md`)                                   |
-| `non-nmethods` above 80%                                     | Raise `NonNMethodCodeHeapSize` explicitly. It does not scale with the total; only with compiler threads. Check `CICompilerCount` and whether a `MethodHandle`-heavy framework mints many intrinsics |
+| Sustained observation via `jcmd`                                                                   | Action                                                                                                                                                                                                      |
+| -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profiled` pinned at ~100%, `non-profiled` < 40% and rising                                        | High call-site churn or constant warm-up (frequent deploys, aggressive autoscaling, class generation at runtime). Consider `ProfiledCodeHeapSize` larger than `NonProfiledCodeHeapSize`                     |
+| `non-profiled` pinned at ~100%, `profiled` < 40% and rising                                        | Stable long-lived workload dominated by mature C2, or many trivial methods going straight to tier 1. Consider a larger `NonProfiledCodeHeapSize`; cross-check `deoptimization` churn first                  |
+| Both have stable headroom across the full warm-up/restart envelope, no material code-cache GC cost | Keep the default split; numeric alert thresholds belong to the workload, not this skill                                                                                                                     |
+| Both approach their ceilings, or code-cache-triggered collections consume material SLO budget      | Increase total only after confirming compilation/class-generation demand is expected; preserve the measured split initially                                                                                 |
+| `non-nmethods` grows toward exhaustion                                                             | Inspect blob composition and compiler concurrency; raise it only when expected peak plus margin cannot fit. Its ergonomic value includes compiler buffers but workload-generated stubs/adapters also matter |
 
 The default action is to leave the three segment flags alone and move only
 `ReservedCodeCacheSize`. Because the two large heaps split the remainder evenly, doubling the
@@ -140,11 +140,11 @@ total doubles both ceilings — which is why that fix works when the pressured s
 them, and wastes half its effect when the asymmetry runs the other way. Manual rebalancing is
 a second-line tool for persistent asymmetry; doing it before measuring is cargo cult tuning.
 
-A larger `ReservedCodeCacheSize` costs address space, not RAM: committed memory follows `used`
-in 64 KB steps (NMT `Code` category showed `reserved=248330KB, committed=8650KB` for an idle
-default JVM). What it does cost is unloading latency — the GC triggers in
-`unloading-and-gc.md` are percentages of the total, so a bigger cache lets more dead code
-accumulate between cycles. Restarting the JVM is the only way to change it.
+Increasing `ReservedCodeCacheSize` immediately increases reserved virtual address space, not
+necessarily committed or resident memory. Heaps commit as they expand, so a larger ceiling can
+permit more committed code over time; NMT `Code`, code-cache usage and RSS answer different
+questions. The GC triggers in `unloading-and-gc.md` are ratios of total capacity, so a larger
+cache can also change unloading cadence and retained cold code. The flag is startup-only.
 
 ## Ergonomic de-segmentation
 
@@ -163,8 +163,12 @@ with a comment that segmentation defeats huge pages on small caches). Three ways
   so only two heaps appear. That is correct, not a misconfiguration.
 - `-Xint`: `SegmentedCodeCache has no meaningful effect with -Xint` and it is reset.
 
-The `jdk.CodeCacheConfiguration` JFR event (once per chunk) records the sizes the JVM actually
+The `jdk.CodeCacheConfiguration` JFR event records the sizes the JVM actually
 settled on — `profiledSize = 0` is the fingerprint of an unsegmented or C1-only cache.
+
+This description is deliberately version-scoped. Do not infer that every later HotSpot must
+have exactly these three named heaps: inspect the target release's flags, source and diagnostic
+output before applying JDK 25 arithmetic.
 
 ## Flushing, unloading and the nmethod lifecycle
 
@@ -173,3 +177,10 @@ there is no `NMethodSweeper`, no `zombie` state and no periodic thread on JDK 20
 `not_entrant` nmethod is reclaimed by the next GC that finds no frame inside it, and the code
 cache asks for that GC itself when allocation crosses a threshold. The flags named `Sweep*`
 survive with new meanings, listed there.
+
+## Authoritative sources
+
+- [JEP 197: Segmented Code Cache](https://openjdk.org/jeps/197)
+- [JDK 25 HotSpot `codeCache.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/codeCache.cpp)
+- [JDK 25 HotSpot `compilerDefinitions.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compilerDefinitions.cpp)
+- [JDK 25 `java` launcher documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)

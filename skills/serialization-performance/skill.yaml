@@ -1,20 +1,16 @@
 schemaVersion: 1
 
 name: serialization-performance
-version: 1.0.0
+version: 1.1.0
 description: >-
-  The cost of turning objects into bytes: comparing formats and libraries on throughput,
-  allocation per operation, wire size and schema evolution together, buffer reuse and
-  streaming, why Java serialisation is the wrong default and how to harden the paths that
-  cannot be removed, and benchmarking a serialiser without lying. Use when a consumer's
-  flame graph is dominated by ObjectMapper.readValue, when ObjectInputStream appears on a
-  path that reads data from outside the process, when Kryo register() calls sit beside the
-  default setRegistrationRequired(false), when a mixed deploy broke a distributed cache with
-  KryoException, when a serialiser comparison is timed with System.nanoTime in a loop, when
-  a benchmark reports average time and no allocation figure, or when picking a format for a
-  new topic or contract. Does not cover writing the benchmark correctly
-  (jmh-microbenchmarks), finding the allocation in production (allocation-profiling), or
-  buffers outside the heap (off-heap-memory).
+  Engineering serialization cost as a system budget across encode/decode CPU, allocation and
+  retention, wire/storage bytes, copies, buffers, compression, schema evolution, compatibility,
+  security, and rollout. Covers format/library selection by workload and contract, streaming
+  versus materialization, buffer ownership/backpressure, representative JMH/component/load
+  experiments, production attribution, and mixed-version failure tests. Use when serialization
+  is measured hot, a new wire/cache/topic format is chosen, or “zero-copy”/binary-format claims
+  need validation. General benchmark mechanics, schema governance, and Java native-serialization
+  hardening have separate owners.
 
 license: Apache-2.0
 
@@ -45,6 +41,13 @@ files:
 dependencies:
   - name: jmh-microbenchmarks
     version: ^1.0.0
+
+suggests:
+  - schema-evolution-and-compatibility
+  - java-serialization-hardening
+  - load-testing
+  - off-heap-memory
+  - jmh-advanced
 
 capabilities:
   - reads-source

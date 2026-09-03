@@ -91,8 +91,9 @@ static OrderState fromRow(String state, Row row) {
 
 Evolving the set:
 
-- **Adding a state** is additive for the code and requires no migration — but old rows never carry
-  it, and any report grouping by state must handle it.
+- **Adding a state** may require no row rewrite, but can require schema/check-constraint, index,
+  report, API-consumer and rolling-version compatibility changes. Old binaries must define how
+  they handle rows/messages containing the new code.
 - **Removing a state** requires migrating existing rows first. Deploying code that cannot read a
   value still present in the database is an outage for those rows.
 - **Renaming** is a two-phase change: accept both names, migrate the rows, then drop the old one.

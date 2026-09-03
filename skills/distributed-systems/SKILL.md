@@ -1,16 +1,11 @@
 ---
 name: distributed-systems
 description: >
-  Triage and routing entry point for distributed systems in Java: turn a design question or
-  a production symptom into the one skill that owns it. Use when work crosses a process
-  boundary and the next step is unclear — a new service or integration is being designed, a
-  review must decide whether an operation is safe to retry or duplicate, a request fans out
-  or a queue backs up, replicas disagree, an incident is spreading across services, or
-  someone proposes sharding, a distributed lock, a leader or an event-driven rewrite. Routes
-  to failure-models for the fault model, delivery-semantics and idempotency for duplicates,
-  consistency-models for what a reader observes, and the rest of the family for each
-  specific decision. Does not itself cover any of those topics; JVM performance is
-  java-performance and in-process concurrency is the Java concurrency family.
+  Triage and routing entry point for cross-process Java systems. Classifies design questions
+  and production symptoms, establishes boundary and fault assumptions, then selects the
+  specialist skill for delivery, consistency, time, overload, partitioning, messaging,
+  coordination, recovery or observability. Use when the next technical owner is unclear; it
+  deliberately does not duplicate specialist guidance.
 ---
 
 # Distributed Systems
@@ -53,6 +48,7 @@ write. In a distributed system the expensive mistakes are made at design time an
 | How long may this call take, and who cancels it?        | `timeouts-and-deadlines`               |
 | Should this failure be retried, and how many times?     | `retries-and-backoff`                  |
 | What do we promise callers, and how does it change?     | `rpc-and-api-contracts`                |
+| Can old and new schemas coexist through rollout/replay? | `schema-evolution-and-compatibility`   |
 | Probes, graceful shutdown, 502s during a deploy         | `kubernetes-service-lifecycle`         |
 | Add a capability to a container I cannot modify         | `sidecar-pattern`                      |
 | Mediate outbound calls, split traffic, route by shard   | `ambassador-pattern`                   |
@@ -66,6 +62,10 @@ write. In a distributed system the expensive mistakes are made at design time an
 | Sharding or replicating a cache                         | `cache-sharding-and-replication`       |
 | One request must fan out to many workers                | `scatter-gather`                       |
 | Publish facts, or call the service directly?            | `event-driven-architecture`            |
+| Is a process boundary justified at all?                 | `distribution-boundaries`              |
+| Should state be cached, and who owns freshness?         | `caching-strategies`                   |
+| Persist current state or an event history?              | `event-sourcing`                       |
+| Where should session state live?                        | `session-state-strategies`             |
 | Does order matter, and over what scope?                 | `message-ordering-and-partitioning`    |
 | Distribute work to a pool of interchangeable workers    | `task-queues-and-competing-consumers`  |
 | A message that can never succeed                        | `poison-messages-and-dlq`              |
@@ -80,6 +80,8 @@ write. In a distributed system the expensive mistakes are made at design time an
 | What should it measure, and what must not be a label?   | `metrics-and-cardinality`              |
 | What deserves a span, and how do async hops link?       | `distributed-tracing-design`           |
 | What should wake someone at 3am?                        | `slo-and-alerting`                     |
+| Authentication, authorization or tenant isolation       | `java-application-security-basics`     |
+| RPO/RTO, restore and correlated failure domains         | `failure-models`                       |
 | Error rate and latency climbing across several services | `cascading-failures`                   |
 | Stop calling a dependency that is failing               | `circuit-breakers`                     |
 | Name this symptom — is it a known pattern?              | `distributed-failure-catalogue`        |
@@ -94,20 +96,29 @@ write. In a distributed system the expensive mistakes are made at design time an
   policy over an operation of unknown repeat-safety is a decision to corrupt data on a schedule.
 - **Three questions are asked at the wrong altitude more than any others.** "Should we shard?" is
   usually "should we cache or add a replica?" (`sharding-and-partitioning` says so). "We need a
-  distributed lock" is usually a conditional write or a partitioned owner
-  (`distributed-locks-and-leases`). "We need exactly-once" is at-least-once delivery plus an
-  idempotent consumer (`delivery-semantics`, `idempotency`) — there is no other kind.
+  distributed lock" is often a conditional write or a partitioned owner
+  (`distributed-locks-and-leases`). "We need exactly-once" must name the observable effect and
+  boundary: it may reduce to at-least-once plus deduplication, or to one transaction containing
+  progress and effect (`delivery-semantics`, `idempotency`).
 - Never accept "ordered", "exactly-once", "consistent" or "guaranteed" without a named scope. If
   the scope cannot be named, the claim is not yet a design.
-- During an incident, route to the pattern before the mechanism. The instinctive interventions
-  during a cascade — more replicas, longer timeouts, more retries — are the ones that deepen it.
+- During an incident, route to the pattern before the mechanism. More replicas, longer
+  timeouts or more retries can deepen a cascade under specific saturation/recovery conditions;
+  require evidence and a rollback trigger before changing them.
 - Do not stay in this skill once the owning skill is known. It carries no depth by design.
 - Two neighbouring families own what this one does not: JVM latency, GC, allocation and profiling
   are `java-performance` and the skills below it; in-process concurrency mechanics — executors,
   cancellation, structured concurrency, bulkheads — belong to the Java concurrency family, and a
   distributed skill that needs them names the owner rather than restating it.
+- Keep in-process and cross-process semantics separate: a Java `synchronized` block cannot
+  order another JVM, cancellation of a `CompletableFuture` need not cancel remote work, and
+  virtual threads increase local concurrency capacity but do not create distributed
+  backpressure.
 
 ## References
+
+- [Google SRE: Addressing Cascading Failures](https://sre.google/sre-book/addressing-cascading-failures/)
+- [Amazon Builders' Library: Timeouts, retries and backoff with jitter](https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/)
 
 - [Triage map](references/triage-map.md) — the separating question for each pair of symptoms that
   routes to two different owners, and the cheapest evidence that resolves it. Read when the table

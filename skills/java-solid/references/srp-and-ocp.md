@@ -2,10 +2,11 @@
 
 ## Single responsibility
 
-A responsibility is a reason to change, and the only reliable witness is change
-itself. Review the history before the shape.
+A responsibility is a reason to change owned by an actor or authority. History is the strongest
+witness in mature code; accepted requirements, team/release boundaries and external contracts are
+needed for new code. Review those before shape.
 
-### Detection heuristics
+### SRP detection heuristics
 
 - **Divergent change in the log.** `git log --follow --oneline` on the class shows
   interleaved commits serving unrelated pressures — rate rules in one, file formats
@@ -22,7 +23,7 @@ itself. Review the history before the shape.
 - **Stakeholder test.** List who requests changes to this class. Two independent
   requesters with veto over different parts is two reasons to change.
 
-### False positives — do not flag
+### SRP false positives — do not flag
 
 - **Many methods, one reason.** A `Money` type with twenty arithmetic and
   formatting operations changes only when monetary arithmetic changes. Size is not
@@ -31,10 +32,11 @@ itself. Review the history before the shape.
   surface. Many dependencies, one reason to change: the subsystem's shape.
 - **A mapper or serialiser touching every field.** It changes whenever the mapped
   type changes — that is one tracking reason, not one reason per field.
-- **A class that has never changed.** Whatever its shape, zero observed change
-  streams means zero evidence. Note the shape if you must; do not demand a split.
+- **A class with no history and no independent ownership/requirement pressure.** Shape alone does
+  not justify a split. Do not confuse this with critical new code whose specification already
+  names independently governed concerns.
 
-### When not to apply
+### When not to apply SRP splitting
 
 Splitting has a price: two files, a seam to name, wiring, and every future reader
 reassembling the whole. Do not split stable code, code whose halves always change
@@ -44,11 +46,11 @@ fans out across many classes. SRP applied without change evidence manufactures i
 
 ## Open-closed
 
-OCP says new behaviour should arrive as new code, not edits to working code. The
-part reviews forget: an extension point is speculation until the second variant
-exists, and it costs indirection, API surface and comprehension from day one.
+OCP says new behaviour should often arrive as new code rather than risky edits to stable code.
+The part reviews forget: an extension point without an observed variant or committed extension
+contract is speculation, and it costs indirection, API surface and comprehension from day one.
 
-### Detection heuristics
+### OCP detection heuristics
 
 - **The recurring conditional.** The same `if`/`switch` over a type code or string
   tag edited in commit after commit, each adding a branch for a new feature. That
@@ -61,7 +63,7 @@ exists, and it costs indirection, API surface and comprehension from day one.
 - **Copy-paste variants.** Three near-identical classes differing in one method
   body. Variation arrived; nobody built the point for it.
 
-### False positives — do not flag
+### OCP false positives — do not flag
 
 - **A switch over a sealed type.** Exhaustive pattern switches over a sealed
   hierarchy — no `default` — are the designed alternative to OCP: the author chose
@@ -69,12 +71,13 @@ exists, and it costs indirection, API surface and comprehension from day one.
   slot in silently". Recommending a visitor or a strategy here removes that
   guarantee.
 - **An enum switch with all constants covered.** Same trade, older tool.
-- **A conditional edited once.** One edit is not a pattern. Two may be coincidence.
-  Flag on the third, when variation is demonstrated.
+- **A conditional edited once.** One edit is weak historical evidence. Do not wait mechanically
+  for a third when a published extension requirement or high-cost second variant already makes
+  the axis explicit.
 - **Branching on data, not type.** A threshold check (`amount > limit`) is domain
   logic, not a missing extension point.
 
-### When not to apply
+### When not to apply OCP abstraction
 
 An abstraction in a _published_ API is close to permanent — you cannot un-ship an
 extension point once external code implements it, so speculative OCP in a public

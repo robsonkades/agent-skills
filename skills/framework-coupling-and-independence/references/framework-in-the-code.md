@@ -8,8 +8,9 @@ answer; each has a defensible answer once the context is stated.
 
 `@Service`, `@Component`, `@Repository` and constructor injection are the cheapest rung of
 the ladder. The class is a plain object with a constructor; the annotation tells a container
-how to build it. Remove Spring and the class still compiles, still works, and is still
-testable — you lose only the wiring.
+how to build it. Constructor injection remains plain Java; removing Spring from an annotated class
+also requires removing/replacing the annotation dependency and wiring, though its business behavior
+can remain directly testable.
 
 ```java
 @Service
@@ -42,8 +43,9 @@ semantics are framework-specific in ways that matter.
 Two properties are worth knowing regardless of the coupling question, because both cause
 silent failures:
 
-- **Self-invocation bypasses the proxy.** A method calling another method on `this` does not
-  go through the proxy, so the annotation on the callee does nothing. This is the most common
+- **Self-invocation bypasses default Spring proxy advice.** A method calling another method on `this` does not
+  go through that proxy, so the annotation on the callee does nothing in proxy mode. AspectJ mode
+  and calls through an injected/exposed proxy behave differently. This is a common
   cause of "the transaction annotation is there but nothing rolled back"
   (`enterprise-transactions`).
 - **Placement determines the boundary.** On a repository, the transaction is one query wide,
@@ -65,9 +67,10 @@ class that carries the business rules.
 - Cheaper: one model, one place to add a field, no mapper.
 - The coupling is mostly metadata, and metadata survives a lot: a JPA provider swap keeps
   these annotations, since they are Jakarta Persistence, not Hibernate.
-- Real costs are not portability but semantics: a no-arg constructor and non-final fields are
-  required, so the type cannot enforce its invariants at construction; lazy proxies escape into
-  business code and throw outside a session; equality gets tangled with identity.
+- Real costs are not only portability but persistence semantics: provider/spec-version constraints
+  on construction and proxying can weaken ordinary construction paths; hydration may bypass public
+  factories; lazy proxies can escape into business code; equality can become tangled with identity.
+  Encapsulation and validation are still possible, but every reconstitution path must preserve them.
 
 **Two models — a domain type plus a separate persistence entity.**
 
@@ -147,8 +150,8 @@ a published API contract is not.**
 
 ## Enforcing the decision
 
-Whatever the decision, encode it. These rules take an hour and are the only thing that keeps
-the boundary true after the third new joiner.
+Automate the decision where static structure represents it faithfully. Semantic boundaries still
+require review and behavioral tests; rule cost depends on classpath size and complexity.
 
 ```java
 @Test

@@ -1,167 +1,144 @@
-# Measuring lambda, mu, c and c_s without contaminating them
+# Measuring queue-model parameters without changing their meaning
 
-A model is only as good as the four numbers fed into it, and three of the four have a standard
-way of being measured wrong.
+## Begin with one boundary and cohort
 
-## lambda — arrival rate
+Record the events and counts that define the model:
 
-Count **arrivals at the server** over a **stable** window — not completions, and not the
-client's request count. The two differ by exactly the retries, health checks and internal
-fan-out that the client never sees and the model must; a 20% retry share is a 20% larger
-`lambda`. Exclude ramp-up periods; a load ramp makes the rate a moving target and the model
-assumes it is not. Record `lambda` at 1 s or 10 s resolution as well as the window mean, so
-that the p95 of `rho` is available — the mean alone hides the bursts that set the tail (see
-`references/production-behaviour.md`).
-
-## c_a — coefficient of variation of inter-arrival time
-
-Take the arrival timestamps, difference them, and compute `std/mean` of the gaps. Poisson
-arrivals give `c_a = 1`; paced or round-robin-split arrivals give `c_a < 1`; retries, cron
-fan-out and batches give `c_a > 1`. When only per-interval counts are available (a counter
-scraped every 10 s), use the index of dispersion `I = Var(N)/E[N]` over the interval counts
-— `1` for Poisson, and for long intervals `I ≈ c_a²` (Cox & Lewis, _The Statistical Analysis
-of Series of Events_, 1966 — not verified here). A scrape interval much longer than the burst
-length averages `I` towards 1 and hides the burstiness the model needs; check at the finest
-resolution the counter allows.
-
-Batch arrivals need the batch size, not `c_a`: log how many requests arrive within one
-service time of each other, and use the bulk-arrival formula when that number is stable.
-
-## mu — service rate
-
-Mean service time of completed requests, measured with the server **unsaturated**, at
-`rho < 0.3`.
-
-This is the most common methodological error in the whole subject: measuring mu under load
-measures `W`, not `1/mu`. `W = Wq + 1/mu`, and at rho = 0.8 the queue term is already 4x the
-service term — so a "service rate" derived from observed response time under load understates
-mu several-fold, and every downstream prediction inherits the error.
-
-If low utilisation is not achievable, call the service component directly, outside the queue.
-
-## c — the _effective_ number of servers
-
-`c` is the number of units that actually make progress in parallel, not the nominal pool size.
-If 20 of 100 threads are permanently blocked on I/O, `c = 80`.
-
-```bash
-jcmd <pid> Thread.print | grep "java.lang.Thread.State:" | sort | uniq -c
+```text
+offered → admitted → enqueued → service-start → service-end → terminal outcome
 ```
 
-Three cases for a `ThreadPoolExecutor`, all decided by the queue and not by the size fields:
+For each class preserve queue identity, route/partition, retry/attempt, deadline/cancellation and
+server position. Use one monotonic clock for durations. Reconcile inventory at window edges; a
+growing queue invalidates a stationary fit even when the window-average rates match.
 
-| Configuration                                     | Effective `c`                                 |
-| ------------------------------------------------- | --------------------------------------------- |
-| `core == max` (`newFixedThreadPool`)              | `c = core`. No ambiguity.                     |
-| `core < max`, unbounded queue                     | `c = core`, forever. `max` is dead config.    |
-| `core < max`, bounded queue or `SynchronousQueue` | `c` varies in `[core, max]` — model both ends |
+## Arrival rate and process
 
-`ThreadPoolExecutor.execute()` enqueues **before** it grows: it creates a thread above
-`corePoolSize` only when the queue _rejects_ the task. An unbounded `LinkedBlockingQueue` never
-rejects, so the pool never grows past `corePoolSize` no matter what `maximumPoolSize` says. An
-M/M/c prediction using `max` under that configuration is systematically optimistic.
+Measure offered `λ`, admitted rate and completed throughput separately. Retries, hedges, fan-out,
+health traffic and background tasks are distinct classes/visits, not an unexplained increment to
+one homogeneous `λ`. A finite queue uses offered `λ` for blocking and `λ_eff` for admitted Little's
+Law.
 
-HikariCP is different: it has no core/max split, so `maximumPoolSize` **is** the real, fixed
-number of connections and is the model's `c` directly. A thread waiting for a connection parks
-in `LockSupport.park()` until one is returned or the acquisition timeout fires, at which point
-HikariCP throws `SQLTransientConnectionException` (not `PoolInitializationException`, which is
-an initialisation failure only).
+Mean inter-arrival CV is insufficient to establish a Poisson or renewal process. Characterise:
 
-With virtual threads the platform thread count stops being the concurrency limit for I/O-bound
-work, and the `c` that matters moves downstream — to the database connection pool or to an
-external service's own limit. Note also that `jcmd Thread.print` does **not** list virtual
-threads; use `jcmd <pid> Thread.dump_to_file -format=json`.
+- time-varying intensity at resolutions finer than queue response/recovery;
+- empirical gap distribution and hazard, autocorrelation and burst/batch sizes;
+- count dispersion across several window widths;
+- dependence on queue state, timeouts, retries, cron and admission feedback;
+- per-source streams before and after routing/superposition.
 
-## c_s — coefficient of variation of service time
+Poisson has exponential independent gaps and variance equal to mean counts, but seeing one of
+those properties in a finite trace does not prove the others. Detrend seasonality before estimating
+`C_a`; otherwise rate variation appears as intrinsic burstiness. Scrape-interval counts may be too
+coarse to recover the process.
+
+## Service time, demand and `μ`
+
+`S` is time occupying one modeled service position, not automatically endpoint wall time or CPU
+time. For a platform-thread pool whose worker stays blocked on a downstream call, that block is
+part of worker occupancy if the whole task is the service center. If instead the model separates
+CPU, connection pool and remote dependency, measure visits/demand/residence at each node and model
+the blocking interaction.
+
+Capture enqueue/start/end timestamps directly. Do not derive `μ=1/W_endpoint`; endpoint residence
+contains queues and other stages. Low-load measurement can reduce queue contamination, but CPU
+frequency, cache/JIT state and batching may differ from production. Measure service at multiple
+loads; if its distribution/demand changes with queue length or concurrency, `μ` is state-dependent
+and a constant-rate model must be rejected or made piecewise.
+
+For CPU centers, use profilers/JFR/OS counters or controlled attribution. JDK 25 `ThreadMXBean`
+CPU-time methods apply to platform threads, may be unsupported/disabled, have precision not
+accuracy guarantees and do not support virtual-thread accounting. Do not wrap asynchronous
+requests with current-thread CPU time and call the result request demand.
+
+## Service distribution
+
+Compute moments from uncensored service-position samples and inspect the empirical distribution:
 
 ```python
-c_s = np.std(service_times_ms) / np.mean(service_times_ms)
-
-# c_s < 0.5  : nearly deterministic     -> M/D/1, or G/G/1 with low c_s
-# c_s ~ 1.0  : exponential              -> M/M/1 or M/M/c fits well
-# c_s > 1.5  : heavy tail               -> M/* badly understates high percentiles
+mean_s = service.mean()
+second_moment = (service ** 2).mean()
+cs = service.std(ddof=0) / mean_s
 ```
 
-For P-K use `E[S²]` directly — `mean(service_times_ms ** 2)` — rather than reconstructing it
-from `c_s`; the mean of squares is what the formula wants. Look at the histogram as well as
-the number: a `c_s` of 3 from a bimodal distribution (99% at 10 ms, 1% at 500 ms) and a
-`c_s` of 3 from a smooth heavy tail give the same mean wait and very different p99 waits,
-and only the first is fixed by a separate pool.
+The second moment directly feeds P–K. A CV of one does not establish exponential service; inspect
+survival/hazard, modality and serial/class dependence. Mixtures should be modeled by routing class
+when classification is available, while preserving their shared-resource interaction.
 
-Two contaminations of `c_s` are common. Measuring service time with the queue wait included
-(residence time rather than service time) inflates `c_s` with the queue's own variance,
-which is circular. And a request timeout that fires while the request is queued or running
-truncates the distribution: the slowest requests never complete, are counted as errors, and
-leave a `c_s` that is optimistic exactly in the tail — record timeouts alongside the samples
-and treat them as censored observations at the timeout value, not as absent.
+Timeouts and cancellations can right-censor service or abandon queue wait. Record whether work
+actually stopped; a caller timeout may leave server work running. Success-only samples make both
+`E[S]` and `E[S²]` optimistic. Survival methods require defensible censoring assumptions, and a
+deadline cannot reveal the distribution beyond it without a model.
 
-Common JVM causes of `c_s > 1`: GC pauses landing inside request processing, intermittent L3
-or database cache misses, sporadic lock contention, JIT deoptimisation on a hot path.
+## What counts as `c`
 
-Reduce `c_s` rather than only chasing rho: generational ZGC (JEP 474, the default in the JDK 25
-baseline) or generational Shenandoah (JEP 521, product) to remove long pauses; a dedicated pool
-for slow queries so one heavy request cannot occupy slots meant for fast ones; aggressive
-timeouts and circuit breakers to cut the extreme tail; cgroup quotas to stop CPU bursts from
-injecting variance.
+`c` is structural simultaneous service capacity under the model's server assumptions. It is not:
 
-## Measuring queue wait with JFR
+- nominal host CPUs when a cgroup quota/cpuset supplies less;
+- `maximumPoolSize` when an unbounded queue keeps `ThreadPoolExecutor` near core size;
+- pool size minus threads currently blocked—those tasks may still occupy service positions;
+- pod count when routing creates per-pod queues or pods share a downstream bottleneck;
+- virtual-thread count when the constrained centers are CPU and downstream permits.
 
-```bash
-jcmd <pid> JFR.start name=queueing settings=profile filename=queueing.jfr duration=60s
-```
+For `ThreadPoolExecutor`, record pool size over time, active count, task start/end and queue age.
+After core workers, `execute` normally offers to the queue before adding non-core workers; a
+bounded/full queue or `SynchronousQueue` is needed to trigger growth toward max. If worker count
+changes, model `c(t)` or split the interval. A parked idle worker is available capacity; a worker
+blocked inside a task remains occupied even if it consumes no CPU.
 
-| Situation                                                          | Thread state    | Correct event          |
-| ------------------------------------------------------------------ | --------------- | ---------------------- |
-| Contended entry into `synchronized` (lock contention)              | `BLOCKED`       | `jdk.JavaMonitorEnter` |
-| `Object.wait()`                                                    | `WAITING`       | `jdk.JavaMonitorWait`  |
-| `java.util.concurrent` — **thread pool and connection pool waits** | `TIMED_WAITING` | `jdk.ThreadPark`       |
+For a connection pool, configured max is only a candidate `c`: subtract disabled/leaked/broken
+resources only through measured availability, and remember the database may saturate before all
+connections provide independent progress. For virtual threads, bound actual scarce resources and
+CPU admission; `ThreadMXBean`/legacy dumps do not provide a complete virtual-thread population.
 
-`jdk.MonitorWait` does not exist in any JDK version. Waiting for a pooled thread or connection
-is not monitor entry — it is `LockSupport.park()`, and it appears as `jdk.ThreadPark` in
-`TIMED_WAITING`, not `BLOCKED`.
+## Measuring queue wait
 
-All three events have a **threshold of 20 ms in `default.jfc` and 10 ms in `profile.jfc`**.
-Fine-grained contention of a few milliseconds is invisible until the threshold is lowered:
-
-```bash
-jfr configure --input profile.jfc --output queueing-fine.jfc \
-    jdk.ThreadPark#threshold=1ms \
-    jdk.JavaMonitorEnter#threshold=1ms
-jcmd <pid> JFR.start name=queueing settings=queueing-fine.jfc duration=60s filename=queueing.jfr
-```
-
-Reading the distribution back:
+Instrument task lifecycle at the queue boundary:
 
 ```java
-new RecordingFile(Path.of("queueing.jfr")).readAllEvents().stream()
-    .filter(e -> e.getEventType().getName().equals("jdk.ThreadPark"))
-    .mapToLong(e -> e.getDuration().toNanos())
-    .summaryStatistics();
+long enqueuedAt = System.nanoTime();
+executor.execute(() -> {
+    long queueWait = System.nanoTime() - enqueuedAt;
+    queueWaitRecorder.record(queueWait);
+    runTask();
+});
 ```
 
-## Other signals
+Production instrumentation must avoid capture/allocation/cardinality overhead, propagate
+cancellation safely and include rejected submissions separately. Framework hooks or wrapped tasks
+may be preferable; verify nested/resubmitted tasks and caller-runs execution.
 
-```bash
-vmstat 1 | awk 'NR>2{print "runq:", $1, "blocked:", $2}'   # NR>2 skips two header lines
-curl -s localhost:8080/actuator/metrics/hikaricp.connections.active
-```
+JFR wait events answer different questions:
 
-HikariCP publishes the pool through a JMX MXBean (`com.zaxxer.hikari:type=Pool (<poolName>)`),
-not through JVM flags — `jcmd VM.flags` has nothing to do with third-party library metrics.
+| Event                  | What it observes                                                   | What it does not observe                                                     |
+| ---------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| `jdk.JavaMonitorEnter` | platform-thread contended monitor entry above configured threshold | arbitrary executor task age                                                  |
+| `jdk.JavaMonitorWait`  | `Object.wait` episodes                                             | monitor-entry contention or all conditions                                   |
+| `jdk.ThreadPark`       | platform-thread park episodes from locks/conditions/permits        | time a `Runnable` object sits in an executor queue before any thread owns it |
 
-Watch `hikaricp.connections.timeout.total`: a rising count means the pool is saturated and
-dropping acquisition attempts. Rejected work does not appear in latency metrics at all, it
-appears as errors, so a bounded queue can make measured latency look _better_ precisely as the
-system saturates. Check the rejection counter before believing a good-looking `Wq`.
+Inspect the running JDK's JFC settings: enabled state, stack traces, cutoff/threshold and period are
+version/configuration-specific. Lower thresholds on a short representative recording while
+monitoring overhead; zero recorded events is not zero wait. For virtual threads use applicable
+virtual-thread events plus application queue/permit timestamps; do not infer everything from
+platform-thread states.
 
-## Validating the model
+## Fit and falsify
 
-```
-error = |Wq_predicted - Wq_measured| / Wq_measured
-```
+1. Attach uncertainty and outcome/censoring policy to every parameter.
+2. Fit/calibrate on selected stable operating points, not the same point used to claim validation.
+3. Predict held-out load, service mix, server count or queue bound.
+4. Compare mean queue wait, wait probability, loss and any supported distribution—not only one
+   convenient metric.
+5. Plot residual against load/time/class. Systematic curvature suggests variability, topology,
+   state-dependent service or transient effects.
+6. Set acceptable absolute/relative error from the decision/SLO before results. There is no
+   universal 30% threshold, especially near zero.
+7. Prefer a simpler sensitivity bound when parameter uncertainty is wider than option differences.
 
-Under 30%: the model applies as chosen. Over 30%: the assumptions are wrong, not the
-arithmetic — note the **direction** of the miss and take the matching row of the
-disagreement table in `references/production-behaviour.md`; a measured wait above the
-prediction and one below it name different failed assumptions. Declare the environment and
-the tolerance alongside the comparison, or the validation is not reproducible.
+## Sources
+
+- [Oracle JDK 25 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+- [Oracle JDK 25 `ThreadMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadMXBean.html)
+- [Oracle JDK 25 JFR troubleshooting](https://docs.oracle.com/en/java/javase/25/troubleshoot/troubleshoot-performance-issues-using-jfr.html)
+- Harchol-Balter, [_Performance Modeling and Design of Computer Systems_](https://www.cs.cmu.edu/~harchol/PerformanceModeling/book.html)
+- Cox and Lewis, _The Statistical Analysis of Series of Events_ (1966).

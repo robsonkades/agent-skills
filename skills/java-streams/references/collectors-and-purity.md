@@ -14,9 +14,9 @@ Three things are wrong with this beyond taste:
 - **It is not safe if the stream ever becomes parallel.** `ArrayList` is not thread-safe;
   adding `.parallel()` produces lost elements or `ArrayIndexOutOfBoundsException`, not an
   error message about concurrency.
-- **It defeats optimisation.** A pipeline whose stages have side effects cannot be reordered,
-  fused or short-circuited safely, and the reader cannot tell what the result is without
-  tracing the mutation.
+- **It invalidates the stream contract.** The implementation may elide stages or stop early
+  where the terminal result permits it; a side effect makes observable behaviour depend on
+  traversal details the API intentionally does not promise.
 - **It hides the result.** The written form of the operation is "collect the SKUs of active
   orders", which the pipeline should state directly:
 
@@ -31,10 +31,12 @@ terminal operation, through a collector that knows how to combine partial result
 
 | Need                                 | Collector                                                                           |
 | ------------------------------------ | ----------------------------------------------------------------------------------- |
-| Immutable list, encounter order      | `toList()` (the `Stream.toList()` terminal, or `toUnmodifiableList()`)              |
+| Unmodifiable list, encounter order   | `Stream.toList()` or `Collectors.toUnmodifiableList()`                              |
+| List with no mutability guarantee    | `Collectors.toList()`                                                               |
 | Mutable list the caller will modify  | `Collectors.toCollection(ArrayList::new)`                                           |
 | Set, no duplicates                   | `toSet()` / `toUnmodifiableSet()`; `toCollection(LinkedHashSet::new)` to keep order |
-| Map, keys unique **and proven so**   | `toMap(key, value, merge)` — always with a merge function                           |
+| Map, keys unique **and enforced**    | `toMap(key, value)`; duplicate keys fail                                            |
+| Map, duplicate keys are valid        | `toMap(key, value, explicitMergePolicy)`                                            |
 | Map preserving encounter order       | `toMap(key, value, merge, LinkedHashMap::new)`                                      |
 | Group into lists                     | `groupingBy(classifier)`                                                            |
 | Group into something else            | `groupingBy(classifier, downstream)`                                                |
@@ -52,17 +54,19 @@ Map<String, Order> byCustomer = orders.stream()
 // IllegalStateException: Duplicate key CUST-1 (attempted merging values Order[...] and Order[...])
 ```
 
-- **No merge function means "I promise keys are unique".** Production data breaks that promise
-  eventually, and the failure is an exception in the middle of a request, naming a key. Pass a
-  merge function: `(a, b) -> b` (last wins), `(a, b) -> a` (first wins), or an explicit
-  `(a, b) -> { throw new IllegalStateException("duplicate customer " + a.customerId()); }` when
-  duplication really is a bug — at least the message is yours.
+- **No merge function means duplicate keys violate an invariant.** Keep that overload when
+  uniqueness is required: silently choosing first/last can corrupt meaning. Supply `(a, b) -> b`,
+  `(a, b) -> a`, or a domain merge only when duplicates are valid and encounter-order semantics
+  make the choice deterministic enough for the use case. Pre-validate or throw a domain-specific
+  error when the default diagnostic is insufficient.
 - **A null value throws NPE**, because `toMap` accumulates through `Map.merge`, which forbids
   null values. This surprises people who expect `HashMap`'s tolerance. If values may be null,
   use `groupingBy` with a list downstream, or a loop, or make the absence explicit with a
   sentinel/`Optional` value type.
-- **A null key throws too**, for `HashMap`-backed maps via `merge`, and the group key of a
-  `groupingBy` may not be null either.
+- **Null-key behaviour is collector/map dependent.** The default `toMap` implementation currently
+  uses a `HashMap`, which can accept a null key, but the collector contract does not promise a map
+  type and a supplied map may reject it. `groupingBy` rejects a null classifier result. Normalize
+  absence or choose and test an explicit representation instead of relying on incidental support.
 - **The map type is unspecified** unless you supply a factory. If iteration order matters
   downstream, ask for `LinkedHashMap`; if the keys are enums, ask for `EnumMap` (see
   java-enums).
@@ -87,9 +91,9 @@ Summary summary = products.stream().collect(teeing(
     Summary::new));
 ```
 
-- `groupingBy` returns a `HashMap` with mutable `ArrayList` values by default. Use
-  `groupingBy(classifier, TreeMap::new, downstream)` or `toUnmodifiableList()` downstream when
-  either matters.
+- `groupingBy` does not promise the returned map's type, mutability or serializability; its default
+  downstream is `toList()`, which likewise makes no mutability/type guarantee. Supply a map factory
+  and downstream collector when either property belongs to the contract.
 - Grouping by two or more attributes is clearer with a record key
   (`record Key(Category c, Region r)`) than with nested `groupingBy`, which produces a type
   nobody can read and forces two lookups at every use.
@@ -118,12 +122,15 @@ Two further points:
 - `reduce(identity, accumulator)` requires that `identity` really is one:
   `accumulator.apply(identity, x)` must equal `x`. `""` for concatenation, `0` for addition,
   `BigDecimal.ZERO` for `add` — but `BigDecimal.ZERO` is not an identity for `multiply`.
-- String concatenation with `reduce` is quadratic. Use `joining()`.
+- Repeated immutable string concatenation in a reduction can copy an increasing prefix and become
+  quadratic. Use `joining()` (or an explicit builder when control is needed), then measure for large
+  pipelines rather than relying on JIT rescue.
 
 ## Exceptions inside a pipeline
 
-A pipeline stage cannot throw a checked exception, and an unchecked one aborts the whole
-pipeline with no partial result. When per-element failure is expected — parsing a batch,
+A standard stream functional interface cannot declare a checked exception, and an unchecked one
+prevents the terminal operation from producing its normal result; earlier side effects may already
+have happened. When per-element failure is expected — parsing a batch,
 calling a dependency per item — model the outcome instead of throwing:
 
 ```java
@@ -143,7 +150,8 @@ covers the wider choice between exceptions and result types.
 
 - [ ] No mutation of anything outside the pipeline in `map`/`filter`/`sorted`/`flatMap`.
 - [ ] `forEach` only for output, never for accumulation.
-- [ ] Every `toMap` has a merge function; nullable values and keys accounted for.
+- [ ] Every `toMap` states whether duplicates are invalid or defines an explicit merge policy;
+      nullable values and keys are accounted for.
 - [ ] `groupingBy` has an explicit downstream whenever the value is not a plain list.
 - [ ] `reduce` accumulators are pure; mutable accumulation uses `collect`.
 - [ ] Collector-produced collections' mutability and iteration order match what callers assume.

@@ -1,18 +1,15 @@
 schemaVersion: 1
 
 name: java-performance
-version: 2.4.0
+version: 2.5.0
 description: >-
-  Triage entry point for JVM performance problems: turn a reported symptom into the one
-  investigation that can resolve it, and hand off to the specialist skill that owns it. Use
-  when a performance problem arrives without a known cause — "it got slow", a p99 regression
-  after a deploy, high CPU, memory growth, a slow start — and the next step is unclear.
-  Routes to performance-methodology for the process, jfr-and-async-profiler for evidence,
-  jvm-gc-tuning for collectors, sql-query-performance and orm-fetch-and-batching-performance
-  for the database, incident-evidence-capture when a restart is imminent, and the rest of
-  the family for each specific cause. Does not itself cover the investigation process,
-  profiling commands, GC, JIT, concurrency, the database, load testing, pools or caches —
-  each of those is its own skill.
+  Evidence-first triage and routing for ambiguous Java/JVM performance symptoms: defining the
+  affected population and work, separating latency/throughput/resource/error dimensions,
+  checking measurement and recent-change validity, preserving live-incident evidence, mapping
+  competing hypotheses to discriminating signals, and handing each confirmed mechanism to its
+  owning skill. Use for “it is slow,” regressions, saturation, memory/RSS growth, startup,
+  uneven instances, or post-JDK/deploy changes when the cause is unknown. This is a router, not
+  a substitute for performance-methodology or specialist JVM/OS/database/distributed skills.
 
 license: Apache-2.0
 
@@ -124,49 +121,69 @@ dependencies:
     version: ^1.0.0
   - name: virtual-threads-internals
     version: ^1.0.0
+  - name: allocation-profiling
+    version: ^2.0.0
+  - name: blocking-and-nonblocking-io
+    version: ^1.0.0
+  - name: capacity-planning
+    version: ^1.0.0
+  - name: code-cache-segments
+    version: ^2.0.0
+  - name: concurrency-limiting-and-bulkheads
+    version: ^1.0.0
+  - name: continuous-profiling
+    version: ^1.0.0
+  - name: false-sharing-and-contended
+    version: ^1.0.0
+  - name: graalvm-native-image
+    version: ^2.0.0
+  - name: heap-dump-analysis
+    version: ^1.0.0
+  - name: io-uring-and-zero-copy
+    version: ^1.0.0
+  - name: java-reference-types-and-leaks
+    version: ^1.0.0
+  - name: jfr-advanced
+    version: ^1.0.0
+  - name: jmh-advanced
+    version: ^1.0.0
+  - name: jni-and-ffm
+    version: ^1.0.0
+  - name: load-testing-advanced
+    version: ^1.0.0
+  - name: metaspace-internals
+    version: ^1.0.0
+  - name: pause-attribution
+    version: ^1.0.0
+  - name: queueing-models
+    version: ^1.0.0
+  - name: scoped-values
+    version: ^1.0.0
 
 suggests:
-  - allocation-profiling
   - async-profiler-advanced
-  - blocking-and-nonblocking-io
   - c2-sea-of-nodes
   - cancellation-and-interruption
-  - capacity-planning
-  - code-cache-segments
   - compilation-and-inlining-logs
   - completablefuture-composition
-  - concurrency-limiting-and-bulkheads
   - concurrency-testing
-  - continuous-profiling
   - epsilon-and-shenandoah-internals
   - escape-analysis-internals
   - executors-and-task-lifecycle
-  - false-sharing-and-contended
   - forkjoinpool-and-work-stealing
   - g1-concurrent-marking
   - g1-internals
   - g1-tuning-for-slo
   - graalvm-jit
-  - graalvm-native-image
-  - heap-dump-analysis
   - hot-partitions-and-rebalancing
-  - io-uring-and-zero-copy
-  - jfr-advanced
   - jhsdb-and-core-dumps
-  - jmh-advanced
-  - jni-and-ffm
   - jvm-bytecode
   - load-balancing-and-routing
-  - load-testing-advanced
   - lock-free-patterns
   - lock-inflation
-  - metaspace-internals
-  - pause-attribution
-  - queueing-models
   - reactive-and-virtual-thread-selection
   - reactive-backpressure
   - reading-jit-assembly
-  - scoped-values
   - simd-and-vector-api
   - structured-concurrency
   - tcp-tuning
@@ -175,6 +192,9 @@ suggests:
   - varhandles-and-memory-ordering
   - zgc-and-shenandoah
   - zgc-generational-internals
+  - distributed-systems
+  - structured-logging
+  - metrics-and-cardinality
 
 capabilities:
   - reads-source

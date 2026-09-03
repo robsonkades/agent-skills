@@ -3,20 +3,19 @@
 ## The allocation structure the tools report on
 
 ```
-Metaspace
-└── VirtualSpaceList — regions reserved from the OS (mmap)
-    └── VirtualSpace — e.g. 64 MB
-        └── Chunks (1 KB … 4 MB) — the allocation unit of a VirtualSpace
-            └── Metachunks — handed to one ClassLoaderData
-                └── the metadata of every class loaded by that loader
+MetaspaceContext (non-class; plus class context when compressed class pointers are active)
+└── VirtualSpaceList / VirtualSpaceNodes — reserve address ranges from the OS
+    └── root chunks — split/coalesced by the buddy-style ChunkManager
+        └── Metachunks — committed in granules and assigned to MetaspaceArena
+            └── metadata allocations for a ClassLoaderData
 
-ClassLoaderData (one per live ClassLoader)
-├── the list of Metachunks it owns
-└── a pointer to the next free position in the current chunk
+ClassLoaderData
+└── one or more MetaspaceArena instances owning chunk lists and allocation cursors
 ```
 
-Chunks are owned by a loader, so they are freed as a group when that loader is collected —
-never per class. That is why the only lever on committed metaspace is loader lifetime.
+Arena allocations are reclaimed in bulk when the owning CLD dies rather than class by class.
+Loader lifetime is therefore central, but committed memory also responds to allocation rate
+and shape, reusable free chunks, uncommit policy, class unloading opportunities and CDS.
 
 ## `jcmd <pid> VM.metaspace`
 
@@ -29,11 +28,13 @@ question is specifically about chunk fragmentation. It reports, separately for `
 - `Virtual space` — what was actually reserved from the OS
 - `Chunk freelists` — free chunks available for reuse without a new OS allocation
 
-Growing `Chunk freelists` with flat `used` means loaders are being collected and space is
-being recycled. Growing `committed` with flat freelists means loaders are not dying.
+Growing `Chunk freelists` with flat `used` is consistent with reclaimed/reusable chunks, but
+chunk splitting/coalescing and subsequent allocation also move these counters. Growing
+`committed` with flat freelists does not by itself prove loaders are retained; correlate CLD
+births/deaths, loaded/unloaded classes and per-loader rows.
 
-Options on 25 (`jcmd <pid> help VM.metaspace`): `basic` prints the summary **without a
-safepoint** — the one to poll on a loaded production JVM; `show-loaders` lists every CLD
+Options on 25 (`jcmd <pid> help VM.metaspace`): `basic` prints the summary without requesting
+a global safepoint on this build, but still check command impact on the target; `show-loaders` lists every CLD
 with its chunks, and each non-strong hidden class appears there as its own
 `<hidden class>` CLD; `show-classes` adds the class names under each loader;
 `by-chunktype`, `by-spacetype`, `vslist` and `chunkfreelist` break the numbers down. The
@@ -46,7 +47,7 @@ loaders are, or are not, dying.
 Requires `-XX:NativeMemoryTracking=summary` at start. The output is **nested**, not a flat
 list of categories — the `Class` category contains both metaspace halves:
 
-```
+```text
 -                     Class (reserved=1048774KB, committed=1478KB)
                             (classes #2890)
                             (  instance classes #2583, array classes #307)
@@ -63,12 +64,12 @@ list of categories — the `Class` category contains both metaspace halves:
 -        Shared class space (reserved=16384KB, committed=14144KB, readonly=0KB)
 ```
 
-- `Metadata:` is the non-class metaspace. `Class space:` is the compressed class space, whose
-  `reserved` is the 1 GB ceiling regardless of heap size.
+- `Metadata:` is the non-class metaspace. `Class space:` is compressed class metadata; the
+  shown 1 GB reservation is the verified default for this run, not a universal fixed value.
 - `waste` inside `Class space:` is internal chunk fragmentation — committed but not usable
   for the next allocation. A rising percentage in an application that mints many small
-  classes (proxies, lambdas, hidden classes) is the early warning that the **class space**,
-  not the metaspace total, is the ceiling that will be hit first.
+  classes (proxies, lambdas, hidden classes) warrants investigation. Waste alone does not
+  predict whether class space or the overall metadata allocation will fail first.
 - `Shared class space` is the CDS/AppCDS contribution, mapped from the archive rather than
   materialised into metaspace.
 
@@ -105,14 +106,14 @@ jcmd <pid> JFR.start settings=profile duration=300s filename=metaspace.jfr
 jfr print --events jdk.MetaspaceSummary,jdk.ClassLoadingStatistics metaspace.jfr
 ```
 
-| Event                               | Kind     | Use                                                         |
-| ----------------------------------- | -------- | ----------------------------------------------------------- |
-| `jdk.MetaspaceSummary`              | periodic | The cheapest time series for "metaspace only grows"         |
-| `jdk.ClassLoadingStatistics`        | periodic | `loadedClassCount` vs `unloadedClassCount` over time        |
-| `jdk.ClassLoaderStatistics`         | periodic | Per-loader statistics, cross-checks the leak shape          |
-| `jdk.MetaspaceAllocationFailure`    | one-off  | Carries `stackTrace` — points at the code loading the class |
-| `jdk.MetaspaceOOM`                  | one-off  | Fires on the `OutOfMemoryError: Metaspace` itself           |
-| `jdk.ClassLoad` / `jdk.ClassUnload` | one-off  | Individual loads; high volume, use a filter                 |
+| Event                               | Kind                   | Use                                                         |
+| ----------------------------------- | ---------------------- | ----------------------------------------------------------- |
+| `jdk.MetaspaceSummary`              | GC-boundary            | Before/after-GC metaspace state; correlate with GC timing   |
+| `jdk.ClassLoadingStatistics`        | periodic               | `loadedClassCount` vs `unloadedClassCount` over time        |
+| `jdk.ClassLoaderStatistics`         | chunk/end-of-recording | Per-loader snapshot, cross-checks the leak shape            |
+| `jdk.MetaspaceAllocationFailure`    | one-off                | Carries `stackTrace` — points at the code loading the class |
+| `jdk.MetaspaceOOM`                  | one-off                | Fires on the `OutOfMemoryError: Metaspace` itself           |
+| `jdk.ClassLoad` / `jdk.ClassUnload` | one-off                | Individual loads; high volume, use a filter                 |
 
 Never cite a JFR event name from memory — check it with `jfr metadata` first. Plausible names
 that do not exist are a recurring source of wrong instrumentation.

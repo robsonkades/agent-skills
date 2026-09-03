@@ -1,19 +1,14 @@
 schemaVersion: 1
 
 name: lock-inflation
-version: 1.1.0
+version: 1.2.0
 description: >-
-  The lifecycle of a Java monitor under contention: the fast-locked and inflated mark word
-  states on the current baseline, the LockStack and the ANONYMOUS_OWNER inflation protocol,
-  adaptive spinning, the ObjectMonitor entry queues, measuring contention as a fraction of
-  wall time, and reducing or partitioning a hot critical section. Use when threads sit in
-  BLOCKED on a synchronized block, when jdk.JavaMonitorEnter dominates a recording, when
-  throughput stops scaling as threads are added, when -XX:LockingMode or
-  -XX:+UseBiasedLocking appears on a JVM command line, or when someone proposes swapping
-  synchronized for ReentrantLock to avoid virtual-thread pinning. Does not cover
-  happens-before and safe publication (java-memory-model), collecting the profile itself
-  (jfr-and-async-profiler), cache-line contention with no lock involved
-  (false-sharing-and-contended), or lock-free algorithm design (lock-free-patterns).
+  Diagnosing and engineering Java intrinsic-monitor contention across fast and inflated monitor
+  states without freezing one HotSpot release's internals. Covers ownership, recursion, wait sets,
+  entry queues, inflation/deflation, virtual-thread behavior, JFR/thread-dump evidence,
+  threshold/censoring, convoys, fairness, lock graphs, critical-section redesign, partitioning and
+  validation. Use when `synchronized` wait/hold time is suspected; JMM correctness, explicit locks,
+  false sharing and lock-free algorithms have separate owners.
 
 license: Apache-2.0
 
@@ -44,6 +39,13 @@ files:
 dependencies:
   - name: java-memory-model
     version: ^1.0.0
+
+suggests:
+  - java-thread-safety-contracts
+  - concurrency-diagnostics
+  - lock-free-patterns
+  - false-sharing-and-contended
+  - jvm-performance-review
 
 capabilities:
   - reads-source

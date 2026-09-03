@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-null-safety
-version: 1.1.0
+version: 1.2.0
 description: >-
   Null as a semantic problem, not a syntax problem: what each null means (absence, error,
   uninitialised), nullability as an API contract, JSpecify @NullMarked and @Nullable, where

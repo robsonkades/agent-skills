@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-pattern-antipatterns
-version: 1.1.0
+version: 1.2.0
 description: >-
   Detecting and removing design-pattern misuse: abstractions that trace to no requirement,
   patterns chosen because a name sounded right, and the specific failure each overused pattern

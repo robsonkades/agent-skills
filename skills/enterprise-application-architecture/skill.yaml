@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: enterprise-application-architecture
-version: 1.2.0
+version: 1.2.1
 description: >-
   The entry point for reasoning about an enterprise application's architecture: what makes
   these systems distinctive (data that outlives the code, concurrent users, integration,

@@ -10,7 +10,8 @@ description: >
   fails and there is no answer. Does not catalogue distributed failure modes in general
   (distributed-failure-catalogue, failure-models), does not decide whether a deliberate shortcut
   is acceptable (technical-debt-decisions), and does not design the resilience mechanism
-  (resilience-patterns).
+  (timeouts-and-deadlines, retries-and-backoff, circuit-breakers,
+  concurrency-limiting-and-bulkheads).
 ---
 
 # Feature Risk Analysis
@@ -95,8 +96,10 @@ THEN it is a constraint on the design, and it belongs back in the solution phase
 
 ## Constraints
 
-- **No risk without an owner of the decision to accept it.** The agent may accept LOW; anything
-  higher is the user's.
+- **No risk without an owner authorised to accept it.** Impact rating alone does not establish
+  authority. An agent may accept only risks that are local, reversible, within explicit policy and
+  the user's delegated scope. Product, operational, security, privacy, legal, financial, data-loss,
+  or cross-team risks go to the accountable human owner even when probability is LOW.
 - **Do not restate the general failure modes of a technology.** The register is about this
   feature's use of it, in this system.
 - **Do not use the register to relitigate the design.** If the risk kills the option, that is a

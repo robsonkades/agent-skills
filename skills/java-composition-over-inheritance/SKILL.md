@@ -15,8 +15,8 @@ description: >
 
 ## Purpose
 
-Pick the cheapest relationship that does the job. Implementation inheritance is the
-strongest coupling Java offers: a subclass depends not only on the base class's contract
+Pick the cheapest relationship that does the job. Implementation inheritance is one of the
+strongest source-level couplings Java offers: a subclass depends not only on the base contract
 but on its self-use — which methods call which, in what order, touching what state — none
 of which the compiler checks and most of which is undocumented. This skill exists to
 prevent two failures: reuse-by-extends that turns every base-class edit into a minefield,
@@ -28,12 +28,14 @@ delegating wrappers.
 1. **Name what is being inherited.** A contract (the subtype _is_ usable wherever the base
    is), implementation (code reuse only), or both. Reuse without substitutability is the
    case to eliminate: hold the other object in a field and forward.
-2. **If the variants form a closed set you own**, model them as a sealed interface with
-   record implementations and dispatch with exhaustive `switch` — no `default`, so the
-   compiler finds every dispatch site when a variant is added.
-3. **If behaviour varies along more than one axis**, never encode axes as subclass layers
-   (the N×M explosion). One axis may stay a hierarchy or sealed set; the others become
-   composed strategy fields.
+2. **If the variants form a closed set you own**, consider a sealed interface. Put stable
+   variant-owned behavior on the implementations; use an exhaustive `switch` when operations
+   evolve more often than variants. Recompilation finds missing cases, while already compiled
+   clients can instead encounter `MatchException` after incompatible hierarchy evolution.
+3. **If behaviour varies along more than one independent axis**, calculate the subtype product.
+   When N×M classes or override-order knowledge appears, keep at most one axis as a hierarchy
+   and compose the others as policies. Correlated axes with a tiny closed product may still be
+   clearer as named subtypes.
 4. **If genuine substitutability remains**, inheritance is right — see the rule below for
    the three legitimate shapes. Design and document for it: specify self-use, keep
    overridable surface minimal.
@@ -44,19 +46,23 @@ delegating wrappers.
 
 ## Rules
 
-- A class not designed for extension is `final` or `sealed`. "Design and document for
-  inheritance or else prohibit it" (Effective Java) is the default posture, not an option.
+- An externally subclassable class not designed for extension should be `final`, `sealed`, or
+  hidden behind a non-exported/package-private boundary. Framework proxies and bytecode tools
+  can require non-final classes; treat that as an explicit runtime contract with tests.
 - Never call an overridable method from a constructor: it runs against a subclass whose
   fields are not yet initialised. Self-use of overridable methods elsewhere must be
   documented, because subclasses will depend on it either way.
-- A subclass that overrides a method to do nothing, or to throw, is inheriting a contract
-  it does not honour — restructure; do not ship the override.
+- A subclass that overrides a promised operation to do nothing or throw is evidence the base
+  contract is too broad. Restructure code you own; for a platform contract that explicitly
+  permits optional operations, document and test the chosen partial behavior instead of
+  pretending the exception cannot occur.
 - Records compose but never extend: a record is implicitly final and cannot extend a
   class. A family of record variants is expressed as a sealed interface they implement.
-- Inheritance is genuinely right in three shapes: a subtype substitutable under a stable,
-  documented base contract; a framework template contract explicitly designed for
-  extension (servlet, test base, adapter skeletons); and a sealed abstract base carrying
-  real shared state and behaviour for a closed set of subclasses.
+- Inheritance is justified when substitutability holds under a stable documented contract and
+  shared implementation/state is worth its evolution coupling. Common sound shapes include a
+  framework template explicitly designed for extension and a shallow sealed abstract base for a
+  closed same-module family; exception classification and compatibility adapters can also be
+  contract hierarchies without sharing algorithms.
 - Composition has costs — forwarding boilerplate, lost identity (`wrapper != wrapped`, so
   `equals` and listener registration break across the boundary), no self-type for chained
   returns. Count them before dismantling a working hierarchy; do not present delegation

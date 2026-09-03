@@ -1,149 +1,248 @@
-# Commands and container permissions
+# Capture protocols
 
-## JFR
+Commands are examples, not a compatibility promise. Discover the target JDK and profiler
+interfaces at runtime, pin the exact artifact used, and preserve the command plus output in the
+incident manifest. Values such as duration and interval below are illustrative; derive them from
+the decision, expected event opportunity, overhead budget, and incident lifetime.
+
+## Preflight
+
+Record before attaching:
+
+```text
+target process identity, start time, command line, UID and namespaces:
+JDK vendor/version/build and container image digest:
+host, cgroup/pod/container identity and resource limits:
+workload phase, affected interval, traffic and completed-work denominator:
+existing JFR/profiler/agent/instrumentation and destination filesystem:
+free space, retention, privacy approval and abort owner:
+```
+
+Do not select a PID from an unqualified `ps` listing and assume it is the same process inside a
+container namespace. Prefer the service's process metadata, then verify start time and command.
+Attaching as another UID, crossing PID namespaces, or writing into an ephemeral filesystem can
+fail even when the command syntax is correct.
+
+## Discover JFR support
+
+Use binaries from the same target JDK where possible:
 
 ```bash
-# Continuous rolling buffer — the configuration every production JVM should have.
-# On JDK 25 the documented form uses ':' after the flag name; '=' is still accepted.
-java -XX:StartFlightRecording:name=continuous,maxsize=512m,maxage=4h,settings=default,disk=true \
-     -jar app.jar
-
-# Fixed-duration recording from startup (lab work, startup investigations):
-java -XX:StartFlightRecording:duration=60s,filename=app.jfr,settings=profile -jar app.jar
-
-# Attach to a running process:
-jcmd <pid> JFR.start name=diag settings=profile duration=5m filename=diag.jfr
-
-# Snapshot the buffer without stopping the recording — this is the incident command:
-jcmd <pid> JFR.dump name=continuous filename=/tmp/incident-$(date +%Y%m%d-%H%M%S).jfr
-
-jcmd <pid> JFR.check           # active recordings
-jcmd <pid> JFR.stop name=diag  # stop a named recording
+jcmd <pid> help JFR.start
+jcmd <pid> help JFR.check
+jcmd <pid> help JFR.dump
+jcmd <pid> JFR.check
+jfr help
 ```
 
-`default.jfc`: 20 ms sampler, 20 ms blocking thresholds, 150 allocation samples/s, "typically
-less than 1 % overhead" by its own description. `profile.jfc`: 10 ms sampler, 10 ms
-thresholds, 300/s, "typically around 2 %". Both leave `jdk.CPUTimeSample` **off**; enable it
-with `jdk.CPUTimeSample#enabled=true` on the command line (Linux only).
+`jcmd` itself warns that commands can have different impact. Read the target build's help rather
+than copying flags from another JDK. `JFR.check` reports recordings known to that JVM; absence is
+not proof that no historical artifact or external profiler exists.
 
-The retained window lives in the repository as chunk files (default `maxchunksize` 12 MB),
-pruned by `maxage`/`maxsize`; `JFR.dump` assembles them into the `.jfr`. Put it on a
-volume — `-XX:FlightRecorderOptions:repository=/mnt/diagnostics` — because the directory is
-removed when the JVM exits. For a batch job that should print its own summary,
-`report-on-exit=hot-methods` (repeatable) writes a view to stdout at shutdown.
+### Bounded attach recording
 
-## JFR analysis without a GUI
-
-Servers and containers rarely have a GUI, which is exactly where incidents happen.
+After deriving the settings and destination:
 
 ```bash
-jfr summary recording.jfr          # event counts — always the first command
-jfr metadata recording.jfr         # fields available per event
-
-jfr view hot-methods recording.jfr          # top methods by ExecutionSample + NativeMethodSample
-jfr view cpu-time-hot-methods recording.jfr # the same from jdk.CPUTimeSample, if it was on
-jfr view contention-by-site recording.jfr   # contention by call site
-jfr view latencies-by-type recording.jfr    # every duration event, ranked — the first look
-jfr view gc-pauses recording.jfr            # pauses; gc-pause-phases for the breakdown
-jfr view socket-reads-by-host recording.jfr # network reads by host; socket-writes-by-host
-jfr view pinned-threads recording.jfr       # jdk.VirtualThreadPinned, threshold permitting
-jfr view container-cpu-throttling recording.jfr
-jfr help view                               # the full list; `jfr view all-views <file>` runs them all
-
-# the same views against a running JVM with a recording on — no dump, no file (JDK 21+)
-jcmd <pid> JFR.view hot-methods             # last 10 minutes by default (maxage=10m, maxsize=32MB)
-jcmd <pid> JFR.view maxage=1h latencies-by-type
-
-jfr print --events jdk.JavaMonitorEnter --stack-depth 32 recording.jfr
-jfr print --events jdk.ThreadPark --json recording.jfr | jq '.recording.events[0]'
+jcmd <pid> JFR.start name=incident settings=default duration=120s \
+  filename=/durable/path/incident.jfr
+jcmd <pid> JFR.check name=incident verbose=true
 ```
 
-In JMC, read **Automated Analysis** first — it already points at anomalies — then the tab
-it pointed to. Going straight to Method Profiling is the usual way to spend half an hour on
-the wrong graph.
+`default` is not automatically adequate or safe for every question. Inspect the effective
+events, thresholds, periods, stack traces, disk mode, and path. A custom `.jfc` should be reviewed
+and versioned; see `jfr-advanced`.
 
-## Custom JFR events
-
-```java
-@Label("Order Processing")
-@Category({"Business", "Orders"})
-@Threshold("10 ms")   // without this, commit() records EVERY time the event is enabled
-@StackTrace(false)    // the stack trace is the most expensive field
-public class OrderEvent extends Event {
-    @Label("Order ID")   int orderId;
-    @Label("Stage")      String stage;
-}
-```
-
-`@Threshold` is what makes a business event viable on a hot path: you pay for constructing
-the event, not for recording it. JDK 25 adds `@Throttle` (rate limiting for very
-high-frequency events) and `@Contextual` (fields that contextualise other events on the
-same thread).
-
-Guard field population with `event.isEnabled()` so a disabled event costs nothing.
-
-## async-profiler
+For an already-running recording, dump without assuming that dumping must stop it:
 
 ```bash
-VER=4.5
-curl -L "https://github.com/async-profiler/async-profiler/releases/download/v${VER}/async-profiler-${VER}-linux-x64.tar.gz" | tar xz
-cd "async-profiler-${VER}-linux-x64"   # asprof, jfrconv, lib/libasyncProfiler.so
+jcmd <pid> JFR.dump name=<recording-name> filename=/durable/path/snapshot.jfr
 ```
+
+Discover whether the target supports the intended time filters and options. A dump can contain a
+different interval than the incident unless start/end times are checked.
+
+### Startup recording
+
+When startup is the phenomenon, configure the exact target JVM rather than attaching after the
+phase. One possible shape is:
 
 ```bash
-asprof -d 30 -f cpu.html <pid>                        # CPU, interactive HTML flame graph
-asprof -e alloc --alloc 512k -d 60 -f alloc.html <pid> # allocation
-asprof -e wall -t -d 60 -f wall.html <pid>             # wall clock, per thread
-asprof -e lock --lock 1ms -d 60 -f lock.html <pid>     # lock contention
-
-# CPU and wall clock in ONE session (Linux, 3.0+), separated at conversion time
-asprof -e cpu --wall 100ms -d 60 -o jfr -f prof.jfr <pid>
-jfrconv -o flamegraph -s runnable prof.jfr oncpu.html
-jfrconv -o flamegraph -s sleeping prof.jfr offcpu.html
-jfrconv -o flamegraph --lock     prof.jfr lock.html
-jfrconv -o flamegraph --cpu-time jfr-recording.jfr cpu.html   # from JFR jdk.CPUTimeSample (JEP 509)
-
-asprof -d 60 <pid> | head -30                          # flat text profile to stdout
-asprof -d 60 -o collapsed -f stacks.collapsed <pid>     # for differential tooling
-
-# As a startup agent — captures from the first instruction, no attach needed
-java -agentpath:/opt/async-profiler/lib/libasyncProfiler.so=start,event=cpu,file=cpu.html \
-     -jar app.jar
+java -XX:StartFlightRecording=name=startup,settings=/config/startup.jfc,\
+duration=120s,filename=/durable/path/startup.jfr -jar app.jar
 ```
 
-Reading the flat text output: `samples` decides whether the line can be trusted, `percent`
-decides whether it is worth optimising.
+Quoting and option separators depend on the launcher, shell, manifest, and orchestration layer.
+Exercise the deployed command in a representative environment. Confirm that readiness failure,
+SIGTERM, restart, and disk exhaustion still leave a recoverable artifact.
 
-## Container permissions, in order of preference
+## Validate JFR artifacts
+
+Copy only after the writer has closed or a supported dump has completed. Preserve source path,
+size, timestamp, capture interval, and checksum. On a trusted analysis host with a compatible JDK:
 
 ```bash
-# On a Linux host, for the 'perf' engine:
-sudo sysctl -w kernel.perf_event_paranoid=1
-sudo sysctl -w kernel.kptr_restrict=0
-
-# In a container — the primary blocker is the seccomp profile barring perf_event_open:
-# 1) allow the syscall
-docker run --security-opt seccomp=unconfined --cap-add SYS_ADMIN ...
-
-# 2) fdtransfer: a privileged helper opens the descriptors and hands them over
-asprof --fdtransfer -e cpu -d 60 -f cpu.html <pid>
-
-# 3) no privilege at all: the ctimer engine (no kernel stacks)
-asprof -e ctimer -d 60 -f cpu.html <pid>
+jfr summary incident.jfr
+jfr metadata incident.jfr
+jfr print --events jdk.CPULoad,jdk.GarbageCollection incident.jfr
 ```
 
-`--privileged` is not the documented recommendation and is usually unacceptable in
-production. `-e ctimer` solves most container cases with no privilege; the only loss is
-kernel stacks.
+Validation questions:
 
-## Production readiness checklist
+- Does the file parse and cover the intended process and wall-clock interval?
+- Are the expected event types present in metadata and nonzero when a positive control ran?
+- Do settings, thresholds, periods, stacks, and event counts match the question?
+- Are start time, duration, time zone/clock context, JDK build, and workload markers preserved?
+- Was the artifact truncated, overwritten, left in an ephemeral layer, or collected after the
+  symptom disappeared?
 
-- [ ] Continuous JFR configured, `maxage` longer than overnight human response time
-- [ ] `disk=true` with `-XX:FlightRecorderOptions:repository=` on a volume that has guaranteed
-      space, so `JFR.dump` and a post-mortem `jfr assemble` have something to read
-- [ ] `jcmd` available inside the container or host where the JVM runs
-- [ ] `JFR.dump` runbook written **and tested outside an incident**
-- [ ] Analysis tooling available to whoever is on call (JMC, or `jfr view` in a terminal)
-- [ ] async-profiler installed and tested with the environment's real permissions
-- [ ] If the application uses virtual threads, the runbook uses `Thread.dump_to_file`
-      rather than `jstack`
+`jfr summary` proves what is in the file, not what the workload should have emitted. Empty events
+require the opportunity and positive-control analysis in `choosing-a-profile.md`.
+
+## Acquire and discover async-profiler
+
+Use an approved release or internally built artifact pinned by version and digest. Verify its
+signature/checksum through the organization's supply-chain process. Do not pipe a network download
+directly into a shell during an incident.
+
+From the unpacked, verified distribution:
+
+```bash
+./asprof --version
+./asprof list <pid>
+./asprof --help
+```
+
+The available events and options depend on async-profiler version, JDK, architecture, kernel,
+perf policy, container security, UID/namespace, and symbol access. `list` is evidence for that
+target, not a guarantee that collection will succeed or produce trustworthy stacks.
+
+## Bounded async-profiler examples
+
+These examples deliberately specify duration and output. Confirm all flags against the pinned
+version and write first to a durable, capacity-checked location.
+
+CPU question:
+
+```bash
+./asprof -e cpu -d 60 -f /durable/path/cpu.jfr <pid>
+```
+
+Elapsed/off-CPU residency question:
+
+```bash
+./asprof -e wall -d 60 -f /durable/path/wall.jfr <pid>
+```
+
+Allocation-source question:
+
+```bash
+./asprof -e alloc -d 60 -f /durable/path/alloc.jfr <pid>
+```
+
+Monitor-contention question:
+
+```bash
+./asprof -e lock -d 60 -f /durable/path/lock.jfr <pid>
+```
+
+The last two do not prove retention or all waiting, respectively. Record the effective interval,
+event engine, filters, stack mode, sample/weight semantics, lost/unknown frames, and tool output.
+HTML is convenient for viewing; JFR or another machine-readable supported output is usually better
+for repeatable comparison and artifact validation.
+
+## Access failures are layered
+
+Treat an attach or collection failure as a diagnostic tree:
+
+1. Verify process identity, liveness, UID, attach policy, namespace and filesystem visibility.
+2. Verify target JDK/tool/architecture compatibility and that another attach operation is not
+   blocking progress.
+3. Verify that the requested event engine exists on this host.
+4. For perf-backed modes, inspect the actual kernel perf policy, cgroup/container restrictions,
+   seccomp/LSM policy and PMU availability.
+5. Verify native symbols, JIT frame information, unwind/stack mode and unknown/truncated rates.
+6. Run a bounded positive control and validate output before lengthening collection.
+
+Do not respond by granting a container every capability or changing a host-wide sysctl by default.
+Prefer a supported lower-privilege engine if it answers the question. If elevated access is truly
+required, use an approved short-lived diagnostic path with explicit scope, audit, rollback and
+blast-radius review. An ephemeral debug container still needs correct PID namespace, UID/access,
+binary compatibility, output persistence and cleanup.
+
+## Coordinating two tools
+
+If cross-tool timestamp alignment is necessary:
+
+- establish process/host clocks and capture interval explicitly;
+- calibrate combined overhead on the same workload and configuration;
+- avoid duplicating high-rate events unless the comparison requires it;
+- stagger start/stop if startup effects could contaminate both;
+- retain each tool's stderr/status and effective settings;
+- compare equivalent populations and weights, not just similarly named frames.
+
+Prefer sequential captures when simultaneous correlation is unnecessary and the incident is
+repeatable. Prefer simultaneous bounded capture when the state is transient and missing alignment
+would destroy the inference. State that trade-off in the capture proposal.
+
+## Artifact manifest
+
+Store next to each artifact:
+
+```yaml
+question: ''
+target:
+  process_start: ''
+  pid_namespace: ''
+  image_digest: ''
+  jdk_build: ''
+tool:
+  name: ''
+  version_or_build: ''
+  artifact_digest: ''
+  exact_command: ''
+capture:
+  start_utc: ''
+  end_utc: ''
+  effective_settings: ''
+  workload_phase: ''
+  completed_work: ''
+  positive_control: ''
+  abort_condition: ''
+artifact:
+  path: ''
+  bytes: ''
+  sha256: ''
+  parser_validation: ''
+  loss_or_unknown_fraction: ''
+```
+
+Redact credentials and sensitive business/tenant data according to policy, but do not remove the
+metadata required to establish provenance and adequacy.
+
+## Failure tests before production use
+
+Exercise the capture path against:
+
+- wrong/stale PID and process restart;
+- target exits or is killed during recording;
+- insufficient permission or unavailable event engine;
+- read-only, full, ephemeral or slow destination storage;
+- no eligible events and a known positive control;
+- excessive unknown/truncated stacks or event loss;
+- profiler already active or overlapping recording names;
+- SIGTERM, pod eviction and node replacement;
+- parser/tool version mismatch and corrupt/partial transfer;
+- privacy review, retention expiry and unauthorized artifact access.
+
+Production readiness means the operator can recognize these states, abort safely, preserve the
+result, and state the evidence limitations. A command that exits zero is not enough.
+
+## Authoritative references
+
+- [JDK `jcmd` command documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+- [JDK Flight Recorder runtime guide](https://docs.oracle.com/en/java/javase/25/jfapi/flight-recorder-runtime-guide/index.html)
+- [JDK `jfr` command documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)
+- [JDK Flight Recorder API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/module-summary.html)
+- [async-profiler README and command documentation](https://github.com/async-profiler/async-profiler)
+- [Linux perf security documentation](https://docs.kernel.org/admin-guide/perf-security.html)

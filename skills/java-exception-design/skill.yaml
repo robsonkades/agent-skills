@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: java-exception-design
-version: 1.2.0
+version: 1.3.0
 description: >-
   Exceptions as API design in Java: checked versus unchecked as a deliberate decision,
-  hierarchy sizing, translation at layer boundaries with cause preservation, retryable
-  versus non-retryable as an explicit property, failure atomicity when a method throws
+  hierarchy sizing, translation at layer boundaries with cause preservation, typed failure
+  facts for retry policy, failure atomicity when a method throws
   partway through, and when a sealed result type beats an exception. Use when designing the
   exception surface of a service or library, when a catch block swallows a failure or
   rewraps one without its cause, when a codebase has dozens of exception types nobody

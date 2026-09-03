@@ -16,17 +16,18 @@
 7. OQL               -> domain-specific ad-hoc queries
 ```
 
-Reading Path to GC Roots: how many distinct roots reach the object? A static field in the
-path names a cache or a singleton. A JVM-internal root — the string pool, a loaded-class
-registry — names something the application does not hold directly.
+Reading Path to GC Roots: how many distinct strong paths reach the object after excluding
+the reference strengths you intentionally chose? A static field can name a cache or
+singleton. JVM/framework roots and MAT pseudo-roots need version-specific interpretation;
+do not convert their display label directly into ownership.
 
 ## Shallow versus retained, concretely
 
-| Structure                                                      | Shallow heap | Retained heap                                                                                |
-| -------------------------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------- |
-| Empty `ArrayList`                                              | ~24 B        | ~24 B — the initial array is the shared `EMPTY_ELEMENTDATA`                                  |
-| `ArrayList` of 1,000 unique ~20-char `String`s                 | ~24 B        | ~24 B + ~4 KB of references + Σ shallow of the strings and their backing arrays — tens of KB |
-| Static `HashMap`, 5,000,000 entries each with a 500 B `byte[]` | ~48 B        | gigabytes — it dominates the whole subtree of nodes, keys and payloads                       |
+| Structure                                                      | Shallow heap                   | Retained heap                                                                                 |
+| -------------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------- |
+| Empty `ArrayList`                                              | small object; layout-dependent | list object plus any non-shared backing state; inspect the target dump                        |
+| `ArrayList` of 1,000 unique ~20-char `String`s                 | list object only               | list + reference array + strings/backing arrays, subject to sharing and compact-string layout |
+| Static `HashMap`, 5,000,000 entries each with a 500 B `byte[]` | map object only                | potentially gigabytes if it uniquely dominates nodes, keys and payloads                       |
 
 This is why a histogram sorted by shallow size puts `char[]` at the top while the static
 `HashMap` that retains all of it sits far below. The raw bytes are in the leaves;
@@ -36,8 +37,10 @@ Dominance is strict: Y dominates X only if **every** path from any GC root to X 
 through Y. A shared configuration object read by two subsystems is dominated by neither
 and rises to the synthetic super-root, however large it is.
 
-Sanity check any dominator report — one you read or one you write: if the children's
-retained sizes sum to more than the parent's, it is wrong by construction.
+Direct dominator-tree children represent disjoint dominated branches in the underlying
+graph, but MAT grouping/report views may aggregate or repeat data differently. Before
+summing displayed rows, confirm whether they are direct children, class groups, retained
+sets or query projections.
 
 ## OQL
 
@@ -76,18 +79,18 @@ when writing OQL from memory.
 
 ## Recurring leak shapes
 
-### Interned keys defeating a `WeakHashMap`
+### A `WeakHashMap` whose key is strongly reachable elsewhere
 
-A `WeakHashMap<String, byte[]>` cache whose keys came from `String.intern()` never
-empties: interned strings are held by the JVM's internal string pool, which acts as a
-permanent GC root for them. Symptom in MAT: the `WeakHashMap` with multi-GB retained
-heap, and tens of millions of `java.lang.String` instances in the histogram.
+Interning a string does **not** by itself make a modern HotSpot `WeakHashMap` key permanent;
+otherwise-unreachable string-table entries can be unlinked. A map that never empties instead has
+another strong path: a value referencing its key, a static/application cache, active frame,
+listener, thread context or implementation-specific root. Symptom: the map dominates substantial
+heap and Paths to GC Roots excluding weak references show that other path.
 
-There is no `String.isInterned()` in any public JDK API. Confirm by selecting a sample of
-keys and running Path to GC Roots: the path of an interned string ends directly at the
-JVM-internal string pool root without passing through the map's weak reference, which is
-what defeats the `WeakReference` semantics. The fix is a real cache with a bound —
-`maximumSize`/`expireAfterWrite` — and no interning of cache keys.
+There is no `String.isInterned()` public API, and calling `s.intern()` to compare identity mutates
+the table. Inspect roots in the target JVM/dump and fix the actual owner. A bounded cache may still
+be appropriate, but `maximumSize`/expiry is a capacity policy—not a substitute for explaining
+reachability.
 
 ### A `ThreadLocal` value that is never replaced
 
@@ -107,8 +110,10 @@ System-wide (Histogram grouped by LoggingContext):
 ```
 
 The value object was reused rather than replaced, and its internal list grew forever on a
-pool thread that is never discarded. Fix with `finally { ctx.clear(); }` in the filter, or
-better, a fresh context per request via `set()`, leaving the previous one to the GC.
+pool thread that is never discarded. Fix with a scope that restores/removes state in
+`finally`; a fresh value installed with `set()` but never removed still retains the latest
+request on every carrier/pool thread and breaks nested restoration. Prefer explicit
+parameter passing or `ScopedValue` where its Java-version/lifetime contract fits.
 
 ### Classloader retention across reloads
 

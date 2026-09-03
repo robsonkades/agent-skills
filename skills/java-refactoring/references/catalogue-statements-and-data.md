@@ -123,10 +123,12 @@ stays.
 
 **Precondition, second:** no serialisation or persistence contract carries it. A JPA
 `@Column` on `total`, or a JSON field consumers read, is a contract
-(`compatibility.md`). With field access — the JPA default — deleting the field deletes the
-mapping, loudly only under `ddl-auto=validate`; and any JPQL or `@Query` string filtering or
-ordering on it breaks at runtime. Where the value must persist but should not be maintained
-by hand, the end state is `@Formula` or `@Transient`, not a deleted field.
+(`compatibility.md`). With JPA field access—selected by annotation placement or `@Access(FIELD)`,
+not a universal default—deleting the field deletes the mapping, often detected only when schema
+validation or a runtime path exercises it; JPQL/`@Query` strings can also break at runtime. If the
+value must remain stored, choose an explicit database-generated column, trigger/materialized
+projection or application write policy. `@Transient` does not persist it, while provider-specific
+`@Formula` reads an expression rather than storing the Java field.
 
 Records make the healthy form obvious: components are the state, derived values are methods.
 
@@ -161,12 +163,13 @@ Make the object immutable and equal by state, then copy it instead of sharing on
 non-private setter and mutating method and every call site of each. If any is called on an
 instance another scope also holds, this is a behaviour change, not a step.
 
-In Java 25 the target form is a record with a validating compact constructor, and the full
+A common target form is a record with a validating compact constructor, and the full
 consequence list of that conversion — finality, equality, accessor names, serialisation —
 is `compatibility.md`'s "Class ↔ record". Two things it does not carry: code using `==` or
 `IdentityHashMap` keeps compiling and silently changes result, so search for both; and an
-`@Entity` cannot be a record at all (non-final class, no-arg constructor, non-final fields
-for proxies), though an `@Embeddable` can from Hibernate 6.2.
+portable Jakarta Persistence 3.2 `@Entity` cannot be a record (entities must be non-final and
+provide a public or protected no-arg constructor), while an `@Embeddable` may be a record in 3.2.
+Older provider-specific support needs its own compatibility check.
 
 ## Change Value to Reference
 

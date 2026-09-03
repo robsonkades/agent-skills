@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-test-doubles
-version: 1.0.0
+version: 1.0.1
 description: >-
   Choosing and using test doubles in Java: the stub/mock/fake distinction that actually
   changes what a test proves, preferring the real collaborator or a hand-written fake over a

@@ -12,16 +12,16 @@ public record Order(String id, List<OrderLine> lines, Instant placedAt) {
     public Order {
         Objects.requireNonNull(id, "id");
         Objects.requireNonNull(placedAt, "placedAt");
-        lines = List.copyOf(lines);   // copies, rejects null list and null elements
+        lines = List.copyOf(lines);   // unmodifiable shallow snapshot; rejects nulls
     }
 }
 ```
 
-The compact constructor reassigns the parameter, not a field; the canonical constructor
-then assigns the copied value. Because `List.copyOf` is idempotent — an already-unmodifiable
-list is generally returned as-is rather than copied — round-tripping components through
-withers or re-wrapping costs a check, not a copy. Null rejection belongs here too; the
-placement rules are java-null-safety's.
+The compact constructor reassigns the parameter; implicit component assignments happen after its
+body. `List.copyOf` produces an unmodifiable shallow snapshot and may reuse a trusted
+unmodifiable list. It rejects nulls, but it does not copy `OrderLine` elements—those must be
+deeply immutable for `Order` to be. Treat reuse as an allowed implementation optimization, not a
+fixed identity/performance guarantee.
 
 `Collections.unmodifiableList` is not a substitute: it is a **view**. The caller who still
 holds the backing list mutates your "immutable" state through it. Views are for exposing a
@@ -102,8 +102,8 @@ public record Reservation(String id, List<String> seatIds) {
 }
 ```
 
-**Trade-offs.** One copy per construction — near-free when the input was already an
-immutable list, a real O(n) copy otherwise (see the costs reference before worrying).
+**Trade-offs.** Up to one shallow O(n) copy per construction; the implementation may reuse a
+trusted unmodifiable input (see the costs reference before predicting cost).
 Callers that relied on mutating the returned list now get
 `UnsupportedOperationException` — that is the bug surfacing, but it surfaces at runtime,
 so run the tests. `List.copyOf` also rejects null elements the old code tolerated.
@@ -125,3 +125,17 @@ the existing suite green.
 - **An intentionally mutable component with a documented lifecycle** (e.g. a JPA entity's
   collection). That class is not a value object; making it one is a different decision,
   covered in the costs reference.
+
+## Serialization and framework boundaries
+
+Records preserve component shape, not deep immutability. JSON/JPA/message mappers can create new
+mutable element graphs, and deserialization may choose constructors/access paths differently by
+framework/version. Test that the configured binder invokes validation/copying and that round trips
+preserve canonical form. Java serialization of records invokes the canonical constructor, but that
+does not make mutable components safe or stabilize a wire schema.
+
+## Authoritative references
+
+- [JLS §8.10.4: Record Members](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.10.4)
+- [Record serialization](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/serial-arch.html#serialization-of-records)
+- [List.copyOf contract](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>)

@@ -2,8 +2,8 @@
 name: gof-visitor
 description: >
   Visitor in modern Java: adding operations over a stable set of element types without editing
-  them, and why a sealed hierarchy with an exhaustive switch now replaces the classical
-  double-dispatch version for any hierarchy you own. Covers the expression problem — new operations cheap
+  them, and how a sealed hierarchy with an exhaustive switch competes with the classical
+  double-dispatch version. Covers the expression problem—new operations cheap
   versus new element types cheap — the cases where classical Visitor still wins (types you do not
   compile, libraries whose API is accept()), stateful visitors that are unsafe to share, recursion
   depth on deep structures, and unknown element types from a newer producer. Use when several
@@ -23,10 +23,12 @@ Put an operation over a family of types in one place instead of spreading it acr
 it, "render", "validate", "estimate cost" and "translate to SQL" each add a method to every
 element class, and unrelated concerns accumulate in the model.
 
-The classical mechanism — `accept(Visitor)` calling `visitor.visit(this)` — exists to get double
-dispatch in a language that only dispatches on the receiver. Java has had a better mechanism since
-pattern matching for `switch`: a sealed hierarchy plus an exhaustive `switch` gives the same
-separation, the same compile-time completeness check, and none of the boilerplate.
+The classical mechanism—`accept(Visitor)` calling `visitor.visit(this)`—provides double dispatch
+in a language that normally dispatches on one receiver. Since Java 21, pattern matching for
+`switch` over a sealed hierarchy provides another mechanism: it centralizes an operation and
+offers exhaustiveness without `accept`. It is not categorically better—Visitor can preserve
+encapsulated dispatch, work with an established API, carry traversal state/protocol, and avoid
+exposing every operation to pattern-matching sites.
 
 ## The expression problem, stated once
 
@@ -54,11 +56,12 @@ the same property only if the visitor interface has no default `visit` method.
 
 ```text
 The element types are stable and you own them; the operations grow
-        → sealed interface + exhaustive switch. Not classical Visitor.
+        → compare sealed exhaustive folds with classical Visitor based on
+          encapsulation, API compatibility and operation distribution.
 
-The element types are contributed by code you do not compile, and
-their API is accept(Visitor)
-        → classical Visitor. This is the case it still owns:
+The model/API already exposes accept(Visitor), or operations need
+double dispatch without a closed pattern-switch boundary
+        → classical Visitor remains a strong fit:
           FileVisitor, javax.lang.model's ElementVisitor, ASM,
           ANTLR-generated trees, JDT.
 
@@ -70,8 +73,8 @@ short-circuit
 
 ## When it is not
 
-- **One operation over the structure.** A method on the elements, or one `switch`. The visitor
-  interface is machinery for a plurality that does not exist.
+- **One intrinsic operation over the structure.** A method on elements may be clearer. One
+  external operation can still justify Visitor when an established traversal/API requires it.
 - **The element set is growing.** Every new type breaks every visitor; if types arrive weekly, the
   design is fighting the change it gets.
 - **The operation belongs to the element.** `area()` on a shape is not a visitor's business;
@@ -111,10 +114,10 @@ internals (`java-composition-over-inheritance`).
 ## Decision rules
 
 ```text
-IF the hierarchy is sealed and you own it
-THEN use an exhaustive switch. Classical Visitor adds an interface, an
-     accept method per element, and a visit method per pair, for the
-     same guarantee.
+IF the hierarchy is sealed and controlled with its consumers
+THEN compare exhaustive switch/fold with Visitor. The switch reduces boilerplate;
+     Visitor may better preserve model encapsulation, API stability, traversal state
+     or dependency direction.
 
 IF the Visitor interface has default methods, or the switch has a
 default branch
@@ -122,9 +125,8 @@ THEN adding an element type is silent. That is a deliberate trade for
      open hierarchies and a mistake for closed ones.
 
 IF the visitor holds mutable state across visits
-THEN it is single-use, order-dependent and unsafe to share. Prefer an
-     accumulator passed through the fold, or create one visitor per
-     traversal and document it.
+THEN document order, reset and confinement. Prefer an accumulator or fresh visitor;
+     a deliberately synchronized/shared visitor is possible but changes semantics.
 
 IF the structure can be deep or comes from untrusted input
 THEN a recursive fold overflows the stack. Bound the depth at the
@@ -141,8 +143,9 @@ THEN decide explicitly: reject the document, or handle an "unknown"
      ignores an unknown node widens what it matches.
 
 IF the operation mutates the structure while traversing
-THEN the traversal's behaviour is undefined. Produce a new structure
-     instead; that fold is also easier to test.
+THEN follow the traversal/container mutation contract. In-place transforms can be
+     correct with cursor/iterator-supported replacement or staged edits; arbitrary
+     structural mutation commonly skips or revisits nodes.
 
 IF one visitor needs a different traversal order than another
 THEN traversal is a variation point of its own — separate walking from
@@ -161,11 +164,11 @@ THEN traversal is a variation point of its own — separate walking from
   it does not know, and "ignore it" is rarely safe: for a filter it broadens the match, for a
   pricing tree it drops a charge, for a policy document it may drop a restriction. Reject, or model
   the unknown explicitly (`rpc-and-api-contracts`).
-- **Performance.** Classical double dispatch is two virtual calls per node, both megamorphic by
-  construction, so neither inlines well. A pattern-matching `switch` over a sealed type compiles to
-  a type switch that the JIT handles better, and record deconstruction avoids accessor calls. In a
-  hot traversal this is measurable — but the dominant cost is usually allocation per node visited,
-  not dispatch (`jit-inlining-and-escape-analysis`, `allocation-profiling`).
+- **Performance.** Classical Visitor has two dispatches, but neither is inherently megamorphic and
+  HotSpot may inline stable profiles. Pattern switches use JDK/JVM-specific type-switch machinery;
+  record patterns do not guarantee a meaningful speedup. Traversal usually does not allocate per
+  node unless the operation creates results/context. Benchmark actual tree shape, operation and
+  compilation (`jit-inlining-and-escape-analysis`, `allocation-profiling`).
 - **Testing.** The property worth having is that every element type is handled by every operation.
   With a sealed `switch` the compiler provides it. With classical Visitor, keep the visit methods
   abstract — a `default` in the interface converts a compile error into a silent gap — and add a
@@ -173,10 +176,10 @@ THEN traversal is a variation point of its own — separate walking from
 
 ## Review checklist
 
-- [ ] More than one operation exists over the structure
+- [ ] Operation growth or an established traversal/API justifies externalized dispatch
 - [ ] The element set is stable; if it grows weekly, this is the wrong direction
-- [ ] Closed hierarchies use a sealed type and a `switch` with no `default`
-- [ ] Classical Visitor is used only for types you do not compile, or an `accept`-based API
+- [ ] Closed hierarchies explicitly compare sealed folds with Visitor and record compatibility costs
+- [ ] Classical Visitor has an encapsulation, traversal, dependency, or established-API reason
 - [ ] No `default` visit method hides an unhandled element type
 - [ ] Visitors hold no state across traversals, or are created per traversal
 - [ ] Deep or untrusted structures are traversed iteratively with a depth bound

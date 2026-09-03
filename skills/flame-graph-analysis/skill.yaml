@@ -1,19 +1,16 @@
 schemaVersion: 1
 
 name: flame-graph-analysis
-version: 1.3.0
+version: 1.4.0
 description: >-
-  Reading a flame graph and turning it into a decision: width as responsibility versus
-  self-width as blame, the alphabetical X axis, sample counts, infrastructure frames as the
-  diagnosis, differential graphs and normalisation, and Amdahl's conversion from width to
-  time saved. Use when a flame graph is open and the next step is unclear, when the widest
-  frame is main, when someone reads horizontal position as chronology, when a narrow frame
-  is being optimised before a wide one, when a differential graph comes out in one colour,
-  when a frame disappeared after a change, or when a development-machine profile is being
-  extrapolated to production. Does not cover collecting the profile
-  (jfr-and-async-profiler), microbenchmarking the fix (jmh-microbenchmarks), or the
-  statistics of latency (latency-statistics). Engine selection and output conversion is
-  async-profiler-advanced.
+  Interpreting flame graphs as weighted sampled call-path aggregates: identifying the
+  selection event and denominator, separating inclusive from leaf/self attribution,
+  recognizing truncation, inlining, symbol and thread/task artifacts, using bottom-up and
+  differential views, quantifying sample uncertainty, and turning a hotspot into a bounded
+  causal experiment. Use when a graph looks CPU-heavy, idle-heavy, fragmented, changed after a
+  deploy, or tempting to optimize by width alone. Does not collect profiles
+  (jfr-and-async-profiler), configure engines/conversion (async-profiler-advanced), or define
+  benchmark/latency inference (jmh-microbenchmarks, latency-statistics).
 
 license: Apache-2.0
 
@@ -48,6 +45,12 @@ dependencies:
 suggests:
   - jit-compilation
   - jvm-gc-tuning
+  - async-profiler-advanced
+  - jfr-advanced
+  - latency-statistics
+  - performance-regression-ci
+  - allocation-profiling
+  - concurrency-diagnostics
 
 capabilities:
   - reads-source

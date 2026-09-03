@@ -1,8 +1,10 @@
 # What cannot be governed, and how to record that
 
 Read before declaring a characteristic ungoverned, or before accepting a proxy as governance for a
-composite. The whole reference is one criterion applied: **if two competent people can read the
-result and disagree, it is not a fitness function.**
+composite. The whole reference applies one criterion: **the result and escalation rule must be
+reproducible enough that independent reviewers can explain any disagreement.** Judgement does not
+disqualify a check; hidden judgement does. Record the rubric, evidence, confidence and human owner
+when a binary metric would discard the characteristic that actually matters.
 
 ## The decomposition procedure
 

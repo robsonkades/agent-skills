@@ -45,9 +45,9 @@ Details that matter:
 
 - `instanceof` with a pattern variable replaces the null check, the type check and the cast.
   An explicit `o == null` line before it is dead code.
-- The field list in `hashCode` must be the field list in `equals`. A field in `equals` but not
-  in `hashCode` is legal but weakens distribution; a field in `hashCode` but not in `equals`
-  is a contract violation.
+- Derive `hashCode` from equality-relevant, stable state. Omitting an equality field is legal but
+  may weaken distribution. Adding state that can differ between equal objects violates the
+  contract; derived state is safe only when equal objects are guaranteed to derive the same value.
 - `Objects.hash(...)` boxes its arguments into a varargs array. That is irrelevant almost
   everywhere and measurable in a hot loop or a hash-heavy key; there, write
   `31 * (31 * iban.hashCode() + country.hashCode())` or cache the result. Do not do it on
@@ -74,8 +74,10 @@ record Payload(byte[] bytes) { }                 // equals compares array identi
 new Payload(new byte[]{1}).equals(new Payload(new byte[]{1}));   // false
 ```
 
-Use `List<Byte>`, a `ByteBuffer`, or override both methods with `Arrays.equals`/
-`Arrays.hashCode` _and_ copy the array in the compact constructor and the accessor — see
+Use an immutable byte-sequence value type, or override both methods with `Arrays.equals`/
+`Arrays.hashCode` _and_ copy the array in the compact constructor and accessor—`ByteBuffer` is
+mutable and its equality depends on remaining elements/position, so it is not a drop-in value.
+See
 java-immutability. An unaddressed array component in a record used as a map key is a defect,
 not a nuance.
 
@@ -101,41 +103,40 @@ java-composition-over-inheritance covers the wider decision.
 
 ## Entities, ORMs and proxies
 
-Three properties collide for a persistent entity: the id is assigned by the database on
-flush; Hibernate hands out lazy proxies that are generated subclasses; and the same row may
-be represented by different instances across sessions.
+Entity equality has no provider-neutral one-line recipe. Three properties collide: generated ids
+may be unavailable until insert, the same row can have different Java representatives across
+contexts, and providers may use subclass or interface proxies. Decide from the actual lifecycle:
 
-```java
-@Entity
-public class Order {
-    @Id private final UUID id = UUID.randomUUID();   // assigned at construction, not by the DB
+| Situation                                           | Defensible equality choice                                      | Main risk                                                             |
+| --------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| instances never compared across persistence context | reference equality (`Object`)                                   | detached instances of the same row compare unequal                    |
+| immutable, unique business key exists               | business-key equality                                           | key must never change; DB collation/equality must match Java          |
+| application-assigned id exists at construction      | id equality                                                     | generation/collision policy and unsaved sentinel must be explicit     |
+| provider/database-generated id                      | non-null id equality plus stable hash and proxy-aware type rule | transient objects, hash transitions and provider-specific proxy types |
 
-    @Override public boolean equals(Object o) {
-        // instanceof, not getClass(): a lazy proxy's class is a generated subclass
-        return o instanceof Order other && id.equals(other.getId());
-    }
+For a generated id, `a == b` may short-circuit, but two distinct transient objects with null ids
+must not compare equal. Once an id exists, equality may use it; `hashCode` must not change while an
+object is held in a hash collection, so hashing directly on a late-assigned id is unsafe. A stable
+class-level hash is one trade-off, but it deliberately creates collisions and its “class” must be
+the same effective persistent type for proxy and implementation instances.
 
-    @Override public int hashCode() { return id.hashCode(); }
+Type checks are not interchangeable:
 
-    public UUID getId() { return id; }   // call the getter, not the field: a proxy's field is null
-}
-```
+- `getClass()` preserves strict type equality but sees a subclass proxy as another class.
+- broad `instanceof` tolerates subclass proxies but can collapse distinct entity subtypes and can
+  reintroduce symmetry problems in inheritance hierarchies.
+- Hibernate/provider helpers can obtain an effective persistent class, but some operations may
+  initialize a proxy or couple the domain model to the provider. Jakarta Persistence 3.2 exposes
+  `PersistenceUnitUtil.getClass(Object)`; test its loading/error behaviour in your context.
 
-- **Application-assigned id** (UUID at construction) is the only option that is stable from
-  construction through persistence, so `HashSet` membership survives the flush. A database
-  sequence id does not: `hashCode` changes when the id is filled in.
-- **When the id must come from the database**, use a business/natural key for `equals` if one
-  exists; otherwise return a **constant** `hashCode` (e.g. `getClass().hashCode()`) and compare
-  by id with a null-safe check. A constant hash degrades a large `HashSet` to a linear scan —
-  acceptable for the handful of entities in one session, not for a collection of thousands.
-- **Access the other object through its getter**, never through its field: for a proxy, fields
-  are unpopulated until initialisation and reading `other.id` directly yields `null`.
-- **`getClass()` comparison breaks with proxies.** `order.getClass()` is
-  `Order$HibernateProxy$xyz`, never equal to `Order.class`. If a codebase must use
-  `getClass()`, it has to route through `Hibernate.getClass(o)`.
+Do not traverse lazy associations in equality, hashing or diagnostics. Whether direct field or
+accessor access initializes/observes proxy state depends on access strategy and provider
+enhancement, so verify generated SQL and proxy/unproxied symmetry rather than relying on folklore.
+Test at least: two transient objects, same row in separate contexts, proxy versus initialized
+entity in both call directions, detach/merge, id assignment, and membership before/after persist.
 
-orm-structural-mapping and repository-pattern cover the surrounding design; the rule here is
-that entity equality is an identity question, never a "compare all the columns" question.
+orm-structural-mapping and repository-pattern cover the surrounding design. Entity equality is an
+identity/lifecycle question, not “compare all mapped columns.”
 
 ## What hash values are, and are not, stable across
 
@@ -168,9 +169,16 @@ One hand-written assertion per method proves almost nothing. What is worth writi
   instances, and — the one that catches mutable keys — mutate a field after insertion and
   assert the test _fails_, documenting why the field is excluded.
 - **For entities:** add to a `HashSet` before persist, flush, and assert the set still
-  contains it.
+  contains it; compare proxy/unproxied and cross-context representations in both directions.
 
 Do not use a reflective equals/hashCode helper (`EqualsBuilder.reflectionEquals`,
 `HashCodeBuilder.reflectionHashCode`) in production code. It silently picks up every field
 added later — including caches, back-references, and the lazy association that turns
 `equals` into a query.
+
+## Authoritative references
+
+- [Object contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html)
+- [Record contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html)
+- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)
+- [Hibernate ORM 7 User Guide: implementing equals/hashCode](https://docs.jboss.org/hibernate/orm/7.0/userguide/html_single/Hibernate_User_Guide.html#domain-model-pojo-equalshashcode)

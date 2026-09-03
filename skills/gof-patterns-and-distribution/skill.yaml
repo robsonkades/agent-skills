@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-patterns-and-distribution
-version: 1.2.0
+version: 1.3.0
 description: >-
   What happens to a Gang-of-Four pattern when the collaboration crosses a process boundary,
   and which architectural pattern it becomes. Covers the classification into process-local,

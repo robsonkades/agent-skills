@@ -121,10 +121,11 @@ Merged Cards: ...   Dirty Cards: ...   Skipped Cards: ...
 ```
 
 A non-zero `Howl->Full` or `BitMap->Full` counter that keeps rising, together with `Merged
-Full` above zero, is the evidence for "RSet coarsening is the cost". Densely connected object
-graphs — caches with many cross references, shared index structures — are the workload shape
-that produces it; raising `G1HeapRegionSize` lowers the region count and the fan-in per
-region, and reducing cross-region references in the design attacks the cause.
+Full` and phase-time evidence, supports “RSet coarsening contributes to the cost”. Densely
+connected graphs—caches with many cross references and shared indexes—can produce it. Larger
+regions reduce region count but make a coarse/full source-region scan cover more bytes and reduce
+collection granularity; measure the container mix and scan time. Reducing unnecessary cross-region
+fan-in attacks the cause without assuming a region-size win.
 
 ## Measuring RSet memory
 

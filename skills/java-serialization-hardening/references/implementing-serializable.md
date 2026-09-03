@@ -7,9 +7,10 @@ Adding `implements Serializable` to a class:
 - **Publishes the private representation.** Field names, types and the class hierarchy become
   part of the compatibility contract. Renaming a private field is now a breaking change for any
   persisted or in-flight data.
-- **Adds an extra constructor you did not write.** Deserialization creates the object without
-  running a constructor, then populates fields from the stream. Every invariant a constructor
-  enforces is bypassed unless `readObject` re-enforces it.
+- **Adds another construction path.** For an ordinary serializable class, its constructors and
+  field initializers do not run; the accessible no-arg constructor of the first non-serializable
+  superclass does. Stream state then populates fields. Records and `Externalizable` follow
+  different construction rules.
 - **Increases the testing burden.** Round-trip and cross-version tests become part of the class's
   obligations, and they are the tests most likely to be missing.
 - **Constrains subclasses**, which inherit the serializability and the obligations.
@@ -21,13 +22,14 @@ in an API where clients already depend on the form.
 ## serialVersionUID
 
 ```java
+@Serial
 private static final long serialVersionUID = 1L;
 ```
 
-Declare it on every `Serializable` class. Without it, the JVM computes a value from the class's
-structure — name, modifiers, interfaces, fields, methods — so adding a method or changing a
-modifier changes the id and produces `InvalidClassException` on the next read of older data.
-That failure appears during a rolling deploy or on a cache read, not in CI.
+Declare it on ordinary `Serializable` classes and mark it `@Serial`. Without it, the JVM computes
+a value from specified class details, and seemingly unrelated source/compiler changes can produce
+`InvalidClassException` on old data. Enums have a fixed UID of `0L` and ignore declarations;
+records default to `0L` and waive UID matching, so UID is not their evolution guard.
 
 Keep the value stable while the serialized form stays compatible; change it deliberately only
 when you intend to break compatibility with the old form.
@@ -70,10 +72,11 @@ public final class StringList implements Serializable {
 }
 ```
 
-Rules encoded there: mark representation-only fields `transient`; call
-`defaultWriteObject`/`defaultReadObject` first, so a later non-transient field can be added
-compatibly; write the logical content explicitly; and validate anything read from the stream
-before using it, including sizes used to allocate.
+Rules encoded there: mark representation-only fields `transient`; this design calls
+`defaultWriteObject`/`defaultReadObject` symmetrically so a later non-transient field can be added;
+write logical content explicitly; and validate counts before allocating or looping. A fully
+specified custom form may omit default field data, but that choice itself is a permanent format
+contract.
 
 ## readObject is hostile-input territory
 
@@ -90,6 +93,7 @@ to a "private" mutable component and can mutate it after deserialization.
 ```java
 private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
     s.defaultReadObject();
+    if (start == null || end == null) throw new InvalidObjectException("null endpoint");
     // 1. Defensively copy every mutable component BEFORE validating
     start = new Date(start.getTime());
     end   = new Date(end.getTime());
@@ -98,13 +102,20 @@ private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundEx
 }
 ```
 
-The order is the whole point: copy first, then validate the copy. A `final` field cannot be
+Null/type checks needed to make a copy come first; then copy mutable values and validate only what
+will be retained. Prefer immutable scalar encodings and exact-class filters where a mutable type
+can be subclassed, because a copying accessor may itself dispatch. A `final` field cannot be
 reassigned this way, which is one more reason the serialization proxy below is preferable for
 anything with real invariants.
 
 Also: `readObject` must not invoke any overridable method of the class — the override would run
 against a partially deserialized object, the same hazard as calling one from a constructor
 (java-object-construction).
+
+Implement `readObjectNoData` when a serializable superclass must establish invariants but an old
+or tampered stream contains no data for it. Cross-object validation registered through
+`ObjectInputValidation` runs after graph restoration and can check graph invariants, but it cannot
+undo hooks that already executed and is not a hostile-input defense.
 
 ## The serialization proxy pattern
 
@@ -121,13 +132,18 @@ public final class Period implements Serializable {
 
     private static final class SerializationProxy implements Serializable {
         private static final long serialVersionUID = 1L;
-        private final Date start;                       // the *logical* state
-        private final Date end;
+        private final long startEpochMilli;             // stable logical snapshot
+        private final long endEpochMilli;
 
-        SerializationProxy(Period p) { this.start = p.start; this.end = p.end; }
+        SerializationProxy(Period p) {
+            this.startEpochMilli = p.start.getTime();
+            this.endEpochMilli = p.end.getTime();
+        }
 
         // Deserialization ends here, going through the real constructor:
-        private Object readResolve() { return new Period(start, end); }
+        private Object readResolve() {
+            return new Period(new Date(startEpochMilli), new Date(endEpochMilli));
+        }
     }
 
     private Object writeReplace() { return new SerializationProxy(this); }
@@ -156,13 +172,16 @@ and defensive copies — runs normally. Consequences:
 
 - No `readObject` hazard: invariants cannot be bypassed.
 - No serialization proxy needed for the invariant problem.
-- Records cannot customise `readObject`/`writeObject`, by design; the serialized form is the
-  component list.
-- Changing the component list changes the form — additive changes deserialise missing
-  components as defaults, and removals/renames break compatibility, so the same versioning
-  discipline applies.
+- Records ignore `readObject`, `writeObject`, `readObjectNoData`, `writeExternal` and
+  `readExternal`; the form is the component list. `writeReplace` and `readResolve` remain possible.
+- Missing component values deserialize as Java defaults and extra stream fields are ignored.
+  Therefore add/remove/rename may link successfully while silently injecting `null`/zero or
+  losing data. Test semantic compatibility; UID matching will not catch it.
+- Cycles through a record's components are not preserved because components are reconstructed
+  before the canonical constructor invocation.
 
-For a serializable value type on a modern JDK, a record is the default answer, and
+If native Java serialization is already required for a value type, a record is often the safer
+representation, and
 java-immutability covers making the components genuinely immutable.
 
 ## Related hooks
@@ -182,12 +201,14 @@ java-immutability covers making the components genuinely immutable.
 
 Serialization bugs surface across time, not within a single build. The tests that catch them:
 
-- **Golden files.** Commit a serialized artefact from each released version and assert the
-  current code deserialises each one into the expected value. This is the only test that catches
-  an accidental `serialVersionUID` change or a field rename.
+- **Golden files.** Commit a serialized artifact for supported released forms and assert current
+  code deserializes each into the expected semantic value. This catches real stream behavior;
+  API/serialization-form diff tooling can complement it but does not replace execution.
 - **Round trip with mutation.** Deserialize, mutate what the stream could have aliased, and
   assert the object is unaffected — the defensive-copy test.
 - **Hostile stream.** Feed a stream with an invalid value and assert `InvalidObjectException`,
   not a corrupt object.
-- **Forward compatibility**, when a rolling deploy needs it: the previous release must be able
-  to read what the new one writes, or the deploy needs a flush/drain step in its runbook.
+- **Forward compatibility**, when old readers coexist: exercise new-writer/old-reader. If it
+  fails, keep the writer on the old form, use a versioned envelope/dual-write protocol, or drain
+  and fence old readers before switching. A cache flush is safe only if repopulation cannot race
+  from old nodes and cache loss is operationally acceptable.

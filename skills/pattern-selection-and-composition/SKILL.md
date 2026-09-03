@@ -51,7 +51,8 @@ it has no justification yet.
 
 1. **Answer the nine inputs** for the module — not for the system. Different modules
    legitimately reach different answers.
-2. **Choose the logic organisation first.** It constrains everything downstream
+2. **Start with logic organisation, then iterate with fixed schema, transaction, concurrency and
+   delivery constraints.** It constrains many downstream choices but is not a one-way dependency
    (`domain-logic-organization`).
 3. **Choose the data-source pattern** consistent with it (`data-source-patterns`).
 4. **Add only the patterns a named force requires.** Each addition must trace to an input.
@@ -65,7 +66,8 @@ it has no justification yet.
 ```text
 Rules do not interact; work is per-transaction
         → Transaction Script + Table Data Gateway.
-          Add a Service Layer only if a use case writes twice.
+          Add a Service Layer when transaction, authorization, orchestration or a stable use-case
+          boundary earns it—not from a write-count threshold.
 
 Rules interact; invariants span objects; schema is yours
         → Domain Model (entities with behaviour) + Data Mapper (JPA) +
@@ -92,8 +94,9 @@ Concurrent edits across a user's thinking time
           Pessimistic only when the lost work is expensive.
 
 A remote boundary exists
-        → Remote Facade + DTO. Both, always; one without the other is
-          either a chatty API or a leaked model.
+        → define coarse-enough operations and an explicit wire contract.
+          A dedicated DTO is usual; a stable schema-generated or immutable
+          boundary type can already satisfy that role.
 
 A remote boundary is being CONSIDERED
         → module boundary first; distribute only for a named driver
@@ -121,7 +124,7 @@ Multi-request conversation state
   (`service-layer-design`).
 - **Table Module implies set-based operations** that bypass the domain model's invariants —
   legitimate, and it must be named and bounded, not accidental.
-- Reads and writes may use different patterns, and in any non-trivial system they should.
+- Reads and writes may use different patterns when query and invariant forces diverge.
   This is the most under-applied composition in enterprise architecture and the one that
   resolves most performance–purity arguments (`architecture-and-performance`).
 
@@ -158,7 +161,9 @@ Coarse-Grained Lock + a large aggregate
         → contention. Resize the aggregate; do not weaken the lock.
 
 Distribution + a shared database
-        → one service with a network inside it.
+        → coupled schema, availability and ownership. This may be a deliberate
+          transitional or jointly owned architecture; it does not by itself prove
+          one service, but it weakens independent evolution.
 ```
 
 ## References

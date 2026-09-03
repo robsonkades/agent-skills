@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-proxy
-version: 1.1.0
+version: 1.2.0
 description: >-
   Proxy in modern Java: a stand-in that controls access to another object behind that object's own
   interface — virtual (lazy), remote, protection and caching variants. Covers the central danger
@@ -40,7 +40,7 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
+dependencies: []
 
 suggests:
   - architecture-testing

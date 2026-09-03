@@ -42,11 +42,11 @@ that window:
 
 ## Canary and A/B
 
-| Split by                          | Selects                                     | Property                                                                                   | Use when                                                   |
-| --------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| Percentage of requests            | A weighted random or hash-of-request choice | Not stable per user: consecutive requests can differ                                       | Infrastructure canaries where per-user consistency is moot |
-| Hash of a user-identifying header | The same user always to the same variant    | Stable while the header and the weight are stable; changing the weight rebalances everyone | Product A/B tests, anything with a per-user funnel         |
-| Explicit header (`x-variant`)     | Whoever sets the header                     | Deterministic, and abusable — never trust it from outside the perimeter                    | Internal testing, dogfooding, debug routes                 |
+| Split by                                           | Selects                                      | Property                                                                            | Use when                                                   |
+| -------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Percentage of requests                             | A weighted random or hash-of-request choice  | Not stable per user: consecutive requests can differ                                | Infrastructure canaries where per-user consistency is moot |
+| Hash of a trusted subject key plus experiment salt | The same subject usually maps to one variant | Stable for a fixed algorithm/config; weight or algorithm changes can remap subjects | Product A/B tests after privacy and trust-boundary review  |
+| Explicit header (`x-variant`)                      | Whoever sets the header                      | Deterministic, and abusable — never trust it from outside the perimeter             | Internal testing, dogfooding, debug routes                 |
 
 Two things go wrong reliably. First, a canary weighted at 5% of _requests_ is not 5% of
 _users_, and a single heavy client can be most of the canary traffic — check the distribution
@@ -82,8 +82,10 @@ diffing in the request path makes the shadow a latency dependency of production.
 - **The variant on the response.** Have the ambassador add a response header naming the
   variant, shard or upstream that served the request, and log it. Without it, a user's bug
   report cannot be attached to a variant.
-- **The config version each ambassador is running.** Export it as a metric label; a stale
-  proxy holding old routes looks exactly like a routing bug in the current config.
+- **The config version each ambassador is running.** Expose it through a bounded info metric,
+  status endpoint or structured log and alert on fleet disagreement. Avoid an ever-growing label
+  value on every traffic series; stale proxies holding old routes otherwise look like routing
+  bugs in the current config.
 
 An experiment with no metric that could show it failing has not been run — it has been
 deployed.

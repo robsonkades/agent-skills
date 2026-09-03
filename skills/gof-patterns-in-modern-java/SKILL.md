@@ -39,10 +39,9 @@ Say "Strategy, as a function" and the design stays legible.
 ## Three categories
 
 ```text
-ABSORBED — the language or framework provides the mechanism; writing
-your own duplicates it
-    Iterator          Iterable / Stream / Spliterator
-    Singleton         the container's singleton scope
+COMMON MECHANISMS PROVIDED — reuse them when their guarantees match
+    Iterator          Iterable / Iterator / Spliterator (Stream is a pipeline, not a replacement)
+    Singleton-like lifecycle  the container's singleton scope (not global uniqueness)
     Proxy             @Transactional, @Cacheable, JPA lazy loading
     Decorator         servlet filters, interceptors, client builders
     Observer          application events; reactive streams; brokers
@@ -68,10 +67,12 @@ applies with modern types
 
 ## The two changes that matter most
 
-**Sealed types plus pattern matching.** This is the largest single shift. A closed hierarchy with
+**Sealed types plus pattern matching.** A closed hierarchy with
 an exhaustive `switch` gives, in one construct, what Visitor needed double dispatch for, what State
 needed a class per state for, and what Composite needed the transparent/safe trade-off for — with
-the compiler enumerating every site when a variant is added. Where you own every variant, prefer it
+the compiler enumerating every switch site when a variant is added. This favors adding variants but
+can make adding operations touch many switches—the expression-problem trade-off Visitor addresses.
+Where you own every variant, consider it
 (`java-composition-over-inheritance`).
 
 **The container.** Dependency injection makes Singleton's uniqueness a consequence of wiring rather
@@ -88,8 +89,9 @@ usually simpler than the machinery built to avoid one (`thread-sizing-and-virtua
 ## Decision rules
 
 ```text
-IF you are implementing a pattern from a pre-2015 text
-THEN check the table above first. Six of them you should not write.
+IF you are implementing a pattern from an older text
+THEN check whether the JDK/framework supplies the required semantics before
+     hand-writing infrastructure. Do not turn categories into prohibitions.
 
 IF the framework provides the mechanism
 THEN use it. A hand-rolled chain, proxy or event bus beside the
@@ -115,9 +117,10 @@ IF a pattern exists to defer or offload work
 THEN check whether virtual threads remove the need
      (thread-sizing-and-virtual-threads, structured-concurrency).
 
-IF context must flow through a chain, mediator or command
-THEN ScopedValue, not ThreadLocal — the latter does not follow work
-     handed to another thread and leaks on pooled ones
+IF immutable context must flow down a bounded call tree
+THEN consider ScopedValue on Java 25+. ThreadLocal remains appropriate for
+     mutable/per-thread integration in some libraries but requires lifecycle
+     cleanup and does not automatically propagate to arbitrary executor tasks
      (scoped-values).
 ```
 

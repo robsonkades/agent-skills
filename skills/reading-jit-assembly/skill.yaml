@@ -1,20 +1,20 @@
 schemaVersion: 1
 
 name: reading-jit-assembly
-version: 1.1.0
+version: 1.2.0
 description: >-
   Reading the machine code HotSpot actually emitted: installing hsdis, driving
   -XX:+PrintAssembly and JMH perfasm, telling the verified entry point and prologue from the
   method body, and confirming or refuting a hypothesis about an optimisation from the
   instructions themselves. Use when a claim about an optimisation needs proof at the
-  instruction level, when PrintAssembly prints hex bytes instead of mnemonics, when a
-  command fails because UnlockDiagnosticVMOptions is missing, when a load has no cmp/test
-  before it and someone concludes the null check was eliminated, when an assembly excerpt
-  from a blog is in the other operand order, or when unexplained runtime calls appear
-  between the expected logic. Does not cover the compiler phases that produced the code
-  (c2-sea-of-nodes), what the compiler decided to inline or compile
-  (compilation-and-inlining-logs), vectorisation as a subject (simd-and-vector-api), or
-  benchmark construction (jmh-advanced).
+  instruction level, when PrintAssembly prints hex bytes instead of mnemonics, when
+  PrintOptoAssembly on a product JDK unexpectedly prints only banner lines, when the capture must come
+  from a running JVM, when a load has no cmp/test before it and someone concludes the null
+  check was eliminated, when an assembly excerpt from a blog is in the other operand order,
+  or when unexplained runtime calls appear between the expected logic. Does not cover the
+  compiler phases that produced the code (c2-sea-of-nodes), what the compiler decided to
+  inline or compile (compilation-and-inlining-logs), vectorisation as a subject
+  (simd-and-vector-api), or benchmark construction (jmh-advanced).
 
 license: Apache-2.0
 
@@ -45,6 +45,18 @@ files:
 dependencies:
   - name: c2-sea-of-nodes
     version: ^1.0.0
+
+suggests:
+  - compilation-and-inlining-logs
+  - deoptimization
+  - g1-internals
+  - jfr-and-async-profiler
+  - jmh-advanced
+  - lock-inflation
+  - object-layout-and-footprint
+  - safepoints
+  - simd-and-vector-api
+  - zgc-generational-internals
 
 capabilities:
   - reads-source

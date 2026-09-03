@@ -6,13 +6,13 @@ decision — patch releases can move values without changing the structure.
 
 ## The five tiers
 
-| Tier | Compiler              | Profiling collected                        | Role                                                      |
-| ---- | --------------------- | ------------------------------------------ | --------------------------------------------------------- |
-| 0    | Interpreter           | Invocation/backedge counters, type profile | Entry point for every method; feeds the compile decision  |
-| 1    | C1, no profiling      | none                                       | **Terminal** for trivial methods — never reprofiled       |
-| 2    | C1, limited profiling | invocation/backedge only                   | Fast transition state used when the C2 queue is congested |
-| 3    | C1, full profiling    | branch and type profile                    | Stepping stone — produces the data C2 needs for tier 4    |
-| 4    | C2                    | —                                          | Peak code, all C2 optimisations applied                   |
+| Tier | Compiler              | Profiling collected                        | Role                                                                 |
+| ---- | --------------------- | ------------------------------------------ | -------------------------------------------------------------------- |
+| 0    | Interpreter           | Invocation/backedge counters, type profile | Entry for ordinary executable bytecode; feeds policy                 |
+| 1    | C1, no profiling      | none                                       | Often selected as sufficient for simple methods; inspect history     |
+| 2    | C1, limited profiling | invocation/backedge only                   | Fast transition state used when the C2 queue is congested            |
+| 3    | C1, full profiling    | branch and type profile                    | Stepping stone — produces the data C2 needs for tier 4               |
+| 4    | C2                    | speculative dependencies/traps remain      | Optimizing compilation; transformations are eligible, not guaranteed |
 
 Threshold flags governing the transitions:
 
@@ -28,18 +28,19 @@ Threshold flags governing the transitions:
 -XX:TieredStopAtLevel=4               # 1 = C1 only: no profiling, no C2, one code heap
 ```
 
-`-XX:Tier0InvokeNotifyFreqLog` is a base-2 logarithmic exponent, not a direct invocation
-count. Do not restate it as "every N calls"; read its meaning from `PrintFlagsFinal`.
+`-XX:Tier0InvokeNotifyFreqLog` is a logarithmic notification control, not a direct “compile
+after N calls” threshold. Its interaction with counters/policy must be read from target source.
 
 ### Back-off under load
 
-The thresholds are not constants at runtime (`compilationPolicy.cpp`). Each is multiplied by
+The effective policy thresholds are not constants at runtime (`compilationPolicy.cpp`). On the
+inspected build, queue feedback includes a factor shaped like
 `1 + queue_length / (TierNLoadFeedback × compiler_thread_count)` — `Tier3LoadFeedback=5`,
-`Tier4LoadFeedback=3` — so a congested compile queue raises the bar instead of growing the
+`Tier4LoadFeedback=3` — so a congested compile queue can raise the bar instead of growing the
 queue without bound. Separately, when the C2 queue holds more than `Tier3DelayOn=5` tasks per
 C2 thread, new compilations are sent to tier 2 (C1, counters only) rather than tier 3, and
-return to tier 3 once it drops below `Tier3DelayOff=2`. That is the only reason tier 2 appears
-in a log, and it is why a start-up burst shows methods "stuck" at tier 2 or 3 with counters
+return to tier 3 once it drops below `Tier3DelayOff=2`. This is a common reason tier 2 appears
+in a log; policy transitions, flags and release changes still need inspection. A start-up burst can show methods at tier 2 or 3 with counters
 that look sufficient: the thresholds were temporarily higher. Read the queue with
 `jcmd <pid> Compiler.queue` or the JFR `jdk.CompilerQueueUtilization` event
 (`queueSize`, `peakQueueSize`, `compilerThreadCount`).
@@ -57,7 +58,7 @@ diagnosis:
 - Handlers can be specialised for the actual CPU the JVM boots on, which an interpreter
   compiled once ahead of time cannot do.
 
-## The seven C2 phases
+## A seven-stage diagnostic map of the C2 pipeline
 
 | #   | Phase     | What happens                                                                  |
 | --- | --------- | ----------------------------------------------------------------------------- |
@@ -69,8 +70,9 @@ diagnosis:
 | 6   | RegAlloc  | Register allocation, **graph colouring (Chaitin-Briggs)**, `opto/chaitin.cpp` |
 | 7   | Emit      | Final assembly generation                                                     |
 
-The phase number answers most "why can I not see it" questions. Scalar replacement happens in
-phase 2; the Matcher in phase 5 never sees an allocation for that object.
+This is a routing model, not a canonical exhaustive list: C2 performs repeated IGVN/loop and
+late/macro/scheduling work, and source ordering evolves. Scalar replacement precedes matching
+on this build, so an eliminated allocation does not become an allocation machine node.
 
 Source of truth: OpenJDK `src/hotspot/share/opto/` — `compile.cpp` (pipeline), `escape.cpp`
 (`ConnectionGraph`), `loopTransform.cpp` (loop transformations). `opto` is HotSpot's internal
@@ -122,11 +124,11 @@ depended on the call boundary disappearing.
 | -------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `NoEscape`     | Does not escape the method and is unreachable outside the allocating thread                   | Full **scalar replacement** — removed from the graph, fields become independent values or registers         |
 | `ArgEscape`    | Passed as an argument to a call, but not persistently stored by it                            | Usually still heap-allocated: the non-inlined call boundary blocks scalar replacement. Enables lock elision |
-| `GlobalEscape` | Stored in a field, returned, thrown, or otherwise reachable outside the local scope or thread | Normal heap allocation; no EA optimisation beyond possible partial lock elision                             |
+| `GlobalEscape` | Stored in a field, returned, thrown, or otherwise reachable outside the local scope or thread | Normal heap allocation; other independent optimisations may still apply                                     |
 
-`ArgEscape` is the state most often misread. An object passed to a method that was **not**
-inlined always pays a real heap allocation, even when that method never keeps a reference. The
-only way out is to make the compilation boundary disappear via inlining.
+`ArgEscape` is often misread. An object passed across a call C2 cannot analyze inline is
+normally blocked from scalar replacement by that boundary. Inspect compiler evidence rather
+than treating the state label as a Java semantic guarantee.
 
 ## Strip mining
 
@@ -134,7 +136,8 @@ Introduced by JDK-8186027 in JDK 10, for safepoints — not for SIMD. A fully un
 vectorised counted loop can run a long time with no safepoint, which stalls every
 stop-the-world operation behind that one thread. Strip mining splits the loop into a short
 outer loop carrying a cheap safepoint check per strip, and a fully optimised inner loop with
-no per-iteration safepoint cost. `-XX:+UseCountedLoopSafepoints`, default `true` since JDK 10.
+no per-iteration safepoint cost. The feature arrived in JDK 10; on verified JDK 25.0.3 its
+default is collector-dependent (true for G1/ZGC/Shenandoah, false for Parallel/Serial).
 
 The trade-off is the familiar one: less per-iteration checking cost, slightly higher latency
 before the thread actually reaches a requested global safepoint.

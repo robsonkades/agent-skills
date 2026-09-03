@@ -1,140 +1,200 @@
-# JFR event catalogue and CLI recipes
+# Event discovery and configuration
 
-Every name below has to be re-confirmed against the target build. This table records the
-names that are correct on JDK 25 and the plausible-sounding ones that are not.
+## Generate a catalogue per JDK epoch
 
-## Inspecting a recording
+Do not maintain a timeless handwritten table. For every supported vendor/build/platform:
 
-```bash
-jfr metadata recording.jfr | head -100          # every event type and its field schema
-jfr metadata recording.jfr | grep -A 20 "jdk.GarbageCollection"
-jfr summary recording.jfr                       # what is present, and at what rate
-jfr print --events jdk.GarbageCollection recording.jfr
-jfr print --events jdk.CPULoad --json recording.jfr
-```
+1. enumerate registered event types and setting descriptors in a small Java probe;
+2. retain shipped JFC files and their checksums;
+3. generate metadata from a positive-control recording;
+4. record platform/experimental annotations and command/tool help;
+5. test readers/converters and store schema fixtures.
 
-`jfr metadata` is the only reliable way to confirm that an event or field name exists in
-**that specific build**. `Recording.enable("does.not.Exist")` and
-`RecordingStream.enable("does.not.Exist")` accept the string, do nothing, and throw
-nothing — the failure surfaces later as an analysis that produced no data.
-
-`jfr summary` on the most recent production file answers "do I already have this event,
-and at what rate" before anyone proposes new instrumentation.
-
-## Events by category
-
-| Category           | Key events                                                                                                                               |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| GC                 | `jdk.GarbageCollection` (fields `sumOfPauses`, `longestPause`, `cause` — **not** `pause`), `jdk.GCPhasePauseLevel3`, `jdk.GCHeapSummary` |
-| JIT compilation    | `jdk.Compilation`, `jdk.CompilerInlining`, `jdk.Deoptimization`                                                                          |
-| Threads/contention | `jdk.JavaMonitorEnter`, `jdk.JavaMonitorWait`, `jdk.ThreadPark`, `jdk.ThreadStart`                                                       |
-| I/O                | `jdk.FileWrite`, `jdk.SocketRead`, `jdk.SocketWrite`                                                                                     |
-| Allocation         | `jdk.ObjectAllocationInNewTLAB`, `jdk.ObjectAllocationOutsideTLAB`                                                                       |
-| Classes            | `jdk.ClassLoad`, `jdk.ClassDefine`                                                                                                       |
-| CPU                | `jdk.CPULoad` (fields include `jvmUser`), `jdk.ExecutionSample`, `jdk.CPUTimeSample`                                                     |
-| Virtual threads    | `jdk.VirtualThreadPinned` (`pinnedReason`, `blockingOperation`, `carrierThread`), `jdk.VirtualThreadSubmitFailed`                        |
-
-Names that have circulated in real technical material and do not exist:
-
-| Wrong                     | Correct                          |
-| ------------------------- | -------------------------------- |
-| `jdk.GCPauseL3`           | `jdk.GCPhasePauseLevel3`         |
-| `jdk.AllocationInNewTLAB` | `jdk.ObjectAllocationInNewTLAB`  |
-| field `pause` on GC event | `sumOfPauses` and `longestPause` |
-
-The G1 pause hierarchy is `GCPhasePause` → `GCPhasePauseLevel1` → `Level2` → `Level3`,
-each level decomposing the pause into progressively more specific sub-phases (object
-copy, root set scan).
-
-## The three samplers
-
-| Event                    | Counts                                                                                            | Stock setting                                 |
-| ------------------------ | ------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| `jdk.ExecutionSample`    | a thread executing Java code; waiting and native threads excluded                                 | `period` 20 ms (`default`), 10 ms (`profile`) |
-| `jdk.NativeMethodSample` | a thread in native code, **executing or waiting**                                                 | `period` 20 ms in both                        |
-| `jdk.CPUTimeSample`      | a thread after consuming `throttle` of CPU, native attributed to its Java caller (JEP 509, Linux) | disabled in both; `throttle` 500/s or 10ms    |
-
-The first two are what `hot-methods` and JMC's method profiling aggregate, which is why a
-thread parked in `epoll_wait` shows up as hot there. `jdk.ExecutionSample` does not ask the
-OS whether the thread was scheduled: on a box with more runnable Java threads than cores it
-drifts towards a wall-clock profile of those threads. `jdk.CPUTimeSample` is the only
-CPU-proportional one, at the price of being experimental and Linux-only.
-
-`jdk.ObjectAllocationSample` carries a `weight` in bytes — the allocation it stands for —
-throttled to 150/s (`default`) or 300/s (`profile`). Sum `weight`, never count events, to
-rank allocation sites. `jdk.ObjectAllocationInNewTLAB` / `OutsideTLAB` are off in both
-files and record every TLAB event when enabled: they are the expensive exact form.
-
-`jdk.VirtualThreadPinned` has a `threshold` of **20 ms in both files**. A pinning audit
-after JEP 491 lowers it (`jdk.VirtualThreadPinned#threshold=0ms`) and reads
-`pinnedReason`; what the event measures is `virtual-threads-internals`.
-
-## The three contention channels
-
-They are not interchangeable, and mapping a wait to the wrong one hides the cause.
-
-| Blocking mechanism                                                                                                                         | Event                  |
-| ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
-| Blocked entering a `synchronized` block (label _Java Monitor Blocked_; fields `monitorClass`, `previousOwner`, `address`)                  | `jdk.JavaMonitorEnter` |
-| `Object.wait()`                                                                                                                            | `jdk.JavaMonitorWait`  |
-| `LockSupport.park()` — every `j.u.c.` construct, semaphores, `CountDownLatch`, and **connection pools** such as HikariCP's `ConcurrentBag` | `jdk.ThreadPark`       |
-
-All three default to `threshold` = **10 ms** in `profile.jfc` and **20 ms** in
-`default.jfc`. Contention finer than that — individually short but significant in
-aggregate under high QPS — is absent from the recording until the `.jfc` lowers it.
-
-A worked consequence: a 4.8 s `jdk.ThreadPark` inside `ConcurrentBag.borrow()`,
-overlapping in time with a `jdk.GarbageCollection` whose `longestPause` was abnormal,
-means the GC pause delayed connection returns and starved the pool. Searching for a
-`synchronized` that does not exist is what happens when every wait is assumed to be
-`JavaMonitorEnter`.
-
-## What pushes a recording past its budget
-
-The stock files carry their own numbers — `default.jfc` "typically less than 1 % overhead",
-`profile.jfc` "typically around 2 %" — and `jfr help configure` names the options that
-move them. Ordered by how often they turn a 2 % recording into an incident:
-
-| Option / setting                                  | Why it costs                                                    | Safer form                                             |
-| ------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------ |
-| `stackTrace=true` on an event above ~10³/s        | stack walking dominates every commit                            | `threshold`, or `stackTrace=false`                     |
-| `-XX:FlightRecorderOptions:stackdepth=` above 64  | every stack trace walks and stores more frames                  | raise only for the investigation that needs the roots  |
-| `allocation-profiling=maximum`                    | enables the per-TLAB events instead of the throttled sample     | `high` keeps `ObjectAllocationSample` at a higher rate |
-| `method-trace=<broad filter>`                     | an event with stack trace on every invocation, `threshold` 0 ms | `method-timing=` for the same methods                  |
-| `memory-leaks=gc-roots` / `path-to-gc-roots=true` | a heap walk at dump time pauses the application                 | `stack-traces`; take `gc-roots` on one instance        |
-| `exceptions=all`                                  | records every throw with a stack trace                          | `throttled`                                            |
-| `class-loading=true`                              | an event per loaded class, noisy at startup and redeploy        | leave off outside a class-loading investigation        |
-| `jdk.CPUTimeSample#throttle` at a short period    | more signals and stack walks per CPU second                     | a rate (`500/s`) bounds it independently of load       |
-
-`jcmd JFR.start` prints the same caveat: "if the default event settings are modified,
-overhead may exceed 1%".
-
-## Reading duration correctly
+Programmatic skeleton:
 
 ```java
-event.getDuration();                    // plain begin/end event — no argument
-event.getDuration("longestPause");      // event carrying named duration fields
+FlightRecorder.getFlightRecorder().getEventTypes().stream()
+    .sorted(Comparator.comparing(EventType::getName))
+    .forEach(type -> {
+        System.out.println(type.getName() + " enabled=" + type.isEnabled());
+        type.getSettingDescriptors().forEach(setting ->
+            System.out.println("  setting " + setting.getName()
+                + " default=" + setting.getDefaultValue()));
+        type.getFields().forEach(field ->
+            System.out.println("  field " + field.getName()
+                + " type=" + field.getTypeName()
+                + " content=" + field.getContentType()));
+    });
 ```
 
-`getDuration("pause")` on `jdk.GarbageCollection` compiles and throws at runtime.
+Registration can be dynamic and class-loader-specific; capture after relevant custom event
+classes/libraries are loaded. Event type IDs are JVM-instance-specific and must not be persisted
+as portable identifiers.
 
-In `jfr print --json` output the fields are nested under `"values"`, and durations are
-ISO-8601 **strings**:
+## Command-line inspection
 
-```json
-{
-  "type": "jdk.GarbageCollection",
-  "values": { "cause": "G1 Evacuation Pause", "longestPause": "PT0.015927S" }
+```bash
+jcmd <pid> JFR.check
+jcmd <pid> help JFR.start
+jfr metadata recording.jfr
+jfr summary recording.jfr
+jfr print --events '<verified-filter>' --json recording.jfr
+jfr view <verified-view> recording.jfr
+```
+
+`jfr metadata recording.jfr` describes schemas available in that recording; `jfr summary`
+shows actual counts/bytes by event type. Metadata presence does not prove event occurrence.
+Summary absence can mean disabled/thresholded/unsupported/no workload or a wrong capture window.
+
+Avoid piping huge JSON into ad hoc text tools as the primary parser. Use `RecordingFile` or a
+streaming parser and assert schema/count/units.
+
+## Map question to event family
+
+Verify exact names/fields on the target:
+
+| Question                   | Event family                                                | Required interpretation                                                     |
+| -------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------- |
+| GC pause/cycle/phase       | GC collection, pause and phase events                       | collector, cause, phase nesting, duration/summary semantics                 |
+| heap occupancy/allocation  | heap summary, allocation sample/TLAB events                 | before/after-GC timing, sampling weight, TLAB coverage                      |
+| compilation/deoptimization | compilation, inlining, deoptimization, code cache           | tier, reason, queue/elapsed, code-cache segment                             |
+| monitor/park/wait          | monitor enter/wait, thread park                             | Java mechanism, threshold censoring, previous owner/timeout where available |
+| file/socket I/O            | file/socket read/write                                      | duration, bytes, address/path privacy, blocking API coverage                |
+| CPU/execution              | execution/native/CPU-time sample, CPU load                  | selection policy, weight, platform/experimental status, loss                |
+| virtual threads            | start/end/pinned/submit-failed and scheduler-related events | JDK version, threshold, carrier/logical context and post-JEP-491 meaning    |
+| class loading              | load/define/unload/class-loader statistics                  | event rate/startup scope and loader identity                                |
+| safepoints                 | safepoint begin/state/synchronization/cleanup/end           | TTSP versus operation duration and event ordering                           |
+
+Names that look plausible are not evidence. Even historically stable names can gain fields or
+change settings/defaults.
+
+## Threshold and period calibration
+
+### Duration thresholds
+
+Collect a bounded canary at progressively lower thresholds and retain:
+
+```text
+threshold
+event count/rate and summed recorded duration
+stack-present fraction and stack depth
+recording bytes/s and chunk rate
+process CPU/allocation/GC/tail latency delta
+known synthetic event count/duration distribution
+```
+
+Recorded summed duration is a lower bound when sub-threshold events are omitted. Extrapolating
+their aggregate needs a sampling/model design; do not multiply the threshold by a guessed count.
+
+### Periodic events
+
+A configured period is a request/settings value, not proof that every thread/resource is
+visited or that events occur exactly periodically. Scheduler delays, cooperative sampling,
+population selection, throttling, and collector implementation matter. Validate actual event
+timestamp gaps/counts and known hot threads.
+
+### Throttled/weighted events
+
+Count and weight can answer different questions. Allocation samples may carry a weight
+representing bytes; CPU-time/other sampling may expose lost/quality information. Inspect field
+annotations and JEP/event documentation. Summing event count when weight is required can invert
+rankings.
+
+## Stack trace policy
+
+Estimate:
+
+```text
+event rate * average frames * encoded/storage/index amplification
+```
+
+Enable stacks when caller attribution changes the decision. Disable for self-describing
+periodic aggregates or when event rate is too high, and correlate via bounded application
+events instead. Test actual stack walk and file/backend cost. Increasing global stack depth can
+affect every stack-bearing event and may require startup-time configuration depending on JDK;
+discover `JFR.configure`/`FlightRecorderOptions` behavior on the target.
+
+Truncation policy and default depth are version inputs. Inspect raw stack `truncated` metadata
+and unknown frames rather than assuming “64 leaf frames.”
+
+## Configuration build protocol
+
+```bash
+# Explore supported named options/settings on this JDK.
+jfr help configure
+jfr configure --interactive
+
+# Produce a reviewed file from an explicit base; exact option names are target-specific.
+jfr configure --input /path/to/base.jfc --output service-incident.jfc \
+  '<verified-event>#<verified-setting>=<value>'
+```
+
+Then start a disposable JVM using the exact operational invocation, confirm it remains healthy,
+inspect active recording/settings, trigger positive/negative workload, stop/dump, validate with
+summary/metadata/typed reader, and measure overhead.
+
+Do not claim that hand editing is always wrong: JFC is the source format and advanced/event-
+specific settings may require it. Review against the schema/parser in the target JDK and test.
+
+## Multiple configurations and recordings
+
+Test these cases explicitly:
+
+- base JFC plus override JFC/inline setting precedence;
+- unknown event/setting and missing JFC behavior;
+- `none` plus explicit event settings;
+- two simultaneous recordings with different threshold/stack values;
+- stopping the high-detail recording while baseline continues;
+- dynamically registered custom event while recording is active;
+- same event name across class loaders;
+- reader from Java 17/21 consuming Java 25/custom events.
+
+Effective production cost follows what the JVM must collect for all active recordings, not
+only the file later analyzed.
+
+## Parser validation
+
+Typed API example:
+
+```java
+long matches = 0;
+try (RecordingFile file = new RecordingFile(path)) {
+    while (file.hasMoreEvents()) {
+        RecordedEvent event = file.readEvent();
+        if (!event.getEventType().getName().equals(expectedName)) {
+            continue;
+        }
+        matches++;
+        // Resolve verified descriptors and content types before typed access.
+    }
+}
+if (requiresPositiveControl && matches == 0) {
+    throw new IllegalStateException("Expected control event is absent");
 }
 ```
 
-Reading `event["duration"]` at the root finds nothing; dividing `"PT0.015927S"` by `1e6`
-is a type error, not a unit error. Inspect one raw event before writing the parser, and
-end every extraction script with a sanity assertion:
+Some valid incident windows can have zero events. Use a manifest/control event, recording
+health and expected opportunity count to distinguish valid zero from broken extraction.
 
-```python
-assert total > 0, "no matching events found — do not trust the numbers below"
-```
+CLI JSON may nest values and encode durations/timestamps as formatted strings; exact schema is
+tool-version-specific. Parse one fixture from each supported JDK and reject silent missing
+paths.
 
-Without it, a third mistake of the same class prints an empty table that reads like a
-healthy result.
+## JDK 25 feature checks
+
+- JEP 509 events are experimental and supported on specified Linux environments. Confirm
+  annotations, event fields/settings, stock enablement, throttling and lost/failed/biased sample
+  semantics in the deployed update.
+- JEP 518 changes sampling internals. It aims to improve safe stack walking while minimizing
+  safepoint bias; it does not imply perfect/unbiased coverage.
+- JEP 520 instruments selected methods for timing/tracing. Confirm filter grammar, supported
+  methods, transformation interactions, aggregation/chunk semantics, thresholds/stacks, and
+  overhead with the target JDK.
+
+## Authoritative references
+
+- [JFR event runtime guide](https://docs.oracle.com/en/java/javase/25/jfapi/runtime.html)
+- [`EventType`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/EventType.html)
+- [`SettingDescriptor`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/SettingDescriptor.html)
+- [JDK `jfr` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)
+- [JEP 509](https://openjdk.org/jeps/509), [JEP 518](https://openjdk.org/jeps/518), and [JEP 520](https://openjdk.org/jeps/520)

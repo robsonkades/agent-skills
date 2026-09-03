@@ -86,10 +86,11 @@ private void advance(OrderId id, UnaryOperator<FulfilmentState> transition) {
 }
 ```
 
-Two defects. `ConcurrentHashMap.compute` holds the bin lock while the mapping function runs, so
-`packing.start` — which calls back into `packedSuccessfully` — re-enters `compute` for the same
-key and deadlocks. And even without reentrancy, holding a map lock across an outbound call
-serialises unrelated orders that hash to the same bin.
+Two defects. `ConcurrentHashMap.compute` requires the remapping function to be short and says
+recursive updates must not modify the map; re-entering the same-key computation can be detected
+as an illegal recursive update or otherwise violate progress assumptions depending on the path/JDK.
+Even without reentrancy, placing an outbound call inside atomic map computation can block updates
+that contend for the same internal coordination scope.
 
 The fix is the one that generalises: **compute the transition under the lock, perform effects
 after it.**

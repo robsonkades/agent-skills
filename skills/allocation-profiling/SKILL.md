@@ -33,13 +33,16 @@ duration without reducing the total, because nobody measured where the bytes cam
 
 1. **Get the allocation rate first.** From the GC log — Eden allocated divided by the
    interval between Young GCs — or, more exactly, from the always-on per-thread counters:
-   `jdk.ThreadAllocationStatistics` is in every default recording and
-   `ThreadMXBean.getThreadAllocatedBytes` costs nothing. There is no universal "high";
+   `jdk.ThreadAllocationStatistics` is in the default recording and
+   `com.sun.management.ThreadMXBean.getThreadAllocatedBytes` provides a cumulative per-thread
+   counter when supported/enabled. Neither observation is literally free; measure recording,
+   query and stack-sampling overhead against the service's headroom. There is no universal "high";
    compare against a documented baseline for the same service under comparable load. The
    arithmetic that follows: Young GC interval ≈ Eden capacity / allocation rate, while pause
    duration follows the live set. Cutting allocation cuts frequency, not pause length.
-2. **Profile with `asprof -e alloc` for 30-60 seconds under representative load.** Overhead is
-   low and it is safe in production. Box width is **bytes**, not object count; the top of
+2. **Profile with `asprof -e alloc` for a bounded interval under representative load.** Start
+   with a conservative interval/rate on a canary, record CPU/allocation/latency before and during,
+   and stop if the overhead budget is exceeded. Box width is estimated **bytes**, not object count; the top of
    each stack is the allocated class. Without an agent, `jcmd <pid> JFR.view
 allocation-by-site` (JDK 21+) reads the same question out of the running recording.
 3. **Separate churn from promotion.** Allocation profiling measures what was allocated, not
@@ -71,8 +74,10 @@ allocation-by-site` (JDK 21+) reads the same question out of the running recordi
   default**. It fires from the **same two TLAB hooks as the legacy events** with a throttle in
   front (`jfrAllocationTracer.cpp` → `jfrObjectAllocationSample.cpp`); it is not built on the
   JEP 331 JVMTI sampler. `weight` is the bytes the thread allocated since its previous emitted
-  sample, so the weights sum to the total: 22.98 GB of samples against 22.96 GB from
-  `ThreadMXBean` in a 3 s run at 2000/s on 25.0.3.
+  sample. The weights closely tracked the total in one validation—22.98 GB of samples against
+  22.96 GB from `ThreadMXBean` in a 3 s run at 2000/s on 25.0.3—but are not a universal exact
+  ledger: recording boundaries, disabled/throttled events and short-lived threads can leave a
+  difference.
 - `jdk.ObjectAllocationInNewTLAB` and `jdk.ObjectAllocationOutsideTLAB` are the older,
   unsampled, unthrottled mechanism and are **disabled by default**. An empty recording of them
   is the expected result of not enabling them, not evidence that nothing allocated. Enable
@@ -114,14 +119,17 @@ Allocation)`. A 3 MB buffer per request produced 274 such pauses in 4 s in the r
   off by default): a 4-byte smaller header shifts many small objects down one 8-byte
   alignment step, which lowers the allocation rate of the same code. Layout arithmetic is
   `object-layout-and-footprint`.
-- Do not use `String.intern()` as a cache for high-cardinality values. Since JDK 7 the pool
-  lives in the regular heap and is collected, but interning user IDs still inflates it without
-  bound. Use an explicit `Map` with an eviction policy you control.
+- Do not use `String.intern()` as an application cache for high-cardinality values. Since JDK 7
+  interned strings live in the regular heap and entries without another strong reference may be
+  collected, so growth is not necessarily monotonic; nevertheless the global pool provides no
+  domain TTL/size policy, tenant isolation or useful hit/eviction telemetry. Use an explicit
+  bounded canonicalization/cache design only after measuring duplication and retention.
   `-XX:+UseStringDeduplication` is a retention lever for long-lived duplicates, not an
   allocation lever — the `String` and its array are allocated first and merged later.
 - Do not use `finalize()` for cleanup — deprecated for removal since JDK 18 (JEP 421), and it
-  extends object lifetime into a finalisation queue, raising collection cost. Use `Cleaner`,
-  try-with-resources, or `Arena`/`MemorySegment` for native memory.
+  extends lifetime and has no timely-execution guarantee. Prefer explicit ownership with
+  try-with-resources or `Arena`/`MemorySegment`; use `Cleaner` only as a leak safety net because
+  it is likewise nondeterministic, and keep its cleanup action from retaining the referent.
 - `jcmd <pid> GC.class_histogram` is a retention snapshot, not an allocation rate. Objects
   already collected appear in neither of two snapshots. Use it for leak work, not for this.
 - Unreferenced `jdk.internal.vm.FillerElement[]` and `jdk.internal.vm.FillerObject` in a
@@ -132,6 +140,13 @@ Allocation)`. A 3 MB buffer per request produced 274 such pauses in 4 s in the r
   thread (verified on 25.0.3); JFR attributes samples to the virtual thread by name. Bytes
   under `jdk.internal.vm.StackChunk` at park/yield sites are the frozen stacks of unmounting
   virtual threads (JEP 444), a cost of the thread model rather than of the code on top.
+
+## Security and production handling
+
+Allocation/JFR profiles can expose class names, method names, thread names and contextual values
+embedded in labels. Restrict attach/JMX/JFR access to the target identity, encrypt and retain
+recordings as production telemetry, redact tenant/user identifiers from thread names, and delete
+captures on schedule. Sampling is not a security boundary: a rare sensitive path can still appear.
 
 ## References
 

@@ -28,7 +28,7 @@ pin          the carrier is gone until the call returns.      Costs a carrier ou
 ## Telling them apart with evidence
 
 ```bash
-# Carriers over time. Growth beyond availableProcessors() is compensation happening now.
+# Candidate carriers over time. Names are implementation details; correlate with workload.
 jcmd <pid> Thread.dump_to_file -format=json /tmp/d.json
 grep -c 'VirtualThread-unparker\|ForkJoinPool-1-worker' /tmp/d.json
 
@@ -40,8 +40,9 @@ Rules of reading:
 
 - **Pinning events present** → a native frame or a `<clinit>`. The event's stack trace names
   it. Do not presume `synchronized` on JDK 24+; it does not pin any more.
-- **No pinning events, carriers growing towards `maxPoolSize`** → capture. Almost always file
-  I/O, occasionally a driver doing something unusual.
+- **No pinning events, carriers growing towards `maxPoolSize`** → compensation is a strong
+  hypothesis. Correlate file/socket/JFR events and stacks; thread names or counts alone do
+  not identify the operation.
 - **No pinning, carrier count flat, virtual threads RUNNABLE and waiting** → neither: the
   work is CPU-bound and the ceiling is the core count.
 - **Nothing anomalous anywhere** → the dependency is simply slow. That is a downstream
@@ -49,20 +50,17 @@ Rules of reading:
 
 ## File-heavy workloads
 
-This is the one category where "just use virtual threads" needs qualification. A service
-that reads a thousand files concurrently converts each read into a captured carrier, and the
-scheduler answers by creating platform threads up to `maxPoolSize` (default 256).
-
-```text
-256 carriers × 1 MB reserved stack ≈ 256 MB of reserved address space
-                                     + 256 OS threads the kernel must schedule
-```
+This is the category where "just use virtual threads" needs qualification. Many synchronous
+filesystem operations cannot unmount and may trigger scheduler compensation up to the
+implementation's maximum-pool-size policy. Platform-stack reservation, commit, guard pages
+and native overhead vary by OS, JVM and `-Xss`; measure native memory and process thread
+count rather than multiplying by a presumed 1 MB constant.
 
 Three responses, in order of preference:
 
-1. **Reduce the concurrency of the file work.** A semaphore of ~2 × spindles-or-queue-depth
-   in front of file reads costs nothing and bounds the whole effect. Storage does not go
-   faster when asked by 1 000 threads instead of 30.
+1. **Reduce the concurrency of the file work.** Put a semaphore before acquisition and find
+   its size experimentally from throughput, p99, device queueing, CPU and memory. HDDs,
+   local NVMe, network filesystems and page-cache hits have radically different optima.
 2. **Isolate it.** Run file I/O on a dedicated, sized platform executor, keeping the
    virtual-thread scheduler for network work. Blocking a thread you provisioned is fine;
    blocking one the JDK provisioned for everyone is not.
@@ -86,17 +84,18 @@ Never conclude from the name. A "reactive" driver may hold a bounded internal po
 try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {
     for (int i = 0; i < 50; i++) exec.submit(() -> client.call());
 }
-// Completes in roughly one call's latency  → it unmounts.
-// Completes in roughly 50 × latency        → it captures or pins the single carrier.
+// Near one-call latency suggests overlap; near N × latency suggests serialization.
 ```
 
-With `maxPoolSize=1` there is no compensation available, so capture and pinning both show as
-serialisation — which is exactly what you want from a screening test. Then use
-`jdk.VirtualThreadPinned` to tell which of the two it was.
+With `maxPoolSize=1` there is no compensation headroom, so capture and pinning can both look
+serial. This is only a controlled screening test: connection-pool limits, server
+serialization, rate limits and CPU can produce the same timing. Repeat, retain exceptions,
+inspect JFR pinning and I/O events, and compare with a platform-executor control.
 
-Common findings worth expecting: JDBC drivers that use plain sockets unmount and are fine;
-drivers with a native client library (some Oracle, some DB2 configurations) pin; compression
-and cryptography libraries with JNI backends pin for the duration of the native call.
+Common hypotheses worth testing: a pure supported JDK socket path can unmount; a native
+client call pins for its duration; CPU-heavy compression/cryptography consumes a carrier
+without being "blocked" at all. DNS, TLS, filesystem access, pool admission and driver
+internals mean a JDBC product name is not enough to classify the complete call path.
 
 ## What to do with each finding
 

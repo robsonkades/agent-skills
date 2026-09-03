@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: performance-methodology
-version: 1.3.0
+version: 1.4.0
 description: >-
   The investigation process for performance work: defining an SLO, recording a baseline,
-  observing before hypothesising, falsifiability, Amdahl's Law as a go/no-go filter,
-  changing one variable at a time, and validating by mechanism rather than by coincidence.
+  characterising before diagnosing, falsifiability, fixed-work speedup bounds,
+  experimental design, and validating by mechanism rather than by coincidence.
   Use when starting a performance investigation, when a fix is credited to a deploy that
   also restarted the process, when an optimisation is proposed without a measurement, when a
   benchmark result changes with the duration of the run, when an investigation has run for

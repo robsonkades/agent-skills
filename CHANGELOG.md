@@ -10,6 +10,39 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-09-03
+
+### Added
+
+- **Fourteen feature-engineering skills** covering discovery, requirements, context, scope,
+  architecture impact, solution and decision analysis, risk, decomposition, implementation
+  planning, execution, progress tracking and readiness review. The `feature-engineering` skill
+  routes the complete workflow while each specialist owns one mutually exclusive decision surface.
+- **A complete marketplace audit system** under `docs/audit/`, including the 258-skill inventory,
+  per-skill before/after scorecards, all thirteen category reviews, a cross-skill knowledge graph,
+  remaining-gap analysis and an evidence-oriented final report.
+- `npm run audit:build` to regenerate inventory and scorecard reports, plus
+  `npm run skills:sync-versions` to detect and repair version drift in `SKILLS.md`.
+- `AGENTS.md` with repository-specific guidance for Codex contributors.
+
+### Changed
+
+- **All 258 skills were reviewed against a Staff/Principal engineering rubric.** 231 packages
+  received material improvements to decision criteria, internals, trade-offs, failure modes,
+  production diagnostics, modern Java version boundaries, validation and authoritative references;
+  the remaining 27 were explicitly reviewed and retained.
+- Registry relationships now represent every strong routing-table target and relevant prose
+  cross-reference found by the audit. Registry diagnostics report the complete missing-reference
+  set instead of truncating it.
+- `SKILLS.md` version headings are synchronized with the package manifests.
+
+### Fixed
+
+- CLI agent-detection tests now isolate `PATH` completely on Windows, preventing an installed
+  `codex.CMD` or `claude.CMD` from leaking into supposedly hermetic test cases.
+- Duplicate headings and broken or missing Markdown cross-references found during the audit were
+  corrected across the marketplace.
+
 ## [1.2.0] — 2026-08-28
 
 ### Added

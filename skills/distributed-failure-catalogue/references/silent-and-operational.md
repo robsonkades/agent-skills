@@ -20,8 +20,9 @@ patterns error-rate monitoring cannot show, or that appear only around a deploy 
 
 - **Symptom** — an error-rate alert fires and nothing is broken, or a real incident never
   crosses the threshold. A spike traced back to one client sending malformed requests.
-- **Mechanism** — client and server errors counted in one series: a 4xx rise from one bad
-  caller reads as an outage, and a 5xx rise is diluted by a large 4xx baseline.
+- **Mechanism** — unlike outcomes share one numerator: malformed client traffic can dominate
+  server defects, while contract-significant 4xx responses such as unexpected authorization
+  or throttling failures may be incorrectly dismissed as “client errors.”
 - **Where it hides** — one `http_server_requests` alert with no status-class dimension;
   business rejections mapped to 500; a handler mapping every unhandled exception to one status.
 - **Owner** — `rpc-and-api-contracts` (error surface); `slo-and-alerting` (what to page on).
@@ -30,9 +31,10 @@ patterns error-rate monitoring cannot show, or that appear only around a deploy 
 
 - **Symptom** — errors that start when a rollout starts and stop when it finishes, so the
   cause is never found: deserialisation failures, unknown enum values, missing fields.
-- **Mechanism** — a rolling deploy runs both versions at once against one database, one topic
-  and each other, so a change compatible in only one direction fails for exactly that window —
-  which lasts far longer when a rollback stalls or a consumer group is half upgraded.
+- **Mechanism** — a rolling deploy runs both versions at once against shared databases,
+  topics and APIs. Required compatibility direction follows producer/consumer rollout order,
+  queued-data lifetime and rollback window; one-direction compatibility fails when traffic
+  flows in the opposite direction.
 - **Where it hides** — a renamed field; a reused protobuf field number; a new enum constant
   emitted before consumers parse it; a migration dropping a column in the release that stops
   writing it.
@@ -90,10 +92,10 @@ patterns error-rate monitoring cannot show, or that appear only around a deploy 
 
 - **Symptom** — two instances both believe they hold the lock, the lease or the leadership:
   two writers, interleaved updates, or the same job running twice.
-- **Mechanism** — a lock with a TTL is a lease, and a lease alone does not exclude. The holder
-  can stall past expiry — a long GC pause, a descheduled container, a partition — and keep
-  writing while a second holder is admitted, with no error anywhere. Mutual exclusion is not
-  guaranteed across a pause without a fencing token the protected resource itself enforces.
+- **Mechanism** — a lock with a TTL is a lease. Its service may serialize acquisition while
+  the lease is valid, but a holder can stall past expiry — a long GC pause, descheduling or a
+  partition — and resume after a successor is admitted. A protected resource outside the
+  lease service cannot reject that stale holder without a fencing/version check it enforces.
 - **Where it hides** — a Redis lock released without an owner check; a scheduled job guarded
   only by a lock with no fencing; a lock duration shorter than the job's real runtime.
 - **Owner** — `distributed-locks-and-leases` (fencing tokens); `consensus-and-quorums`.
@@ -102,10 +104,27 @@ patterns error-rate monitoring cannot show, or that appear only around a deploy 
 
 - **Symptom** — negative durations, events ordered wrongly across hosts, leases expiring early
   or late, tokens rejected as not-yet-valid, a metric that jumps backwards.
-- **Mechanism** — wall-clock time on two hosts differs, and NTP corrects by stepping, so one
-  host's clock can also move backwards. Anything subtracting timestamps from different
-  machines, or timing an interval with `System.currentTimeMillis()`, inherits that error.
-- **Where it hides** — an absolute deadline timestamp on the wire instead of a remaining
-  duration; last-writer-wins keyed on wall-clock time; latency as `receivedAt − sentAt`.
-- **Owner** — `timeouts-and-deadlines` (send a duration, convert against a monotonic source);
+- **Mechanism** — wall clocks differ and synchronization daemons may slew or, under configured
+  conditions, step corrections. Cross-host timestamp subtraction includes offset and network
+  asymmetry; local interval timing with `System.currentTimeMillis()` can include wall-clock
+  adjustment. Monotonic clocks measure local elapsed time but are not comparable across hosts.
+- **Where it hides** — last-writer-wins keyed only on wall time; latency as
+  `receivedAt − sentAt`; lease correctness assuming an unstated maximum clock error; a
+  relative timeout reset at every hop so total work exceeds the original budget.
+- **Owner** — `timeouts-and-deadlines` (propagate one budget/deadline with explicit clock and
+  transit assumptions; use a monotonic source for local elapsed time);
   `distributed-locks-and-leases` (clock assumptions behind lease expiry).
+
+## Control-plane/data-plane coupling
+
+- **Symptom** — established data traffic could have continued, but an outage in discovery,
+  identity, configuration or orchestration makes all requests fail or all instances restart.
+- **Mechanism** — the request path synchronously requires control-plane freshness instead of
+  operating from a bounded last-known-good snapshot; fail-closed behavior was chosen without
+  a criticality/expiry policy.
+- **Where it hides** — per-request feature-flag or discovery fetch, startup refusing cached
+  config, credential refresh with no overlap, readiness tied to a remote control plane.
+- **Discriminator** — existing endpoints/data remain healthy while control operations fail;
+  a canary using cached state succeeds.
+- **Owner** — `failure-models`, `caching-strategies`, and
+  `kubernetes-service-lifecycle` for lifecycle coupling.

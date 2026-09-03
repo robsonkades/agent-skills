@@ -46,9 +46,9 @@ What is **not** wrong: the class's size (modest) and its two constructor
 dependencies. Without the divergent history, this shape alone would not justify a
 finding.
 
-The After also upgrades `method()` from a raw String to a `PaymentMethod` enum along
-the way — Replace Type Code, java-refactoring's move, riding along rather than part of
-the SRP case.
+Replacing raw `method()` with `PaymentMethod` is a separate behavior-preserving prerequisite, not
+evidence for SRP. Land or characterize it independently when review/rollback risk matters rather
+than hiding a type migration inside the class split.
 
 ## After
 
@@ -58,17 +58,22 @@ out, no I/O:
 ```java
 public sealed interface RefundDecision {
     record Approve(BigDecimal amount) implements RefundDecision {}
-    record Reject(String reason) implements RefundDecision {}
+    record Reject(RefundRejection reason) implements RefundDecision {}
 }
+
+public enum RefundRejection { WINDOW_EXPIRED, EXCEEDS_CHARGE, CARD_WINDOW_EXPIRED }
 
 public final class RefundPolicy {
 
     public RefundDecision decide(Payment payment, BigDecimal amount, int daysSincePurchase) {
-        if (daysSincePurchase > 90) return new RefundDecision.Reject("window expired");
+        if (daysSincePurchase < 0) throw new IllegalArgumentException("purchase is in the future");
+        if (amount.signum() <= 0) throw new IllegalArgumentException("amount must be positive");
+        if (daysSincePurchase > 90)
+            return new RefundDecision.Reject(RefundRejection.WINDOW_EXPIRED);
         if (amount.compareTo(payment.amount()) > 0)
-            return new RefundDecision.Reject("exceeds original charge");
+            return new RefundDecision.Reject(RefundRejection.EXCEEDS_CHARGE);
         if (payment.method() == PaymentMethod.CARD && daysSincePurchase > 30)
-            return new RefundDecision.Reject("card scheme window expired");
+            return new RefundDecision.Reject(RefundRejection.CARD_WINDOW_EXPIRED);
         return new RefundDecision.Approve(amount);
     }
 }
@@ -98,7 +103,7 @@ public final class RefundProcessor {
                 if (!result.ok()) throw new RefundFailedException(result.errorCode());
                 notifier.refundApproved(payment, approved);
             }
-            case RefundDecision.Reject _ -> { /* nothing to execute */ }
+            case RefundDecision.Reject ignored -> { /* nothing to execute */ }
         }
         return decision;
     }
@@ -108,6 +113,13 @@ public final class RefundProcessor {
 `RefundNotifier` is a port with the mail adapter behind it — the seam is real
 (CX's change stream, plus a transport); the reasoning for when such an interface
 is justified is the java-dependency-inversion skill.
+
+The snippets use Java 21-final pattern matching (no unnamed `_` pattern, which became final in
+Java 22). They still abbreviate a production workflow: use a caller-stable refund idempotency key,
+model currency and remaining refundable amount, and do not assume `@Transactional` makes the
+gateway call and database/event write atomic. Persist intent/result and publish via an outbox or
+reconcile ambiguous gateway outcomes before retrying; notification failure must not repeat a
+completed refund.
 
 ## Trade-offs
 

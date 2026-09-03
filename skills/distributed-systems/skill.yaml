@@ -1,18 +1,13 @@
 schemaVersion: 1
 
 name: distributed-systems
-version: 1.2.0
+version: 1.3.0
 description: >-
-  Triage and routing entry point for distributed systems in Java: turn a design question or
-  a production symptom into the one skill that owns it. Use when work crosses a process
-  boundary and the next step is unclear — a new service or integration is being designed, a
-  review must decide whether an operation is safe to retry or duplicate, a request fans out
-  or a queue backs up, replicas disagree, an incident is spreading across services, or
-  someone proposes sharding, a distributed lock, a leader or an event-driven rewrite. Routes
-  to failure-models for the fault model, delivery-semantics and idempotency for duplicates,
-  consistency-models for what a reader observes, and the rest of the family for each
-  specific decision. Does not itself cover any of those topics; JVM performance is
-  java-performance and in-process concurrency is the Java concurrency family.
+  Triage and routing entry point for cross-process Java systems. Classifies design questions
+  and production symptoms, establishes boundary and fault assumptions, then selects the
+  specialist skill for delivery, consistency, time, overload, partitioning, messaging,
+  coordination, recovery or observability. Use when the next technical owner is unclear; it
+  deliberately does not duplicate specialist guidance.
 
 license: Apache-2.0
 
@@ -40,6 +35,8 @@ files:
   - references/
 
 dependencies:
+  - name: java-application-security-basics
+    version: ^1.0.0
   - name: failure-models
     version: ^1.0.0
   - name: delivery-semantics
@@ -53,6 +50,8 @@ dependencies:
   - name: ambassador-pattern
     version: ^1.0.0
   - name: cache-sharding-and-replication
+    version: ^1.0.0
+  - name: caching-strategies
     version: ^1.0.0
   - name: cascading-failures
     version: ^1.0.0
@@ -68,6 +67,8 @@ dependencies:
     version: ^1.0.0
   - name: distributed-locks-and-leases
     version: ^1.0.0
+  - name: distribution-boundaries
+    version: ^1.0.0
   - name: distributed-systems-testing
     version: ^1.0.0
   - name: distributed-tracing-design
@@ -75,6 +76,8 @@ dependencies:
   - name: distributed-transactions-and-sagas
     version: ^1.0.0
   - name: event-driven-architecture
+    version: ^1.0.0
+  - name: event-sourcing
     version: ^1.0.0
   - name: hot-partitions-and-rebalancing
     version: ^1.0.0
@@ -100,9 +103,13 @@ dependencies:
     version: ^1.0.0
   - name: scatter-gather
     version: ^1.0.0
+  - name: schema-evolution-and-compatibility
+    version: ^1.0.0
   - name: sharding-and-partitioning
     version: ^1.0.0
   - name: sidecar-pattern
+    version: ^1.0.0
+  - name: session-state-strategies
     version: ^1.0.0
   - name: slo-and-alerting
     version: ^1.0.0
@@ -118,6 +125,7 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - java-application-security-basics
   - java-performance
   - littles-law-and-queueing
 

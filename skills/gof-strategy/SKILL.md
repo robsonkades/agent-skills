@@ -5,8 +5,8 @@ description: >
   concept (an algorithm varies), the classical class hierarchy, and the lambda or functional
   interface that expresses it today. Covers when a function value is enough and when a named type earns its
   keep, selecting a strategy by key instead of an if-else chain, the trap of strategies that
-  differ only in constants and should be configuration, why strategies must be stateless when
-  shared, and the contract test every implementation should share. Use when an algorithm must vary
+  differ only in constants and may be configuration, how shared state changes concurrency
+  obligations, and the contract test implementations can share. Use when an algorithm must vary
   at runtime, when a switch over a type code keeps growing, when a class hierarchy exists whose
   members are one-line methods, or when strategy classes differ only in a rate or a threshold. Does not cover behaviour that changes with the
   object's own state (gof-state), two independently varying hierarchies (gof-bridge), an
@@ -19,8 +19,8 @@ description: >
 ## Purpose
 
 Let an operation's algorithm vary independently of the code that uses it. Strategy is the most
-useful and most over-implemented pattern in object design, because the design concept is almost
-always right and the classical class hierarchy almost never is.
+useful and frequently over-implemented pattern in object design. The design concept can be sound
+while a class hierarchy, lambda, enum strategy, table or direct branch is the better mechanism.
 
 Three things share the name, and separating them settles most arguments:
 
@@ -56,10 +56,12 @@ Callers must be able to supply their own algorithm
 
 ## When it is not
 
-- **One algorithm exists and no second is scheduled.** An interface with one implementation is
-  indirection (`gof-pattern-thinking`).
-- **The variants differ only in constants.** A rate, a threshold, a limit, an endpoint — that is
-  configuration, and a class per value is the commonest false Strategy.
+- **One algorithm exists and there is no boundary/ownership reason to abstract it.** An interface
+  may be premature, while a published port, platform SPI or testable external policy can justify
+  one implementation (`gof-pattern-thinking`).
+- **The variants differ only in data and share identical rules.** Prefer typed configuration.
+  Separate named policies can still be warranted when validation, authorization, rollout,
+  compatibility or lifecycle differs.
 - **The algorithm depends on the object's own state and changes as that state changes.** That is
   State (`gof-state`).
 - **Only part of an algorithm varies, inside a fixed sequence.** That is Template Method — or,
@@ -118,16 +120,18 @@ compiler enumerates the cases (`java-composition-over-inheritance`).
 ## Decision rules
 
 ```text
-IF the strategies differ only in numbers
-THEN they are configuration, not code.
+IF strategies differ only in values
+THEN first model typed validated configuration. Keep named strategies only when the
+     values carry distinct policy ownership, compatibility or behavior contracts.
 
 IF a strategy holds mutable state and is shared
-THEN it is a race. Strategies are stateless; per-call state is a
-     parameter or a context object.
+THEN define synchronization, confinement or immutable snapshots. Stateless strategies
+     are easiest to share, but stateful incremental algorithms are valid when lifetime
+     and thread-safety are part of the contract.
 
 IF selection is by a chain of if-else on a code
-THEN key a map, and define what an unknown key does — never a silent
-     default, which turns a typo into a zero charge.
+THEN compare an exhaustive switch for a closed set with a validated map/registry for
+     open contributions. Define unknown/default semantics explicitly.
 
 IF a strategy needs to know whether it applies
 THEN it has two operations (supports + apply) and wants a named type,
@@ -135,10 +139,12 @@ THEN it has two operations (supports + apply) and wants a named type,
      apply in order (gof-chain-of-responsibility).
 
 IF strategies are selected from data crossing a trust boundary
-THEN validate the key against a closed set before it selects anything.
+THEN validate/authorize against the supported registry. Extensible sets need not be
+     compile-time closed, but untrusted input must never become an arbitrary class name.
 
-IF a calculation appears in a profile as an unnamed lambda
-THEN give it a class. Diagnosability is a real requirement.
+IF a calculation is hard to attribute in profiles/logs
+THEN use a named method/type, explicit metric tag, or registration metadata. A whole
+     class is one option, not the only diagnostic identity.
 
 IF every strategy needs the same pre- and post-processing
 THEN that is a template, and it belongs in the caller once — not
@@ -162,10 +168,9 @@ THEN changing it is a migration, not a configuration flip
   determines amplification under failure, the load-balancing strategy determines tail latency.
   Changing one is a migration with a compatibility window, not a switch to be flipped
   (`sharding-and-partitioning`, `load-balancing-and-routing`, `retries-and-backoff`).
-- **Performance.** One interface call. It is inlined while the call site sees one or two
-  implementations, and stops being inlined once several appear — the megamorphic case, which
-  matters only in a measured hot loop and is worth knowing before "we added a strategy and it got
-  slower" becomes a mystery. Lambdas add no cost over a class after the first invocation
+- **Performance.** Dispatch and inlining depend on receiver profiles, compilation tier and code
+  shape rather than a fixed implementation count. Non-capturing lambdas may be cached; capturing
+  lambdas can allocate and either form may inline. Inspect profiles/compilation on measured hot paths
   (`jit-inlining-and-escape-analysis`).
 - **Testing.** Three levels. Each strategy tested directly against its own inputs — the pattern's
   main dividend, since each is a pure function. The selector tested separately, including the
@@ -174,11 +179,11 @@ THEN changing it is a migration, not a configuration flip
 
 ## Review checklist
 
-- [ ] More than one strategy exists today
+- [ ] Variation exists today, or a concrete port/SPI/ownership boundary justifies one implementation
 - [ ] Strategies differ in behaviour, not only in constants
-- [ ] Every strategy is stateless, or its state is immutable
+- [ ] Strategy state has explicit immutability, confinement or synchronization semantics
 - [ ] Selection is keyed, and an unknown key fails loudly
-- [ ] Keys arriving from outside are validated against a closed set
+- [ ] External keys are validated/authorized against a supported registry
 - [ ] Strategies used in hot or diagnosed paths have names, not anonymous lambdas
 - [ ] Shared pre/post processing lives in the caller, not duplicated per strategy
 - [ ] A contract test runs against every implementation

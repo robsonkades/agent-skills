@@ -1,151 +1,140 @@
-# Reading a thread dump
+# Thread dump interpretation
 
-## The two formats, and what each one holds
+## Collect both Java 25 views
 
 ```bash
-# Classic: platform threads only, WITH lock ownership and deadlock detection
-jcmd <pid> Thread.print > /tmp/classic.txt          # jstack <pid> is the same output
+# Platform-thread HotSpot dump with synchronization detail.
+jcmd <pid> Thread.print -l
 
-# JSON: platform AND virtual threads, WITH the scope hierarchy, WITHOUT lock information
-jcmd <pid> Thread.dump_to_file -format=json /tmp/dump.json
+# Tracked platform and virtual threads, thread containers and stacks.
+jcmd <pid> Thread.dump_to_file -format=json dump.json
 ```
 
-| Contains                                | `Thread.print` | JSON dump |
-| --------------------------------------- | -------------- | --------- |
-| Platform threads                        | yes            | yes       |
-| **Virtual threads**                     | **no**         | yes       |
-| Monitor ownership, `- locked <0x…>`     | yes            | **no**    |
-| "Found one Java-level deadlock"         | yes            | **no**    |
-| `StructuredTaskScope` parent/child tree | no             | yes       |
-| Safepoint required to collect           | yes            | no        |
+`Thread.print`/`jstack` does not enumerate virtual threads. The Java 25 simple JSON dump is designed
+for large thread populations and structured containers but omits information found in traditional
+HotSpot dumps and does no automatic deadlock detection. Neither should be called “complete” without
+stating the question.
 
-Collect both, every time, in the same minute. The habit costs two seconds and removes the
-most common evidence gap in a virtual-thread incident.
+Collection is diagnostic work with operational cost. `Thread.dump_to_file` impact scales with thread
+count and its output file must be protected. Confirm attach permission, container PID namespace,
+available disk and overwrite policy. Capture timestamp and runtime version embedded in the output.
 
-## The deadlock signature
+## Consistency model
+
+The all-thread/simple dump is not one stop-the-world snapshot; threads have collection timestamps.
+Do not construct a causal ordering from adjacent JSON entries. Traditional HotSpot collection gives
+a stronger instantaneous platform-thread view but excludes virtual threads and still represents only
+one moment.
+
+Compare repeated dumps by normalized stack signature, container, operation and age. Identical stacks
+strengthen a stuck hypothesis only when the interval exceeds expected service time and progress
+counters are flat. Line-number/JIT/native-frame differences can make equivalent waits appear changed.
+
+## Aggregate large dumps
+
+First inspect the schema instead of assuming a fixed JSON path:
+
+```bash
+jq '.threadDump | keys' dump.json
+jq '.threadDump.threadContainers[0]' dump.json
+```
+
+Then group by container and top application/wait frame. Keep full stacks for the largest and oldest
+groups; a top-frame-only count can merge unrelated resources all parked in `LockSupport.park`.
+
+```bash
+jq -r '.threadDump.threadContainers[]
+  | .container as $container
+  | .threads[]?
+  | [$container, (.stack[0] // "<no-stack>")] | @tsv' dump.json \
+  | sort | uniq -c | sort -rn
+```
+
+JSON schema and field shape are JDK artifacts, not an eternal shell API. Pin scripts to supported JDK
+versions and test them against fixture dumps. The diagnostic MXBean contract permits some or all
+virtual threads, so compare expected lifecycle counts with dump counts.
+
+## Read platform lock evidence
+
+A traditional dump can name monitor/ownable-synchronizer owners and HotSpot can print a detected
+Java-level deadlock. Verify each edge:
 
 ```text
-Found one Java-level deadlock:
-=============================
-"worker-3":
-  waiting to lock monitor 0x00007f... (object 0x000000076ab..., a java.lang.Object),
-  which is held by "worker-7"
-"worker-7":
-  waiting to lock monitor 0x00007f... (object 0x000000076ab..., a java.lang.Object),
-  which is held by "worker-3"
+thread A waits for lock X owned by B
+thread B waits for lock Y owned by A
 ```
 
-The JVM prints this itself when the cycle is among **platform** threads and involves monitors
-or `java.util.concurrent` locks. Programmatically, the same detection is
-`ThreadMXBean.findDeadlockedThreads()`.
+A stable parked stack without an ownership edge is a wait, not a proven deadlock. Conditions,
+semaphores, futures, queues, latches, I/O and non-owning synchronizers require application state to
+identify who can make progress. `StampedLock` has no owner model; remote resources are outside the
+JVM graph.
 
-For **virtual** threads there is no detector. The signature has to be read manually from the
-JSON dump: a set of virtual threads all parked in `await`/`acquire`/`get` on objects that each
-other hold, with carriers idle and CPU near zero. Search for the frames rather than the
-cycle:
+For virtual threads, Java 25 `ThreadMXBean` and automatic platform deadlock detection are explicitly
+insufficient. Instrument logical resource/owner IDs or reproduce with controlled synchronization.
 
-```bash
-jq -r '.threadDump.threadContainers[].threads[]
-       | select(.stack != null)
-       | .stack[0]' /tmp/dump.json | sort | uniq -c | sort -rn | head -20
-```
+## Structured containers
 
-If the top entries are `LockSupport.park`, `AbstractQueuedSynchronizer$ConditionNode.block`
-or `Semaphore.acquire`, and two dumps ten seconds apart are identical, the system is stuck
-rather than slow — and then the question becomes which resource each group is waiting for.
+The JSON dump records thread containers and parent/owner relationships, so named Java 25 preview
+`StructuredTaskScope` instances can expose a task hierarchy. Use the scope's `Config.withName` and a
+useful thread factory name. The hierarchy shows lifetime and location; it does not prove why a child
+has not stopped.
 
-## Aggregating a dump with 100 000 threads
+An owner in `close` with children still running suggests cancellation cleanup is waiting. Confirm
+whether interruption was delivered/observed and whether the provider call supports cancellation.
 
-Reading it is not an option; counting it is.
+## Scheduler evidence (Java 24+)
 
-```bash
-# Top stack frames by thread count — the shape of the whole system in ten lines
-jq -r '[.threadDump.threadContainers[].threads[]] | .[] | .stack[0] // "no-stack"' /tmp/dump.json \
-  | sort | uniq -c | sort -rn | head
-
-# How many threads are in each container (each executor / scope)
-jq -r '.threadDump.threadContainers[] | "\(.container): \(.threads | length)"' /tmp/dump.json
-
-# Carriers: growth beyond availableProcessors() means compensation is running
-grep -c 'ForkJoinPool-1-worker' /tmp/dump.json
-```
-
-Two numbers decide the next step: how many threads are parked in the _same_ frame (a shared
-resource everything waits for), and whether the carrier count is stable or climbing.
-
-## Starvation versus deadlock versus slow
-
-| Observation                                             | Reading                                             |
-| ------------------------------------------------------- | --------------------------------------------------- |
-| Same stacks in two dumps, CPU ~0                        | stuck: deadlock, or waiting on something dead       |
-| Different stacks, CPU ~0, deep queue                    | slow: a downstream or a bounded resource            |
-| Different stacks, CPU high, little progress             | contention or livelock                              |
-| Virtual threads RUNNABLE, carriers all busy             | starvation: not enough carriers, or CPU-bound work  |
-| Carriers climbing towards `maxPoolSize`                 | capture (file I/O) or pinning — check the JFR event |
-| Few virtual threads, many idle carriers, low throughput | the bottleneck is upstream: nothing is arriving     |
-
-"Virtual threads RUNNABLE but not running" is the one that has no equivalent in the
-platform-thread world, and the one most often misread as a stall. It means the scheduler has
-more runnable work than carriers — the fix is either less CPU-bound work on virtual threads
-or an acceptance that the core count is the ceiling.
-
-## Reading a `StructuredTaskScope` hierarchy
-
-The JSON dump nests each scope's forked threads under it, with a reference to the parent
-scope, so the tree can be reconstructed:
-
-```text
-scope "checkout" (owner: VirtualThread[#41,checkout-1])
-   ├── VirtualThread[#42]  at PaymentClient.charge      ← the slow one
-   ├── VirtualThread[#43]  at InventoryClient.reserve
-   └── scope "pricing" (owner: VirtualThread[#43])
-          └── VirtualThread[#44] at PricingClient.quote
-```
-
-The owner is normally parked in `join`; the interesting frames are its children. A scope whose
-owner sits in `close` rather than `join` is waiting for subtasks that were cancelled and have
-not stopped — that is the uninterruptible-subtask signature, and the culprit is whichever
-child is not in an interruptible frame.
-
-Name every scope (`cf -> cf.withName("checkout")`) or this view is unusable at scale.
-
-## The JFR events that matter here
-
-| Event                            | Default        | Answers                                              |
-| -------------------------------- | -------------- | ---------------------------------------------------- |
-| `jdk.VirtualThreadPinned`        | on, 20 ms      | is a carrier being held, and by what stack           |
-| `jdk.VirtualThreadSubmitFailed`  | on             | did the scheduler refuse a thread (resource problem) |
-| `jdk.VirtualThreadStart` / `End` | **off**        | thread churn and lifetime distribution               |
-| `jdk.JavaMonitorEnter`           | on (threshold) | contended monitor entry, with the blocking stack     |
-| `jdk.JavaMonitorWait`            | on (threshold) | `Object.wait` durations                              |
-| `jdk.ThreadPark`                 | on (threshold) | `LockSupport.park` — locks, queues, futures          |
-| `jdk.SocketRead` / `SocketWrite` | on (threshold) | which peer is slow, per thread                       |
-| `jdk.FileRead` / `FileWrite`     | on (threshold) | file I/O that is capturing carriers                  |
-
-```bash
-# Lower the thresholds: the 20 ms default hides the frequent short cases
-jfr configure --input default.jfc --output fine.jfc \
-    jdk.VirtualThreadPinned#threshold=1ms jdk.ThreadPark#threshold=1ms
-
-jfr summary recording.jfr                       # what is even in this file
-jfr print --events jdk.VirtualThreadPinned recording.jfr | head -50
-```
-
-Thresholds are the recurring trap across all of these: an event that did not fire is not
-evidence of absence until you know the threshold it was filtered by.
-
-## Programmatic collection
+Use `jdk.management.VirtualThreadSchedulerMXBean` rather than inferring carriers from names:
 
 ```java
-// The JSON dump, from inside the process — same output as jcmd
-var bean = ManagementFactory.getPlatformMXBean(
-        com.sun.management.HotSpotDiagnosticMXBean.class);
-bean.dumpThreads("/tmp/dump.json",
-        com.sun.management.HotSpotDiagnosticMXBean.ThreadDumpFormat.JSON);
-
-// Deadlock detection — PLATFORM THREADS ONLY. Useful, and not sufficient.
-long[] deadlocked = ManagementFactory.getThreadMXBean().findDeadlockedThreads();
+var scheduler = ManagementFactory.getPlatformMXBean(
+        jdk.management.VirtualThreadSchedulerMXBean.class);
+long queued = scheduler.getQueuedVirtualThreadCount();
+int poolSize = scheduler.getPoolSize();
+int mounted = scheduler.getMountedVirtualThreadCount();
+int parallelism = scheduler.getParallelism();
 ```
 
-Wiring the second one to an alert is worthwhile and must be documented for what it is: a
-detector with a blind spot covering most of the application's threads.
+Counts are estimates and may be `-1`. Interpret trends with CPU saturation, blocked/pinned event
+stacks and useful completion rate. Pool size above target may be compensation/capture behavior, not
+by itself a fault.
+
+## JFR and profiles
+
+Before reading absence, inspect recording settings (`jfr summary`, event metadata, template/custom
+configuration). Monitor contention, monitor wait, park, socket/file I/O and virtual-thread events
+answer different questions. A park event does not identify a lock owner; a pin event does not say the
+operation caused the service SLO breach.
+
+Pair profiles:
+
+- CPU samples: what consumed scheduled CPU;
+- wall samples: where elapsed time accumulated;
+- JFR duration events: selected operations that crossed configured thresholds;
+- application metrics/traces: which business/resource identity was affected.
+
+Use the profiler version's documented syntax and validate virtual-thread support. Sampling every
+virtual-thread start/end can be expensive at very high creation rates.
+
+## Programmatic dumps
+
+Java 21+ HotSpot exposes:
+
+```java
+var diagnostic = ManagementFactory.getPlatformMXBean(
+        com.sun.management.HotSpotDiagnosticMXBean.class);
+diagnostic.dumpThreads(absoluteNewPath,
+        com.sun.management.HotSpotDiagnosticMXBean.ThreadDumpFormat.JSON);
+```
+
+The path must be absolute and not already exist; the default MXBean implementation may throw
+`UnsupportedOperationException`. The contract guarantees all platform threads and may include some
+or all virtual threads. Treat output as sensitive and rotate/delete under an explicit retention
+policy.
+
+## References
+
+- [Java 25 virtual-thread dumps](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html#GUID-3A106A77-892E-4C64-B6D1-2938EE24E09B)
+- [Java 25 `HotSpotDiagnosticMXBean.dumpThreads`](<https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/com/sun/management/HotSpotDiagnosticMXBean.html#dumpThreads(java.lang.String,com.sun.management.HotSpotDiagnosticMXBean.ThreadDumpFormat)>)
+- [Java 25 `ThreadMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadMXBean.html)
+- [Java 25 `VirtualThreadSchedulerMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html)

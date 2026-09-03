@@ -24,9 +24,10 @@ public final class OrderConfirmer {
 
 ## Analysis
 
-- The edge `shop.orders → shop.smtp` points from policy to mechanism. If the
-  business adds SMS or webhook notification, or the mail relay changes, the _order
-  policy_ recompiles and redeploys.
+- The edge `shop.orders → shop.smtp` points from policy to mechanism. If the mail relay, SDK or
+  SMTP representation changes, the _order policy_ recompiles and redeploys. Adding SMS is a
+  separate product decision: this contract currently contains an email destination, so a truly
+  multi-channel policy may honestly require its own contract change.
 - `new SmtpClient(...)` inside the class hides the dependency and hardcodes the
   endpoint; no test can run `confirm` without a mail server or bytecode-level
   mocking of `SmtpClient`.
@@ -111,9 +112,9 @@ public final class Main {
 }
 ```
 
-A DI framework can replace this method; it cannot improve on its clarity for one
-object graph. Adopt one when graph size or scoping demands it, not to enable the
-pattern.
+A DI framework can replace this method and add lifecycle, scopes, conditional assembly and
+diagnostics; for one tiny graph it may not improve clarity. Adopt one for demonstrated graph and
+lifecycle needs, not merely to enable constructor injection.
 
 ## The double that proves the seam
 
@@ -136,11 +137,16 @@ The test constructs `new OrderConfirmer(new RecordingSender())` and asserts on
   the decoupling — collapsing them would re-leak transport vocabulary into policy.
 - The composition root becomes a coupling hotspot by design. It is the one file
   allowed to know everything; keep logic out of it.
+- `send` is an external effect. This port says nothing about retry, deduplication, transaction
+  boundaries or an ambiguous SMTP outcome. If confirmation state and notification must be
+  reliable together, the application needs an outbox/idempotency design; dependency inversion
+  does not create delivery guarantees.
 
 ## Verification
 
 - `shop.orders` compiles with `shop.smtp` absent from the classpath or module
   graph (`jdeps` shows no edge; under JPMS the policy module has no `requires`).
 - The policy test suite runs with the recording double only.
-- Adding a second transport (SMS) touches a new adapter and one line of the
-  composition root — no change in `shop.orders`.
+- Replacing one email transport with another touches a new adapter and the composition root, not
+  `shop.orders`. Adding SMS changes only adapters **only if** the policy contract was already
+  channel-neutral and carried a valid phone destination; this example deliberately is not.

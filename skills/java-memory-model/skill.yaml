@@ -1,20 +1,15 @@
 schemaVersion: 1
 
 name: java-memory-model
-version: 1.2.0
+version: 1.3.0
 description: >-
-  The Java Memory Model as a contract about reordering: happens-before as the only currency,
-  volatile piggyback publication, atomicity versus visibility versus ordering, safe
-  publication and final-field semantics, double-checked locking, and why x86 and aarch64
-  differ. Use when reviewing code where one thread writes a field another reads, when a flag
-  between threads is not volatile, when an invariant spans two fields, when a constructor
-  lets this escape, when two methods synchronise on different monitors, when Thread.sleep is
-  used as synchronisation, when a bug appears only after migrating to aarch64, or when a
-  mitigation only made a race rarer. Does not cover thread sizing and virtual threads
-  (thread-sizing-and-virtual-threads), cache-line effects and false sharing
-  (cpu-cache-and-numa), or lock contention profiling (jfr-and-async-profiler). Explicit
-  access modes are varhandles-and-memory-ordering and monitor cost under contention is
-  lock-inflation.
+  Proving inter-thread visibility, ordering and atomicity under the Java Memory Model. Covers
+  actions/executions, synchronization order, synchronizes-with and happens-before, data races,
+  sequential consistency for correctly synchronized programs, volatile publication, monitor and
+  lifecycle edges, final-field freeze semantics, safe publication, compound invariants, benign
+  races, constructor escape, wait/notify, and architecture/JIT independence. Use for shared-state
+  correctness reviews and intermittent outcomes. VarHandle modes, algorithms, locks and testing
+  mechanics have separate owners.
 
 license: Apache-2.0
 
@@ -43,6 +38,13 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - varhandles-and-memory-ordering
+  - java-thread-safety-contracts
+  - lock-free-patterns
+  - concurrency-testing
+  - cpu-cache-and-numa
 
 capabilities:
   - reads-source

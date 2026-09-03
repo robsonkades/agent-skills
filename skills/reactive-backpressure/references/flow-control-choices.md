@@ -17,7 +17,7 @@ structurally faster than its consumer. That was never about the cost of a thread
 
 ## The three conditions
 
-Reactive backpressure is the right answer when these hold together:
+These signals make reactive backpressure progressively more valuable; they need not all hold:
 
 1. **Sustained rate mismatch** — the producer generates items faster than the consumer
    processes them, persistently under normal load, not as an occasional burst a small buffer
@@ -28,20 +28,20 @@ Reactive backpressure is the right answer when these hold together:
 3. **Multiple stages at different rates** — parse, enrich, validate, persist, each with its
    own sustainable rate, where the bottleneck can move between stages as load changes.
 
-With none of them present — a parallel fan-out with an aggregated response, a simple
-request/response endpoint, an isolated I/O task — thread-per-request is usually the simpler
-answer.
+With none present — a parallel fan-out with an aggregated response, a simple request/response
+endpoint, an isolated I/O task — thread-per-request is often simpler, subject to the team's
+existing stack and migration cost.
 
 ## Scenario comparison
 
-| Scenario                                                                     | Better choice                                                                      | Why                                                                                                         |
-| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Fan-out of three downstream HTTP calls, simple aggregation, no rate mismatch | Virtual threads with structured concurrency                                        | There is no rate mismatch to resolve — it is concurrent I/O orchestration, with direct stack traces         |
-| Kafka topic at 200K msg/s with a handler sustaining 20K msg/s                | Reactive Kafka receiver, or a poll-based consumer with manual `pause()`/`resume()` | A structural rate mismatch exists; something must decide what happens to the excess                         |
-| Simple REST endpoint, 1:1 request/response, no streaming                     | Virtual threads (thread-per-request)                                               | The historical motivation does not apply: a blocked virtual thread costs a stack chunk, not an OS thread    |
-| Streaming export of millions of rows to a client slower than the database    | Reactive with `limitRate` and end-to-end backpressure over HTTP/2                  | Flow control must cross the network protocol; thread-per-request has no built-in "send me N more"           |
-| Parallel calls with timeout and partial-failure tolerance                    | Virtual threads with structured concurrency                                        | The same problem the reactive combinators solve, with imperative control flow                               |
-| Multi-stage pipeline with different per-stage rates (parse, enrich, persist) | Reactive                                                                           | Condition 3 applies: the bottleneck can migrate, and each operator already carries its own notion of demand |
+| Scenario                                                                     | Better choice                                                                      | Why                                                                                                            |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Fan-out of three downstream HTTP calls, simple aggregation, no rate mismatch | Virtual threads with structured concurrency                                        | There is no rate mismatch to resolve — it is concurrent I/O orchestration, with direct stack traces            |
+| Kafka topic at 200K msg/s with a handler sustaining 20K msg/s                | Partition/scale consumers or reduce ingress; pause/resume only bounds local intake | A persistent 10× deficit cannot be repaired by a client API; broker lag and retention become the durable queue |
+| Simple REST endpoint, 1:1 request/response, no streaming                     | Virtual threads (thread-per-request)                                               | The historical motivation does not apply: a blocked virtual thread costs a stack chunk, not an OS thread       |
+| Streaming export of millions of rows to a client slower than the database    | Reactive with `limitRate` and end-to-end backpressure over HTTP/2                  | Flow control must cross the network protocol; thread-per-request has no built-in "send me N more"              |
+| Parallel calls with timeout and partial-failure tolerance                    | Virtual threads with structured concurrency                                        | The same problem the reactive combinators solve, with imperative control flow                                  |
+| Multi-stage pipeline with different per-stage rates (parse, enrich, persist) | Reactive                                                                           | Condition 3 applies: the bottleneck can migrate, and each operator already carries its own notion of demand    |
 
 ## Overflow strategies
 
@@ -90,13 +90,12 @@ it fails silently.
 
 ## Reactive Streams, the parts that constrain a design
 
-| Interface        | Methods                                          | Normative rules |
-| ---------------- | ------------------------------------------------ | --------------- |
-| `Publisher<T>`   | `subscribe(Subscriber<? super T>)`               | 11              |
-| `Subscriber<T>`  | `onSubscribe`, `onNext`, `onError`, `onComplete` | 13              |
-| `Subscription`   | `request(long n)`, `cancel()`                    | 17              |
-| `Processor<T,R>` | `Publisher<R>` plus `Subscriber<T>`              | 2               |
-| **Total**        |                                                  | **43**          |
+| Interface        | Methods                                          | Normative rules                     |
+| ---------------- | ------------------------------------------------ | ----------------------------------- |
+| `Publisher<T>`   | `subscribe(Subscriber<? super T>)`               | produces signals under the protocol |
+| `Subscriber<T>`  | `onSubscribe`, `onNext`, `onError`, `onComplete` | consumes serialized signals         |
+| `Subscription`   | `request(long n)`, `cancel()`                    | controls demand and cancellation    |
+| `Processor<T,R>` | `Publisher<R>` plus `Subscriber<T>`              | obeys both sides                    |
 
 - A publisher may never deliver more items than the outstanding sum of `request(n)`.
 - `onNext`, `onError` and `onComplete` are mutually exclusive; the latter two are terminal.
@@ -118,7 +117,7 @@ exactly three things can follow:
    `pause()`, a semaphore acquired before dispatch. Effective `λ` is forced towards `μ`, and
    the producer waits rather than the consumer drowning.
 
-Only option 3 both bounds memory and keeps every item, and it requires that something
-upstream knows how to slow down. Replacing a pipeline without replacing that "something"
-does not select option 3 — it regresses to option 1, with a more expensive per-item
-representation.
+Only option 3 both bounds **in-memory** backlog and keeps every item, and it requires that
+something upstream can slow down. A durable queue is a fourth architecture: it moves the
+backlog to bounded storage and makes retention/replay/recovery explicit. Replacing a pipeline
+without preserving either mechanism regresses to unbounded pending work.

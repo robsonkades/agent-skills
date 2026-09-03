@@ -1,20 +1,13 @@
 schemaVersion: 1
 
 name: distributed-failure-catalogue
-version: 1.2.0
+version: 1.3.0
 description: >-
-  A recognition index of named distributed failure patterns, each given as symptom,
-  mechanism, where it hides in code or config, and the skill that owns the fix: thundering
-  herd, retry storm, cascading failure, timeout stacking, unbounded queue growth, resource
-  exhaustion, gray failure, duplicate processing, split-brain, clock skew, version skew in a
-  rolling deploy, stale work past its deadline, destructive cleanup, input explosion, the
-  optional dependency that is really required, the second-system rewrite, expected errors
-  mixed with unexpected, and the absence of errors as an error. Use when an incident has a
-  shape you recognise but cannot name, when a postmortem needs the pattern's name, when a
-  design review needs failures to argue against, when a consumer stopped silently and no
-  alert fired, or when a cleanup job deleted more than intended. Does not contain the fixes:
-  every entry routes to its owner — cascading-failures, retries-and-backoff,
-  circuit-breakers, failure-models and the rest.
+  Evidence-oriented recognition index for recurring distributed failure shapes: overload
+  amplification, gray and asymmetric failure, split ownership, stale work, mixed versions,
+  correlated faults, silent stagnation and destructive automation. Use to turn incident
+  observations into discriminable hypotheses and route each to the skill owning diagnosis
+  and remediation. It is not a substitute for the owner skill or causal evidence.
 
 license: Apache-2.0
 
@@ -42,6 +35,8 @@ files:
   - references/
 
 dependencies:
+  - name: caching-strategies
+    version: ^1.0.0
   - name: failure-models
     version: ^1.0.0
   - name: architecture-decision-making
@@ -68,7 +63,6 @@ dependencies:
     version: ^1.0.0
 
 suggests:
-  - caching-strategies
   - connection-pool-sizing
   - consensus-and-quorums
   - distribution-boundaries
@@ -77,6 +71,9 @@ suggests:
   - littles-law-and-queueing
   - load-balancing-and-routing
   - poison-messages-and-dlq
+  - distributed-tracing-design
+  - linux-for-jvm
+  - architecture-characteristics
 
 capabilities:
   - reads-source

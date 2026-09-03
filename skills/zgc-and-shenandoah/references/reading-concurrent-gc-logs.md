@@ -60,12 +60,16 @@ depending on them.
 [gc] GC(42) Garbage Collection (Allocation Stall)
 ```
 
-This line means application threads blocked waiting for space: allocation rate outran the
-collector's concurrent capacity. It is the concrete mechanism behind "ZGC still has bad tail
-latency", and it is where a p99.9 investigation on a concurrent collector should start.
+For ZGC this line means allocation threads waited for space. It establishes a stall, not the
+root cause: insufficient hard/soft heap headroom, spike prediction, live-set growth,
+fragmentation/large allocations, too little concurrent CPU or throttling can converge here.
+Shenandoah uses its own pacing, allocation-failure, degenerated and full-GC signatures; do not
+force both collectors through one log label.
 
-Two fixes exist — raise the heap, or lower the allocation rate. No flag makes either
-collector immune, so a stall answered with a flag change has not been answered.
+Choose remediation from the proven constraint: reduce allocation/live set, restore CPU,
+increase justified heap headroom, adjust workload backpressure, or evaluate a narrowly scoped
+collector control. Re-run burst and steady-state cases; a flag that merely moves the stall is
+not a fix.
 
 ## Summarising pauses and phases
 
@@ -81,7 +85,7 @@ per phase name. Two traps when scripting this:
 ## Locating barrier cost in a profile
 
 ```bash
-./profiler.sh -e cpu -d 30 -o flamegraph -f cpu.html <pid>
+asprof -e cpu -d 30 -f cpu.html <pid>
 ```
 
 Frames to look for, with the caveat that symbol names vary by build and by async-profiler
@@ -105,8 +109,10 @@ jcmd <pid> VM.flags -all | grep -i -E "zgc|shenandoah"
 
 - Same CPU and memory quota as the production target, or the CPU-contention result is
   meaningless.
-- Open-loop load generation (wrk2 or equivalent) so coordinated omission does not hide the
-  tail the migration was meant to fix.
-- p50, p99, p99.9 and max — never a mean.
-- Barrier overhead isolated with JMH, not inferred from a blog figure.
+- Use an open-loop or corrected workload when production arrivals continue during stalls;
+  document offered and achieved load so coordinated omission cannot hide the tail.
+- p50, p99, p99.9 and max for latency/stalls, plus means/rates where they answer CPU,
+  throughput or total-work questions; never substitute a mean for the tail.
+- Barrier/workload overhead evaluated with profiles and repeated end-to-end or focused
+  benchmarks; changing collectors in JMH does not isolate one mechanism by itself.
 - `ShenandoahGCMode` stated in the write-up, and confirmed via `jcmd`.

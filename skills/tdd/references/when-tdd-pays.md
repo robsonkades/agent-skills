@@ -22,9 +22,11 @@ the fix is to make the behaviour reachable without the container, not to abandon
 
 - **Algorithmic and rule-heavy logic** — pricing, tax, eligibility, parsing, scheduling. The
   expected outputs are known, boundaries are numerous, and the cycle is milliseconds.
-- **Bug fixes, always.** The failing test is the reproduction. It is the cheapest test you will
-  ever write, because the debugging already told you the inputs, and it is the only proof the
-  fix addresses the reported fault rather than a nearby one.
+- **Bug fixes, when the failure can be reproduced safely at a useful level.** The failing test is
+  strong evidence that the fix addresses the reported fault rather than a nearby one. During an
+  incident, mitigation may precede the regression test; nondeterministic, destructive, or
+  production-only failures may require a recorded reproducer, model, or diagnostic assertion before
+  a stable automated test is possible.
 - **Designing a new API from the caller's side.** Writing the call first exposes an awkward
   signature before there is an implementation defending it (java-api-design).
 - **Anything with a stated invariant** — sums that must balance, state machines with illegal

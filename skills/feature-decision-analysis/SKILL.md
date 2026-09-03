@@ -73,9 +73,11 @@ naming, internal structure, private methods, which existing utility to call, tes
 file placement inside an established convention, straightforward reuse of a confirmed project
 pattern, formatting, log message wording.
 
-**User-confirmed** — present options, recommend, wait:
+**User-confirmed** — present options, recommend, and wait when the choice changes product behaviour,
+external contracts, operational ownership, material cost, security/privacy/legal posture, stored
+data semantics, or an expensive-to-reverse architecture boundary:
 
-a new technology or dependency; a new infrastructure component; the persistence strategy; a
+a new runtime technology or externally operated dependency; a new infrastructure component; the persistence strategy; a
 change to a published API contract; anything breaking; business behaviour, including defaults
 and limits nobody stated; security, authentication, authorisation, retention and personal-data
 handling; a messaging or delivery-guarantee choice; a consistency model; adopting or departing
@@ -90,7 +92,8 @@ IF the decision is user-confirmed and the user has not confirmed it
 THEN it is a blocking question. Not a default, not a placeholder, not "for now".
 
 IF a technology appears in the repository and is relevant to the feature
-THEN report it as PROJECT_EXISTING and ask whether it applies here.
+THEN report it as PROJECT_EXISTING. Ask only when reuse changes externally visible behaviour,
+     ownership, cost, policy, or reversibility; otherwise follow the established project convention.
 
 IF someone asserts an organisational standard
 THEN record who asserted it. An unattributed standard is an assumption.

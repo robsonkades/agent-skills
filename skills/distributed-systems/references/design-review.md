@@ -31,8 +31,8 @@ Answers are recorded, not assumed — an unanswered question here is a defect sc
 
 - What is promised: the operation, the error surface, and which errors are retryable?
   → `rpc-and-api-contracts`
-- Can an old consumer read a new producer's payload, and the reverse? Both directions must be
-  answered, because a rolling deploy runs both versions at once.
+- Which old/new producer-consumer combinations occur during rollout, rollback and retained
+  message replay? Record that compatibility matrix and evolution horizon.
 - Is the guarantee stated with a scope — at-least-once, per-partition ordering, a named
   consistency model? → `delivery-semantics`, `consistency-models`
 
@@ -42,6 +42,8 @@ Answers are recorded, not assumed — an unanswered question here is a defect sc
 - Is partitioning actually needed, or is this a cache or a read replica?
   → `sharding-and-partitioning` (its decision block should be able to say no)
 - If partitioned: what is the key, how uniform is it _by traffic_, and what query does it forbid?
+- What happens during split/merge/rebalance: who owns writes, how are stale owners fenced, and
+  how are copied ranges verified?
 - Is there singleton work? Can it be partitioned instead of elected? → `leader-election`
 
 ## 6. Overload
@@ -49,6 +51,8 @@ Answers are recorded, not assumed — an unanswered question here is a defect sc
 - What happens at twice the expected load? At ten times?
   → `rate-limiting-and-load-shedding`
 - Is every queue and every pool bounded? Name the bound for each.
+- Where is admission controlled, which work is shed first, and can retries/recovery traffic
+  bypass the same budget?
 - Which dependencies are required and which are optional, and what is the defined degraded
   behaviour of each optional one? → `cascading-failures`
 - Does a failing dependency stop being called, and does the caller have something useful to do
@@ -61,8 +65,23 @@ Answers are recorded, not assumed — an unanswered question here is a defect sc
 - On SIGTERM: what drains, in what order, and does the grace period cover it? Include the
   non-HTTP work — consumers, schedulers, executors, leases.
 - What does a rolling deploy do to in-flight work and to the leader?
+- What is the rollback point after a schema or message change, and which old binaries remain
+  capable of reading new durable state?
 
-## 8. Observability
+## 8. Recovery, integrity and trust
+
+- What are RPO and RTO for each state class, and has restore—not only backup—been exercised?
+- Which failures are correlated across replicas, zones, credentials, DNS and control planes?
+  → `failure-models`
+- How is silent divergence/corruption detected and reconciled? Name authoritative source,
+  invariant/checksum and repair ownership.
+- Where are authentication, authorization and tenant boundaries enforced, including async
+  consumers and internal service calls? What happens when identity/keys cannot refresh?
+  → `java-application-security-basics`
+- Which payload/trace/log fields carry sensitive data, and what retention/deletion obligations
+  survive replication, queues, DLQs and backups?
+
+## 9. Observability
 
 - Can one request be followed end to end? → `distributed-tracing-design`, `structured-logging`
 - What is the SLI, measured where the user crosses the boundary? → `slo-and-alerting`
@@ -70,11 +89,12 @@ Answers are recorded, not assumed — an unanswered question here is a defect sc
   monitoring cannot see it. → `distributed-failure-catalogue`
 - Has anyone computed the cardinality budget of the new metrics? → `metrics-and-cardinality`
 
-## 9. Proof
+## 10. Proof
 
 - Which of these answers has a test? → `distributed-systems-testing`
 - At minimum: duplicate delivery, out-of-order delivery, dependency slow, dependency down, crash
-  mid-operation, and a rolling deploy with two versions live.
+  mid-operation, asymmetric network failure, restore/recovery, overload, and a rolling deploy
+  with two versions live.
 - For each failure test, what invariant is asserted? "No exception" is not an invariant.
 
 ## Red flags that end a review early
@@ -82,7 +102,10 @@ Answers are recorded, not assumed — an unanswered question here is a defect sc
 - No fault model written down.
 - "Exactly-once" claimed with no boundary named.
 - A retry policy over an operation whose repeat-safety nobody has established.
-- A distributed lock protecting a resource that cannot check a fencing token.
+- A distributed lock protecting a resource that cannot enforce ownership and whose duplicate
+  effect is not survivable.
 - An unbounded queue, an unbounded executor, or a timeout of zero meaning infinite.
 - Sharding proposed with no measured growth curve.
-- A liveness probe that checks a database.
+- A liveness probe coupled to an external dependency without evidence that restarting the
+  process can repair the condition.
+- Backups with no restore drill or unmeasured RPO/RTO.

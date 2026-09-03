@@ -1,20 +1,13 @@
 schemaVersion: 1
 
 name: concurrency-limiting-and-bulkheads
-version: 1.2.0
+version: 1.3.0
 description: >-
-  Bounding in-flight work with semaphores and bulkheads: the difference between a
-  concurrency limit, a rate limit and a queue limit, why Little's Law is the only thing
-  connecting them, placing one limit per scarce resource, partitioning so one caller or
-  dependency cannot consume the whole budget, and why a Semaphore bounds one JVM and not a
-  cluster. Use when a virtual-thread executor replaced a pool and nothing bounds the fan-out
-  any more, when a semaphore is described as a rate limiter, when one global limit protects
-  several dependencies, when acquire has no timeout, when a permit is released outside a
-  finally block, when a limit was divided by the replica count and autoscaling changed it,
-  or when a downstream reports more concurrency than the limit allows. Not the queueing
-  arithmetic (littles-law-and-queueing), database pool sizing (connection-pool-sizing),
-  retry amplification (retries-and-backoff), how long to wait (timeouts-and-deadlines), or
-  demand inside a reactive pipeline (reactive-backpressure).
+  Engineer process-local concurrency limits and bulkheads around scarce resources, with explicit
+  admission deadlines, permit ownership, weighted work, partitioning, fairness, observability and
+  overload validation. Distinguishes concurrency, rate and queue limits and the assumptions behind
+  Little's Law. Use after virtual-thread migrations, during downstream saturation, or when local
+  limits leak, over-release, double-queue or fail to compose across replicas.
 
 license: Apache-2.0
 
@@ -50,6 +43,9 @@ dependencies:
 
 suggests:
   - retries-and-backoff
+  - rate-limiting-and-load-shedding
+  - distributed-locks-and-leases
+  - failure-models
 
 capabilities:
   - reads-source

@@ -19,7 +19,7 @@ settle, and whose answer changes the work, becomes a question.
 | -------------------- | ----------------------------------------------------------- |
 | Language and runtime | Version, and whether a newer language feature may be used   |
 | Framework            | Version, and whether a new starter or module is acceptable  |
-| Libraries            | Any new dependency at all — always a decision               |
+| Libraries            | Licence, supply-chain, runtime, footprint, and removal cost |
 | Database             | Which one, and whether this feature may add a schema object |
 | Schema change        | Migration tool and the compatibility window                 |
 | Messaging            | Broker, topic ownership, delivery guarantee                 |
@@ -36,8 +36,9 @@ settle, and whose answer changes the work, becomes a question.
 | Infrastructure       | Anything new to run, and who runs it                        |
 | Deployment           | Ordering constraints, flags, rollback                       |
 
-Most rows resolve to "the project already does this, and it applies here" — which is a decision
-with provenance PROJECT_EXISTING confirmed by the user, not a non-decision.
+Most rows resolve to “the project already does this, and it applies here.” Record provenance as
+PROJECT_EXISTING. User confirmation is warranted only when the authority test identifies external
+behaviour, material cost, policy, data, or expensive reversibility—not merely because a row exists.
 
 ## Asking without smuggling
 
@@ -68,11 +69,12 @@ Good    The project runs Kafka for shipping events (pom.xml:104, two consumers u
 The good version does three things: it separates observation from proposal, it gives the user
 the two facts that actually decide it, and it asks one closed question.
 
-## A new dependency is always a decision
+## Calibrate a new dependency as a decision
 
-Adding a library commits the project to its licence, its transitive tree, its release cadence,
-its vulnerability reports and its eventual removal. That is true of a small library too. Before
-proposing one:
+Adding a library commits the project to its licence, transitive tree, release cadence,
+vulnerability reports and eventual removal. A small, test-only dependency already permitted by the
+project may be an agent-owned implementation choice; a runtime, native, networked, licensed, or
+foundational dependency normally earns explicit review or user confirmation. Before proposing one:
 
 - Does the project, the framework, or the standard library already do this? Check, with a path.
 - What does the project already depend on that is close?

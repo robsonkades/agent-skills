@@ -5,10 +5,10 @@
 **Content coupling — reaching into another module's internals.** In Java:
 `setAccessible(true)` on another package's private members, depending on another
 package's class being a specific concrete subtype, or parsing another component's
-log output or serialised form. Detection: reflection across package boundaries,
-casts to implementation types the API never returned. Always a finding; there is
-no benign version outside test infrastructure and frameworks that own the
-contract.
+log output or serialised form. Detection: reflection across package boundaries and casts to
+implementation types the API never returned. Usually a finding, but first distinguish
+unsupported intrusion from a deliberately versioned low-level integration, generated binding or
+framework mechanism whose owner publishes that representation as the contract.
 
 **Common coupling — shared mutable state.** In Java: a mutable `static` field or
 singleton read and written from several packages, a shared `Properties` or config
@@ -20,8 +20,8 @@ dependency graph — the graph shows edges to the holder, not who overwrites who
 **Control coupling — telling the callee how to behave.** In Java: `boolean` or
 enum flag parameters that select the callee's algorithm
 (`render(data, /* isAdmin */ true)`), mode fields consulted deep inside. The
-caller must know the callee's internals to pick the flag. Fix is usually two
-methods or a variant type. False positive: a flag that is genuine _data_ the
+caller may need to know hidden branch structure to pick the flag. Fix is often two
+methods or a variant type. False positive: an explicit policy/mode that is genuine _data_ the
 domain defines (a `RoundingMode` passed to division is the domain's own
 vocabulary, not control flow leakage).
 
@@ -41,8 +41,9 @@ normal, healthy case. Not a finding; listed so reviews stop trying to "fix" it.
 
 **Functional — one package, one capability.** Everything in `shop.pricing` exists
 to price things; a change to pricing policy lands here and nowhere else. The
-target state; recognise it by the package name being a capability, not a layer or
-a category.
+strong target where capability change is the dominant axis; recognise it by one coherent reason
+to change. Layered packages can also be cohesive when technology/lifecycle ownership is the real
+axis — names do not establish cohesion by themselves.
 
 **Communicational — grouped around the same data.** A package holding everything
 that reads and writes `StockLevel`. Acceptable and common; weaker than functional
@@ -72,8 +73,8 @@ filed in a junk drawer.
 - **An adapter importing a vendor SDK heavily** is not "too coupled" — it exists
   to absorb exactly that coupling so nobody else does. Judge the system by who
   _else_ imports the SDK.
-- **Generated code** (protobuf, JPA metamodels) shows extreme stamp and content
-  patterns and is exempt: nobody hand-maintains it, so its coupling costs nothing
-  at change time. Exclude it from the graph before analysing.
+- **Generated code** (protobuf, JPA metamodels) distorts source-maintenance metrics, so analyse
+  it separately rather than declaring it free. Regeneration may be mechanical while schema,
+  binary and downstream compatibility costs remain large.
 - **A test package coupled to everything it tests** is definitionally fine;
   coupling analysis applies to production edges.

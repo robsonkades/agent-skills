@@ -1,10 +1,10 @@
 schemaVersion: 1
 
 name: gof-chain-of-responsibility
-version: 1.1.0
+version: 1.2.0
 description: >-
   Chain of Responsibility in modern Java, and the pipeline it is usually confused with: the
-  classical form where exactly one handler handles and the rest pass, versus the middleware form
+  classical first-accepting form versus middleware where stages may all process and forward
   where every stage processes and forwards. Covers choosing between them, the unhandled-request
   policy that silent chains get wrong, ordering discipline when handlers are contributed
   independently, error propagation and partial state when a stage throws mid-chain, and why
@@ -40,7 +40,7 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
+dependencies: []
 
 suggests:
   - cancellation-and-interruption

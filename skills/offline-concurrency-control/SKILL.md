@@ -49,9 +49,9 @@ Pessimistic offline lock   prevent the conflict by recording ownership before
                            the edit begins. Needs an owner, an acquisition
                            time and an expiry, because owners crash.
 
-Coarse-grained lock        one version or one lock for a whole aggregate, so
-                           related data cannot be updated inconsistently and
-                           parts do not conflict with each other spuriously.
+Coarse-grained lock        one version or lock for a whole aggregate, so
+                           related changes share one concurrency boundary;
+                           independent edits may conflict spuriously.
 
 Implicit lock              the mechanism is applied by the framework or a
                            base class rather than by each developer, so it
@@ -117,16 +117,17 @@ The mechanism can be forgotten on a new write path
   affected-row count must be tested. An ORM does this for you; hand-written SQL and bulk
   updates do not, and a bulk `UPDATE` that does not touch the version silently defeats
   every optimistic lock on those rows (`orm-behavioral-patterns`).
-- Pessimistic offline locks need four things or they will strand data: an owner, an
-  acquisition timestamp, an expiry, and an administrative override. The expiry is not
-  optional — the owning session will crash, and without expiry the record is locked
-  forever.
+- Pessimistic offline locks need ownership and abandonment recovery. A lease uses acquisition time,
+  expiry and safe renewal; a durable checkout may instead require explicit release plus an audited
+  administrative recovery procedure. Expiry is valuable but unsafe if work can outlive it without
+  fencing, because two owners may then act concurrently.
 - Do not implement a pessimistic offline lock with a database transaction held open across
   requests. It holds a pooled connection for a human's thinking time, and it will exhaust
   the pool long before it will protect data.
-- Lock granularity follows the invariant. Versioning each row of an aggregate separately
-  produces conflicts between edits that were never in conflict, and permits inconsistent
-  combinations that the aggregate exists to prevent (`domain-logic-organization`).
+- Lock granularity follows the invariant. Versioning rows independently reduces conflicts but can
+  permit combinations that violate an aggregate-wide invariant. One root version protects the
+  invariant but can create false conflicts between independent edits
+  (`domain-logic-organization`).
 - Coarse granularity trades throughput for correctness, and the trade is real: one version
   on a hot aggregate serialises all its writers. If that hurts, the aggregate is probably
   too big — resize it rather than weakening the lock.
@@ -135,8 +136,9 @@ The mechanism can be forgotten on a new write path
   code being read. Pay that cost back with logging that names the entity, the version
   expected and the version found.
 - Optimistic locking and idempotency solve different problems and are frequently confused.
-  Versioning stops a _stale_ write; an idempotency key stops a _duplicate_ write. A retried
-  request carrying the same version will pass the version check
+  Versioning stops a _stale_ write; an idempotency key stops a _duplicate_ write. After the first
+  successful update increments the version, a duplicate carrying the old version normally fails
+  optimistic locking rather than returning the original result
   (`idempotency`).
 - Test concurrency with concurrency. A unit test with a mocked repository cannot observe a
   lost update; two threads against a real database can.

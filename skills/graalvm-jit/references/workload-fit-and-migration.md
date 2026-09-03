@@ -6,16 +6,16 @@ Treat this as a prior for choosing what to benchmark, never as a substitute for 
 and read the last column: several rows changed with the GraalVM 25.x line, and a prior formed
 on an older compiler is a prior about a different compiler.
 
-| Workload                                                    | Trend                       | Why                                                                                              | Holds on                                          |
-| ----------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
-| Many temporary allocations that rarely escape               | Favours Graal               | PEA removes the allocation on the paths where it does not escape                                 | All lines                                         |
-| Many interface or polymorphic calls at hot call sites       | Favours Graal               | Graph-based inlining budget and more aggressive speculation                                      | All lines; 25.3 replaced the inliner — remeasure  |
-| High-level frameworks with heavy boxing (Spring, Hibernate) | Favours Graal               | Combines both effects above                                                                      | All lines                                         |
-| Numeric code with simple loops over arrays                  | Favours C2                  | CE had no auto-vectorisation; `Vectorization` was Oracle GraalVM only                            | CE through 25.2. CE 25.3 enables `VectorizeLoops` |
-| Vector API (`jdk.incubator.vector`) kernels                 | Unknown, measure            | Graal lowers Vector API operations only since 25.0, coverage "initial", experimental             | 25.0+; C2's coverage is older and broader         |
-| Start-up critical (Lambda, CLI, short jobs)                 | Favours C2, or native image | The compilation investment has no time to repay                                                  | All lines                                         |
-| Severely CPU-limited (containers with a low quota)          | Favours C2                  | Graal compilations cost more CPU each, and 0.66 of `CICompilerCount` goes to JVMCI since 24      | All lines                                         |
-| Memory-limited containers                                   | Favours C2                  | libgraal's isolate heap and threads are outside `-Xmx`; more JVMCI threads raised peak RSS in 24 | All lines                                         |
+| Workload                                                    | Trend              | Why                                                                                    | Holds on                                          |
+| ----------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Many temporary allocations that rarely escape               | Favours Graal      | PEA removes the allocation on the paths where it does not escape                       | All lines                                         |
+| Many interface or polymorphic calls at hot call sites       | Favours Graal      | Graph-based inlining budget and more aggressive speculation                            | All lines; 25.3 replaced the inliner — remeasure  |
+| High-level frameworks with heavy boxing (Spring, Hibernate) | Favours Graal      | Combines both effects above                                                            | All lines                                         |
+| Numeric code with simple loops over arrays                  | Favours C2         | CE had no auto-vectorisation; `Vectorization` was Oracle GraalVM only                  | CE through 25.2. CE 25.3 enables `VectorizeLoops` |
+| Vector API (`jdk.incubator.vector`) kernels                 | Unknown, measure   | Graal lowers Vector API operations only since 25.0, coverage "initial", experimental   | 25.0+; C2's coverage is older and broader         |
+| Start-up critical (function, CLI, short job)                | Measure break-even | Compilation may not repay before exit; AOT/CRaC/native image change other constraints  | All lines                                         |
+| Severely CPU-limited (containers with a low quota)          | Often favours C2   | Graal compilation can consume more CPU; queueing and time-to-tier-4 decide the result  | Verify on the selected line                       |
+| Memory-limited containers                                   | Often favours C2   | libgraal has a separate isolate heap and compiler threads outside the Java heap budget | Verify RSS and native accounting                  |
 
 The Vector API row is `simd-and-vector-api`'s subject — proving that vector instructions
 were emitted is the same exercise under either compiler. The start-up row is where Oracle now
@@ -101,8 +101,8 @@ Scalar Replacement for Java", CGO 2014, doi:10.1145/2544137.2544157; PDF at
 - [ ] The comparison is one binary with `-XX:-UseJVMCICompiler` on the C2 side, the same GC
       pinned explicitly on both
 - [ ] The mode has been confirmed as libgraal before any warm-up number is interpreted
-- [ ] Warm-up ran until the score stabilised (variation under roughly 5% between iterations),
-      not for a fixed iteration count assumed in advance
+- [ ] Warm-up convergence was inspected across iterations and independent forks; raw results
+      and uncertainty were retained for both compilers
 - [ ] The GraalVM line is recorded with the result (25.0, 25.1, 25.3 ...), because the
       inliner and vectoriser changed inside the 25.x series
 
@@ -153,10 +153,10 @@ What changed in 2025–2026 and why it is now a gate rather than a footnote:
   (September 2025), then 25.1, 25.2 and 25.3 as monthly innovation releases with quarterly
   CPUs, all on a JDK 25 base. The blog text itself was not fetched directly for this
   revision; the openjdk.org Galahad page and the Oracle JDK 25 release notes corroborate it.
-- **OpenJDK Project Galahad was dissolved in March 2026** ("This Project became unnecessary
-  in light of the September 2025 announcement to detach GraalVM from the Java ecosystem" —
-  openjdk.org/projects/galahad). No OpenJDK build will carry Graal; the placeholder module
-  and `-XX:+UseGraalJIT` in JDK 22+ are the residue.
+- **OpenJDK Project Galahad was dissolved in March 2026** after losing its sponsoring group.
+  Stock JDK 25 builds tested here contain JVMCI and a placeholder module but no Graal
+  compiler. Treat future OpenJDK contents as a release fact to verify, not as either an
+  integration promise or an impossibility claim.
 - **Licence per line, not per product:** the GraalVM downloads page states that CPU
   releases of GraalVM for JDK 17.0.13 and later are under the GraalVM OTN licence, while
   updates for Oracle GraalVM for JDK 21 and Oracle GraalVM 25.0 and 25.3 remain under the
@@ -167,3 +167,11 @@ governance and now the different patch-licence history remain legitimate corpora
 Licensing and support terms are the category of information here most likely to have
 changed since this was written; confirm at `graalvm.org/downloads` and
 `oracle.com/downloads/licenses/graal-free-license.html` before a corporate decision.
+
+## Authoritative sources
+
+- [GraalVM release calendar](https://www.graalvm.org/release-calendar/)
+- [Oracle GraalVM support roadmap](https://docs.oracle.com/en/graalvm/support-roadmap.html)
+- [Oracle GraalVM 25 support and licensing](https://docs.oracle.com/en/graalvm/jdk/25/docs/support/)
+- [Partial Escape Analysis and Scalar Replacement for Java (CGO 2014)](https://ssw.jku.at/Research/Papers/Stadler14/Stadler2014-CGO-PEA.pdf)
+- [JEP 410: Remove the Experimental AOT and JIT Compiler](https://openjdk.org/jeps/410)

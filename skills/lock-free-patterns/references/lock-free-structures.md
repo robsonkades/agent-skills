@@ -1,209 +1,96 @@
-# Lock-free structures
+# Lock-free structures and proof obligations
 
-## Progress guarantees
+## Operation proof table
 
-| Guarantee        | What it guarantees                                                                      | Example                                                                      | Typical cost to implement                                         |
-| ---------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Wait-free        | EVERY thread completes in a finite number of steps, whatever the others do              | `AtomicInteger.getAndIncrement()` — one atomic instruction, no visible retry | Hard for composite operations; rare outside simple primitives     |
-| Lock-free        | AT LEAST ONE thread completes per round of contention; individual starvation is allowed | `ConcurrentLinkedQueue` (Michael-Scott), Treiber stack                       | A CAS retry loop — one thread's failure implies another's success |
-| Obstruction-free | A thread running WITHOUT interference always progresses; nothing under real contention  | Rare on its own in production; usually an intermediate design step           | Easier to prove, insufficient alone under load                    |
+For every method complete:
 
-The distinction that matters in practice: lock-free means "without a _lock_", not "without
-waiting". A thread can burn CPU in a CAS retry loop, and the system still progresses because
-each failed CAS implies some other thread's CAS succeeded. That chaining — failure implies
-someone else's progress — is what separates lock-free from "blocked thread trying again".
+| Operation/outcome       | Preconditions | Linearization point | Postcondition | Progress | Retry/help/reclaim |
+| ----------------------- | ------------- | ------------------- | ------------- | -------- | ------------------ |
+| successful insert       |               |                     |               |          |                    |
+| failed/duplicate insert |               |                     |               |          |                    |
+| successful remove       |               |                     |               |          |                    |
+| empty/miss              |               |                     |               |          |                    |
+| close/cancel race       |               |                     |               |          |                    |
 
-## Treiber stack, with the ordering anchors marked
+Also show representation invariants before/after every successful atomic transition and why a
+failed transition leaves no visible side effect.
 
-```java
-public class LockFreeStack<T> {
+## Treiber stack checklist
 
-    private static class Node<T> {
-        final T item;
-        Node<T> next;                 // plain field — only read after 'current' is published by CAS
-        Node(T item) { this.item = item; }
-    }
-
-    private final AtomicReference<Node<T>> top = new AtomicReference<>();
-
-    public void push(T item) {
-        Node<T> newNode = new Node<>(item);
-        Node<T> current;
-        do {
-            current = top.get();          // acquire read
-            newNode.next = current;       // plain write — carried by the CAS release below
-        } while (!top.compareAndSet(current, newNode));
-        // compareAndSet has full volatile semantics: everything written BEFORE it in this
-        // thread — newNode.next included — is visible to any thread that later reads 'top'.
-    }
-
-    public T pop() {
-        Node<T> current;
-        Node<T> next;
-        do {
-            current = top.get();
-            if (current == null) return null;
-            next = current.next;          // safe: current only became visible already published
-        } while (!top.compareAndSet(current, next));
-        return current.item;
-    }
-}
+```text
+node payload/next fully initialized before head publication
+head CAS is linearization point for push/pop success
+empty read/CAS race has a defined failure point
+popped node is not reset/reinserted while a reader can rely on old next
+ABA/tag wrap/reuse horizon addressed
+failed CAS allocation and retention bounded
 ```
 
-The load-bearing detail is the order inside `push`: `newNode.next` is written _before_ the
-CAS. Writing it after — a common slip in a hurried rewrite — leaves no ordering guarantee at
-all, and another thread can observe `newNode` with `next` unpublished.
+GC prevents reclamation of a node still strongly reachable by a thread, but explicit reuse of that
+same node can still create ABA. Off-heap nodes require a separate reclamation scheme such as epochs/
+hazards with its own Java/native memory-order proof.
 
-`Atomic*` classes use volatile semantics for plain read and write, and full acquire-plus-
-release for `compareAndSet` and the other CAS operations. That is why application code never
-inserts a manual barrier around a CAS.
+## Linked queue checklist
 
-## Michael-Scott queue, and what "helping" adds
+Linked nonblocking queues often allow tail to lag head/link state and rely on helping. Prove:
 
-`ConcurrentLinkedQueue` is a production implementation of the 1996 Michael and Scott
-algorithm: an MPMC queue CAS-ing `head` and `tail` separately, with a sentinel node and a
-_helping_ mechanism the single-CAS Treiber stack does not need.
+- sentinel/dummy-node invariants;
+- enqueue link linearization and tail-help safety;
+- dequeue value/head transition and memory clearing;
+- no lost node when an actor stalls between link and tail update;
+- iterator/size consistency contract (often weak/expensive);
+- retention of old heads/iterators and empty transitions;
+- progress when a helper or producer is preempted.
 
-```java
-public void enqueue(T item) {
-    Node<T> newNode = new Node<>(item);
-    while (true) {
-        Node<T> last = tail.get();
-        Node<T> next = last.next.get();
-        if (last == tail.get()) {                     // tail still consistent
-            if (next == null) {                        // 'last' really is the final node
-                if (last.next.compareAndSet(null, newNode)) {
-                    tail.compareAndSet(last, newNode); // advance tail; failing here is fine
-                    return;
-                }
-            } else {
-                tail.compareAndSet(last, next);        // tail lagging — help it forward
-            }
-        }
-    }
-}
+Prefer the JDK queue unless the missing property is documented and tests cover the custom proof.
 
-public T dequeue() {
-    while (true) {
-        Node<T> first = head.get();
-        Node<T> last = tail.get();
-        Node<T> next = first.next.get();
-        if (first == head.get()) {
-            if (first == last) {
-                if (next == null) return null;         // empty
-                tail.compareAndSet(last, next);        // tail lagging — help it forward
-            } else {
-                T value = next.item;
-                if (head.compareAndSet(first, next)) return value;
-            }
-        }
-    }
-}
+## Striped counters
+
+Striping distributes writers across cells and aggregates later. It changes semantics:
+
+- sum/read is not one atomic point-in-time value under concurrent updates;
+- reset/sumThenReset can race with updates according to API contract;
+- cells consume memory and can false-share without suitable layout;
+- hash/probe collisions and resizing matter;
+- excellent for statistics, unsuitable for unique IDs, account balances and exact admission limits.
+
+Compare `AtomicLong`, `LongAdder`, per-owner accumulation and locked batching using real read/write
+frequency and required consistency.
+
+## Ring buffers
+
+Define:
+
+```text
+capacity and sequence arithmetic/wrap proof
+single/multi producer and consumer topology
+slot ownership and publication/access modes
+full/empty detection and gating sequences
+wait strategy and CPU/power/tail behavior
+overwrite/drop/block/backpressure policy
+consumer failure and stalled gating sequence
+batch visibility and shutdown/drain
+padding/layout and cache topology
 ```
 
-Two structural points to preserve in any variant: the queue is momentarily inconsistent
-between the two CAS operations of an enqueue, and every other thread is expected to _help_
-finish it rather than wait. That is what keeps the structure lock-free when the enqueuing
-thread is preempted between its two CAS operations.
+Sequence wrap may be practically distant without being mathematically impossible. State the bound
+from maximum rate and lifetime, and test near-wrap with reduced-width model values.
 
-## ABA, and the fix when it is reachable
+## Reclamation choices
 
-CAS compares only the current _value_ against the expected one; it keeps no memory of how
-many times that value changed in between. If a thread reads A, the value goes to B and back
-to A before the CAS runs, the CAS succeeds even though the real state changed.
+| Storage                 | Typical aid                     | Remaining hazard                                       |
+| ----------------------- | ------------------------------- | ------------------------------------------------------ |
+| ordinary heap, no reuse | GC reachability                 | logical retention and ABA through explicit reinsertion |
+| heap node pool          | GC + reuse protocol/tag         | same-reference ABA/reset races                         |
+| off-heap/manual         | epoch/hazard/refcount/ownership | use-after-free, stalled participants, close            |
+| bounded array slots     | sequence/version protocol       | wrap and overwrite before consumer completes           |
 
-In Java this is unreachable for object references the algorithm does not recycle. The
-guarantee is not "addresses are never reused" — compacting collectors move objects and reuse
-addresses constantly. It is **reference identity**: while a thread holds a live Java
-reference, that reference always resolves to the same logical object, however many times the
-collector relocated it.
+Reclamation progress can be weaker than operation progress. A stalled epoch participant can prevent
+memory reclamation indefinitely while operations remain lock-free.
 
-ABA comes back in exactly two situations:
+## Authoritative references
 
-- the algorithm recycles nodes explicitly from a pool — a deliberate optimisation under GC
-  pressure;
-- the CAS is over a primitive that legitimately cycles. A counter that decrements back to a
-  previous value has no identity to preserve, and CAS cannot tell "the same 5 as before" from
-  "a 5 that went to 3 and came back".
-
-```java
-private final AtomicStampedReference<Node<T>> top = new AtomicStampedReference<>(null, 0);
-
-public void push(T item) {
-    Node<T> newNode = new Node<>(item);
-    int[] stampHolder = new int[1];
-    Node<T> current;
-    int stamp;
-    do {
-        current = top.get(stampHolder);   // reads value AND stamp
-        stamp = stampHolder[0];
-        newNode.next = current;
-    } while (!top.compareAndSet(current, newNode, stamp, stamp + 1));
-    // the stamp only ever grows -> ABA is impossible inside the stamp space
-}
-```
-
-`AtomicMarkableReference` carries a single boolean instead of a counter — typically
-"logically removed" — and covers a narrower subset of the problem.
-
-The third option is the common one: do nothing, because without a node pool the JVM's
-reference identity already closes the hole.
-
-## Ring buffer pipeline
-
-```
-Ring buffer, size a power of two:
-  slot = sequence & (size - 1)      -> O(1) indexing, no real modulo
-  producer sequence: next slot to fill
-  consumer sequence: next slot to process
-  natural backpressure: the producer waits when the buffer is full
-```
-
-Five distinct reasons such a pipeline is fast, only one of which is CAS:
-
-1. **Pre-allocation** — every event object is allocated at construction, so normal operation
-   allocates nothing per message and adds no GC pressure.
-2. **Cache-friendly layout** — a contiguous array with sequential access, the opposite of a
-   linked structure.
-3. **Lock-free claim** — under `ProducerType.MULTI` producers CAS to reserve the next slot;
-   under `ProducerType.SINGLE` there is not even that, since a lone producer just increments.
-   Neither path enters a monitor.
-4. **Batch processing** — a lagging consumer takes every available slot at once, amortising
-   per-message cost when there is a backlog.
-5. **Sequence isolation** — the hot, high-frequency position counters are padded into their
-   own cache lines to avoid false sharing between producer and consumers; the exact padding
-   mechanism varies by library version.
-
-Attributing the whole gain to "lock-free" is the standard error. Pre-allocation and cache
-locality usually weigh as much or more.
-
-### Wait strategies, the CPU-versus-latency dial
-
-```
-BusySpinWaitStrategy:  endless spin              -> minimum latency, 100% CPU
-YieldingWaitStrategy:  spin + Thread.yield()     -> low latency
-SleepingWaitStrategy:  spin + yield + sleep      -> balanced
-BlockingWaitStrategy:  lock + condition          -> minimum CPU, highest latency
-```
-
-```java
-int bufferSize = 1024;  // MUST be a power of two
-Disruptor<ValueEvent> disruptor = new Disruptor<>(
-    ValueEvent.FACTORY, bufferSize, DaemonThreadFactory.INSTANCE,
-    ProducerType.SINGLE, new YieldingWaitStrategy());
-
-disruptor.handleEventsWith((event, sequence, endOfBatch) -> handle(event));
-disruptor.start();
-
-RingBuffer<ValueEvent> ringBuffer = disruptor.getRingBuffer();
-long sequence = ringBuffer.next();      // claim a slot
-try {
-    ValueEvent event = ringBuffer.get(sequence);
-    event.value = 42;                   // fill in place — no allocation
-} finally {
-    ringBuffer.publish(sequence);       // hand off to the consumer
-}
-```
-
-The `try`/`finally` is not stylistic: a claimed sequence that is never published stalls every
-consumer behind it permanently.
+- [Java concurrent package](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
+- [Java atomic package](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/package-summary.html)
+- [OpenJDK concurrent source](https://github.com/openjdk/jdk/tree/master/src/java.base/share/classes/java/util/concurrent)
+- [Michael and Scott queue paper](https://www.cs.rochester.edu/research/synchronization/pseudocode/queues.html)

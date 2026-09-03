@@ -1,123 +1,123 @@
-# Pinning diagnostics
+# Pinning and carrier diagnostics
 
-## The event
+## Evidence plan
 
-`-Djdk.tracePinnedThreads` was removed in JDK 24 alongside JEP 491. It is still accepted on
-the command line and does nothing at all. The only source of truth is the JFR event
-`jdk.VirtualThreadPinned`.
+Collect over the same incident interval:
 
-| Field                    | Meaning                                                                                   |
-| ------------------------ | ----------------------------------------------------------------------------------------- |
-| `startTime` / `duration` | When the pin began and how long the virtual thread stayed pinned                          |
-| `eventThread`            | The virtual thread that pinned, by name if it was named                                   |
-| `stackTrace`             | The stack at the moment of the pin — where the native frame or `<clinit>` becomes visible |
+- useful completion/latency and offered load;
+- CPU quota/throttling;
+- virtual-thread scheduler MXBean estimates;
+- JFR pin, submit-failure, file/socket/park and relevant execution events with recorded settings;
+- all-thread dump plus platform dump;
+- dependency/resource in-flight and wait.
 
-## Real-time instrumentation
+A completion counter neither confirms nor excludes pinning. A pin event confirms a threshold-crossing
+pin, while causality requires scheduler/latency impact.
+
+## RecordingStream example
 
 ```java
-import jdk.jfr.consumer.RecordingStream;
-import java.time.Duration;
-import java.util.concurrent.atomic.LongAdder;
-
-LongAdder pinnedEvents = new LongAdder();
-
-try (RecordingStream rs = new RecordingStream()) {
-    // Explicit threshold — profile.jfc defaults to 20 ms and hides
-    // short, frequent pinning.
-    rs.enable("jdk.VirtualThreadPinned").withThreshold(Duration.ofMillis(1));
-
-    rs.onEvent("jdk.VirtualThreadPinned", event -> {
-        pinnedEvents.increment();
-        System.out.println(event.getThread() + " pinned for "
-                + event.getDuration().toMillis() + " ms at:\n"
-                + event.getStackTrace());
+try (var stream = new RecordingStream()) {
+    stream.enable("jdk.VirtualThreadPinned")
+            .withThreshold(Duration.ofMillis(configuredThresholdMillis));
+    stream.onEvent("jdk.VirtualThreadPinned", event -> {
+        pinCount.increment();
+        pinDuration.record(event.getDuration());
+        sampledPinLogger.log(event.getThread(), event.getStackTrace());
     });
-
-    rs.startAsync();
-    // ... workload runs here ...
-    rs.stop();
+    stream.startAsync();
+    // Keep stream ownership tied to the component/application lifecycle.
 }
 ```
 
-The difference between this and counting completed tasks is categorical, not subtle. A
-pinned task also completes successfully — it merely took longer and held a whole carrier
-while doing so. Counting successes measures whether the code works; counting
-`jdk.VirtualThreadPinned` events measures whether it pins. Different questions.
+Choose threshold and stack-trace volume from the question and overhead budget. A 1 ms threshold is an
+experiment, not a universal production floor. High-frequency full-stack logging can become the new
+bottleneck and disclose sensitive code/context; aggregate duration/rate and sample stacks.
 
-## Watching compensation
+Inspect actual event metadata/configuration because defaults differ by JDK and recording template.
+Start/end events can be too costly at extreme virtual-thread creation rates.
 
-There is no dedicated JFR event for "the scheduler compensated N carriers". The indirect
-signal is the count of system threads named `ForkJoinPool-<n>-worker-<m>` growing past the
-configured `parallelism`, towards `maxPoolSize`:
+## Scheduler MXBean
 
-```bash
-jcmd <pid> Thread.dump_to_file -format=json /tmp/threads.json
+```java
+var scheduler = ManagementFactory.getPlatformMXBean(
+        jdk.management.VirtualThreadSchedulerMXBean.class);
 
-jq -r '.threadDump.threadContainers[].threads[]?.name' /tmp/threads.json \
-  | grep -c 'ForkJoinPool-1-worker'
-# Track this over time against jdk.virtualThreadScheduler.parallelism.
-# Sustained growth towards maxPoolSize is compensation happening NOW.
+int target = scheduler.getParallelism();
+int pool = scheduler.getPoolSize();
+int mounted = scheduler.getMountedVirtualThreadCount();
+long queued = scheduler.getQueuedVirtualThreadCount();
 ```
 
-Never `jstack` — it does not list virtual threads.
+Values are estimates and can be `-1`. Export at moderate cadence with JDK/build and configuration.
+`pool > target` shows extra scheduler platform threads, not why they exist. `queued > 0` can be a
+transient healthy state; correlate its duration with completion/latency and CPU.
 
-## The wall-clock flame-graph signature
+## Stack classification
 
-Run `asprof -e wall -t`. When the pin is caused by a native downcall, the flame graph shows
-the native frame (JNI or FFM) directly beneath the Java frame that invoked it, **with no**
-`LockSupport.park` or `Object.wait` frame above it — because no unmount happened. That
-absence of a parking frame, combined with a wide native frame, is what separates pinning
-from legitimate waiting in a flame graph.
+| Stack/evidence                                        | Classification candidate        | Next check                                           |
+| ----------------------------------------------------- | ------------------------------- | ---------------------------------------------------- |
+| pin event with JNI/foreign frame                      | native/foreign pin              | duration/frequency, operation owner, scheduler queue |
+| file read/write stacks, pool expands, no matching pin | captured carrier/compensation   | file latency/concurrency and native thread budget    |
+| application CPU frames, queued grows, CPU high        | CPU-ready starvation            | quota/throttling and CPU phase ownership             |
+| lock/connection/queue park, scheduler queue low       | normal unmounted wait           | resource queue age/occupancy and deadline            |
+| submit-failed event                                   | start/unpark scheduling failure | accompanying exception, native/resource exhaustion   |
 
-## Sizing `maxPoolSize` as a memory budget
+Do not use absence of `LockSupport.park` in a sampled wall stack as proof of pinning; sampling can land
+inside any frame and native unwinding can be incomplete.
 
-Every compensation carrier is a real platform thread with the full cost of one. Sizing
-`maxPoolSize` without that arithmetic repeats, through another door, the mistake of a fixed
-thread pool with an unbounded queue: a ceiling that exists on paper but was never thought
-of as a memory budget.
+## Remediation choices
 
-```
-Worst-case memory budget for full compensation:
-maxPoolSize × ThreadStackSize + per-thread kernel overhead
+### Native/foreign pin is causal
 
-Example: maxPoolSize = 256, default -Xss (1 MB reserved)
-256 × 1 MB ≈ 256 MB of reserved address space
-            (real RSS depends on the stack depth actually used)
-```
+Prefer a newer/non-blocking integration. If unavailable, isolate the exact call on a bounded platform
+executor whose queue, rejection, native memory, timeout and shutdown are owned. Crossing to that pool
+does not cancel native work automatically.
 
-| Scenario                                             | Guidance                                                                                                                                                                 |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| No known blocking JNI/FFM dependency on the hot path | Keep the default; still monitor `jdk.VirtualThreadPinned` — transitive dependencies change                                                                               |
-| Native dependency identified, occasional use         | Lower `maxPoolSize` to a number you can afford in memory, and treat its saturation as an alarm, not an infinite safety net                                               |
-| Native dependency on the hot path, constant use      | Do not manage this through `maxPoolSize`: isolate the native call in a dedicated, Little's-Law-sized platform `ExecutorService`, out of the virtual-thread path entirely |
+### Carrier capture is causal
 
-## Pre-production checklist
+Evaluate asynchronous provider support, reduce/batch file operations, isolate with a measured platform
+pool, or tune scheduler maximum only when extra native threads are affordable and the underlying I/O
+has capacity. Validate pool size, native memory, context switching and tail latency.
 
-- [ ] `jdk.virtualThreadScheduler.parallelism` and `maxPoolSize` set deliberately, not left
-      at the default by omission, and `maxPoolSize` translated into a memory budget.
-- [ ] All JNI/FFM dependencies on the hot path mapped and, where blocking, isolated in a
-      dedicated platform pool.
-- [ ] The HTTP framework explicitly configured for virtual threads, not assumed.
-- [ ] `jdk.VirtualThreadPinned` instrumented via `RecordingStream` or continuous JFR **in
-      production**, with an adjusted threshold — not only in the lab.
-- [ ] Every `synchronized` / `ReentrantLock` choice decided on semantics, with no migration
-      done "as a precaution against pinning".
-- [ ] Any `StructuredTaskScope` code compiled against the preview matching the production
-      JDK, not copied from pre-2025 material using `ShutdownOnFailure`/`ShutdownOnSuccess`.
-- [ ] `ScopedValue` used only as immutable context; caching an expensive resource remains
-      the job of an explicit pool.
+### CPU-ready starvation
 
-## Incident checklist
+Move long CPU phases behind a bounded CPU executor/gate, reduce work or supply CPU capacity. Raising
+scheduler target above usable CPU can worsen contention/throttling.
 
-- [ ] `jcmd <pid> Thread.dump_to_file -format=json` collected and `ForkJoinPool-*-worker-*`
-      threads counted — is it above the configured `parallelism`?
-- [ ] JFR collected with `jdk.VirtualThreadPinned#threshold` lowered to 1 ms before
-      concluding there is no pinning.
-- [ ] The event's `stackTrace` points at a native frame or a `<clinit>` — not at an
-      unverified assumption.
-- [ ] Pinning (carriers held, events present), starvation (virtual threads `RUNNABLE`
-      waiting for a free carrier, no pinning events) and legitimate downstream waiting told
-      apart before acting.
-- [ ] If the cause is saturated compensation: the fix applied was isolating the blocking
-      call, not merely raising `maxPoolSize` to "give it room", which only postpones the
-      same ceiling.
+### Suspended memory dominates
+
+Bound admission near the wait, reduce stack/context state, eliminate per-thread expensive caches, and
+ensure timed-out work actually ends. Validate retained heap after equivalent load/recovery.
+
+## Scheduler property review
+
+Before changing `jdk.virtualThreadScheduler.parallelism` or `maxPoolSize`, record current values,
+defaults on this build, CPU/native-memory budget, predicted signal and rollback threshold. The maximum
+is not a virtual-thread concurrency cap. Do not compute its cost as exactly `max × 1 MB`; platform
+stack reservation/commit and kernel cost vary by environment.
+
+## Checklists
+
+### Before production
+
+- [ ] JNI/foreign and heavy file paths inventoried under representative load.
+- [ ] Resource-local concurrency/deadlines remain explicit after migration.
+- [ ] ThreadLocal/inherited context memory reviewed at projected cardinality.
+- [ ] Scheduler/JFR/application telemetry has bounded overhead and secure retention.
+- [ ] Cancellation and shutdown tests prove resource return, not only caller completion.
+
+### During incident
+
+- [ ] Exact JDK/build/config and CPU limits captured.
+- [ ] Pin, capture, CPU-ready and normal-wait hypotheses compared.
+- [ ] MXBean estimates, JFR stacks and useful progress aligned in time.
+- [ ] No scheduler/lock rewrite occurred before baseline capture.
+- [ ] Intervention validated against throughput, tail, scheduler queue and resource health.
+
+## References
+
+- [Java 25 virtual-thread JFR guidance](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
+- [Java 25 `VirtualThreadSchedulerMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html)
+- [JEP 444 pinning and scheduler compensation boundaries](https://openjdk.org/jeps/444)
+- [JEP 491](https://openjdk.org/jeps/491)

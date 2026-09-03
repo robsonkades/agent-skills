@@ -41,10 +41,13 @@ consequences of implicitness:
 
 ## After
 
-Invariants move into types and constructors; preconditions become documented, enforced
-entry conditions; the postcondition is asserted and tested. (Compiled on Java 25.)
+Invariants move into types and constructors; input obligations become documented, enforced entry
+conditions; the postcondition is asserted and tested. The fragment targets Java 25 and elides the
+`InsufficientStockException` declaration.
 
 ```java
+import java.util.Objects;
+
 /** A strictly positive number of units. */
 public record Quantity(int units) {
     public Quantity {
@@ -104,14 +107,15 @@ What each mechanism carries:
   unnecessary rather than forgotten.
 - **The constructor** owns the class invariant; immutability means nothing can break it
   after construction, so no method needs to re-verify it.
-- **`InsufficientStockException`** separates the _expected_ precondition failure
-  ("legitimately out of stock" — callers branch on it) from the _bug_ class
+- **`InsufficientStockException`** separates the expected state conflict the caller could not
+  guarantee ("legitimately out of stock" — callers branch on it) from the _bug_ class
   (`IllegalArgumentException` from `Quantity` — nobody catches it). If declines turn
   out to be a routine outcome the caller always branches on, promote the result to a
   sealed type — that decision belongs to java-exception-design.
 - **The `assert`** states the postcondition at its source. Disabled in production
-  (`-ea` in CI and tests), it costs nothing there and pins the guarantee where the
-  arithmetic lives.
+  (`-ea` in CI and tests), its expression is not evaluated there and it pins a cheap diagnostic
+  near the arithmetic. If violating this guarantee could be persisted rather than discarded with
+  the new object, use an unconditional internal check as well.
 - **Javadoc** turns the callers'-heads knowledge into the promise: the `@throws`
   condition _is_ the availability rule, stated once.
 
@@ -127,6 +131,10 @@ What each mechanism carries:
 - Callers that used to "reserve what's available, capped" now get an exception; the
   capping behaviour, if wanted, must become its own honest method (`reserveUpTo`),
   which is the contract surfacing a product decision that was previously an accident.
+- Immutability makes one `StockLevel` value safe; it does not serialize updates. Two requests can
+  read the same level, both create valid successors, and lose one reservation on write. The
+  repository must use a version/CAS or conditional update (`available >= quantity`) and map a
+  failed predicate to the same explicit state-conflict outcome.
 
 ## Verification
 
@@ -135,6 +143,8 @@ What each mechanism carries:
   `available()` succeeds with `available() == 0`; `new StockLevel(5, 6)` and
   `new Quantity(0)` throw naming expected and actual.
 - Run the suite with `-ea` so the postcondition assert is live in CI.
+- Race reservations against the real persistence mechanism and prove no oversell/lost update;
+  unit tests of the value object cannot establish datastore atomicity.
 - Grep callers: the old `getOnHand() - getReserved()` arithmetic appears nowhere
   outside the class; `setReserved` has no remaining callers and is deleted, not
   deprecated-and-kept.

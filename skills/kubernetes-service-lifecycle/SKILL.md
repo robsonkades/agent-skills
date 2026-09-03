@@ -39,10 +39,10 @@ once, and now nothing is serving even after the database recovers.
 2. **Strip dependencies out of liveness.** Liveness must depend on nothing outside the
    process. If restarting the process cannot fix the condition, it does not belong in
    liveness.
-3. **Do the probe arithmetic.** Detection time is roughly
-   `periodSeconds × failureThreshold` (plus `initialDelaySeconds` for the first check), and
-   `timeoutSeconds` must exceed the check's own worst case. Write both numbers down and
-   compare them with the SLO. See `references/probe-and-shutdown-configuration.md`.
+3. **Do bounded probe arithmetic.** Detection includes initial delay, probe scheduling,
+   execution/timeout and consecutive thresholds; readiness may run more often while unready.
+   Treat `period × threshold` as an approximation, write best/worst expectations, and test
+   under throttling and pauses. See `references/probe-and-shutdown-configuration.md`.
 4. **Replace guessed startup delays with a startup probe.** `startupProbe` (GA since
    Kubernetes 1.20) suspends liveness and readiness until it first succeeds, so a slow boot
    gets a long budget without making crash detection slow forever.
@@ -85,34 +85,39 @@ Prefer a startup probe instead when:
 - The probe endpoint must do no business work and have **no side effect**. It runs on every
   pod every `periodSeconds` forever: a query inside it is permanent background load, and a
   write inside it is a bug the kubelet triggers on a schedule.
-- `timeoutSeconds` shorter than the check's own worst case makes the probe fail under exactly
-  the load it exists to survive — a 1 s timeout on a check with a p99 of 900 ms fails
-  whenever the service is busy. `successThreshold` must be 1 for liveness and startup probes;
-  Kubernetes rejects any other value there.
-- **SIGTERM and endpoint removal are concurrent, not ordered.** The kubelet begins
-  termination while the EndpointSlice controller and every kube-proxy or ingress data plane
-  are still converging, so a pod receives new connections _after_ SIGTERM. A `preStop` that
-  sleeps a few seconds is the standard fix — a fix for a race, not for slow shutdown.
-- The native `sleep` preStop action arrived in Kubernetes 1.29 and is on by default from
-  1.30. On older clusters `preStop` must be `exec` with a real `sleep` binary, which a
-  distroless or scratch image does not contain, so the hook fails silently.
+- `timeoutSeconds` is part of the failure-detection budget. Derive it from a lightweight
+  local check's measured tail plus jitter, then decide how many consecutive misses justify
+  action; "greater than worst case" is unusable when the worst case is unbounded.
+  `successThreshold` must be 1 for liveness and startup probes.
+- **Local termination and data-plane convergence are concurrent.** Terminating EndpointSlice
+  endpoints are marked not ready, but proxies, ingresses, clients and persistent connections
+  converge on their own timelines. A measured `preStop` sleep can bridge legacy data planes;
+  explicit readiness refusal, connection draining and load-balancer behavior are preferable
+  when supported. Sleeping is a workaround, not a universal protocol.
+- The native `sleep` lifecycle handler is version-dependent. On clusters without it,
+  `preStop.exec` needs a real binary in the image; distroless/scratch images often lack one.
+  A failed hook is observable through pod events (`FailedPreStopHook`) but termination
+  continues, so alerting must not rely on application logs.
 - `preStop` runs **inside** `terminationGracePeriodSeconds`, not before it. A 30 s grace
   period with a 20 s preStop leaves the application 10 s, then SIGKILL.
-- Spring Boot's `server.shutdown` defaults to `immediate`; draining requires
-  `server.shutdown=graceful`, and the window is `spring.lifecycle.timeout-per-shutdown-phase`.
-  Setting the first without checking the second gives a silently capped drain.
-- A container killed by the grace period expiring and one killed by the memory limit both
-  exit **137**; only the pod status distinguishes them, via `reason: OOMKilled`. Heap sizing
-  against that limit is `container-awareness` — do not re-derive it here.
-- A CPU limit throttles the JVM hardest during startup, its most CPU-hungry phase. A startup
-  budget tuned on an unthrottled machine fails in the cluster and produces a CrashLoopBackOff
-  that looks like an application fault; the throttling evidence is `linux-for-jvm`.
+- Spring Boot defaults changed across major lines: current Boot 4 documentation enables
+  graceful shutdown by default, while older lines required `server.shutdown=graceful`.
+  Pin the service's Boot version and verify effective behavior; the window is governed by
+  `spring.lifecycle.timeout-per-shutdown-phase`.
+- A container killed after grace expiry and one killed for memory can both surface as 137.
+  Correlate terminated reason/signal, events, cgroup counters and timestamps; `OOMKilled` is
+  strong orchestrator evidence, not the only possible record. Heap sizing belongs to
+  `container-awareness`.
+- CPU quota often affects JVM startup because class loading, verification and compilation
+  create bursts, but "hardest" is workload-dependent. Measure cold-start distribution in
+  the same quota and node conditions used in production.
 - A rolling update runs two versions concurrently by design. The API contract consequence is
   `rpc-and-api-contracts`; the _data_ consequence is yours — a schema change must be readable
   by both versions at once.
-- A PodDisruptionBudget constrains only **voluntary** disruptions routed through the Eviction
-  API. It does not protect against a node crash, a direct pod delete, or the Deployment's own
-  `maxUnavailable`, and `minAvailable: 1` with `replicas: 1` blocks every node drain forever.
+- A PodDisruptionBudget constrains only disruptions routed through the Eviction API. It does
+  not prevent a node crash or direct delete, and workload controllers are not constrained by
+  it during rollout. `minAvailable: 1` with one healthy replica blocks compliant eviction;
+  operators can still bypass it or time out, so call it unavailable by policy, not immortal.
 - Never claim a rolling update is zero-downtime because the manifest has a readiness probe.
   Prove it: run a continuous open-loop client through a deploy and count non-2xx responses.
 

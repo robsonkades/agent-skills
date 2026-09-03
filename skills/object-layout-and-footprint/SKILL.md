@@ -5,8 +5,8 @@ description: >
   of instances — record, class, primitive array, parallel arrays or boxed collection; when
   an array is proposed to save the header; when HashMap<Integer,Integer> or List<Long> is on
   a bulk path; when -XX:+UseCompactObjectHeaders is evaluated for footprint; or when smaller
-  objects are expected to buy shorter GC pauses — they do not, and the mechanism is here.
-  Answers in bytes per element; the record-versus-array answer reverses under the JDK 27
+  objects are expected to buy shorter GC pauses without a collector-specific measurement.
+  Answers in bytes per element; one record-versus-array example reverses under the JDK 27
   default (JEP 534, not yet GA). Sizing a replacement belongs here; measuring what exists is
   heap-dump-analysis. Not flag lifecycle (jvm-performance-review), @Contended padding
   (false-sharing-and-contended), cache hierarchy (cpu-cache-and-numa), allocation rate
@@ -52,9 +52,12 @@ instance    = alignUp( header + Σ field sizes , ObjectAlignmentInBytes )
 array       = alignUp( arrayBase + n × elementSize , ObjectAlignmentInBytes )
 ```
 
-`Σ field sizes` is the **plain** sum of declared and inherited fields. Never add a padding
-term: holes are an output of the layout, not an input. Exact for 650 generated classes in both
-header modes `[executed]` — 0–20 random fields, 2–4-deep inheritance chains, zero misses.
+For the ordinary, non-`@Contended` HotSpot layouts tested here, `Σ field sizes` is the plain
+sum of declared and inherited fields. Do not promote this measured model to a JVM
+specification: VM-injected fields, special classes, value-class experiments, alignment flags
+and future layout algorithms require a target-build measurement. Holes are an output of the
+layout, not a portable input. The model matched 650 generated classes in both tested header
+modes `[executed]` — 0–20 random fields, 2–4-deep inheritance chains, zero misses.
 
 | Term                         | Classic headers                           | Compact object headers                  |
 | ---------------------------- | ----------------------------------------- | --------------------------------------- |
@@ -68,7 +71,8 @@ Other field sizes, executed, all modes: `boolean` 1, `byte` 1, `char` 2, `short`
 `float` 4, `long` 8, `double` 8.
 
 **Every table in this skill is measured with compressed oops on** — the second precondition,
-and the one that changes without a flag. Ergonomics turns them off **at 32 GB and above**, and
+and the one that changes without a flag. Ergonomics commonly turns them off near **32 GB** at
+8-byte alignment, and
 the boundary is off-by-one from how it is usually quoted, exactly like the 8191 GB bound
 above: measured on 25.0.3, `-Xmx32736m` still gives `UseCompressedOops = true {ergonomic}` and
 `-Xmx32740m` already gives `false {default}` — so `-Xmx32g` is **off**, not the last value on.
@@ -174,7 +178,7 @@ it is the point of that reference.
 
 ## Rules
 
-- **Never present compact object headers as a footprint default worth switching on.** Answer
+- **Treat compact object headers as a measured deployment decision.** Answer
   only the footprint half: the saving is workload-specific and frequently zero, so quote it
   from the class mix, and say what would prove it — the same live-set measurement in both
   modes on the same build (heap after a full GC, or `GraphLayout.totalSize()` over the actual
@@ -227,9 +231,10 @@ it is the point of that reference.
   The per-object arithmetic is exact and the heap cost is still wrong by up to a region per
   array — size chunks against `G1HeapRegionSize`.
   `references/production-footprint-checks.md` §4.
-- **Hashing and locking never grow an object on 25**, in either header mode (executed):
+- **Hashing and locking did not change shallow object size on the tested JDK 25 build**, in
+  either header mode (executed):
   the identity hash and the monitor state live in the mark word or beside the object. Do
-  not carry "hashed objects get bigger" from Lilliput's 32-bit-header plans into a sizing.
+  not carry "hashed objects get bigger" from other or proposed header layouts into this build.
 
 ## References
 
@@ -257,3 +262,12 @@ it is the point of that reference.
   for large arrays; what never changes an object's size; and the symptom-to-cause table for
   a prediction that disagrees with an observation. Read at step 5 when JOL cannot be
   attached, and at step 6 whenever the numbers disagree.
+
+Authoritative sources for release-sensitive claims:
+
+- [JEP 450: Compact Object Headers (Experimental)](https://openjdk.org/jeps/450)
+- [JEP 519: Compact Object Headers](https://openjdk.org/jeps/519)
+- [JEP 534: Compact Object Headers by Default](https://openjdk.org/jeps/534)
+- [`Instrumentation.getObjectSize`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.instrument/java/lang/instrument/Instrumentation.html#getObjectSize(java.lang.Object)>)
+- [OpenJDK JOL](https://github.com/openjdk/jol) — verify the current release and tool limitations
+- [Oracle JDK GC Tuning Guide: class metadata and compact headers](https://docs.oracle.com/en/java/javase/26/gctuning/other-considerations.html)

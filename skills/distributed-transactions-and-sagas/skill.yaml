@@ -1,20 +1,13 @@
 schemaVersion: 1
 
 name: distributed-transactions-and-sagas
-version: 1.2.0
+version: 1.3.0
 description: >-
-  Ending a multi-service operation consistently when no transaction spans it: the dual-write
-  defect and why @Transactional does not cover a broker publish; two-phase commit stated
-  fairly — the blocking window that rules it out between services, and where XA is still
-  correct; sagas, whose defining property is atomicity but not isolation; compensation
-  design, pivot ordering and the persisted saga log. Use when a method saves a row then
-  publishes or calls another service, when @Transactional is expected to span two services,
-  when a rollback is proposed for work another service committed, when a saga's state lives
-  in memory, or when nobody can say which step a process reached. Not the outbox
-  (delivery-semantics), repeat-safe steps (idempotency), what readers observe
-  (consistency-models), choreography versus orchestration (event-driven-architecture), retry
-  policy (retries-and-backoff), one owner of a role (leader-election,
-  distributed-locks-and-leases), or one-database boundaries (enterprise-transactions).
+  Coordinating a business operation across transactional owners: dual writes, XA/2PC,
+  persisted sagas, compensation, pivot/forward recovery, ambiguous outcomes and manual
+  repair. Use when a local transaction is expected to cover a broker or remote service, or
+  in-flight workflow state cannot survive restart. Outbox delivery, idempotency, consistency,
+  retries and single-database transaction design remain in their owning skills.
 
 license: Apache-2.0
 

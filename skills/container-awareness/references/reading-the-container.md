@@ -8,7 +8,7 @@ different question.
 | Question                               | Command                                                                            |
 | -------------------------------------- | ---------------------------------------------------------------------------------- |
 | Is container support on?               | `java -XX:+PrintFlagsFinal -version 2>&1 \| grep -w UseContainerSupport`           |
-| How many CPUs did the JVM detect?      | `java -XshowSettings:system -version 2>&1 \| grep -i "active processor count"`     |
+| How many CPUs did the JVM detect?      | `java -XshowSettings:system -version 2>&1 \| grep -i "effective cpu count"`        |
 | Same, from JDK 17 or older             | `Runtime.getRuntime().availableProcessors()` from application code                 |
 | What did the JVM read from the cgroup? | `java -Xlog:os+container=trace -version 2>&1 \| grep -iE "container\|cpu\|memory"` |
 | What heap did ergonomics resolve to?   | `java -XX:+PrintFlagsFinal -version 2>&1 \| grep -w MaxHeapSize`                   |
@@ -49,7 +49,7 @@ renamed. A v1 command run on a v2 host simply finds no file.
 | ------------------ | ----------------------------------------------- | ----------------------------------------------------------- |
 | Memory limit       | `memory/memory.limit_in_bytes`                  | `memory.max`                                                |
 | Memory in use      | `memory/memory.usage_in_bytes`                  | `memory.current`                                            |
-| OOM evidence       | —                                               | `memory.events` → `oom_kill`                                |
+| OOM evidence       | controller/version-specific event files         | `memory.events.local` → `oom` / `oom_kill`                  |
 | CPU quota + period | `cpu/cpu.cfs_quota_us`, `cpu/cpu.cfs_period_us` | `cpu.max` as `"$QUOTA $PERIOD"`                             |
 | Throttle counters  | `cpu/cpu.stat` → `throttled_periods`            | `cpu.stat` → `nr_periods`, `nr_throttled`, `throttled_usec` |
 
@@ -58,7 +58,7 @@ All v2 paths are directly under `/sys/fs/cgroup/`:
 ```bash
 cat /sys/fs/cgroup/memory.max                 # bytes, or the literal "max"
 cat /sys/fs/cgroup/memory.current
-cat /sys/fs/cgroup/memory.events | grep oom   # oom / oom_kill
+cat /sys/fs/cgroup/memory.events.local | grep oom # local oom / oom_kill
 cat /sys/fs/cgroup/cpu.max                    # "$QUOTA $PERIOD", microseconds
 cat /sys/fs/cgroup/cpu.stat | grep -E "nr_periods|nr_throttled|throttled_usec"
 ```
@@ -72,13 +72,14 @@ period.
 kubectl exec <pod> -- jcmd 1 VM.flags -all
 kubectl exec <pod> -- jcmd 1 VM.native_memory summary
 kubectl exec <pod> -- cat /sys/fs/cgroup/memory.current
+kubectl exec <pod> -- cat /sys/fs/cgroup/memory.stat
 ```
 
 ## Enabling Native Memory Tracking
 
 ```bash
 java -XX:NativeMemoryTracking=summary -jar app.jar   # at startup
-jcmd <pid> VM.native_memory summary                  # at peak load, not at boot
+jcmd <pid> VM.native_memory summary                  # JVM-tracked native view, not RSS
 ```
 
 ## Version notes worth checking before trusting a reading

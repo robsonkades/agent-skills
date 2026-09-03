@@ -69,9 +69,9 @@ chain's stages are being used correctly.
 1. **Check the handler's contents.** A controller should bind input, call one application
    service, and map the result. Rules, persistence calls and transaction demarcation in a
    controller are misplaced (`layering-and-boundaries`).
-2. **Find the duplicated concern.** Anything copied into more than about three handlers —
-   authorisation, error mapping, correlation ids, tenant resolution, response envelopes —
-   belongs in the shared chain.
+2. **Find duplicated policy.** Repetition count alone does not justify indirection; shared
+   authorization, error mapping, correlation, tenant and envelope semantics often belong in the
+   chain when centralization prevents drift and preserves ordering.
 3. **Place it at the right stage.** Filter, interceptor, argument resolver, exception
    handler, advice: they see different things and run at different times. Choosing wrongly
    produces a concern that works until it does not.
@@ -121,12 +121,14 @@ The API is REST over resources
 
 ## Rules
 
-- **A controller with a business rule is a layering defect**, and the cheapest one to fix
-  early. Grep for `if` statements that mention domain state in handler methods.
+- A controller deciding domain policy is a layering defect; `if` itself is not evidence because
+  protocol negotiation, optional input and response mapping legitimately branch. Trace whether the
+  condition must hold for non-HTTP callers.
 - **A controller with a repository call is not automatically wrong.** For a pure read it can
   be the honest design; for anything that writes, it puts the transaction boundary and the
   invariants in the web layer (`service-layer-design`).
-- Cross-cutting concerns implemented per handler diverge. The third copy is the signal, and
+- Cross-cutting concerns implemented per handler can diverge. Repeated policy plus observed drift or
+  ordering/security risk is the signal, and
   the fix is one chain stage, not a base controller class — inheritance for cross-cutting
   concerns fails as soon as a handler needs two of them.
 - **Choose the chain stage by what it must see.** A filter runs before routing and cannot
@@ -145,8 +147,9 @@ The API is REST over resources
 - **Application Controller is the least-known pattern here and the most useful** where it
   applies: multi-step flows, approval chains, state machines. Its value is that the flow
   becomes a testable object rather than a set of redirects spread over handlers.
-- Do not map classical page-flow patterns onto a REST API by analogy. A REST endpoint is a
-  Remote Facade over a resource; there is no page, no navigation and no view state
+- Do not map classical page-flow patterns onto an HTTP API by analogy. An API may expose resources,
+  commands, workflows and hypermedia; Remote Facade is useful when network granularity requires it,
+  not a synonym for every REST endpoint
   (`remote-facade-and-dto`).
 - Handler tests are boundary tests: binding, validation, status codes, error shape. If a
   handler test needs a database, either the handler is doing too much or the test is at the

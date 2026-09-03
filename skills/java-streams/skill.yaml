@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-streams
-version: 1.1.0
+version: 1.2.0
 description: >-
   Stream pipelines as a design decision: when a stream is clearer than a loop and when it is
   not, side-effect-free stages and mutable reduction with collectors, the toMap and

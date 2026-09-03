@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: gof-template-method
-version: 1.1.0
+version: 1.2.0
 description: >-
   Template Method in modern Java: fixing an algorithm's skeleton while named steps vary, and the
-  inheritance coupling that makes composition the better default. Covers why the template method
-  must be final and the hook surface minimal, the constructor-calls-an-overridable-method trap,
+  inheritance coupling that often makes composition preferable. Covers when final protects the
+  sequence, controlled overriding, minimal hook surfaces, the constructor-calls-an-overridable-method trap,
   protected hooks becoming an API you cannot change, when the pattern is genuinely right
   (frameworks that instantiate your subclass, contract test base classes), and how to convert one
   to a class taking its steps as collaborators. Use when an abstract base class with protected
@@ -40,7 +40,7 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
+dependencies: []
 
 suggests:
   - gof-chain-of-responsibility

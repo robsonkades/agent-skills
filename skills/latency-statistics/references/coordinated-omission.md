@@ -1,43 +1,59 @@
 # Coordinated omission
 
-## What it actually is
+## Define the observation process first
 
-Coordinated omission is not "the slow response was not recorded". The slow response _is_
-recorded. What goes missing are the requests that **should have been issued while it was
-in flight** and never were, because the measuring loop was blocked waiting.
+Coordinated omission occurs when the system being measured delays or suppresses future
+measurements that should have occurred under the target arrival schedule. The observed sample is
+then conditioned on the measured system being responsive. A simple closed-loop worker that sends
+its next request only after the prior response is the canonical case.
 
-The consequence is that it misleads in two directions at once:
+The slow response is usually recorded. Missing are the arrivals—and therefore queue waits and
+terminal outcomes—that the target workload model says would have occurred while the worker was
+blocked. This can make latency look better and offered capacity look higher than under the intended
+arrival process.
 
-- **Tail latency is underestimated** — the requests that would have queued behind the
-  slow one were never sent, so their waiting time never appears.
-- **Capacity is overestimated** — the generator throttled itself to match the server,
-  so the reported throughput is the server's capacity under an artificially cooperative
-  arrival pattern.
+Not every closed-loop test is invalid. It correctly models a population where each user waits for
+the prior result plus think time. It is invalid when interpreted as a fixed/open arrival workload
+or when the production population contains enough independent users that the generator's finite
+workers become the limiting feedback loop.
 
-## Detection
+## Evidence packet
 
-The conclusive signal is the **sample count**: compare requests _planned_ by the schedule
-with requests _actually issued_. A deficit is coordinated omission. Everything else is
-circumstantial.
+Record counters at each stage over the same monotonic interval:
 
-- k6: `dropped_iterations` must be `0`, and `vus` must stay below `maxVUs`.
-- The `p99/p50 > 3` heuristic is weak evidence in both directions — the ratio is low both
-  in an omission-affected test and in a healthy system far from saturation.
-- The N vs. 2N test is conclusive for the closed-loop case: run the same test with N and
-  2N virtual users. If throughput does not move and latency doubles, the generator is in
-  charge, not the server.
-
-## Correction
-
-Two independent options, and they solve it at different layers:
-
-```java
-// At recording time: HdrHistogram fills in the requests that were owed
-histogram.recordValueWithExpectedInterval(latencyNanos, expectedIntervalNanos);
+```text
+scheduled/offered → admitted by generator → started on wire → accepted by service
+                  → completed / failed / timed out / cancelled
+generator workers/VUs, event-loop lag, CPU, sockets and queue depth
 ```
 
+A scheduled-versus-started deficit proves that the generator missed its schedule; it does **not**
+alone prove coordinated omission. The cause may be generator CPU, connection limits, admission
+policy or response-coupled workers. Correlate the deficit with worker state and response
+completion. Conversely, equal counts do not prove validity if timestamps are shifted, bursts are
+compressed after stalls, or client-side queue delay is excluded from “latency”.
+
+Ask four questions:
+
+1. What arrival model is the production hypothesis—closed, open, trace replay, or stateful mix?
+2. Is issue time scheduled independently of prior completion?
+3. Where does the latency clock start—scheduled time, generator queue, socket write, server
+   receive, or handler entry?
+4. What happens when the generator cannot keep up—drop, queue, burst later, add workers, or reduce
+   rate?
+
+Tools expose different signals. For k6 arrival-rate executors, inspect `dropped_iterations`, VU
+limits and generator resource saturation; a nonzero value says the requested schedule was not
+realised, not why. A closed-workload N-versus-2N run can reveal a concurrency/throughput knee, but
+latency doubling with flat throughput is compatible with ordinary queue saturation and is not a
+conclusive omission test.
+
+## Prefer generation-time fidelity
+
+Schedule arrivals independently when that is the production model, preallocate enough generator
+capacity, and include client-side waiting from scheduled arrival to terminal outcome.
+
 ```javascript
-// At generation time: open-loop injection by schedule, not by response
 export const options = {
   scenarios: {
     steady: {
@@ -52,13 +68,54 @@ export const options = {
 };
 ```
 
-Generation-time correction is preferable: it measures the system under the arrival
-pattern it actually faces. Recording-time correction reconstructs what the measurement
-lost, which is better than nothing but is still an inference.
+This configuration is a starting hypothesis, not proof: validate actual start timestamps,
+`dropped_iterations`, generator CPU/event-loop lag, sockets and terminal counts. Open-loop load can
+overwhelm a system exactly as production would; pair it with abort thresholds and a bounded blast
+radius.
 
-## Where else it appears
+## HdrHistogram correction is a model, not recovered data
 
-Any fixed-rate producer that blocks on its consumer has the same structure — a scheduled
-job that skips a run because the previous one is still going, a queue consumer measuring
-handling time rather than time in the queue. The question to ask is always the same: was
-the next observation delayed _by_ the observation being measured?
+```java
+histogram.recordValueWithExpectedInterval(latencyNanos, expectedIntervalNanos);
+```
+
+`recordValueWithExpectedInterval` adds synthetic values at expected-interval steps below an
+observed long latency. It answers a counterfactual resembling “what would a regularly scheduled
+single stream have observed during this stall?” It does not reconstruct actual arrival times,
+concurrency, queue discipline, retries, drops or correlated service times. Results depend directly
+on the chosen expected interval.
+
+Use it when only omission-prone samples remain and the regular-interval model is defensible.
+Report both uncorrected and corrected distributions, the interval and the model assumptions. Do
+not apply correction again to measurements already scheduled independently, and do not merge
+corrected and raw histograms as if they were the same population.
+
+## Distributed and asynchronous forms
+
+- A scheduled executor that suppresses/merges a run while the previous run is active measures
+  completed jobs, not intended trigger latency.
+- A consumer reporting handler time omits broker dwell and client prefetch queues; end-to-end age
+  needs producer timestamp semantics and clock/error handling.
+- A retry loop that starts its latency clock at each attempt omits backoff and failed attempts from
+  user-perceived completion time.
+- A circuit breaker or load shedder removes work from the success-latency histogram; those outcomes
+  belong in the denominator and usually in a separate terminal-outcome view.
+- A tracing sampler that preferentially retains errors/slow traces changes the observed
+  distribution; weighted reconstruction requires known inclusion probabilities.
+
+## Validation and failure injection
+
+Inject a known pause or service-time step while arrivals remain scheduled. Verify that:
+
+- offered/start timestamps retain the intended cadence until an explicit bounded drop policy;
+- client queue time is included or separately reported;
+- completed + failed + timeout + cancelled reconciles with admitted work;
+- the histogram shows the expected queue/recovery shape rather than one long request only;
+- generator saturation alarms before the generator becomes the bottleneck.
+
+## Sources
+
+- [HdrHistogram coordinated-omission support](https://github.com/HdrHistogram/HdrHistogram#correcting-for-coordinated-omission)
+- [k6 arrival-rate executors](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/arrival-rate-vu-allocation/)
+- [RFC 2330, Framework for IP Performance Metrics](https://www.rfc-editor.org/rfc/rfc2330)
+- [Schroeder et al., “Open Versus Closed: A Cautionary Tale” (NSDI 2006)](https://www.usenix.org/conference/nsdi-06/open-versus-closed-cautionary-tale)

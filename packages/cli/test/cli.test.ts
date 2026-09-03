@@ -15,9 +15,9 @@ const bin = join(repoRoot, 'packages', 'cli', 'bin', 'agent-skills.mjs');
 
 describe('CLI version', () => {
   it('reports the version its package.json publishes', async () => {
-    // The constant is hand-written and was last bumped at 1.0.0, so `--version` would have
-    // announced 1.0.0 from a 1.2.0 release. Releases move every package together; this keeps
-    // the one number a user actually sees moving with them.
+    // The constant is hand-written, so a package-only version bump could leave `--version`
+    // announcing an older release. Releases move every package together; this keeps the one
+    // number a user actually sees moving with them.
     const pkg = JSON.parse(
       await readFile(join(repoRoot, 'packages', 'cli', 'package.json'), 'utf8'),
     ) as { version: string };
@@ -51,9 +51,14 @@ async function cli(
     NO_COLOR: '1',
     ...(options.env ?? {}),
   };
-  // PATH is cleared so a real `claude` or `codex` on the developer's machine cannot
-  // influence detection; the config directories above are the only evidence.
-  env['PATH'] = dirname(process.execPath);
+  // Keep the absolute Node executable used below, but expose no executable search path to the
+  // child. Pointing PATH at dirname(process.execPath) is not hermetic on Windows: npm can install
+  // codex.CMD beside node.exe, which made the "no agents" tests detect the developer's real Codex.
+  // Remove case variants first because Windows treats Path/PATH as the same environment key.
+  for (const key of Object.keys(env)) {
+    if (key.toUpperCase() === 'PATH') delete env[key];
+  }
+  env['PATH'] = join(options.home, '.empty-executable-path');
 
   try {
     const { stdout, stderr } = await run(process.execPath, [bin, ...args], {

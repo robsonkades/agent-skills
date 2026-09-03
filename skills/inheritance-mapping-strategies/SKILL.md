@@ -31,7 +31,8 @@ subtype relationship, and composition maps better and reads better.
 
 ```text
 Single table          one table, all subtypes, a discriminator column.
-(SINGLE_TABLE)        Subtype-specific columns must be nullable.
+(SINGLE_TABLE)        Subtype-specific columns are commonly nullable;
+                      discriminator-aware CHECK constraints can enforce groups.
 
 Class table           one table per class in the hierarchy, joined by the
 (JOINED)              shared primary key. Normalised; each read joins
@@ -69,7 +70,8 @@ Subtypes differ only in which fields are set; no distinct behaviour
 
 Few subtypes, few subtype-specific columns, polymorphic queries common,
 performance matters
-        → SINGLE_TABLE. Fastest reads, no joins, simplest queries.
+        → SINGLE_TABLE often minimizes joins for polymorphic reads. Confirm
+          row width, indexes, predicates and workload before claiming speed.
           Pay with nullable columns and weak database-level constraints.
 
 Many subtype-specific columns, or the database must enforce them, or
@@ -95,17 +97,17 @@ without a deploy
 
 ## Rules
 
-- **Single table's real cost is constraint loss, not disk.** Every subtype-specific column
-  must be nullable, so the database cannot enforce "a `CardPayment` must have a
-  `card_last4`". Recover it with check constraints conditioned on the discriminator, or
+- **Single table's real cost includes constraint complexity, not just disk.** Columns may remain
+  nullable at the column level while discriminator-aware `CHECK` constraints enforce “a
+  `CardPayment` must have `card_last4`.” Verify ORM-generated DDL and bulk/import paths, or
   accept that only application code enforces it — and that bulk imports bypass it.
 - **Joined's real cost is the join per level on every read, including polymorphic ones**,
   plus an insert per level on write. It is usually acceptable; it becomes painful on a list
   screen that reads the whole hierarchy at volume, and that is a measurable question, not a
   matter of taste (`architecture-and-performance`).
-- Concrete table per class forbids a foreign key from any other table to the base type,
-  because there is no base table to point at. If anything references the hierarchy
-  polymorphically, this strategy is already excluded.
+- Concrete table per class has no single base table for an ordinary polymorphic foreign key.
+  Alternatives such as separate subtype FKs, a registry/base identity table or application-level
+  integrity add complexity; price them before excluding the strategy.
 - **Set discriminator values explicitly** (`@DiscriminatorValue("CARD")`). The default is the
   entity name, which means a class rename silently invalidates every existing row.
 - Polymorphic queries under single table are just a `WHERE` on the discriminator — cheap.
@@ -116,8 +118,9 @@ without a deploy
   exactly right for audit columns and shared identifiers.
 - Adding a subtype costs: an `ALTER TABLE ADD COLUMN` (single table, nullable, online in
   most engines); a new table plus a foreign key (joined); a new table (concrete). Changing
-  strategy later costs a full data migration in every direction — this is a one-way
-  decision and deserves the corresponding analysis (`architecture-decision-making`).
+  strategy later usually requires a substantial data migration. It is expensive, not literally
+  one-way; use expand/contract, reconciliation and rollback/forward-fix analysis
+  (`architecture-decision-making`).
 - Indexing differs materially: under single table, indexes on subtype-specific columns are
   mostly null and should usually be filtered/partial indexes; under joined, each level
   indexes its own columns naturally.

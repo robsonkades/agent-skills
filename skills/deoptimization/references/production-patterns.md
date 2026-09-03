@@ -72,11 +72,11 @@ latency spike with no compiler evidence, which is why the compilation log matter
 
 ## Feature flags and configuration in the hot path
 
-| Flag storage                                          | What C2 does                                                                          | Cost after the first flip                                                                                                                 |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `static final boolean`                                | Constant-folds; the dead side is never compiled                                       | Cannot flip without a restart — no cost, no runtime control                                                                               |
-| `volatile` / `AtomicBoolean` / config lookup          | A real load and a branch; the untaken side is an `unstable_if` trap until first taken | One trap per bci, then both sides compiled. The cost is the lost folding, not recurring deoptimisation                                    |
-| Flag that selects a **strategy object** at a hot site | Type profile: monomorphic → bimorphic → megamorphic                                   | After the second type, up to four `class_check` traps; after the third, a virtual call and no inlining. The cost is inlining, permanently |
+| Flag storage                                          | What C2 does                                                                          | Cost after the first flip                                                                                                               |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `static final boolean`                                | Constant-folds; the dead side is never compiled                                       | Cannot flip without a restart — no cost, no runtime control                                                                             |
+| `volatile` / `AtomicBoolean` / config lookup          | A real load and a branch; the untaken side is an `unstable_if` trap until first taken | One trap per bci, then both sides compiled. The cost is the lost folding, not recurring deoptimisation                                  |
+| Flag that selects a **strategy object** at a hot site | Receiver-type profile can evolve from monomorphic to polymorphic/megamorphic          | Additional types can invalidate guarded inlining; the eventual inline shape depends on profile width, frequency and compiler heuristics |
 
 The first row is a build-time decision, the second is cheap, the third is the one that turns
 a "harmless" flag into a lost inline tree on the hot path. Put the strategy choice one level
@@ -85,25 +85,32 @@ sites.
 
 ## Act or accept
 
-| Signal                                                        | Accept when                                  | Act when                                                                                |
-| ------------------------------------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Burst of any reason in the first minutes after start          | The rate reaches a floor and stays there     | The same burst repeats after every deploy at a site whose types are known: warm it up   |
-| `marked for deoptimization` on class load                     | The class loads once per process             | It recurs in steady state: the hierarchy is being changed by generated code             |
-| `class_check` → bimorphic → virtual call at one site          | The site is not on the latency-critical path | It is, and profiling shows the lost inline: narrow the static type or peel the hot type |
-| `action=none` at a steady rate on one site                    | Never                                        | Always: find the two hundred decompilations behind it                                   |
-| `made not compilable on level 4`                              | Never                                        | Always; the method is C1 code until restart                                             |
-| `jdk.Deoptimization` + `jdk.CompilationFailure` on one method | Never                                        | The generated method is too large or too complex; split it                              |
+| Signal                                                        | Accept when                                    | Act when                                                                                 |
+| ------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Burst of any reason in the first minutes after start          | The rate reaches a floor and stays there       | The same burst repeats after every deploy at a site whose types are known: warm it up    |
+| `marked for deoptimization` on class load                     | The class loads once per process               | It recurs in steady state: the hierarchy is being changed by generated code              |
+| `class_check` → bimorphic → virtual call at one site          | The site is not on the latency-critical path   | It is, and profiling shows the lost inline: narrow the static type or peel the hot type  |
+| `action=none` at a steady rate on one site                    | Rate and service cost are negligible           | It consumes meaningful CPU/latency: explain the decompilation history and unstable input |
+| `made not compilable on level 4`                              | Method is cold or C1 meets the SLO             | It is hot and the tier loss is measurable; diagnose before considering source changes    |
+| `jdk.Deoptimization` + `jdk.CompilationFailure` on one method | Events are isolated and operationally harmless | The same hot method repeatedly fails/storms; inspect failure text and generated bytecode |
 
 ## The levers and their trade-offs
 
-| Lever                                                                     | Buys                                                                                             | Costs                                                                                              |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| Warm-up traffic exercising every type and branch                          | No deoptimisation under production load                                                          | A bimorphic or megamorphic profile where a monomorphic one was possible — predictability over peak |
-| Loading generated classes at start-up                                     | One CHA burst before traffic instead of many under it                                            | Start-up time; every generated class, not just the ones this deploy needs                          |
-| Narrowing the static type at a hot call site                              | No guard, no dependency, full inlining                                                           | The design loses a seam; a `final` on the implementation alone buys nothing                        |
-| Peeling a hot receiver type into its own site                             | The hot type inlines; the rest stays virtual                                                     | Code that exists for the compiler; document why                                                    |
-| `-XX:CompileCommand=dontinline,C::m` on a large trapping callee           | Smaller blast radius per deoptimisation; cheaper rematerialisation                               | The call boundary blocks escape analysis across it                                                 |
-| `-XX:CompileCommand=exclude,C::m` on a storming method                    | Stops the storm immediately                                                                      | The method is **interpreted**, slower than the tier-1 fallback the cutoff would give               |
-| `-XX:-UseTypeSpeculation`                                                 | Isolates `speculate_*` traps in an experiment                                                    | Process-wide loss of a C2 optimisation; not a production setting                                   |
-| Raising `PerMethodRecompilationCutoff` / `PerBytecodeRecompilationCutoff` | Nothing — the `none` state is reached at half the cutoff, and the method still does not converge | A longer storm before the C1 fallback                                                              |
-| Restart                                                                   | A clean MDO and a clean baseline for evidence                                                    | Nothing is fixed; the storm rebuilds                                                               |
+| Lever                                                                     | Buys                                                                                               | Costs                                                                                                |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Warm-up traffic exercising every type and branch                          | No deoptimisation under production load                                                            | A bimorphic or megamorphic profile where a monomorphic one was possible — predictability over peak   |
+| Loading generated classes at start-up                                     | One CHA burst before traffic instead of many under it                                              | Start-up time; every generated class, not just the ones this deploy needs                            |
+| Narrowing the static type at a hot call site                              | No guard, no dependency, full inlining                                                             | The design loses a seam; a `final` on the implementation alone buys nothing                          |
+| Peeling a hot receiver type into its own site                             | The hot type inlines; the rest stays virtual                                                       | Code that exists for the compiler; document why                                                      |
+| `-XX:CompileCommand=dontinline,C::m` on a large trapping callee           | Smaller blast radius per deoptimisation; cheaper rematerialisation                                 | The call boundary blocks escape analysis across it                                                   |
+| `-XX:CompileCommand=exclude,C::m` on a storming method                    | Stops the storm immediately                                                                        | The method is **interpreted**, slower than the tier-1 fallback the cutoff would give                 |
+| `-XX:-UseTypeSpeculation`                                                 | Isolates `speculate_*` traps in an experiment                                                      | Process-wide loss of a C2 optimisation; not a production setting                                     |
+| Raising `PerMethodRecompilationCutoff` / `PerBytecodeRecompilationCutoff` | More attempts before the tested HotSpot build gives up; useful only in a bounded causal experiment | More compilation/deoptimisation work and delayed fallback; it does not make unstable inputs converge |
+| Restart                                                                   | A clean MDO and a clean baseline for evidence                                                      | Nothing is fixed; the storm rebuilds                                                                 |
+
+## Authoritative sources
+
+- [JDK 25 HotSpot `deoptimization.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/deoptimization.cpp)
+- [JDK 25 HotSpot `dependencies.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/dependencies.cpp)
+- [JDK 25 Instrumentation API](https://docs.oracle.com/en/java/javase/25/docs/api/java.instrument/java/lang/instrument/Instrumentation.html)
+- [JDK 25 JVM TI specification](https://docs.oracle.com/en/java/javase/25/docs/specs/jvmti.html)

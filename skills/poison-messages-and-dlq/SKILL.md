@@ -36,18 +36,22 @@ that says the consumer is healthy.
 
 ## Workflow
 
-1. **Classify the failure from its type, not its count.** Permanent (this input will never
-   succeed), transient (the operation did not happen and may later), ambiguous (unknown). The
-   signal must come from the contract — a typed error, a status code, a validation result —
-   never from a message substring. The classification is `retries-and-backoff`; making it
-   machine-readable in the first place is `rpc-and-api-contracts`.
-2. **Route each class to a different destination.** Permanent goes to the DLQ on the first
-   failure. Transient retries in place or on a delay/retry topic. Ambiguous retries under
-   idempotency. The table and its conditions are `references/classification-and-routing.md`.
+1. **Classify from evidence and context, not count or exception name alone.** Distinguish
+   payload-intrinsic rejection, environment/version incompatibility, transient dependency,
+   overload, ambiguous side effect and programmer defect. HTTP status is input to a policy,
+   not the policy: 409/425/429 can be retryable while some 2xx responses carry rejected
+   business outcomes. The classification is `retries-and-backoff`; machine-readable contracts
+   are `rpc-and-api-contracts`.
+2. **Route each class according to recovery.** Proven payload-intrinsic defects can quarantine
+   immediately; transient/overload work waits or retries within budgets; ambiguous effects
+   require status lookup/idempotency/reconciliation; environment-wide failures stop admission
+   and repair the consumer. The table is `references/classification-and-routing.md`.
 3. **Decide the ordered-log case explicitly** — block the partition or accept a per-key
    ordering gap. It is a business decision with two acceptable answers and no default.
-4. **Design the DLQ record before the DLQ.** Payload plus failure, stack, attempt count,
-   origin, timestamps and trace id. Schema in `references/dlq-operations.md`.
+4. **Design the quarantine record and atomic transfer before the DLQ.** Preserve bounded raw
+   bytes or a secure blob reference, origin/identity, schema, failure evidence and operation
+   history. Publishing the DLQ record and advancing the source must be atomic where the broker
+   supports it, or repeat-safe/reconciled otherwise. Schema in `references/dlq-operations.md`.
 5. **Name an owner and an alert.** A DLQ with no owning team, no arrival-rate alert and no
    age alert is a data-loss mechanism.
 6. **Build redrive before you need it**, with its preconditions written down: the defect is
@@ -58,23 +62,23 @@ that says the consumer is healthy.
 
 ## Rules
 
-- Never dead-letter on attempt count alone. `attempts > 5 → DLQ` sends the whole in-flight
+- Never classify on attempt count alone. `attempts > 5 → DLQ` can send the whole in-flight
   stream to the DLQ during a dependency outage, because every message reaches five attempts.
-  Count is the bound for the _ambiguous_ class only.
-- Never classify on `e.getMessage().contains(...)`. A deserialisation failure, a schema
-  mismatch, a validation rejection and a 4xx from a downstream are all permanent, and all of
-  them are identifiable by type.
-- A message that fails deserialisation is permanent by construction and must be dead-lettered
-  on the first failure — it will never parse, and it cannot be retried into success by any
-  policy.
+  Counts/deadlines bound transient and ambiguous retries to protect capacity, but exhausting a
+  bound does not turn a dependency outage into poison; route to durable delayed work, pause or
+  escalate according to the recovery contract.
+- Never classify on `e.getMessage().contains(...)`. Typed failures still need context: a
+  deserialization error can be corrupt bytes, unknown schema, missing decryption key or a bad
+  deployment. Preserve raw bytes before deserialization and compare failure rate/build/schema
+  compatibility before deciding record-local quarantine versus stopping the fleet.
 - **A DLQ nobody alerts on is a data-loss mechanism with extra steps.** Two alerts, not one:
   arrival rate (something started failing) and age of the oldest record (nobody is acting).
   Alert design and thresholds are `slo-and-alerting`.
-- The DLQ record must carry enough to diagnose without the original topic: the payload and
-  its headers, the failure type and stack, the attempt count, the source topic/partition/
+- The DLQ record must carry enough to diagnose without the source: protected raw payload/blob
+  reference and safe headers, failure code/evidence, attempt history, source topic/partition/
   offset or queue and receipt, the first- and last-failure timestamps, the consumer group and
-  build version, and the trace id (`distributed-tracing-design`). A DLQ holding only a payload
-  is unusable, and the information is unrecoverable once the source retention expires.
+  build/schema version, and correlation/trace IDs (`distributed-tracing-design`). Redact
+  credentials and bound stack/payload size; DLQs often become long-lived PII stores.
 - Give the DLQ a retention longer than the time it takes a human to act on the alert, and know
   what that retention is. A DLQ inheriting a 7-day topic retention silently deletes the
   evidence over a long weekend.
@@ -91,16 +95,29 @@ that says the consumer is healthy.
   moved on — the order was cancelled, the price changed, the account closed — applies stale
   intent as if it were current. Check whether the record is still valid before replaying it,
   and prefer replaying through the normal consumer over a bespoke script.
-- Redrive at full rate re-creates the incident. Rate-limit the redrive, and redrive into the
-  original topic or queue rather than calling the handler directly, so the limits, retries and
-  metrics that exist on the normal path still apply.
+- Redrive at full rate can re-create the incident. Use an isolated, rate-limited replay lane
+  through the production validation/handler contract. Reinjecting the original topic is one
+  option but changes order and may loop into the same DLQ; an admin replay endpoint/job can be
+  safer if it shares code, authorization, idempotency and observability.
 - **Every message failing after a deploy is an incident, not a data-quality problem.** The DLQ
   is filling with valid data because the _consumer_ is broken. Stop or pause the consumer and
   roll back; do not let the topic drain into the DLQ, because the DLQ preserves neither the
   partition ordering nor the offsets you will want when the fix ships.
-- Never let the DLQ producer share the failure mode of the handler. If the handler fails
-  because the broker is unreachable and the DLQ is on the same broker, dead-lettering fails
-  too — and the fallback must be to stop consuming, not to drop the record.
+- Never acknowledge/commit the source unless durable quarantine is proven. With Kafka, use a
+  consume-transform-produce transaction when its scope/configuration fits, or make DLQ publish
+  idempotent and reconcile before advancing. If quarantine storage is unavailable, pause/stop;
+  a best-effort `send()` followed by commit is silent loss.
+
+## Anti-patterns
+
+| Anti-pattern                | Symptom                                            | Better alternative                                               |
+| --------------------------- | -------------------------------------------------- | ---------------------------------------------------------------- |
+| Every 4xx is poison         | conflicts/rate limits are discarded                | contract-specific retryability and current-state checks          |
+| Deserialize before capture  | poison record cannot be reconstructed              | intercept raw bytes and metadata at the consumer boundary        |
+| DLQ send then source commit | crash/lost ack yields loss or duplicate quarantine | transactional transfer or idempotent transfer ledger             |
+| Infinite in-place retry     | one partition/key stalls indefinitely              | bounded budget plus durable delayed/quarantine decision          |
+| Blind bulk redrive          | stale intents and dependency overload recur        | dry run, semantic validation, rate guardrails and reconciliation |
+| Shared unrestricted DLQ     | PII/credentials outlive source controls            | encryption, ACLs, minimization, retention and audit              |
 
 ## References
 

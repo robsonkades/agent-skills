@@ -3,7 +3,7 @@ name: java-reflection-and-method-handles
 description: >
   Runtime access to code the compiler cannot check: what reflection costs beyond speed — no
   compile-time checking, invisible to refactoring and dead-code analysis, blocked by module
-  encapsulation, unsupported without configuration under AOT and native image — the
+  encapsulation, and constrained by closed-world native-image analysis — the
   alternatives that keep the checking (interfaces, ServiceLoader, annotation processing,
   code generation), MethodHandles and VarHandles for genuinely dynamic access, and the
   security boundary around resolving a name that came from outside. Use when reflection
@@ -19,12 +19,12 @@ description: >
 
 ## Purpose
 
-Keep dynamic access to a boundary that is deliberate, narrow and configured, because
-everything the compiler cannot see, no other tool can see either — the IDE's rename, the
-linker's dead-code elimination, the native-image analyser and the reviewer all lose the edge.
+Keep dynamic access deliberate, narrow and described by metadata/contracts. Compilers and basic
+refactoring tools cannot prove a string-computed edge; specialized analyzers may approximate it,
+but correctness still depends on runtime inputs, loader/module identity and configuration.
 Two failure modes: application code using reflection where an interface would do, so a rename
 compiles and fails at runtime; and reflection over a name that came from outside the process,
-which is a code-execution primitive rather than a lookup.
+which becomes an execution primitive once initialization, construction or invocation is reachable.
 
 ## Workflow
 
@@ -33,13 +33,12 @@ which is a code-execution primitive rather than a lookup.
    checking. Reflection is for genuinely open sets: plugins, frameworks, tooling.
 2. **If it must be dynamic, decide where the openness stops.** One factory, one registry, one
    adapter — never scattered `getDeclaredMethod` calls through business code.
-3. **Validate the name before resolving it.** A class or method name from configuration or a
-   payload is resolved only against an allow-list, and `asSubclass` narrows it to the expected
-   supertype.
+3. **Validate tokens before resolution.** Map external tokens to code-owned types/operations.
+   `asSubclass` narrows a genuinely configurable class to an expected supertype, but does not
+   authorize its constructor, static initializer, loader, code source or later methods.
 4. **Choose the mechanism by frequency.** A one-off at startup: `Class`/`Method` reflection is
-   fine — but resolve the `Method` once and keep it, because every `getMethod` call returns a
-   fresh copy and `setAccessible(true)` applies only to the copy held. Repeated on a hot path:
-   a `MethodHandle` in a `static final` field, or generated code.
+   fine—but resolve/validate once and cache with a lifecycle-safe key. Repeated on a measured hot
+   path: compare a stable typed `MethodHandle`, a bound functional adapter and generated code.
 5. **Register what the runtime cannot see** — module `opens`, native-image reflection
    configuration, AOT metadata — and test on the target runtime, because a JVM run proves
    nothing about a native image.
@@ -51,38 +50,37 @@ which is a code-execution primitive rather than a lookup.
   construction; every call afterwards goes through the interface, checked by the compiler.
 - Prefer `ServiceLoader` to hand-rolled classpath scanning for plugin discovery: it is
   declarative (`META-INF/services` or `provides … with` in a module), the JDK's own mechanism,
-  and visible to the module system and native-image tooling.
+  and visible to the module system. It does not provide ordering, dependency injection, failure
+  isolation or unload lifecycle, and native-image support must still be verified for the toolchain.
 - Prefer build-time to run-time. An annotation processor or code generator produces code you
   can read, debug, and that the compiler checks; runtime reflection produces behaviour nobody
   can grep for. This is why modern frameworks moved mapping, validation and injection metadata
   towards build time — see java-annotations.
-- Reflection loses more than performance: no compile-time type checking, no `Find Usages`, no
-  safe rename, no dead-code elimination, no static analysis of what is called, and stack traces
-  full of framework frames. Those costs apply even when the call happens once at startup.
+- Reflection loses more than performance: no ordinary compile-time type checking, incomplete
+  rename/find-usage/dead-code results unless specialized tooling understands the metadata, and
+  less direct stack traces. Those costs apply even when invocation happens once at startup.
 - `setAccessible(true)` on another module's private member fails under strong encapsulation
   unless the package is opened (`opens`, `--add-opens`). Requiring `--add-opens` in production
   is a design decision, not a workaround — record it and revisit it, because the JDK's direction
   is towards restricting it further. Reflecting into JDK internals is not a supported contract.
-- Never resolve a class or method name that came from a payload, a header, a message field or
-  untrusted configuration. `Class.forName(userInput)` and polymorphic deserialisation keyed by
-  a type field are remote-code-execution primitives; the mitigation is an allow-list mapping
-  known tokens to known types, never a deny-list of dangerous ones —
+- Never let a payload, header or message field directly select a class/member. `Class.forName`
+  with initialization can execute static initialization; construction/invocation and polymorphic
+  deserialization can reach powerful gadget behavior. Map known tokens to known operations and
+  validate code source/loader where plugins are allowed; a deny-list is not a security boundary—
   java-serialization-hardening covers the deserialisation side.
 - Wrap reflective failures at the boundary. `NoSuchMethodException`, `IllegalAccessException`
   and `InvocationTargetException` are implementation detail; propagate a domain or configuration
   error, and always unwrap `InvocationTargetException.getCause()` — losing the cause hides the
   real exception under a generic wrapper (java-exception-design).
-- For repeated dynamic invocation, use a `MethodHandle` (or `VarHandle` for fields) resolved
-  once and stored in a `private static final` field. The JIT can constant-fold and inline
-  through a static-final handle, giving performance close to a direct call; a handle looked up
-  per call, or held in a non-final field, gets none of that, and `invokeWithArguments` builds
-  an argument array on every call — no better than `Method.invoke`, which boxes every argument
-  into an `Object[]` and re-checks access. Since JDK 18 (JEP 416) `Method.invoke` runs on
-  method handles itself: the inflation flags (`-Dsun.reflect.inflationThreshold`,
-  `-Dsun.reflect.noInflation`) are ignored, and a runbook that sets them describes a JVM that
-  no longer exists. See `references/reflection-cost-model.md`.
+- For repeated dynamic invocation, resolve a typed `MethodHandle` (or `VarHandle`) once. A stable
+  handle visible as a compiler constant often enables adapter/target inlining, but this is a JIT
+  decision, not a `static final` guarantee. `invokeWithArguments` intentionally performs generic
+  array/spreader adaptation; `Method.invoke` has varargs/boxing/wrapping/access costs. Measure the
+  actual target and storage shape. Core reflection is MethodHandle/VarHandle-based since JDK 18;
+  the old implementation was removed in JDK 22, making old inflation/direct-handle switches no-ops.
 - Use `VarHandle` rather than `sun.misc.Unsafe` or reflection for low-level field access with
-  memory-ordering semantics; `varhandles-and-memory-ordering` covers the access modes.
+  explicit memory-ordering semantics. Query `isAccessModeSupported`; final fields support reads,
+  not arbitrary writes. `varhandles-and-memory-ordering` covers the access modes.
 - Do not use reflection to bypass a design you control. Reaching into a private field to test a
   class, to mutate an immutable object, or to "just get this working" makes the private surface
   a de facto API that the next refactor breaks. In tests, prefer constructing the object
@@ -92,11 +90,28 @@ which is a code-execution primitive rather than a lookup.
   debugging and deployment. When it is genuinely required, the FFM API is the modern path — it
   is safer, statically typed, and requires explicit enabling of restricted operations — and
   jni-and-ffm and off-heap-memory own the mechanics.
-- Assume reflection is invisible to ahead-of-time tooling. Native image needs every reflectively
-  accessed type, method and field declared in its configuration; anything missed fails at
-  runtime on a path the JVM tests never exercise. Where startup or footprint matters, that is
-  itself an argument for build-time alternatives — graalvm-native-image and
-  startup-cds-crac-leyden.
+- Closed-world native-image analysis may infer constant reflective edges and framework metadata,
+  but runtime-computed access needs owned reachability metadata. Missing edges may fail at build
+  time or only on an untrained runtime path. Test the native artifact itself; this constraint can
+  justify build-time alternatives—see `graalvm-native-image`.
+- Treat `Lookup`, `MethodHandle` and `VarHandle` as capabilities. Access checks happen when a
+  handle is created; code receiving the handle can invoke it without re-proving the creator's
+  private access. Never expose a full-power lookup or non-public handle across an untrusted plugin
+  boundary; expose a narrow parent-owned interface instead.
+- Cache without pinning reloadable code. A `Class`, reflected member, method handle, lambda/proxy
+  class or cache value can retain its defining loader. Parent-loaded framework caches should use
+  lifecycle eviction, `ClassValue` where appropriate, or rigorously tested weak-key designs.
+
+## Acceptance gate
+
+- Resolve all required members/providers at startup and report missing/ambiguous signatures with
+  class loader, module and code source.
+- Test named modules, classpath/unnamed modules, duplicate plugin loaders, reload/unload and the
+  exact JDK/native-image artifact.
+- Exercise primitive/reference/null/varargs signatures and verify `WrongMethodTypeException`,
+  target exceptions and access failures are translated without losing causes.
+- Benchmark only after proving the reflective path is material; include direct/interface,
+  `Method.invoke`, stable/unstable handles and generated alternatives with allocation profiling.
 
 ## References
 

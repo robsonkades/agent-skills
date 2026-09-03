@@ -1,101 +1,220 @@
 ---
 name: serialization-performance
 description: >
-  The cost of turning objects into bytes: comparing formats and libraries on throughput,
-  allocation per operation, wire size and schema evolution together, buffer reuse and
-  streaming, why Java serialisation is the wrong default and how to harden the paths that
-  cannot be removed, and benchmarking a serialiser without lying. Use when a consumer's
-  flame graph is dominated by ObjectMapper.readValue, when ObjectInputStream appears on a
-  path that reads data from outside the process, when Kryo register() calls sit beside the
-  default setRegistrationRequired(false), when a mixed deploy broke a distributed cache with
-  KryoException, when a serialiser comparison is timed with System.nanoTime in a loop, when
-  a benchmark reports average time and no allocation figure, or when picking a format for a
-  new topic or contract. Does not cover writing the benchmark correctly
-  (jmh-microbenchmarks), finding the allocation in production (allocation-profiling), or
-  buffers outside the heap (off-heap-memory).
+  Engineering serialization cost as a system budget across encode/decode CPU, allocation and
+  retention, wire/storage bytes, copies, buffers, compression, schema evolution, compatibility,
+  security, and rollout. Covers format/library selection by workload and contract, streaming
+  versus materialization, buffer ownership/backpressure, representative JMH/component/load
+  experiments, production attribution, and mixed-version failure tests. Use when serialization
+  is measured hot, a new wire/cache/topic format is chosen, or “zero-copy”/binary-format claims
+  need validation. General benchmark mechanics, schema governance, and Java native-serialization
+  hardening have separate owners.
 ---
 
-# Serialization Performance
+# Serialization performance
 
 ## Purpose
 
-Pick a serialisation format on all four axes at once — throughput, allocation per operation,
-wire size and schema evolution — rather than on the one axis a blog post measured. Format
-choice is not an isolated performance decision: it is a joint decision about latency, bytes on
-the wire, how consumers will evolve, and how many languages have to read the payload.
+Choose and operate a serialization boundary from total system cost and compatibility, not one
+library's small-payload throughput chart. The fastest encoder can lose after wire bytes,
+compression, copies, allocation, downstream parsing, schema migration, or recovery are included.
 
-Two failure modes justify the skill. First, a serialiser chosen from a throughput number, then
-discovered months later to be structurally unable to survive a mixed deploy. Second, Java's
-native serialisation surviving as the default on a path that reads bytes from outside the
-process — the shape that produced the 2015 Commons Collections gadget chain and made
-`ObjectInputFilter` an operational requirement rather than a good practice.
+## Ownership boundary
 
-## Workflow
+- This skill owns serialization performance models, experiments, buffer/copy strategy, and
+  production attribution.
+- `schema-evolution-and-compatibility` owns compatibility governance and rollout contracts.
+- `java-serialization-hardening` owns deep `ObjectInputStream` security/migration.
+- `jmh-microbenchmarks` owns harness validity; `load-testing` owns end-to-end arrivals/queueing.
+- `off-heap-memory` owns native/direct memory lifecycle; `serialization-performance` owns how the
+  codec uses those buffers.
 
-1. **Answer the two eliminating questions first.** Does the data cross a process or language
-   boundary? Does it outlive a single session or deploy — a long-lived cache, persisted state,
-   a Kafka topic? Those two answers remove most candidates before performance is discussed.
-2. **State the schema-evolution mechanism explicitly** — a registry with compatibility rules, a
-   format-native rule, or a versioned serialiser. "We will be careful" is not a mechanism.
-3. **Characterise the read profile.** Few fields read out of large messages favours zero-copy;
-   most fields read every time makes a full parse fine and zero-copy pointless.
-4. **Measure on the real payload with JMH and `-prof gc`.** Compare `gc.alloc.rate.norm`
-   alongside time; a format that is faster and allocates twice as much has not necessarily won.
-5. **Take allocation out of the hot path.** Reuse working buffers, write straight to the output
-   stream where possible, and pool or thread-confine the serialiser instance.
-6. **Harden or delete every remaining `ObjectInputStream`** that reads data originating outside
-   the process, before shipping.
+## Decision contract
 
-## Rules
+```text
+boundary and trust zone: in-process/cache/process/network/storage/topic
+producer/consumer languages, versions, ownership and deployment skew
+payload schema, size/cardinality/nesting/optional-field and value distributions
+read/write ratio and fields accessed
+throughput/latency/tail/CPU/allocation/wire/storage objectives
+streaming, framing, random access, compression and batching requirements
+buffer ownership/lifetime/backpressure and maximum message policy
+compatibility/registry/unknown-field/default/ordering/canonicalization rules
+security/resource limits/privacy and malformed-input behavior
+migration, dual-read/write, replay, rollback and retained-data horizon
+```
 
-- Java's native serialisation is not a default for anything crossing a process boundary. It
-  carries a deserialisation vulnerability class, reflection-driven slowness, `serialVersionUID`
-  fragility, and class and field names on the wire.
-- Every `ObjectInputStream` that reads data from outside the process gets an `ObjectInputFilter`
-  (JEP 290; per-context factories since JEP 415, JDK 17). The filter ends in `!*` and sets
-  `maxdepth`, `maxrefs`, `maxbytes` and `maxarray` — a class allow-list alone still leaves the
-  denial-of-service path open, since a hostile graph of _allowed_ classes can be arbitrarily
-  deep.
-- A `record`'s canonical constructor **does** run during native deserialisation, so declared
-  validation cannot be bypassed — unlike a conventional class, which is reconstructed without
-  any constructor. This removes one bug class, not two: it is not a substitute for
-  `ObjectInputFilter`, because a gadget chain acts on intermediate objects in the graph before
-  your constructor is ever reached.
-- Records ignore `writeObject`/`readObject` and `writeExternal`/`readExternal`. Only
-  `readResolve` and `writeReplace` still apply. Code relying on the others silently does nothing.
-- `kryo.register(Type.class, id)` without `kryo.setRegistrationRequired(true)` is decorative:
-  the default reflection fallback still accepts unregistered classes, so the wire never shrinks
-  to the numeric id and unknown classes pass silently. Both calls, or neither.
-- Kryo registration ids must be stable across versions. Changing the registration order between
-  deploys makes existing serialised data unreadable.
-- Kryo instances are not thread-safe. Use a `ThreadLocal` or a pool; a shared instance is a
-  latent corruption bug, not a performance choice.
-- Raw Kryo is disqualified for data that outlives one JVM session or deploy window. Use
-  `VersionFieldSerializer` or a schema-carrying format when a mixed deploy is possible.
-- Benchmarks use JMH — never `System.nanoTime()` or `currentTimeMillis()` in a hand-written
-  loop. Each `@Benchmark` is named unambiguously as round-trip or as one direction only.
-- Run with `-prof gc` and report `gc.alloc.rate.norm` (bytes per operation), not just average
-  time. Fix the heap (`-Xms`/`-Xmx`) and add `-XX:+AlwaysPreTouch` in the forks; a non-trivial
-  `gc.count` during measurement means the timing comparison is partly measuring collections.
-- Zero-copy formats (Cap'n Proto, FlatBuffers) shift the cost from "full parse, once" to
-  "offset arithmetic, per field read". That is a win only when few fields of large messages are
-  actually read, and neutral-to-negative when most fields are.
-- The Cap'n Proto Java binding is community-maintained, unlike the C++ and Rust cores. Check its
-  commit and issue history before depending on it; FlatBuffers is the zero-copy option with an
-  official Java binding.
-- Never pin a serialisation library version from memory — `protobuf-java` has moved from the
-  3.25.x line to 4.x and Editions. Check Maven Central at the time you write the POM.
-- A format migration starts from a profiler finding, not intuition: `ObjectMapper.readValue`
-  dominating sampled CPU in a high-rate consumer is the actionable evidence.
+## Cost model
+
+Measure stages separately and together:
+
+```text
+end-to-end serialization cost =
+  object/model construction
+  + encode/decode CPU
+  + allocation, retention and GC consequence
+  + buffer growth/copy/reference-count/lifetime cost
+  + compression/decompression
+  + framing/checksum/encryption
+  + wire/storage bytes and downstream I/O
+  + schema lookup/validation/conversion
+  + queueing/backpressure/retry/replay effects
+```
+
+Normalize per business message and per useful byte/field where appropriate. Batch-level results can
+hide per-message tail and oversized-item failure.
+
+## Eliminate by contract before speed
+
+| Constraint                                  | Consequence                                                             |
+| ------------------------------------------- | ----------------------------------------------------------------------- |
+| untrusted input                             | safe parser/resource limits; native Java serialization is not a default |
+| long-lived data or rolling deploy           | explicit schema/compatibility and stable identifiers                    |
+| multiple languages                          | supported implementations and conformance fixtures for each             |
+| selective access to large immutable payload | indexed/lazy format may help if lifetime/validation costs fit           |
+| streaming/unknown total size                | incremental API, framing, cancellation, backpressure                    |
+| human inspection/interoperability           | text/self-describing trade may outweigh bytes/CPU                       |
+| canonical bytes/signatures/dedup            | deterministic/canonical rules, not ordinary serializer defaults         |
+
+No format automatically supplies organizational compatibility. Registry policy, generated code,
+field IDs, defaults, unknown fields, enum evolution, maps/order, and implementation versions must
+be tested across deployed producers/consumers.
+
+## Format families and trade-offs
+
+- **Text/self-describing** (for example JSON): broad interoperability and inspectability; repeated
+  names and lexical conversion can increase bytes/CPU. Parsers may reuse field-name symbols and
+  stream tokens, so “one String per key/value” is not a valid universal model.
+- **Tagged schema formats** (for example Protocol Buffers/Avro variants): compact fields and
+  explicit evolution rules, with sequential wire scanning during parse/skip. Generated in-memory
+  objects may provide direct field access after materialization.
+- **Indexed/in-place access formats** (for example FlatBuffers/Cap'n Proto designs): avoid full
+  object materialization for some access patterns, while adding offset traversal, validation,
+  alignment/layout, buffer-lifetime, implementation and mutation constraints.
+- **Object-graph/library-specific codecs** (for example Kryo): flexible and often efficient within
+  controlled ecosystems; class registration, graph/reference semantics and version compatibility
+  become application protocol responsibilities.
+
+“Zero-copy” is a claim about specific copies and stages, not end-to-end absence of copying. Kernel,
+TLS, framing, decompression, buffer conversion, alignment and application materialization may remain.
+
+## Buffer, ownership, and streaming
+
+Prefer writing to the next stage's bounded buffer/stream when it eliminates a demonstrated copy.
+Before reuse/pooling, define:
+
+- owner, thread-safety, handoff and release point;
+- maximum retained capacity and oversized-message behavior;
+- heap/direct/native accounting and container headroom;
+- partial write/read, cancellation, timeout and exception cleanup;
+- reference-count/use-after-release and data leakage between tenants;
+- pool exhaustion/backpressure and shutdown/redeploy cleanup.
+
+`ThreadLocal` avoids concurrent codec use but can retain large buffers per platform thread and
+behaves differently with virtual-thread workloads. Pools bound instances only if acquisition,
+capacity reset, eviction, failure and telemetry are designed. Reuse can reduce allocation while
+increasing retained memory or contention.
+
+## Library-specific caution
+
+Do not infer protocol safety from a benchmark snippet:
+
+- Kryo registrations can use compact/stable IDs for registered types even when registration is not
+  globally required. `setRegistrationRequired(true)` rejects accidental unregistered types; it is
+  not what makes existing registered types use their IDs.
+- registration IDs and serializers must remain compatible with retained bytes and rolling versions;
+  order-based implicit registration is fragile unless frozen and tested.
+- Kryo instances are generally not thread-safe; choose confinement/pooling and test reset state.
+- disabling graph reference tracking changes semantics for shared/cyclic graphs, not only speed.
+- library defaults and version serializers are not substitutes for cross-version golden fixtures.
+
+Never pin versions or capability claims from memory. Inspect the current official documentation,
+release artifact and supported JDK/platform matrix.
+
+## Measurement ladder
+
+1. **Corpus characterization:** production-derived, privacy-safe cohorts for size, nesting, values,
+   optional/unknown fields, compressibility, malformed and maximum inputs.
+2. **Semantic/conformance tests:** round-trip, cross-language/version, unknown/default fields,
+   deterministic bytes where required, corruption/resource limits.
+3. **JMH mechanism benchmark:** encode and decode separately plus round trip where relevant; CPU,
+   allocation, output size, buffer mode, lifecycle, multiple forks and raw results.
+4. **Component benchmark:** framing, registry, compression, buffer pool, network/storage and
+   backpressure with realistic concurrency.
+5. **Production/canary evidence:** profiles, allocation/GC, queue depth, payload sizes, errors,
+   retries and SLOs normalized by useful work.
+6. **Migration/failure test:** rolling versions, replayed old bytes, rollback, poison/max messages,
+   dependency/registry outage and resource exhaustion.
+
+Use `references/benchmarking-serialisers.md` for the experiment matrix.
+
+## Production attribution
+
+CPU samples at `ObjectMapper.readValue`, a generated parser, or codec method show sampled CPU
+location, not automatically optimization value. Establish frequency per business operation,
+inclusive/self cost, payload cohort, compilation/native frames, allocation/GC consequence, queueing,
+and whether I/O or compression dominates end-to-end latency.
+
+Allocation profiles find creation sites; they do not prove retained memory. Correlation between
+allocation and GC pauses is not additive causal attribution because thread durations overlap and
+collector work is phase-dependent. Use aligned work-normalized evidence and a controlled change.
+
+## Security and resource safety
+
+Treat all deserialization across a trust boundary as parser attack surface:
+
+- cap bytes, nesting/depth, collections/arrays, references and decompressed expansion;
+- reject/route malformed, incompatible, unknown-type and oversized messages deterministically;
+- bound time, memory, concurrency and retries; avoid poison-message loops;
+- authenticate/integrity-check at the correct layer and protect sensitive payload/profile data;
+- fuzz/property-test parsers and cross-version fixtures.
+
+Avoid Java native serialization for new external boundaries. If legacy `ObjectInputStream` remains,
+use `ObjectInputFilter` with class and resource constraints, per-context policy where applicable,
+and a migration plan; follow `java-serialization-hardening` and official serialization-filter docs.
+
+## Decision framework
+
+Prefer a candidate when it:
+
+- satisfies trust, language, compatibility and retained-data constraints;
+- meets CPU/allocation/wire/tail objectives over all important payload cohorts;
+- has supported implementations, tooling and observable failure modes;
+- integrates with bounded buffers/backpressure and operational recovery;
+- survives mixed-version, rollback and malformed/max-input tests.
+
+Reject or defer when the measured benefit is below migration risk/cost, only a toy corpus was tested,
+the producer/consumer rollout cannot be made compatible, or buffer/native headroom is unbounded.
+
+## Anti-patterns
+
+| Anti-pattern                        | Why dangerous                           | Better alternative                          | Narrow exception                        |
+| ----------------------------------- | --------------------------------------- | ------------------------------------------- | --------------------------------------- |
+| Choose fastest median encode        | ignores decode/tail/bytes/compatibility | weighted system scorecard and failure tests | isolated one-way ephemeral path         |
+| “Binary is faster”                  | payload/library/hardware vary           | representative corpus and stages            |
+| “Zero-copy” as architecture         | copy boundaries/lifetime hidden         | byte-movement and ownership map             | verified single-stage claim             |
+| ThreadLocal unbounded buffers       | retained memory multiplies by threads   | cap/shrink/pool/stream with telemetry       | few stable platform threads             |
+| New byte array per message by habit | copy/allocation pressure                | stream/bounded reusable buffer after proof  | ownership requires immutable byte array |
+| Raw registration order as protocol  | mixed deploy corrupts meaning           | explicit stable IDs/schema/golden fixtures  | single disposable session               |
+| Same-process A/B called controlled  | order/JIT/GC interference remains       | blocked/forked experiment and controls      | exploratory diagnosis                   |
+
+## Definition of done
+
+- [ ] Contract, trust boundary, compatibility horizon and migration are explicit.
+- [ ] Representative corpus includes size/value/schema/malformed/max cohorts.
+- [ ] Encode, decode, round trip, bytes, allocation, copies, compression and failure are measured as relevant.
+- [ ] Buffer ownership, retention, backpressure, cancellation and shutdown are bounded/tested.
+- [ ] JMH results preserve fork/corpus identity and component/load behavior validates impact.
+- [ ] Cross-version/language, rollback/replay and registry/dependency failures pass.
+- [ ] Security/resource limits and observability exist in production.
 
 ## References
 
-- [Choosing a format](references/format-selection.md) — the three wire-encoding families and
-  what each costs to decode, a per-scenario selection table with what to avoid in each, the
-  Kryo configuration that actually holds, the record-versus-class deserialisation semantics
-  table, and the `ObjectInputFilter` pattern syntax for paths that cannot be removed. Read when
-  selecting a format for a new contract, or when hardening a legacy `ObjectInputStream`.
-- [Benchmarking and profiling serialisers](references/benchmarking-serialisers.md) — a correctly
-  configured JMH harness with the flags that make the comparison valid, which tool answers which
-  question, and the buffer-reuse and pooling recipes for Protobuf and Kryo. Read before
-  publishing any serialisation measurement or optimising an existing hot path.
+- [Format-selection scorecard](references/format-selection.md)
+- [Benchmarking and profiling serializers](references/benchmarking-serialisers.md)
+- [Java serialization filtering](https://docs.oracle.com/en/java/javase/25/core/serialization-filtering1.html)
+- [Protocol Buffers encoding](https://protobuf.dev/programming-guides/encoding/)
+- [Apache Avro specification](https://avro.apache.org/docs/current/specification/)
+- [FlatBuffers internals](https://flatbuffers.dev/internals/)
+- [Cap'n Proto encoding](https://capnproto.org/encoding.html)
+- [Kryo documentation](https://github.com/EsotericSoftware/kryo)

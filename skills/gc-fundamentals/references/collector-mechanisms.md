@@ -16,14 +16,18 @@ Copying is why a young collection is cheap: with 99% mortality, almost nothing i
 and the whole Eden is reclaimed by moving a pointer. This is also why the same collection
 becomes expensive the moment survival rises — the algorithm did not change, the input did.
 
-"Proportional to survivors" is a count of objects more than a count of bytes. Every
+The evacuation component is often better predicted by survivor count than allocated
+bytes. Every
 survivor is visited, its references are followed, its forwarding pointer is installed and
 checked; the memcpy of its body is the cheap part. Executed on 25.0.3 with a linked list of
 ten million 24-byte nodes: the young pause that evacuated it spent 327.93 ms in `Evacuate
 Collection Set`, and the full collection took 241 ms with 8-byte-aligned headers and 240 ms
 with `-XX:+UseCompactObjectHeaders`, although the live set shrank from 230 MB to 154 MB.
-Fewer bytes buy more room in Eden and therefore fewer collections; fewer _objects_ buy
-shorter ones. The layout arithmetic is object-layout-and-footprint.
+In this object graph, fewer bytes bought more room in Eden and therefore fewer collections,
+while object count dominated traversal. Copy bandwidth, cache locality, reference density,
+roots, remembered sets and worker balance can change the result; treat the numbers as a
+falsifiable example, not a universal cost model. The layout arithmetic is
+object-layout-and-footprint.
 
 ## Tri-colour marking and the two invariants
 
@@ -243,15 +247,15 @@ throughput, or stalls at traffic peaks, is seeing the mechanism, not a defect.
 
 ## The JDK 25 collector landscape
 
-| Collector  | Pause depends on                            | Generational                                                           | Status on 25                                                                                                                                | Design point                           |
-| ---------- | ------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| Serial     | young: survivors; full: live data and heap  | yes                                                                    | product; ergonomic choice on one CPU through 26                                                                                             | tiny heaps, single core                |
-| Parallel   | young: survivors; full: live data and heap  | yes                                                                    | product                                                                                                                                     | throughput, batch, no latency SLO      |
-| G1         | young: survivors and cards; full: live data | yes (regions)                                                          | product; default on a server-class machine (≥ 2 CPUs and ≥ 2 GB — only the CPU half executed here); unconditional default from 27 (JEP 523) | balanced default                       |
-| ZGC        | root work only                              | yes, by definition (JEP 490)                                           | product                                                                                                                                     | large heaps, latency SLO               |
-| Shenandoah | root work only                              | generational is product (JEP 521), default from 28 (JEP 535, Targeted) | product in builds that ship it (Temurin does); `ShenandoahGCMode` defaults to `satb`                                                        | large heaps, latency SLO               |
-| Epsilon    | never collects                              | no                                                                     | experimental (JEP 318): `-XX:+UnlockExperimentalVMOptions` required, executed                                                               | measurement instrument, not production |
-| CMS        | —                                           | —                                                                      | **removed** in JDK 14 (JEP 363); 25.0.3 refuses `-XX:+UseConcMarkSweepGC` with `Unrecognized VM option`                                     | —                                      |
+| Collector  | Pause depends on                                                                       | Generational                           | Status on 25                                                                                                                                     | Design point                           |
+| ---------- | -------------------------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| Serial     | young: survivors; full: live data and heap                                             | yes                                    | product; ergonomic choice observed with one CPU on JDK 25                                                                                        | tiny heaps, single core                |
+| Parallel   | young: survivors; full: live data and heap                                             | yes                                    | product                                                                                                                                          | throughput, batch, no latency SLO      |
+| G1         | young: survivors, roots, cards and phase overhead                                      | yes (regions)                          | product; default on a server-class machine on the verified JDK 25 build; JEP 523 proposes broadening the default but is Candidate with no target | balanced default                       |
+| ZGC        | normal pauses: primarily roots and bounded coordination; fallback behavior differs     | yes, by definition (JEP 490)           | product                                                                                                                                          | large heaps, latency SLO               |
+| Shenandoah | normal pauses: primarily roots and bounded coordination; degenerated/full paths differ | generational mode is product (JEP 521) | product in builds that ship it (Temurin does); `ShenandoahGCMode` defaults to `satb` on the verified JDK 25 build                                | large heaps, latency SLO               |
+| Epsilon    | never collects                                                                         | no                                     | experimental (JEP 318): `-XX:+UnlockExperimentalVMOptions` required, executed                                                                    | measurement instrument, not production |
+| CMS        | —                                                                                      | —                                      | **removed** in JDK 14 (JEP 363); 25.0.3 refuses `-XX:+UseConcMarkSweepGC` with `Unrecognized VM option`                                          | —                                      |
 
 Baseline corrections that invalidate older comparisons, all executed on 25.0.3:
 
@@ -260,9 +264,10 @@ Baseline corrections that invalidate older comparisons, all executed on 25.0.3:
   warns `Ignoring option ZGenerational; support was removed in 24.0`, which is HotSpot's
   _obsolete_ stage; the flag is scheduled to _expire_ in 26, where an unrecognised option
   stops the JVM (see the lifecycle in references/diagnosis-and-versions.md).
-- Generational Shenandoah is product (JEP 521), not experimental — but still not the
-  default through JDK 27: `-XX:+UseShenandoahGC` alone runs `satb` mode. JEP 535 makes
-  generational the default and is Targeted for JDK 28.
+- Generational Shenandoah is product (JEP 521), not experimental. On the verified JDK 25
+  build, `-XX:+UseShenandoahGC` alone runs `satb` mode. A 2026 draft (JDK-8379682)
+  proposes making generational mode the default, but as of 2026-09-03 it has neither a JEP
+  number nor a target release.
 - `-XX:+UseCompactObjectHeaders` is a product flag on 25 (JEP 519) and **off by default**.
   It changes object size, not collector behaviour — see the measurement at the top.
 - `-XX:+UseBiasedLocking` is gone (deprecated JDK 15, JEP 374; removed JDK 18, JDK-8256425):

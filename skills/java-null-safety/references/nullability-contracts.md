@@ -2,8 +2,10 @@
 
 ## JSpecify 1.0 — the current standard
 
-`org.jspecify.annotations` is the nullability vocabulary the major checkers and IDEs have
-converged on. Two annotations carry the whole contract:
+JSpecify 1.0 defines a shared nullness vocabulary increasingly supported by checkers, IDEs and
+language interop. Support depth still varies—especially for generic inference, wildcards, JDK
+models and bytecode type annotations—so “uses JSpecify” does not prove equivalent enforcement.
+Two annotations carry the core contract:
 
 - `@NullMarked` — placed on a module, package (`package-info.java`) or class: every
   unannotated type usage within is **non-null by default**.
@@ -18,8 +20,8 @@ package com.example.billing;
 import org.jspecify.annotations.NullMarked;
 ```
 
-What this buys, precisely: a machine-readable contract that tools — NullAway under Error
-Prone, IntelliJ's inspections, Kotlin's interop — check at build or edit time. What it
+What this buys, precisely: a machine-readable contract that compatible tools may check at build,
+edit or interop time. What it
 does not buy: any runtime behaviour. An annotated method still returns null happily if
 its body does; the JVM never reads the annotation. A codebase that adopts JSpecify
 without wiring a checker into CI has bought documentation, which is still better than
@@ -27,35 +29,35 @@ nothing — but say which of the two you have.
 
 ## Adoption strategy for an existing codebase
 
-1. Add the `org.jspecify:jspecify` dependency (annotations only, no runtime weight) and a
-   checker to the build. Start with the checker in warning mode.
-2. `@NullMarked` one package at a time, starting where NPEs actually occur — the
-   boundary/adapter packages — not alphabetically. Each marked package is a completed
-   contract; a half-annotated package is worse than an unannotated one because readers
-   trust the default.
+1. Add a pinned `org.jspecify:jspecify` annotation dependency and a pinned checker/compiler
+   configuration. Decide whether annotations ship in published bytecode/module metadata.
+2. `@NullMarked` one coherent package at a time, often starting with dependency-leaf value/core
+   APIs where contracts are clearest. Boundary DTO packages may intentionally contain many legal
+   nulls and need explicit modelling before marking.
 3. In each package, the checker's findings sort into: real defects (fix), legal nulls
    (mark `@Nullable` and make callers handle them), and boundary leaks (normalise at the
    edge — below).
-4. Only when marking is done, promote warnings to errors. A checker permanently in
-   warning mode decays into noise within weeks.
+4. Track a ratchet/baseline during migration and promote completed scopes to errors. Warning-only
+   findings need ownership and a burn-down gate or they tend to become background noise.
 
-Mixing annotation vocabularies (`javax.annotation`, `org.jetbrains.annotations`,
-JSpecify) in one codebase gives contradictory defaults per package — pick JSpecify and
-migrate mechanically rather than coexisting.
+Frameworks and dependencies may require other annotation vocabularies. Define which tool interprets
+which annotations/defaults, prevent contradictory duplicates on one type use, and migrate public
+signatures deliberately; a blind mechanical replacement can change generic/array annotation
+positions and Kotlin semantics.
 
 ## Boundary tactics — where null leaks in regardless of contracts
 
-| Leak                     | Behaviour                                  | Tactic                                                                                                                              |
-| ------------------------ | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| JSON/XML deserialisation | absent field → null, ignoring annotations  | validate the DTO once, at the adapter; convert to a domain type whose constructor enforces the contract                             |
-| ORM / JPA relations      | unfetched or absent relation → null        | treat entity getters as `@Nullable` at the repository boundary; do not let entities cross it                                        |
-| `Map.get`                | null for absent **and** for mapped-to-null | `getOrDefault` when a default exists; `Optional.ofNullable` at the API edge; never `containsKey` + `get` on a concurrent map (race) |
-| Arrays                   | every slot null-initialised                | fill on construction, or prefer `List.of`/`List.copyOf`, which reject nulls                                                         |
-| Legacy/third-party APIs  | unannotated returns                        | wrap once in an adapter that establishes your contract; do not sprinkle checks at every call site                                   |
+| Leak                     | Behaviour                                                                                 | Tactic                                                                                                                             |
+| ------------------------ | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| JSON/XML deserialisation | absent field → null, ignoring annotations                                                 | validate the DTO once, at the adapter; convert to a domain type whose constructor enforces the contract                            |
+| ORM / JPA relations      | absent optional to-one may be null; lazy state is normally proxy/wrapper/provider-managed | derive contract from mapping/schema/provider; do not label “unfetched” as null                                                     |
+| `Map.get`                | null for absent **and** for mapped-to-null                                                | `getOrDefault` distinguishes absence but preserves an explicit null; `containsKey` distinguishes in a stable map; CHM forbids null |
+| Reference arrays         | every slot null-initialised                                                               | track fill state or validate all slots; primitive arrays instead contain zero values                                               |
+| Legacy/third-party APIs  | unannotated returns                                                                       | wrap once in an adapter that establishes your contract; do not sprinkle checks at every call site                                  |
 
-The shape is always the same: **normalise once, where the data enters, then trust the
-contract inside.** A null check repeated on every hop is the symptom of a boundary that
-never did its job.
+The shape is: establish the nullness contract where data enters/objects are constructed, then rely
+on it within the checked scope. Re-check only when another framework, override, reflective path or
+trust boundary can invalidate the proof.
 
 ## False positives — nullable that is not a defect
 
@@ -72,6 +74,22 @@ never did its job.
   boundary that already validated, the check is redundant by design. The finding is real
   only when the method is public or the boundary check is absent.
 
-The inverse false negative is worth naming too: `requireNonNull` on parameters the method
-would dereference immediately anyway changes only the stack trace quality — the message
-naming the parameter is the actual value. Without a message it is nearly a no-op.
+The inverse false negative is worth naming too: `requireNonNull` immediately before the same natural
+dereference may mainly improve blame location/message and stabilize the public failure point. That
+can be valuable, but it is not runtime null-safety for later producers.
+
+## Tooling decision checks
+
+- Pin checker, plugin, `javac` and JSpecify versions; test upgrades on representative generics.
+- Compile published annotations into a consumer fixture, including Kotlin if supported.
+- Test override variance, arrays/varargs, `T extends @Nullable Object`, wildcards and unannotated
+  libraries—the places where checker support differs.
+- Count suppressions/baseline growth and require a reason/owner; “zero reported findings” is only as
+  strong as the analyzed scope and library models.
+
+## Authoritative references
+
+- [JSpecify 1.0 user guide](https://jspecify.dev/docs/user-guide/)
+- [JSpecify specification](https://jspecify.dev/docs/spec/)
+- [NullAway JSpecify support and limitations](https://github.com/uber/NullAway/wiki/JSpecify-Support)
+- [Map API null/getOrDefault contracts, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html)

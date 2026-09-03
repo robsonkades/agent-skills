@@ -109,9 +109,9 @@ The query returns entities that are only read
   not portability. Designing one so the storage could be swapped produces a lowest-common-
   denominator API and usually still fails to be portable
   (`architecture-decision-making`).
-- Derived query methods are excellent until they are not: they stop paying when the name
-  exceeds roughly four conditions, when the same criterion appears in several method names,
-  or when optional parameters force a method per combination.
+- Derived query methods stop paying when names obscure intent, criteria repeat, optional parameters
+  cause combinatorial methods, or generated SQL becomes hard to predict. There is no meaningful
+  universal condition-count threshold; use reviewability and change frequency.
 - **Composition hides joins.** Two specifications that each join the same association can
   produce two joins, duplicated rows and a wrong count. Where the API allows, check whether
   the join already exists before adding one, and always verify with a count assertion in a
@@ -130,9 +130,10 @@ The query returns entities that are only read
 - A criteria API is a poor way to express set operations, aggregations, window functions and
   recursion. Reach for SQL, owned by a gateway, and stop apologising for it
   (`data-source-patterns`).
-- Every query used in production should be executed at least once in CI. A JPQL string or a
-  criteria path that names a renamed field fails at runtime, on whichever path nobody
-  tested (`metadata-mapping`).
+- Execute every materially distinct query shape in CI where feasible, prioritizing dynamic,
+  privileged and high-traffic paths. Combinatorial searches may require pairwise/property-based
+  coverage plus production telemetry rather than pretending every value combination was run
+  (`metadata-mapping`).
 - Read paths do not need the aggregate, the transaction or the repository. Routing them
   through the write model to preserve symmetry is the leading cause of slow list screens
   (`architecture-and-performance`).

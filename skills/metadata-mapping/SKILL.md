@@ -54,9 +54,9 @@ Generated code                a build step produces the mapping or the
 2. **Decide whether the domain class may carry the metadata.** This is the layering
    question, and the honest answer depends on whether a separate domain model exists at all
    (`data-source-patterns`).
-3. **Validate the mapping against the real schema at startup**, in every environment. A
-   mismatch found at boot is an outage of one deploy; found at runtime it is a corrupted
-   request in production.
+3. **Validate mapping/schema compatibility in CI and suitable startup environments.** Strict
+   startup validation can intentionally reject mixed-version rolling deploys or restricted
+   production credentials; decide where it is safe and keep a pre-deploy compatibility gate.
 4. **Remove string literals** from anything that names a column or attribute — generated
    metamodels and constants exist so that a rename is a compile error.
 5. **Check for duplicated mapping.** The same fact stated in annotations, in a migration,
@@ -104,9 +104,9 @@ need no deploy
 - **Migrations own the schema; mapping metadata describes it.** `hibernate.ddl-auto` set to
   anything other than `validate` or `none` outside development means two things generate
   the schema, and the one that wins depends on startup order.
-- Use `validate` in every deployed environment. It converts an entire class of production
-  failures — a column renamed by a migration nobody matched in the mapping — into a startup
-  failure with a precise message.
+- Use `validate` where startup failure is an acceptable control and permissions expose enough
+  metadata. For rolling deployment, validate both old and new application versions against the
+  expanded schema before rollout; do not discover incompatibility by replacing all healthy pods.
 - **Startup validation is not complete validation.** It checks tables, columns and types; it
   does not check nullability the way you would want, nor constraints, nor indexes, nor
   defaults. A schema diff in CI covers the rest.
@@ -114,12 +114,13 @@ need no deploy
   defensible is claiming a framework-free domain while the domain classes carry
   `@Entity` — decide which architecture you have and record it
   (`layering-and-boundaries`).
-- **String literals naming columns or attributes are a latent outage.** JPQL text,
+- **Unchecked string literals naming columns or attributes are a runtime-failure risk.** JPQL text,
   `Sort.by("cusotmerId")`, projections by name, native queries: all fail at runtime, some
   only on a rarely used path. Generate the JPA static metamodel and use `Order_.CUSTOMER`
   style constants where the API allows it.
-- Reflection-based mapping costs startup time, not steady-state throughput — the ORM builds
-  its metadata once and generates accessors thereafter. Do not optimise it away; do measure
+- Reflection/enhancement/accessor costs are provider, mapping and runtime specific. Metadata parsing
+  is primarily startup work, while field access, dirty checking and materialization remain hot-path
+  concerns. Do not infer significance; measure startup and query/allocation profiles
   startup if it matters (`startup-cds-crac-leyden`).
 - Bytecode enhancement changes real behaviour, not just performance: lazy attribute
   loading, dirty tracking without snapshots, and lazy `@ManyToOne` that actually works on

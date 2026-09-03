@@ -6,11 +6,10 @@ routing rather than coordination.
 
 ## What `@Transactional(readOnly = true)` is and is not
 
-It is a hint. Spring sets it on the transaction definition; Hibernate uses it to put the
-session in `FlushMode.MANUAL` and skip dirty checking, and the JDBC driver may set the
-connection read-only. It does **not** choose a data source, does not wait for replication,
-and does not weaken or strengthen any consistency guarantee. Marking a method `readOnly`
-and observing that stale reads appear is a coincidence of routing, not causation.
+Spring exposes it as transaction metadata; a transaction manager, ORM or JDBC driver may use it
+for flush/dirty-checking/connection optimizations, with version-specific behavior. It does **not**
+by itself choose a data source or wait for replication. It becomes routing policy only when code
+such as an `AbstractRoutingDataSource` deliberately reads the flag.
 
 It becomes a _routing input_ only when an `AbstractRoutingDataSource` reads it:
 
@@ -24,11 +23,10 @@ public class ReplicaRoutingDataSource extends AbstractRoutingDataSource {
 }
 ```
 
-**The trap:** without `LazyConnectionDataSourceProxy` wrapping the routing data source, the
-connection is acquired when the transaction begins — before the read-only flag is visible to
-`determineCurrentLookupKey` — so every lookup returns the primary and the routing appears to
-work in tests and never route in production, or vice versa depending on the transaction
-manager's ordering. Wrap it, and acquire the connection at first statement:
+**Connection acquisition order is part of the design.** Depending on transaction manager and
+proxy order, a routing data source may be asked before the read-only context is established.
+`LazyConnectionDataSourceProxy` can defer physical acquisition until the first statement, but
+verify the actual proxy chain and transaction-manager behavior with route assertions:
 
 ```java
 @Bean DataSource dataSource(ReplicaRoutingDataSource routing) {
@@ -38,11 +36,11 @@ manager's ordering. Wrap it, and acquire the connection at first statement:
 
 ## The bounded primary-read window
 
-After a write, pin that session's reads to the primary for a window. Two ways to size it,
-and they are not equivalent.
+After a write, routing that session to the authoritative writer for a window can meet a bounded
+freshness SLO. It cannot prove strict read-your-writes after rare lag/failover beyond the window.
 
 ```java
-// Time-based: simple, and an estimate. Size from measured replication lag p99.9.
+// Time-based: simple, probabilistic estimate. Size from measured end-to-end visibility lag.
 @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 void onWrite(EntityWritten event) {
     PrimaryReadWindow.pin(Duration.ofSeconds(5));   // scoped to the session, not the thread
@@ -55,14 +53,14 @@ void onWrite(EntityWritten event) {
   request, a short-lived Redis entry keyed by session or user id for a pin that must survive
   across requests and instances. A `ThreadLocal` will not survive a request boundary and will
   not follow work handed to another thread.
-- Five seconds is not a constant to copy. Derive it from replication lag p99.9 and re-derive
-  it when the topology changes.
+- Five seconds is not a constant to copy. Derive it from the chosen lag percentile and define
+  what happens beyond it; re-derive after topology/failover changes.
 
-**Position-based is strictly better where the driver exposes it.** Capture the write's
-replication position and require the replica to have reached it — PostgreSQL exposes LSNs
-(`pg_current_wal_lsn()` on the primary, `pg_last_wal_replay_lsn()` on the standby); MySQL
-exposes GTIDs and a wait primitive. The read then blocks or falls back to the primary on a
-fact rather than on a guess, and it is correct even when lag exceeds the estimate.
+**Position-based is stronger where the engine exposes a token tied to the committed write.** A
+pre-commit “current WAL position” may precede the commit record and is not sufficient. Obtain a
+documented commit/causal token, require a replica watermark at least that high, and bound the wait
+by the request deadline before falling back/rejecting. PostgreSQL LSN and MySQL GTID mechanisms
+need engine/version-specific commit semantics and privilege checks.
 
 ## Detecting stale reads in tests
 
@@ -76,12 +74,11 @@ fresh and an incorrect implementation passes. Make the lag real.
 - **Assert on the route, not only on the value.** Record the resolved lookup key per query
   and assert that a post-write read inside the window went to the primary. Asserting the
   returned value alone gives a green test whenever lag happens to be zero.
-- **Property-style interleaving.** Two virtual threads, one writing and one reading the same
-  key in a loop, asserting the reader's observed sequence never goes backwards. This is the
-  cheapest test for monotonic reads and it catches sticky-routing regressions that a
-  single-request test cannot.
+- **Deterministic sequence test.** Drive a session through replicas with controlled watermarks and
+  failover, asserting its observed version never decreases. Uncontrolled virtual-thread loops can
+  pass without exercising lag and are stress signals, not proof.
 - **Fault injection for the partition case.** If a requirement claims behaviour during a
-  partition, the only evidence is a test that creates one — block traffic between the
+  partition, integration evidence should create one—block traffic between the
   application and the primary and assert the documented behaviour (refuse, or serve stale
   with a marker). An untested partition claim is not a claim.
 
@@ -99,6 +96,6 @@ primaryRepo.updateBalance(id, balance - amount); // lost update, no error
 //    The path's staleness is now the cache TTL and the write invalidates nothing.
 ```
 
-Rule for all three: **a read whose result decides a write goes to the primary**, or is
-protected by a conditional write (a unique constraint, a version predicate) that turns the
-stale read into a failed write rather than a wrong one.
+Rule for all three: route a decision read to the authoritative write transaction when supported,
+and always enforce the invariant with a conditional write/constraint/version predicate. A fresh
+read alone still races another writer.

@@ -1,144 +1,153 @@
-# Inputs, forecast and cost
+# Inputs, Forecast and Cost
 
-## Collecting throughput and latency per instance
+## Measurement contract
+
+Capture immutable experiment metadata:
+
+- code/image digest, JDK/JVM/GC flags and dependency versions;
+- CPU architecture/node class, Kubernetes requests/limits, cgroup mode and placement;
+- heap/native-memory settings, sidecars and observability configuration;
+- dataset distribution, cache state, request mix/payload and tenant skew;
+- load-generator model, location, offered schedule, time synchronization and client
+  headroom;
+- run phases, abort criteria and raw artifact locations.
+
+Warmup is a state criterion. Inspect compilation, allocation/GC, cache hit rate,
+connection establishment and throughput/latency stability. Preserve cold-start behavior
+as a separate scenario.
+
+## Signals
+
+| Plane          | Minimum evidence                                                          |
+| -------------- | ------------------------------------------------------------------------- |
+| demand         | offered, admitted, rejected/shed, attempted, retried and successful units |
+| user outcome   | latency distribution, errors, deadlines, correctness/degradation          |
+| queues         | depth, age, in-flight, admission and abandonment by partition/class       |
+| JVM/process    | CPU time, runnable delay, allocation, GC, heap/native memory, threads     |
+| container/node | throttling, working set/OOM/eviction, network, disk, placement pressure   |
+| dependency     | calls, occupancy, latency/errors, quota, pool and partition skew          |
+
+For Prometheus classic histograms, aggregate bucket counters by all desired dimensions and
+_le_ before histogram_quantile, with a rate window appropriate to the analysis:
 
 ```promql
-# Throughput per pod
-sum(rate(http_requests_total[5m])) by (pod)
-
-# CPU per pod — context for a diagnosis, never a substitute for throughput
-rate(container_cpu_usage_seconds_total[5m]) by (pod)
-
-# p99 latency — the direct input for p99_at_1_instance_ms when taken on an
-# isolated pod under light load
-histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
+histogram_quantile(
+  0.99,
+  sum by (le) (
+    rate(http_server_request_duration_seconds_bucket{service="checkout"}[5m])
+  )
+)
 ```
 
-## The scaling sweep
+Retain histograms/traces or run-level artifacts. A dashboard percentile cannot be safely
+re-aggregated across replicas or time.
 
-```bash
-#!/bin/bash
-# Requires core == max on the application's internal pool so that "N" is unambiguous,
-# and heap plus cgroup quota identical to production.
-for N in 1 2 4 8 16 32; do
-    kubectl scale deployment myapp --replicas=$N
-    sleep 60   # stabilise; JIT warmup needs at least 120s before a measurement counts
+## Experiment matrix
 
-    THROUGHPUT=$(kubectl exec prometheus -- promtool query instant \
-        'sum(rate(http_requests_total[30s]))' | jq '.data.result[0].value[1]')
+Vary independently where feasible:
 
-    P99_MS=$(kubectl exec prometheus -- promtool query instant \
-        'histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[30s])) * 1000' \
-        | jq '.data.result[0].value[1]')
+- resource shape and replica count;
+- offered-load level and trajectory;
+- workload mix, payload/data size and tenant concentration;
+- cache/JIT coldness;
+- dependency latency/error/quota state;
+- rollout and failure topology.
 
-    if [ -z "$THROUGHPUT" ] || [ "$THROUGHPUT" = "null" ]; then
-        echo "ERROR: could not extract throughput for N=$N" >&2
-        exit 1
-    fi
+Randomize or block run order to reduce infrastructure drift. Include enough independent
+repetitions to estimate uncertainty needed by the decision; there is no universal run
+count. Stop or isolate a run when the generator or unrelated infrastructure is the
+bottleneck.
 
-    echo "$N,$THROUGHPUT,$P99_MS" >> scaling_data.csv
-done
-```
+## Forecasting demand
 
-The abort on an empty result matters more than it looks: writing a silent `0` or `null` into
-the CSV corrupts the fit in a way that still produces plausible coefficients.
+### Define the target
 
-## Pre-benchmark checklist
+Forecast the scenario statistic used for sizing: for example, maximum admitted successful
+checkout starts per five-minute interval during the weekly business peak. Daily average
+requests cannot size a short seasonal peak.
 
-- Heap (`-Xmx` / `-Xms`) identical to production.
-- cgroup quota and `-XX:ActiveProcessorCount` identical to the production pod.
-- `core == max` on the internal `ThreadPoolExecutor`, so the unit being scaled is unambiguous.
-- At least 120 s of JIT warmup before the first recorded measurement.
-- Real endpoint mix, not only the fastest route; real dependency latency, no mocks.
-- `p99_at_1_instance_ms` taken on one instance at utilisation below 0.3.
+Distinguish organic baseline/seasonality, known launches and campaigns, tenant/region
+concentration, structural changes, and demand censored by rejection, quota or outage.
 
-### Why the baseline p99 needs its own care
+### Validate as a time-series decision model
 
-It enters the prediction as an **additive** term, so a measurement error propagates
-one-for-one at every `N` — a +5 ms error gives a +5 ms error in the answer. That is
-predictable, unlike errors in the scalability coefficients, which propagate non-linearly.
-The real risk is sampling variance: a single 60 s run at low utilisation contains very few
-tail samples. Take the measurement at least three times and use the median.
+Use rolling-origin backtests over representative seasons and events. Compare
+seasonal-naive and trend baselines with candidate models. Evaluate interval coverage,
+peak bias and downstream exhaustion-date error—not only in-sample fit.
 
-Measuring it under heavy load instead measures total residence time, folding in the queueing
-the model is supposed to add separately — and the scaling fit will still look excellent,
-because the two are independent measurements and only one of them was checked.
+A regression such as
 
-## Forecasting traffic
+\[
+\log y_t=\beta_0+\beta_1t+\text{seasonality}+\epsilon_t
+\]
 
-Fit growth in log space, then derive an interval from the residuals:
+is only a candidate. Residual standard deviation alone is not a prediction interval when
+parameters are uncertain, residuals autocorrelate, variance changes or future events are
+unknown. Use a model, bootstrap or scenarios carrying relevant sources and disclose
+exclusions.
 
-```python
-coeffs = np.polyfit(days, np.log(rps_values), 1)
-daily_growth = np.exp(coeffs[0]) - 1
+### Convert paths into a trigger
 
-residuals = np.log(rps_values) - np.polyval(coeffs, days)
-sigma = np.std(residuals)
+For each forecast path, find the first time required demand exceeds the selected
+configuration's feasible envelope. Report a saturation-date distribution. Subtract
+procurement, architecture, validation and rollout lead time. Trigger action using the
+agreed risk of exhaustion within lead time rather than a point forecast.
 
-log_forecast = np.polyval(coeffs, future_day)
-p50 = np.exp(log_forecast)
-p10 = np.exp(log_forecast - 1.28 * sigma)
-p90 = np.exp(log_forecast + 1.28 * sigma)
-```
+## Cost model
 
-This is a **parametric** interval — the standard deviation of the residuals of a single
-regression, with a fixed z-score of 1.28 for the 10th and 90th percentiles. It is not a
-bootstrap: nothing is resampled and the regression is never refitted. Labelling it
-"bootstrap" in a comment misleads whoever extends the code, and the two methods give
-different numbers on non-normal data.
+Choose a dated pricing basis and currency. Include:
 
-## Three planning horizons
+\[
+C_{total}=C_{compute}+C_{memory}+C_{nodes}+C_{storage}+C_{network}
++C_{platform}+C_{licence}+C_{observability}+C_{risk}
+\]
 
-| Horizon | Question it answers                                                | Mechanism                                 |
-| ------- | ------------------------------------------------------------------ | ----------------------------------------- |
-| 30 days | React to today's peaks                                             | Autoscaler; reaction under 5 minutes      |
-| 90 days | Instance type upgrade, reservations                                | The capacity model on real benchmark data |
-| 1 year  | Architecture change; when `N_max` forces a refactor; annual budget | Coefficients plus growth forecast         |
+Represent concrete interruption, replacement, unused commitment and availability
+scenarios separately rather than inventing one risk premium.
 
-## When the model says to stop scaling horizontally
+Compute:
 
-Past `N_max`, adding instances lowers throughput. The cause is shared state under a lock or
-O(N^2) inter-instance communication. The action is not more instances:
+\[
+C_{useful}=\frac{C_{total}}{\text{successful useful units}}
+\]
 
-1. Identify the shared state — a database lock, a shared cache, session affinity.
-2. Eliminate or partition it.
-3. Refit and confirm coherency actually dropped before scaling further.
+Also report cost per admitted unit when shedding matters; the gap exposes retry/failure
+waste. Allocate shared cost with an explicit driver and show sensitivity.
 
-Worked example: `kappa = 0.02`, `sigma = 0.05` gives `N_max ≈ 6.9`. Every instance queries a
-global configuration table; a local read-through cache with a short TTL takes coherency to
-`0.001`, and `N_max` rises to about 30.8.
+For committed or interruptible supply model utilization/term, correlated interruption and
+replacement lag, on-demand fallback/quota, required warm standby, egress/locality,
+licensing and material operational complexity.
 
-## Multi-resource ceiling
+## Sensitivity
 
-The application-layer plan is not the system plan.
+Vary inputs capable of changing the decision:
 
-1. Run the capacity model for the application, giving its instance count and ceiling.
-2. Run the same model for the dominant downstream resource — for a database, `N` is
-   connections.
-3. The system ceiling is the **lower** of the two. Not the sum, not the average.
-4. If the application ceiling exceeds the database ceiling, the next investment is the
-   database. More application pods make it worse: twenty pods holding twenty connections
-   each is 400 against a limit of 300.
+| Input                |            low |     base |           high | Decision impact       |
+| -------------------- | -------------: | -------: | -------------: | --------------------- |
+| required peak path   |       scenario | scenario |       scenario | replicas/exhaustion   |
+| request-mix cost     |       measured | measured |       measured | feasible envelope     |
+| cache miss ratio     |       measured | measured |       measured | dependency/CPU demand |
+| scale reaction       | observed range | observed | observed range | warm capacity         |
+| failed domains       |       declared | declared |       declared | survivorship          |
+| price/commitment use |          dated |    dated |          dated | cost ranking          |
 
-## Cost
+Do not combine all uncertainty into undocumented percentage headroom. Some reserves overlap;
+others protect different events and must coexist.
 
-Hourly cost per instance is a business assumption. Pass it explicitly at every call site;
-an implicit default is how one document ends up carrying three different unlabelled cost
-bases. Label the assumed rate in the dashboard panel title as well.
+## Data quality and security
 
-A mixed strategy is usually compared three ways for the same instance counts:
+- Verify counter resets, missing series, histogram schema changes and clock alignment.
+- Prevent high-cardinality labels from making measurement the bottleneck.
+- Treat tenant identifiers, payload examples and traces as sensitive; minimize, redact and
+  apply retention/access controls.
+- Keep raw artifacts and transformations sufficient to reproduce the decision without
+  exposing production secrets.
 
-- pure on-demand at the peak count;
-- reserved for the off-peak base plus on-demand for the burst, charged only for the peak
-  hours per day;
-- reserved base plus spot for the burst.
+## Authoritative references
 
-Report `cost_per_million_requests` alongside the monthly total — it is the figure that stays
-comparable when traffic changes.
-
-## Before the projection drives a decision
-
-- Compare it against a real staging measurement; agreement within 30% is the bar.
-- Document the benchmark environment next to the result.
-- Have someone other than the person who ran the model review the coefficients and the cost
-  assumptions.
+- [Kubernetes: Horizontal Pod Autoscaling](https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/)
+- [Kubernetes: Resource management](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+- [Google SRE: Addressing cascading failures](https://sre.google/sre-book/addressing-cascading-failures/)
+- [Google SRE: Production services best practices](https://sre.google/sre-book/service-best-practices/)
+- [Prometheus: Histograms and summaries](https://prometheus.io/docs/practices/histograms/)
+- [NIST/SEMATECH: Time series analysis](https://www.itl.nist.gov/div898/handbook/pmc/section4/pmc4.htm)

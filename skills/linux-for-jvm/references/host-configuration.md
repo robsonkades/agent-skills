@@ -10,25 +10,26 @@ resources:
 # with -Xmx4g
 ```
 
-The process is `SIGKILL`ed by the cgroup as soon as heap + metaspace + code cache + stacks
+The cgroup can invoke OOM handling when all charged memory reaches its hard limit. The budget
+includes heap, metaspace, code cache, native allocations, thread stacks, direct buffers and
+cgroup-charged cache/kernel categories; NMT does not account for all of them. Reconcile NMT,
+RSS/PSS and cgroup v2 `memory.stat` under representative load, then select explicit heap or
+percentage ergonomics with measured headroom.
 
-- direct buffers exceed the limit. Budget the non-heap regions **with NMT measured under
-  your own load**, then use `-XX:MaxRAMPercentage` to leave that headroom.
-
-* `vm.swappiness ≤ 1`, or no swap at all (the Kubernetes node default), persisted in
-  `sysctl.d` rather than set once by hand.
-* `-XX:+AlwaysPreTouch` for predictability, understanding it pre-empts minor faults only.
-* `-XX:+ExitOnOutOfMemoryError` and `-XX:+HeapDumpOnOutOfMemoryError` with `HeapDumpPath`
+- Swap policy chosen at node/cgroup level from latency-versus-survival goals; monitor
+  `memory.swap.current`, swap-in/out, faults and PSI where enabled.
+- `-XX:+AlwaysPreTouch` for predictability, understanding it pre-empts minor faults only.
+- `-XX:+ExitOnOutOfMemoryError` and `-XX:+HeapDumpOnOutOfMemoryError` with `HeapDumpPath`
   on a volume that survives the restart.
 
 ## Transparent huge pages
 
-| `enabled` | `defrag`  | Effect                                                               |
-| --------- | --------- | -------------------------------------------------------------------- |
-| `always`  | `always`  | synchronous compaction — the classic latency disaster                |
-| `always`  | `madvise` | huge pages everywhere, compaction only when asked                    |
-| `madvise` | `madvise` | **recommended for large heaps**, with `-XX:+UseTransparentHugePages` |
-| `never`   | —         | defensible for ultra-low latency, as a measured decision             |
+| `enabled` | `defrag`  | Effect                                                                  |
+| --------- | --------- | ----------------------------------------------------------------------- |
+| `always`  | `always`  | may enter direct reclaim/compaction on allocation failure               |
+| `always`  | `madvise` | broad THP eligibility; direct work focused on advised regions           |
+| `madvise` | `madvise` | only advised regions eligible; still measure reclaim/compaction cost    |
+| `never`   | any       | disables ordinary allocation/collapse paths, with documented exceptions |
 
 ```bash
 cat /sys/kernel/mm/transparent_hugepage/enabled
@@ -46,8 +47,8 @@ throws away the TLB benefit to fix a problem the host may not have.
   cores inside a two-core quota generates throttling by itself.
 - `-XX:+UseNUMA` only does something under Parallel GC or G1 (JEP 345, JDK 14, Linux);
   under ZGC or Shenandoah it is accepted and inert.
-- The CFS scheduler was replaced by EEVDF in kernel 6.6 — the `vruntime` mental model still
-  applies, the latency sysctls do not.
+- Kernel 6.6 began the transition from CFS selection toward EEVDF. Check the node's exact
+  kernel and available scheduler interfaces before applying a tuning recipe.
 
 ## Limits
 
@@ -72,8 +73,8 @@ LimitNPROC=4096
     and on(pod) kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
 ```
 
-Also alert on `nr_throttled / nr_periods`, on `VmSwap`, and export `/proc/pressure/*` — PSI
-is the earliest saturation signal available and the least used.
+Also alert on throttling frequency **and duration**, swap activity, and host/cgroup PSI.
+Lifetime counters need rate/delta queries and workload baselines.
 
 ## Pre-deploy checklist
 
@@ -81,9 +82,8 @@ is the earliest saturation signal available and the least used.
       not estimated from a rule of thumb
 - [ ] `-Xmx` or `MaxRAMPercentage` leaves that measured headroom inside `memory.max`
 - [ ] `-XX:+ExitOnOutOfMemoryError` and heap dump path on a surviving volume
-- [ ] `vm.swappiness ≤ 1` persisted in `sysctl.d`
-- [ ] THP mode **verified**, decision recorded, `-XX:+UseTransparentHugePages` set if the
-      mode is `madvise`
+- [ ] Swap policy and failure trade-off recorded; swap/fault/PSI evidence observable
+- [ ] THP mode and sizes **verified**; JDK flag support and measured outcome recorded
 - [ ] `LimitNOFILE` and `LimitNPROC` in the systemd unit
 - [ ] `ActiveProcessorCount` checked from inside the container
 - [ ] Alerts for OOM kill, pod `OOMKilled`, `nr_throttled/nr_periods` and `VmSwap`

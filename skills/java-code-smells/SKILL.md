@@ -33,9 +33,10 @@ ignores), and rewriting code during what was supposed to be a diagnosis.
 2. **Classify against the catalogue** — read `references/catalogue-within.md` for
    findings inside one class, `references/catalogue-between.md` for findings about
    coupling between classes. Check the smell's false positives before recording it.
-3. **Weigh severity as blast radius × change frequency.** A smelly method touched by
-   every second PR outranks a monstrous one nobody has edited in two years. Use the
-   repository history as evidence, not aesthetics.
+3. **Weigh severity from risk, not size.** Combine change frequency and blast radius with
+   business/security criticality, defect evidence, test/observability confidence, ownership,
+   reversibility and migration cost. A rarely edited authorisation or money-movement path may
+   outrank a frequently edited formatter. Repository history is evidence, not a veto.
 4. **Record findings, do not fix them.** Each finding: smell name, location, evidence,
    severity argument, the named java-refactoring technique — routed through
    `references/smell-to-refactoring.md`, which also says what decides between competing
@@ -46,17 +47,47 @@ ignores), and rewriting code during what was supposed to be a diagnosis.
 
 - No finding without evidence a reviewer can check: a metric, a diff that fanned out, a
   duplicated block's two locations. "This looks wrong" is not a finding.
-- Stable code is presumed innocent: if it has not changed in a year and has no open
-  defects, report at most a note, whatever it looks like.
+- Stable code gets a lower change-pressure score, not immunity. Dormant compatibility,
+  security, concurrency and data-integrity defects still warrant findings when their impact and
+  evidence are strong; absence of tickets is weak evidence when failures are silent.
 - One structural cause often shows as several smells (a God Object produces Feature
   Envy in its neighbours and Shotgun Surgery in its callers). Report the cause once,
   not each symptom separately.
 - An exhaustive `switch` over a sealed type with no `default` is not the Switch
   Statements smell — it is one of its fixes. Read `references/modern-java.md` before
   flagging any switch, record, or Optional usage.
-- A comment apologising for code ("hack", "careful here", a paragraph explaining a
-  block) marks a smell site — treat the comment as the detector, not the problem.
+- A comment apologising for code ("hack", "careful here") is a search lead, not a finding.
+  Preserve comments that encode an invariant, upstream defect, compatibility constraint or
+  measured workaround; report the underlying structure only when independently evidenced.
 - Never bundle a fix into the detection pass. Detection changes no code.
+
+## Severity and decision record
+
+For each candidate, record this compact tuple:
+
+```text
+location + structural signal
+evidence and counter-evidence
+change pressure + impact if wrong
+test/observability confidence
+plausible refactoring and migration surface
+decision: finding | monitor | no action
+```
+
+Do not multiply ordinal scores and pretend the result is quantitative risk. Use the dimensions
+to expose the argument, then rank findings relative to this repository:
+
+| Priority      | Typical evidence                                                                                                                   |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Critical/high | Security, money or data-integrity failure; repeated incidents; unsafe concurrent state; change is already blocked by the structure |
+| Medium        | Recurring co-change/defects with a bounded refactoring seam and adequate characterization tests                                    |
+| Low/monitor   | Readability cost with little change pressure, speculative future benefit, or migration cost larger than demonstrated harm          |
+| No action     | Intentional boundary/representation, generated code, framework contract, or candidate falsified by ownership/change evidence       |
+
+Before recommending a move, identify externally observed contracts: serialized fields, database
+mapping, reflection, dependency injection, native-image configuration and module exports. A
+smell inside such a boundary may be real while the safe recommendation is staged migration,
+not immediate cleanup.
 
 ## References
 

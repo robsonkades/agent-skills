@@ -1,138 +1,188 @@
 ---
 name: slo-and-alerting
 description: >
-  Turning measurements into an on-call contract: SLI, SLO and SLA, choosing an indicator
-  that reflects the user's experience and where it is measured, the availability definition
-  (window, which status classes count, shed traffic), error budgets as a change-velocity
-  decision, and multi-window burn-rate alerting on symptoms not causes. Use when an SLO is
-  quoted with no window or definition of a good event, when the target equals or is looser
-  than the SLA, when 100% is proposed as a target, when high CPU or heap pages someone, when
-  a page fires for one instance in a replicated fleet, when an alert is routinely
-  acknowledged and ignored, when shed 429s are counted as errors, or when anomaly detection
-  is proposed for paging. Does not cover the metrics themselves (metrics-and-cardinality),
-  percentile correctness (latency-statistics), tail decomposition (tail-latency-analysis),
-  the log event (structured-logging), the shedding mechanism
-  (rate-limiting-and-load-shedding), or the fault model detected (failure-models).
+  Engineering service-level contracts and actionable alerting: defining user-centered SLIs
+  and SLOs with explicit populations and windows, negotiating error-budget policy,
+  separating request- and time-based semantics, deriving multi-window burn alerts, handling
+  low traffic and missing data, and routing symptoms or predictive hazards by urgency and
+  actionability. Use when an SLO is ambiguous, an SLA lacks operating margin, alert noise is
+  high, resource thresholds page without context, or PromQL burn rules need review.
+  Instrument design belongs to metrics-and-cardinality; percentile semantics to
+  latency-statistics; overload controls to rate-limiting-and-load-shedding.
 ---
 
-# SLO And Alerting
+# SLO and Alerting
 
 ## Purpose
 
-Decide what the team promises, how it is measured, and what wakes a human. An SLO is not a
-dashboard number: it is a **change-velocity decision**. A target of 99.9% over 30 days buys
-roughly 43 minutes of budget to spend on releases, migrations and experiments; a target of
-100% buys none, which is a demand to stop shipping stated in percentages.
+Create a measurable user expectation and an operating policy that changes decisions. Then
+alert early enough, and only when a person has a time-sensitive action.
 
-The failure this prevents is the alerting system that trains the response it needs. A page
-firing on a cause nobody acts on, or on a single replica the orchestrator was about to replace
-anyway, teaches the on-call that pages are noise — and that training holds during the incident
-that was real. Every rule below keeps the number of pages small, each one actionable, each one
-corresponding to something a user is feeling.
+An SLI is any carefully defined quantitative measure of service level—not necessarily a
+ratio. An SLO is a target or range on an SLI under declared conditions. An SLA is an
+agreement carrying explicit consequences. Error-budget ratios are powerful for event-based
+reliability objectives, but freshness, durability, correctness, throughput and distribution
+objectives may need other semantics.
 
 ## Workflow
 
-1. **Separate the three terms before writing anything.** SLI is the measurement, SLO is the
-   internal target, SLA is the external contract with financial or contractual consequence.
-   The SLO must be **strictly stricter** than the SLA, or the first alert arrives after the
-   penalty.
-2. **Choose an SLI the user would recognise, and name its measurement point** — the boundary
-   the user actually crosses. A request that never reached the application is invisible to
-   the application's own counter.
-3. **Write the availability definition down as arithmetic**: good events over valid events,
-   over a stated window, with an explicit list of which outcomes are good, bad, or excluded.
-   See `references/sli-and-error-budgets.md`.
-4. **Compute the error budget and agree the policy before you need it.** What happens when
-   the budget is exhausted — and who decides — is a written agreement, not an improvisation
-   during the week it runs out.
-5. **Alert on symptoms, from the budget burn rate.** Fast burn over a short window pages;
-   slow burn over a long window raises a ticket. Everything else is a dashboard. See
-   `references/alerting-design.md`.
-6. **Give every page a runbook and an owner**, then review the alert set on a schedule and
-   retire anything that fired without producing an action.
+### 1. Start from user journeys and consequences
 
-## Decision block
+Identify users (including services), critical journeys, harm from failure/latency/staleness
+or incorrectness, and dependency assumptions. Choose the few objectives that can resolve a
+real priority conflict. Do not turn every measurable resource into an SLO.
 
-```text
-Define an SLO for a service when:
-- it has identifiable users (human or another team) whose experience changes when it
-  degrades, and a boundary where that experience is measurable
-- someone would make a different engineering decision if the number moved
-Do not define an SLO when:
-- nothing changes at any value of it — an unactionable target becomes a number people
-  learn to explain away
-Page when all four hold:
-- a user-visible symptom is occurring or the error budget is burning fast enough to be
-  exhausted well before the period ends
-- a human can do something about it now
-- that something cannot be automated instead
-- there is a runbook naming the first three steps
-Raise a ticket instead when:
-- the burn is slow: real, but it will still be there in the morning
-- the condition is a cause (a saturating resource, a growing queue) that has not yet
-  produced a symptom
-Leave it on a dashboard when:
-- the signal is diagnostic — it explains an incident but does not detect one
-Automate instead of paging when:
-- the same page fires repeatedly with the same runbook step: that is an unwritten script
-```
+### 2. Write the SLI specification
 
-## Rules
+Record:
 
-- An SLI is a **ratio of good events to valid events over a window**, and all three parts must
-  be written down. "99.9% available" without the window, the status classes and the
-  exclusions is not falsifiable.
-- The SLO must be tighter than the SLA. Equal targets exhaust the budget at exactly the moment
-  the contract is breached, leaving the alert no lead time.
-- **Prefer a latency SLI expressed as a ratio, not as a percentile**: "proportion of requests
-  faster than 300 ms". That form is a counter ratio, so it aggregates correctly across
-  instances and windows — a percentile does not, and `latency-statistics` owns why.
-- Measure availability at the boundary the user crosses (edge, gateway, load balancer): the
-  application's own counter cannot see a request that never arrived, which is exactly what a
-  total outage looks like. Business correctness is a different SLI, measured inside.
-- Decide **explicitly** whether 4xx counts against the budget. Usually not — counting a
-  malformed request lets a client breach your SLO on your behalf — but a 400 from your own
-  broken validation is then invisible, which is why business outcomes need their own SLI.
-- **Traffic you deliberately shed is not the same failure as a 500.** A 429 or 503 from a
-  limiter or shedder is the system working as designed (`rate-limiting-and-load-shedding`).
-  Counting it as good hides overload; counting it as an error makes self-protection look like
-  breakage. Track it as its own SLI against goodput, and state which side it falls on.
-- 100% is not a target, it is a shipping freeze. Choosing 99.9 over 99.99 chooses a change
-  velocity; whoever owns release cadence must be in the room for it.
-- **Error budget on a 30-day window (43,200 min):** 99% is 432 min, 99.9% is 43.2 min, 99.95%
-  is 21.6 min, 99.99% is 4.32 min. One 20-minute incident spends a 99.9% monthly budget almost
-  entirely, and that is the number that makes the target real.
-- **Alert on symptoms, not causes.** High CPU, high heap, a full queue and a slow query may
-  all be present with no user impact, and absent during a real one. Page on the SLI; causes
-  belong on the dashboard the runbook opens.
-- Use **multi-window, multi-burn-rate**: high burn over a short window pages, low burn over a
-  long window tickets, and each condition is paired with a shorter window so the alert clears
-  promptly once the burn stops. Derive thresholds from `budget consumed = burn_rate × window
-/ period`; a factor copied from a document about a different SLO is a coincidence.
-- **Never page on a single instance in a replicated fleet.** The correct response is to
-  replace the instance, which is automation's job. Page when the fleet's aggregate SLI moves.
-- Alert on **missing data**: a target that stopped being scraped reports no errors, and an
-  error-rate rule reads that as health.
-- A page routinely acknowledged without action must be deleted or downgraded. It is not
-  neutral — it degrades the response time to the real ones.
-- Treat anomaly detection sceptically for paging. It answers "this is unusual", not "this is
-  bad"; seasonality (weekday, month-end, marketing events) makes naive models noisy; and the
-  page has no runbook because nobody knows what the anomaly is. A well-chosen SLI with
-  burn-rate alerting beats it for paging. Its real place is **investigation** — surfacing the
-  one series that moved — not waking someone.
-- A fast-burn page says the budget is disappearing, never why. Route from the page to the
-  diagnosis: `distributed-failure-catalogue` to name the pattern from the symptom, and
-  `cascading-failures` when error rate and latency are climbing together across several
-  services — that one is time-critical, because the interventions that work during a cascade
-  are the opposite of the instinctive ones.
+- population and valid-event/time denominator;
+- good/bad classification or numerical measurement;
+- start/end events and observation point;
+- aggregation/window and calendar versus rolling semantics;
+- exclusions, unknown/missing data and low-traffic behavior;
+- labels/cohorts and weighting;
+- source, query, retention and backfill/change policy.
 
-## References
+Measure near the user's boundary where practical, while using internal business signals for
+correctness invisible at the edge. Client telemetry may be sampled or unavailable; document
+the proxy gap rather than claiming a boundary is always authoritative.
 
-- [SLIs and error budgets](references/sli-and-error-budgets.md) — choosing the indicator and
-  its measurement point, the availability-definition decisions (window, status classes, shed
-  traffic, valid events), the error-budget table worked through for common targets, budget
-  policy, and the SLO-to-SLA relationship. Read when defining or reviewing an SLO.
-- [Alerting design](references/alerting-design.md) — symptom versus cause with examples, the
-  multi-window burn-rate mechanism explained so a reader can configure it, the
-  page/ticket/dashboard routing decision, runbook requirements, and an alert-review checklist
-  for retiring noisy alerts. Read when writing an alert rule, or when the on-call is drowning.
+### 3. Negotiate target and policy
+
+Base targets on user needs, dependency promises, business risk, attainable architecture,
+cost and observed distribution—without simply adopting current performance. A tighter
+internal objective than an external SLA often supplies detection/remediation and semantic
+margin, but “strictly tighter” is not a mathematical requirement: definitions/windows may
+differ and other controls may supply margin. Reconcile them explicitly.
+
+Avoid 100% availability objectives for failure-prone serving paths unless the scope and
+consequence genuinely require it. Some correctness/durability invariants can legitimately
+target zero tolerated events; manage them as safety/data-integrity controls rather than
+pretending all objectives need a spendable budget.
+
+Define what budget states change: release risk, reliability work, escalation, exemption
+authority and recovery. A budget is not permission to cause outages deliberately.
+
+### 4. Derive alerts from response urgency
+
+Page when:
+
+- impact or a predictive hazard is urgent enough to require action before business hours;
+- a person has a safe action or escalation now;
+- automation cannot handle it fully;
+- ownership, runbook and expected response are explicit.
+
+User symptoms are strong paging signals, but “never page on causes” is unsafe. Impending
+irreversible data loss, certificate expiry inside response lead time, disk exhaustion or a
+stateful quorum loss can justify predictive paging before users fail. Conversely, a
+user-visible low-severity condition may only need a ticket.
+
+Use multi-window burn-rate alerts for high-volume ratio SLOs. Use direct deadline/hazard,
+synthetic probes, minimum-event logic or manual aggregation where burn ratios are
+ill-conditioned.
+
+### 5. Validate the monitoring system
+
+Test recording and alert rules with controlled traffic/faults; verify labels, absent data,
+counter resets, delayed ingestion, partial monitoring outage and alert routing. A page is a
+production interface and needs version control, review and tests.
+
+### 6. Operate and retire
+
+Review firings by precision, recall, time-to-detect, time-to-action and user impact. Merge
+correlated pages, automate repeatable remediation, and downgrade or remove alerts that
+cannot drive action. “Never fired” can mean rare critical coverage, not automatic deletion;
+exercise it and verify assumptions.
+
+## Error-budget arithmetic
+
+For an event-based objective target \(S\):
+
+\[
+e_b=1-S,qquad
+burn=\frac{e_{observed}}{e_b}
+\]
+
+At constant burn \(b\), a full objective period's budget is consumed in period divided by
+\(b\). Over alert window \(w\), approximate fraction spent is:
+
+\[
+f=b\frac{w}{T}
+\]
+
+This assumes comparable event populations and a stable interpretation over windows. For a
+time-based SLI, denominator and harm differ. Do not translate request failures directly
+into “minutes unavailable” under variable traffic.
+
+## Classification decisions
+
+| Outcome                 | Default question                                                             |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| client 4xx              | was the request valid, and did our change cause rejection?                   |
+| shed 429/503            | did the user receive required service, and is shedding a separate objective? |
+| timeout/no response     | where was it observed and was late work canceled?                            |
+| degraded/fallback       | does it satisfy the promised quality/completeness?                           |
+| duplicate/retry success | is logical-call success or attempt success the population?                   |
+| no traffic              | healthy quiet period, upstream outage or missing telemetry?                  |
+
+There is no universal “4xx excluded” or “shed is neither good nor bad.” Encode the user
+contract. Keep overload classifications distinct so protection is visible even when it
+counts against availability.
+
+## Alert routing framework
+
+| Signal                   | Page when                                                       | Otherwise                       |
+| ------------------------ | --------------------------------------------------------------- | ------------------------------- |
+| fast error-budget burn   | actionable, high-volume and current in both windows             | ticket/report                   |
+| traffic disappears       | expected demand exists and edge/synthetic evidence shows impact | annotate quiet schedule         |
+| resource/hazard forecast | time-to-limit is inside response lead time with high confidence | ticket/capacity work            |
+| one replica unhealthy    | redundancy/state/risk makes human intervention urgent           | automate replacement/dashboard  |
+| correctness/data loss    | credible evidence and containment is urgent                     | investigate/ticket per severity |
+| anomaly                  | mapped to harm and response                                     | investigative signal            |
+
+## Failure modes
+
+| Symptom                                  | Likely design defect                                   | Remediation                          |
+| ---------------------------------------- | ------------------------------------------------------ | ------------------------------------ |
+| SLO green during outage                  | wrong boundary, absent traffic/data, excluded failures | add edge/synthetic/business coverage |
+| budget changes after query refactor      | population/classification/schema drift                 | version SLI and dual-run migration   |
+| one request pages low-volume service     | ratio statistically sparse                             | synthetic/group/window/manual policy |
+| page storms across services              | dependency correlation and duplicate routes            | inhibit/group by user journey        |
+| alert clears before responder sees cause | short window/no retained evidence                      | recording rules, incident snapshots  |
+| pages routinely ignored                  | no action, bad severity or ownership                   | automate, ticket, merge or remove    |
+
+## Anti-patterns
+
+**SLO equals current dashboard:** rewards existing implementation and hides user need.
+
+**All SLIs are good/valid ratios:** freshness gauges, distributions and durability can need
+different objectives; ratios are especially useful for budget-based availability/latency.
+
+**SLA margin by percentage only:** differing populations, windows, exclusions and
+measurement points can consume or create more risk than the numeric gap.
+
+**Cause-versus-symptom dogma:** route by urgency, actionability and irreversible risk.
+
+**No-data equals good:** explicitly distinguish absent telemetry, zero denominator and
+legitimate inactivity.
+
+**Budget exhaustion automatically freezes everything:** apply a pre-agreed risk policy with
+exceptions, ownership and business authority; security/safety fixes must not be blocked.
+
+## Cross-skill routing
+
+- [SLI and error budgets](references/sli-and-error-budgets.md)
+- [Alerting design](references/alerting-design.md)
+- [Burn-rate rules and templates](references/burn-rate-rules-and-templates.md)
+- metrics-and-cardinality for metric schemas and costs.
+- latency-statistics for distributions/quantiles.
+- structured-logging and distributed-tracing-design for diagnosis.
+- capacity-planning and rate-limiting-and-load-shedding for remediation.
+
+## Authoritative references
+
+- [Google SRE: Service Level Objectives](https://sre.google/sre-book/service-level-objectives/)
+- [Google SRE Workbook: Implementing SLOs](https://sre.google/workbook/implementing-slos/)
+- [Google SRE Workbook: Alerting on SLOs](https://sre.google/workbook/alerting-on-slos/)
+- [Prometheus alerting rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/)

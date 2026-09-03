@@ -5,12 +5,12 @@ resources. Cutting one breaks the loop; cutting all four makes the cascade a loc
 
 ## The four points and their controls
 
-| Point                    | What it amplifies                                           | Control                                                                        | Owner                                |
-| ------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------ |
-| Retry                    | one logical call into N requests, multiplied across layers  | one retrying layer, full jitter, a retry **budget** rather than an attempt cap | `retries-and-backoff`                |
-| Unbounded queue          | overload into unbounded latency, then into 100% wasted work | bounded queue + defined rejection + oldest-first eviction                      | `rate-limiting-and-load-shedding`    |
-| Pool / thread exhaustion | one slow dependency into failure of unrelated endpoints     | one limit per dependency, `tryAcquire` with a timeout                          | `concurrency-limiting-and-bulkheads` |
-| Timeout stack            | an abandoned call into resources held for the difference    | deadline propagation; inner bound < caller's remaining budget                  | `timeouts-and-deadlines`             |
+| Point                    | What it amplifies                                          | Control                                                                        | Owner                                |
+| ------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------ |
+| Retry                    | one logical call into N requests, multiplied across layers | one retrying layer, full jitter, a retry **budget** rather than an attempt cap | `retries-and-backoff`                |
+| Unbounded queue          | overload into latency/memory and expired work              | bounded queue + deadline/priority/durability-aware rejection or expiry         | `rate-limiting-and-load-shedding`    |
+| Pool / thread exhaustion | one slow dependency into failure of unrelated endpoints    | one limit per dependency, `tryAcquire` with a timeout                          | `concurrency-limiting-and-bulkheads` |
+| Timeout stack            | an abandoned call into resources held for the difference   | deadline propagation; inner bound < caller's remaining budget                  | `timeouts-and-deadlines`             |
 
 Two controls are worth stating as arithmetic a reviewer can check:
 
@@ -24,8 +24,8 @@ Both are properties of configuration and can be asserted in a test with no netwo
 
 ## Bounding the queue is not optional
 
-An executor built with an unbounded queue has no failure mode other than latency growth
-followed by `OutOfMemoryError`:
+An executor with an unbounded queue provides no early overload signal; latency and retained
+memory can grow until external failure, shutdown or `OutOfMemoryError`:
 
 ```java
 // The default shape to find and delete: unbounded queue, no rejection policy.
@@ -57,14 +57,14 @@ Critical — the request cannot produce a correct answer without it:
 - the authoriser for a request that must not be served unauthorised
 Behaviour on failure: fail closed, fast, with a typed error. Do not fall back.
 
-Non-critical — the request has a correct, if worse, answer without it:
+Degradable — this operation has a correct, explicitly lower-quality answer without it:
 - enrichment, recommendation, personalisation, A/B assignment, analytics
-- an audit or metrics write that can be made asynchronous and durable elsewhere
-Behaviour on failure: fail open to a defined degraded response — a default, a stale
+- an audit/metrics write only when policy permits and it is durably captured elsewhere
+Behaviour on failure: return a defined degraded response — a default, a stale
 cached value with an explicit staleness marker (caching-strategies), or omission —
 recorded on a degraded-response counter so the degradation is visible.
 
-Non-critical but on the critical path — treat as critical until fixed:
+Declared degradable but implemented as required — treat as critical until fixed:
 - called synchronously, no timeout shorter than the request budget, no fallback branch,
   no breaker. This is the classification error that causes the outage: nobody believed
   the dependency mattered, and the code made it required.
@@ -75,14 +75,15 @@ that makes it fail and asserts the endpoint still returns a successful, degraded
 and a metric that increments when it does. A classification held only in a document is not
 implemented.
 
-**Fail open is a security decision as well as an availability one.** For an authoriser, a
+**Fail open is a security decision, not a synonym for feature degradation.** For an authoriser, a
 quota enforcer or a fraud check, failing open admits requests that should have been refused;
 that trade must be made deliberately and recorded, not inherited from a `catch` block.
 
 ## Design-review checklist
 
 - [ ] Every remote call has a timeout, and the sum down the path fits the caller's budget.
-- [ ] Exactly one layer retries; the others declare a single attempt explicitly.
+- [ ] Retry ownership is explicit; layered retries have non-overlapping purposes and one bounded
+      end-to-end attempt budget rather than an accidental multiplier.
 - [ ] The retry policy has a budget, not just an attempt count.
 - [ ] Every queue and executor is bounded, with a rejection mapped to a real response.
 - [ ] There is one concurrency limit per dependency, not one shared across all of them.

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-testing
-version: 1.2.0
+version: 1.3.0
 description: >-
   Testing what an enterprise architecture actually promises: that boundaries hold, that a
   use case is atomic, that persistence mapping matches the schema, that concurrent edits are

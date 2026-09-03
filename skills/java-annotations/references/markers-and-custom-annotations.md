@@ -38,7 +38,7 @@ as an annotation.
  */
 @Documented
 @Retention(RUNTIME)                                        // the redactor reflects over it
-@Target({ FIELD, PARAMETER, RECORD_COMPONENT, METHOD })    // records need all four
+@Target({ FIELD, PARAMETER, RECORD_COMPONENT, METHOD })    // only if consumers inspect all four
 public @interface Sensitive {
     /** How the value is rendered when redaction applies. */
     Redaction value() default Redaction.MASKED;
@@ -56,8 +56,8 @@ Checklist for any annotation you define:
 - [ ] Members have defaults wherever possible, so the annotation can gain attributes without
       breaking existing uses. Adding a member **without** a default breaks every existing use at
       compile time.
-- [ ] Member types are limited to primitives, `String`, `Class`, enums, other annotations and
-      arrays of those — and are compile-time constants.
+- [ ] Member return types are limited to the annotation-element types permitted by the JLS;
+      supplied values obey the corresponding constant/class-literal/enum/annotation rules.
 - [ ] There is a test that the enforcement fires, and a test that it does **not** fire where it
       should not.
 
@@ -94,12 +94,12 @@ class OrderService {
 }
 ```
 
-Nothing fails, nothing logs; the work simply runs outside a transaction. The same applies to
-`@Cacheable`, `@Retryable`, `@Async`, `@PreAuthorize` and every other proxy-implemented
-annotation, and additionally to `private`, `final` and `static` methods, which cannot be
-proxied at all. The fix is structural — move the annotated method to a different bean, or
-invoke the behaviour explicitly (a `TransactionTemplate`, an explicit retry) — and the review
-check is: _does the call cross a bean boundary?_
+In ordinary Spring proxy mode the internal call bypasses advice. The same concern applies to
+proxy-backed `@Cacheable`, `@Retryable`, `@Async`, `@PreAuthorize`, etc. Private/static methods
+cannot be intercepted by ordinary instance proxies; final classes/methods prevent subclass
+proxies, while interface proxies and AspectJ weaving differ. Fix structurally (another bean), use
+an explicit API such as `TransactionTemplate`, or deliberately configure weaving; verify the
+actual proxy kind and call path rather than only asking whether a bean boundary exists.
 
 **3. Security annotations on an unreached path.** An `@PreAuthorize` on a service method
 protects that method; it does not protect a second controller that reaches the repository

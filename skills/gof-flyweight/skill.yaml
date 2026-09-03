@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: gof-flyweight
-version: 1.1.0
+version: 1.2.0
 description: >-
   Flyweight in modern Java: sharing one immutable instance across many logical occurrences to
   bound memory, and why the modern JVM makes that pay only for long-lived duplicates. Covers the
-  intrinsic/extrinsic split, why allocation of short-lived objects is nearly free so pooling them
-  loses, the memory arithmetic deciding whether a cache entry costs more than the object it saves,
+  intrinsic/extrinsic split, why cheap TLAB allocation does not make reclamation free, the memory
+  arithmetic deciding whether a cache entry costs more than the object it saves,
   string deduplication and boundary canonicalisation as cheaper alternatives, the unbounded intern
   map as a leak, and the == trap. Use when object pooling or interning is proposed, when a heap
   dump shows millions of duplicate values, when someone suggests caching small objects for speed,
@@ -40,7 +40,7 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
+dependencies: []
 
 suggests:
   - allocation-profiling

@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: java-design-by-contract
-version: 1.1.0
+version: 1.2.0
 description: >-
   Contracts as the semantics of a Java API, without a contract framework: preconditions,
   postconditions and invariants defined precisely and mapped to Java 25 mechanisms —
   constructor and compact-constructor validation, invariants as types that cannot represent
-  invalid states, postconditions via tests and assert, contracts documented in Javadoc,
+  invalid states, postconditions via tests and proportionate runtime checks, contracts documented in Javadoc,
   behavioural subtyping (overrides may weaken preconditions and strengthen postconditions,
   never the reverse), and contracts across sealed hierarchies. Use when a class's invariants
   live in its callers' heads, when an override adds a requirement its supertype never made,

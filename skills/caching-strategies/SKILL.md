@@ -17,68 +17,85 @@ description: >
 
 ## Purpose
 
-Cache is the only technique that attacks `λ` in `L = λ × W`: a query that does not happen
-consumes no connection, no planner and no I/O. It is also the only performance technique
-whose broken form has **better** metrics than its correct form — which is why the rules
-here are mostly about what to measure alongside hit rate.
+A cache can reduce the arrival rate seen by an origin in `L = λ × W`: a hit consumes no origin
+connection, planner or I/O. Batching, admission control and eliminating work can also reduce
+origin demand, so caching is one option rather than a unique law. A stale, unbounded cache can
+show excellent hit rate; correctness, memory and origin protection must be measured beside it.
 
 ## Workflow
 
-1. **Measure `T_source`** (p50 and p99) before deciding. Caching something that costs
-   0.5 ms buys complexity, staleness risk and memory for almost nothing.
+1. **Measure source cost and capacity** (latency distribution, CPU/I/O and rate) before deciding.
+   Even a sub-millisecond lookup may matter at very high volume; latency alone is not the case.
 2. **Measure the access distribution** and estimate `h` for the intended `maximumSize`.
-3. **Decide on `h × T_source`, not on `h`.** A cache with 20% hit rate over a 200 ms source
-   is worth more than one with 90% over a 2 ms source.
-4. **Bound it** — by size, or by **weight** when entry sizes vary by orders of magnitude.
-   Keep `maximumSize × average_size` at or below ~25% of available heap.
+3. **Model saved work and latency, not hit rate alone.** Estimate origin work avoided by hit
+   distribution and compare `h·T_hit + (1-h)·T_miss` (including queueing/load cost) with the
+   uncached distribution. Tail latency cannot be derived from averages.
+4. **Bound it**—by count or a measured weight proxy. Account for keys, values, node metadata,
+   allocator/GC headroom and concurrent load buffers; a weigher's logical bytes are not measured
+   heap retention. Validate with heap/allocation evidence under representative occupancy.
 5. **Set a TTL from the business tolerance for stale data**, and add jitter if entries are
    created in bulk.
 6. **Define the invalidation strategy and write an automated test for it** — propagation is
    the part that silently stops working.
-7. **Instrument four series, not one**: hit rate, Old Gen occupancy after collection,
-   `cache.load.duration`, and the invalidation test in CI.
+7. **Instrument outcomes**: request-weighted and byte-weighted hit/miss, origin rate and load
+   latency/failures, eviction/admission, retained memory, stale-age/version and invalidation lag.
 
 ## Rules
 
-- `T_effective = T_cache + (1 − h) × T_source`. In latency the return is **not**
-  diminishing: the difference between 95% and 99% is larger than between 50% and 80%. What
-  diminishes is the return on memory, because coverage grows with the logarithm of cache
-  size.
+- For a simple cache-aside path, `E[T] ≈ h·T_hit + (1-h)·T_miss`; miss cost includes cache lookup,
+  origin queueing/load and fill. Increasing hit rate has linear average benefit only if those
+  distributions stay fixed; near saturation, queueing can make the system nonlinear. Hit-rate
+  gain per byte depends on the observed popularity/size distribution, not a universal logarithm.
 - **A broken cache has better metrics than a correct one.** No limit, no TTL and no
   invalidation gives the best possible hit rate. This is why hit rate never travels alone.
-- Never cache a mutable JPA entity — the cache holds the reference, so any code with that
-  object mutates the cache contents without going through `put`, and dirty checking may
-  persist the change, or may not, leaving cache and database divergent. Cache immutable
-  DTOs (`record`), converted at the boundary.
-- `@Cacheable` called via `this` never goes through the proxy and the cache is simply never
-  consulted — no error, no log. Same mechanism as `@Transactional`. Extract to a separate
-  bean; that is more readable than self-injection.
+- Avoid putting managed/mutable JPA entities in an application cache—the cache may retain aliases,
+  lazy proxies and persistence-context assumptions. Cache immutable projections/value snapshots
+  with an explicit version. A provider's second-level cache is a separate coordinated mechanism,
+  not evidence that arbitrary entity references are safe.
+- In Spring's default proxy mode, `@Cacheable` self-invocation via `this` bypasses interception.
+  AspectJ mode or direct programmatic caching differs. Test the deployed mode; extracting a
+  collaborator is often clearer than self-injection.
 - Never cache an operation with a side effect. `@Cacheable` on something that _creates_
   means that on a hit the thing is not created and the cache asserts that it was.
   Idempotency belongs to durable storage — a keys table with a unique constraint. A cache
   can accelerate the lookup of that table; it can never replace it.
-- Stampede has **four scopes and four different remedies**: jitter desynchronises entries
-  created in bulk; singleflight (or a `LoadingCache`) guarantees one reload per key;
-  `refreshAfterWrite` removes the miss entirely on hot keys; staggered reload avoids a
+- Stampede has several scopes: jitter desynchronizes bulk expiry; singleflight/`LoadingCache`
+  coalesces per key only within its process/cache instance unless backed by distributed
+  coordination; `refreshAfterWrite` serves an old value while a hot-key refresh runs; staged
+  warm-up avoids a
   global cold cache. Probabilistic early expiration reduces the spike, it does not remove
   it — and the correct form is `P = exp(−(expiry − now) / (β · δ))`, with β in the
-  denominator.
+  denominator and `δ` representing measured recomputation duration. Validate the algorithm and
+  clock/units rather than copying the equation without its assumptions.
 - `FLUSHALL` in a deploy pipeline is a stampede generator. If the service needs the cache to
   serve its load, the cache is an **availability** component, not a performance one. For a
   format change, version the key prefix instead.
-- `RedisTemplate`'s default serialiser is `JdkSerializationRedisSerializer`, not JSON —
-  unreadable outside the JVM, fragile across class evolution, and with a deserialisation
-  security history. `GenericJackson2JsonRedisSerializer` is necessary, not optional. And
-  `Jackson2JsonRedisSerializer<>(Object.class)` fails with `ClassCastException` on the first
-  hit, because it does not write the type.
-- Redis pub/sub is fire-and-forget, so the L1 TTL is the **safety net**, not redundancy. An
+- Spring Data Redis defaults `RedisTemplate`/`RedisCache` to JDK serialization in current
+  documentation; override it explicitly. Prefer a typed schema/serializer. In Spring Data Redis
+  4, Jackson 3 uses `JacksonJsonRedisSerializer<T>` or `GenericJacksonJsonRedisSerializer`;
+  Jackson-2-named serializers are deprecated, and the old generic serializer enabled default
+  typing by default. Do not solve lost type information by enabling payload-selected classes
+  (java-serialization-hardening).
+- Redis pub/sub is fire-and-forget, so the L1 TTL is a staleness bound, not redundant delivery. An
   instance disconnected at publish time misses the message and serves stale data until the
-  TTL; with no TTL the inconsistency is permanent and silent. Propagate **after commit**
-  (`@TransactionalEventListener(AFTER_COMMIT)`), never inside the transaction.
-- `sun.misc.Unsafe` for off-heap has an expiry date: memory-access methods were terminally
-  deprecated in JDK 23 (JEP 471) and warn since JDK 24 (JEP 498). The standard replacement
-  is the FFM API (`MemorySegment`/`Arena`) — check whether your off-heap library has
-  migrated.
+  TTL; with no TTL it can survive until eviction/write. Publish only after a successful commit,
+  but recognize that an `AFTER_COMMIT` listener can crash before publishing. Use an outbox/CDC or
+  version-checked reads where bounded reliable invalidation is required.
+- Cache-aside has races: an old slow read can fill after a newer write invalidates, resurrecting
+  stale data. Use versioned values/keys, compare-and-set fills, write-through/CDC, or a tolerated
+  TTL according to the consistency requirement.
+- A key is an authorization boundary. Include tenant, locale, entitlement/principal dimensions
+  that affect the result; canonicalize them; never let one tenant reuse another's cached response.
+  Avoid secrets/PII in keys because keys appear in metrics, logs and admin tools.
+- Negative caching protects against penetration only with a short bounded TTL and input/cardinality
+  controls. Caching every attacker-chosen miss is itself an unbounded-memory attack.
+
+## Primary sources
+
+- [Spring Data Redis object mapping and serializers](https://docs.spring.io/spring-data/redis/reference/redis/template.html)
+- [Spring Data Redis 4 migration guide](https://docs.spring.io/spring-data/redis/reference/upgrading.html)
+- [Caffeine refresh semantics](https://github.com/ben-manes/caffeine/wiki/Refresh)
+- [Redis key eviction](https://redis.io/docs/latest/develop/reference/eviction/)
 
 ## References
 

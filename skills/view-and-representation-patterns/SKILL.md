@@ -24,9 +24,9 @@ classical view patterns still describe every option in a modern stack — a Thym
 Jackson-serialised DTO, and a global response envelope are Template View, Transform View and
 Two Step View respectively — and naming them makes the recurring failures easy to see.
 
-The failure this prevents is logic migrating into the least testable layer in the system.
-A condition in a template is a business rule that no unit test covers, that no compiler
-checks, and that fails only when someone loads the page.
+The failure this prevents is domain policy migrating into a representation layer. Templates can be
+tested and some engines compile them, but feedback is generally weaker than for typed domain code;
+presentation conditions remain legitimate.
 
 ## The three patterns
 
@@ -54,8 +54,9 @@ Two Step View     build a logical representation first, then render it to
    formatted where formatting is a domain matter (money, dates in a business calendar).
    The view should have nothing left to decide.
 3. **Choose the pattern** by the decision rules below.
-4. **Check the template or serialiser for decisions.** Conditions on domain state,
-   arithmetic, and any data access are all defects in this layer.
+4. **Check the template or serializer for domain decisions.** Presentation branching, iteration and
+   formatting are expected; invariant enforcement, pricing/authorization policy and data access are
+   defects here.
 5. **Apply the shared parts once.** An envelope, a layout, an error shape, a link format —
    these are Two Step View's justification, and duplicating them per response is the
    commonest inconsistency in an API.
@@ -98,15 +99,17 @@ Output must vary by tenant, brand or locale
 
 ## Rules
 
-- **Templates must not decide.** A condition in a template is untestable and invisible to
-  the compiler. Decide in the application layer and put a boolean or a pre-selected value in
-  the presentation model. A loop and a null check are presentation; a discount calculation
-  is not.
+- Templates must not own domain policy. Conditions are testable and may be presentation concerns;
+  prefer a presentation model when branching duplicates business meaning or becomes hard to review.
+  A loop and null/empty rendering are presentation; a discount calculation is not.
 - **A template must not trigger data access.** Rendering that walks a lazy association
-  issues queries during view rendering, inside the request's transaction if Open Session In
-  View is on, and produces an N+1 that no query budget catches
+  issues queries during view rendering while the persistence context is open under Open Session In
+  View; it may be outside the original service transaction. Scope query budgets to the whole request
+  so rendering queries are included
   (`orm-behavioral-patterns`).
-- Never serialise a persistence entity to a client. It couples the public representation to
+- Avoid serializing persistence entities across externally evolving or security-sensitive
+  boundaries. A tightly internal CRUD endpoint may accept the coupling deliberately, with explicit
+  visibility/fetch tests. Direct serialization otherwise couples the representation to
   the schema, exposes fields nobody chose to expose, and fails or over-fetches on lazy
   associations (`remote-facade-and-dto`).
 - Formatting that carries business meaning — money with its currency and rounding, a

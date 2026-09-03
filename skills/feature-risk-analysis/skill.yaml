@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-risk-analysis
-version: 1.0.0
+version: 1.1.0
 description: >-
   Naming what could go wrong with a specific feature in a form that can be acted on: the failure
   stated as an event rather than a worry, how anyone would find out it happened, what reduces its
@@ -12,7 +12,8 @@ description: >-
   there is no answer. Does not catalogue distributed failure modes in general
   (distributed-failure-catalogue, failure-models), does not decide whether a deliberate shortcut
   is acceptable (technical-debt-decisions), and does not design the resilience mechanism
-  (resilience-patterns).
+  (timeouts-and-deadlines, retries-and-backoff, circuit-breakers,
+  concurrency-limiting-and-bulkheads).
 license: Apache-2.0
 
 authors:
@@ -47,7 +48,10 @@ suggests:
   - distributed-failure-catalogue
   - feature-architecture-analysis
   - feature-engineering
-  - resilience-patterns
+  - timeouts-and-deadlines
+  - retries-and-backoff
+  - circuit-breakers
+  - concurrency-limiting-and-bulkheads
 
 agentOverrides:
   codex:

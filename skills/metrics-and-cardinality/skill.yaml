@@ -1,20 +1,16 @@
 schemaVersion: 1
 
 name: metrics-and-cardinality
-version: 1.2.0
+version: 1.3.0
 description: >-
-  What to count and what not to label: RED for services and USE for resources, counter
-  versus gauge versus histogram and each mis-selection's failure, label cardinality as a
-  computed budget, path templating, and business outcomes that detect what a health check
-  misses. Use when a label carries a user id, a request id, a raw URL path or an exception
-  message, when series count grows without matching traffic, when a scrape fails after a
-  deploy that added a tag, when a dashboard averages per-instance quantiles, when a gauge
-  reports NaN or misses everything between scrapes, when histogram_quantile returns NaN
-  because a Timer exports no buckets, when a label must be capped with a MeterFilter because
-  its source cannot be fixed, when a counter is read as a value rather than a rate, or when
-  saturation has no metric at all. Does not cover percentiles (latency-statistics), the tail
-  (tail-latency-analysis), exporter cost (opentelemetry-performance), alerting
-  (slo-and-alerting), or single events (structured-logging).
+  Designing bounded, decision-oriented metrics for Java services: selecting counters,
+  gauges and histogram forms; defining RED, USE and business outcomes; budgeting active
+  series and ingestion/query cost; controlling caller-driven dimensions; and planning
+  schema migrations, overflow behavior and exemplars. Use when adding labels, routes,
+  histograms or business metrics, diagnosing series growth or missing gauges, reviewing
+  Micrometer/Prometheus instrumentation, or choosing between classic/native histograms and
+  client quantiles. Percentile inference belongs to latency-statistics, exporter overhead
+  to opentelemetry-performance, alert policy to slo-and-alerting.
 
 license: Apache-2.0
 

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-prototype
-version: 1.1.0
+version: 1.2.0
 description: >-
   Prototype in modern Java: producing a new object from an existing instance's state, when the
   configuration is expensive or the concrete type is unknown to the caller. Covers why
@@ -50,6 +50,7 @@ suggests:
   - java-memory-model
   - offline-concurrency-control
   - orm-behavioral-patterns
+  - gof-memento
 
 capabilities:
   - reads-source

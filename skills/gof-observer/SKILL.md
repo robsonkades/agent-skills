@@ -23,9 +23,9 @@ Let a subject tell an unknown set of dependents that something happened, without
 them. It is the most reached-for decoupling mechanism in object design and the one whose contract
 is most often over-read.
 
-What the classical pattern actually promises: registered observers are called. That is all. It
-does not promise an order, does not promise isolation between observers, does not promise delivery
-if the process dies, and does not promise anything about which thread runs them.
+The abstract pattern does not itself choose ordering, thread, error isolation, lifecycle or crash
+delivery. A concrete observer API must choose them; even “registered observers are called” needs
+qualification for concurrent deregistration, filtering and failure policy.
 
 ## What people assume, and what holds
 
@@ -55,15 +55,15 @@ inherit.
 
 ## Observer, reactive stream, pub/sub
 
-| Property              | In-process Observer     | Reactive Stream              | Distributed pub/sub                |
-| --------------------- | ----------------------- | ---------------------------- | ---------------------------------- |
-| Thread                | The publisher's         | Wherever scheduled           | The consumer's, another process    |
-| Backpressure          | None — publisher blocks | `request(n)`, explicit       | Broker buffering, consumer lag     |
-| Delivery              | Best effort, in memory  | In memory, with cancellation | At-least-once, durable             |
-| Ordering              | Unspecified             | Per subscription             | Per partition only                 |
-| Failure of a consumer | Breaks the publisher    | Terminates that subscription | Independent; retry and dead-letter |
-| Transaction           | The publisher's         | None                         | Separate; needs an outbox          |
-| Schema                | A Java type             | A Java type                  | A versioned contract               |
+| Property              | In-process Observer              | Reactive Stream                                   | Distributed pub/sub                 |
+| --------------------- | -------------------------------- | ------------------------------------------------- | ----------------------------------- |
+| Thread                | API-defined; often publisher     | Publisher/subscriber unless a scheduler shifts it | Consumer execution context          |
+| Backpressure          | None — publisher blocks          | `request(n)`, explicit                            | Broker buffering, consumer lag      |
+| Delivery              | In memory                        | In memory, with cancellation                      | Broker/configuration-specific       |
+| Ordering              | Implementation contract          | Per-stream contract                               | Scope depends on broker/topology    |
+| Failure of a consumer | Policy-defined; often propagates | Usually terminates that subscription              | Ack/retry/terminal policy-specific  |
+| Transaction           | May share caller context         | Context/framework-dependent                       | Usually separate; bridge explicitly |
+| Schema                | A Java type                      | A Java type                                       | A versioned contract                |
 
 These are not interchangeable implementations of one idea. Moving a listener from the first column
 to the third changes transactional semantics, ordering, error handling, latency and idempotency
@@ -77,7 +77,7 @@ A subject must notify dependents it does not know about, in-process
 
 Modules within one application must react to a domain change without
 the originator knowing them
-        → application events, published after the transaction commits.
+        → application events, with before/after-commit phase chosen from consistency needs.
 
 A consumer must control the rate of a stream it cannot outrun
         → a reactive stream; Observer has no backpressure and the
@@ -89,12 +89,13 @@ Another service must react
 
 ## When it is not
 
-- **There is one listener and it is known.** Call it. An event with a single subscriber is
-  indirection that hides the call graph.
+- **There is one listener, same ownership, and no lifecycle/evolution reason for indirection.** A
+  direct call is clearer. One current listener can still justify an event at a module boundary or
+  when publisher semantics explicitly permit zero/many future observers.
 - **The publisher needs the outcome.** Observers return nothing; a publisher that inspects results
   is issuing commands, not events (`gof-command`).
-- **Order between listeners is essential.** Then the flow is a sequence and should be written as
-  one; imposing order on listeners re-couples them without making the sequence readable.
+- **Order between listeners is essential but implicit.** Prefer an explicit pipeline/workflow;
+  ordered observers remain valid when the API makes phases and dependencies visible.
 - **The listener must not fail silently.** In-process events give no retry, no dead-letter and no
   record. Work that must not be lost belongs on a durable queue.
 
@@ -117,8 +118,9 @@ THEN decide: fail the publisher (fine when the listener is essential),
      is the failure that gets discovered by a customer.
 
 IF the subject notifies while holding a lock
-THEN a listener that acquires another lock, or calls back into the
-     subject, can deadlock. Notify outside the critical section, always.
+THEN a listener that acquires another lock or re-enters can deadlock or see
+     partial state. Prefer publishing an immutable snapshot after releasing the lock;
+     if atomic synchronous callbacks are required, document lock/reentrancy rules.
 
 IF the listener does I/O
 THEN the publisher's latency now includes it. Either accept that
@@ -141,19 +143,21 @@ THEN state it explicitly and test it, or remove the dependency.
 
 ## Cross-cutting checks
 
-- **Concurrency.** Three recurring failures. Mutation of the listener list during notification —
-  use `CopyOnWriteArrayList`, which is exactly the right structure here (many notifications, rare
-  registrations). Notification under a lock, which turns any listener's own locking into a
+- **Concurrency.** Three recurring failures. Mutation of the listener list during notification—
+  `CopyOnWriteArrayList` fits read-heavy/small listener sets, while snapshot copies, immutable
+  registries or locks may fit different churn/size. Notification under a lock turns listener locking into a
   deadlock risk. And reentrancy: a listener that triggers another notification on the same subject
   produces nested notification with the subject mid-update (`java-memory-model`).
 - **Distribution.** Observer stops at the process boundary. Crossing it introduces at-least-once
   delivery (so consumers must be idempotent), partition-scoped ordering only, consumer failures
   that are now invisible to the publisher, and an event schema that other teams depend on. The
-  transactional bridge is an outbox: publish by writing to the same database transaction, and let
-  a relay forward it — anything else is a dual write that loses events or invents them
+  common transactional bridge is an outbox: write the event in the same database transaction and
+  relay it. CDC or coordinated transactions are alternatives with different assumptions; an
+  uncoordinated database write plus broker send is the dual-write hazard
   (`idempotency`, `message-ordering-and-partitioning`).
-- **Performance.** Notification is linear in listeners and synchronous, so the publisher's latency
-  is the sum of every listener's. A hot subject with many listeners is a fan-out on the request
+- **Performance.** A sequential synchronous implementation is linear and publisher latency includes
+  listeners until failure/short-circuit; parallel/asynchronous forms trade this for queues,
+  scheduling and detached failure. A hot subject with many listeners is a fan-out on the request
   path. Also watch allocation: an event object per notification is normally fine, and is not fine
   in a per-element loop over a large collection (`allocation-profiling`).
 - **Testing.** Test the publisher by asserting the event it published, and each listener
@@ -166,13 +170,13 @@ THEN state it explicitly and test it, or remove the dependency.
 
 - [ ] Every registration has a deregistration with a named owner
 - [ ] The listener collection is safe to iterate while listeners are added or removed
-- [ ] Nothing is notified while a lock is held
+- [ ] Notification locking, reentrancy and snapshot visibility are explicit and deadlock-reviewed
 - [ ] The policy for a throwing listener is explicit and tested
 - [ ] Listener ordering is either irrelevant or imposed and tested
 - [ ] Listeners doing I/O are accounted for in the publisher's latency budget
 - [ ] Events crossing a transaction boundary have a defined phase
-- [ ] Events crossing a process boundary go through an outbox and are consumed idempotently
-- [ ] An event with exactly one known listener is a direct call instead
+- [ ] Cross-process publication has a transactional bridge and delivery-appropriate duplicate policy
+- [ ] A single known listener has a stated module/lifecycle reason or is a direct call
 
 ## References
 

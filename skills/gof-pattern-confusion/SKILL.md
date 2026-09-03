@@ -34,23 +34,23 @@ Q1: Is the wrapper's interface the SAME as the wrapped object's?
     same        → Decorator or Proxy
     different   → Adapter or Facade
 
-Q2 (same interface): could you stack two of them and still make sense?
+Q2 (conforming interface): what responsibility changes?
 
-    yes, and the order matters      → Decorator
-    no; it stands in for the thing  → Proxy
+    adds orthogonal behaviour and composition/order matters → Decorator
+    controls access, lifecycle, location or reachability     → Proxy
 
-Q2 (different interface): how many objects are behind it?
+Q2 (different/coarser interface): what boundary is translated?
 
-    one, and you did not design it  → Adapter
-    several, and you own them       → Facade
+    an incompatible collaborator API                         → Adapter
+    a subsystem's complexity and workflow                    → Facade
 ```
 
-| Pattern       | Interface    | Behind it        | Caller believes         | Tell                                   |
-| ------------- | ------------ | ---------------- | ----------------------- | -------------------------------------- |
-| **Adapter**   | Different    | One foreign type | It is using your API    | Foreign types stop at it               |
-| **Facade**    | New, coarser | Several, yours   | It is using a subsystem | It calls collaborators, not one object |
-| **Decorator** | Same         | One, same type   | It has the thing        | Two could be stacked, in an order      |
-| **Proxy**     | Same         | One, same type   | It **has** the thing    | It controls whether you reach it       |
+| Pattern       | Interface      | Behind it                                 | Caller believes         | Tell                                  |
+| ------------- | -------------- | ----------------------------------------- | ----------------------- | ------------------------------------- |
+| **Adapter**   | Target API     | One or more adaptees                      | It is using your API    | Incompatible/foreign types stop at it |
+| **Facade**    | Simplified API | A subsystem, possibly one complex service | It is using a subsystem | Complexity/workflow is hidden         |
+| **Decorator** | Same           | One, same type                            | It has the thing        | Two could be stacked, in an order     |
+| **Proxy**     | Same           | One, same type                            | It **has** the thing    | It controls whether you reach it      |
 
 ## Behavioural lookalikes, in one line each
 
@@ -85,8 +85,8 @@ Chain of Responsibility vs Decorator
     Do all of them run, wrapping each other → Decorator/pipeline.
 
 Composite vs Decorator
-    Structurally identical. Composite has many children and models
-    part/whole; Decorator has exactly one and adds behaviour.
+    Both conform to a component interface. Composite models part/whole
+    and delegates to children; Decorator wraps one component to add behaviour.
 
 Visitor vs Iterator
     Iterator supplies the elements; Visitor supplies the operation.

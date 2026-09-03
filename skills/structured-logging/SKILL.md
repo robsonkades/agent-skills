@@ -1,163 +1,182 @@
 ---
 name: structured-logging
 description: >
-  Logs as queryable events rather than prose: named fields instead of interpolated
-  sentences, the correlation ids every event carries and the MDC lifecycle behind them, the
-  encoder and sync-versus-async appender choice and what each loses, levels as a contract
-  with the on-call, redaction at the encoder, and volume as a cost. Use when finding
-  something in the logs needs a regex, when MDC is empty on a handed-off thread or stale on
-  a pooled one, when INFO events vanish under load while WARN survives, when the trace id
-  key is traceId in one service and trace_id in another, when a handled-and-retried failure
-  is logged at ERROR, when e.getMessage() is concatenated and the stack trace is gone, or
-  when a request body or a token reaches an appender. Not label cardinality
-  (metrics-and-cardinality), span design (distributed-tracing-design), trace propagation
-  cost (opentelemetry-performance), the exception hierarchy (java-exception-design), context
-  mechanics (scoped-values), or alerting policy (slo-and-alerting).
+  Designing application logs as governed event schemas: choosing events and fields,
+  correlation and context lifecycle, exception and severity semantics, synchronous versus
+  buffered delivery, overload/drop behavior, injection prevention, data minimization,
+  integrity/retention and measurable cost. Use when logs require regex parsing, correlation
+  is missing or stale across async work, events disappear under load, fields drift between
+  services, failures are duplicated, secrets or untrusted text reach logs, or logging
+  appears in latency profiles. Metric labels belong to metrics-and-cardinality; span
+  topology to distributed-tracing-design; JVM -Xlog to unified-logging.
 ---
 
 # Structured Logging
 
 ## Purpose
 
-Decide what a service emits so that a question nobody anticipated can still be answered.
-A log line is a **record with fields**, not a sentence. `log.info("Order {} failed for
-customer {}", id, cust)` produces a string that a future investigation must parse with a
-regex that breaks the day someone rewords the message; an event carrying `order_id` and
-`customer_id` as fields is queryable, joinable and aggregatable without touching the code.
+Emit events that answer operational, security, audit and business questions without making
+logging a latency, availability, confidentiality or integrity hazard.
 
-Logs earn their cost by answering the three questions metrics and traces cannot: **the
-specific** (what happened to this one order), **the rare** (the single occurrence that no
-counter was incremented for), and **the unanticipated** (the question invented during an
-incident, against data written before anyone thought to ask). A metric needs its dimension
-chosen at write time and a trace is usually sampled away; the log is the only signal that
-retains the detail of one instance. Everything that follows is about keeping that property
-without paying for prose.
+Structured fields improve stable querying, but structure does not create facts that were
+never recorded. Logs are neither the only source of rare/unanticipated evidence nor a
+license for arbitrary payload retention. Design from explicit uses, threat model and
+retention policy.
 
 ## Workflow
 
-1. **Fix the event schema before the first appender.** Decide the field set every event
-   carries — timestamp, level, logger, service, version, environment, `trace_id`,
-   `span_id`, `request_id` — and the naming convention (one case style, one name per
-   concept, identical across services). See `references/fields-and-levels.md`.
-2. **Choose the emission surface by what the collector needs**, not by taste: the SLF4J 2.x
-   fluent API (`atInfo().addKeyValue(...)`) keeps fields typed in the call, a JSON encoder
-   on the appender decides the wire format. They are complementary — key-value pairs only
-   become fields if the encoder renders them; a plain pattern encoder appends them to the
-   message and you are back to regex. Pick the encoder from the table in
-   `references/appenders-and-cost.md` — Logback's `JsonEncoder`, logstash-logback-encoder,
-   Log4j2's `JsonTemplateLayout` and Spring Boot's `logging.structured.format.*` differ in
-   field names, masking and stack-trace control — and decide synchronous versus
-   asynchronous there too, explicitly choosing block or drop when the queue is full.
-3. **Establish correlation at the edge and carry it deliberately.** Accept or mint a
-   request id at the ingress filter, bind the trace id from the tracing context, and put
-   both on every event. MDC is a `ThreadLocal`: it does not cross an executor hand-off and
-   it outlives a task on a pooled thread. Check which key the instrumentation actually
-   writes — `trace_id` (OpenTelemetry agent), `traceId` (Micrometer Tracing) or `trace.id`
-   (ECS) — before any pattern or query names it. See `references/java-logging-mechanics.md`.
-4. **Assign levels against the on-call contract, not against how bad it felt.** ERROR means
-   a human should look. Walk every existing ERROR call site and demote the ones that are
-   already handled.
-5. **Put redaction in the encoder.** A deny-list of field names and a marker type applied
-   once at serialisation is auditable; a `maskCpf(...)` call at each site is not, and every
-   new call site defaults to unsafe.
-6. **Budget the volume.** Events per request × request rate × bytes per event is the bill
-   and the ingestion rate limit. Sample INFO by the trace decision so the retained subset
-   is coherent; never sample WARN, ERROR or audit events.
-7. **Test the boundary.** One test that captures emitted events at an entry point and
-   asserts the required fields are present on all of them — otherwise the schema decays
-   silently, one new call site at a time.
+### 1. Define event classes and consumers
 
-## Decision block
+For each event specify:
 
-```text
-Emit a log event when:
-- the question it answers is about one specific occurrence, identified by a business key
-- the occurrence is rare enough that its volume is bounded by failures, not by traffic
-- the detail needed is unbounded or not known in advance (a payload fragment, a
-  downstream error body, the branch a decision took)
-Prefer a metric instead when:
-- the question is "how many" or "how fast" over a bounded set of dimensions; a log line
-  per request parsed into a count is a metric implemented badly and priced by the byte
-Prefer a span or span attribute instead when:
-- the question is where the time went, or what called what, within one request
-Do not log at all when:
-- the line restates what the next line already says, or narrates control flow that a
-  stack trace would give you for free on failure
-- the value is a credential, a token, a full request or response body, or a personal
-  identifier that no query will ever legitimately filter on
-```
+- stable event name/version and producer;
+- operational, security, audit or business purpose;
+- occurrence boundary and deduplication semantics;
+- required/optional fields with type/unit;
+- severity and expected consumer/action;
+- sensitive/untrusted fields and transformations;
+- delivery, ordering, retention and integrity requirements.
 
-## Rules
+Security/audit records often need a separate durable, access-controlled path. Application
+debug logs must not be treated as an authoritative audit ledger.
 
-- Every event carries `trace_id` and a request id, or the three signals cannot be joined
-  and the trace becomes unusable for the "what exactly happened here" question.
-- Log the **exception object**, never `e.getMessage()` concatenated into the message.
-  `getMessage()` discards the type, the stack and the cause chain — the three things that
-  identify the failure. Pass the throwable as the trailing argument with no placeholder for
-  it (`log.error("payment rejected", e)`), or `setCause(e)` on the fluent builder.
-- **Log a failure once, where it is handled.** Log-and-rethrow at every layer produces one
-  failure as N stack traces with N different messages, and the count of ERROR events stops
-  meaning anything. If a layer adds context, add it to the exception (`java-exception-design`)
-  rather than to a second log line.
-- ERROR is a request for human attention. A failure that was caught, retried and succeeded
-  is at most WARN — logging it at ERROR is the most common real defect in this area, because
-  it trains the on-call to ignore ERROR, and the training holds during the incident that
-  matters.
-- **Clear MDC in a `finally`, always.** On a pooled thread an uncleared MDC is attributed to
-  the _next_ request — a correlation id that points at someone else's data is worse than
-  none. With a thread per request this cannot leak, but the hand-off loss still applies.
-- MDC does not cross a thread boundary by itself. Capture the context map before submitting
-  and restore it inside the task, or carry the context as a value. The mechanism choice is
-  `scoped-values` and `thread-sizing-and-virtual-threads`; the logging consequence is that
-  an un-carried context produces events with the correlation fields simply absent, which
-  looks like a gap in traffic rather than a defect. Inheritance
-  (`log4j2.isThreadContextMapInheritable`, any `InheritableThreadLocal`) is not the fix: it
-  is a snapshot taken when a thread is created, so it is stale on every pooled thread and
-  leaks a request's context into every per-task virtual thread created from it.
-- **An async appender drops INFO by default.** Logback's `AsyncAppender` discards TRACE,
-  DEBUG and INFO once the 256-slot queue is 80% full (`discardingThreshold`), and Log4j2's
-  `Discard` policy drops at or below `INFO`; both lose the whole queue on SIGKILL and on a
-  context nobody stopped. Choose block or drop per appender and make a drop observable.
-- Caller data (`%line`, `%method`, `includeLocation`) is a stack walk per event; the
-  logger name already locates the code. A stack trace is tens of kilobytes per event —
-  bound its depth and length at the encoder, root cause first.
-- A pattern layout writes user text verbatim, so an embedded newline forges an event. A
-  JSON encoder escapes it; where a pattern stays, `%replace` or Log4j2's `%enc{}{CRLF}`.
-- Never log a full request or response body. It is unbounded in size, it is the most common
-  route for credentials and personal data into a log store, and the useful part is a handful
-  of fields you can name.
-- Redaction lives at the encoder, applied to field names and to a marker type. A call-site
-  masking helper is unenforceable: the review that catches the one new unmasked call site
-  does not exist.
-- A field name is a schema. Once `order_id` is queried by a dashboard or an alert, renaming
-  it to `orderId` breaks them silently — nothing errors, results just become empty.
-- Do not log at INFO once per request as a matter of course at high request rates. It is the
-  dominant line item in most log bills and the usual cause of hitting a collector's ingestion
-  limit, at which point events are dropped — including the errors.
-- Sampling must be **coherent**: decide once per request and apply to every event of that
-  request. Independently sampled events give you a third of a story and no way to tell that
-  the rest existed.
+### 2. Define a common envelope
 
-## References
+Typical fields include timestamp with timezone, event name/schema version, severity,
+service/deployment/instance identity, logger, message, trace/span/request/business
+correlation when valid, outcome/error type and source clock.
 
-- [Java logging mechanics](references/java-logging-mechanics.md) — the fluent key-value API
-  and what an encoder must do with it, the MDC lifecycle with the executor and pooled-thread
-  traps and the clear-in-finally shape, what `InheritableThreadLocal` inheritance really
-  does across virtual threads, per-task executors and pools (measured), the three trace id
-  key conventions and how to reconcile them, exception logging done correctly, redaction at
-  the encoder with the concrete mechanism per stack, newline injection, and a test that
-  asserts the required fields on every event at a boundary. Read when writing or reviewing
-  logging code, or when correlation fields are missing or under the wrong name.
-- [Appenders, encoders and cost](references/appenders-and-cost.md) — the encoder table
-  (Logback `JsonEncoder`, logstash-logback-encoder, Log4j2 `JsonTemplateLayout`, Spring
-  Boot `logging.structured.*`) with field names, MDC handling and masking per stack;
-  synchronous versus asynchronous with Logback `AsyncAppender` and Log4j2 async-logger
-  defaults and what each loses on a full queue and on a crash; the per-event cost model
-  (parameterised messages, caller data, stack-trace bytes, the JUL bridge); backpressure
-  from stdout, files, TCP and OTLP sinks; and a symptom-to-cause table. Read when choosing
-  or reviewing the logging configuration, when events go missing, duplicate or arrive late,
-  or when logging shows up in a latency profile.
-- [Fields, levels and volume](references/fields-and-levels.md) — the standard field set,
-  naming consistency as a queryability requirement, level semantics as a contract with the
-  on-call, what must never be logged, sampling strategy, and a review checklist. Read when
-  defining a logging convention or auditing an existing one.
+Not every event has a request or active trace: startup, scheduler, health and background
+events legitimately omit them. Encode absence explicitly where consumers require it; never
+copy stale context to satisfy a mandatory-field rule.
+
+### 3. Choose API, encoder and transport together
+
+SLF4J fluent key-value APIs preserve field intent, but the selected provider/layout must
+serialize them as structured fields. Fixture-test the actual output. Parameterized messages
+avoid unnecessary formatting when disabled but do not replace typed fields.
+
+Choose synchronous, buffered/asynchronous or durable delivery from the loss/blocking
+contract. Queue capacity, discard/block policy, shutdown flush, sink failure, rotation and
+container stdout behavior are part of production semantics—not implementation details.
+
+### 4. Propagate and clean context
+
+MDC/ThreadContext implementations are usually thread-bound and do not automatically cross
+every executor, CompletableFuture, reactive or virtual-thread boundary. Automatic
+instrumentation/frameworks may bridge some. Test the pinned stack, capture context at
+submission when needed, restore only for task scope, and restore the prior map in finally.
+
+Clearing all MDC can erase an outer framework context; use a lexical close/restore pattern.
+Inheritable thread-local behavior is not a general executor solution because creation and
+task lifetimes differ.
+
+### 5. Minimize and protect data at the source
+
+Never record credentials, session/access tokens, encryption keys or prohibited personal
+data. Prefer bounded classifications, lengths and pseudonymous references. Hashing does not
+necessarily anonymize low-entropy/linkable personal data.
+
+Use layered controls: typed safe APIs, allowlists/schema validation, source minimization,
+output encoding against CR/LF/delimiter injection, centralized redaction as defense in
+depth, transport encryption, access controls, tamper detection where required, and timely
+disposal. Encoder redaction alone cannot reliably sanitize arbitrary message strings,
+Throwable messages and nested objects.
+
+### 6. Budget and test failure
+
+Estimate events per logical operation, bytes/event, peak ingress, compression/index/storage
+and retention. Load-test normal and failure-path volume because stack traces and retry loops
+change size/rate. Inject sink outage, full queue/disk, slow stdout, forced termination and
+malformed/untrusted fields. Monitor emitted, queued, dropped, blocked, failed and delayed
+events independently.
+
+## Event selection
+
+Prefer a log when a discrete occurrence needs durable/searchable context: state transition,
+security decision, administrative action, unexpected failure or diagnostic checkpoint.
+
+Prefer a metric for exact aggregate rates/SLIs and a trace for causal latency topology.
+Prefer neither when the event repeats information with no consumer, narrates every method,
+or retains data whose risk exceeds its use.
+
+Access logs at INFO can be legitimate when required and budgeted; “never one INFO per
+request” is not universal. Sampling can control diagnostic volume but must preserve stated
+estimators and never silently sample required audit/security records.
+
+## Levels and error ownership
+
+Levels are filtering/severity metadata, not automatically pager commands:
+
+- ERROR: operation/system failure requiring investigation under policy;
+- WARN: unexpected/degraded condition worth attention but not necessarily failed outcome;
+- INFO: normal significant lifecycle/business event;
+- DEBUG/TRACE: diagnostic detail, normally time-bounded.
+
+Map levels to the organization's routing. A recovered retry might be DEBUG, WARN or a
+security-relevant ERROR depending on impact/rate; avoid a universal “at most WARN.”
+
+Log an exception object when stack/cause is needed. Avoid log-and-rethrow duplication by
+choosing an owning boundary, but multiple records can be justified for distinct security,
+audit and operational consumers if they share an event/cause identifier and do not inflate
+one metric accidentally.
+
+## Delivery decision table
+
+| Requirement                    | Prefer                                                | Risk to test                                 |
+| ------------------------------ | ----------------------------------------------------- | -------------------------------------------- |
+| lowest loss for audit          | separate durable append/transactional design          | application coupling and availability        |
+| bounded app latency            | async bounded queue with declared loss policy         | dropped evidence during incidents            |
+| immediate local crash evidence | synchronous/stderr or crash-safe path                 | hot-path blocking                            |
+| high-volume access events      | structured buffered pipeline and sampling/aggregation | queue and sink overload                      |
+| container collection           | stdout/stderr when platform contract supports it      | blocking, multiline and rotation outside app |
+
+No appender is crash-lossless by default. Async defaults vary by library/version; inspect
+effective configuration instead of encoding one Logback/Log4j behavior as universal.
+
+## Failure modes
+
+| Symptom                          | Distinguish with                                  | Response                                            |
+| -------------------------------- | ------------------------------------------------- | --------------------------------------------------- |
+| stale correlation on pooled task | capture/restore fixture with interleaved requests | lexical context bridge                              |
+| key-value rendered as prose      | actual encoder fixture                            | structured layout/provider                          |
+| INFO vanishes under load         | queue/discard counters and config                 | tune or separate critical path                      |
+| application stalls               | sink latency, stdout pipe, queue-full blocking    | bound/separate transport                            |
+| duplicate stack traces           | same cause/event across layers/retries            | choose ownership/dedup fields                       |
+| secrets in logs                  | source/Throwable/nested-field scan                | contain access, remove/rotate, fix layered controls |
+| forged multiline event           | raw untrusted CR/LF and parser                    | encode/sanitize and length-limit                    |
+| missing shutdown events          | lifecycle/flush deadline/forced kill              | explicit bounded flush; accept documented loss      |
+| schema query goes empty          | field rename/type drift                           | version and dual-read migration                     |
+
+## Anti-patterns
+
+**Every event must have trace_id:** creates stale/fake IDs for work outside a trace.
+
+**ERROR means page:** level and alert routing are related but separate policies.
+
+**Redact only at encoder:** arbitrary prose, Throwable and downstream copies can bypass
+field-name rules; minimize at source.
+
+**Sample logs by trace decision universally:** can remove audit/security/error evidence and
+bias log counts. Use event-class-specific policies.
+
+**Structured equals safe:** JSON still carries secrets, oversized fields, attacker content
+and costly cardinality in backend indexes.
+
+## Cross-skill routing
+
+- [fields and levels](references/fields-and-levels.md)
+- [Java logging mechanics](references/java-logging-mechanics.md)
+- [appenders and cost](references/appenders-and-cost.md)
+- distributed-tracing-design/opentelemetry-performance for trace context.
+- metrics-and-cardinality for aggregates.
+- java-exception-design for exception contracts.
+- slo-and-alerting for paging.
+
+## Authoritative references
+
+- [SLF4J manual](https://www.slf4j.org/manual.html)
+- [Logback appenders](https://logback.qos.ch/manual/appenders.html)
+- [Log4j 2 manual](https://logging.apache.org/log4j/2.x/manual/)
+- [OWASP Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html)
+- [NIST SP 800-92](https://csrc.nist.gov/pubs/sp/800/92/final)

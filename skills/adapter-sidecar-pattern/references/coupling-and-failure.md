@@ -58,17 +58,18 @@ budget is `metrics-and-cardinality`.
 
 ## When the adapter falls behind or dies
 
-| Handover                                       | Adapter slow                                                                  | Adapter dead                                                        | Make it survivable by                                                                              |
-| ---------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| App writes to stdout, runtime collects         | Nothing — the runtime, not the adapter, drains the pipe                       | Nothing for the app; telemetry gaps only                            | Keeping the adapter off the app's write path in the first place                                    |
-| App writes to a pipe the adapter drains        | The 64 KiB kernel pipe buffer fills and `write` **blocks the logging thread** | Same, permanently: the app stalls on its first full buffer          | Never put the adapter on the app's write path; if unavoidable, a bounded async appender that drops |
-| App writes a file to `emptyDir`, adapter tails | The file grows                                                                | The volume fills and the pod is evicted for ephemeral-storage usage | `sizeLimit` on the volume, rotation with a retained-file cap, and an alert on volume usage         |
-| Adapter scrapes the app and re-exposes         | Stale values served as if current                                             | Scrape failures — which look like the application being down        | Exporting sample age and the adapter's own scrape success                                          |
+| Handover                                       | Adapter slow                                                             | Adapter dead                                                        | Make it survivable by                                                                         |
+| ---------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| App writes to stdout, runtime collects         | Nothing — the runtime, not the adapter, drains the pipe                  | Nothing for the app; telemetry gaps only                            | Keeping the adapter off the app's write path in the first place                               |
+| App writes to a pipe the adapter drains        | Bounded buffering fills; `write` can block or the logging layer can drop | The same persists while the drain is unavailable                    | Avoid the dependency; otherwise define a bounded async overflow policy and account for losses |
+| App writes a file to `emptyDir`, adapter tails | The file grows                                                           | The volume fills and the pod is evicted for ephemeral-storage usage | `sizeLimit` on the volume, rotation with a retained-file cap, and an alert on volume usage    |
+| Adapter scrapes the app and re-exposes         | Stale values served as if current                                        | Scrape failures — which look like the application being down        | Exporting sample age and the adapter's own scrape success                                     |
 
 The second row is the one that turns an observability component into an availability
 component: a logging sidecar can stop a payment. If the application must log through the
-adapter, the appender must be asynchronous **and bounded**, and must drop rather than block —
-and the number of dropped records must itself be a metric.
+adapter, the appender should normally be asynchronous and bounded. Whether overflow drops,
+samples, spills or briefly blocks depends on audit and availability requirements; make the
+choice explicit and expose loss, backlog and disk usage.
 
 ## Testing the output contract
 

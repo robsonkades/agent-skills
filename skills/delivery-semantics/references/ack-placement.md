@@ -29,10 +29,11 @@ for (var record : records) {
 consumer.commitSync();                 // crash before this replays the whole batch
 ```
 
-This is the default worth defending. The duplicate window is the batch, not one record: a
-crash after the twentieth of fifty records replays all fifty, because the offset is
-per-partition, not per-record. Commit per record and the duplicate window shrinks to one at
-the cost of one round trip per record — a throughput decision, not a correctness one.
+This is the usual loss-averse choice. The replay window is every completed record after the
+last committed offset **in each partition**. A batch can span partitions, and Kafka offsets
+are positions within a partition, not batch-level or record-level acknowledgements. Explicit
+per-partition commits can shrink that window but add calls and coordination; commit the next
+offset to process, preserve contiguous completion, and never jump over unfinished work.
 
 ## Position 3 — side effect and offset in one transaction
 
@@ -45,31 +46,36 @@ Only closes if both live in the same transactional system. Two shapes:
   startup. The broker's own offset store is then advisory. This works because there is one
   commit, and it fails the moment a second store joins.
 
-## Visibility-timeout queues (SQS, JMS, RabbitMQ ack)
+## Visibility leases and messaging acknowledgements
 
-The same three positions appear with different names. The message is invisible to other
-consumers for a timeout; deleting or acknowledging it is the ack.
+SQS-style visibility leases and JMS/RabbitMQ acknowledgements are not one protocol. Apply the
+same effect-before-progress reasoning, but verify the provider's exact redelivery contract.
 
 ```java
-// JMS: CLIENT_ACKNOWLEDGE puts the ack under the application's control.
+// Jakarta Messaging: CLIENT_ACKNOWLEDGE puts acknowledgement under application control,
+// but acknowledging one consumed message acknowledges all consumed messages in the session.
 var session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
 var message = consumer.receive(5_000);
 handler.apply(message.getBody(String.class));
 message.acknowledge();                 // process-then-ack: at-least-once
 ```
 
-`Session.AUTO_ACKNOWLEDGE` acknowledges around the delivery to the listener rather than
-around your side effect, so a handler that throws or a process that dies mid-handler is
-where the at-most-once behaviour leaks in. `DUPS_OK_ACKNOWLEDGE` is lazy acknowledgement
-and says so in its name.
+For an asynchronous Jakarta Messaging listener, `AUTO_ACKNOWLEDGE` acknowledges after the
+listener returns successfully; for synchronous `receive`, it acknowledges when `receive`
+returns, before subsequent application work. That distinction changes the failure window.
+`CLIENT_ACKNOWLEDGE` is session-cumulative, and `DUPS_OK_ACKNOWLEDGE` permits lazy
+acknowledgement and possible redelivery. Transacted sessions acknowledge through commit.
 
 The failure mode unique to this family is **timeout expiry under a slow handler**: the
 timeout elapses while the handler is still running, the message becomes visible, a second
 consumer picks it up, and both complete. No retry occurred and nothing failed.
 
-- Set the timeout above the handler's p99.9, not its p50 — the tail is what redelivers.
-- Extend the timeout from inside a long handler (SQS `ChangeMessageVisibility`) rather than
-  setting one global timeout sized for the worst handler in the queue.
+- Size the initial lease from measured distributions and operational recovery needs; a
+  percentile is not an upper bound. A long lease reduces concurrent duplicates but delays
+  recovery after a crash.
+- Heartbeat and extend a long-running SQS lease with `ChangeMessageVisibility`, with a maximum
+  execution deadline and handling for extension failure. SQS Standard can still redeliver
+  within the visibility interval, so lease tuning never replaces idempotency.
 - Read the redelivery signal and treat it as information, not noise: JMS exposes
   `JMSRedelivered` and a `JMSXDeliveryCount` property; brokers expose an equivalent
   delivery counter. A first delivery and a redelivery are different situations for
@@ -81,7 +87,12 @@ consumer picks it up, and both complete. No retry occurred and nothing failed.
 - [ ] `enable.auto.commit` is `false` wherever the guarantee matters.
 - [ ] The handler is repeat-safe, or the path is documented as at-most-once on purpose.
 - [ ] `max.poll.interval.ms` exceeds the batch handler's worst case, or the batch size is
-      bounded — otherwise the consumer is evicted mid-batch and the batch is redelivered.
-- [ ] Visibility timeout exceeds the handler's p99.9, or is extended in-flight.
+      bounded — otherwise the consumer can be evicted mid-batch. Parallel processing keeps
+      polling, pauses assigned partitions and commits only contiguous completed offsets.
+- [ ] Visibility lease has measured headroom or a heartbeat extension, a maximum work
+      deadline, and metrics for extension failure, age and concurrent duplicate execution.
+- [ ] Shutdown stops intake, drains only within its deadline, and commits no offset for work
+      that did not complete durably.
+- [ ] Revocation handling stops or fences work for lost partitions before committing.
 - [ ] A test kills the process between the side effect and the commit and asserts the
       recovered downstream state.

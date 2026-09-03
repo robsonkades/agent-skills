@@ -37,10 +37,11 @@ the first possible one that came to notice (anchoring), and even though it was n
 and did not enable the further evolution of the product, resources were persistently being wasted
 on it (irrational escalation)."_
 
-The cascade has one entry point per stage, and each is cheap to block: a MECE set blocks the
-bandwagon entry, forcing the disadvantages blocks framing, pricing forward blocks escalation.
+These counter-moves reduce exposure; they do not reliably “block” cognitive bias. A comparable
+option set challenges bandwagon effects, explicit disadvantages challenge framing, and forward-only
+costing challenges escalation. Preserve dissent and revisit signals because facilitators are biased too.
 
-## Debiasing works, and works harder on you than on a junior
+## A small experiment found debiasing improved argumentation
 
 Borowa, Rebouças de Almeida & Wiese, "Debiasing Architectural Decision-Making: An Experiment With
 Students and Practitioners" (arXiv:2502.04011, 2025). Controlled experiment, **16 students and 20
@@ -53,9 +54,9 @@ practitioners**, control versus workshop pairs, think-aloud protocol.
 > "We found that practitioners were more susceptible to cognitive biases than students, so the
 > workshop had a more substantial impact on practitioners."
 
-Their speculated cause: _"the practitioners' attachment to their systems."_ This is the empirical
-form of the authors' own advice to avoid evangelising your own past decisions — the person most
-likely to need the counter-move in the room is the one with the most experience of the system.
+Their speculated cause was practitioners' attachment to their systems. With 36 participants this is
+useful directional evidence, not proof that seniority generally causes more bias or that the
+workshop improves architecture outcomes.
 
 The same paper is candid about its field: _"few studies have focused on behavioral factors in ADM,
 with even fewer containing any empirical validation of decision-making techniques."_

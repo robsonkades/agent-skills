@@ -31,8 +31,9 @@ are expected to arrive without touching the abstraction.
 ## When it is the answer
 
 ```text
-Two axes of variation, both open, both independently extensible
-        → Bridge. This is the whole test.
+Two axes of variation can evolve independently and a product hierarchy
+would couple their change rates
+        → Bridge is a candidate; compare plain composition and configuration.
 
 An API you publish must outlive the mechanisms that implement it —
 drivers, transports, backends contributed by others
@@ -48,12 +49,15 @@ extra operations — not just one class
 
 - **One axis varies.** That is Strategy or plain composition; Bridge's second hierarchy would be
   empty (`gof-strategy`).
-- **The abstraction is a single class.** Then it is a class holding a collaborator. Call it
-  that. The GoF name adds nothing and misleads readers into looking for a hierarchy.
-- **The implementor has one implementation.** Speculative indirection until a second exists
-  (`gof-pattern-thinking`).
-- **The two axes are not independent** — some combinations are illegal or meaningless. A matrix
-  with holes is not a bridge; enumerate the legal pairs instead (see the references).
+- **The abstraction is a single stable class and no refined abstraction is expected.** Plain
+  composition may describe it better, although the same separation can still protect a public
+  API from independently evolving providers.
+- **The implementor has one implementation and no boundary reason.** This weakens the case. A
+  public SPI, ownership boundary, testable hardware port, or migration seam can justify one
+  implementation without inventing a future second one (`gof-pattern-thinking`).
+- **The axes are mostly coupled.** A sparse matrix can still use a bridge, but construction must
+  encode capabilities or legal combinations. If most pairs are invalid, model named variants
+  instead of exposing a misleading Cartesian product.
 - **You are adapting something that already exists.** Bridge is designed in from the start with
   both sides under your control; Adapter is retrofitted around a type you did not design
   (`gof-adapter`).
@@ -94,14 +98,14 @@ IF only one axis actually varies today
 THEN Strategy or a field. Do not build the second hierarchy on spec.
 
 IF some (abstraction, implementor) pairs are illegal
-THEN the axes are not independent. Enumerate valid pairs explicitly —
-     a factory over a closed set — rather than allowing construction of
-     combinations that must then be rejected at runtime.
+THEN prevent invalid construction with capability-specific interfaces, validated
+     factories, or named legal combinations. The number and stability of holes decide
+     whether the bridge remains useful.
 
 IF one implementor is remote and the others are local
-THEN the interface must be designed for the remote one: failure modes,
-     timeouts, and possibly asynchrony must be visible in the contract,
-     or every caller written against the local case will break
+THEN do not pretend costs and failures are identical. Expose bounded failure and
+     suitable granularity, or split local and remote capabilities when forcing all
+     implementations into one contract would create a lowest-common-denominator API
      (gof-patterns-and-distribution).
 
 IF the abstraction reaches past the implementor interface — instanceof,
@@ -114,26 +118,26 @@ THEN every other backend must now implement or reject it. Either the
      operation belongs to the abstraction, or the interface is wrong.
 
 IF thread-safety differs per backend
-THEN the contract is undefined for callers. Fix the requirement in the
-     interface's documentation and make every backend meet it.
+THEN make lifetime and concurrency requirements explicit. Either normalize them in
+     adapters, expose per-operation/session objects, or constrain callers; one universal
+     thread-safe contract is useful but not mandatory.
 ```
 
 ## Cross-cutting checks
 
-- **Concurrency.** The abstraction is usually shared; each backend must therefore meet one
-  stated thread-safety contract. "Backend A is safe, backend B is not" makes the abstraction
-  unusable, because callers cannot know which they hold. Decide at the interface — normally
-  "implementations must be safe for concurrent use" — and make the unsafe backend wrap its own
-  synchronisation or a per-call resource.
+- **Concurrency.** State whether abstraction and implementor instances are shared, confined, or
+  session-scoped. A uniform thread-safe contract simplifies substitution, but forced internal
+  synchronization can destroy affinity or throughput; factories that return confined sessions
+  are often a better bridge for stateful drivers.
 - **Distribution.** A bridge is the standard place a remote implementation hides behind a local
   interface. The interface must then carry what remoteness implies: bounded time, a failure
   channel that is not `null`, and enough granularity that callers do not issue one remote call
   per element. An interface designed against an in-memory backend and later implemented over
   HTTP is the reliable way to produce an N+1 remote-call problem (`gof-proxy`,
   `rpc-and-api-contracts`).
-- **Performance.** One extra interface dispatch, which the JIT inlines while the call site sees
-  few implementations and stops inlining once it is megamorphic — relevant only in a measured
-  hot path (`jit-inlining-and-escape-analysis`). The real cost sits in interface granularity: a
+- **Performance.** Interface dispatch may inline at stable profiled call sites and may resist
+  inlining when highly polymorphic; compilation logs must decide. The real cost usually sits in
+  interface granularity: a
   chatty implementor interface multiplies whatever the backend's per-call cost is.
 - **Testing.** The point of the seam is that the abstraction is tested once against a fake
   backend, and each backend is tested once against the interface's contract. Write that contract
@@ -142,11 +146,11 @@ THEN the contract is undefined for callers. Fix the requirement in the
 
 ## Review checklist
 
-- [ ] Two axes genuinely vary, and both have more than one member today
+- [ ] Two independently evolving axes or a concrete public-boundary need is demonstrated
 - [ ] The abstraction never downcasts, inspects or exposes the concrete implementor
 - [ ] The implementor interface has no method that exists for one backend only
-- [ ] Illegal (abstraction, implementor) combinations are impossible to construct
-- [ ] One thread-safety contract is stated at the interface and met by every backend
+- [ ] Illegal combinations are prevented or rejected at a documented construction boundary
+- [ ] Sharing, confinement and thread-safety requirements are explicit for every backend
 - [ ] The interface's granularity is acceptable for the most expensive backend
 - [ ] Failure and timeout semantics are in the contract when any backend is remote
 - [ ] A shared contract test runs against every backend

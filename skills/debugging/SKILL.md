@@ -51,17 +51,18 @@ guessing is most expensive.
 
 ## Rules
 
-- Never fix what you cannot explain. A change that makes the symptom go away without a causal
-  account is a coincidence you have promoted to a release — and it silently removes the
-  evidence that would have found the real cause.
+- Prefer a causal explanation before a permanent fix. During an incident, a reversible mitigation
+  may precede diagnosis; label it as mitigation, preserve the evidence the response budget allows,
+  and do not present symptom disappearance as root-cause proof.
 - One variable at a time. If a batch of changes makes it work, you have learned nothing about
   which one mattered, and you now carry the other four for ever.
-- Read the whole stack trace, not the first line: the deepest frame in your own code is where
-  to look, and the `Caused by` chain at the bottom usually names the actual fault. A trace
-  with no frame from your code means the fault is in how you called something, not in it.
-- Preserve evidence before restoring service where the two conflict, and where they do not
-  conflict, collect first — a restart destroys thread state, heap contents and in-flight
-  requests, and there is no way to get them back (`references/production-evidence.md`).
+- Read the whole stack trace, including cause and suppressed chains. The deepest application frame
+  is a useful boundary candidate, not a verdict: framework callbacks, generated code, reflection,
+  native frames, and library defects can move or hide the causal frame.
+- Balance evidence preservation against customer impact and the incident commander's authority.
+  Capture cheap, non-disruptive evidence first when the error budget permits; mitigate immediately
+  when delay is unsafe, and record which volatile evidence the action destroyed
+  (`references/production-evidence.md`).
 - "It works now" is not a resolution. Either you know what changed, or the fault is still
   present and you have lost the reproduction.
 - Question the assumption that the fault is where the symptom is. Corrupted state is written

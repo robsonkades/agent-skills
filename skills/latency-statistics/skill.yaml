@@ -1,10 +1,10 @@
 schemaVersion: 1
 
 name: latency-statistics
-version: 1.3.0
+version: 1.4.0
 description: >-
-  The statistics of latency measurement: percentiles versus averages, histogram aggregation,
-  sample-size adequacy, distribution shape, and coordinated omission. Use when an SLO or
+  The statistics of latency measurement: estimands, means and quantiles, histogram aggregation,
+  uncertainty, censoring, dependence, and coordinated omission. Use when an SLO or
   dashboard reports mean latency, when p99 values are averaged across instances or time
   windows, when a percentile is quoted without its sample count, when Prometheus buckets are
   the default set, or when deciding whether two measurements actually differ. Does not cover

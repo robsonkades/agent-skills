@@ -23,44 +23,50 @@ from numbers with no observed change pain behind them.
 ## Workflow
 
 1. **Build the real graph.** `jdeps -verbose:class` over the compiled classes, or
-   the `requires` edges under JPMS. Import statements are ground truth; the
-   architecture diagram is a hypothesis to test against them.
-2. **Find cycles first.** Every package in a cycle compiles, changes and is
-   understood as one unit — the packages are a fiction. A cycle is one finding,
-   not one per member, and breaking it precedes any other restructuring.
+   the `requires` edges under JPMS. Bytecode references are the compile/link graph;
+   imports can be unused and miss reflection, services, resources, schemas and shared
+   infrastructure. The architecture diagram remains a hypothesis, and runtime/semantic
+   edges need separate evidence.
+2. **Find strongly connected components first.** A package cycle removes independent
+   compilation and increases reasoning/migration cost, but does not prove every member
+   changes together. Treat the component as one candidate, identify its actual edges, and
+   break it when the benefit exceeds compatibility and ownership costs.
 3. **Classify the suspicious edges.** What kind of coupling does each carry —
    content, common, control, stamp, data? The kind determines the fix.
-4. **Choose among the three moves** for each bad edge: move a class (most bad
-   edges exist because one class sits in the wrong package), invert the edge
-   (that mechanic is the java-dependency-inversion skill), or merge packages that
-   always change together and were never really two.
+4. **Choose among the three moves** for each bad edge: move a misplaced class, invert the edge
+   (that mechanic is the java-dependency-inversion skill), or merge packages that always change
+   together and were never independently releasable concepts. Edge count alone does not choose.
 5. **Corroborate with metrics after suspicion, never before.** Afferent/efferent
    counts and instability support a case built from the graph and the change
    history; they never originate one.
-6. **Verify.** Recompute the graph: the edge is gone, no new cycle appeared, and
-   the change that motivated the work now touches fewer packages.
+6. **Verify.** Recompute static and declared graphs, exercise runtime/service-loading paths, and
+   confirm the motivating change or policy is easier to enforce. Inversion may add an interface
+   edge while removing the harmful concrete edge, so "fewer packages" is not the universal test.
 
 ## Rules
 
 - Depend in the direction of stability. The most expensive edge in a graph runs
-  from a widely-depended-on package into a volatile one: every change to the
-  volatile package now reverberates through the stable one's dependants.
-- Common closure beats conceptual similarity: classes that change together belong
-  together. Classes that merely share a noun do not — `util`, `common` and
-  `helpers` packages are logical cohesion, grouping by category instead of by
-  change, and they accrete dependants from everywhere.
+  from a widely-depended-on contract into a structurally unstable package. Martin's
+  instability metric describes dependency shape, not empirical volatility; corroborate it
+  with change history and contract compatibility before calling the target volatile.
+- Common closure is stronger evidence than conceptual similarity, but balance it with reuse,
+  ownership, release and dependency direction. Classes that merely share a noun do not
+  automatically belong together — `util`, `common` and `helpers` often group by category and
+  accrete dependants from everywhere.
 - A package's exported surface is its coupling budget. Under JPMS, an unexported
-  package cannot be coupled to from outside — the strongest decoupling Java
-  offers is not creating the possibility. The module system also rejects cyclic
-  `requires`, so module boundaries make the no-cycles rule physical.
+  package is not accessible to ordinary code in other modules. `exports`, qualified exports,
+  `opens`, services, reflection flags and command-line `--add-exports/--add-opens` create
+  distinct edges, so unexported is strong encapsulation under the supported launch contract,
+  not metaphysical isolation. The module system rejects cyclic `requires`.
 - Temporal cohesion in lifecycle code — init, shutdown, migration ordering — is
   unavoidable and not a finding. Flag it only when unrelated business logic hides
   inside the lifecycle sequence.
-- A stateless leaf utility class is low cohesion by definition and often fine. It
-  becomes a finding when it acquires state, domain vocabulary, or dependencies —
-  at that point it is a domain concept without a home.
-- Metrics are evidence, never verdicts. A finding built on a threshold ("Ce is
-  too high") with no observed change pain is not a finding.
+- A stateless leaf utility can be highly cohesive (`Hex`, one numerical transform) or a logical
+  junk drawer. Judge whether its functions change for one reason. It becomes suspicious when
+  unrelated domain vocabulary, mutable state or dependencies accumulate.
+- Metrics are evidence, never verdicts. A threshold ("Ce is too high") can open an
+  investigation; a finding needs a violated boundary, credible failure/change cost, or an
+  explicit preventive architecture objective.
 
 ## References
 

@@ -31,10 +31,13 @@ as three. Naming the class turns each of those into a visible, arguable claim.
 
 ## Workflow
 
-1. **Write down the fault classes you tolerate.** Crash-stop, crash-recovery, omission,
-   timing, Byzantine — pick, do not assume. A JVM service that restarts and reads back its
-   own database is **crash-recovery**, so recovery re-executes work and every recovery path
-   must be idempotent or reconcilable.
+1. **Write a fault-model card for each boundary.** Name the fault classes, failure domains,
+   synchrony assumption, recovery source, detection mechanism, and maximum tolerated
+   combination. Crash-stop, crash-recovery, omission, timing and Byzantine are not labels
+   for the whole system: a trusted database replica may be crash-recovery while an
+   Internet-facing client is arbitrary or hostile. A process that restarts from durable
+   state is crash-recovery; any in-flight operation whose completion was not durably
+   recorded must be retried, reconciled, or abandoned by an explicit rule.
 2. **Give every remote call three outcomes**, not two: success, definite failure, unknown.
    Definite failure means the request provably never applied; anything else — read timeout,
    reset after the bytes went out, a broker ack that never arrived — is unknown. Then decide
@@ -46,9 +49,11 @@ as three. Naming the class turns each of those into a visible, arguable claim.
    has no answer in production either.
 4. **Draw the failure domains.** For a process, a host, a rack, an AZ, a dependency and a
    deploy, write what each one takes down. Anything sharing a domain is one unit, not N.
-5. **Do the availability arithmetic** on the request path before promising a number.
-   Required dependencies in series multiply availability; only genuinely independent
-   redundancy multiplies _unavailability_. See
+5. **Do conditional availability arithmetic** on the request path before promising a
+   number. Required dependencies in series multiply availability only when their events are
+   independent and their SLI windows and success definitions align; genuinely independent
+   redundant alternatives multiply _unavailability_. Correlated and conditional failure
+   needs a measured joint distribution or an explicit common-cause model. See
    `references/failure-domains-and-arithmetic.md`.
 6. **Walk the eight fallacies as a checklist** — reliable network, zero latency, infinite
    bandwidth, secure network, unchanging topology, one administrator, zero transport cost,
@@ -60,25 +65,51 @@ as three. Naming the class turns each of those into a visible, arguable claim.
 
 ```text
 Assume crash-stop when:
-- the failed instance is never reused: a fresh replica replaces it and no local durable
-  state survives the crash.
+- the algorithm may treat a stopped participant as never returning. Replacing its process
+  identity with a fresh replica does not make the original participant crash-recovery.
 Assume crash-recovery when:
-- the process restarts and reads back its own state — database rows, local disk,
-  committed offsets, a lease it may still hold. This is nearly every Java service, and
-  it means work in flight at crash time runs again, so recovery must be idempotent or
-  reconcilable.
+- the same logical participant can return after a crash and recover durable state — local
+  log, database rows, committed offsets, epochs or leases. Volatile state is lost; durable
+  state may lag acknowledged work unless the durability contract proves otherwise.
 Assume omission (a message or a response silently lost) when:
-- anything crosses a network, a queue, a proxy or a load balancer. Not optional.
+- the underlying transport, queue, proxy or load balancer can drop sends or receives.
+  A higher-level reliable-channel abstraction may mask omissions, but its retry,
+  deduplication and terminal-failure assumptions then become part of the model.
 Assume timing/performance failure when:
-- the workload has a deadline. A correct-but-late response is a failure to the caller,
-  which is why every remote call needs a timeout shorter than the caller's own budget.
+- correctness or usefulness depends on a deadline. A correct-but-late response can be a
+  failure to the caller. Allocate the caller's end-to-end deadline across attempts,
+  queueing and cleanup; a timeout is not automatically useful merely because it is shorter.
 Include Byzantine faults when:
 - input crosses a trust boundary — a client, another tenant, a third party — where a
-  participant may send arbitrary or hostile data. Validate there, treat the peer as
-  adversarial, and stop there: tolerating Byzantine faults in the protocol itself costs
-  3f+1 replicas and cryptographic verification against 2f+1 for crash faults, a price an
-  ordinary business service should not pay for participants that are its own code.
+  participant may send arbitrary, inconsistent or hostile data. Input validation protects
+  an API but does not make its replication protocol Byzantine-fault tolerant. Under common
+  quorum protocols, tolerating `f` crash failures typically needs `2f+1` voting members and
+  Byzantine agreement commonly needs `3f+1`; the exact bound depends on synchrony,
+  authentication, quorum and protocol assumptions. State those assumptions instead of
+  transplanting a replica count.
 ```
+
+## Fault-model card
+
+For every important operation, make these fields reviewable:
+
+| Field              | Question that must have an answer                                                                    |
+| ------------------ | ---------------------------------------------------------------------------------------------------- |
+| Safety invariant   | What must remain true even during a partition, retry or recovery?                                    |
+| Liveness condition | Under which timing and quorum assumptions must progress resume?                                      |
+| Faults tolerated   | Crash-stop, crash-recovery, send/receive omission, delay, corruption, arbitrary peer?                |
+| Bound              | How many simultaneous faults, and in which independent domains?                                      |
+| Detector           | Timeout, lease, heartbeat, quorum observation, operator signal? Which false suspicion is acceptable? |
+| Durable truth      | Which log, row, offset, epoch or manifest reconstructs state after restart?                          |
+| Ambiguous effect   | How is an unknown outcome deduplicated, queried, reconciled or escalated?                            |
+| Recovery objective | What RTO/RPO and backlog-drain time are required, and under what load?                               |
+| Re-entry           | How is a recovered or partitioned participant fenced before it can mutate state again?               |
+
+Do not merge **fault**, **error** and **failure**. A fault is the hypothesised cause; an error
+is incorrect internal state; a failure is externally visible deviation from the service
+contract. The distinction prevents a host reboot from being counted as one customer-visible
+failure per request and prevents a latency SLO failure from being dismissed because every
+response was eventually correct.
 
 ## Rules
 
@@ -90,23 +121,80 @@ Include Byzantine faults when:
 - Crash-recovery makes the recovery path a correctness surface. For each recovery step,
   state whether it is idempotent and under which key. The mechanics are `idempotency`; the
   requirement to have an answer is here.
-- **A slow node is worse than a dead one.** The dead one is removed by the failure detector;
-  the slow one keeps its endpoint, keeps accepting traffic, and holds a caller thread or
-  connection for every request. That the system's view of health can differ from the
-  client's — _differential observability_ — is why "fail fast" is a property you build, not
-  one you observe. No failure detector over an asynchronous network can tell a crashed
-  process from a slow one, so every health check is a timeout-based guess: tune it for the
-  cost of each error direction and never claim to have _detected_ a crash.
+- **A slow node can be more damaging than a dead one.** A definitively stopped endpoint is
+  eventually excluded; a slow endpoint may retain traffic and consume caller threads,
+  connections and deadline budget. But aggressive suspicion can eject a healthy node and
+  destroy quorum or capacity. That the system's view of health can differ from the client's
+  — _differential observability_ — is why "fail fast" is a policy, not a fact. In a fully
+  asynchronous network a detector cannot distinguish crash from unbounded delay; practical
+  systems assume some eventual timing bound and trade false suspicion against detection
+  delay. Record that trade-off for readiness checks, leases and failover.
 - **Redundancy inside one failure domain is not redundancy.** Three replicas on one host is
   one replica with extra memory cost. Ask what they share: host, rack, AZ, control plane,
   image, config, deploy, certificate, downstream dependency. A shared deploy is the one most
   often missed — rolling one bad artefact to every replica correlates them perfectly, which
   makes deploy strategy an availability control rather than a release convenience.
-- **Adding a required dependency multiplies unavailability.** Ten dependencies at 99.9% in
-  series is 99.0% — roughly 87 hours a year, not 8.8. Either give the dependency a fallback
-  with defined degraded behaviour, or stop quoting the higher number. Redundancy multiplies
-  unavailability _only_ under independence: with a shared component the composite is capped
-  by that component whatever the replica count.
+- **Adding a required dependency multiplies availability under an independence model and
+  therefore increases total unavailability.** Ten independent dependencies at 99.9% in
+  series produce about 99.0% path availability — roughly 87 hours a year unavailable, not
+  8.8. Real incidents are often correlated, so use this as a comparison model, not a
+  forecast. Either define a tested degraded mode that removes the dependency from the
+  required path, or stop quoting the higher number. Redundant alternatives multiply
+  unavailability only under independence; common causes set an unavailability floor.
+
+## Decision framework
+
+```text
+If the operation crosses a process boundary:
+  classify timeout/cancellation/disconnect as Unknown unless protocol evidence proves
+  the request could not have applied.
+
+If progress requires suspecting a peer:
+  preserve safety with quorum, epochs or fencing;
+  tune the detector only for liveness and recovery speed.
+
+If replicas share any host, zone, control plane, deploy, credential or dependency:
+  model that cause once as a common failure domain;
+  do not multiply replica availability as if independent.
+
+If a recovered participant can still write:
+  require a new epoch/term/fencing token or an authoritative ownership check before re-entry.
+
+If the design claims availability during partition:
+  state which operations remain safe, which side may progress, and what reconciliation
+  occurs after healing. "The service stays up" is not a consistency contract.
+```
+
+## Failure injection and recovery proof
+
+Test the model, not merely exception handlers:
+
+- inject loss separately before send, after apply/before acknowledgement, and during
+  response transfer; assert downstream state and duplicate count;
+- pause a process and add latency/jitter rather than testing only clean termination;
+- partition asymmetrically (`A` reaches `B`, `B` cannot reach `A`) and isolate data plane
+  from control plane;
+- crash after every durable-write boundary, restart from persisted state, and verify the
+  safety invariant plus bounded recovery;
+- expire credentials, deploy incompatible versions, exhaust pools/disk/file descriptors,
+  and restore backups into an isolated environment;
+- run at realistic load: failover that takes 20 seconds when idle can create hours of
+  recovery backlog at saturation.
+
+Observe detection latency, false-positive rate, unknown outcomes, duplicate/reconciliation
+counts, quorum loss, recovery backlog, RTO and recovered data point (RPO). A test that only
+asserts the client exception does not validate the distributed outcome.
+
+## Anti-patterns
+
+| Anti-pattern                         | Why dangerous / symptom                                                 | Better alternative                                                          |
+| ------------------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| One fault model for the whole system | Trust and durability assumptions leak across boundaries                 | Model each operation and participant role, then compose them                |
+| Timeout means rollback               | Retried writes duplicate after lost acknowledgements                    | Preserve `Unknown`; use idempotency, status lookup or reconciliation        |
+| Health check means truth             | Gray/asymmetric failures stay green or healthy nodes flap               | Compare client-view signals; define detector error costs                    |
+| Replica count means availability     | Common deploy, zone or datastore defeats all replicas                   | Draw domains and measure joint/common-cause failures                        |
+| Failover equals recovery             | Traffic moves but stale owners write, data is missing, backlog explodes | Fence old owners; prove state recovery and capacity during catch-up         |
+| Chaos without invariants             | Generates outages but no falsifiable learning                           | Declare safety/liveness hypotheses, blast radius and abort conditions first |
 
 ## References
 

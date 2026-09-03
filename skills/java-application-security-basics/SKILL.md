@@ -1,18 +1,15 @@
 ---
 name: java-application-security-basics
 description: >
-  Application-level security judgement in Java 21+ code: password storage with a memory-hard
-  KDF at current parameters, constant-time comparison, cryptographically secure randomness,
-  authorisation as a precondition of the domain operation rather than an annotation on the
-  controller, the adversarial half of input validation, and secrets that never reach source,
-  config, toString() or an error message. Use when a password, hash, salt, token, API key or
-  pepper appears in a diff; when MessageDigest, SecureRandom, Random, UUID or a
-  PasswordEncoder is called; when @PreAuthorize sits on a controller while a scheduler or
-  consumer calls the same service method; when the acting user's id is read from the path
-  not the principal; when a CryptoUtils wrapper is proposed "to swap algorithms later"; or
-  when reviewing "is this secure enough to ship". Code-level only — layered validation is
-  java-defensive-programming, redaction is structured-logging, ReDoS is
-  java-strings-and-text, deserialisation is java-serialization-hardening.
+  Application-security judgement for Java 21+: password storage with current memory-hard KDF
+  parameters, constant-time verification, secure randomness, authorisation inside the protected
+  operation, adversarial validation, reversible-cryptography boundaries, and secret-safe types.
+  Use when a password, hash, salt, token, API key or pepper appears in a diff; when
+  MessageDigest, SecureRandom, Random, UUID, Cipher, Mac or PasswordEncoder is called; when a
+  controller annotation is the only authorisation check; when identity comes from the request
+  instead of the principal; or when a generic CryptoUtils wrapper is proposed. Code-level only:
+  layered validation is java-defensive-programming, redaction is structured-logging, ReDoS is
+  java-strings-and-text, and deserialisation is java-serialization-hardening.
 ---
 
 # Java Application Security Basics
@@ -27,7 +24,7 @@ security framework. It prevents two failures: "I used the framework default" mis
 
 **Covers:** password storage and verification, secure randomness, authorisation as a
 precondition of the domain operation, the adversarial half of input validation, secrets in
-source and in types, and the realistic form of "rolling your own crypto".
+source and in types, and safe review boundaries for reversible cryptography.
 
 **Does not cover:** transport security, nor framework configuration — filter chains, JWT and
 OAuth2 resource server, method-security wiring and CORS belong to `spring-security-for-apis`,
@@ -54,8 +51,10 @@ with no credential store, no untrusted input and no per-instance ownership rule:
 
 3. **Make authorisation a precondition of the domain operation** — it takes the acting
    principal and refuses, rather than trusting that the caller which checked is the only
-   caller. Keep the controller annotation as cheap early rejection; it stops being the only
-   check. Authorise the _instance_: "has role CUSTOMER" without "and this order is theirs".
+   caller. The parameter is a compile-time obligation, not proof of identity: construct it only
+   from a trusted authentication context, and do not let request JSON supply roles or tenant.
+   Keep the controller annotation as cheap early rejection; it stops being the only check.
+   Authorise the _instance_: "has role CUSTOMER" without "and this order is theirs".
 4. **Allowlist attacker-controlled input as structure, but it is not the control** — regex over
    hostile input is a DoS vector (`java-strings-and-text`); hostile bytes are
    `java-serialization-hardening`.
@@ -70,19 +69,28 @@ with no credential store, no untrusted input and no per-instance ownership rule:
 IF greenfield password storage
 THEN Argon2id at OWASP parameters, not the encoder's defaults.
 
-IF existing bcrypt at strength >= 12
-THEN not an incident: migrate opportunistically via DelegatingPasswordEncoder and
-     upgradeEncoding on next login, never as a scheduled project. At strength 10 (the
-     Spring default) raise the strength first — cheaper, and buys more security.
+IF existing bcrypt at a measured adequate cost
+THEN keep verification support and migrate on successful authentication; schedule forced
+     migration only when compliance, compromise evidence, an unacceptable cracking model,
+     inactive accounts or the 72-byte legacy estate justify its user and operational cost.
 
 IF a caller identity or resource owner is read from the request
 THEN it is a claim, not an identity: take the subject from the authenticated principal.
 
-IF comparing a hash, a MAC or any secret
-THEN MessageDigest.isEqual, never Arrays.equals or String.equals.
+IF comparing fixed-width hashes, MACs or token digests
+THEN MessageDigest.isEqual (or the vetted library verifier), never Arrays.equals or
+     String.equals; reject or canonicalise representation before decoding and keep compared
+     lengths fixed. Passwords go through PasswordEncoder.matches, not a digest comparison.
 
 IF a value must be unguessable (session id, reset token, API key, OTP, salt)
-THEN new SecureRandom(); never Random, ThreadLocalRandom or Math.random().
+THEN generate an explicit entropy budget with SecureRandom; never Random, ThreadLocalRandom or
+     Math.random(). Store reset/API tokens as a digest, bind purpose and subject, expire them,
+     and consume single-use tokens atomically.
+
+IF plaintext must be recovered later
+THEN define the threat model and key custody first; use a vetted AEAD construction with an
+     explicit transformation, unique nonce per key and versioned envelope. Never use
+     Cipher.getInstance("AES"), ECB, unauthenticated CBC, or a reusable fixed GCM nonce.
 ```
 
 ## Rules
@@ -101,8 +109,27 @@ THEN new SecureRandom(); never Random, ThreadLocalRandom or Math.random().
   or a rehash under `upgradeEncoding` — throws for users whose stored hash predates the fix.
   `matches` still skips the guard, so legacy hashes keep the ASVS 6.2.8 truncation. Cap at 72
   bytes at the boundary, or use Argon2id.
-- Same response, same work done, whether or not the account exists: `orElseThrow()` before
-  the comparison — or distinct not-found/not-permitted errors — is an enumeration oracle.
+- Make account-existence paths observationally similar: the same external response, one KDF
+  on both paths, and shared throttling. This mitigates rather than proves indistinguishability:
+  caches, database work, network jitter and downstream side effects remain measurable.
+  `orElseThrow()` before comparison — or distinct not-found/not-permitted errors — is an
+  enumeration oracle.
+- Treat authorisation and mutation as one consistency decision. A check against an object read
+  in one transaction followed by an unconditional write in another is a TOCTOU bug; use a
+  transaction with the required isolation, a version/CAS predicate, or a conditional update
+  that includes tenant/owner and expected state. Returning `404` for both absent and forbidden
+  resources hides detail from the caller but is not the authorisation control.
+- Password-reset and API-key flows are credential systems, not random-string helpers. Generate
+  at least the entropy required by the applicable standard, display the raw value once, store
+  only a domain-separated digest, enforce purpose/subject/expiry, and atomically mark it used.
+  Rate-limit redemption; do not log query strings containing bearer material.
+- Hash what only needs equality verification; encrypt only what the application must recover.
+  With reversible data, `Cipher.getInstance("AES")` delegates mode and padding to the provider.
+  Prefer a platform/KMS envelope or a reviewed `AES/GCM/NoPadding`/ChaCha20-Poly1305 facility;
+  authenticate tenant, record id, schema and key version as AAD where those fields must not be
+  swappable. Nonce uniqueness is per key, and decrypt must release no plaintext before tag
+  verification. Store algorithm, key version, nonce and ciphertext/tag so rotation is possible;
+  never store the data-encryption key beside the ciphertext it protects.
 - A record component or Lombok `@Data` field holding a secret is in `toString()` by
   construction, and `log.info("processing {}", request)` is then a leak nobody wrote.
 - Two moves make code worse. **Encrypting what only needs hashing** ("so we can support
@@ -112,6 +139,21 @@ THEN new SecureRandom(); never Random, ThreadLocalRandom or Math.random().
   narrow for Argon2's parameters and drops the algorithm identifier the `{id}` format carries
   per hash, destroying the migration path it was built for — that, not implementing AES, is
   rolling your own crypto.
+
+## Failure modes and production evidence
+
+| Symptom                                              | Distinguish with                                                                    | Likely remediation                                                                                                                      |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Login latency or CPU jumps after a KDF change        | KDF duration histogram by encoded algorithm id; auth concurrency and CPU saturation | Bound authentication concurrency, benchmark on production-class hardware, then tune parameters without dropping below the binding floor |
+| Known users and unknown users have separable latency | Distributions, not one stopwatch sample; include warm/cold cache paths              | Dummy hash with current parameters, common response path and rate limiting; remove existence-specific downstream work                   |
+| Cross-tenant mutation despite role checks            | Audit subject, tenant, resource owner and write predicate; enumerate every caller   | Derive subject from trusted context and include owner/tenant/version in the transactional write condition                               |
+| Reset link works twice or after replacement          | Concurrent redemption and replay tests against the real datastore                   | Digest-at-rest, expiry and one atomic consume/update; invalidate older outstanding tokens intentionally                                 |
+| Secret appears after an exception                    | Structured-log and error-contract tests with canary secrets                         | Secret-free value types/messages, allowlisted error mapping and encoder-side redaction as a backstop                                    |
+
+Do not benchmark password verification with JMH alone and call the capacity question solved.
+Measure the primitive to choose parameters, then load-test the bounded authentication path:
+arrival bursts, dummy-hash misses, rehash-on-login, datastore latency and rate limiting determine
+whether an attacker can turn the KDF into a CPU or memory-exhaustion endpoint.
 
 ## References
 

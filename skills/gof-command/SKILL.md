@@ -19,12 +19,14 @@ description: >
 
 ## Purpose
 
-Make "do this" a value. Once an invocation is an object it can be stored, put on a queue, sent
-across a boundary, replayed, audited, undone or scheduled — none of which a method call permits.
+Make "do this" a value. Once an invocation is an object it can be parameterized, composed,
+stored, queued, replayed, audited, undone or scheduled. Instrumentation can observe ordinary
+method calls too; Command matters when the invocation itself needs identity, lifetime or
+polymorphic handling.
 
-That list is also the justification test. If none of those things happen to the object, the
-pattern is a class where a method call would do. `GetCustomerByIdCommand` with a handler that
-calls the repository is ceremony; the reification bought nothing.
+Those capabilities are the justification test. A synchronous command may still decouple an
+invoker from receivers or parameterize UI/workflow actions, but `GetCustomerByIdCommand` plus a
+handler that merely calls one repository often adds ceremony without a consumer of reification.
 
 ## Command is not Event
 
@@ -34,8 +36,8 @@ Command                              Event
 An instruction: PlaceOrder           A fact: OrderPlaced
 Imperative, present tense            Past tense, immutable history
 Addressed to one logical handler     Broadcast to zero or more subscribers
-May be rejected or fail validation   Cannot be rejected; it already happened
-Sender expects an outcome            Publisher expects nothing
+May be rejected or fail validation   The fact remains true; a consumer may reject/park malformed delivery
+Sender usually owns an outcome       Publisher does not coordinate one authoritative handler result
 Coupling: sender knows the operation Coupling: publisher knows nothing of
                                      the subscribers
 Retry semantics: re-issue the        Retry semantics: redeliver the same
@@ -73,8 +75,9 @@ The set of operations is open and must be dispatched uniformly
   reification.
 - **`Runnable`, `Callable` or a method reference is enough.** They are commands. A class adds
   value only when the command carries data worth naming and inspecting.
-- **The "command" is really a query.** A request that returns data and changes nothing does not
-  need to be queued, retried or undone; give it a method (`query-objects-and-specifications`).
+- **The "command" is a CQRS query with no reason to be reified.** GoF Command can return a result,
+  so mutation is not the discriminator. Use a method when the query needs no deferred lifetime,
+  uniform dispatch, composition or audit (`query-objects-and-specifications`).
 - **The thing being modelled already happened.** That is an event.
 
 ## Modern Java expression
@@ -122,8 +125,9 @@ THEN its shape is a versioned contract: a stable name, tolerant
      command written by an older producer (rpc-and-api-contracts).
 
 IF a command may be delivered more than once
-THEN the handler must be idempotent, keyed by a command id — every
-     at-least-once transport guarantees this eventually
+THEN the handler needs idempotent effects, deduplication, or an explicitly tolerated
+     duplicate policy keyed at the correct business scope. At-least-once permits
+     duplicates; it does not promise that a duplicate eventually occurs
      (idempotency, delivery-semantics).
 
 IF a command captures a mutable object and executes later
@@ -147,13 +151,13 @@ THEN that is a deserialisation vulnerability. Dispatch from a closed
   managed JPA entity holds an object whose session is gone. Capture immutable values and
   identifiers; propagate context explicitly (`scoped-values`,
   `executors-and-task-lifecycle`).
-- **Distribution.** A command sent to a broker inherits every property of that transport:
-  at-least-once redelivery, no global ordering unless partitioned, and no synchronous outcome. The
-  sender must accept an asynchronous result, and the handler must be idempotent. A command that
+- **Distribution.** A command sent to a broker inherits its configured delivery, ordering,
+  retention and acknowledgement semantics; do not assume every broker is at-least-once. Most
+  broker flows decouple the immediate outcome, though reply channels are possible. A command that
   fails permanently needs a dead-letter path, or it blocks a partition forever
   (`poison-messages-and-dlq`, `message-ordering-and-partitioning`).
-- **Performance.** One allocation per command, plus serialisation cost when it crosses a
-  boundary. The pattern's real performance property is the opposite of a cost: because commands
+- **Performance.** Representation may allocate (records usually do; cached non-capturing lambdas
+  may not per invocation), plus serialization/copying when crossing a boundary. Because commands
   are values, they can be batched, deduplicated and reordered — which is often why the design was
   chosen (`orm-behavioral-patterns`).
 - **Testing.** Commands as values make tests unusually clean: assert that a service _produced_ the
@@ -165,7 +169,8 @@ THEN that is a deserialisation vulnerability. Dispatch from a closed
 
 - [ ] Something actually queues, stores, retries, audits or undoes the command
 - [ ] Commands are named imperatively; events in the past tense
-- [ ] Each command has exactly one logical handler
+- [ ] Each command has one outcome owner; horizontally competing handler instances are distinguished
+      from multiple independent semantic handlers
 - [ ] Persisted or transmitted commands carry a stable name and a schema version
 - [ ] Handlers are idempotent when the transport may redeliver
 - [ ] Commands capture values or identifiers, never live mutable objects

@@ -1,138 +1,101 @@
-# Lazy initialisation
+# Lazy initialization state machines
 
-## Start by not doing it
+## Decision
 
-Lazy initialisation trades a startup cost for a first-use cost plus a correctness obligation.
-It pays only when both hold:
+Prefer eager initialization when use is common, cost is modest, readiness should fail fast, or
+first-request latency matters. Prefer lazy when avoided lifetime cost is material and the owner has
+defined first-use concurrency, failure, retry, cancellation and cleanup.
 
-- the field is **expensive** to build (a large table, a compiled artefact, a connection), and
-- it is **often not used at all** in a given process lifetime.
+## State model
 
-For a service with an SLO, moving work from startup to the first request is usually the wrong
-direction: it turns a cost paid once, before traffic arrives, into a latency spike on a real
-user's request — and, with several replicas rolling, on many of them. Eager initialisation is
-also the only form that fails fast: a misconfigured resource blows up at boot, not at 3 a.m.
-when the code path is first exercised.
+Do not overload `null` when states matter:
 
-So: initialise eagerly by default, and lazily only with a reason you can state.
-
-## The four correct forms
-
-**1. Eager (static or instance final field).** No synchronisation, no ordering question, fails
-at startup.
-
-```java
-private static final CurrencyTable TABLE = CurrencyTable.load();
+```text
+UNINITIALIZED -> INITIALIZING -> READY
+                         \-> FAILED(retryable or sticky)
+all states -> CLOSING -> CLOSED
 ```
 
-**2. Lazy-initialisation holder class — the right answer for a static field.**
+Specify concurrent callers during initialization, recursive calls, timeout/cancel, creator death,
+failure caching/backoff, disposal of losing values, and close racing with create/use.
+
+## Static holder
 
 ```java
-private static class Holder {
-    static final CurrencyTable TABLE = CurrencyTable.load();
+private static final class Holder {
+    static final Resource VALUE = create();
 }
-public static CurrencyTable table() { return Holder.TABLE; }
+
+static Resource value() { return Holder.VALUE; }
 ```
 
-The JVM initialises `Holder` on first access to `Holder.TABLE`, under the class-initialisation
-lock, and publication is guaranteed by the JLS. After that, reads are plain field reads with no
-synchronisation and no volatile — this is the fastest correct form, and it needs no
-double-checked-locking reasoning at all.
+Class initialization provides synchronization. Caveats: scope is class loader, initialization
+failure is wrapped and effectively sticky for that class initialization, circular initialization
+can surprise/deadlock, and first access pays cost.
 
-**3. Synchronised accessor — the right default for an instance field.**
+## Synchronized instance initialization
 
 ```java
-private FieldType field;
-public synchronized FieldType field() {
-    if (field == null) field = computeFieldValue();
-    return field;
+private Resource value;
+
+synchronized Resource value() {
+    if (value == null) value = create();
+    return value;
 }
 ```
 
-Simple, obviously correct, and the cost is one uncontended lock acquisition per read — which is
-negligible unless the accessor is genuinely hot. Start here; measure before replacing it.
+Correct for one-shot creation if holding this lock during `create` is safe. Prefer a private lock.
+Remote/blocking creation needs deadline, interruption, failure/retry and prevention of unrelated
+operations queueing behind it.
 
-**4. Double-checked locking — only when a measurement shows form 3 costs too much.**
+## Double-checked locking
 
 ```java
-private volatile FieldType field;          // volatile is not optional
-public FieldType field() {
-    FieldType result = field;              // read the volatile field once into a local
-    if (result == null) {
-        synchronized (this) {
-            if (field == null) field = result = computeFieldValue();
-            else result = field;
+private volatile Resource value;
+
+Resource value() {
+    Resource r = value;
+    if (r == null) {
+        synchronized (lock) {
+            r = value;
+            if (r == null) value = r = create();
         }
     }
-    return result;
+    return r;
 }
 ```
 
-Two details are load-bearing:
+The volatile publication and second check are load-bearing. Use only when the synchronized hot path
+is measured material. Also test exceptions, reentrancy, close and external side effects; the idiom
+only solves publication/single assignment.
 
-- **`volatile`.** Without it, another thread can see a non-null reference to a partially
-  constructed object: the JMM permits the assignment to become visible before the constructor's
-  writes. java-memory-model has the reordering argument in full.
-- **The local variable.** Reading the field once instead of twice is what makes this measurably
-  faster than the naive version; reading it twice can also observe two different values.
+## Future memoization
 
-The **single-check idiom** (no lock, `volatile` field, accept that several threads may compute
-the value) is legitimate when the computation is cheap, deterministic and idempotent. The
-**racy single-check** (not even `volatile`) is legitimate only under the exact conditions
-`String.hashCode` satisfies — see the analysis in java-immutability's safe-publication
-reference. Neither is a general-purpose idiom.
+A shared future can represent initialization in progress and let callers wait without holding the
+state lock. Define whether one caller cancelling cancels shared initialization, whether failures are
+cached, how retry atomically replaces a failed future, and how completed resources close. Avoid
+common-pool or orphan task ownership by default.
 
-## What not to write
+## Duplicate-tolerant CAS
 
-```java
-// Broken: no volatile. Another thread may see a non-null, half-constructed object.
-private FieldType field;
-public FieldType field() {
-    if (field == null) {
-        synchronized (this) { if (field == null) field = compute(); }
-    }
-    return field;
-}
-```
+Compute outside a lock and CAS the result only when multiple creation and disposal are safe. “Pure
+and idempotent” must include external resources, registration, billing, files and native handles.
+Close losing instances and account for thundering-herd cost.
 
-This is the version that circulates as "double-checked locking", and it is the one that is
-wrong. It also usually _works_ on x86, and fails on weaker memory models such as aarch64 —
-so it survives testing on one architecture and breaks after a migration to another.
+## Validation
 
-Also avoid:
+- zero, one and many simultaneous first callers;
+- creator slow/hangs/throws/is interrupted;
+- recursive initialization and callback reentry;
+- retryable versus permanent failure;
+- caller timeout/cancel while others continue;
+- close before/during/after initialization;
+- class-loader reload and application redeploy;
+- memory/resource leak after losing or failed creation;
+- latency/readiness behavior during fleet rollout.
 
-- Lazy initialisation of a field that is **not** expensive: the check costs more than the work.
-- `Optional` as a lazily assigned field — it adds a wrapper without addressing publication.
-- Holding a lock across the expensive computation when it may call out to alien code or I/O
-  (lock-scope-and-alien-calls). If `compute()` calls a remote service, the synchronised accessor
-  serialises every caller behind it and a hang blocks them all; bound it, or initialise eagerly.
+## Authoritative references
 
-## Memoising suppliers and caches
-
-For an instance field whose computation is genuinely expensive, a memoising `Supplier` packages
-the same double-checked pattern once:
-
-```java
-private final Supplier<CurrencyTable> table = memoize(CurrencyTable::load);   // Guava's Suppliers.memoize, or your own
-```
-
-For a _keyed_ lazy value — one per tenant, per currency, per configuration — do not hand-roll
-it. `ConcurrentHashMap.computeIfAbsent` gives atomic per-key initialisation, with two caveats:
-the mapping function must not modify the same map (it can deadlock or corrupt the map), and it
-holds a bin lock for the duration, so a slow computation blocks other keys hashing to the same
-bin. When the value is expensive and remote, a proper cache with a loading policy
-(caching-strategies) is the right tool, and it also gives you the bound that
-`computeIfAbsent` does not.
-
-## Startup, AOT and the wider picture
-
-- **A lazily initialised field is not initialised in a CDS/AOT training run** unless that run
-  exercises the path, so it will not appear in the archive and the cost stays on the first
-  request. Conversely, eagerly initialised static state is captured at build time in a native
-  image — including anything it read from the environment, which is a bug if the environment
-  differs at run time (graalvm-native-image, startup-cds-crac-leyden).
-- **Warm-up matters more than the initialisation itself** for JIT-compiled paths; a first
-  request that both initialises the field and runs interpreted code is the shape behind "the
-  first requests after a deploy are slow" (jit-compilation).
-- **Fail-fast beats lazy** for anything that validates configuration or opens a connection.
-  Prefer to construct it at startup and let a broken configuration stop the deployment.
+- [JLS 12.4.2 class initialization](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.4.2)
+- [JLS 17.4 memory model](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4)
+- [`Future`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html)

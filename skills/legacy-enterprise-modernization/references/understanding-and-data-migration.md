@@ -4,14 +4,14 @@
 
 Documentation is aspirational and memory is selective. Production is evidence.
 
-| Question                           | Where the answer is                                                                             |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Which endpoints are used?          | Access logs, a month. Endpoints with zero traffic are candidates for deletion                   |
-| Which tables are written, by what? | Database audit, `pg_stat_user_tables`, SQL Server Query Store, or a trace of writing statements |
-| Which jobs run?                    | The scheduler, the crontabs, and the operations team                                            |
-| What rules exist outside the code? | `information_schema.routines`, `triggers`, column defaults, check constraints                   |
-| What is actually slow?             | Query Store / `pg_stat_statements` by total time, not by mean                                   |
-| Which code is dead?                | Coverage from a production-shadow run, or logging on entry to suspects                          |
+| Question                           | Where the answer is                                                                                        |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Which endpoints are used?          | Access logs over representative business cycles. Zero observed traffic is a deletion hypothesis, not proof |
+| Which tables are written, by what? | Database audit, `pg_stat_user_tables`, SQL Server Query Store, or a trace of writing statements            |
+| Which jobs run?                    | The scheduler, the crontabs, and the operations team                                                       |
+| What rules exist outside the code? | `information_schema.routines`, `triggers`, column defaults, check constraints                              |
+| What is actually slow?             | Query Store / `pg_stat_statements` by total time, not by mean                                              |
+| Which code is dead?                | Coverage from a production-shadow run, or logging on entry to suspects                                     |
 
 ```sql
 -- Rules living in the database. Run this before believing any module inventory.
@@ -129,13 +129,16 @@ and the divergence is discovered by a customer.
 long cursor = checkpoint.load();
 int moved;
 do {
+    long batchStart = cursor;
     moved = transactionTemplate.execute(status -> {
-        var batch = legacy.nextBatch(cursor, 1000);
+        var batch = legacy.nextBatch(batchStart, 1000);
+        if (batch.isEmpty()) return 0;
         modern.insertAll(batch.stream().map(acl::translate).toList());
         checkpoint.save(batch.lastId());
         return batch.size();
     });
     metrics.counter("backfill.rows").increment(moved);
+    cursor = checkpoint.load();
 } while (moved > 0);
 ```
 
@@ -162,12 +165,12 @@ resulting data will look like a bug in the new code.
 
 ## Signals that the modernisation is failing
 
-| Signal                                               | What it means                                                |
-| ---------------------------------------------------- | ------------------------------------------------------------ |
-| Nothing decommissioned in six months                 | Two architectures, both paid for. Stop building; remove one. |
-| Parallel runs with no divergence policy              | Alerts nobody actions; the switch will not be signed         |
-| The new system also reads legacy tables directly     | The ACL was skipped; the legacy model is spreading           |
-| Feature work has moved entirely to the new system    | The legacy is now neglected, and the risk of running it grew |
-| Nobody can say which system served a given request   | Routing is not observable; incidents will be unresolvable    |
-| The first slice is not finished and a second started | Nothing has been learned about whether the approach works    |
-| The team cannot name the next decommissioning date   | There is no plan, only construction                          |
+| Signal                                                       | What it means                                                                            |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Nothing decommissioned across the planned first-slice window | Benefits may be deferred while coexistence cost grows; review scope and removal blockers |
+| Parallel runs with no divergence policy                      | Alerts nobody actions; the switch will not be signed                                     |
+| The new system also reads legacy tables directly             | The ACL was skipped; the legacy model is spreading                                       |
+| Feature work has moved entirely to the new system            | The legacy is now neglected, and the risk of running it grew                             |
+| Nobody can say which system served a given request           | Routing is not observable; incidents will be unresolvable                                |
+| The first slice is not finished and a second started         | Nothing has been learned about whether the approach works                                |
+| The team cannot name the next decommissioning date           | There is no plan, only construction                                                      |

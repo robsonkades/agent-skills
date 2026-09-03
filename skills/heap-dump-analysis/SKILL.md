@@ -32,21 +32,25 @@ size, which names the leaf array instead of the static map holding it.
 1. **Record the context with the file.** `-Xmx`, wall-clock time, approximate load in
    req/s, JVM uptime, and whether `-XX:+UseCompactObjectHeaders` was on. A dump without
    these is not comparable to any other dump.
-2. **Decide the live-object filter deliberately.** A dump filtered to live objects runs a
-   full GC first, which is what removes false leaks — and which, on a heap already under
+2. **Decide the live-object filter deliberately.** A dump filtered to live objects requests a
+   full GC first, removing unreachable-but-not-yet-collected objects from the capture—not proving
+   that every survivor is a leak—and, on a heap already under
    pressure, can itself take tens of seconds to minutes before a byte is written.
-3. **Capture, choosing the tool by whether the JVM can reach a safepoint.** `jcmd` and
-   `jmap` both hang against a JVM that cannot; `jhsdb jmap --binaryheap` reads the process
-   externally.
-4. **Take a second dump 5–10 minutes later** whenever the process is still alive. The
-   delta between two dumps separates "many objects because load is high now" from "many
-   objects because nothing is ever released" far more reliably than a single dump.
-5. **Triage by size against `-Xmx` first**, then open the Dominator Tree. One object
-   retaining more than 30% of the heap is a probable single root cause; many medium
-   objects with no dominant one suggests legitimate usage or several small leaks.
-6. **Run Path to GC Roots on the suspect, excluding weak and soft references.** A static
-   field in the path names a cache or singleton; a JVM-internal root names something like
-   the string pool.
+3. **Capture, choosing the tool by reachability and incident risk.** `jcmd`/`jmap` need target-VM
+   cooperation/safepoint and can block or time out when it is wedged. Serviceability Agent attach
+   is invasive and may suspend/conflict with the process; prefer operating on a core dump when
+   recovery time and disk permit.
+4. **Take a second dump only when its incremental diagnostic value exceeds another global pause.**
+   Choose separation from the suspected growth rate/business cycle and normalize for load, cache
+   warm-up and topology. Continuous class/heap/JFR statistics may establish slope more safely.
+5. **Triage by live heap and context**, then open the Dominator Tree. A large dominator is a useful
+   starting point, not a universal 30% leak threshold; caches and immutable indexes can
+   legitimately dominate, while a distributed leak may have no single large owner.
+6. **Run Path to GC Roots on the suspect with reference strengths made explicit.** Start
+   by excluding weak/soft/phantom paths to expose strong ownership, then inspect excluded
+   strengths when a soft cache or reference-processing policy is itself the question. A
+   static field often names an owner, but framework/JVM roots require version-aware
+   interpretation rather than a guessed label.
 7. **Validate the fix with dumps, not with the absence of an OOM.** Two post-fix dumps
    under equivalent load, separated in time, must show the former dominator no longer
    growing.
@@ -56,7 +60,8 @@ size, which names the leaf array instead of the static map holding it.
 - Use retained heap — Dominator Tree, or the Histogram's "Retained Heap" column — to
   identify a leak. Shallow size alone assigns no responsibility: it puts `char[]` at the
   top when the static `HashMap` is the retainer.
-- `jcmd GC.heap_dump` and `jmap -dump` are the same mechanism: both schedule
+- `jcmd GC.heap_dump` and attach-based `jmap -dump` converge on the HotSpot heap-dump
+  operation: both schedule
   `VM_HeapDumper`, which requires a safepoint and stops every Java thread. Neither is the
   "low-pause" option. The cost difference is the preceding full GC, not the tool.
 - `jcmd <pid> GC.heap_dump <file>` runs a full GC unless `-all` is passed;
@@ -64,8 +69,10 @@ size, which names the leaf array instead of the static map holding it.
   command also takes `-gz=<1-9>`, `-parallel=<n>` and `-overwrite`, and a relative
   `<file>` is opened by the target JVM in _its_ working directory. Confirm the installed
   build with `jcmd <pid> help GC.heap_dump`.
-- The file is roughly the size of the live set — every object's fields and array payload
-  are written raw — and it is written while every Java thread is stopped. In a cgroup the
+- HPROF size is related to captured objects but also encoding, identifiers, class metadata and
+  unreachable inclusion; budget near the configured heap plus filesystem/container headroom
+  rather than assuming equality with live bytes. It is written while Java execution is stopped.
+  In a cgroup the
   dirty page cache of that file is charged to the container, so a heap-sized dump written
   to the container's own filesystem can OOMKill the pod it was meant to diagnose. Budget
   the destination before capturing: see the cost table in the capture reference.
@@ -82,16 +89,20 @@ true` arms a running JVM that started without it.
 - Dominance means **every** path from any GC root passes through the dominator. An object
   reachable from two independent roots belongs to neither branch and rises to the
   synthetic super-root.
-- A dominator tree whose children sum to more than the parent's retained size is wrong by
-  construction. Use that as a sanity check on any heap report, including your own.
+- Do not sum arbitrary dominator descendants as if they were disjoint. Direct children in
+  a correctly constructed dominator tree partition dominated subgraphs, but report views,
+  grouping and shared objects can change what is displayed; validate tool semantics before
+  using an additive sanity check.
 - MAT's OQL has no SQL-style aggregation. `SELECT SUM(...)` does not exist; totals come
   from the Histogram or from "Group Result by class".
 - `@` in OQL is reserved for MAT-computed attributes (`@retainedHeapSize`, `@objectId`),
   not for arbitrary object fields. `java.lang.ClassLoader`'s field is `classes`, not
   `loadedClasses`.
-- There is no `String.isInterned()` in any public JDK API. Confirm an interned-key
-  suspicion with Path to GC Roots: an interned string's path ends at the JVM-internal
-  string pool root, bypassing the `WeakHashMap`'s weak reference entirely.
+- There is no `String.isInterned()` in the public API. Modern HotSpot's string table does not by
+  itself make an otherwise unreachable interned string immortal, so `intern()` alone does not
+  explain a `WeakHashMap` key leak. Use Paths to GC Roots to find the actual strong path and pin
+  claims to the target JVM; calling `s.intern()` for comparison mutates the table and is not a
+  neutral diagnostic.
 - A static `ThreadLocal` has exactly **one** entry per thread — the key is the
   `ThreadLocal` instance. Its leaks come from the value never being cleared or replaced,
   not from entries accumulating in one `ThreadLocalMap`.
@@ -108,6 +119,17 @@ true` arms a running JVM that started without it.
   boundary — shows a delta that came from layout, not from code.
 - JMC and GCeasy.io do not open `.hprof`. MAT is the reference tool; HeapHero.io and
   jxray.com handle dumps beyond what a local MAT can index.
+
+## Evidence integrity and security
+
+- A heap dump contains credentials, tokens, personal data, payloads and cryptographic material in
+  plaintext object fields. Capture to an approved encrypted destination, restrict operator/tool
+  access, hash/record provenance, transfer securely and delete by incident-retention policy.
+- Do not upload production dumps to a third-party analyzer without explicit data-governance
+  approval. Prefer a sanitized reproducer or controlled local/isolated analysis.
+- Record whether a full GC/filter occurred, capture completion/truncation, tool/JDK version and
+  parser warnings. A partial/corrupt dump or two captures with different layout/JDK/load cannot
+  support a byte-for-byte growth conclusion.
 
 ## References
 

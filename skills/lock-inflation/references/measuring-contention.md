@@ -1,147 +1,87 @@
-# Measuring and reducing contention
+# Measuring and reducing monitor contention
 
-## Confirm the mechanism first
+## Capture plan
+
+```text
+question and suspected invariant:
+affected window/load/business denominator:
+JDK/build/thread type:
+JFR event names/settings/threshold/stacks:
+dump cadence/count and target identity:
+positive control and expected qualifying events:
+overhead/storage/privacy/abort:
+```
+
+Discover and validate target commands. A possible bounded JFR shape is:
 
 ```bash
-java -XX:+PrintFlagsFinal -version | grep LockingMode
-# JDK 25:  int LockingMode = 2  {product} {default}   -- 2 = LM_LIGHTWEIGHT
-# JDK 21 and JDK 26+: no output at all -- the flag does not exist
+jcmd <pid> help JFR.start
+jcmd <pid> JFR.start name=locks settings=/approved/locks.jfc duration=60s \
+  filename=/durable/locks.jfr
+jfr summary /durable/locks.jfr
 ```
 
-A value of `1` means `-XX:LockingMode=1` was set somewhere in the configuration. Flag it for
-removal before comparing measurements against current material.
+Do not assume stock profile settings answer short-contention questions. Validate metadata, counts,
+loss, capture interval and positive-control behavior.
 
-**Empty output is not a failed command.** Measured on Temurin 21.0.12, 25.0.4 and 26.0.2:
-the flag is absent on 21, present on 25, and absent again from 26. On those releases there is
-one locking implementation and nothing to confirm, so read the empty result as "not
-applicable", never as "the grep broke" or "the default is 0".
+## Thread evidence
 
-## Thread state to JFR event
+Use repeated dumps with stable PID/start identity. For virtual threads, use the target JDK's
+supported virtual-thread dump facility and assess artifact size/impact. Interpret:
 
-| Observed thread state                                                                  | Correct event          | Not this           |
-| -------------------------------------------------------------------------------------- | ---------------------- | ------------------ |
-| `BLOCKED` entering `synchronized`                                                      | `jdk.JavaMonitorEnter` | `ThreadPark`       |
-| `WAITING` / `TIMED_WAITING` in `Object.wait()`                                         | `jdk.JavaMonitorWait`  | —                  |
-| `WAITING` / `TIMED_WAITING` in `LockSupport.park()`, `ReentrantLock`, connection pools | `jdk.ThreadPark`       | `JavaMonitorEnter` |
-
-`jdk.JavaMonitorEnter` is labelled _Java Monitor Blocked_ and carries `monitorClass`,
-`previousOwner` and `address`. Connection-pool waiting does **not** enter an intrinsic
-monitor and will never appear as `JavaMonitorEnter`.
-
-All three events have a **10 ms threshold in `profile.jfc`** and 20 ms in `default.jfc`.
-Finer contention is invisible until you build a custom settings file with `jfr configure`.
-
-## Collection
-
-```bash
-jcmd <pid> JFR.start settings=profile duration=60s filename=locks.jfr
+```text
+BLOCKED -> monitor acquisition candidate and reported owner when available
+WAITING/TIMED_WAITING -> wait/park/sleep/join; inspect predicate/resource owner
+RUNNABLE -> may be CPU, native or kernel wait depending stack/platform
 ```
 
-```bash
-# async-profiler, sampling lock-contention events
-./profiler.sh -e lock -d 30 -o flamegraph -f locks.html <pid>
+Repeated identical stacks can indicate a long wait/hold but not exact duration without sampling
+assumptions. A dump cannot prove short waits are absent.
 
-# wall-clock: threads parked or waiting rise to the top even with no CPU burnt
-./profiler.sh -e wall -d 30 -o flamegraph -f wall.html <pid>
+## Metrics
+
+Prefer:
+
+```text
+wait events/eligible operations
+total and percentile acquisition wait per operation (acknowledging overlap/censoring)
+maximum/concurrent blocked population and queue duration
+owner hold-path frequency and duration proxy
+useful throughput/error/deadline/cancel rate
+CPU/throttle/GC/safepoint aligned timeline
 ```
 
-```bash
-jstack <pid> | grep -A 5 "BLOCKED\|waiting on"
-jcmd <pid> Thread.print | grep "java.lang.Thread.State:" | sort | uniq -c
+Instrument hold time at application boundary only if overhead/reentrancy/exceptions are handled and
+the critical section is known. High-cardinality monitor/object labels should stay in bounded
+diagnostic artifacts, not fleet metrics.
 
-# with virtual threads, the two above show nothing — this is the supported path
-jcmd <pid> Thread.dump_to_file -format=json dump.json
-```
+## Redesign checks
 
-Aggregating a recording by monitor class:
+For moving work outside:
 
-```java
-Map<String, LongSummaryStatistics> waitByClass = new HashMap<>();
-for (RecordedEvent event : RecordingFile.readAllEvents(Path.of("locks.jfr"))) {
-    if (!event.getEventType().getName().equals("jdk.JavaMonitorEnter")) continue;
-    waitByClass.computeIfAbsent(event.getClass("monitorClass").getName(),
-                                k -> new LongSummaryStatistics())
-               .accept(event.getDuration().toMillis());
-}
-```
+- Can input/state change before commit?
+- Does computation depend on guarded version?
+- Can compare/version/CAS validate and retry safely?
+- Does callback/event ordering change?
+- If external work succeeds but state commit fails, how is it reconciled?
 
-`RecordingFile.readAllEvents` is **static**; calling it on an instance does not compile.
+For partitioning:
 
-## Programmatic detection
+- Is the invariant truly key-local?
+- What handles cross-key operations atomically?
+- Does skew leave one hot partition?
+- How are shard count/rebalancing and memory priced?
+- Is global snapshot/iteration semantics weakened?
 
-```java
-ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
-long[] deadlocked = threadBean.findDeadlockedThreads();
+## Validation experiment
 
-threadBean.setThreadContentionMonitoringEnabled(true);
-for (ThreadInfo ti : threadBean.getThreadInfo(threadBean.getAllThreadIds(), true, true)) {
-    if (ti.getBlockedTime() > 100) { /* report ti.getLockName() */ }
-}
-```
+Use matched load and capture windows. Verify correctness first, then compare wait/hold/queue,
+useful throughput, tail, CPU, allocation/GC, fairness/starvation and the next constrained resource.
+Report inconclusive if event opportunity/threshold or workload drift prevents discrimination.
 
-## Overhead
+## Authoritative references
 
-```
-overhead = total_lock_wait_ns / (recording_duration_ns * monitored_thread_count) * 100
-```
-
-The denominator is aggregate **wall time**, not CPU time — the two answer different
-questions. Triage bands:
-
-| Overhead | Reading                             |
-| -------- | ----------------------------------- |
-| < 5%     | acceptable in most load profiles    |
-| 5–20%    | investigate; already visible in p99 |
-| > 20%    | likely the dominant bottleneck      |
-
-## Reducing contention, in order of preference
-
-**Narrow the section.** Only the shared mutation needs the lock; validation, transformation
-and logging do not.
-
-```java
-public void processRequest(Request req) {
-    validateInput(req);
-    transformData(req);
-    synchronized (sharedState) { sharedState.update(req.getKey(), req.getValue()); }
-    logProcessing(req);
-}
-```
-
-**Partition by key.** One lock per hash shard turns one queue into N.
-
-```java
-private static final int SHARDS = 64;
-int shard = Math.abs(key.hashCode()) % SHARDS;
-synchronized (locks[shard]) { shards[shard].get(key).increment(); }
-```
-
-**Confine to the thread.** A `ThreadLocal` accumulator merged into the global one at a much
-lower frequency removes the lock from the hot path entirely.
-
-**Change primitive last**, on the read/write profile:
-
-| Scenario                                    | Primitive                       |
-| ------------------------------------------- | ------------------------------- |
-| Simple critical section, low contention     | `synchronized`                  |
-| Needs `tryLock()` or an acquisition timeout | `ReentrantLock`                 |
-| Reads ≫ writes, high concurrency            | `StampedLock`                   |
-| High-frequency concurrent counter           | `LongAdder`                     |
-| Concurrent map                              | `ConcurrentHashMap`             |
-| Work queue between threads                  | `LinkedBlockingQueue`           |
-| Publishing one immutable value              | `volatile` field                |
-| Atomic operation on a single field          | `AtomicReference` / `VarHandle` |
-
-Rule of thumb, to be calibrated against the real workload: reads > 10× writes suggests
-`StampedLock`; reads > 2× writes suggests `ReentrantReadWriteLock`; reads ≈ writes means
-`synchronized` or `ReentrantLock` already suffices.
-
-`AtomicLong` avoids the lock but still contends one cache line; `LongAdder` stripes the sum
-instead.
-
-## Validating the fix
-
-- Aggregate `jdk.JavaMonitorEnter` time or `BLOCKED` count must fall — not merely
-  throughput, which can rise for unrelated reasons.
-- Rerun under the same load, same environment and same warm-up, before and after.
-- Check which resource became the next limit. Relieving lock contention usually reveals it.
+- [JDK Flight Recorder runtime guide](https://docs.oracle.com/en/java/javase/25/jfapi/flight-recorder-runtime-guide/index.html)
+- [JDK `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+- [Java monitoring API `ThreadInfo`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadInfo.html)
+- [JEP 444 thread observability](https://openjdk.org/jeps/444)

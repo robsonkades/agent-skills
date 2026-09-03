@@ -12,11 +12,14 @@ Cache<String, byte[]> cache = Caffeine.newBuilder()
         .build();
 ```
 
-When entry sizes vary by orders of magnitude — HTTP responses, lists, documents —
-`maximumWeight` is the correct control, because memory is what matters, not the count.
+When entry sizes vary by orders of magnitude—HTTP responses, lists, documents—logical weight is
+usually better than entry count. The example weighs only value bytes; real retained heap also
+contains keys, objects, cache nodes and allocator alignment, so calibrate the weigher against a
+heap profile rather than calling 200 MB a hard heap bound.
 
-Keep `maximumSize × average_size` at or below ~25% of available heap. Above that, the cache
-becomes a GC problem before it becomes a hit-rate problem.
+Choose a memory budget from container/JVM headroom, live non-cache set, allocation rate and pause
+SLO. A percentage such as 25% can be an experiment starting point, never a portable limit. Verify
+post-GC occupancy and behavior at maximum occupancy; eviction/maintenance may be asynchronous.
 
 ## Jitter for bulk-created entries
 
@@ -30,7 +33,7 @@ Cache<Long, ProductDto> cache = Caffeine.newBuilder()
                 return b + ThreadLocalRandom.current().nextLong(b / 5);   // +0..20%
             }
             public long expireAfterCreate(Long k, ProductDto v, long now) { return jittered(); }
-            public long expireAfterUpdate(Long k, ProductDto v, long now, long d) { return d; }
+            public long expireAfterUpdate(Long k, ProductDto v, long now, long d) { return jittered(); }
             public long expireAfterRead(Long k, ProductDto v, long now, long d) { return d; }
         })
         .recordStats()
@@ -53,9 +56,11 @@ Caffeine.newBuilder()
         .build(key -> loadFromSource(key));
 ```
 
-`refreshAfterWrite` reloads asynchronously on the first access after the interval, serving
-the stale value meanwhile. `expireAfterWrite` remains as the hard bound for keys that stop
-being accessed.
+`refreshAfterWrite` makes an entry eligible; the first later access initiates asynchronous reload
+and normally receives the old value. Failed refresh retains the old value. `expireAfterWrite` is
+an eligibility/removal policy rather than a wall-clock guarantee, and keys not accessed after
+refresh eligibility may expire. Configure a dedicated executor when common-pool contention or
+blocking loaders matter.
 
 For async loading, `AsyncCacheLoader.asyncLoad` takes `(K key, Executor executor)` — **two**
 parameters. A one-argument lambda in `buildAsync` does not compile.
@@ -63,16 +68,19 @@ parameters. A one-argument lambda in `buildAsync` does not compile.
 ## Redis
 
 ```java
-// The default serialiser is JdkSerializationRedisSerializer, not JSON
-template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+// Spring Data Redis 4 / Jackson 3: use a typed serializer when the cache has one value schema
+template.setValueSerializer(new JacksonJsonRedisSerializer<>(ProductDto.class));
 ```
 
-`Jackson2JsonRedisSerializer<>(Object.class)` fails with `ClassCastException` on the first
-hit, because it does not write the type.
+For Spring Data Redis 3.x/Jackson 2 the class names differ. Do not use `Object.class` and then
+assume concrete types reappear; untyped JSON normally yields maps unless explicit safe type
+metadata is configured. Spring Data Redis 4's generic Jackson 3 serializer does not enable
+default typing by default; the deprecated Jackson 2 generic serializer did.
 
 - `maxmemory-policy` explicitly configured — the default `noeviction` **rejects writes**
   when full.
-- Monitor `evicted_keys` and `mem_fragmentation_ratio` (below 1.0 indicates swap).
+- Monitor `evicted_keys`, rejected writes, RSS/allocator fragmentation and host/container swap or
+  major faults. `mem_fragmentation_ratio` alone is not a reliable swap detector.
 - Version the key prefix for format changes. `FLUSHALL` in a deploy pipeline is a stampede
   generator.
 
@@ -80,27 +88,30 @@ hit, because it does not write the type.
 
 - [ ] Cross-instance invalidation implemented (pub/sub, Kafka or CDC)
 - [ ] L1 TTL **short**, as the safety net for lost events
-- [ ] `TTL_L1 < TTL_L2`
+- [ ] L1 TTL/stale-age bound derived explicitly (often no greater than L2, but consistency policy decides)
 - [ ] Metrics separated per layer (L1, L2, source) — an aggregate hit rate hides which
       layer is working
-- [ ] Graceful degradation tested: with L2 down, the service still responds
+- [ ] L2 outage policy tested: bounded fallback/origin traffic, stale serve, rejection or load shedding
 - [ ] Invalidation-propagation test running in CI
 
 Redis pub/sub is fire-and-forget. An instance disconnected at publish time misses the
 message and serves stale data until its TTL expires — which is why the TTL is a safety net
-rather than redundancy. Propagate **after commit**
-(`@TransactionalEventListener(AFTER_COMMIT)`), never inside the transaction.
+rather than redundancy. Publish only after commit; if loss between commit and publish exceeds the
+staleness policy, an `AFTER_COMMIT` listener is insufficient—use transactional outbox/CDC or
+version-checked cache reads.
 
 ## Before implementing
 
-- [ ] `T_source` **measured** (p50 and p99), not estimated
+- [ ] Source latency distribution, origin work and sustainable capacity measured
 - [ ] Access distribution measured from real data
 - [ ] `h` projected from that distribution for the intended `maximumSize`
 - [ ] Decision made on `h × T_source`, not on `h` alone
 - [ ] `maximumSize` or `maximumWeight` set — weight if entry sizes vary widely
-- [ ] `maximumSize × average_size` ≤ ~25% of available heap
+- [ ] Logical weight calibrated to retained memory; full-cache post-GC/SLO headroom verified
 - [ ] TTL derived from the business tolerance for stale data
 - [ ] Jitter in the TTL if entries are created in bulk
-- [ ] Values are immutable DTOs, never JPA entities
+- [ ] Values are immutable/versioned projections; entity-cache semantics are explicit
 - [ ] `recordStats()` enabled
 - [ ] Invalidation strategy defined **and** covered by an automated test
+- [ ] Cache key includes every tenant/authorization/locale dimension affecting the value
+- [ ] Cache-outage, loader-timeout, stale-fill race and cold-start behavior tested

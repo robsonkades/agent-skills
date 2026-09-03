@@ -9,7 +9,7 @@ A breaker's output is a fast failure. The fallback decides what that failure bec
 | Stale cached value           | the caller can act on data known to be old, and the age is carried with the value | the age is dropped and stale reads look identical to fresh ones            |
 | Static default               | the default is safe in the restrictive direction (no discount, no entitlement)    | the default grants something — access, credit, a limit                     |
 | Degraded feature omitted     | the response is explicitly partial and the client can render it                   | an empty list is returned where "none" and "unknown" mean different things |
-| Queued write, applied later  | the operation is asynchronous by contract and the queue is durable                | the caller is told the write succeeded and the queue is in heap            |
+| Queued write, applied later  | contract returns accepted/pending, queue is durable, request is idempotent        | caller is told committed success or queue is in heap                       |
 | Fail fast with a typed error | the caller upstream has its own fallback, or a human does                         | it is called a fallback; it is the absence of one, which is often correct  |
 
 **The wrong-data rule.** A fallback that returns wrong data indistinguishably from right data
@@ -46,9 +46,9 @@ Three properties, each with an assertion that fails when the configuration is wr
 
 **1. It trips on the condition you configured.** Drive the exact number of calls the window
 and minimum-call count require, with the exact outcome the predicate should record, and assert
-the state changed. Then drive the _same_ number of calls with an outcome the predicate should
-**ignore** (a 400) and assert the state did not change. The second assertion is the one that
-catches a predicate counting client errors.
+the state changed. Then drive the _same_ number with an outcome the declared predicate should
+ignore (for example, validation 422) and assert the state did not change. Do not encode “all 4xx”
+if 408, 429 or a shared-authentication failure has another policy.
 
 ```java
 // Conceptual: the second half is the assertion usually missing.
@@ -56,7 +56,7 @@ for (int i = 0; i < minimumCalls; i++) callReturning(503);
 assertEquals(State.OPEN, breaker.getState());
 
 breaker.reset();
-for (int i = 0; i < minimumCalls; i++) callReturning(400);
+for (int i = 0; i < minimumCalls; i++) callReturning(422); // declared validation outcome
 assertEquals(State.CLOSED, breaker.getState());
 ```
 
@@ -66,6 +66,10 @@ directly — Resilience4j exposes `transitionToOpenState()`, `transitionToHalfOp
 duration. Then submit more concurrent calls than the probe limit and assert the excess were
 rejected without reaching the stub. Counting **stub invocations**, not exceptions, is what
 makes this assertion real.
+
+Direct transitions test probe gating, not the configured wait duration or automatic transition.
+Test timing separately with a controllable clock/scheduler where supported, or a narrowly bounded
+integration test; do not make the suite depend on long sleeps.
 
 **3. It closes again.** From half-open, return successes for the probe count and assert the
 state is closed and traffic flows. A breaker tested only in the open direction has an untested
@@ -94,5 +98,5 @@ Assert, in this order:
 4. Nothing wrote wrong data. Where the fallback touches state, assert the state afterwards.
 
 Finally, exercise the breaker in a load test: inject dependency latency at capacity and assert
-goodput on unrelated endpoints stays flat. That is the property the breaker exists for, and
+goodput on unrelated endpoints stays within its agreed isolation bound. That is the property the breaker exists for, and
 the one no unit test observes (`cascading-failures`, `load-testing`).

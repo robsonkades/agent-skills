@@ -11,9 +11,10 @@ capacity is reduced, so more calls time out, so more are retried. The loop susta
 after the original trigger is gone: removing the cause does not end the incident, because the
 retries are now the cause.
 
-**Signature.** The dependency's inbound request rate **rises** while its success rate
-**falls**. Nothing else produces that combination — under organic load growth both rise, and
-under a pure dependency fault the inbound rate is flat.
+**Signature.** The dependency's inbound attempts per logical call rise while success falls,
+with attempt ordinals/backoff visible in traces. Raw inbound rate rising while success falls is
+not unique—it can also be overload, fan-out change or attack—so correlate logical operation IDs
+and retry policy activation.
 
 **Exit.** Retries have to be cut, not waited out. A budget empties on its own because there
 are no successes to refill it; attempt counts do not. Shedding at the dependency
@@ -36,9 +37,10 @@ reconnecting. Two of the three layers are typically invisible in the repository.
 review. `downstream_requests / logical_calls` above the layer's own `maxAttempts` proves a
 second retrying layer exists.
 
-**Fix.** Retry at exactly one layer — the one that knows whether the operation is idempotent,
-which is almost never the sidecar — and set the others to a single attempt _explicitly_, so
-the decision is greppable rather than inherited from a default.
+**Fix.** Give one layer ownership of the operation-level retry policy/budget and explicitly
+configure transport, proxy, SDK and application attempt counts. A lower transport layer may
+retry a connection only when it can prove no request effect; include that in the combined
+maximum rather than relying on a slogan.
 
 ## 3. The non-idempotent write retried after a timeout
 
@@ -63,15 +65,18 @@ duplicate from a consumer-rebalance duplicate, which delivery-semantics owns.
 
 ## 4. Retry with no budget during a partial outage
 
-**Mechanism.** One dependency instance out of five is failing. With `maxAttempts(3)` and no
-budget, the 20% of calls that land on it become 60% extra load spread over the healthy four,
-which now carry 1.4× their normal traffic. The partial outage becomes a total one.
+**Mechanism.** Suppose 100 calls are initially split evenly over five instances and one fails.
+If each of its 20 failed calls makes two more attempts and both land on healthy instances,
+healthy instances receive 120 calls instead of their original 80: **1.5×** load. If retries
+can select the failed instance or trigger nested attempts, the distribution differs; calculate
+from routing and attempt policy rather than quoting a fixed multiplier.
 
 **Observation.** Healthy instances saturate while the unhealthy one is idle. Per-instance
 request rate diverges from the load balancer's intended split.
 
-**Fix.** A budget bounds this at 1.1× regardless of how much of the fleet is failing. Setting
-`maxAttempts` lower is a smaller multiplier, not a bound.
+**Fix.** A retry budget earning 0.1 token per success approaches at most 0.1 retries per
+success after its initial burst within that budget scope; this is not universally 1.1× of
+offered traffic. Combine it with per-call attempts, deadline, endpoint ejection and shedding.
 
 ## 5. Retry that holds a resource
 
@@ -94,7 +99,7 @@ connection-pool-sizing; the queueing arithmetic is littles-law-and-queueing.
 | Series                                             | Healthy shape | Incident shape                                                        |
 | -------------------------------------------------- | ------------- | --------------------------------------------------------------------- |
 | attempts ÷ logical calls                           | ~1.0, flat    | climbs to `maxAttempts` and plateaus there                            |
-| dependency inbound rps ÷ caller inbound rps        | constant      | rises while the dependency's success rate falls — the storm signature |
+| downstream attempts ÷ logical operations           | ~1.0          | rises while success falls; direct amplification evidence              |
 | retry budget rejections per second                 | 0             | > 0, which is the budget working; alert on it as a dependency signal  |
 | p99 of the logical call vs p99 of a single attempt | roughly equal | logical ≈ attempts × attempt + Σ backoff; the retry is inside the SLA |
 | duplicate business records per hour                | 0             | > 0 after any ambiguous-class retry that lacked an idempotency key    |
@@ -105,9 +110,9 @@ from an incident; the ratio can.
 
 ## Proving the policy before production
 
-- **Configuration test, no network.** Assert `maxAttempts × per-attempt timeout + Σ backoff ≤
-the caller's budget` for every declared policy, and assert that exactly one layer in the
-  path has `maxAttempts > 1`.
+- **Configuration test, no network.** Conservatively assert `Σ(attempt timeouts) + Σ(backoff)
+  - cleanup/response reserve ≤ caller budget`, including proxy/SDK/transport layers. Assert
+    one policy owns the budget and hidden retry defaults are explicit.
 - **Fault injection.** A proxy in front of the dependency (Testcontainers with a latency or
   connection-cut toxic) driven to a fixed failure rate. Assert the dependency's observed
   request count stays within the budget multiplier — that is the amplification bound made
@@ -115,3 +120,20 @@ the caller's budget` for every declared policy, and assert that exactly one laye
 - **Duplicate detection.** Run the ambiguous path deliberately: inject a timeout _after_ the
   server has committed, then assert exactly one business record exists. This is the test that
   catches a missing idempotency key, and it fails loudly on the shape that costs money.
+- **Server guidance and cancellation.** Exercise valid/invalid `Retry-After`, a delay beyond
+  remaining deadline, interruption during sleep, response streaming and breaker-open results.
+- **Statistical jitter.** With a deterministic random source in unit tests verify range and
+  saturation/overflow; at fleet scale inspect retry-arrival histograms for synchronization.
+
+## Troubleshooting path
+
+```text
+Dependency success falls
+  ↓ compare logical calls with attempt ordinals at every hop
+Attempt ratio rises?
+  ├─ no → organic load/capacity or fan-out change
+  └─ yes → identify owning and hidden retry layers
+             ↓ classify outcomes and unknown writes
+             ↓ inspect budget tokens, deadline exhaustion, jitter distribution
+             ↓ disable/amend retries, shed load, validate recovery and duplicates
+```

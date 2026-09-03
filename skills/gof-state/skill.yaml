@@ -1,13 +1,13 @@
 schemaVersion: 1
 
 name: gof-state
-version: 1.1.0
+version: 1.2.0
 description: >-
   State in modern Java: making an object's behaviour depend on an explicit state, with the
   transitions themselves modelled rather than implied by scattered flags. Covers the intent
   difference from Strategy, where transitions should live — in the state classes, in a table, or
   in one exhaustive switch — sealed records against enums, rejecting illegal transitions by
-  default, persisting a state safely (never by ordinal), atomic transitions under concurrency, and
+  default, persisting a state through stable codes rather than ordinals, atomic transitions under concurrency, and
   timeouts as transitions in a durable workflow. Use when boolean flags multiply on an entity,
   when a status field is checked in scattered ifs, when an illegal transition reaches production,
   when a workflow must survive a restart, or when two requests transition the same entity
@@ -40,7 +40,7 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
+dependencies: []
 
 suggests:
   - distributed-locks-and-leases

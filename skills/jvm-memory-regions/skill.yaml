@@ -1,10 +1,11 @@
 schemaVersion: 1
 
 name: jvm-memory-regions
-version: 1.4.0
+version: 1.6.0
 description: >-
-  The six memory regions of a JVM process — heap, Metaspace, code cache, thread stacks,
-  direct/native memory and JVM-internal — and how to budget them against a container limit.
+  The major memory-accounting domains of a JVM process — heap, Metaspace/class space, code
+  cache, thread stacks, direct/native/JVM-internal memory and mapped/file-backed pages — and
+  how to budget them against a container limit.
   Use when a pod is OOMKilled with no Java exception, when an OutOfMemoryError names
   something other than "Java heap space", when -Xmx is set equal to the container limit,
   when RSS exceeds the heap by more than expected, when a heap above 32 GB is proposed, or
@@ -43,7 +44,9 @@ files:
 dependencies: []
 
 suggests:
+  - linux-for-jvm
   - object-layout-and-footprint
+  - code-cache-segments
 
 capabilities:
   - reads-source

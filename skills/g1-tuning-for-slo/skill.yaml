@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: g1-tuning-for-slo
-version: 2.0.0
+version: 2.1.0
 description: >-
   Deriving G1 flag values from a latency SLO and proving they helped: what
   `MaxGCPauseMillis` actually controls, the young size bounds, IHOP and adaptive IHOP with
@@ -9,7 +9,7 @@ description: >-
   calculation, `G1OldCSetRegionThresholdPercent` and `G1MixedGCCountTarget`, and the
   measure-derive-predict-validate loop. Use when GC flags were copied from another service,
   when `-Xms` differs from `-Xmx` in production, when mixed GC violates the SLO while young
-  GC is healthy, when GC overhead exceeds 5 to 10 percent, when a full GC follows a marking
+  GC is healthy, when GC overhead exceeds its explicit service budget, when a full GC follows a marking
   cycle that finished too late, when an IHOP was set to the theoretical ceiling, when a G1
   flag makes the JVM refuse to start, or when a parser reports a promotion rate of zero.
   Does not cover deciding whether GC is the bottleneck at all or which collector to use

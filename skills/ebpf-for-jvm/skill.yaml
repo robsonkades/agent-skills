@@ -1,17 +1,17 @@
 schemaVersion: 1
 
 name: ebpf-for-jvm
-version: 2.0.0
+version: 2.1.0
 description: >-
-  Observing a JVM from the kernel with eBPF and bpftrace: syscall and futex latency, block
-  I/O, run queue latency, page faults, JVM USDT probes, and correlating kernel-side evidence
-  with JVM-side evidence. Use when JFR and a CPU profile show a healthy runtime but p99 is
-  bad, when threads are RUNNABLE yet not scheduled, when a bpftrace script returns an empty
-  histogram under known contention, when a script filters `sched:*` tracepoints by
-  `args->pid`, when a USDT probe listed by `tplist` never fires, or when someone is about to
-  run `profiler.sh`. Does not cover host metrics and incident commands that need no eBPF
-  (linux-for-jvm), running a single JVM-side profile (jfr-and-async-profiler), or always-on
-  collection (continuous-profiling).
+  Using eBPF/bpftrace to measure kernel-visible behavior around a JVM without inventing
+  attribution: selecting stable tracepoints versus kprobes/uprobes/USDT, scoping by
+  process/thread/cgroup, tracking syscall/futex/scheduler/block-I/O lifecycles, managing BPF
+  map loss and cardinality, resolving native and time-varying JIT code, and correlating—not
+  summing—kernel, JFR, profile, and application evidence. Use when scheduler delay, kernel I/O,
+  faults, networking, or cross-process interference may explain JVM symptoms, or when a BPF
+  script is empty/plausible-but-wrong. Does not own ordinary host diagnosis (linux-for-jvm),
+  JVM-local profiling (jfr-and-async-profiler), or continuous profile operations
+  (continuous-profiling).
 
 license: Apache-2.0
 
@@ -45,6 +45,10 @@ dependencies:
 
 suggests:
   - async-profiler-advanced
+  - tcp-tuning
+  - cpu-cache-and-numa
+  - io-uring-and-zero-copy
+  - blocking-and-nonblocking-io
 
 capabilities:
   - reads-source

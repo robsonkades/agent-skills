@@ -57,7 +57,7 @@ Test exactly those, with the application mocked:
 class OrderControllerTest {
 
     @Autowired MockMvc mvc;
-    @MockitoBean PlaceOrder placeOrder;      // Boot 4: @MockBean was removed
+    @MockitoBean PlaceOrder placeOrder;      // Spring Framework 6.2+
     @MockitoBean OrderQueries queries;
 
     @Test
@@ -161,8 +161,10 @@ void the_api_still_matches_the_published_schema() {
 }
 ```
 
-The asymmetry is the design: additive change passes, removal and renaming fail
-(`rpc-and-api-contracts`).
+Compatibility depends on the contract technology and consumer behavior. Additive fields are often
+backward-compatible for tolerant JSON readers, but closed schemas, generated clients, enums,
+validation constraints and event consumers can make an addition breaking. Configure the checker
+for the actual compatibility policy (`rpc-and-api-contracts`).
 
 For events, the same discipline applies and is more often missing: a published event's shape
 is a contract with every consumer, and a renamed field in an event payload is a silent break

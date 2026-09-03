@@ -1,72 +1,115 @@
-# Reading the utilisation curve
+# Reading utilisation curves without turning models into laws
 
-## M/M/1
+## M/M/1 is a sensitivity baseline
 
-```
-R_total = S / (1 − ρ)        W_queue = R_total − S
-```
+For stationary Poisson arrivals, independent exponential service, one work-conserving FCFS server,
+infinite waiting room and `ρ=λS<1`:
 
-Where it comes from, in three lines, so the "80% cliff" is a derivation and not a slogan:
-the mean number in an M/M/1 system is `L = ρ / (1 − ρ)`; Little gives `R = L / λ`; and
-`ρ = λ × S`, so `R = S / (1 − ρ)`. The slope is `dR/dρ = S / (1 − ρ)²`: at ρ = 0.5 each
-extra point of utilisation costs `0.04 S`, at 0.8 it costs `0.25 S`, at 0.9 it costs
-`1.0 S`. The cliff is the square in the denominator. With `c` servers sharing one queue
-the knee moves right — a 32-thread pool tolerates a higher ρ than a 2-thread one — and
-choosing between M/M/1, M/M/c and M/D/1 for a real system is `queueing-models`.
-
-| ρ    | R_total | Reading                                |
-| ---- | ------- | -------------------------------------- |
-| 0.50 | 2.0 × S | queue wait already equals service time |
-| 0.70 | 3.3 × S | still recoverable                      |
-| 0.80 | 5.0 × S | the knee                               |
-| 0.90 | 10 × S  | +10% load from here is +200% latency   |
-| 0.99 | 100 × S | not a system, an outage in progress    |
-
-Two consequences that are not intuitive:
-
-- **Queue wait equals service time at ρ = 0.5.** Half the response time is already
-  waiting, at what most dashboards render as a comfortable green.
-- **Returns on capacity are super-linear near saturation.** By Erlang-C, doubling
-  capacity for a system at 80% utilisation moves latency from 5.0×S to 1.19×S — a 4.2×
-  improvement, not 2×. The same spend at 40% utilisation buys almost nothing.
-
-Service-time variance is a capacity lever in its own right: with deterministic service
-time (M/D/1) the queue wait is half that of M/M/1 at the same utilisation.
-
-## Bimodal service time
-
-The mean of a bimodal distribution describes neither mode.
-
-```
-99% of requests at 10 ms, 1% at 500 ms:
-
-  E[S] = 0.99 × 0.010 + 0.01 × 0.500 = 0.0149 s
-  At 100 req/s:  ρ = 100 × 0.0149 = 1.49  → already saturated
-
-The slow path is 1% of requests and 34% of utilisation.
+```text
+E[R]  = S/(1−ρ)
+E[Wq] = ρS/(1−ρ)
+E[L]  = ρ/(1−ρ)
 ```
 
-Model the two paths separately and sum their utilisations.
+| `ρ` |                  `E[R]/S` | Model reading                                                             |
+| --: | ------------------------: | ------------------------------------------------------------------------- |
+| .50 |                       2.0 | mean queue wait equals mean service time                                  |
+| .70 |                      3.33 | small demand/load errors already amplify                                  |
+| .80 |                       5.0 | 10% relative more arrivals gives `ρ=.88`, `E[R]=8.33S`                    |
+| .90 |                      10.0 | 10% relative more arrivals gives `ρ=.99`, `E[R]=100S`                     |
+|  ≥1 | no stationary finite mean | backlog grows until a finite limit, shedder or workload change intervenes |
 
-## The Universal Scalability Law knee
+The derivative `d(E[R]/S)/dρ=1/(1−ρ)^2` explains nonlinear sensitivity; it does not create a
+universal 70%, 80% or 90% operating threshold. Real headroom also covers burstiness, failover,
+autoscaling delay, correlated service, retries and uncertainty in demand.
 
-Beyond `N* = √((1 − α) / β)` — where α is the serial fraction and β the coherency
-penalty — total throughput **falls** as concurrency rises. This is why "add threads" has
-a maximum and then reverses, and why a scalability curve that turns downward is evidence
-of coherency cost (see `cpu-cache-and-numa`), not of missing capacity.
+Do not use this curve when evidence contradicts its assumptions. A bounded executor blocks or
+rejects rather than possessing an infinite queue; a database pool has multiple servers and
+downstream contention; a CPU with SMT/NUMA does not supply identical independent servers.
 
-## Diagnosing saturation
+## Variability is a first-class capacity input
 
-| Observation                              | Classification           | Next step                 |
-| ---------------------------------------- | ------------------------ | ------------------------- |
-| High CPU, threads `RUNNABLE`             | CPU-bound                | profile the hot path      |
-| Low CPU, threads `TIMED_WAITING` in park | pool or downstream limit | `jdk.ThreadPark`          |
-| Low CPU, threads `BLOCKED`               | monitor contention       | `jdk.JavaMonitorEnter`    |
-| Latency rising over the run's duration   | queue accumulating       | inspect `workQueue` depth |
+For an M/G/1 FCFS queue with Poisson arrivals and general service time:
 
-Lower the JFR locking thresholds first if the contention is fine-grained — the defaults
-(20 ms in `default.jfc`, 10 ms in `profile.jfc`) hide exactly the high-frequency case,
-and "zero events" then reads as "no contention".
+```text
+E[Wq] = λ E[S²] / (2(1−ρ))
+      = ρ(1 + C_s²)E[S] / (2(1−ρ))
+```
 
-**Low CPU with high latency is a queue, not idleness.** It is the most common incident
-shape in JVM applications, and no CPU metric will point at it.
+`C_s` is the coefficient of variation of service time. At the same mean demand and utilisation,
+larger variance raises queue wait. Deterministic service (`C_s=0`) has half the M/M/1 mean queue
+wait (`C_s=1`); a rare slow path can dominate `E[S²]` even when its request fraction is small.
+
+Example for one shared server:
+
+```text
+99% at 10 ms, 1% at 500 ms
+E[S]  = 14.9 ms
+E[S²] = .99(.010²) + .01(.500²) = .002599 s²
+at 50 req/s: ρ=.745; E[Wq]≈255 ms
+```
+
+The two paths' demand contributions add only if they visit the same capacity boundary. If they use
+different pools/resources, model each boundary and routing probability separately. A mixture mean
+is valid for aggregate demand even though it describes neither mode.
+
+## Multiple servers and “doubling capacity”
+
+Erlang C models M/M/c with one FCFS queue and `c` identical servers. Under those assumptions, a
+single server at total offered load `a=.8` has `E[R]=5S`; two servers at the same total load have
+per-server utilisation `.4` and `E[R]≈1.19S`. That illustrative 4.2× improvement is a queueing
+effect, not a promise from doubling arbitrary production capacity. Sharding queues, unequal
+servers, connection affinity, lock contention and downstream bottlenecks change it.
+
+Measure the curve: hold workload mix and state, step offered load or capacity, record throughput,
+queue, service demand and latency distribution, and test whether the fitted model predicts held-out
+points. `queueing-models` owns selection/fitting.
+
+## Utilisation is boundary-specific
+
+Use demand law for a resource visited `V_k` times per completed transaction:
+
+```text
+D_k = V_k × E[S_k]          # resource time per completed transaction
+U_k = X × D_k / m_k         # fraction per equivalent capacity unit
+```
+
+Units must cancel. CPU-seconds/request × requests/second gives cores, not “CPU percent” until
+divided by effective capacity. A connection's residence includes the whole checkout-to-return hold
+time, not only SQL execution. Retries add visits. Failures may consume demand without appearing in
+successful throughput.
+
+## Diagnose with converging evidence
+
+| Symptom                            | Competing explanations                                                                                         | Evidence that distinguishes them                                                   |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| High process CPU, runnable backlog | CPU demand, spin, kernel work, quota throttling, memory bandwidth                                              | per-cgroup CPU/throttling, run queue, CPU profile, IPC/cache/NUMA evidence         |
+| Low process CPU, high latency      | downstream wait, timer/backoff, lock parking, admission queue, idle capacity due affinity, external throttling | wall-clock profile/JFR events, queue/permit metrics, trace critical path, host CPU |
+| `BLOCKED` platform threads         | monitor entry contention at dump instant                                                                       | repeated dumps plus `jdk.JavaMonitorEnter`/lock-site evidence and hold/wait time   |
+| `WAITING`/`TIMED_WAITING`          | normal idle worker, future/permit wait, timeout, downstream pool                                               | stack/owner, queue depth, task age, dependency telemetry                           |
+| Latency rises through run          | accumulating queue, data/cache state, leak, throttling, generator drift                                        | inventory slope, arrival/departure gap, state metrics, generator timestamps        |
+
+Thread state is a snapshot, not a diagnosis. Inspect event settings and thresholds on the running
+JDK; lower JFR thresholds gradually within an overhead budget. “Zero events” means zero recorded
+events under that configuration, not zero contention or I/O.
+
+## Overload and recovery tests
+
+Test more than the steady point:
+
+1. finite burst below queue capacity;
+2. sustained offered load above service capacity;
+3. dependency slowdown while arrival remains fixed;
+4. one server/zone removed;
+5. client cancellation and deadlines while work is queued/running;
+6. load returned below capacity—measure queue drain and whether stale work monopolises recovery.
+
+Record offered, admitted, started, completed, failed, rejected, timed-out and cancelled counts.
+Verify queue age as well as depth, memory per queued task, and whether abandoned work is removed.
+
+## Sources
+
+- [Little, “A Proof for the Queuing Formula: L = λW” (1961)](https://doi.org/10.1287/opre.9.3.383)
+- [Denning and Buzen, “The Operational Analysis of Queueing Network Models”](https://www.columbia.edu/~ww2040/8100S12/DenningBuzen1978.pdf)
+- [Oracle JDK 25 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+- [Oracle JDK 25 JFR troubleshooting](https://docs.oracle.com/en/java/javase/25/troubleshoot/troubleshoot-performance-issues-using-jfr.html)

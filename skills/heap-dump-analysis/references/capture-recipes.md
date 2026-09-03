@@ -36,44 +36,53 @@ jcmd <pid> help GC.heap_dump
 
 If the JVM is wedged such that no thread reaches a safepoint — a native deadlock, for
 instance — `jcmd` and `jmap` both hang waiting for an operation that will never run.
-`jhsdb jmap --binaryheap` reads the process memory externally (a ptrace-equivalent
-mechanism) without needing the target's cooperation.
+`jhsdb jmap --binaryheap` reads process memory externally (a ptrace-equivalent mechanism)
+without a normal target-VM safepoint handshake, but live-process SA attach is invasive: it
+suspends the target and concurrent serviceability attaches can corrupt the investigation or
+leave the JVM unhealthy. Prefer `jhsdb` against a core dump; if live attach is the only
+option, drain the instance, use one operator/tool and plan restart/recovery.
 
 ## The live-filter trade-off
 
-| Choice                                            | What you get                            | What it costs                                                                                                                                                                 |
-| ------------------------------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Full GC first (`jcmd` default, `jmap -dump:live`) | Only surviving objects — no false leaks | A full GC on an already-pressured heap can take tens of seconds to minutes before the file is written; during a live incident that pause may itself be the user-visible event |
-| No forced GC (`-all`, plain `jmap -dump`)         | Fires immediately, raw state            | Larger file, polluted with garbage not yet swept                                                                                                                              |
+| Choice                                            | What you get                                                    | What it costs                                                                                                                                 |
+| ------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Full GC first (`jcmd` default, `jmap -dump:live`) | Objects reachable after that collection; less unreachable noise | A full GC on an already-pressured heap can take tens of seconds to minutes before the file is written; survivors are not thereby proven leaks |
+| No forced GC (`-all`, plain `jmap -dump`)         | Fires immediately, raw state                                    | Larger file, polluted with garbage not yet swept                                                                                              |
 
-A dump written by `-XX:+HeapDumpOnOutOfMemoryError` never gets the filter: the JVM has
-already failed to allocate, and running another full GC would risk both freeing enough
-memory to destroy the evidence and failing again. Read those dumps through the Dominator
-Tree, never through raw instance counts.
+A dump written by `-XX:+HeapDumpOnOutOfMemoryError` is not requested with the interactive
+“live” filter. The failing allocation path may already have attempted collection, but the
+resulting HPROF can still contain objects not useful to the retention question. Read it
+through ownership/reachability evidence, not raw instance counts.
 
 ## What a dump costs in production
 
-| Cost                     | Mechanism                                                                                                                                                                                                            | What to do before capturing                                                                                                                                                                                                   |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pause                    | `VM_HeapDumper` runs at a safepoint; every Java thread stays stopped until the last byte is written. Duration scales with live objects and with the write speed of the destination                                   | Drain the instance from the load balancer first. Record duration from `jdk.HeapDump` in JFR or `-Xlog:heapdump`; `-parallel=<n>` splits the walk across dumper threads                                                        |
-| Preceding full GC        | Without `-all` a full collection runs before the walk, on a heap that is already under pressure                                                                                                                      | See the live-filter table below; `-all` when the pause matters more than a clean histogram                                                                                                                                    |
-| Disk                     | HPROF writes each object's fields and array payload raw, so the uncompressed file is about the live set (here: a 214 MB file for 210 MB of live arrays on 25.0.3). `-all` adds the garbage not yet collected         | `df` the destination for a full `-Xmx` worth of bytes. `-gz` compresses inline, but the compression work happens inside the safepoint — measure before choosing a level above 1                                               |
-| Page cache in a cgroup   | Dirty file pages are charged to the container's memory. A heap-sized file written into the container's own filesystem can push the cgroup over its limit while the JVM is paused — the dump OOMKills the pod         | Write to a volume that is not `medium: Memory`, leave headroom of the dump's size under the limit, or stream out (`kubectl cp` after the fact is too late if the pod is already gone). Page-cache accounting is linux-for-jvm |
-| Auto-dump is once-only   | `-XX:+HeapDumpOnOutOfMemoryError` writes on the **first** VM-raised `OutOfMemoryError` of the process and never again; an OOM constructed in Java code (`Cannot reserve … direct buffer memory`) does not trigger it | Do not let a caught-and-logged OOM consume the one shot. Pair with `-XX:+ExitOnOutOfMemoryError` so the dump is followed by a restart rather than a half-dead JVM (decision in jvm-memory-regions)                            |
-| Destination is ephemeral | `HeapDumpPath` pointing at the container's overlay filesystem vanishes with the pod                                                                                                                                  | Point it at a directory on a volume; a directory value yields `java_pid<pid>.hprof` inside it. `HeapDumpPath`, `HeapDumpGzipLevel` and the flag itself are settable live with `jcmd VM.set_flag`                              |
+| Cost                     | Mechanism                                                                                                                                                                                                            | What to do before capturing                                                                                                                                                                                                            |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pause                    | `VM_HeapDumper` runs at a safepoint; every Java thread stays stopped until the last byte is written. Duration scales with live objects and with the write speed of the destination                                   | Drain the instance from the load balancer first. Record duration from `jdk.HeapDump` in JFR or `-Xlog:heapdump`; `-parallel=<n>` splits the walk across dumper threads                                                                 |
+| Preceding full GC        | Without `-all` a full collection runs before the walk, on a heap that is already under pressure                                                                                                                      | See the live-filter table below; `-all` when the pause matters more than a clean histogram                                                                                                                                             |
+| Disk                     | HPROF size depends on captured reachability, object/array payloads, identifiers, class records and encoding; one 25.0.3 array-heavy run produced 214 MB for ~210 MB of live arrays, which is not a universal ratio   | Budget from a representative dump with contingency up to the relevant heap/capture state. `-gz` compresses inline, but compression work occurs during the operation—measure pause/CPU before choosing a level above 1                  |
+| Page cache in a cgroup   | Dirty file pages can be charged to the writer's cgroup. A heap-sized dump can push the cgroup over its limit while the JVM is paused, including on a persistent filesystem                                           | Leave measured memory/disk headroom and test accounting/writeback on the target runtime. A persistent volume preserves the file but does not by itself remove page-cache charging; never use memory-backed `emptyDir` for a large dump |
+| Auto-dump is once-only   | `-XX:+HeapDumpOnOutOfMemoryError` writes on the **first** VM-raised `OutOfMemoryError` of the process and never again; an OOM constructed in Java code (`Cannot reserve … direct buffer memory`) does not trigger it | Do not let a caught-and-logged OOM consume the one shot. Pair with `-XX:+ExitOnOutOfMemoryError` so the dump is followed by a restart rather than a half-dead JVM (decision in jvm-memory-regions)                                     |
+| Destination is ephemeral | `HeapDumpPath` pointing at the container's overlay filesystem vanishes with the pod                                                                                                                                  | Point it at a directory on a volume; a directory value yields `java_pid<pid>.hprof` inside it. `HeapDumpPath`, `HeapDumpGzipLevel` and the flag itself are settable live with `jcmd VM.set_flag`                                       |
 
-Cheaper questions first: `jcmd <pid> GC.class_histogram` (also a safepoint operation, but no
-file; `-parallel` on 25) answers "which class" without a dump, and JFR's `jdk.OldObjectSample`
+Lower-artifact questions first when their impact fits: `jcmd <pid> GC.class_histogram`
+(still a high-impact safepoint operation; filter behavior is command/version-specific, but
+there is no HPROF file; `-parallel` on 25) estimates “which class”, and JFR's `jdk.OldObjectSample`
 answers "which allocation site is retained" from a running process — see
 java-reference-types-and-leaks for its settings and its ZGC caveat.
 
 ## From a container
 
 ```bash
-docker cp "$JAVA_HOME/bin/jcmd" container:/tmp/          # if jcmd is not in the image
-docker exec container /tmp/jcmd <pid> GC.heap_dump /tmp/dump.hprof
-docker cp container:/tmp/dump.hprof ./dump.hprof
+# When the image already contains a compatible JDK tool:
+docker exec container /opt/java/openjdk/bin/jcmd <pid> GC.heap_dump /dumps/dump.hprof
+docker cp container:/dumps/dump.hprof ./dump.hprof
 ```
+
+Do not copy only the `jcmd` executable into a minimal image: it depends on the matching JDK
+runtime/libraries and attach permissions. Use a compatible diagnostic image/container that
+shares the target PID namespace and credentials, or bake supported tools into the image;
+test the platform-specific attach path before the incident.
 
 Check free disk first: an uncompressed dump can approach the size of the used heap, and
 `/tmp` inside the container is charged to the pod's memory while the pages are dirty.
@@ -89,19 +98,20 @@ Without these, the dump cannot be compared to anything and its numbers cannot be
   header, shifting the shallow size of the entire heap. A histogram diff across that flag
   shows a delta that came from layout, not from code.
 
-Archive a baseline dump from a healthy system shortly after the first stable production
-deploy. 10,000 `UserSession` instances may be normal or may be a nascent leak; a single
-dump cannot tell the difference, and MAT's "Compare Histograms" against a baseline can.
+Prefer a controlled representative baseline or lower-cost class/JFR statistics; archiving
+a healthy production dump adds a global pause and creates a sensitive-data artifact. A
+single count cannot distinguish normal working set from growth, but comparisons are valid
+only when load, cache state, topology, JDK/layout and capture filter are normalized.
 
 ## Initial triage: leak or peak?
 
-| Signal                                                                  | Reading                                                                                       |
-| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Dump size ≈ 90–95%+ of configured `-Xmx`, taken after a full GC         | Heap genuinely exhausted — real retention, not pending garbage                                |
-| Dump size ≈ 60–70% of `-Xmx`, taken after a full GC                     | The heap is not at its limit; check whether `-Xmx` is oversized or the dump missed the peak   |
-| Taken at peak load versus at idle                                       | In-flight request objects are expected at peak; the same volume at idle is the real suspicion |
-| One object at the top of the Dominator Tree retaining > 30% of the heap | Probable single root cause — start there                                                      |
-| Many medium objects, none dominant                                      | Legitimate fragmented usage, or several small simultaneous leaks                              |
+| Signal                                                                       | Reading                                                                                             |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Captured live bytes near the effective heap limit after a requested full GC  | Strong retention/capacity evidence; distinguish legitimate working set from leak                    |
+| Captured live bytes materially below the effective limit                     | Capture may miss the peak/use another capacity basis, or the OOM may be non-heap; reconcile context |
+| Taken at peak load versus at idle                                            | In-flight request objects are expected at peak; the same volume at idle is the real suspicion       |
+| One dominator owns a material share and grows across normalized observations | High-value starting point; a business cache/index may legitimately dominate                         |
+| Many medium objects, none dominant                                           | Legitimate fragmented usage, or several small simultaneous leaks                                    |
 
 ## Two dumps beat one
 
@@ -113,8 +123,12 @@ jcmd <pid> GC.heap_dump dump2.hprof
 # MAT: Window -> Heap Dump -> Compare Baselines -> "Compare Histograms"
 ```
 
-Growth that is monotonic and proportional to elapsed time confirms a leak. A high
-instance count that stabilises between the two captures is load, not retention.
+Monotonic normalized growth strengthens an unbounded-retention hypothesis; it does not by
+itself prove a defect. Legitimate append-only state, changed traffic/cardinality, delayed
+expiry and topology shifts can have the same shape. Conversely, two stable points do not
+prove safety if the growth is bursty or the observation window misses its trigger. Trace
+the strong ownership path and compare behavior with the declared capacity/lifecycle
+contract.
 
 Apply the same discipline to validating a fix: two post-fix dumps under equivalent load,
 separated in time, showing the former dominator no longer growing. Then run long enough
@@ -123,8 +137,10 @@ immediate OOM proves nothing.
 
 ## Dumps too large for a local MAT
 
-MAT typically needs about 2× the dump size as `-Xmx` in its own `MemoryAnalyzer.ini` to
-index comfortably. Beyond that:
+MAT index memory can be comparable to or greater than dump size; “2×” is only a planning
+heuristic and varies with object count, identifiers, parser version and indexes. Run a
+representative parse with disk/RAM headroom and record the tool version. Beyond local
+capacity:
 
 - **HeapHero.io** — online `.hprof` analysis; the heap-dump sibling of GCeasy.io.
 - **jxray.com** — commercial, aimed at very large dumps, with common leak patterns

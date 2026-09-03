@@ -5,10 +5,11 @@ Reproductions below were executed on Temurin 25.0.3; the thread-dump text is wha
 
 ## The procedure that matters (JVMS 5.5, abridged)
 
-Initialisation runs once per class, under a per-class initialisation lock, triggered by the
-first `new`, static method call, static field access (other than a compile-time constant),
-`Class.forName(name, true, …)`, subclass initialisation or reflective use. The steps that
-produce production incidents:
+Initialization is attempted under the JVMS initialization protocol. Active-use triggers include
+`new`, invocation of a class's static method, and access/assignment of a non-constant static field
+**declared by that class**, plus specified reflective/method-handle API uses and initialization
+of a subclass. Merely loading, linking, taking a class literal, or referring through a subclass
+does not necessarily initialize the named class. The incident-producing steps are:
 
 1. If another thread is initialising the class, **wait** on the initialisation lock.
 2. If the **current** thread is initialising the class, **return immediately** — the
@@ -16,8 +17,8 @@ produce production incidents:
    assigned so far.
 3. If initialisation previously failed, throw `NoClassDefFoundError` — every time, for the
    life of the loader.
-4. Initialise the superclass chain first (interfaces only if they declare default methods),
-   then run `<clinit>`: static field initialisers and `static {}` blocks in **textual order**.
+4. Initialize required superclasses and recursively required superinterfaces that declare
+   default methods, then run `<clinit>`: static field initializers and blocks in textual order.
 
 Steps 1 and 2 are the two traps; step 3 is the confusing error.
 
@@ -54,7 +55,8 @@ back into the container; a JDBC driver's static registration touching a logging 
 static initialiser loads the driver. Fix by breaking the static cycle — move one side to
 explicit initialisation at a lifecycle point you choose, or initialise both classes eagerly
 from one thread at startup (`Class.forName(name, true, loader)`) before any worker thread
-runs.
+runs. This can avoid the two-thread cycle but does not make fallible work safe, remove recursive
+partial-state reads, or define recovery; use eager touching only after proving those preconditions.
 
 ## Recursion: one class, one thread
 
@@ -88,11 +90,12 @@ separates the singleton's initialisation from the class that carries the other s
 ```
 
 The first touch throws `ExceptionInInitializerError` with the real cause; every later touch
-— from any thread, for the life of the loader — throws `NoClassDefFoundError: Could not
-initialize class X` (step 3). Since JDK 17 the second error's `cause` restates the original
-exception and the thread it happened in, so a log that only captured the second one still
-names the culprit. A `NoClassDefFoundError` whose `cause` is a `ClassNotFoundException`
-instead is the other kind: the class file itself is absent at run time.
+— from any thread, for the life of that definition — throws `NoClassDefFoundError: Could not
+initialize class X` (step 3). Modern HotSpot commonly preserves useful original-initialization
+detail in the later cause, but do not depend on that across vendors/releases or logging wrappers.
+The first failure remains authoritative. A `NoClassDefFoundError` caused by
+`ClassNotFoundException` usually means JVM-initiated loading could not locate a required
+definition; classify other linkage causes from the complete chain.
 
 The operational consequence: a static initialiser that fails on a transient condition (a
 DNS lookup, a file that appears later) poisons the class until restart. Retry logic around
@@ -109,3 +112,18 @@ jcmd <pid> Thread.print            # the deadlock signature above
 `class+init` shows which thread initialised which class and in what order — enough to see a
 cycle forming before it deadlocks, and to confirm that an initialiser suspected of doing I/O
 is the one that took the time.
+
+## Acceptance tests for initialization changes
+
+- Run first touch concurrently behind a barrier; assert one successful publication and no hang.
+- Inject each fallible dependency failure on first touch; verify a controlled startup/readiness
+  failure rather than poisoning a class needed for recovery.
+- Exercise shutdown/restart in the same JVM when a plugin/container supports reload.
+- Test constant/non-constant field access and subclass/superinterface triggers explicitly rather
+  than inferring them from source order.
+
+## Primary references
+
+- [JVMS 25 §5.5, initialization](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-5.html#jvms-5.5)
+- [JLS 25 §12.4, initialization](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.4)
+- [Java 25 `Class.forName`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html#forName(java.lang.String,boolean,java.lang.ClassLoader)>)

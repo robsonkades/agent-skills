@@ -34,15 +34,18 @@ serve before the proxy is up, and the proxy can exit while the app is still drai
 ## Workflow
 
 1. **Name the capability and why the application cannot carry it.** "A library exists in our
-   language and we own the code" ends the discussion — read
+   language and we own the code" is the lower-operational-cost baseline; compare isolation,
+   rollout, language coverage and failure containment before rejecting it. Read
    `references/sidecar-or-node-agent.md` before continuing.
 2. **Choose the unit of deployment**: per pod (sidecar), per node (DaemonSet), or in process.
    Per-pod cost is paid once per replica; per-node cost once per node. That ratio is usually
    the decision, not elegance.
-3. **Declare it as a native sidecar** — an init container with `restartPolicy: Always` — so
+3. **When the cluster supports it, prefer a native sidecar** — an init container with
+   `restartPolicy: Always` — when startup, termination or Job completion ordering matters, so
    the kubelet starts it before the app containers and terminates it after them. Alpha in
    Kubernetes 1.28, on by default from 1.29, stable in 1.33. Check the cluster version before
-   relying on it; on older clusters that ordering does not exist.
+   relying on it; feature-gate and API compatibility must be verified during admission and
+   rollout on mixed-version clusters.
 4. **Give it `requests` and `limits`.** They are per container, but the QoS class and node
    pressure eviction are per pod, so an unbounded sidecar degrades the app's scheduling.
 5. **Write down the coupling surface** — which `localhost` port, which shared volume, and
@@ -95,10 +98,11 @@ Prefer changing the application instead when:
   Job never completes. This is the most common reason a batch pod hangs at 1/2 containers
   ready. A native sidecar is terminated by the kubelet once the last app container exits,
   which is the fix.
-- Adding a container without `limits` silently drops the pod out of **Guaranteed** QoS, which
-  requires every container to set `requests` equal to `limits` for both CPU and memory. The
-  pod becomes Burstable and is evicted earlier under node pressure — the app's availability
-  changed because someone added a logging sidecar.
+- Under traditional container-level resources, adding a container without matching non-zero
+  CPU and memory requests/limits drops the pod out of **Guaranteed** QoS. Kubernetes 1.34+
+  can instead classify from Pod-level resources when that beta feature is enabled. Verify the
+  effective cluster policy; QoS influences node-pressure eviction preference but is not an
+  absolute eviction order independent of requests, priority and actual usage.
 - A container that exceeds its own memory limit is OOM-killed **individually** and restarted
   per the pod's restart policy; the app container keeps running. Sizing the JVM under its own
   limit is `container-awareness`.
@@ -106,8 +110,9 @@ Prefer changing the application instead when:
   broken is a **gray failure**: Kubernetes sees a healthy container and only the app's error
   rate against `localhost` reveals it. Give the sidecar its own readiness probe rather than
   inferring its health from the app's — probe semantics are `kubernetes-service-lifecycle`.
-- The app must survive a sidecar restart, which means no connection may be cached across one.
-  Validate pooled connections on borrow, or the first requests after every restart fail.
+- The app must survive a sidecar restart. Bound connect/request timeouts and make the pool evict
+  failed or closed connections; validation on borrow is one option, with an extra round trip or
+  health-check cost, not a universal requirement.
 - `kubectl logs` needs `-c <container>` once there are two containers, and any metric without
   a `container` label sums two unrelated processes into one series. Fix both before you need
   them at 03:00.

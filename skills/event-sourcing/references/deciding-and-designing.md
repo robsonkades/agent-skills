@@ -6,14 +6,14 @@ Event sourcing is usually proposed to solve a problem that a cheaper mechanism a
 solves. Run this comparison explicitly, because the alternatives are genuinely good and are
 routinely skipped.
 
-| Need                                    | Cheapest adequate mechanism                    | Event sourcing adds                               |
-| --------------------------------------- | ---------------------------------------------- | ------------------------------------------------- |
-| "Who changed this, and when"            | Audit/history table, or DB temporal tables     | Nothing worth the cost                            |
-| "What did it look like last March"      | Bitemporal columns, or temporal tables         | Arbitrary reconstruction, including derived state |
-| "Feed changes to analytics"             | Change data capture (CDC) from the existing DB | Nothing — CDC is less invasive                    |
-| "Other services react to changes"       | Publish integration events from an outbox      | Nothing — the outbox is independent               |
-| "Undo, and show the user their history" | A history table plus a revert operation        | Undo of derived state, not just stored fields     |
-| "The sequence IS the domain"            | —                                              | This is the case it exists for                    |
+| Need                                    | Cheapest adequate mechanism                    | Event sourcing adds                                      |
+| --------------------------------------- | ---------------------------------------------- | -------------------------------------------------------- |
+| "Who changed this, and when"            | Audit/history table, or DB temporal tables     | Domain replay only if independently required             |
+| "What did it look like last March"      | Bitemporal columns, or temporal tables         | Arbitrary reconstruction, including derived state        |
+| "Feed changes to analytics"             | Change data capture (CDC) from the existing DB | Semantic domain events only if CDC rows are insufficient |
+| "Other services react to changes"       | Publish integration events from an outbox      | Historical fold only if the sequence is authoritative    |
+| "Undo, and show the user their history" | A history table plus a revert operation        | Undo of derived state, not just stored fields            |
+| "The sequence IS the domain"            | —                                              | This is the case it exists for                           |
 
 The last row is the honest test. In a ledger, the entries are the truth and the balance is a
 derived number — writing the balance as the truth and the entries as an audit log inverts the
@@ -27,12 +27,28 @@ customer profile is a normal table is well designed, not inconsistent.
 
 - Every query needs a projection, and every new query needs a new projection built from
   history.
-- Every event type is a permanent schema commitment.
+- Every retained event type is a schema commitment for its replay/evolution horizon.
 - The team needs an operational answer for rebuilds, projection lag and position tracking.
 - Onboarding cost: this is unfamiliar to most Java developers, and mistakes are structural
   rather than local.
 - Erasure obligations conflict with immutability, and the resolution must exist before the
   first event is written.
+
+### Define what “state at time T” means
+
+Replay can answer different temporal questions:
+
+- **Transaction/recorded time:** what the system had recorded by T.
+- **Effective/valid time:** what the business now believes was true at T, including later
+  corrections/backdated facts.
+- **Historical interpretation:** state produced by the code/schema rules deployed at T.
+- **Current interpretation of history:** old events upcast and folded by today's rules.
+
+These answers can differ. Persist decision inputs and effective/recorded times where the domain
+needs them; version projection logic or retain reproducible artifacts when historical code
+semantics matter. External exchange rates, feature flags or reference data absent from events
+make exact replay impossible. Compare bitemporal storage when valid-time correction is the real
+requirement.
 
 ## Stream boundaries
 
@@ -58,9 +74,9 @@ Too fine:    a stream per field or per event type
                and the invariant has nowhere to live.
 ```
 
-The failure that shows up late is the **unbounded stream**: an aggregate that accumulates
-events forever — a long-lived account, a device feed, a rolling subscription. Every load gets
-slower, permanently. Two answers, in order of preference:
+The failure that shows up late is the **long stream**: full replay work grows with retained
+events even when indexed append/tail reads remain efficient. Measure event count, bytes, fold
+CPU and snapshot hit/recovery time. Possible answers include:
 
 1. **Close and open streams on a business boundary.** An accounting period, a subscription
    term, a session. The closing event carries the balance forward, and the new stream starts
@@ -68,7 +84,8 @@ slower, permanently. Two answers, in order of preference:
 2. **Snapshot.** Cheaper to implement, but treats the symptom and adds a cache to keep
    correct.
 
-If neither is possible, the aggregate boundary is probably wrong.
+If neither is possible, incremental state loading or a revised aggregate boundary may be
+needed; long history alone does not prove the boundary wrong.
 
 ## Designing the events
 
@@ -89,15 +106,15 @@ withdrawn" and no new rule can be applied to the past.
 
 **What belongs in the payload:**
 
-- Everything a projection or a future replay will need — an event is read by code that does not
-  exist yet, and cannot ask the database for context that has since changed.
+- Decision inputs/results needed to preserve the event's meaning and known replay obligations.
+  Future consumers cannot be predicted, so “store everything” is not a bounded requirement.
 - The values as they were, not references to look up. If a price was applied, store the price.
 - Enough identity to route it: aggregate id, and the stream version the store assigns.
 
 **What does not belong:**
 
-- Derived values that can be recomputed from other events, unless recomputation is expensive
-  and the rule can never change.
+- Derived values that can be recomputed from retained facts, unless preserving the value/rule
+  used at decision time is itself part of the domain record.
 - Whole related aggregates — copy the fields that mattered.
 - Anything the aggregate did not actually decide. Events describe the aggregate's own facts.
 
@@ -172,20 +189,24 @@ Every append states the version the decision was made against. The store rejects
 the stream has moved.
 
 ```java
-public void withdraw(String accountId, Money amount, CommandId commandId) {
+public WithdrawResult withdraw(String accountId, Money amount, CommandId commandId) {
     StreamSlice slice = store.readStream(accountId);          // events + current version
 
     // An unknown outcome from a previous attempt may already have appended this command.
-    if (slice.containsCommand(commandId)) {
-        return;
+    var prior = slice.outcomeFor(commandId);
+    if (prior.isPresent()) {
+        return WithdrawResult.from(prior.orElseThrow());
     }
     Account account = Account.replay(accountId, slice.events());
 
-    switch (account.withdraw(amount, clock.instant())) {
-        case Account.Decision.Rejected r -> throw new CommandRejectedException(r.reason());
-        case Account.Decision.Accepted a ->
-                store.append(accountId, a.events(), slice.version(), commandId);
-    }
+    return switch (account.withdraw(amount, clock.instant())) {
+        case Account.Decision.Rejected r -> WithdrawResult.rejected(r.reason());
+        case Account.Decision.Accepted a -> {
+            AppendResult appended =
+                    store.append(accountId, a.events(), slice.version(), commandId);
+            yield WithdrawResult.accepted(appended.position());
+        }
+    };
 }
 ```
 
@@ -208,14 +229,17 @@ computes a second, perfectly valid `FundsWithdrawn` and appends it at version N+
 expected-version check passes, because the version really is new. The customer is debited
 twice for one command, and nothing in the concurrency model can detect it.
 
-The fix is command-level idempotency, and it must be designed in: carry a command id, record
-it in the appended events' metadata, and check for it before re-deciding after an unknown
-outcome — as the snippet above does (`idempotency`).
+The fix is command-level idempotency, designed with the store: carry a command id, append it
+atomically with the events, and recover the prior outcome before re-deciding. A linear scan of
+an unbounded stream may be too costly, so use store-supported event identity or a command index
+whose uniqueness/transaction boundary is explicit. On an expected-version conflict, reload and
+repeat the command-ID check before any re-decision (`idempotency`).
 
-**One assumption underlies all of this: a single linearizable primary per stream.** The
-`(streamId, version)` constraint has to be enforced in one place, and `readStream` must go to
-that place, not to a replica. An active-active or multi-region store that resolves concurrent
-writes last-writer-wins provides no expected-version check at all, and none of this holds.
+**One assumption underlies all of this: linearizable conditional append for the stream.** A
+single primary is one implementation; a quorum service can also provide it. The decision read
+and expected-version append must participate in the store's stated consistency contract. An
+active-active store using last-writer-wins without conditional stream append does not provide
+this invariant.
 
 Where an invariant spans aggregates, event sourcing does not help: the answer is the same as
 anywhere else — redesign the boundary, or accept eventual consistency with a compensating
@@ -226,12 +250,12 @@ process (`distributed-transactions-and-sagas`).
 Two build-time decisions that are effectively permanent, because the events written under them
 outlive every other choice in the system.
 
-**The store** must give you three things, and a message broker gives you only the first: append
-with an expected version, read a stream back in order at any time, and subscribe from a
-position. A topic is a transport with a retention window, not a store — it cannot replay a
-single aggregate's history two years later, and that replay is the whole design. Use a
-purpose-built event store, or an append-only table with a unique `(streamId, version)`
-constraint and a gapless subscription strategy (`message-ordering-and-partitioning`).
+**The store** must support the required conditional append, ordered stream read over the
+declared retention horizon, and resumable subscription. Some brokers provide long retention,
+ordering and replay but lack a direct expected-stream-version primitive or efficient per-stream
+reads; some databases/event stores provide all three. Evaluate semantics and access paths, not
+the product label. An append-only table needs a unique `(streamId, version)` constraint and a
+commit-order-safe subscription strategy (`message-ordering-and-partitioning`).
 
 **The payload format** is a schema commitment on the same horizon. Choose one that tolerates
 unknown and missing fields, so an additive change stays the cheap change: JSON with lenient
@@ -257,5 +281,5 @@ measurement shows load time is the actual problem.
 - A snapshot is tied to the shape of the state class. Change that shape and old snapshots must
   be invalidated — version them, and discard rather than upcast; they are rebuildable.
 - Snapshot on a threshold of events, not on a timer. The cost is a function of stream length.
-- Do not snapshot early. It is a cache, with a cache's invalidation problems, and premature
-  adoption hides the fact that the stream boundary is wrong.
+- Do not snapshot by folklore. It is a rebuildable cache with version/invalidations; add it
+  when measured load/recovery cost or bounded replay SLO justifies it.

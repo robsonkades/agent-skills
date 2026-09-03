@@ -1,19 +1,14 @@
 schemaVersion: 1
 
 name: cancellation-and-interruption
-version: 1.0.0
+version: 1.1.0
 description: >-
-  Cancellation in Java as a cooperative protocol: interruption as a request rather than a stop,
-  the two legal responses to InterruptedException, the blocking operations that ignore
-  interruption and what stops them instead, why Future.cancel(false) and CompletableFuture.cancel
-  never stop running work, and why a timeout is not a cancellation. Use when a catch block logs
-  InterruptedException and continues, when Thread.interrupted() is called and its result
-  discarded, when a timed-out request leaves work running, when cancel is expected to free a
-  connection, when shutdownNow leaves threads alive, when a task blocks on a plain Socket or a
-  native call, when Thread.stop is proposed, or when a StructuredTaskScope takes far longer to
-  close than to fail. Does not cover choosing the bound itself (timeouts-and-deadlines), what to
-  do after it fires (retries-and-backoff), executor shutdown mechanics
-  (executors-and-task-lifecycle), or scope join policies (structured-concurrency).
+  Designing cooperative cancellation in Java across interruption, Future/CompletableFuture,
+  executor/scope shutdown, deadlines, resource close/abort, CPU loops, blocking APIs, native calls,
+  partial side effects and cleanup. Covers multiple cancellation sources, signal ownership,
+  propagation/translation/restoration, noninterruptible regions, residual work, idempotency and
+  bounded termination tests. Use when timeout/cancel returns but work or resources remain, or when
+  `InterruptedException` handling is ambiguous. Timeout selection and retry policy are separate.
 
 license: Apache-2.0
 

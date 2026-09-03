@@ -1,12 +1,11 @@
 schemaVersion: 1
 
 name: scatter-gather
-version: 1.2.0
+version: 1.3.0
 description: >-
-  Fanning one request out to N workers and combining the answers: the root's latency is the
-  max over N leaves, not their mean, choosing N against tail exposure, the completion rule
-  (all-of-N, first-of-N, k-of-N-by-deadline), hedges and the two conditions that make them
-  safe, partial results with a completeness field, deadline propagation, and cancelling
+  Fanning one request out to N workers and combining answers: order-statistic latency,
+  choosing N against tail exposure, all-of-N/first-of-N/k-of-N completion, safe hedging,
+  partial-result completeness and watermarks, deadline propagation, and cancelling
   losers. Use when a keyless query fans out to every shard, when leaf dashboards are green
   but user-facing p99 is not, when more leaves made the request slower, when a fan-out gives
   no way to tell no-data from no-answer, when a hedge is proposed, or when an in-flight
@@ -54,6 +53,7 @@ suggests:
   - rpc-and-api-contracts
   - structured-concurrency
   - tail-latency-analysis
+  - distributed-transactions-and-sagas
 
 capabilities:
   - reads-source

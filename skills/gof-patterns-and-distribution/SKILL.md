@@ -19,9 +19,10 @@ description: >
 
 ## Purpose
 
-Stop a local design's guarantees from being assumed across a network. Every GoF pattern was
-written for objects in one address space, where a call cannot half-happen, a reference is a
-reference, and "one instance" means one. None of that holds across a process, and the patterns
+Stop a local design's guarantees from being assumed across a network. GoF patterns primarily
+describe collaborating objects in one address space. Local calls can still partially mutate then
+throw, block on I/O, or race; a process boundary additionally introduces an independent
+failure/ambiguity domain, serialization and operational ownership. The patterns
 whose names survive the crossing are the ones most likely to hide that it stopped holding.
 
 ## What a boundary removes
@@ -29,14 +30,14 @@ whose names survive the crossing are the ones most likely to hide that it stoppe
 ```text
 Inside one process                  Across a boundary
 ──────────────────────────────────  ───────────────────────────────────
-A call succeeds or throws           It may succeed and the reply be lost
-Latency is nanoseconds              Milliseconds at best, unbounded at worst
+A call has one process failure domain It may commit remotely while the reply is lost
+Latency follows local work/I/O      Adds transport queues and independent tail latency
 A reference is the object           A copy; identity does not travel
 Uniqueness is per class loader      Uniqueness requires coordination
-Order is program order              Order is per partition, or absent
+Order follows synchronization/API   Broker/protocol/topology defines its scope
 State is shared                     State is replicated and stale
 A clock is one clock                Clocks disagree
-Exactly once                        At least once, plus deduplication
+One invocation; effects may partial Delivery may be at-most/at-least/effectively-once
 ```
 
 Every transformation below follows from that table.
@@ -48,7 +49,7 @@ PROCESS-LOCAL — the guarantee stops at the JVM
     Singleton    uniqueness is per class loader, never per cluster
     Flyweight    references are shared; nothing crosses the wire
     Iterator     the cursor is in this process
-    Memento      opaque and transient; it is not a wire format
+    Memento      opacity/lifecycle is local unless a durable snapshot contract is added
 
 BOUNDARY — the pattern manages a seam, and the seam may be a network
     Adapter      where a foreign model, vocabulary and failure stop
@@ -58,7 +59,7 @@ BOUNDARY — the pattern manages a seam, and the seam may be a network
 
 INTERACTION — the pattern shapes who talks to whom
     Command      becomes a message: versioned, redelivered, idempotent
-    Observer     becomes pub/sub: at-least-once, partition-ordered
+    Observer     becomes pub/sub with broker-specific delivery and ordering
     Mediator     becomes an orchestrator, with its own availability
     Chain        becomes a workflow, failing at every step
 
@@ -72,20 +73,20 @@ ALGORITHM — largely unaffected; the choice may not be
 
 ## The transformations
 
-| Local pattern | Distributed form                            | What must be added                                                        |
-| ------------- | ------------------------------------------- | ------------------------------------------------------------------------- |
-| Singleton     | Leader election / a lease                   | Fencing tokens, or idempotency so overlap is harmless                     |
-| Flyweight     | A distributed cache — a **different** thing | Invalidation, staleness policy, a network hop per miss                    |
-| Iterator      | Pagination                                  | Keyset cursors, a bound, a deadline, mid-walk consistency semantics       |
-| Memento       | A versioned snapshot                        | A schema, a version field, a tolerant reader                              |
-| Observer      | Publish/subscribe                           | An outbox, idempotent consumers, DLQ, consumer-lag alerting               |
-| Command       | A message                                   | A stable name, a version, an idempotency key, a terminal failure path     |
-| Mediator      | An orchestrator                             | Durable state, per-step timeouts, compensation, its availability budget   |
-| Chain         | A workflow                                  | Per-step failure and retry, redelivery semantics, partial-effect handling |
-| Facade        | An API gateway or BFF                       | A deployment, authentication, its own scaling and outage surface          |
-| Proxy         | A service client                            | Deadlines, a failure vocabulary, bulk operations                          |
-| State         | A durable state machine / saga              | Persisted transitions, timeouts as real events, idempotent transitions    |
-| Composite     | Fan-out                                     | Concurrency, an overall deadline, a defined partial-failure result        |
+| Local pattern | Distributed form                                          | What must be added                                                        |
+| ------------- | --------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Singleton     | Leader election / a lease                                 | Fencing tokens, or idempotency so overlap is harmless                     |
+| Flyweight     | Distributed cache/content addressing—different mechanisms | Invalidation, staleness, serialization and remote/local tiers             |
+| Iterator      | Pagination/cursor                                         | Strategy, bound, deadline, cancellation, mid-walk consistency             |
+| Memento       | Durable snapshot/checkpoint                               | Schema identity, compatibility, consistency and corruption recovery       |
+| Observer      | Publish/subscribe                                         | Transactional bridge, declared delivery/ordering, terminal failure policy |
+| Command       | A message                                                 | A stable name, a version, an idempotency key, a terminal failure path     |
+| Mediator      | An orchestrator                                           | Durable state, per-step timeouts, compensation, its availability budget   |
+| Chain         | A workflow                                                | Per-step failure and retry, redelivery semantics, partial-effect handling |
+| Facade        | Remote facade, gateway or BFF when appropriate            | Contract, deployment, authentication, scaling and outage surface          |
+| Proxy         | A service client                                          | Deadlines, a failure vocabulary, bulk operations                          |
+| State         | A durable state machine / saga                            | Persisted transitions, timeouts as real events, idempotent transitions    |
+| Composite     | Fan-out                                                   | Concurrency, an overall deadline, a defined partial-failure result        |
 
 ## Decision rules
 
@@ -96,15 +97,14 @@ THEN ask "one per what?" A static field gives one per class loader.
      design where multiplicity does not matter (gof-singleton,
      leader-election).
 
-IF a process-local limit is configured — a pool, a rate limiter, a
-cache size
-THEN write the figure multiplied by the replica count next to it.
-     20 connections × 8 replicas is 160, and the database has 100.
+IF a process-local limit is configured—a pool, limiter or cache
+THEN model the aggregate across minimum/maximum dynamic replica count, rollout
+     overlap and sidecars. Simple multiplication is a scenario, not a stable invariant.
 
 IF an interface designed against a local implementation is about to be
 implemented remotely
-THEN the CONTRACT must change, not only the implementation: bulk
-     operations, a deadline parameter, a named failure vocabulary.
+THEN review the contract: suitable granularity, propagated deadline/context, cancellation
+     and named failure/unknown-outcome semantics may require change.
      Otherwise a loop becomes N network calls (gof-proxy).
 
 IF an in-process listener is being moved to a broker
@@ -113,9 +113,9 @@ THEN it is a redesign: six properties change at once — thread,
      (gof-observer).
 
 IF an object is sent across a boundary
-THEN it is serialised: identity is lost, invariants enforced only in
-     constructors are not re-run, and its shape becomes a versioned
-     contract (rpc-and-api-contracts).
+THEN a representation is serialized and reconstructed; reference identity does not
+     travel. Constructor/invariant behavior is codec-specific, and the representation
+     becomes a compatibility contract (rpc-and-api-contracts).
 
 IF a pattern name is applied to a deployed component — "the gateway is
 our facade", "the orchestrator is a mediator"
@@ -127,9 +127,9 @@ IF the design question is really "where should this boundary be"
 THEN it is not an object-design question at all
      (distribution-boundaries).
 
-IF work must happen once and duplicates are harmful
-THEN idempotency first, coordination second. A deduplication key
-     survives the lock failing; a lock does not (idempotency).
+IF duplicate effects are harmful
+THEN choose among naturally idempotent operations, deduplication, fencing/coordination
+     and transactional authority. Dedup stores also fail/expire; no mechanism is universal.
 ```
 
 ## The level confusion
@@ -157,11 +157,11 @@ equivalence.
 ## Review checklist
 
 - [ ] Every "only one" requirement names its scope, and the mechanism matches
-- [ ] Process-local limits are recorded multiplied by the replica count
+- [ ] Process-local limits are modeled across autoscaling and rollout replica ranges
 - [ ] No interface hides remoteness: deadlines, failure types and granularity are in the contract
-- [ ] No getter or per-item method makes a network call
-- [ ] Anything published beyond the process has a version and a tolerant reader
-- [ ] Consumers of at-least-once delivery are idempotent, keyed, and commit dedup with the effect
+- [ ] Any getter/per-item remote call is explicit, bounded and protected from accidental fan-out
+- [ ] Published representations have explicit schema identity and compatibility/unknown-value policy
+- [ ] Delivery semantics drive idempotency/deduplication and atomicity requirements
 - [ ] Fan-out has an overall deadline and a defined partial-failure result
 - [ ] Durable workflows persist their state and treat timeouts as real events
 - [ ] Pattern names are not used for deployed components without saying so

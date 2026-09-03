@@ -2,8 +2,8 @@
 name: gof-template-method
 description: >
   Template Method in modern Java: fixing an algorithm's skeleton while named steps vary, and the
-  inheritance coupling that makes composition the better default. Covers why the template method
-  must be final and the hook surface minimal, the constructor-calls-an-overridable-method trap,
+  inheritance coupling that often makes composition preferable. Covers when final protects the
+  sequence, controlled overriding, minimal hook surfaces, the constructor-calls-an-overridable-method trap,
   protected hooks becoming an API you cannot change, when the pattern is genuinely right
   (frameworks that instantiate your subclass, contract test base classes), and how to convert one
   to a class taking its steps as collaborators. Use when an abstract base class with protected
@@ -41,20 +41,21 @@ satisfy
         → Template Method, and it is clearly right: the subclass
           supplies a value and inherits a specification.
 
-A genuinely stable algorithm with a small, closed set of variants
+A genuinely stable algorithm with cohesive variants
 that share substantial state
-        → Template Method with a final template and 2–3 documented
-          hooks. Justifiable; still weigh composition.
+        → Template Method with documented hooks and an explicit
+          extension policy. Still compare composition.
 ```
 
 ## When it is not
 
-- **One step varies.** Pass that step in. A hierarchy for one function is the heaviest possible
-  expression of "this varies" (`gof-strategy`).
-- **The variants are open.** Anyone may subclass, so every base-class change is an unreviewed
-  change to code you cannot see.
-- **The hook count is growing.** Five or more hooks means the "algorithm" is really a coordination
-  problem, and subclasses must understand the whole sequence to implement any part of it.
+- **One step varies and no inheritance/framework constraint exists.** Passing a function is often
+  cheaper, while a template can still be justified to protect lifecycle or invariants
+  (`gof-strategy`).
+- **The variants are open without a compatibility policy.** Open extension is a legitimate
+  framework use of Template Method, but hook call order and self-use become published API.
+- **The hook surface is growing across unrelated concerns.** This suggests coordination or
+  optional-feature pressure; use cohesion and subclass complexity rather than a numeric cutoff.
 - **Subclasses override the template method itself.** Then there is no template; there are N
   algorithms sharing a superclass.
 - **Steps are contributed by different modules.** That is a pipeline or a chain
@@ -91,9 +92,9 @@ composed, and nothing is inheritable.
 ## Decision rules
 
 ```text
-IF the template method is not final
-THEN a subclass can replace the algorithm, and the pattern's only
-     guarantee — that the sequence is fixed — is gone.
+IF the template sequence must be invariant
+THEN make the template method final. If subclasses may refine the sequence, document
+     allowed override/super-call behavior and test it as public extension API.
 
 IF the constructor calls a hook
 THEN it runs before the subclass's fields are initialised, so the hook
@@ -110,21 +111,23 @@ THEN the base's algorithm has leaked into every subclass and forgetting
      the call is a silent bug. Restructure so the base calls two hooks
      instead.
 
-IF a subclass overrides a hook to do nothing or to throw
-THEN it does not fit the template. Either the hook should have a
-     no-op default, or the hierarchy is wrong.
+IF a subclass overrides a hook to do nothing or throw unsupported
+THEN distinguish an intentional optional hook (prefer a documented base no-op) from a
+     required step the subtype cannot honor, which violates substitutability.
 
 IF the base class holds mutable state between hook calls
-THEN a shared instance is not thread-safe, and subclasses depend on
-     representation rather than contract. Pass a context through the
-     hooks instead.
+THEN define instance confinement/lifetime and what subclasses may observe. A per-run
+     instance can be safe; a shared instance needs synchronization or, preferably,
+     a per-run context passed through hooks.
 
-IF only one variant exists
-THEN there is no template. Write the algorithm.
+IF only one known variant exists
+THEN seek a concrete framework/SPI/lifecycle reason for the hook. Otherwise write the
+     algorithm directly and extract variation when it becomes real.
 
 IF a step is remote
-THEN the template owns its timeout, its failure classification and
-     what a partial run means (timeouts-and-deadlines).
+THEN the template must honor the run's deadline and define partial-run semantics;
+     transport timeouts may belong to the client and retry classification to an
+     explicit resilience policy (timeouts-and-deadlines).
 ```
 
 ## Cross-cutting checks
@@ -139,7 +142,8 @@ THEN the template owns its timeout, its failure classification and
   the run, a per-step timeout, a failure classification that decides whether the run retries or
   stops, and an explicit answer to "what does a half-finished run leave behind" — a partially
   written output, an advanced cursor, an emitted event (`idempotency`, `retries-and-backoff`).
-- **Performance.** Virtual calls per hook, which is noise. The cost worth watching is structural: a
+- **Performance.** Hook dispatch is usually minor but should not be declared free in a measured hot
+  loop. The cost worth watching is structural: a
   template that calls a hook once per record turns a per-record cost into the run's cost, and a
   subclass whose hook opens a connection per call converts a batch into N round trips
   (`orm-behavioral-patterns`).
@@ -152,13 +156,13 @@ THEN the template owns its timeout, its failure classification and
 
 ## Review checklist
 
-- [ ] The template method is `final`
+- [ ] The template method is final when sequence invariance is required; otherwise override policy is explicit
 - [ ] No constructor calls an overridable hook
 - [ ] The hook surface is small, documented, and does not require `super` calls at set points
-- [ ] No subclass overrides a hook to do nothing or to throw
-- [ ] The base class holds no mutable state between hook calls
-- [ ] More than one variant exists
-- [ ] A remote step's timeout and failure classification live in the template
+- [ ] Optional no-op hooks are explicit; required hooks preserve substitutability
+- [ ] Mutable cross-hook state is confined, synchronized, or carried in a per-run context
+- [ ] Multiple variants or a concrete framework/SPI extension constraint exists
+- [ ] Remote deadline, transport timeout and resilience ownership are explicit
 - [ ] A partial run's effects are defined
 - [ ] Composition was considered, and the reason for inheritance is stated
 

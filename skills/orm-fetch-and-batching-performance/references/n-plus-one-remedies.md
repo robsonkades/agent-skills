@@ -50,28 +50,31 @@ Neither is caused by `LAZY` being wrong.
 | Subselect fetching            | 2           | no                       | yes                     | A collection needed for _all_ roots of the original query    |
 | DTO projection                | 1           | no (you shape it)        | yes                     | A read that is not written back — the default for read paths |
 
-### JOIN FETCH and entity graphs are the same mechanism
+### JOIN FETCH and entity graphs express related, not identical, fetch plans
 
-`select o from Order o join fetch o.customer where …` and an `@EntityGraph` naming `customer`
-produce the same shape. The graph form is the one to prefer when the same query is reused with
-different fetch requirements, because it keeps the fetch decision out of the query string.
+`select o from Order o join fetch o.customer where …` requests a join in the query. An entity graph
+selects attributes to fetch, while the provider retains latitude over the SQL strategy and
+`fetchgraph` versus `loadgraph` changes how unspecified attributes are treated. Inspect generated
+SQL instead of assuming that a graph is a textual join-fetch equivalent. Graphs are useful when the
+same query needs named fetch plans without embedding them in JPQL.
 
 Both are per-query. That is the whole point: the mapping stays `LAZY` and each query states what
 it needs.
 
 ### The cartesian product
 
-Join-fetching two collections in one query returns the product of their sizes:
+Join-fetching two to-many associations in one query can return the product of their sizes:
 
 ```java
 // 10 items x 5 shipments = 50 rows, each repeating the order
 select o from Order o join fetch o.items join fetch o.shipments where o.id = :id
 ```
 
-Hibernate returns one `Order` — it de-duplicates by identity — so the defect is invisible in the
-result and visible only in the row count on the wire. Newer Hibernate versions reject the second
-collection outright rather than silently doing this; older ones do not. **One collection per
-query.** For the second, use batch or subselect fetching, or a second query.
+Hibernate de-duplicates root identity in supported shapes, so the defect may be invisible in the
+result and visible only in rows transferred. Multiple bags are rejected in common Hibernate
+versions; other collection combinations can still execute with a Cartesian product. **Default to
+one collection per query**, then relax only with bounded cardinalities and measured SQL. For the
+second, use batch or subselect fetching, or a second query.
 
 ### Paginating a fetch
 

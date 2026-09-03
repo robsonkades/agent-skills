@@ -2,8 +2,9 @@
 
 ## The two compositions
 
-**Series (a required dependency).** If the request cannot succeed without it, availabilities
-multiply:
+**Series (a required dependency).** If the request cannot succeed without every component,
+the component success events are independent, and all figures use the same SLI definition
+and window, availabilities multiply:
 
 ```
 A_total = A1 × A2 × … × An
@@ -11,8 +12,9 @@ A_total = A1 × A2 × … × An
 
 Ten dependencies at 99.9% each: `0.999^10 = 0.9900` — 99.0%, about **87 hours a year**
 against the 8.8 hours a single 99.9% component would give. Five at 99.9% is already 99.5%.
-The arithmetic is why "we are 99.9% because all our dependencies are 99.9%" is always wrong
-in the same direction.
+The arithmetic shows why "we are 99.9% because every dependency is 99.9%" is not justified.
+Without independence, request-weighted joint observations, routing and time correlation, the
+product is a design approximation rather than a prediction.
 
 **Parallel (independent redundancy).** If any one instance suffices and their failures are
 independent, the _unavailabilities_ multiply:
@@ -26,23 +28,24 @@ redundancy works, and it holds exactly as far as independence does.
 
 ## Correlation destroys the parallel term
 
-Split each replica's unavailability into an independent part and a common-mode part shared
-with its peers (same image, same config, same certificate, same AZ, same downstream):
+One useful explicit model separates a common-cause event from conditional independent
+replica failures (same image, config, certificate, AZ or downstream):
 
 ```
-q_total ≈ q_independent^n + q_common
+q_total = q_common + (1 - q_common) × q_independent^n
 ```
 
 Two replicas at 99.9%, where a tenth of the failure budget is common-mode
 (`q_ind = 0.0009`, `q_common = 0.0001`):
 
 ```
-q_total ≈ 0.0009^2 + 0.0001 = 0.00000081 + 0.0001 ≈ 0.0001   →  99.99%
+q_total = 0.0001 + 0.9999 × 0.0009^2 ≈ 0.00010081   →  99.9899%
 ```
 
-Not 99.9999%. The independent term vanished; the answer is the shared term and nothing else.
-**A parallel composition is capped by its largest correlated component**, so adding replicas
-past that point buys capacity, not availability. Report the cap, not the multiplication.
+Not 99.9999%. The independent term becomes negligible beside the common cause. Common-cause
+unavailability is a floor: adding replicas eventually buys capacity with almost no
+availability gain. This equation is still a model; estimate its terms from incident and
+request-level data rather than inventing independence.
 
 ## Worked example: an order API
 
@@ -69,10 +72,30 @@ Nine hours a year recovered by one design decision and no extra hardware. That i
 highest-leverage move available: **removing a dependency from the required path beats making
 the dependency more reliable**, because the second is someone else's roadmap.
 
-Two honest caveats on all of this: the numbers assume independence between the listed
-dependencies (rarely true — they often share a network or a cloud region), and a published
-availability figure is a historical average, not a probability for next month. Use the
-arithmetic to compare designs, not to promise a number to a customer.
+Four caveats matter: dependency failures are rarely independent; traffic is not distributed
+uniformly; availability figures may use different windows or success criteria; and a
+historical average is not a probability for next month. Retry and fallback also make path
+availability conditional rather than a simple product. Use arithmetic to expose assumptions
+and compare designs, then validate with request-weighted joint data and failure exercises.
+
+## Do not add unlike SLIs
+
+Before composing numbers, align:
+
+- **unit:** request success, minute availability, durable-write acceptance or control-plane
+  uptime are different events;
+- **population:** a global dependency SLI may hide the one region or tenant your service
+  uses;
+- **window:** monthly and annual averages do not preserve burst correlation or error-budget
+  burn;
+- **load:** an idle failover success rate says little about failover at peak utilization;
+- **degraded success:** decide whether stale reads, queued writes or partial responses satisfy
+  the user contract.
+
+For measured events `S_i`, the exact path availability is
+`P(S_1 ∩ ... ∩ S_n)`. The product `∏P(S_i)` is valid only when those events are independent.
+When possible, calculate the joint request outcome directly from traces or correlated SLI
+time series. Never average percentages without the matching denominator.
 
 ## Enumerating domains
 
@@ -122,3 +145,9 @@ outage:
 Before accepting a redundancy claim, name the single event that takes down the whole set. If
 you cannot name one, you have not looked hard enough — try the deploy, the config change, and
 the certificate.
+
+## Primary references
+
+- [Google SRE Workbook: Implementing SLOs](https://sre.google/workbook/implementing-slos/)
+- [NIST SP 800-160 Vol. 2 Rev. 1: cyber-resilient systems](https://csrc.nist.gov/pubs/sp/800/160/v2/r1/final)
+- [Gray Failure: The Achilles' Heel of Cloud-Scale Systems](https://www.microsoft.com/en-us/research/publication/gray-failure-achilles-heel-cloud-scale-systems/)

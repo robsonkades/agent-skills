@@ -18,72 +18,72 @@ description: >
 
 ## Purpose
 
-Decide which of two independent costs you are actually paying — **CPU copies** or **syscall
-count** — and apply the mechanism that removes that one. `sendfile`/`transferTo` and `mmap`
-remove copies. io_uring removes syscalls. They are routinely confused, and the confusion is
-expensive in one direction: a native dependency, a kernel floor and a JNI surface adopted to
-fix a problem `transferTo` already solved with no dependency at all.
+Separate the costs on the byte path: payload copies, syscall transitions, blocking, queueing,
+page faults and protocol framing. `FileChannel.transferTo` permits the JDK to select an
+optimized file-transfer path; `mmap` maps pages but is not globally "zero-copy"; io_uring
+provides asynchronous submission/completion and batching opportunities, not automatic copy or
+syscall elimination. Confusing those properties can add a native dependency without addressing
+the measured bottleneck.
 
 The second failure this prevents is the belief that `java.nio` reaches io_uring on its own.
-It does not, in any JDK up to and including 25 — there is no `IoUringChannel`, no JVM flag,
-no integrated JEP. Every "io_uring in Java" claim resolves to a third-party native transport,
-a hand-written FFM binding, or your own JNI. If it fits none of those, the claim is wrong.
+It does not, in any JDK up to and including 25: there is no `IoUringChannel`, JVM flag or
+integrated JEP. Every "io_uring in Java" claim resolves to a third-party native transport, an
+FFM/JNI binding, or an external component. Name and verify that route.
 
 ## Workflow
 
-1. **Name the cost before naming the fix.** CPU copies show as saturated CPU, high page-fault
-   and LLC-miss rates on a byte-moving path. Syscall cost shows as `epoll_wait`/`read`/`write`
-   dominating `strace -c` under tens of thousands of connections. Measure; do not assume.
-2. **Spend the JDK's free zero-copy first.** `FileChannel.transferTo`/`transferFrom` compile to
-   `sendfile(2)`/`splice(2)`; `FileChannel.map` gives a `MappedByteBuffer` over `mmap(2)`. Both
-   have existed since JDK 1.4, need no dependency, and cover the common file-to-socket and
-   repeated-random-access cases outright.
-3. **Fix the buffer at the boundary.** A heap `ByteBuffer` on an I/O path forces an extra
-   heap-to-native copy before the syscall. Use `allocateDirect` there.
-4. **Only then consider io_uring, and only via a named route.** Choose from the decision table
-   in `references/choosing-the-mechanism.md` — not by preference for "pure Java".
-5. **Pin one Netty era.** The 4.2 GA API and the 4.1.x incubator API differ in spelling,
-   package and bootstrap shape. Mixing them fails at runtime, not at compile time.
-6. **Guard availability and declare the fallback.** `IoUring.isAvailable()` before use, Epoll or
-   NIO behind it, and `IoUring.unavailabilityCause()` in the log when it is false.
-7. **Prove the change landed.** Re-measure the same counter you started from, and report
-   percentiles — see `references/diagnosing-the-io-path.md`.
+1. **Name the cost before naming the fix.** Combine profiles, syscall traces, CPU time per byte,
+   memory bandwidth, queue depth and tail latency. Page faults or cache misses alone do not prove
+   an application copy.
+2. **Try the stable JDK transfer APIs first.** `transferTo`/`transferFrom` may use an optimized
+   kernel path for supported channel pairs, but the contract does not promise `sendfile` or
+   `splice`, and a call may transfer fewer bytes or zero. Loop correctly and measure the actual
+   path. `FileChannel.map` is useful for mapped access; later parsing or socket writes may still
+   copy data.
+3. **Choose buffers for the boundary and lifetime.** Direct buffers can avoid staging copies in
+   native I/O, but increase native-memory accounting, allocation and reclamation complexity.
+   Heap buffers remain appropriate away from native boundaries and can win for small or
+   short-lived data. Pool direct buffers on hot paths only with bounded ownership.
+4. **Only then consider io_uring, and only via a named route.** Choose from
+   `references/choosing-the-mechanism.md`, with a pinned kernel, native artifact and fallback.
+5. **Pin one Netty era.** The 4.2 GA API and 4.1.x incubator API differ in spelling, package and
+   bootstrap shape. Mixed source and dependencies can fail at compile time or at runtime.
+6. **Guard availability and declare the fallback.** Check `IoUring.isAvailable()` before use,
+   select matching io_uring, epoll or NIO channel classes, and expose the unavailability cause.
+7. **Prove the change landed.** Re-measure the original bottleneck and load shape; use
+   `references/diagnosing-the-io-path.md` to distinguish mechanism evidence from outcome evidence.
 
 ## Rules
 
-- io_uring reduces **syscall count**; zero-copy reduces **CPU copies**. A system can have one
-  without the other. Never justify one with evidence for the other.
+- io_uring can amortize submission/completion transitions through batching and shared rings;
+  ordinary operation still commonly uses `io_uring_enter`. Zero-copy is a separate property.
 - `java.nio` and `java.net` have no io_uring binding in any JDK through 25, and no flag turns
   one on. Reject any design note that assumes otherwise.
-- Most common io_uring opcodes (`IORING_OP_READ`, `IORING_OP_WRITE`) still copy. Only the
-  `_ZC` opcodes do not.
-- `IORING_OP_SEND_ZC` is a **Linux kernel** opcode (~5.20/6.0). It has no JDK version
-  requirement. What depends on library version is whether Netty exposes it, via
-  `IoUringChannelOption.IO_URING_WRITE_ZERO_COPY_THRESHOLD`.
-- Never `ByteBuffer.allocate` on a read/write path. `allocateDirect`, or `transferTo`, which
-  needs no application buffer at all.
-- Against Netty 4.2 GA the API is `IoUring*` (camelCase, package `io.netty.channel.uring`) with
-  `MultiThreadIoEventLoopGroup(IoUringIoHandler.newFactory())`. `IOUringEventLoopGroup` and the
-  all-caps `IOUring*` spelling belong to the 4.1.x incubator line. Artifact version and spelling
-  must come from the same line.
-- `SO_BACKLOG` is `ChannelOption.SO_BACKLOG`, valid on every Netty transport. It is not a field
-  of `IoUringChannelOption`, and writing it there does not compile against the real class.
-- Presence of `io_uring_enter` is the evidence that io_uring is in use. Absence of `epoll_wait`
-  is not.
-- Socket buffer size is a trade-off, not a default: large `SO_SNDBUF`/`SO_RCVBUF` for throughput,
-  small buffers plus a tight `WriteBufferWaterMark` for latency. State which you chose and why.
-- Report p50/p95/p99 for any I/O benchmark, never mean or total alone — the variance here comes
-  from syscalls and the scheduler, which JMH neither removes nor measures.
-- Treat every throughput and CPU figure as specific to the machine it was measured on. Do not
-  carry numbers across environments.
+- Ordinary `READ`/`WRITE` operations copy payloads between kernel and user memory. `_ZC` send
+  operations and splice-style paths can avoid particular copies; registered buffers reduce
+  registration/pinning overhead but do not by themselves make payload movement copy-free.
+- `IORING_OP_SEND_ZC` is a Linux-kernel capability, not a JDK capability. Availability also
+  depends on the native transport version, operation type and fallback behavior.
+- Do not impose a global ban on heap buffers. Prefer transfer APIs when their channel semantics
+  fit; otherwise choose direct versus heap buffers from measured copy cost, buffer size,
+  pooling, lifetime and native-memory limits.
+- Against Netty 4.2 GA the API is `IoUring*` in `io.netty.channel.uring`, with
+  `MultiThreadIoEventLoopGroup(IoUringIoHandler.newFactory())`. The all-caps `IOUring*` spelling
+  belongs to the 4.1.x incubator line. Artifact version and spelling must match.
+- `SO_BACKLOG` is `ChannelOption.SO_BACKLOG`; it is not a field of `IoUringChannelOption`.
+- Presence of `io_uring_enter` proves ring activity, not that all I/O uses the ring or that
+  batching/zero-copy is effective. Correlate operations, queue depth and workload phase.
+- Socket buffers and application watermarks jointly affect buffering, utilization and
+  backpressure. Size them from bandwidth-delay product, concurrency, memory budget and latency
+  objectives; "large for throughput, small for latency" is not a sufficient rule.
+- Report throughput, CPU per unit of work and tail percentiles for I/O benchmarks. Preserve
+  payload, concurrency, connection lifecycle and backpressure behavior between comparisons.
+- Treat every throughput and CPU figure as environment-specific. Validate the fallback path and
+  behavior under queue saturation, peer cancellation, shutdown and native-memory exhaustion.
 
 ## References
 
-- [Choosing the mechanism](references/choosing-the-mechanism.md) — the situation-to-solution
-  decision table, the three routes to io_uring with their real adoption costs, the 4.1-to-4.2
-  Netty API migration map, and the actual fields of `IoUringChannelOption`. Read before adding
-  any native I/O dependency or writing a Netty io_uring bootstrap.
-- [Diagnosing the I/O path](references/diagnosing-the-io-path.md) — the commands that confirm
-  which syscalls a live process is issuing, how to identify a ring file descriptor and its io-wq
-  workers, and the corrections to the widely repeated wrong forms of each. Read when verifying
-  that io_uring is actually in use, or that a copy was actually eliminated.
+- [Choosing the mechanism](references/choosing-the-mechanism.md) — selection criteria, adoption
+  costs, Netty API eras and a bootstrap whose transport and channel fallback agree.
+- [Diagnosing the I/O path](references/diagnosing-the-io-path.md) — syscall, ring and outcome
+  evidence, including what those signals cannot prove.

@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: simd-and-vector-api
-version: 1.1.0
+version: 1.2.0
 description: >-
   Vectorisation on the JVM: C2 SuperWord auto-vectorisation and the loop shapes that defeat
   it, the incubating Vector API (species, lanes, masks, loop bound and tail handling),
-  proving that vector instructions were actually emitted, and the portability and silent
-  fallback rules. Use when someone proposes rewriting a hot loop with jdk.incubator.vector,
+  proving that vector instructions were actually emitted, and portability and non-intrinsic
+  fallback risks. Use when someone proposes rewriting a hot loop with jdk.incubator.vector,
   when a SIMD rewrite produced no measurable gain, when "the Vector API is stable since JDK
   21" appears in a PR or design document, when compilation fails with "package
   jdk.incubator.vector is not visible", when a fixed species is pinned across a
@@ -44,6 +44,10 @@ files:
 dependencies:
   - name: reading-jit-assembly
     version: ^1.0.0
+
+suggests:
+  - jdk-upgrade-impact
+  - jni-and-ffm
 
 capabilities:
   - reads-source

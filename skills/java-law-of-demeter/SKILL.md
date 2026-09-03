@@ -25,13 +25,15 @@ link and is often worse than the chain.
 
 ## Workflow
 
-1. **Classify the chain.** Fluent calls returning the same conceptual object, Stream and
-   Optional pipelines transforming values, and accessors on records or DTOs you own are not
-   navigation. Only walking through _distinct collaborators' structure_ is. Read
+1. **Classify the chain.** Fluent calls on one conceptual receiver and Stream/Optional dataflow
+   are not structural navigation by themselves (callbacks still may navigate). Records/DTOs
+   expose structure as contract, so walking them is intentional schema coupling rather than
+   encapsulation leakage. The suspect case walks _distinct collaborators' private composition_. Read
    `references/detection.md` when the classification is not obvious.
-2. **Ask what the caller does with the result.** Decides or mutates on it → the behaviour
-   probably belongs where the data is; the placement decision is java-tell-dont-ask's. Only
-   reads a value → the fix is usually narrowing what is passed.
+2. **Ask what the caller does with the result.** Decides or mutates on it → move the decision to
+   the module that owns the policy and required data, which is not necessarily the data class.
+   The placement decision is java-tell-dont-ask's. Only reads a value → consider a stable
+   projection/snapshot or narrowing what is passed.
 3. **Price the fix against the chain.** Count the forwarding methods it would add and the
    classes it would touch. A `getCustomerCity()` on `Order` that exists to shorten one call
    site is a Middle Man, not an improvement.
@@ -51,8 +53,9 @@ link and is often worse than the chain.
 - Fix priority: move the behaviour to the type that owns the data; failing that, pass the
   needed value instead of its container; wrap only when a real abstraction boundary exists,
   never to launder a chain.
-- Never add a forwarding method whose only caller is the chain you are removing — that is
-  the Middle Man smell wearing the law as a badge.
+- Do not add a forwarding method merely to reduce dots. Even one caller can justify a query that
+  protects a real aggregate/module boundary or names stable domain meaning; demonstrate what
+  internal shape can now change independently.
 - One navigation at an orchestration point — fetching a collaborator once and passing it on
   — is acceptable; the same navigation repeated across call sites is the coupling to remove.
 - Getters on a record you own, read locally for data, are not violations. Query, reporting
@@ -60,6 +63,21 @@ link and is often worse than the chain.
 - Chains that mix navigation with mutation (`getX().getY().setZ(...)`) are the worst case:
   both coupling and a decision made outside the owner — hand the decision part to
   java-tell-dont-ask.
+
+## Runtime consequences
+
+- A harmless-looking chain over ORM entities can trigger lazy loads, N+1 queries, a closed-
+  session failure or inconsistent reads between hops. That is evidence of a leaky persistence
+  boundary; diagnose fetch/round-trip cost with `orm-fetch-and-batching-performance`, not by
+  adding getters.
+- Repeated remote/proxy navigation is worse: each hop can be a network call with independent
+  timeout/failure semantics. Replace it with a coarse-grained operation or projection owned by
+  the remote boundary.
+- Narrowing to several scalar parameters can destroy snapshot consistency and create long
+  parameter lists. Prefer one immutable purpose-specific projection when values must be observed
+  together; copy mutable collections at the boundary.
+- Hiding a chain may reduce source coupling while leaving semantic/schema coupling unchanged.
+  Verify with an actual shape change and runtime query/trace evidence, not import count alone.
 
 ## References
 

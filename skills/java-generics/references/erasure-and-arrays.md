@@ -6,14 +6,14 @@ At compile time `List<String>` and `List<Integer>` are different types. At runti
 `List`, and there is no object anywhere holding "String". Consequences that drive every rule
 in this skill:
 
-| Not possible at runtime                        | Because                                      | What to do instead                                  |
-| ---------------------------------------------- | -------------------------------------------- | --------------------------------------------------- |
-| `new T()`                                      | no class to instantiate                      | pass a `Supplier<T>` or a `Class<T>`                |
-| `new T[n]`                                     | no component type                            | `(T[]) new Object[n]`, kept private, or a `List<T>` |
-| `x instanceof List<String>`                    | the type argument is not there to test       | `instanceof List<?>`, then validate elements        |
-| `catch (SomeException<T> e)`                   | the JVM matches on erased types              | non-generic exception types (a language rule)       |
-| Two overloads differing only in type arguments | same erased signature                        | different method names                              |
-| A static field of type `T`                     | one class, one field, many parameterisations | an instance field, or a `Map<Class<?>, ?>`          |
+| Not possible at runtime                        | Because                                      | What to do instead                                       |
+| ---------------------------------------------- | -------------------------------------------- | -------------------------------------------------------- |
+| `new T()`                                      | no class to instantiate                      | pass a `Supplier<T>` or a `Class<T>`                     |
+| `new T[n]`                                     | no reified component type                    | `Object[]` internally, array factory/token, or `List<T>` |
+| `x instanceof List<String>`                    | the type argument is not there to test       | `instanceof List<?>`, then validate elements             |
+| `catch (SomeException<T> e)`                   | the JVM matches on erased types              | non-generic exception types (a language rule)            |
+| Two overloads differing only in type arguments | same erased signature                        | different method names                                   |
+| A static field of type `T`                     | one class, one field, many parameterisations | an instance field, or a `Map<Class<?>, ?>`               |
 
 What erasure preserves is enough for most work: the compiler inserts the casts, and
 `ClassCastException` at those synthetic casts is the runtime symptom of a compile-time
@@ -119,14 +119,16 @@ static <T> void dangerous(List<T>... lists) {
 }
 ```
 
-`@SafeVarargs` documents that the method does neither of the two unsafe things:
+`@SafeVarargs` asserts that the body and code it calls perform no potentially unsafe operation on
+the varargs array. Strong sufficient rules are:
 
 - it **stores nothing** into the varargs array, and
 - it **never lets the array escape** (no returning it, no passing it to another method that
   might).
 
-Given both, annotate it. `@SafeVarargs` is only permitted on `static`, `final` and `private`
-methods, because an overridable method cannot promise anything about its overrides. The
+Given a proof, annotate it to suppress declaration/call-site warnings. `@SafeVarargs` is permitted
+on constructors and on `static`, `final` and `private` instance methods, because an overridable
+instance method cannot promise anything about its overrides. The
 alternative — often better — is to take a `List<T>` parameter instead and let callers use
 `List.of(...)`, which loses nothing and removes the whole category.
 

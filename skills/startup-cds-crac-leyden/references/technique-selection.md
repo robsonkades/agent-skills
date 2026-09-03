@@ -2,15 +2,14 @@
 
 ## What each mechanism preserves
 
-| Dimension                          | CDS / AppCDS                                    | CRaC                                        | Leyden AOT cache (483+514+515)                |
-| ---------------------------------- | ----------------------------------------------- | ------------------------------------------- | --------------------------------------------- |
-| Unit preserved                     | Class metadata, plus some archived heap objects | The entire process: heap, threads, fds      | Loaded and linked classes, plus profiles      |
-| Created when                       | Dump, explicit or automatic, before deploy      | Checkpoint on demand, after real warm-up    | Training run before deploy                    |
-| Removes class verification/linking | Yes                                             | Yes                                         | Yes                                           |
-| Removes JIT warm-up                | **No**                                          | **Yes** — restored code is already compiled | **Partly** — profiles speed recompilation     |
-| Portability                        | Any platform with a standard JDK 25             | Linux only, CRaC-enabled build required     | Any platform with a standard JDK 25           |
-| Needs a special JDK build          | No                                              | **Yes**                                     | No                                            |
-| Application state (pools, timers)  | Nothing captured, nothing to reopen             | Explicit `beforeCheckpoint`/`afterRestore`  | Nothing captured; the process starts normally |
+| Dimension                     | CDS / AppCDS                                   | CRaC                                                          | JDK 25 AOT cache (483/514/515)                                      |
+| ----------------------------- | ---------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Unit preserved                | Selected class metadata and heap artifacts     | Process/JVM state permitted by the engine and resource policy | Selected loaded/linked classes, heap artifacts and trained profiles |
+| Created when                  | Static/dynamic archive build                   | Checkpoint at a defined lifecycle/warm-up point               | Training plus assembly before deploy                                |
+| Class-loading/linking benefit | Reuses archived work; exact coverage varies    | Restores already-created process state                        | Adds trained AOT loading/linking                                    |
+| JIT warm-up                   | Does not archive application native code       | Restores compiled/profile state captured at checkpoint        | Profiles can shorten later compilation; code still compiles         |
+| Portability                   | Bound to compatible JDK/runtime/image/platform | CRaC build, engine, OS/kernel/CPU/container compatibility     | Bound to compatible application, JDK, OS and CPU architecture       |
+| External state                | Process starts normally                        | Must close/recreate or explicitly handle every resource       | Process starts normally                                             |
 
 The last two rows decide most real cases before the second-to-last one gets a vote.
 
@@ -26,62 +25,63 @@ Is slow startup a real, measured problem?
 |
 +- Can a cache be produced in build/CI and used by every production instance
 |  without breaking reproducible builds?
-|     yes -> Leyden AOT cache (JEP 514 one-command flow): removes verification
-|            and linking and shortens warm-up via profiles, with no special JDK
-|            build and no CRIU
+|     yes -> JDK 25 AOT cache (JEP 514 one-command flow): reuses selected loaded/linked
+|            state and profiles; requires a supporting HotSpot distribution/platform,
+|            but not a CRaC build or CRIU
 |     no  -> continue
 |
-+- Any case, low risk, no platform prerequisite:
-      AppCDS with -XX:+AutoCreateSharedArchive. Smaller gain — it only attacks
-      class verification and linking — but zero friction and fully portable.
++- Repeated short-lived local/CI process with writable persistent path?
+|     yes -> dynamic AppCDS/AutoCreate may amortize creation; validate clean exit
+|     no  -> build AppCDS explicitly with the immutable runtime image if measured value remains
+|
++- Otherwise use the default archive actually present in the runtime image and optimize the
+   measured dominant phase rather than adding another startup artifact.
 ```
 
-## JEP status at this baseline (OpenJDK 25 LTS)
+## JEP status at the JDK 25 baseline
 
-| JEP / issue | What it delivers                                                  | Status                             |
-| ----------- | ----------------------------------------------------------------- | ---------------------------------- |
-| 310         | Application classes in the shared archive (AppCDS)                | Delivered, JDK 10                  |
-| 341         | Default CDS archives; `-Xshare:auto` is the factory behaviour     | Delivered, JDK 12                  |
-| 350         | Dynamic CDS: `-XX:ArchiveClassesAtExit`                           | Delivered, JDK 13                  |
-| JDK-8261455 | `-XX:+AutoCreateSharedArchive` (an enhancement, not a formal JEP) | Delivered, JDK 19                  |
-| 483         | AOT class loading and linking; three-step `record`/`create` flow  | **Delivered, JDK 24**, not preview |
-| 514         | One-command AOT ergonomics: `-XX:AOTCacheOutput`                  | Delivered, JDK 25                  |
-| 515         | AOT method profiling persisted into the cache                     | Delivered, JDK 25                  |
-| 516         | AOT cache with any collector, ZGC included                        | Delivered, JDK 26 (not on 25)      |
-| JDK-8377932 | AOT cache accepts a modified JAR (affects 25 and 26)              | Fixed in 27; no backport (2026-09) |
+| JEP / issue | What it delivers                                                  | Status                                                                                              |
+| ----------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 310         | Application classes in the shared archive (AppCDS)                | Delivered, JDK 10                                                                                   |
+| 341         | Default CDS archives; `-Xshare:auto` is the factory behaviour     | Delivered, JDK 12                                                                                   |
+| 350         | Dynamic CDS: `-XX:ArchiveClassesAtExit`                           | Delivered, JDK 13                                                                                   |
+| JDK-8261455 | `-XX:+AutoCreateSharedArchive` (an enhancement, not a formal JEP) | Delivered, JDK 19                                                                                   |
+| 483         | AOT class loading and linking; three-step `record`/`create` flow  | **Delivered, JDK 24**, not preview                                                                  |
+| 514         | One-command AOT ergonomics: `-XX:AOTCacheOutput`                  | Delivered, JDK 25                                                                                   |
+| 515         | AOT method profiling persisted into the cache                     | Delivered, JDK 25                                                                                   |
+| 516         | AOT cache with any collector, ZGC included                        | Delivered, JDK 26 (not on 25)                                                                       |
+| JDK-8377932 | Affected AOT-cache builds accepted a modified application JAR     | Fixed in mainline and at least some JDK 25 updates (including Corretto 25.0.3); verify vendor build |
 
-## Numbers: what is sourced and what is not
+## Measurement contract
 
-| Technique        | Figure                       | Status                                                                                                                                                                 |
-| ---------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CDS / AppCDS     | No citable single percentage | It attacks verification and linking only; that phase's share of total startup varies by application. Measure locally.                                                  |
-| CRaC             | No citable single percentage | Eliminates JIT warm-up in theory; real restore time depends on heap size and image read cost. Expect a large reduction for warm-up-heavy applications, but measure it. |
-| Leyden AOT cache | **~42%**, 4.486 s to 2.604 s | Primary source: SoftwareMill benchmark on Spring PetClinic. The only reconcilable public figure here.                                                                  |
-| Native Image     | Sub-100 ms startup typical   | Trade-off: peak throughput typically 10–25% lower, no adaptive JIT. Out of scope — see graalvm-native-image.                                                           |
+There is no transferable percentage. Report cold-process cohorts for at least: process spawn,
+application-ready, first successful representative transaction, first transaction meeting the
+latency SLO, and time/requests to stable throughput. Record CPU quota, memory limit, storage/cache
+state, JDK build/flags, image digest and training coverage. Compare p50/p95/p99 and failures under
+concurrent scale-out; randomized interleaving avoids attributing host warming to one technique.
 
-Label every other number as an expected order of magnitude, and say whether it covers total
-startup or one phase.
+## AOT coverage is observed, not inferred from `<clinit>` shape
 
-## Which classes the AOT cache can cover (JEP 483)
-
-| Category                                                               | Eligible for AOT linking |
-| ---------------------------------------------------------------------- | ------------------------ |
-| No `<clinit>`, or an initialiser of pure constants                     | Yes                      |
-| `<clinit>` depending only on already-resolved classes                  | Usually yes              |
-| `<clinit>` reading `System.getProperty` or environment-specific values | No, or handled carefully |
-| `<clinit>` opening I/O — files, sockets                                | No                       |
-
-JEP 483 makes this distinction itself: ineligible classes simply load and link at runtime as
-before, uncovered by the cache. The practical consequence is that the gain scales with how much
-of the codebase falls in the first category. Well-behaved frameworks benefit more than code
-with heavy environment-bound static initialisation.
+Training determines candidate classes and profiles; compatibility and implementation rules
+determine what can be archived/linked. Arbitrary application initialization is not equivalent to
+AOT linking, and a “pure constants” visual inspection is not an eligibility proof. Inspect
+creation/use logs and class sources, then correlate covered work with the startup profile. Classes
+or paths absent from training run normally and may dominate the first real request.
 
 ## Why CRaC costs more operationally
 
-CDS and the AOT cache preserve metadata, so the artefact grows with class count — megabytes. A
-CRaC checkpoint preserves the whole heap, so the on-disk image grows with the application's real
-memory footprint — potentially gigabytes. Two consequences follow directly: restore time is not
-a small constant, since it scales with the pages that must be remapped; and moving that image
-from the checkpointing environment to the restoring one is itself a latency factor. Managed
-mechanisms such as SnapStart address this with on-demand page restoration rather than loading
-the whole image before resuming.
+CDS/AOT size depends on selected metadata and archived objects. CRaC image size/restore depends on
+heap and native process state, dirty/resident pages, engine, compression, filesystem and lazy-page
+strategy. Measure image creation, storage/transfer, restore CPU, major faults and first-request
+latency. Managed snapshots may hide transfer behind lazy restoration, moving cost into page faults
+rather than eliminating it.
+
+## Primary references
+
+- [Java 25 launcher: Ahead-of-Time Cache](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#ahead-of-time-cache)
+- [Project Leyden delivered JEPs](https://openjdk.org/projects/leyden/)
+- [JEP 341: Default CDS Archives](https://openjdk.org/jeps/341)
+- [JEP 483: Ahead-of-Time Class Loading & Linking](https://openjdk.org/jeps/483)
+- [JEP 514: Ahead-of-Time Command-Line Ergonomics](https://openjdk.org/jeps/514)
+- [JEP 515: Ahead-of-Time Method Profiling](https://openjdk.org/jeps/515)
+- [JEP 516: Ahead-of-Time Object Caching with Any GC](https://openjdk.org/jeps/516)

@@ -25,7 +25,9 @@ Consequences:
   ```
 
   For user-facing truncation ("…" after N characters), use
-  `BreakIterator.getCharacterInstance(locale)`, which respects grapheme clusters.
+  `BreakIterator.getCharacterInstance(locale)`. The default Java 25 implementation follows
+  Unicode extended grapheme-cluster boundaries; test on the exact supported JDK because Unicode
+  data and locale behaviour can change across releases.
 
 - Reversing a string by code units corrupts anything outside the BMP, and so does most
   character-by-character processing written with `charAt`.
@@ -44,10 +46,11 @@ composed.equals(decomposed);               // false
 Normalizer.normalize(decomposed, Form.NFC).equals(composed);   // true
 ```
 
-macOS filesystems hand out decomposed forms, most web input is composed, and a database
-unique index compares bytes. Normalise (NFC is the usual choice) at the boundary where text
-enters, and store the normalised form — otherwise "the same" username, filename or product
-code exists twice and only one of them can be found.
+Filesystems, clients and copy/paste can produce different normalization forms, while database
+uniqueness depends on the selected collation rather than universally comparing bytes. Choose a
+canonical form for a specific identifier, normalize once at ingress, store the canonical value,
+and configure the database/index to enforce compatible equality. Keep the original separately
+when exact round-trip or display spelling matters.
 
 `NFKC` additionally folds compatibility variants (full-width characters, ligatures); useful for
 search keys, wrong for anything that must round-trip exactly.
@@ -62,7 +65,8 @@ Every conversion between `String` and bytes uses a charset. Omitting it means "w
 platform default is", which:
 
 - was the OS/locale default before Java 18 and is UTF-8 from Java 18 onwards (JEP 400);
-- can still be overridden with `-Dfile.encoding`;
+- may select the native encoding with `-Dfile.encoding=COMPAT` on Java 18+; other override values
+  have unspecified behaviour;
 - differs between a developer's machine, a CI container and a production image.
 
 The failure it produces is characteristic: text is fine in tests and shows `Ã©` or `?` in
@@ -96,7 +100,7 @@ Turkish or Azeri:
 ```java
 header.toLowerCase()                  // locale-dependent — a bug in protocol code
 header.toLowerCase(Locale.ROOT)       // deterministic
-header.equalsIgnoreCase("Content-Type")   // better still: no intermediate string
+header.equalsIgnoreCase("Content-Type")   // allocation-free, locale-independent comparison
 ```
 
 **Number and date formatting.** `String.format("%.2f", 1234.5)` yields `1234,50` in `pt-BR`
@@ -104,9 +108,11 @@ and `1234.50` in `en-US`. In a JSON body, a CSV export, a filename or a signatur
 corrupt value; use `Locale.ROOT` for machine-readable output and the user's locale only for
 display.
 
-The rule: **`Locale.ROOT` for machine text, the user's locale for human text, never the
-default.** `Locale.setDefault` at startup is not a fix — it makes every library's behaviour
-depend on load order, and it changes human-facing output too.
+The rule: **follow the protocol's specified casing/format for machine text and the user's locale
+for human text; do not accidentally inherit the process default.** `Locale.ROOT` is usually the
+right locale-neutral mapping but does not replace a protocol-specific ASCII rule or Unicode
+canonicalization profile. `Locale.setDefault` at startup is not a local fix—it mutates global
+behaviour and can invalidate already-created locale-sensitive objects.
 
 ## Comparison and collation
 
@@ -115,7 +121,9 @@ depend on load order, and it changes human-facing output too.
 - `compareTo` orders by code unit: `Z` before `a`, accents after `z`. Correct as a total order,
   wrong as alphabetical order for humans — `Collator.getInstance(locale)` is the one that
   sorts as a reader expects (java-object-contracts covers the ordering contract).
-- Case-insensitive comparison in Java and in the database may disagree: a `CI` collation, a
+- `equalsIgnoreCase` is locale-independent and does not perform normalization or full
+  language-sensitive collation. Case-insensitive comparison in Java and in the database may
+  disagree: a `CI` collation, a
   `citext` column, or an index on `lower(x)` each define their own rules. When uniqueness is
   enforced by the database, do the normalisation the database expects before checking in Java,
   or the check passes and the insert fails.
@@ -136,3 +144,12 @@ value.getBytes(StandardCharsets.UTF_8).length <= 50
 
 The same distinction applies to message-size limits, header limits, and anything else specified
 in bytes.
+
+## Authoritative references
+
+- [String API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html)
+- [BreakIterator API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/text/BreakIterator.html)
+- [JEP 400: UTF-8 by Default](https://openjdk.org/jeps/400)
+- [Unicode Standard Annex #15: Normalization Forms](https://www.unicode.org/reports/tr15/)
+- [Unicode Standard Annex #29: Text Segmentation](https://www.unicode.org/reports/tr29/)
+- [Unicode Technical Standard #39: Security Mechanisms](https://www.unicode.org/reports/tr39/)

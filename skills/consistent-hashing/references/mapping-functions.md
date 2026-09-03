@@ -5,13 +5,13 @@ what happens when membership changes — and on three that decide the engineerin
 
 ## Comparison
 
-| Function                     | Keys moved when one node joins or leaves    | Lookup cost           | Distribution quality                                    | Complexity                                              |
-| ---------------------------- | ------------------------------------------- | --------------------- | ------------------------------------------------------- | ------------------------------------------------------- |
-| `hash(key) % N`              | Nearly all of them                          | O(1)                  | Excellent while N is fixed                              | Trivial                                                 |
-| Ring, one point per node     | About K/N                                   | O(log N)              | Poor — gaps between N random points vary widely         | Small, and the wrap-around is the part people omit      |
-| Ring with V virtual nodes    | About K/N                                   | O(log(V×N))           | Tunable: raise V until the max/mean share is acceptable | V must be chosen by measurement; ring holds V×N entries |
-| Rendezvous (HRW)             | About K/N                                   | O(N) hashes per key   | Even by construction, no tuning                         | A loop and a max; nothing to get wrong                  |
-| Bounded-load consistent hash | About K/N, plus displacement as loads shift | O(log(V×N)) amortised | Hard cap on any node's share                            | Needs live per-node load, so placement depends on state |
+| Function                     | Keys moved on equal-node join / removal    | Lookup cost         | Distribution quality                               | Complexity                                            |
+| ---------------------------- | ------------------------------------------ | ------------------- | -------------------------------------------------- | ----------------------------------------------------- |
+| `hash(key) % N`              | Nearly all of them                         | O(1)                | Excellent while N is fixed                         | Trivial                                               |
+| Ring, one point per node     | About K/(N+1) / K/N                        | O(log N)            | High variance — random gaps differ widely          | Small, but collision and wrap-around handling matter  |
+| Ring with V virtual nodes    | About K/(N+1) / K/N                        | O(log(V×N))         | Tunable: raise V until measured skew is acceptable | V and membership handoff require engineering          |
+| Rendezvous (HRW)             | About K/(N+1) / K/N                        | O(N) hashes per key | Probabilistically even; no virtual-point tuning    | Framing, unsigned order and deterministic ties matter |
+| Bounded-load consistent hash | Algorithm-specific, plus load displacement | Algorithm-specific  | Configured capacity bound under its assumptions    | Placement depends on agreed live state                |
 
 K is the number of keys, N the number of nodes.
 
@@ -33,13 +33,28 @@ changes. The two shapes where it is nonetheless correct:
 For each node, compute `w = hash(key, node)`; the owner is the node with the highest `w`.
 
 ```java
+static long score(String key, String node) {
+    byte[] k = key.getBytes(UTF_8);
+    byte[] n = node.getBytes(UTF_8);
+    return HASH.newHasher()
+            .putInt(k.length).putBytes(k)
+            .putInt(n.length).putBytes(n)
+            .hash().asLong();
+}
+
 static String owner(String key, Collection<String> nodes) {
     return nodes.stream()
-            .max(Comparator.comparingLong(n ->
-                    HASH.newHasher().putString(key, UTF_8).putString(n, UTF_8).hash().asLong()))
+            .max((a, b) -> {
+                int byScore = Long.compareUnsigned(score(key, a), score(key, b));
+                return byScore != 0 ? byScore : a.compareTo(b);
+            })
             .orElseThrow();
 }
 ```
+
+Lengths prevent ambiguous tuples such as (`"ab"`, `"c"`) and (`"a"`, `"bc"`) from hashing
+the same byte sequence. Pin the integer encoding used by the chosen library, and define a
+stable node-ID tie-breaker for the rare equal score.
 
 Properties that fall out of the definition rather than out of tuning:
 
@@ -49,13 +64,13 @@ Properties that fall out of the definition rather than out of tuning:
 - Sorting the nodes by weight gives the **ordered replica list** for a key directly, so
   primary and R−1 successors come from one computation, with distinct physical nodes by
   construction.
-- Capacity weighting is available too, at the cost of a more careful weight function than a
-  plain multiply; if nodes are homogeneous this never comes up.
+- Capacity weighting is available too, but weighted rendezvous requires a mathematically
+  valid transformation; multiplying a uniform score by a weight generally gives the wrong
+  ownership probabilities. Use and test a documented weighted variant.
 
-The cost is O(N) hashes per lookup. At small N that is a handful of nanoseconds and no
-tuning; at large N it dominates, and that is when the ring's O(log(V×N)) earns its
-complexity. **For a small, stable node set, rendezvous is the simpler engineering choice and
-picking a ring instead is usually cargo cult.**
+The cost is O(N) hashes per lookup. Whether it matters depends on N, hash implementation,
+batching and the request budget; benchmark the full lookup. At larger N a ring or a
+hierarchical/candidate-reducing variant may earn its added complexity.
 
 ## Bounded-load
 
@@ -78,21 +93,38 @@ Requirements, in order:
 
 1. **Specified value.** The same input must produce the same output in every process, on
    every JDK, forever. Disqualified: `Object.hashCode()` (identity), record and enum
-   `hashCode()` (unspecified), `Objects.hash(...)` (order- and implementation-dependent), and
+   `hashCode()` (unspecified), and `Objects.hash(...)` (only 32 bits, potentially allocating,
+   and only as stable as every component hash), plus
    any library function documented as version-unstable — Guava's `Hashing.goodFastHash`
    states this in its own contract, `Hashing.murmur3_128()` names a fixed algorithm.
 2. **Good avalanche.** One bit of input changes about half the output bits. `String.hashCode()`
    is stable but fails this: it is a 31-multiply accumulator whose low bits barely move for
    keys sharing a prefix, and real keys share prefixes (`user:1001`, `user:1002`).
-3. **64 bits or more.** With V×N ring points, a 32-bit space starts producing position
-   collisions, which silently transfer a virtual node from one owner to another.
+3. **64 bits or more.** Collision probability follows the birthday bound and depends on the
+   number of points; quantify it for the topology. Regardless of width, the representation
+   must retain colliding points instead of silently transferring ownership.
 4. **Fast.** Placement is on every request. A cryptographic hash is correct here and simply
    more expensive than the job requires; MD5 and SHA-1 appear in older ketama implementations
    for historical reasons, not for their security properties.
 
-MurmurHash3 (128-bit, truncated to 64) and xxHash both satisfy all four. Whichever is chosen,
-pin it: a golden-file test over a fixed node list, so that changing the hash — or reformatting
-the string fed to it — fails a build instead of splitting the cluster's view of ownership.
+Specific MurmurHash3 and xxHash variants can satisfy these requirements. Pin the exact
+algorithm/variant, seed, charset, tuple framing, integer byte order, truncation and unsigned
+comparison semantics, plus the library version or an independently specified format. Use
+golden vectors shared across every language/runtime. If tenants can choose keys adversarially,
+consider a secret-keyed placement hash or an admission control layer; fast non-cryptographic
+hashes do not provide denial-of-service resistance.
+
+Modulo implementations also need explicit unsigned or `floorMod` semantics: Java `%` can
+produce a negative remainder for a negative hash. This fixes indexing, not remapping when N
+changes.
+
+## Reconfiguration is a protocol
+
+All clients computing placement must use a coherent membership epoch. During E→E+1, copying
+the affected ranges is not enough: concurrent writes need fencing and a change-capture,
+dual-write or forwarding strategy; readers need defined old/new-epoch behavior; activation
+and retirement need observable completion criteria. A ring minimizes the data affected but
+does not supply consensus, atomic membership, recovery or rollback.
 
 ## Decision
 

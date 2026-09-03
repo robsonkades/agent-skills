@@ -4,14 +4,14 @@
 
 **Exit criteria:** a recorded baseline nobody has to argue about later.
 
-| Measure                                   | Why it is on the list                                 |
-| ----------------------------------------- | ----------------------------------------------------- |
-| p50 / p95 / p99 at the target rate        | the only comparison that survives the migration       |
-| In-flight concurrency (per endpoint)      | tells you what the new limits must allow              |
-| Thread count, by pool                     | the implicit limits, enumerated                       |
-| Connection-pool utilisation and wait time | whether the database is already the bottleneck        |
-| Downstream error and latency rates        | so their regression is attributable                   |
-| Heap after full GC, and GC overhead       | suspended stacks are heap; this is the before picture |
+| Measure                                                | Why it is on the list                                       |
+| ------------------------------------------------------ | ----------------------------------------------------------- |
+| p50 / p95 / p99 at the target rate                     | the only comparison that survives the migration             |
+| In-flight concurrency (per endpoint)                   | tells you what the new limits must allow                    |
+| Thread count, by pool                                  | the implicit limits, enumerated                             |
+| Connection-pool utilisation and wait time              | whether the database is already the bottleneck              |
+| Downstream error and latency rates                     | so their regression is attributable                         |
+| Retained heap after comparable recovery, and GC phases | suspended stacks/state are heap; this is the before picture |
 
 Run it at the real arrival rate. A baseline collected at saturation measures the queue, not
 the service.
@@ -63,10 +63,10 @@ jfr print --events jdk.VirtualThreadPinned recording.jfr
 
 ## Stage 3 — Declare the limits, on platform threads
 
-Deploy the semaphores, bulkheads and bounded queues from the inventory **before** enabling
-virtual threads, while the pools are still there. Two reasons: it isolates the risk of the
-limit being wrong from the risk of the model being wrong, and if the numbers are right,
-nothing changes — which is the cheapest possible proof.
+Deploy justified semaphores, bulkheads and bounded admission from the inventory **before** enabling
+virtual threads, while the pools are still there. This isolates limit-policy risk from execution-model
+risk. Expect possible queue/wait changes if two gates temporarily coexist; equivalence is a hypothesis
+to validate, not proof from unchanged throughput.
 
 **Exit criteria:** limits deployed; p99 and throughput indistinguishable from the baseline;
 each limit exporting available permits, wait time and rejections.
@@ -82,17 +82,18 @@ endpoint is the classic first move; a payment path is not.
 app.virtual-threads.reports=true
 ```
 
-Canary for at least one full traffic cycle (a business day, usually — not ten minutes), and
-compare against the baseline:
+Canary long enough to cover the workload's relevant peak, batch/cron and dependency variability;
+duration follows evidence, not a universal business-day rule. Compare against a concurrent control
+or seasonally matched baseline:
 
-| Signal                                    | Expected                     | Roll back if                           |
-| ----------------------------------------- | ---------------------------- | -------------------------------------- |
-| p99 at target rate                        | equal or better              | worse by more than the noise band      |
-| Downstream error rate                     | unchanged                    | rises at all                           |
-| Connection-pool wait time                 | unchanged or lower           | rises — the pool is now the bottleneck |
-| Heap after full GC                        | modestly higher              | grows without bound                    |
-| Carrier count (`ForkJoinPool-1-worker-*`) | near `availableProcessors()` | climbing towards `maxPoolSize`         |
-| `jdk.VirtualThreadPinned`                 | absent                       | present on a hot path                  |
+| Signal                                 | Expected                                 | Roll back if                                        |
+| -------------------------------------- | ---------------------------------------- | --------------------------------------------------- |
+| p99 at target rate                     | equal or better                          | worse by more than the noise band                   |
+| Downstream error rate                  | inside error budget/no causal regression | statistically/operationally significant causal rise |
+| Connection-pool wait time              | inside capacity/SLO envelope             | sustained queue-age/SLO breach                      |
+| Retained heap and GC phases            | stable at repeated load/recovery         | retained state or GC violates budget                |
+| Scheduler MXBean queued/pool estimates | explained and SLO-safe                   | sustained causal pressure/exhaustion                |
+| `jdk.VirtualThreadPinned`              | measured/impact understood               | native/foreign pins causally constrain throughput   |
 
 Write the rollback criteria **before** the canary. Written afterwards they become negotiable
 in the exact moment they should not be.
@@ -102,13 +103,15 @@ in the exact moment they should not be.
 The instinct is to raise it because concurrency rose. Resist it and do the arithmetic:
 
 ```text
-L = λ × W        λ = 400 queries/s, W = 8 ms hold time  →  L ≈ 3.2 connections
+L = λ × W        λ = 400 queries/s, W = 8 ms average hold time  →  average L ≈ 3.2
 Database ceiling: what the server can actually serve concurrently (its own configuration,
                   its CPU count, its own connection limit)  →  say 40 across all clients
-Our share:        40 ÷ 6 replicas ≈ 6
-
-maximumPoolSize = 6, not 200.
+Our provisional share must include all clients, rollout overlap and headroom.
 ```
+
+`3.2` is an average occupancy consistency check, not a safe pool size; `40 ÷ 6` assumes even traffic
+and full authority over the database budget. Sweep candidate sizes under representative variance and
+choose the smallest that meets SLO/throughput without exceeding the database envelope.
 
 Raising the pool past the database's capacity does not add throughput; it moves the queue
 from your process (where it is visible, bounded and cheap to reject at) into the database
@@ -118,19 +121,27 @@ more requests are in flight, and that is the number to fix, not the pool size.
 ## Stage 6 — Verify observability, then widen
 
 ```bash
-# jstack does not list virtual threads. Every runbook that says jstack is now wrong.
+# Traditional dumps remain useful for platform locks but omit virtual threads.
 jcmd <pid> Thread.dump_to_file -format=json /tmp/dump.json
 
 # Name the factories, or the dump is thousands of VirtualThread[#38]/runnable
 ```
 
-**Exit criteria before widening:** dumps readable and named, pinning events wired to an
-alert, per-limit metrics on a dashboard, and every runbook updated. Then repeat from Stage 4
+**Exit criteria before widening:** both platform/all-thread evidence is understood, pinning and
+scheduler/resource signals are observable with bounded overhead, per-limit metrics are on a
+dashboard, and runbooks are updated. Then repeat from Stage 4
 for the next workload.
 
 ## What "done" means
 
-Not "every thread is virtual". Done is: each workload runs on the model that suits it, every
-scarce resource has a declared limit with a metric, no runbook mentions `jstack` or
-`-Djdk.tracePinnedThreads`, and the baseline comparison is recorded somewhere the next team
-can find it.
+Not "every thread is virtual". Done is: each workload runs on the model that suits it, every scarce
+resource has a declared admission policy/metric, traditional dumps are retained for platform-lock
+questions while all-thread dumps cover virtual lifetimes, removed pin diagnostics are gone, and the
+baseline/canary/rollback record is durable.
+
+## Authoritative references
+
+- [Java 25 virtual threads](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
+- [Java 25 `VirtualThreadSchedulerMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html)
+- [JEP 444](https://openjdk.org/jeps/444)
+- [JEP 491](https://openjdk.org/jeps/491)

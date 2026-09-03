@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: retries-and-backoff
-version: 1.0.0
+version: 1.1.0
 description: >-
   Retry as a policy with a cost: classifying a failure as transient, permanent or ambiguous
   before retrying anything; why a timeout is ambiguous and safe to retry only under
-  idempotency; exponential backoff with full jitter; retry budgets rather than attempt
-  counts as the only real bound on amplification; retrying at exactly one layer; and
+  idempotency or reconciliation; capped jittered backoff; aggregate retry budgets plus
+  per-call limits; one layer owning the end-to-end policy; and
   honouring 429, Retry-After and the remaining deadline. Use when a catch block retries on
   Exception or on a message substring, when backoff has no jitter, when several layers each
   retry the same call, when a POST is retried after a timeout, when a dependency's inbound

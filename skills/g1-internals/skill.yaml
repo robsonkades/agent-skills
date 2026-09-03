@@ -1,14 +1,15 @@
 schemaVersion: 1
 
 name: g1-internals
-version: 1.2.0
+version: 1.3.0
 description: >-
   How G1 actually works: uniform regions and the ergonomic sizing formula, remembered sets
   and the card table with its write barrier, SATB and the pre-write barrier, the phases of
   an evacuation pause, humongous allocation and why it bypasses the young generation, and
   how the collection set is chosen for a mixed collection. Use when a pause is longer than
   the live-set size explains, when `Merge Heap Roots` or `Merge RS` dominates
-  `-Xlog:gc+phases`, when `To-space exhausted` appears, when the old generation grows
+  `-Xlog:gc+phases`, when legacy `To-space exhausted` or current `Evacuation Failure`
+  appears, when the old generation grows
   without the application retaining anything, when `Humongous regions` climbs in the log,
   when someone sets `-Xmn` under G1, or when mixed GC is being described as a full GC. Does
   not cover the introductory collector mental model and generational hypothesis

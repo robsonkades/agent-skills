@@ -6,9 +6,9 @@ Work down this list. A lock is what remains when none of these fits.
 
 | Alternative                 | Selecting condition                                                                                    | What it costs                                              |
 | --------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| Conditional write / CAS     | The invariant is expressible over one row: `UPDATE … SET v = :new WHERE id = :id AND version = :seen`  | A retry path for the losing writer                         |
+| Conditional write / CAS     | The invariant is expressible in one resource version/predicate                                         | Conflict/retry semantics and hotspot contention            |
 | Unique constraint           | The invariant is "at most one of these exists" — one booking per seat, one payment per idempotency key | A caught constraint violation as normal control flow       |
-| Partitioned ownership       | Work can be routed by key so one process handles a key at a time (`sharding-and-partitioning`)         | A routing layer, and a rebalance protocol with fencing     |
+| Partitioned ownership       | Work can be routed by key and rebalance uses epochs/fencing (`sharding-and-partitioning`)              | Routing, recovery and a safe ownership handoff             |
 | Idempotent operation        | The operation can be repeated with the same observable outcome (`idempotency`)                         | A dedup store, and its retention decision                  |
 | Queue with per-key ordering | Serialisation, not exclusion, is what is wanted: one consumer per key by partition assignment          | Queue latency; ordering only _within_ a partition          |
 | Doing nothing               | The race is benign: last writer wins is an acceptable outcome                                          | Saying so explicitly, in the design, so nobody adds a lock |
@@ -19,24 +19,26 @@ dependency, a round trip, a TTL to guess and a failure mode the database did not
 
 ## Step 2 — comparing lock implementations
 
-| Implementation                       | Held until                                | Clock-dependent?                       | Fencing token available                 | Main failure mode                                                               |
-| ------------------------------------ | ----------------------------------------- | -------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------- |
-| Redis, single instance, `SET NX PX`  | TTL expiry, or compare-and-delete release | Yes — TTL vs holder's pause            | No monotonic counter unless you add one | Async replication: a failover can lose the key and admit a second holder        |
-| Redlock (N independent Redis)        | TTL expiry on a majority                  | Yes — and contested (below)            | No                                      | Its assumptions: bounded clock drift and bounded pauses                         |
-| etcd / Consul lease                  | Lease TTL, refreshed by keepalive         | Yes, but expiry is decided by a quorum | Yes — the key's revision is monotonic   | Renewal lost under partition; holder keeps working while the lease is regranted |
-| ZooKeeper ephemeral znode            | Session expiry, decided by the ensemble   | Yes, via session timeout               | Yes — znode version / `zxid`            | The client believes its session is alive after the ensemble expired it          |
-| Database row lock (`FOR UPDATE`)     | Commit, rollback or connection loss       | **No**                                 | Only if you add a fence column          | Holds a transaction and a pooled connection for the whole critical section      |
-| DB advisory lock, transaction-scoped | Transaction end                           | **No**                                 | Only if you add a fence column          | Same connection cost; lock is invisible to anyone reading the schema            |
-| DB advisory lock, session-scoped     | Explicit unlock or session end            | **No**                                 | Only if you add a fence column          | Leaks through a connection pool: the next borrower inherits the lock            |
+| Implementation                       | Held until                               | Clock-dependent?                                                  | Fencing token available                                     | Main failure mode                                                          |
+| ------------------------------------ | ---------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Redis, single instance, `SET NX PX`  | TTL expiry, or owner-conditional release | Yes — server wall clock and client validity assumptions           | No monotonic counter unless separately designed             | Promotion can lose an unreplicated key and admit a second holder           |
+| Redlock (N independent Redis)        | TTL expiry on a majority                 | Yes — and contested (below)                                       | No                                                          | Its assumptions: bounded clock drift and bounded pauses                    |
+| etcd lease-backed mutex              | Unlock or attached lease expiry          | Expiry is server/quorum decided; client still has stale-work risk | Creation revision can order grants if deliberately exported | Renewal lost under partition; stale holder keeps working after regrant     |
+| ZooKeeper ephemeral-sequential lock  | Delete or session expiry                 | Ensemble session timeout                                          | Sequential-node suffix can order grants                     | Client resumes after the ensemble expired its session                      |
+| Database row lock (`FOR UPDATE`)     | Commit, rollback or connection loss      | **No**                                                            | Only if you add a fence column                              | Holds a transaction and a pooled connection for the whole critical section |
+| DB advisory lock, transaction-scoped | Transaction end                          | **No**                                                            | Only if you add a fence column                              | Same connection cost; lock is invisible to anyone reading the schema       |
+| DB advisory lock, session-scoped     | Explicit unlock or session end           | **No**                                                            | Only if you add a fence column                              | Leaks through a connection pool: the next borrower inherits the lock       |
 
 Two structural observations from the table:
 
-- **Only the database rows are clock-independent**, because liveness is defined by a connection
-  rather than by a timeout. That is a genuinely better-defined failure mode, and it is paid for
-  with an open transaction and the database's availability becoming the lock's.
+- **Database transaction locks do not use an application TTL.** Their lifetime follows the
+  server transaction/session; failure detection and connection cleanup still affect how long
+  waiters block. This is paid for with an open transaction/connection and the database's
+  availability becoming the lock's.
 - **Fencing support is a property of the lock service _and_ of your resource.** etcd and
-  ZooKeeper hand you a monotonic number for free; Redis does not, and a `redis.incr` counter
-  used as a token is only monotonic while that instance's data survives a failover.
+  etcd revisions or ZooKeeper sequential-node numbers can seed a token protocol; they help
+  only if the external resource atomically claims and enforces them. Redis does not attach a
+  monotonic grant token, and an ad hoc `INCR` needs its own durability/atomicity analysis.
 
 ## The Redlock disagreement, stated fairly
 
@@ -58,19 +60,20 @@ The dispute is about which assumptions a distributed system may make, not about 
 assumption fails.
 
 ```text
-Treat the lock as an efficiency measure (any implementation above is defensible) when:
-- a violation costs duplicated work, a wasted API call, or a second identical email
+Treat the lock as an efficiency measure (subject to its documented assumptions) when:
+- a violation costs only bounded duplicate computation or a reconciled repeat
 - the operation is idempotent, or its duplicate is detectable and cheap to reconcile
 Treat it as a correctness control (fencing at the resource is mandatory) when:
 - a violation corrupts data, double-charges, or breaks an invariant nothing else re-checks
-- in this case the lock algorithm barely matters: the resource's token check is what protects
-  you, and without it no lock service on this list is sufficient
+- the lock service establishes grant order, while the resource's claim/conditional check
+  prevents stale holders; both parts and their atomic boundaries matter
 ```
 
 ## Anti-pattern shapes to grep for
 
 - `SETNX` with no expiry, or `SET … NX` with no `PX`/`EX`: a crash holds the lock forever.
-- `jedis.del(key)` / `redisTemplate.delete(key)` in a `finally` with no owner-token comparison.
+- `jedis.del(key)` / `redisTemplate.delete(key)` in a `finally` with no owner-token comparison;
+  use Redis 8.4 `DELEX ... IFEQ` or an atomic script on older versions.
 - A lock acquired, then a `RestTemplate`/`RestClient` call inside the critical section whose read
   timeout is longer than the lease (or absent — `timeouts-and-deadlines`).
 - A scheduled renewal task presented in a comment as the reason the lock is safe.

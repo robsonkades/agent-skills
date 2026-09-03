@@ -1,10 +1,10 @@
 schemaVersion: 1
 
 name: jvm-bytecode
-version: 2.0.0
+version: 2.1.0
 description: >-
   Reading and reasoning about JVM bytecode: javap -c -p -v, operand stack and local slots, the
-  constant pool and lazy resolution, descriptors versus Signature, the invoke* family with
+  constant pool and resolution timing, descriptors versus Signature, the invoke* family with
   invokedynamic and inline caching, verification and the StackMapTable, the class-file limits,
   what javac desugars, and what bytecode does and does not say about performance. Use when a
   VerifyError appears after instrumentation by an agent, proxy or mock library, when

@@ -20,6 +20,8 @@ collectors:
 - There is no ZGC "generational mode" to enable on JDK 24+. There is only ZGC.
 - There _is_ a Shenandoah generational mode to enable on JDK 25, and it is off unless asked
   for.
+- As of 2026-09-03, making generational Shenandoah the default is only draft JDK-8379682,
+  with no target release/JEP number. Do not label it “JDK 28” or “JEP 535.”
 
 ## ZGC
 
@@ -31,7 +33,7 @@ java -XX:+UseZGC -jar app.jar
 java -XX:+UseZGC -XX:+ZGenerational -jar app.jar
 ```
 
-Tuning surface, in the order you should reach for it:
+Diagnostic/tuning surface to verify on the target build, not a sequence to apply:
 
 ```bash
 -Xmx / -Xms                        # size the heap first; this is the real lever
@@ -43,8 +45,9 @@ Tuning surface, in the order you should reach for it:
 
 `ZCollectionInterval` and friends are sensitive to change between releases — confirm the
 default in your build with `-XX:+PrintFlagsFinal` rather than quoting a remembered value.
-ZGC self-calibrates from the observed allocation rate; in practice nothing beyond heap size
-and `ConcGCThreads` is needed or advisable.
+Start with ergonomics and change a knob only for a measured failure mode. `SoftMaxHeapSize`,
+hard `-Xmx`, available CPU and `ConcGCThreads` can trade memory headroom, mutator CPU and
+stall risk; interval/spike/fragmentation options are advanced, release-sensitive controls.
 
 ## Shenandoah
 
@@ -57,10 +60,15 @@ and `ConcGCThreads` is needed or advisable.
 -XX:ShenandoahGCHeuristics=compact      # aggressive; more GC, less throughput
 -XX:ShenandoahGCHeuristics=aggressive   # near-continuous concurrent GC
 
+-XX:+UnlockExperimentalVMOptions        # required before the following implementation knobs
 -XX:ShenandoahMinFreeThreshold=10       # min free % before triggering GC
 -XX:ShenandoahInitFreeThreshold=70      # initial threshold %
--XX:ShenandoahSATBBufferSize=1024       # SATB buffer (experimental; needs -XX:+UnlockExperimentalVMOptions)
+-XX:ShenandoahSATBBufferSize=1024       # SATB buffer
 ```
+
+On the JDK 25 baseline, generational mode supports the adaptive heuristic; do not combine its
+mode with the single-generation compact/aggressive/static examples without verifying startup.
+The heuristic list is diagnostic context, not a recommendation to bypass ergonomics.
 
 On JDK 24 the generational mode additionally required
 `-XX:+UnlockExperimentalVMOptions`. On JDK 25 it does not.
@@ -86,6 +94,7 @@ Never infer the mode from the command line you believe was used.
 ```bash
 jcmd <pid> VM.flags -all | grep -i -E "zgc|shenandoah"
 jcmd <pid> GC.heap_info
+java <same flags> -Xlog:gc+init=info -version
 ```
 
 A test intended to exercise generational Shenandoah that cannot show
@@ -94,21 +103,22 @@ say nothing about the mode it claimed to measure.
 
 ## Flags that are dead after the migration
 
-G1's tuning surface — `-XX:MaxGCPauseMillis`, `-XX:G1HeapRegionSize`, and the rest of that
-family — is largely ignored by ZGC and Shenandoah, which each carry their own flag set.
-Carrying the G1 configuration across a collector migration retains dead flags and creates
-the impression that the new collector was tuned.
+G1-specific options such as `G1HeapRegionSize` can remain syntactically accepted while not
+governing ZGC/Shenandoah; global options such as heap sizing may still apply. Inventory each
+flag with its type/origin and startup logs, then remove inert options with a launch regression
+test. “Accepted” is not evidence that the selected collector consumed it.
 
-## Collector selection, once the SLO is numeric
+## Collector/mode selection criteria
 
-| Situation                                                | Choice                                                                |
-| -------------------------------------------------------- | --------------------------------------------------------------------- |
-| p99 ≤ 10 ms, comfortable CPU (8+ cores)                  | ZGC                                                                   |
-| p99 ≤ 50 ms, throughput matters as much as latency       | Shenandoah; evaluate generational if young allocation is high         |
-| p99 ≤ 200 ms, maximum throughput                         | G1                                                                    |
-| Batch, latency is not a criterion                        | Parallel, or G1 with a high pause target                              |
-| Very constrained CPU (1-2 cores)                         | G1 — concurrent phases compete directly with the application          |
-| High young-allocation rate and Shenandoah already chosen | `-XX:ShenandoahGCMode=generational` before rejecting it on throughput |
+No p99 or core-count threshold selects a collector portably. Build a representative matrix:
 
-This table is only usable once the latency SLO is stated as a number. "Faster" is not an
-input to it.
+| Constraint/evidence                                                | Comparison to run                                                                                           |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Tight pause SLO with heap/live set that makes STW evacuation risky | ZGC and generational Shenandoah against a tuned G1 baseline                                                 |
+| CPU quota/throttling or memory bandwidth already saturated         | Measure concurrent-GC interference and achieved throughput; include G1/Parallel where pauses are acceptable |
+| High young allocation with stable old live set                     | Compare generational modes; confirm generation-specific logs and old-cycle behavior                         |
+| Large objects, fragmentation or allocation spikes                  | Exercise that distribution and inspect stalls, relocation/evacuation failure and fallback                   |
+| Small heap/short-lived batch process                               | Include startup/footprint/throughput; concurrent collectors may not repay their machinery                   |
+
+Declare numeric SLO, achieved load, build, mode, heap/live set, allocation rate, quota and
+failure behavior. “Faster” and a collector name alone are not reproducible inputs.

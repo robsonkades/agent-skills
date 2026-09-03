@@ -19,11 +19,12 @@ description: >
 
 ## Purpose
 
-Repair a distribution that is correct on paper and broken in production. **A hash function
-distributes keys uniformly; it never distributes traffic.** Every shard can hold within a few
-per cent of the mean number of keys while one of them is at 100% CPU, because one key on it
-is receiving a large share of the requests. Rehashing does not help, raising the virtual-node
-count does not help, and adding shards moves the hot key to a different machine.
+Repair a distribution that is correct on paper and broken in production. **A suitable hash
+can make non-adversarial key placement approximately uniform; it says nothing about traffic,
+value size or work per request.** Every shard can hold close to the mean key count while one
+is at 100% CPU because a single key receives a large share of requests. Rehashing, more
+virtual nodes or more shards can repair placement variance, but cannot divide an indivisible
+hot key; they usually move that bottleneck to a different owner.
 
 The failure this prevents is diagnosing the wrong thing. A hot partition and an overloaded
 fleet look identical on an aggregate dashboard — elevated p99, elevated error rate — and
@@ -33,9 +34,10 @@ added the shard label to the metric before the incident.
 
 ## Workflow
 
-1. **Get the max-to-mean ratio, per shard, for four series**: request rate, p99 latency,
-   storage bytes and CPU. A ratio near 1 across all four means the fleet is uniformly loaded
-   and this is a capacity problem, not a skew problem. Stop here if so.
+1. **Measure distribution, normalized by each shard's capacity**, for accepted and offered
+   request rate, errors, queueing, latency, CPU/IO, storage and replication lag. Use top-share,
+   max/median and a heat map; max/mean is only a screening signal. A ratio near 1 can still
+   hide a uniformly saturated fleet, rejected work or heterogeneous instances.
 2. **Classify the skew** as read-hot, write-hot, storage-hot or mixed from which ratio is
    elevated. They have different repairs, and a cache fixes exactly one of them. The
    signature table is `references/detecting-skew.md`.
@@ -52,8 +54,9 @@ added the shard label to the metric before the incident.
 6. **If the repair is a move, treat the move as a distributed protocol.** Version the shard
    map, define the double-ownership window, throttle the copy, and make a stale client unable
    to write to the former owner.
-7. **Add the detection you did not have.** The per-shard metric with a max/mean ratio and an
-   alert on it, so the next occurrence is caught by a dashboard rather than by a user.
+7. **Prove steady state and recovery.** Replay the observed power-law key distribution,
+   measure tail amplification and catch-up time, inject stale clients and abort midway.
+   Then add bounded-cardinality per-shard detection and alerts on skew plus saturation.
 
 ## Decision block
 
@@ -69,7 +72,8 @@ Put a cache in front of the key when:
   small enough to cache — a cache does nothing for write skew (caching-strategies)
 Coalesce concurrent requests for the key when:
 - many identical in-flight reads for one key arrive together; this removes duplicate work
-  with no staleness cost at all, and composes with a cache rather than replacing it
+  when identity, authorization, consistency level and response semantics are part of the
+  coalescing key; define cancellation and failure sharing explicitly
 Split the partition when:
 - the store supports online split, the hot range is contiguous, and the skew is a range
   boundary rather than a single key
@@ -83,9 +87,10 @@ Change the shard key when:
 
 ## Rules
 
-- **Skew is invisible in an aggregate.** With N shards and one saturated, the fleet mean
-  moves by roughly 1/N and every dashboard stays green. Report `max(by shard) / avg(by
-shard)` as a first-class series; it is the only number that makes skew monitorable.
+- **Skew is easily hidden by an aggregate.** With N equal shards and one saturated, the fleet
+  mean's excess is diluted by roughly N. Report a normalized distribution: maximum or high
+  quantile, median, top-shard share and capacity utilization. `max/mean` is useful but highly
+  sensitive to one outlier and says nothing about two clusters or heterogeneous capacity.
 - Every per-shard metric needs the shard as a label from the beginning. Adding the label
   during an incident is the same as not having it: there is no history to compare against.
 - Read-hot, write-hot and storage-hot are three problems. A cache removes read load and does
@@ -94,17 +99,18 @@ shard)` as a first-class series; it is the only number that makes skew monitorab
 - **Rehashing is not a repair for a hot key.** The key still has one owner under every
   placement function in `consistent-hashing`; the hash decides _which_ node melts, not
   whether one does.
-- Salting is `key#i` for `i` in `[0, S)`: writers pick a suffix at random or round-robin,
-  readers must read all S and merge. **The read fan-out is the cost and it is permanent** —
-  choose S as small as the write rate allows, and never salt a key whose dominant access is a
-  point read.
+- Salting is `key#i` for `i` in `[0, S)`: writers route by a deliberate sub-key (random,
+  round-robin or an entity identifier), readers query the required buckets and merge. The
+  cost includes read fan-out, loss of single-key atomicity/global order, retries and future
+  resharding. Choose S from measured per-partition capacity with headroom; random assignment
+  can still burst and a deterministic secondary key is preferable when semantics allow it.
 - Do not salt every key. Salt the identified hot keys from a list you can update without a
   deploy; otherwise every read in the system pays the fan-out to fix one key.
-- **A partition has one owner at a time — except during a move, when it has two.** That
-  window is a correctness problem, not a performance one: a write to the old owner after the
-  new one took over is lost silently. The shard map must be versioned and the old owner must
-  reject writes stamped with a stale version — fencing, whose general mechanism is
-  `distributed-locks-and-leases`.
+- **A move creates overlapping copies, not two unconstrained authorities.** Name the sole
+  write authority for every phase. Publish a monotonic ownership epoch, require it on every
+  mutation, and enforce it at the state transition that commits the write. Rejecting stale
+  routing only in a client or proxy is insufficient: paused clients and old owners survive
+  cutover. The general fencing mechanism is `distributed-locks-and-leases`.
 - Throttle the migration copy explicitly, in bytes or rows per second, and treat it as
   production load. An unthrottled rebalance to relieve a hot shard is a second, larger
   incident caused by the fix.
@@ -120,6 +126,30 @@ shard)` as a first-class series; it is the only number that makes skew monitorab
 - Protecting the hot shard by rejecting the excess is legitimate and often the fastest
   mitigation, but it is a per-key limit, not a global one — `rate-limiting-and-load-shedding`
   owns the mechanism.
+
+## Operational invariants
+
+- At most one ownership epoch may commit writes for a partition.
+- Every acknowledged pre-cutover write is present at the target before target activation.
+- Every accepted post-cutover write is routed to or forwarded into the target epoch.
+- Map publication is monotonic, cacheable only with bounded staleness, and observable by
+  version; rollback uses a new epoch rather than resurrecting an old one.
+- Replica safety is preserved throughout: moving data must not remove enough healthy copies
+  to violate the store's durability/quorum rule.
+- Source deletion starts only after a retention window, reconciliation and a tested restore
+  point. Retention alone is not rollback unless post-cutover writes are reverse-replicated or
+  replayable.
+
+## Anti-patterns
+
+| Anti-pattern               | Symptom                                               | Better alternative                                                 |
+| -------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------ |
+| Average-only dashboard     | fleet looks healthy while one shard rejects work      | normalized per-shard heat maps and top-share                       |
+| Key as metric label        | telemetry cardinality becomes the outage              | bounded sketches; protected top-K logs with redaction              |
+| Add shards for one hot key | bottleneck changes owner but not capacity             | split/coalesce/cache/isolate the logical key                       |
+| Blind salting              | reads fan out, ordering and uniqueness silently break | derive bucket and merge semantics before migration                 |
+| Reactive auto-balancer     | partitions ping-pong and copy traffic amplifies load  | prediction, hysteresis, move budget and kill switch                |
+| Copy then flip             | writes disappear across snapshot/cutover              | snapshot position, change catch-up, epoch fence and reconciliation |
 
 ## References
 

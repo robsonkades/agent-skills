@@ -59,12 +59,14 @@ do not know. That last part is what makes the rest of it trustworthy.
 - Say no to the request, not to the person, and pair it with what you can do. "Not by Friday at
   this scope; the read path alone is achievable by Friday" is a usable answer;
   "that's not possible" ends a conversation that needed to continue.
-- Raise a risk once, in writing, with its trigger and impact, and let it be decided. Repeating
-  it converts you into noise; failing to record it means it was never raised.
+- Raise a risk early, in writing, with owner, trigger, impact, decision deadline, and next escalation
+  point. Do not repeat an unchanged warning as noise, but re-surface it when evidence, severity,
+  exposure, ownership, or the decision window changes—or when the agreed escalation condition fires.
 - Do not soften a message until the claim disappears. If the reader can come away thinking
   everything is fine when it is not, the message failed however comfortable it was to send.
-- Blame is not information. Describe the failure, not the person; "the deploy skipped the
-  migration step" tells everyone what to fix, and naming who ran it does not.
+- Blame is not diagnosis. Describe the mechanism and contributing conditions. Preserve accountable
+  ownership where audit, security, safety, or deliberate policy violations require it, without
+  turning a causal analysis into a judgement about character.
 - Match the register to the audience: a non-engineer needs the consequence and the decision,
   not the mechanism. Keep the mechanism available below, for whoever wants it.
 

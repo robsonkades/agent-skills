@@ -1,20 +1,16 @@
 schemaVersion: 1
 
 name: consistent-hashing
-version: 1.1.0
+version: 1.2.0
 description: >-
-  The function that maps a key to an owner, and what happens when membership changes: why
-  hash(key) % N remaps almost every key when N changes; the ring, where a key belongs to the
-  first node clockwise so a change moves only about K/N keys; virtual nodes as the fix for
-  the ring's uneven shares; rendezvous hashing as the simpler alternative; and the Java
-  shape — a TreeMap ring with ceilingEntry plus firstEntry for the wrap-around, and a hash
-  whose value is specified in every process and on every JDK. Use when reviewing key-to-node
-  placement, when a % nodeCount appears in routing code, when adding a node causes a miss
-  storm or a large migration, when nodes hold visibly unequal shares, or when
-  Object.hashCode is used to place data. Does not cover whether to shard or on what key
-  (sharding-and-partitioning), traffic skew on a correctly hashed keyspace
-  (hot-partitions-and-rebalancing), cache placement (cache-sharding-and-replication), or
-  balancing requests across interchangeable replicas (load-balancing-and-routing).
+  Stable key-to-node placement across membership changes: modulo remapping, consistent-hash
+  rings, virtual points, rendezvous hashing, collision-safe Java implementations, hash
+  contracts, replica selection, weighting, testing and membership handoff. Use when changing
+  node count causes a miss storm or migration, ownership is uneven, or placement relies on
+  Object.hashCode. Does not choose the shard key (sharding-and-partitioning), repair hot keys
+  (hot-partitions-and-rebalancing), define cache topology
+  (cache-sharding-and-replication), or balance interchangeable replicas
+  (load-balancing-and-routing).
 
 license: Apache-2.0
 

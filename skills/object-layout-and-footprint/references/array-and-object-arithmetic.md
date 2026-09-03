@@ -173,7 +173,9 @@ What this establishes:
   freed header bytes end up as **external** padding at offset 44 — the object never changed
   size class.
 
-So you can compute a **size** from source, and you cannot compute an **offset** from source.
+For the ordinary HotSpot classes in this experiment, you can predict a **size** from source;
+you cannot infer a portable **offset** from source. Treat the result as a model to verify,
+not a guarantee of the JVMS.
 If an offset matters — it does for cache-line contention, which is
 `false-sharing-and-contended` — it must be read from a JOL listing.
 
@@ -262,9 +264,10 @@ array    = alignUp(16 + 40M × 4, 8)     = 160,000,016 bytes   (Txn[] of referen
 total    = 40M × 40 + 160,000,016       = 1,760,000,016 bytes ≈ 1.64 GiB
 ```
 
-You never need to know where the holes are to get the size right — `alignUp(header + Σ field
-sizes, 8)` was exact for **650 generated classes** in both header modes `[executed]`, with no
-hole term. Holes matter for **offsets**, which is §4.
+For the tested ordinary classes, the holes were unnecessary to predict total size:
+`alignUp(header + Σ field sizes, 8)` was exact for **650 generated classes** in both header
+modes `[executed]`, with no hole term. Re-measure special/VM-injected, `@Contended`, preview
+value-class and future-release layouts. Holes matter for **offsets**, which is §4.
 
 Confirm before believing it: `ClassLayout.parseInstance(new Txn(1,1,1,1)).instanceSize()`
 must return 40, and `GraphLayout.parseInstance(array).totalSize()` must return the total.

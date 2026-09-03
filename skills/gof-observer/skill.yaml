@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-observer
-version: 1.1.0
+version: 1.2.0
 description: >-
   Observer in modern Java, treated as high-risk: notifying an unknown set of dependents that
   something changed, and the guarantees it does not provide. Covers the properties people assume
@@ -40,7 +40,7 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
+dependencies: []
 
 suggests:
   - allocation-profiling

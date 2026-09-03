@@ -15,16 +15,27 @@ call site — see java-immutability.
 mutation:
 
 ```java
+private record State(Money balance, List<Entry> entries) {}
+
 public void withdraw(Money amount) {
-    requireSameCurrency(amount);                     // all checks first
-    if (amount.isGreaterThan(balance)) throw new InsufficientFunds(id, balance, amount);
-    balance = balance.minus(amount);                 // then the single mutation
-    entries.add(Entry.debit(amount));                // ordered so nothing after this can fail
+    State before = state;
+    requireSameCurrency(amount);
+    if (amount.isGreaterThan(before.balance())) {
+        throw new InsufficientFunds(id, before.balance(), amount);
+    }
+    Entry debit = Entry.debit(amount);                // may validate/throw before publication
+    var entries = new ArrayList<>(before.entries());
+    entries.add(debit);                               // may allocate/throw before publication
+    state = new State(before.balance().minus(amount), List.copyOf(entries)); // one state swap
 }
 ```
 
-The ordering rule generalises: perform the operation that can fail _before_ the one that
-mutates, and put the mutation that cannot fail last. A `Stack.pop` that checks `size == 0`
+This is failure atomicity, not automatically thread safety. Concurrent access still needs a lock or
+an appropriate `volatile`/atomic state-reference protocol, and multi-step decisions must be guarded
+as one operation; see java-thread-safety-contracts.
+
+The ordering rule generalises: perform fallible work before publishing mutation and, where
+multiple fields form one invariant, publish an immutable aggregate in one assignment. A `Stack.pop` that checks `size == 0`
 before touching the array is this pattern in the JDK.
 
 **3. Work on a copy, then swap.** When the operation is complex, build the new state
@@ -37,9 +48,9 @@ public void replaceAll(List<Rule> rules) {
 }
 ```
 
-Sorting implementations do exactly this — copying into an array, sorting, and writing back —
-partly for performance and partly because a comparator that throws mid-sort would otherwise
-leave the list scrambled.
+Some operations use copy-then-swap, but do not assume library sorts are failure-atomic: the
+`List.sort` contract explicitly permits elements to be reordered if the comparator throws. Read
+the target API contract and test exceptional paths.
 
 **4. Recovery code.** A rollback in a `catch` that undoes what was already done. It is the
 weakest option: the rollback itself can fail, it doubles the code paths, and it is hard to
@@ -53,8 +64,9 @@ Failure atomicity is not free and not always desirable:
 - **A batch that processes 10 000 records** should usually keep the 9 998 that succeeded and
   report the two that failed. Atomicity at the item level, a summary at the batch level — see
   the result-type discussion in `design-decisions.md`.
-- **A concurrent object whose invariant already broke** cannot be repaired by the failing
-  thread alone; `ConcurrentModificationException` explicitly makes no atomicity promise.
+- **Concurrent/fail-fast collections** may detect interference with
+  `ConcurrentModificationException`, but detection is best effort and does not promise rollback.
+  Thread safety and failure atomicity are separate contracts.
 - **`Error`s (OOM, stack overflow) are not recoverable** and no method is expected to stay
   atomic across them.
 
@@ -88,9 +100,10 @@ substitute one for another.
 
 ## Review checks
 
-- [ ] Every mutating method validates fully before mutating anything.
-- [ ] The unfailable mutation is last; nothing that can throw runs between two mutations that
-      must both happen.
+- [ ] Mutating methods either validate/prepare fallible work before publication or explicitly
+      document partial progress.
+- [ ] Fields participating in one invariant are published as one immutable state where practical;
+      rollback paths handle their own possible failures.
 - [ ] Complex updates build new state and install it with one assignment.
 - [ ] Methods that deliberately are not atomic say so in the Javadoc.
 - [ ] No method mutates in-memory state and then performs a remote call whose failure would
@@ -100,3 +113,8 @@ substitute one for another.
       or explicitly restored when the transaction rolls back.
 - [ ] A test exercises the failure path and asserts the object is still usable afterwards —
       not only that the exception was thrown.
+
+## Authoritative references
+
+- [List.sort exceptional-state contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#sort(java.util.Comparator)>)
+- [try-with-resources and suppressed exceptions, Java Language Guide](https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html)

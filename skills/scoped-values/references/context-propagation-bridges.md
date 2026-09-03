@@ -135,8 +135,9 @@ ExecutorService contextual(ExecutorService delegate) {
    cancellation together — and is usually the reason the `@Async` existed.
 
 Option 2 has a trap worth stating: `TENANT.orElse(null)` binds `null` when nothing was
-bound, and `ScopedValue.where(KEY, null)` then binds null, so `get()` returns null instead of
-throwing. Either forbid the unbound case at the wrapper, or branch on `isBound()`.
+bound, and Java 25 explicitly permits a null binding, so `get()` then returns null instead
+of throwing. Either forbid the unbound case at the wrapper, or branch on `isBound()` and
+run the task without creating that binding.
 
 ## What still needs an explicit capture
 

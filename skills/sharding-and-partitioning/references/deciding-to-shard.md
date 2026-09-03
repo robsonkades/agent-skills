@@ -1,42 +1,45 @@
 # Deciding to shard, and on what key
 
-Two decisions, in order. The first is almost always "no". Do not read the second until the
-first has been made with a measured number attached.
+Two decisions, in order. First prove which ownership/resource boundary must change with
+measured alternatives; then choose a key/strategy. “Not yet” is common, but do not make the
+answer dogmatic when residency, isolation or recovery—not raw capacity—is the driver.
 
 ## The alternatives, and the condition that selects each
 
-| Option                      | Selected when                                                                                    | Buys                                             | Costs                                                                |
-| --------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------ | -------------------------------------------------------------------- |
-| Bigger node                 | The instance is not the largest available, and the growth curve gives you a year at that size    | Everything, unchanged                            | Money; one reboot; a ceiling you will meet again                     |
-| Read replicas               | Read QPS or read CPU saturates while write rate is comfortable                                   | Read throughput, geographic read locality        | Replication lag becomes visible to clients — `consistency-models`    |
-| Cache                       | A small key set serves a large share of reads, and `h × T_source` justifies it                   | Removes reads before they reach the store        | Staleness and invalidation — `caching-strategies` owns the decision  |
-| Retention / archiving       | Storage grows because nothing is deleted; queries touch only recent rows                         | Storage and index size, restore time             | A deletion policy someone must own, and an archive read path         |
-| Native table partitioning   | Growth is time-ordered and bulk deletion by age is the real requirement                          | `DROP PARTITION` instead of a bulk `DELETE`      | Still one node — no write-capacity or blast-radius gain              |
-| Splitting off one hot table | One table dominates writes and is only loosely joined to the rest                                | Buys time without a key decision                 | Two stores to operate; the join you thought was loose usually is not |
-| **Sharding**                | Write throughput, storage or blast radius is exhausted on the largest node, **and** a key exists | Capacity beyond one node; per-shard blast radius | Everything below                                                     |
+| Option                      | Selected when                                                                                    | Buys                                             | Costs                                                                 |
+| --------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------ | --------------------------------------------------------------------- |
+| Bigger node                 | Vertical headroom meets SLO/cost/availability horizon                                            | Preserves application data model                 | Cost/ceiling, larger failure/restore domain, resize interruption risk |
+| Read replicas               | Read QPS or read CPU saturates while write rate is comfortable                                   | Read throughput, geographic read locality        | Replication lag becomes visible to clients — `consistency-models`     |
+| Cache                       | A small key set serves a large share of reads, and `h × T_source` justifies it                   | Removes reads before they reach the store        | Staleness and invalidation — `caching-strategies` owns the decision   |
+| Retention / archiving       | Storage grows because nothing is deleted; queries touch only recent rows                         | Storage and index size, restore time             | A deletion policy someone must own, and an archive read path          |
+| Native table partitioning   | Growth is time-ordered and bulk deletion by age is the real requirement                          | `DROP PARTITION` instead of a bulk `DELETE`      | Still one node — no write-capacity or blast-radius gain               |
+| Splitting off one hot table | One table dominates writes and is only loosely joined to the rest                                | Buys time without a key decision                 | Two stores to operate; the join you thought was loose usually is not  |
+| **Sharding**                | Write throughput, storage or blast radius is exhausted on the largest node, **and** a key exists | Capacity beyond one node; per-shard blast radius | Everything below                                                      |
 
 Rejecting an option requires the measurement that rejects it, recorded. "Replicas would not
 help" is admissible only next to a write-rate number.
 
 ## The trajectory test
 
-Sharding for future scale is defensible only with a curve. Take the resource that will be
-exhausted, plot its last six to twelve months, extrapolate to the ceiling of the largest node
-you can buy, and put a date on it. If the date is beyond the horizon in which the schema will
-be rewritten anyway, do not shard now — but do keep the key candidate in mind and avoid
-schema choices that would rule it out.
+Sharding for future capacity needs a forecast with uncertainty. Use seasonal peaks, tenant/key
+distribution, workload/product scenarios and measured per-node service curves—not blind linear
+extrapolation. Put confidence ranges and decision lead time against the largest operationally
+acceptable node. If the trigger is beyond architecture/product horizon, preserve an evolution
+seam rather than paying distributed cost now.
 
 ## The shard-key scorecard
 
-Score every candidate. A single "fails" is disqualifying, not a trade-off to balance.
+Score every candidate and record mitigations. Some failures are disqualifying (an unbounded
+single hot key beyond shard capacity); others can be paid for with a global index or dedicated
+tenant placement. Make that cost visible rather than averaging scores blindly.
 
-| Criterion              | Passes when                                                                                       | How to check                                                                                |
-| ---------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| **Query coverage**     | The key is present in the overwhelming majority of queries weighted by rate and by cost           | Take the top queries from the slow log or statement statistics and mark presence per query  |
-| **Cardinality**        | Distinct key values exceed the intended shard count by orders of magnitude                        | `COUNT(DISTINCT key)` against the planned shard count                                       |
-| **Traffic uniformity** | The busiest key's share of requests and of bytes is small enough that one key cannot fill a shard | Per-key request rate over a peak window — not `COUNT(*)`                                    |
-| **Immutability**       | A row's key value never changes                                                                   | Look for `UPDATE ... SET <key>` anywhere; a mutable key means a cross-shard move per update |
-| **Growth**             | Per-key data volume is bounded, or bounded by a policy you control                                | Largest key's row count and byte size, and its trend                                        |
+| Criterion                     | Passes when                                                                                       | How to check                                                                                |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Query coverage**            | The key is present in the overwhelming majority of queries weighted by rate and by cost           | Take the top queries from the slow log or statement statistics and mark presence per query  |
+| **Cardinality/splittability** | Enough independent units exist to rebalance with headroom; a hot unit can be subdivided           | histogram/top-key share against planned shard capacity/count                                |
+| **Traffic uniformity**        | The busiest key's share of requests and of bytes is small enough that one key cannot fill a shard | Per-key request rate over a peak window — not `COUNT(*)`                                    |
+| **Immutability**              | A row's key value never changes                                                                   | Look for `UPDATE ... SET <key>` anywhere; a mutable key means a cross-shard move per update |
+| **Growth**                    | Per-key data volume is bounded, or bounded by a policy you control                                | Largest key's row count and byte size, and its trend                                        |
 
 Traffic uniformity is the criterion that gets skipped, because row counts are easy to query
 and per-key request rates are not. Skipping it is how a correct shard map ends up with one
@@ -66,14 +69,31 @@ saturated shard — the diagnosis and repair are `hot-partitions-and-rebalancing
 
 ## Partitioning strategies
 
-| Strategy               | Placement                       | Good at                                                    | Gives up / costs                                                                                           |
-| ---------------------- | ------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Range**              | Key intervals map to shards     | Ordered scans, `BETWEEN`, cheap split of a range in two    | Hot tail on any ordered key; needs continuous split/merge management                                       |
-| **Hash**               | `f(key)` maps to a shard        | Uniform placement, no manual balancing                     | No range queries at all; resharding is a data movement problem                                             |
-| **Directory / lookup** | An explicit key-to-shard table  | Arbitrary placement, per-key moves, pinning a large tenant | One extra hop per request; the directory is a new availability dependency and must be cached and versioned |
-| **Per-tenant**         | One shard (or store) per tenant | Isolation, per-tenant restore, per-tenant residency        | Poor packing for many small tenants; shard count grows with customer count                                 |
+| Strategy               | Placement                       | Good at                                                    | Gives up / costs                                                                          |
+| ---------------------- | ------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Range**              | Key intervals map to shards     | Ordered/local scans, targeted split of a range             | Growing-edge hotspot for monotonic traffic; split/merge management                        |
+| **Hash**               | `f(key)` maps to a shard        | Approximate uniform placement of keys                      | Global range query needs fan-out/index; resharding moves data                             |
+| **Directory / lookup** | An explicit key-to-shard table  | Arbitrary placement, per-key moves, pinning a large tenant | Lookup/cache invalidation and stale-routing fence; not necessarily a hop on every request |
+| **Per-tenant**         | One shard (or store) per tenant | Isolation, per-tenant restore, per-tenant residency        | Poor packing for many small tenants; shard count grows with customer count                |
 
 Hash partitioning is the default when the access pattern is point lookups by key. Reach for
 a directory only when placement must be per-key — which is precisely the case a known-large
 tenant creates. The mapping function underneath hash partitioning, and why `hash(key) % N` is
 the wrong one, is `consistent-hashing`.
+
+## Capacity and skew proof
+
+For candidate key `K`, estimate the busiest logical key/range at peak, per-shard capacity at
+the target SLO, replication/migration overhead and failure headroom. Mean keys per shard is not
+the decision. Load-test a recorded or synthetic power-law distribution, membership change and
+one-shard loss; verify the remaining fleet can serve/recover without a cascade.
+
+Also evaluate adversarial keys/hash flooding, null/canonicalization across languages, mutable
+tenant merges/splits, new region/residency placement and a tenant larger than one shard. A key
+that works only for today's median tenant is already a migration plan.
+
+## Primary references
+
+- [Google Cloud Spanner schema design](https://cloud.google.com/spanner/docs/schema-design)
+- [Amazon DynamoDB partition-key design](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
+- [CockroachDB transaction layer](https://www.cockroachlabs.com/docs/stable/architecture/transaction-layer)

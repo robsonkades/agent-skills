@@ -1,190 +1,183 @@
-# Closed world, metadata and initialisation
+# Closed world, metadata, and initialization
 
-## The four build phases
+## Runtime model
 
-```
-.class files (bytecode)
-  |
-  1. POINTS-TO ANALYSIS (closed-world, Andersen style)
-  |    starts from the entry points (main, methods registered via reachability
-  |    metadata) and propagates transitively: if A calls B, B is included; if a
-  |    field can point at instances of T, T is included. The result is a fixed
-  |    point - the smallest set of classes, methods and fields that can execute
-  |    given the statically observable call graph. Everything outside it is
-  |    eliminated, not by heuristic but because the analysis proves it unreachable
-  |    under the assumed closure.
-  |
-  2. HEAP SNAPSHOTTING
-  |    runs static initializers at BUILD TIME and serialises the resulting state
-  |    into the image heap, so the process starts with that state ready and never
-  |    re-runs <clinit>.
-  |
-  3. AOT COMPILATION
-  |    the Graal compiler as an offline compiler. Less run-time information than a
-  |    JIT (no profile, unless PGO supplies one), but all code is compiled from the
-  |    first execution - no warm-up.
-  |
-  4. LINKING
-  |    compiled code + image heap + selected GC + minimal runtime (SubstrateVM)
-  |    -> ELF (Linux) / PE (Windows) / Mach-O (macOS)
+Native Image statically analyzes reachable bytecode, compiles reachable methods ahead of time,
+lays out an initial image heap, and links that output with SubstrateVM and selected native
+libraries. The human-useful model is:
 
-reachability metadata feeds into phase 1.
+```text
+entry points + class path/module path + configuration
+  -> points-to/reachability analysis to a fixed point
+  -> reachable types, methods, fields, dynamic-access registrations, and image-heap objects
+  -> AOT compilation and object/code layout
+  -> platform linker
+  -> executable or shared library for one OS/architecture/libc contract
 ```
 
-The closed-world assumption states that anything not reachable at build time does not exist
-at run time. Without it the binary would have to include the whole JDK just in case
-something is loaded dynamically, destroying both the size gain and the analysis time that
-make Native Image viable. That same assumption is why reflection, dynamic proxies and
-serialisation need explicit configuration.
+This is a conceptual dependency pipeline, not the exact order of the builder's displayed phases.
+Analysis, parsing, class initialization, heap discovery, and compiler work interact and can revisit
+state while the build converges.
 
-Primary sources: Christian Wimmer et al., _"Initialize Once, Start Fast: Application
-Initialization at Build Time"_, OOPSLA 2019, DOI 10.1145/3360610 — the canonical paper for
-heap snapshotting plus points-to analysis. Thomas Würthinger et al., _"One VM to Rule Them
-All"_, Onward! 2013 (a SPLASH track, not OOPSLA), DOI 10.1145/2509578.2509581.
+The closed-world assumption means code that may execute must be available for analysis at build
+time. It does not mean all supplied classes are included, nor that an included class automatically
+permits every reflective operation on it. Dynamic loading of previously unknown bytecode remains
+incompatible with an ordinary native executable; some runtime class definition is possible only
+where Native Image can precompute and register the resulting classes.
 
-## Why reflection breaks it
+## What static analysis can and cannot prove
+
+The analysis can often resolve constant reflection and other dynamic accesses. It cannot generally
+infer values supplied only at runtime:
 
 ```java
-Class<?> cls = Class.forName(className);        // className can be any String
-Method method = cls.getDeclaredMethod(methodName);
-method.invoke(instance, args);
+Class<?> plugin = Class.forName(configuration.get("plugin.class"));
+Method method = plugin.getDeclaredMethod(request.methodName());
+return method.invoke(instance, request.arguments());
 ```
 
-The analyser cannot infer the value of an arbitrary String at build time. If the class or
-method is not declared reachable, the binary does not contain it — and the failure arrives
-at run time, not at build time.
+If the class, member, resource, proxy interface set, serialization behavior, JNI access, or FFM
+access cannot be inferred, metadata must describe the intended dynamic contract. Missing metadata
+can cause a build failure, a `Missing*RegistrationError` in exact mode, a conventional lookup
+exception, a null resource, or library-specific behavior. Therefore, do not diagnose every
+`ClassNotFoundException` as a metadata error without confirming the artifact actually contains the
+class and the failing operation is dynamic access.
 
-## Legacy versus unified metadata
+## Metadata sources and ownership
 
-| Aspect                      | Legacy (five files)                                                                                                | `reachability-metadata.json`                      |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
-| Files                       | `reflect-config.json`, `resource-config.json`, `proxy-config.json`, `serialization-config.json`, `jni-config.json` | One file                                          |
-| Discovery                   | Automatic via `META-INF/native-image/<group>/<artifact>/`                                                          | Automatic, same mechanism                         |
-| Manual authoring            | Edit each file separately                                                                                          | One file, sections named per category             |
-| Compatibility               | Supported indefinitely, not deprecated                                                                             | Recommended for new configuration                 |
-| Shared third-party metadata | N/A                                                                                                                | `github.com/oracle/graalvm-reachability-metadata` |
+Use multiple sources, with explicit ownership:
 
-```json
-// reflect-config.json — legacy, still supported
-[
-  {
-    "name": "com.example.MyService",
-    "allDeclaredConstructors": true,
-    "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  }
-]
-```
+| Source                           | Strength                                             | Failure mode                                             | Appropriate use                                 |
+| -------------------------------- | ---------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------- |
+| Framework AOT integration        | understands framework-generated code and conventions | coupled to framework/plugin version                      | primary source for supported frameworks         |
+| Library-packaged metadata        | maintained with the library                          | may lag unusual configurations                           | preferred for library internals                 |
+| Reachability Metadata Repository | reusable community/vendor metadata                   | version matching and conditionality matter               | dependencies that do not package metadata       |
+| Tracing agent                    | captures observed runtime accesses                   | incomplete when coverage is incomplete; can record noise | discover application-specific accesses          |
+| Hand-authored metadata           | deterministic statement of intent                    | can become broad, stale, or schema-invalid               | stable application contracts and reviewed fixes |
+| Feature API/substitution         | can express build-time logic beyond JSON             | code and version coupling                                | last resort for integration authors             |
 
-```json
-// reachability-metadata.json — general shape, illustrative.
-// Confirm exact key names and schema version against
-// graalvm.org/latest/reference-manual/native-image/metadata/ for the release in use.
-{
-  "reflection": [
-    {
-      "type": "NativeImageLab$Service",
-      "allDeclaredConstructors": true,
-      "allDeclaredMethods": true,
-      "allDeclaredFields": true
-    }
-  ]
-}
-```
+Store application metadata below
+`META-INF/native-image/<group-id>/<artifact-id>/reachability-metadata.json`, validate it against the
+schema for the target release, and prefer conditional entries so optional dependencies do not bloat
+unrelated images. Keep generated agent output reviewable: merge runs, diff changes, and separate
+intentional configuration from transient test/framework noise.
 
-## Build-time initialisation and its three fixes
+Current unified metadata covers reflection, JNI, resources and bundles, serialization, proxies,
+and foreign access as documented by the release schema. Legacy per-feature files remain accepted
+in supported releases, but “accepted today” is not an indefinite compatibility guarantee. Do not
+mix formats for the same ownership boundary without a reason; it makes provenance and stale-entry
+removal harder.
 
-```java
-public class Config {
-    static final Properties PROPS;
-    static {
-        PROPS = new Properties();
-        PROPS.load(ClassLoader.getSystemResourceAsStream("config.properties"));
-        // Runs at BUILD TIME - the contents of PROPS are frozen into the binary
-    }
-}
-```
-
-If the configuration depends on an environment variable, the captured value is the build
-environment's. An empty variable fails the build loudly; a CI value is snapshotted silently,
-which is the worse case.
-
-In order of practical preference:
-
-```java
-// 3 (most portable): lazy initialisation - defer the side effect to first use, via DI
-@Singleton
-class DataSourceFactory {
-    @Bean
-    DataSource dataSource(DataSourceConfig config) {
-        return createDataSource(config.getUrl());   // created at run time
-    }
-}
-```
+Use exact handling during tests:
 
 ```bash
-# 2: the native-image flag - simplest
-native-image --initialize-at-run-time=com.example.Config -jar myapp.jar
+native-image --exact-reachability-metadata -jar app.jar
+./app -XX:MissingRegistrationReportingMode=Exit
 ```
 
+Exact mode improves attribution but still needs representative execution to reach the problematic
+path. `Warn` helps inventory multiple gaps; `Exit` is useful in a correctness gate where caught
+errors must not be hidden. Confirm these runtime options against the selected release.
+
+## Class initialization and image-heap state
+
+Java requires a class to initialize at first active use. Native Image may move initialization to
+build time when it is configured or proven safe, storing resulting static state in the executable's
+initial heap. Important Native Image runtime and JDK classes are build-time initialized. Application
+classes default to runtime initialization unless automatically proven safe or explicitly selected.
+
+Relevant supertypes of build-time-initialized classes must also be build-time initialized. Relevant
+subtypes of runtime-initialized classes must remain runtime initialized, and instances of a runtime-
+initialized class cannot already be present in the image heap. Those constraints explain many
+apparently indirect initialization errors.
+
+Build-time initialization is valid only when its observable result is safe for every deployment of
+that artifact. Audit reads of:
+
+- environment variables, system properties, secrets, hostnames, paths, locale, time zone, clocks,
+  randomness, certificates, and network/file content;
+- mutable singletons, caches, thread pools, file descriptors, native pointers, and background
+  threads;
+- providers or registries whose membership differs between build and deployment environments.
+
+Prefer fixes in this order:
+
+1. ordinary runtime construction through DI, lazy holders, or explicit application startup;
+2. narrow `--initialize-at-run-time=<class>` or the public
+   `RuntimeClassInitialization.initializeAtRunTime` Feature API;
+3. a framework-supported extension;
+4. SVM substitution only when source/framework changes are impossible.
+
+Avoid package-wide `--initialize-at-build-time`. It expands the review surface and may turn future
+dependency additions into persisted state without an obvious source change.
+
 ```java
-// 1: SVM class substitution - recomputes the field at run time instead of
-// inheriting the build-time snapshot. There is no "@Reinitialize" annotation;
-// the real mechanism is these three.
-@TargetClass(className = "com.example.Config")
-final class Target_Config {
-    @Alias
-    @RecomputeFieldValue(kind = RecomputeFieldValue.Kind.Reset)
-    static Properties PROPS;
+// Portable: read deployment configuration at runtime.
+final class DataSourceFactory {
+    DataSource create(RuntimeConfig config) {
+        return connect(config.databaseUrl());
+    }
 }
 ```
 
-`RecomputeFieldValue` lives in `com.oracle.svm.core.annotate` and is an internal SVM API, not
-a stable public one — confirm the `Kind` constant against the installed GraalVM version.
+If internal substitution is unavoidable, pin the GraalVM release and regression-test it:
 
-## Choosing native or the JVM
+```java
+@TargetClass(className = "com.example.LegacyConfig")
+final class Target_LegacyConfig {
+    @Alias
+    @RecomputeFieldValue(kind = RecomputeFieldValue.Kind.Reset)
+    static Properties PROPERTIES;
+}
+```
 
-| Scenario                                                                      | Choose                                                                                         | Why                                                                                  |
-| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Serverless / FaaS with frequent cold starts                                   | Native Image                                                                                   | Millisecond startup removes warm-up cost charged on every cold invocation            |
-| CLI run thousands of times by users                                           | Native Image                                                                                   | There is no steady state over which to amortise JIT warm-up                          |
-| Long-running service, sustained high throughput                               | Traditional JVM                                                                                | C2 exploits the real profile; the higher post-warm-up ceiling outweighs startup cost |
-| Heavy dynamic reflection unknowable at build time (plugins by arbitrary name) | Traditional JVM, or Native Image with `--no-fallback` and robust reachability regression tests | Closed world requires every dynamic path to be known at build time                   |
-| Needs PGO or G1 in Native Image                                               | Confirm the distribution before committing to the design                                       | CE has neither; changing distribution afterwards is avoidable rework                 |
+`com.oracle.svm.core.annotate` is an implementation API, not a portable Java or stable Native Image
+contract. There is no general public `@Reinitialize` annotation.
 
-## Distributions
+## Runtime and distribution choices
 
-Since the GraalVM for JDK 17 line (2023), the old paid Community/Enterprise split became two
-distributions with different licences, **both free**: GraalVM Community Edition under GPLv2
-with Classpath Exception, and Oracle GraalVM under the GraalVM Free Terms and Conditions
-(GFTC), free in production including commercially.
+Distribution capabilities are release-specific. For the current JDK 25 line, Community Edition
+uses GPLv2 with Classpath Exception and supports Serial/Epsilon collectors; Oracle GraalVM uses the
+GFTC and additionally provides Native Image G1 and PGO. The GFTC permits commercial and production
+use subject to its terms, but redistribution and support terms still require review. Confirm the
+actual release rather than copying an old “Community versus Enterprise” table.
 
-| Aspect           | GraalVM CE                                  | Oracle GraalVM                            |
-| ---------------- | ------------------------------------------- | ----------------------------------------- |
-| Licence          | GPLv2 + Classpath Exception                 | GFTC                                      |
-| Production cost  | Free                                        | Free                                      |
-| Native Image GCs | Serial (default), Epsilon                   | Serial, Epsilon, **G1**                   |
-| PGO              | **Not available**                           | Available                                 |
-| Where to get it  | `graalvm.org/downloads`, SDKMAN `*-graalce` | `graalvm.org/downloads`, SDKMAN `*-graal` |
+Collector choice is a workload decision:
 
-Licensing and feature set are normatively defined by `graalvm.org/faq/` and the `LICENSE` /
-`LICENSE_GRAALVM_CE` files in the `oracle/graal` repository; terms can be revised between
-releases.
+| Collector | Prefer when                                                                 | Avoid or investigate when                                                                       |
+| --------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Serial    | small heaps, low footprint, low CPU budget, or short-lived processes        | stop-the-world time at target live set violates the SLO                                         |
+| G1        | larger live sets or pause/throughput goals justify parallel/concurrent work | distribution/platform support, extra threads/footprint, or small-container economics do not fit |
+| Epsilon   | bounded process lifetime and allocation budget make reclamation unnecessary | any request/load growth can outlive the allocation budget                                       |
 
-## JFR support
+The Serial heap's default maximum can be 80% of detected physical memory. That is an upper bound,
+not an RSS prediction. A copying collector can need transient headroom, and the process also has
+image heap, stacks, native allocations, code, mappings, and libraries. Always validate the
+container-visible memory calculation and set an operational ceiling.
 
-JFR works in native binaries, but with structurally narrower support: much of the JVM's JFR
-instrumentation is coupled to HotSpot internals — multi-tier JIT, HotSpot-sense safepoints,
-particular GC structures — that do not exist in the same form on SubstrateVM. This is a
-consequence of a different runtime, not an implementation gap awaiting a fix.
+## Observability is a product feature
 
-| Aspect                                                       | JVM (HotSpot)         | Native Image                                                                                                                                                                      |
-| ------------------------------------------------------------ | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Application (custom) events                                  | Supported             | Supported                                                                                                                                                                         |
-| Allocation / GC events for the selected collector            | Supported             | Partially supported, depending on the GC chosen (Serial/G1)                                                                                                                       |
-| Most VM-internal events (JIT compilation, tiers, code cache) | Supported             | **Not supported** — no run-time JIT and no tiers for them to describe                                                                                                             |
-| Stack traces on events                                       | Complete              | **Can be incomplete**, depending on the event and the depth SVM captured                                                                                                          |
-| Platform                                                     | Linux, Windows, macOS | All three; local recording works everywhere, but **remote JMX and `jcmd` control are unavailable on Windows** (recurring-callback fallback instead of the signal-handler sampler) |
+Build monitoring capabilities into the artifact with `--enable-monitoring=<features>`. JFR, heap
+dumps, NMT, JMX, `jcmd`, and thread diagnostics have distinct inclusion and platform rules. Native
+Image implements many useful JFR events, but not all HotSpot bytecode-instrumented or VM-internal
+events; old-object root paths are limited. GraalVM 25.1 added Windows JFR recording and heap dumps,
+while current documentation still excludes `jcmd` on Windows.
 
-Planning production observability on assumed JFR parity is the kind of decision that only
-surfaces during an incident. Test the specific events on the real binary first.
+Do not preserve a static parity table across all GraalVM versions. Instead, for the release and
+platform being deployed:
+
+1. build with only required monitoring capabilities;
+2. list available `jcmd` commands and JFR event types on the produced artifact;
+3. capture a representative recording, heap dump, thread dump, and native-memory view;
+4. verify symbol retention and crash/core-dump procedures;
+5. quantify feature overhead under load.
+
+## Primary references
+
+- [Native Image overview](https://www.graalvm.org/latest/reference-manual/native-image/)
+- [Reachability Metadata](https://www.graalvm.org/latest/reference-manual/native-image/metadata/)
+- [Class Initialization](https://www.graalvm.org/latest/reference-manual/native-image/optimizations-and-performance/ClassInitialization/)
+- [Memory Management](https://docs.oracle.com/en/graalvm/jdk/25/docs/reference-manual/native-image/optimizations-and-performance/MemoryManagement/)
+- [Debugging and Diagnostics](https://www.graalvm.org/latest/reference-manual/native-image/debugging-and-diagnostics/)
+- [GraalVM 25.1 release notes](https://www.graalvm.org/release-notes/25.1/)
+- [Initialize Once, Start Fast (OOPSLA 2019)](https://doi.org/10.1145/3360610)

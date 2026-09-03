@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: graalvm-jit
-version: 2.0.0
+version: 2.1.0
 description: >-
   Graal as a JIT compiler compared with C2: partial escape analysis, graph-size inlining and
   speculation, where Graal wins and where it loses, JVMCI and what JEP 410 removed, libgraal

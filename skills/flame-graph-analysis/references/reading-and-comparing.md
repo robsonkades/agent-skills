@@ -1,84 +1,172 @@
 # Reading and comparing flame graphs
 
-## Which graph answers which question
+## Read one graph
 
-| Symptom                     | Graph type     | How to produce it                                      |
-| --------------------------- | -------------- | ------------------------------------------------------ |
-| High CPU                    | CPU            | `asprof -e cpu`                                        |
-| High latency, low CPU       | wall / off-CPU | `asprof -e wall -t -o jfr`, then `jfrconv -s sleeping` |
-| Frequent young GC           | allocation     | `asprof -e alloc --alloc 512k`                         |
-| Threads blocking each other | lock           | `asprof -e lock --lock 1ms`                            |
-| Regression between versions | differential   | `difffolded.pl -n old.collapsed new.collapsed`         |
+### 1. State the sample universe
 
-## Self-width, worked through
+Write one sentence:
 
+> During `[window]`, `[producer/event]` selected `[population]`; one unit of width represents
+> `[weight]`, under `[filters/rate/stack limits]`.
+
+If that sentence cannot be completed, return to the raw recording/configuration. A title such
+as “CPU Flame Graph” is not sufficient provenance.
+
+### 2. Validate totals and quality
+
+Record:
+
+- total sample/event weight and count;
+- duration and completed/error/cancelled workload;
+- missing targets/threads/context;
+- lost/dropped/throttled events;
+- truncated/unknown/unresolved stack fractions;
+- producer/converter/JDK/platform epoch.
+
+Render thresholds can hide narrow frames without removing their weight from ancestors. Filters
+can remove complete stacks or frames depending on tool. Read the exact conversion command.
+
+### 3. Partition heterogeneous populations
+
+Whole-process graphs mix request threads, GC, JIT compilers, signal/profiler/export workers,
+and idle pools. Split only on trustworthy metadata:
+
+- application/runtime/native/kernel thread roles;
+- runnable/sleeping/blocked state where defined;
+- service/operation/workload cohort;
+- version/instance/host class;
+- virtual-thread logical task versus carrier when supported.
+
+Thread names are hints, can be reused, and can contain high-cardinality data. Validate IDs and
+lifecycle.
+
+### 4. Read inclusive and leaf weight
+
+Suppose retained stack weights form:
+
+```text
+request                                      100
+├─ parse                                      35
+│  └─ decode                                  30
+├─ persist                                    50
+│  └─ pool.borrow
+│     └─ park                                 45
+└─ respond                                    10
 ```
-main                                   100%   ← widest, never the bottleneck
-└─ handleRequest                        98%
-   ├─ parseBody                         45%   ← plateau: W_self is high here
-   │  └─ ObjectMapper.readValue         44%
-   └─ persist                           50%
-      └─ LockSupport.park               49%   ← infrastructure frame: look below it
+
+Under this simplified aggregate, `request` has roughly 5 units with no displayed child,
+`parse` roughly 5, and `persist` roughly 5. That arithmetic can be distorted by filtered or
+hidden frames, recursion, truncation, inline attribution, and renderer minimum width. The graph
+does not say whether `park` is avoidable or which resource caused it.
+
+### 5. Switch views
+
+Use root-oriented view for ownership paths. Use bottom-up/reversed aggregation to answer “all
+callers of this leaf/mechanism.” Search may highlight/sum matches, but name normalization,
+overloads, recursion, and duplicate display names can affect totals.
+
+Use time-bucketed/heatmap/JFR views when phase matters. Horizontal flame-graph position is not
+chronology.
+
+## Rank next measurements, not fixes
+
+For each candidate path record:
+
+| Candidate  |        Selected weight | Outcome it could affect | Alternative explanation | Discriminating evidence                     |
+| ---------- | ---------------------: | ----------------------- | ----------------------- | ------------------------------------------- |
+| serializer |           absolute + % | CPU/request             | changed payload mix     | bytes/items + CPU profile per work          |
+| pool wait  | absolute + % wall/lock | request latency         | healthy idle workers    | pool queue/leases/timeouts + request cohort |
+| GC worker  |       absolute + % CPU | capacity/tail           | normal concurrent phase | allocation/live set/GC phase CPU and pauses |
+
+The most useful next step can target a narrow but high-cost/failure-critical path, or measure a
+wide frame whose mechanism is still ambiguous.
+
+## Amdahl as a bounded hypothesis
+
+Use Amdahl only after mapping selected weight to the resource being optimized and avoiding
+double-counting inclusive ancestors:
+
+```text
+p = non-overlapping end-to-end resource fraction affected
+s = credible speedup of that fraction
+overall speedup <= 1 / ((1 - p) + p/s)
 ```
 
-`W_self(handleRequest) = 98 − 45 − 50 = 3%`. Optimising `handleRequest` itself buys 3%.
-The two candidates are `ObjectMapper.readValue` (real work) and whatever is starving the
-resource that `park` is waiting on (a queue, and probably not a code problem at all).
+State why `p` is credible. If a CPU profile says a leaf has 20% of samples but the service is
+I/O-bound, eliminating it can reduce CPU cost materially while barely moving latency. Both can
+be valuable; they are different decisions.
 
-## Amdahl, correctly
+## Differential design
 
+### Pair the question and denominator
+
+| Question                                  | Comparison basis                                             |
+| ----------------------------------------- | ------------------------------------------------------------ |
+| Did fixed work use more CPU?              | absolute CPU-event weight for equal work, or CPU weight/work |
+| Did per-request code mix change?          | matched operation cohort, weight/successful request          |
+| Did an incident phase change composition? | normalized share plus raw totals and load                    |
+| Did allocation per item change?           | allocated weight/item and object/site distribution           |
+| Did wait move?                            | matched request/thread cohort and elapsed-wait weight/work   |
+
+Total normalization is appropriate only for composition. It can make a candidate that uses
+twice the CPU appear unchanged if every stack doubles together.
+
+### Validate converter direction
+
+Create tiny folded inputs:
+
+```text
+# baseline
+root;stable 80
+root;removed 20
+
+# candidate
+root;stable 80
+root;added 20
 ```
-Frame at 45%:  speedup = 1 / (1 − 0.45) = 1.82×   → 45% time reduction
-Frame at  2%:  speedup = 1 / (1 − 0.02) = 1.02×   →  2% time reduction
-```
 
-The 2% frame is usually chosen first because the fix is obvious and fits in a small pull
-request. It is real work with a null return, and worse, it consumes the attention window
-the true bottleneck would have had.
+Run the exact pinned differential pipeline and record which sign/color means added versus
+removed. Palettes differ between classic FlameGraph, async-profiler HTML, JMC, and other
+backends. Colors in a normal graph may encode language/frame type or be decorative.
 
-State the conversion as **time reduction**, not as "N% faster" — the second phrasing
-routinely inflates a 45% frame into an 82% claim.
+### Use repeated trials
 
-## Differential
+One pair is descriptive. For a regression decision, collect randomized/paired independent
+runs and compare stable stack groups or resource outcomes at the run level. Individual
+samples inside one profile are not independent version trials. Preserve each raw profile;
+aggregating first can hide host/run variance.
 
-```bash
-# ❌ profiles with different totals (60 s × 100 Hz vs 30 s × 100 Hz)
-perl difffolded.pl v1.collapsed v2.collapsed | perl flamegraph.pl > diff.svg
-# → the whole graph in one colour. That is arithmetic, not a regression.
+### Interpret tree reshaping
 
-# ✅ -n normalises, scaling the first profile to the second's total
-perl difffolded.pl -n v1.collapsed v2.collapsed | perl flamegraph.pl > diff.svg
-```
+Compiler inlining, deoptimization, hidden-class/lambda naming, library upgrades, symbolization,
+and converter normalization can move weight among frames without changing machine work. Use
+bottom-up stable mechanisms, JIT compilation/assembly where needed, and external metrics.
 
-Normalisation corrects the total. It does not correct different load or different warm-up,
-and nothing does — those have to be equal by construction.
+## Post-change protocol
 
-## Colours
+1. Predeclare expected outcome and affected path/resource.
+2. Repeat the same compatible experiment, including control/order policy.
+3. Compare throughput/latency/errors/resource per work with uncertainty.
+4. Verify the target stack mechanism changed by the expected absolute weight.
+5. Inspect displaced/new work and system bottleneck migration.
+6. Test relevant scale/concurrency/data and failure conditions.
+7. Record negative or inconclusive results; do not select the best rerun.
 
-Colours mean whatever **that tool's** legend says. In the classic FlameGraph script they
-are random warm hues carrying no meaning; in async-profiler's HTML they encode frame type
-(Java, native, kernel, inlined); in a differential they encode direction of change. Reading
-one tool's convention into another's output is a common source of invented findings.
+A graph that “looks cleaner” is not a validation criterion.
 
-## Before collecting
+## Review checklist
 
-- [ ] Application warm by an observable criterion, not `sleep`
-- [ ] Load representative in volume, operation mix and concurrency
-- [ ] Dataset at production order of magnitude
-- [ ] Graph type matches the symptom
-- [ ] Duration enough for ~100 samples on the frame of interest
-- [ ] Throughput and p50/p99/p99.9 baseline recorded
-- [ ] If comparing versions: same machine, same load, same warm-up
+- [ ] Source/event/weight/population/filters are named.
+- [ ] Absolute totals, workload denominator, loss, truncation, and symbols are checked.
+- [ ] Runtime/idle/application populations are separated only where metadata supports it.
+- [ ] Inclusive and leaf widths are not double-counted.
+- [ ] Bottom-up/search grouping is used for mechanisms spread across callers.
+- [ ] Amdahl fraction maps to the actual resource/outcome and states assumptions.
+- [ ] Differential denominator and converter sign are explicitly validated.
+- [ ] Repeated compatible runs and external outcomes—not graph shape alone—decide the change.
 
-## After the fix
+## Authoritative references
 
-- [ ] Re-profiled under identical conditions
-- [ ] Differential generated **with `-n`**
-- [ ] The frame shrank by the predicted proportion
-- [ ] Throughput **and** percentiles compared
-- [ ] No new hotspot appeared
-- [ ] One fix at a time, so the gain is attributable
-- [ ] Result documented: metrics and graphs, before and after
-
-A frame that vanished is not proof of improvement — it may have been inlined. Only
-throughput and percentiles settle that.
+- [Flame Graphs](https://www.brendangregg.com/flamegraphs.html)
+- [Differential Flame Graphs](https://www.brendangregg.com/blog/2014-11-09/differential-flame-graphs.html)
+- [FlameGraph scripts](https://github.com/brendangregg/FlameGraph)

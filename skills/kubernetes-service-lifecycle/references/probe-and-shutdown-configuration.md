@@ -30,9 +30,11 @@ spec:
 
 Read the three numbers as answers to three questions:
 
-- **Boot budget** = `startupProbe.periodSeconds × failureThreshold`. Set it from the measured
-  p99 cold start on a _throttled_ pod, times two. Exceeding it is a restart loop.
-- **Crash detection** = `livenessProbe.periodSeconds × failureThreshold`. Shorter means
+- **Boot budget approximation** = `startupProbe.periodSeconds × failureThreshold`, adjusted
+  for initial delay and probe execution timing. Set it from a chosen cold-start percentile
+  plus explicit margin on production-equivalent throttled pods; "p99 times two" is not a
+  universal reliability target.
+- **Crash detection approximation** = `livenessProbe.periodSeconds × failureThreshold`. Shorter means
   faster recovery and more spurious restarts under load; that is the trade to argue about.
 - **Traffic removal** = `readinessProbe.periodSeconds × failureThreshold`, plus however long
   the EndpointSlice change takes to reach every data plane — not bounded by the manifest, and
@@ -46,9 +48,9 @@ pauses and CPU throttling the pod actually sees — not the numbers from a lapto
 ## Version-dependent pieces
 
 - **`sleep` preStop action** — added in 1.29, enabled by default from 1.30. Before that, the
-  only portable form is `exec: { command: ["/bin/sleep", "10"] }`, which requires a shell or
-  `sleep` binary in the image. Distroless and scratch images have neither, and a failing
-  preStop hook does not block termination — it fails quietly.
+  portable form is `exec: { command: ["/bin/sleep", "10"] }`, which requires the referenced
+  binary in the image. Distroless and scratch images commonly lack it. A failing hook does
+  not block termination, but kubelet records a `FailedPreStopHook` event when retained.
 - **`grpc` probe** — a first-class probe type, stable since 1.27. On older clusters use
   `exec` with a gRPC health-check client binary shipped in the image.
 - **Probe-level `terminationGracePeriodSeconds`** — overrides the pod value when a liveness
@@ -69,11 +71,12 @@ terminationGracePeriodSeconds  >  preStop  +  application drain  +  margin
        45 s                    >   10 s    +        20 s          +  15 s
 ```
 
-The countdown starts when the pod is marked for deletion. `preStop` runs inside it, SIGTERM is
-delivered only after `preStop` returns, and whatever remains is what the application has —
-here, `spring.lifecycle.timeout-per-shutdown-phase`. Get the inequality backwards and the
-kubelet sends SIGKILL mid-request, which reaches the client as a connection reset with no
-server-side log line at all.
+The countdown starts when the pod is marked for deletion. `preStop` runs inside it, and the
+runtime stop signal is requested after the hook returns. If a hook is still running at grace
+expiry, kubelet currently requests a small one-off extension; this is emergency behavior,
+not budget. Whatever remains is what the application has — here,
+`spring.lifecycle.timeout-per-shutdown-phase`. Get the inequality backwards and forced
+termination can cut a request without giving the JVM a final logging opportunity.
 
 The preStop value is not "how long shutdown takes" — it is how long endpoint removal takes to
 propagate to every proxy in the path. Measure it: deploy repeatedly under an open-loop client
@@ -83,7 +86,7 @@ and raise it until the error count reaches zero.
 
 ```yaml
 server:
-  shutdown: graceful # default is immediate — requests are cut off
+  shutdown: graceful # explicit across baselines; current Boot 4 defaults to graceful
 spring:
   lifecycle:
     timeout-per-shutdown-phase: 20s # default 30s; must fit the pod budget above
@@ -127,14 +130,17 @@ Notes that decide correctness:
 
 ## Resources and disruption
 
-- `requests` decide scheduling and the QoS class; `limits` decide throttling and killing.
-  Requests equal to limits on every resource gives Guaranteed QoS, evicted last under node
-  pressure. The memory limit is enforced against the whole container, not the heap — sizing
+- `requests` influence scheduling and QoS; memory limits can trigger kills and CPU limits
+  impose quota throttling. Guaranteed QoS requires every relevant container to specify equal
+  non-zero CPU and memory requests/limits. QoS affects eviction ordering but is not an
+  absolute "evicted last" guarantee across priorities and resource conditions. The memory
+  limit is enforced against the whole container, not the heap — sizing
   the heap and the non-heap under it is `container-awareness`.
 - A PodDisruptionBudget applies only to evictions through the Eviction API (`kubectl drain`,
   autoscaler, node upgrades). It does not constrain a node crash, a direct pod deletion, or a
   Deployment's own rollout.
-- `minAvailable: 1` with `replicas: 1` is a deadlock: no eviction can satisfy it, so node
-  drains hang forever. Either run two replicas or accept the disruption.
+- `minAvailable: 1` with `replicas: 1` disallows a healthy-pod eviction through the Eviction
+  API, so a compliant drain retries until capacity appears or its own timeout expires. Run
+  enough replicas for the availability objective or explicitly accept/bypass the disruption.
 - A PDB whose pods are already unhealthy can block the very drain that would fix them.
   `unhealthyPodEvictionPolicy: AlwaysAllow` (beta since 1.27) exists for that case.

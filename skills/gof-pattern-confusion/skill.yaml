@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-pattern-confusion
-version: 1.1.0
+version: 1.2.0
 description: >-
   Telling apart the patterns that look alike, so a design is not chosen because a name sounded
   right. Covers the four wrappers (Adapter, Decorator, Proxy, Facade) and the two questions that

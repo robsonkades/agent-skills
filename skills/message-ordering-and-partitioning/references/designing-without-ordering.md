@@ -1,8 +1,9 @@
 # Designing for no ordering requirement
 
-Ordering is a property the **handler** demands, not one the domain has. The question is narrow:
-_if these two records arrive swapped, is the final state different?_ If not there is no
-requirement, and the key constraint, the parallelism ceiling and the one-way door all lift.
+Ordering can be required by a domain invariant, an externally visible history, or an
+implementation. Ask separately: if records swap, is final state different; is an invalid
+intermediate state/effect visible; and must every transition occur? Equal final state alone is
+insufficient for payments, notifications or audits.
 
 ## 1 — The version guard
 
@@ -16,8 +17,10 @@ UPDATE customer
  WHERE id = :id AND version < :version
 ```
 
-- An update count of **0 is success**, not a failure: a newer version is already stored, so log
-  at debug and acknowledge. Treating it as an error sends good records to a DLQ.
+- An update count of 0 is not automatically success: distinguish stale/duplicate from missing
+  target, equal-version conflict and a future gap by reading authoritative state or using a
+  richer conditional statement/result. A stale snapshot may be acknowledged; a missing
+  required transition may need repair.
 - The comparison must be in the same statement as the write. Read-then-compare-then-write
   reintroduces the race between concurrent consumers that the guard exists to remove.
 - This is not JPA's `@Version` optimistic locking, which _rejects the stale writer_ so it can
@@ -27,12 +30,14 @@ UPDATE customer
 
 ## 2 — Commutative handlers
 
-Operations whose composition does not depend on order:
+Operations whose composition does not depend on order include:
 
-- Assigning fields from a **full snapshot** carried in the record. This is why an event should
-  carry the resulting state rather than a delta (`event-driven-architecture`); a delta forces
-  ordering, a snapshot does not.
-- Upsert keyed by a natural id; insert into a set; any idempotent assignment.
+- Taking the set union of uniquely identified facts, `max` of comparable monotonic watermarks,
+  or a CRDT merge with its algebra and metadata intact.
+- Applying a **full snapshot with a version guard**. Assignment alone is idempotent but not
+  commutative: an old snapshot applied last overwrites a new one.
+- An upsert only when conflicting values have a commutative deterministic merge. A plain upsert
+  with different values is last-arrival-wins, not commutative.
 - A counter incremented once per record id, with the id stored as a dedup key — addition
   commutes but is not repeat-safe, so this needs `effectively-once` application: at-least-once
   delivery plus deduplication at the store (`delivery-semantics`, `idempotency`).
@@ -91,8 +96,11 @@ this technique is implemented wrongly.
 | LWW                 | A comparable version or a trusted clock, plus a tie-break | Concurrent updates, silently                       |
 | State machine       | A closed status set and a transition table                | Freedom to add states without revisiting the table |
 
-All four remove the ordering requirement, so the key can be chosen for load distribution
-instead (`sharding-and-partitioning`) and the consumer can scale past one thread per partition.
+These techniques relax different requirements. Version guard/LWW can preserve newest final
+state while discarding intermediates; a state machine detects gaps but may need ordered repair;
+only a genuinely commutative, associative and duplicate-safe merge is independent of order for
+its declared outcome. Key choice can change only after checking every required effect and
+recovery path.
 
 ## Proving that handlers are order-insensitive
 
@@ -115,7 +123,26 @@ void final_state_is_independent_of_delivery_order() {
   flake instead of a bug.
 - **Include duplicates in the shuffle.** At-least-once delivery produces reordering and
   repetition together, so the test should too — it then proves both properties at once.
-- **Assert the final state, never the sequence of calls.** A test that asserts call order has
-  re-introduced the requirement it was written to remove.
+- Assert final state and every externally relevant invariant/effect. Do not assert incidental
+  call order, but do assert required transition/audit/notification semantics.
 - With few enough records, enumerate every permutation instead of shuffling; beyond a handful a
   property-based generator over permutations is the same test with better coverage.
+
+Also generate duplicates, gaps, late snapshots, concurrent equal versions, restore/epoch reset
+and poison records. Run the handler against the real transactional constraint: an in-memory
+model does not prove the SQL predicate is atomic.
+
+## Decision matrix
+
+| Need                                       | Suitable mechanism                      | What still fails                                    |
+| ------------------------------------------ | --------------------------------------- | --------------------------------------------------- |
+| Only newest snapshot matters               | authority version + conditional replace | missing intermediate effects are intentionally lost |
+| Every delta exactly once, order irrelevant | unique operation ID + commutative merge | retention expiry or non-atomic dedup+merge          |
+| Every transition in sequence               | per-key sequence + gap buffer/replay    | permanent gap blocks progress                       |
+| Concurrent offline edits                   | CRDT/domain merge or conflict retention | metadata growth and semantic conflicts              |
+| Audit-visible total history                | authoritative sequencer/log             | sequencing availability/throughput ceiling          |
+
+## Primary references
+
+- [Shapiro et al., Conflict-free Replicated Data Types](https://inria.hal.science/inria-00609399/document)
+- [RFC 1982: Serial Number Arithmetic](https://www.rfc-editor.org/rfc/rfc1982)

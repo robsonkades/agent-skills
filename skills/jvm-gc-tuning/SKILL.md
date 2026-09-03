@@ -25,19 +25,21 @@ decision is the one that saves the most time.
 
 ## Workflow
 
-1. **Confirm GC is on the critical path.** Pause times must line up with the latency
-   percentile that regressed. If they do not, stop here and go back to `java-performance`.
-2. **Separate pause duration from pause frequency** in the log. Duration points at the
-   collector or the heap size — this skill. Frequency points at allocation rate — a
-   different investigation, and usually the real one.
-3. **Reconcile the logged pause with the pause the client felt.** If they disagree, the
-   collector is not the cost; `gc-fundamentals` covers Time-To-SafePoint and
+1. **Confirm GC is on the critical path.** Align GC/safepoint intervals with affected
+   requests, queue depth, CPU and throughput. Temporal overlap routes the investigation;
+   matched unaffected windows and recovery behavior help establish causality.
+2. **Separate duration, frequency and concurrent cost.** Duration decomposes into roots,
+   remembered sets, copying, reference processing, scheduling and collector phases.
+   Frequency depends on allocation, young sizing and triggers. Concurrent CPU/barriers can
+   reduce throughput without a long pause.
+3. **Reconcile the logged pause with the pause the client felt.** A discrepancy means the
+   event alone is insufficient; `gc-fundamentals` covers Time-To-SafePoint and
    `linux-for-jvm` covers throttling and page faults.
 4. **Check upstream before touching a flag.** By `N = λ × R`, slower dependencies keep more
    requests in flight and more objects alive. Expensive GC is frequently a symptom of
    slowness elsewhere, and tuning the collector masks the cause.
-5. **Size the heap explicitly**, `-Xms` equal to `-Xmx`, with the non-heap budget accounted
-   for.
+5. **Size the heap and container explicitly**, choosing fixed versus elastic initial heap
+   from startup, residency, density and SLO evidence, with non-heap/untracked margin.
 6. **Change the collector only** when the workload's requirement genuinely does not match
    the default's design point.
 7. **Re-measure with the method that produced the baseline.** A flag change that does not
@@ -46,32 +48,35 @@ decision is the one that saves the most time.
 ## Rules
 
 - Never set GC flags copied from a blog post without the log that justified them.
-- Changing collector is a bigger lever than tuning one, and a smaller lever than reducing
-  allocation rate. Try them in that reverse order.
+- Choose the least risky lever that addresses the measured mechanism. Allocation/lifetime
+  changes can be architecturally larger than a collector switch, while one flag can be more
+  dangerous than either; there is no universal order by “size.”
 - `-Xmx` is not the container limit. Metaspace, code cache, thread stacks and direct
   buffers live outside it and still count against the cgroup.
-- In a container with a fixed memory limit, set `-Xms` equal to `-Xmx`: a heap that grows
-  pauses while it grows, GC behaviour changes as it grows, and there is nothing to hand
-  the memory back to. Add `-XX:+AlwaysPreTouch` when the limit is what you are sizing
-  against, so the cgroup sees the whole heap resident from start-up rather than at the
-  first peak. A variable heap is the right choice only where the memory is genuinely shared
-  and returned — a developer machine, or a collector configured to uncommit on idle.
-- Through JDK 26 the JVM picks **Serial** when it sees a single CPU (executed on 25.0.3:
-  `-XX:ActiveProcessorCount=1` yields `UseSerialGC = true {ergonomic}`); JEP 523 makes G1
-  unconditional only from 27. A one-CPU pod with a latency SLO is therefore running a
-  stop-the-world collector unless the collector is named — check `jcmd <pid> VM.flags`
-  before reading its pauses as a G1 problem.
-- `MaxGCPauseMillis` is a target, not a guarantee — and lowering it shrinks the young
-  generation, raising collection frequency and premature promotion. For throughput under
-  G1, the adjustment is usually to **raise** the target.
-- A rising live set is a leak or a cache with no eviction. No collector fixes that.
-- Full GC should be zero in healthy production. `G1 Evacuation Failure` means the old
-  generation had no room; raising the heap is palliative, and the question is why old
-  filled up.
+- In a container, fixed `-Xms = -Xmx` trades predictable heap ergonomics/no growth for
+  earlier commitment and usually higher residency pressure; variable heap trades warm-up
+  variability for footprint elasticity. Container memory can still serve page cache,
+  sidecars and node density. `AlwaysPreTouch` moves page population to startup and can
+  expose an undersized cgroup early, but raises startup/RSS and does not prevent swap or
+  later faults. Measure the selected policy; do not combine these flags by ritual.
+- On the verified JDK 25 build, one visible CPU selected Serial
+  (`-XX:ActiveProcessorCount=1`). JDK 27 EA documentation says G1 is the default, while JEP
+  523 remains Candidate as of 2026-09-03. Verify the exact vendor/build with startup logs or
+  `VM.flags`; explicitly name a collector when fleet-wide intent must not depend on ergonomics.
+- `MaxGCPauseMillis` is a target, not a guarantee. Lowering it often selects less young/CSet
+  work and increases frequency; promotion changes only if lifetime/survivor policy makes it
+  so. Raising it is a throughput candidate, not a rule—validate tails, pause share and CPU.
+- A rising post-reclamation floor means more retained state under those conditions. It may
+  be a leak, cache, workload/cardinality change or legitimate working set; name the ownership
+  contract before declaring a defect. No collector removes strongly reachable state.
+- Unplanned Full GC should be outside an online service's steady-state SLO. An evacuation
+  failure means usable to-space was unavailable, not simply “old had no room”; inspect live
+  set, promotion spike, pinning, humongous topology and reserve before choosing heap growth.
 - Prefer fewer flags. Every flag is a decision the JVM's own heuristics can no longer adapt.
 - Do not carry over pre-JDK-23 collector comparisons: ZGC is generational by definition
   (`-XX:+ZGenerational` no longer exists, JEP 490) and generational Shenandoah is product
-  (JEP 521), though not the default until JEP 535 lands in JDK 28 (Targeted). An inherited
+  (JEP 521). Its mode remains explicit/default-build-dependent; a 2026 draft JDK-8379682
+  proposes changing the default but has no JEP number or target. An inherited
   `-XX:+ZGenerational` is an upgrade blocker rather than a no-op: Temurin 25.0.4 warns and
   starts, Temurin 26.0.2 **refuses to start** (both executed).
 

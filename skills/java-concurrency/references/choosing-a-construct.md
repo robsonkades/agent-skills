@@ -1,78 +1,65 @@
-# Choosing a construct
+# Choosing a concurrency construct
 
-## From requirement to construct
+## Selection matrix
 
-| The requirement, stated plainly                              | Start with                                     | Exceptions and costs                                                               |
-| ------------------------------------------------------------ | ---------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Handle many concurrent requests that mostly wait on I/O      | virtual threads, thread-per-request            | needs an explicit limit at every scarce resource; no help if CPU-bound             |
-| Call three services concurrently inside one request and join | `StructuredTaskScope`                          | preview API on every released JDK; version-locked class files                      |
-| The same, without a preview API                              | virtual-thread executor + explicit joins       | you own cancellation and leak prevention by hand                                   |
-| Split one CPU-bound computation across cores                 | `ForkJoinPool` / parallel stream               | granularity matters; the common pool is shared; no blocking inside                 |
-| Run a task later, or periodically                            | `ScheduledExecutorService`                     | a throw unschedules it forever; single-threaded by default                         |
-| Compose stages where each depends on the previous            | `CompletableFuture`                            | executor must be explicit; exceptions wrap; cancel does not stop work              |
-| Adapt a callback-only client to a value                      | `CompletableFuture`                            | complete it on every path, or the caller waits forever                             |
-| Consume a stream whose producer can outrun the consumer      | Reactive Streams, or a bounded queue           | operators can silently unbound the buffer; blocking inside is an outage            |
-| Limit how many calls run at once                             | `Semaphore` next to the resource               | it is not a rate limit; it bounds one JVM only                                     |
-| Limit how many calls run per second                          | token bucket                                   | different mechanism; divides across replicas cleanly, unlike permits               |
-| Carry request context to indirect callees                    | `ScopedValue`                                  | inherited only by `StructuredTaskScope` forks; frameworks still read `ThreadLocal` |
-| Cache an expensive object per worker                         | a pool                                         | **not** a `ThreadLocal` once threads are per-request                               |
-| Guarantee one execution at a time, cluster-wide              | a distributed lease                            | nothing in `java.util.concurrent` does this                                        |
-| Guarantee ordering of related operations                     | a single-threaded executor, or per-key queue   | this is correctness; do not "modernise" it away                                    |
-| Produce a result from whichever replica answers first        | `StructuredTaskScope` + `anySuccessfulOrThrow` | doubles downstream load; `CompletableFuture.anyOf` is _not_ this                   |
-| Share mutable state safely between threads                   | `java.util.concurrent` collections, or a lock  | see `java-memory-model` before designing anything custom                           |
+| Requirement                       | Prefer when                                                      | Avoid/augment when                                                                       |
+| --------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| direct synchronous call           | sequential ownership is clearest                                 | concurrency needed and independent work exists                                           |
+| virtual thread per task           | blocking style, high waiting concurrency, supported blockers     | CPU-heavy work, hidden unbounded resource demand, incompatible native/framework behavior |
+| managed executor                  | long-lived scheduling/queue/isolation/lifecycle                  | lexical request fan-out better fits a scope                                              |
+| structured task scope             | child lifetime/failure/cancel is lexical and target API accepted | daemon/background work or preview policy disallows API                                   |
+| `CompletableFuture`               | callback adaptation or true stage/value graph                    | sequential blocking flow becomes harder to debug                                         |
+| ForkJoin/parallel stream          | fine-grained CPU-decomposable work                               | blocking, unmanaged common-pool interference, poor granularity                           |
+| Reactive Streams                  | continuing stream needs demand propagation/operators             | finite request/value flow without stream semantics                                       |
+| bounded queue/channel             | explicit producer-consumer handoff                               | queue hides overload or ordering/ownership is undefined                                  |
+| semaphore/limiter                 | cap concurrent use of one scarce resource                        | rate/window/fairness/distributed limit is required                                       |
+| lock/atomic/concurrent collection | shared invariant genuinely needs it                              | immutable snapshot/confinement is simpler                                                |
 
-## Constructs commonly chosen for the wrong reason
-
-**`CompletableFuture` because "async is faster".** It is not faster; it releases a thread
-while waiting. Virtual threads release the thread too, and keep the stack trace. Choose
-`CompletableFuture` when the value genuinely arrives by callback, or when the stages form a
-graph you would otherwise have to build by hand.
-
-**Reactive because "blocking does not scale".** Blocking a _virtual_ thread scales. Choose
-reactive for demand-driven streams and time-shaped operators, not to avoid blocking a thread.
-See `reactive-and-virtual-thread-selection`.
-
-**Virtual threads because "they are faster".** They are cheaper to _wait_ on. On CPU-bound
-work they change nothing except adding scheduling overhead and removing the pool that used to
-bound the work.
-
-**A bigger thread pool because latency is high.** If latency is high and CPU is low, the
-system is queueing, and the queue is usually downstream. Adding threads adds arrivals to a
-queue that is already the problem. `littles-law-and-queueing`.
-
-**`ReentrantLock` instead of `synchronized` to avoid pinning.** Obsolete since JDK 24
-(JEP 491). Choose between them on semantics — `tryLock`, timeouts, `lockInterruptibly`,
-fairness, multiple conditions.
-
-**`parallelStream()` because the collection is large.** It runs on the shared common pool,
-gives no cancellation, and is wrong for anything that blocks. `forkjoinpool-and-work-stealing`.
-
-**A `ThreadLocal` for per-request context.** Right for twenty years, wrong once threads are
-per-request and number in the millions. `scoped-values` — and note that the framework
-contexts around you are still `ThreadLocal` and must be bridged rather than replaced.
-
-## Composition: what goes with what
+## Questions that disqualify a design
 
 ```text
-Virtual threads   +  StructuredTaskScope   →  the intended pairing; scopes fork virtual threads
-Virtual threads   +  ScopedValue           →  context that costs nothing per thread
-Virtual threads   +  Semaphore             →  the bound that the pool used to provide
-Virtual threads   +  ForkJoinPool          →  fine, for the CPU-bound part only
-Reactive          +  virtual threads       →  only at the edges (boundedElastic), never in operators
-CompletableFuture +  virtual threads       →  works; usually a sign the chain could be sequential code
-StructuredTaskScope + long-lived work      →  wrong: a scope ends with its block
-Semaphore(1)      +  mutual exclusion      →  wrong: not reentrant; use a lock
+Who owns tasks after the requester times out?
+Which exact resource bounds concurrency, and what happens at the bound?
+Can cancellation reach blocking/native/remote work, and are side effects reversible?
+Which executor/thread runs each callback/operator, including error paths?
+How are context and security identity installed and removed?
+What is the ordering unit and can retries/parallelism violate it?
+How does shutdown drain, cancel, persist or abandon work?
+Which metric distinguishes queueing, active work, saturation and orphan work?
 ```
 
-## The questions to answer before writing any of it
+## Common combinations
 
-1. What is the scarce resource, and what is its capacity?
-2. What bounds the number of concurrent operations against it, and where is that written?
-3. What happens when that bound is reached — reject, queue, degrade, or fall over?
-4. Who cancels, and does the cancellation actually reach the work?
-5. How will this be observed: what metric rises first when it goes wrong?
-6. What does the test look like that fails if the answer to (3) or (4) is wrong?
+```text
+virtual threads + resource-local semaphore/connection pool
+structured scope + deadline + cooperative cancellation + scoped context
+executor + bounded queue + rejection + lifecycle health
+reactive demand + bounded blocking bridge + explicit scheduler
+ForkJoin CPU phase + separate blocking I/O phase
+concurrent collection + atomic compound operation + invariant test
+```
 
-A design that cannot answer these has not chosen a concurrency construct; it has chosen a
-syntax. The answers are also, in practice, the review: every one of them is checkable against
-the diff.
+Boundaries must preserve deadline, cancellation, context and error semantics. A future completed by
+a virtual-thread task does not automatically propagate cancellation to that task; a reactive
+wrapper around blocking I/O does not make the I/O nonblocking.
+
+## Decision record
+
+```text
+construct and owner:
+alternatives rejected:
+task/resource/state lifetime:
+admission/queue/overload:
+deadline/cancel/error/partial result:
+execution resource and blocking policy:
+context propagation:
+JDK/framework constraints:
+tests and observability:
+```
+
+## Authoritative references
+
+- [Java `java.util.concurrent`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
+- [Flow API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Flow.html)
+- [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)
+- [Reactive Streams specification](https://github.com/reactive-streams/reactive-streams-jvm)

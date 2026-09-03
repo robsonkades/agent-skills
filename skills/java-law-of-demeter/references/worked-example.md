@@ -16,10 +16,10 @@ if (m.tier() == Tier.GOLD && m.points() >= 1_000) {
 }
 ```
 
-**Analysis.** The caller navigates to `Membership` and then decides _using only membership
-data_. Two services now encode the tier table; when the SILVER rule gained a points
-threshold, only one of them was updated. The chain is a symptom; the displaced decision is
-the disease (java-tell-dont-ask). Both go away by moving the rule to its data:
+**Analysis.** The caller navigates to `Membership` and then decides from membership data. Two
+services now encode the tier table; when the SILVER rule gained a points threshold, only one was
+updated. The chain is a symptom; duplicated policy is the disease. The move below is correct only
+if membership owns this rate table as part of its contract:
 
 ```java
 public record Membership(Tier tier, int points) {
@@ -39,9 +39,11 @@ public final class Customer {
 }
 ```
 
-Call site: `order.customer().discountRate()`. One navigation remains — to the customer,
-the collaborator `Order` legitimately hands out — but the caller no longer branches on
-membership internals, and `Membership`'s shape can change without reaching it.
+Call site: `order.customer().discountRate()`. The strict formal rule still sees a call on an
+object returned by another call; pragmatically this is acceptable only if `Customer` is a stable
+published collaborator of `Order`. If customer is an aggregate-internal part, ask the root for
+the owned concept instead. Either way the caller no longer branches on membership internals, and
+`Membership`'s shape can change without reaching it.
 
 **The judgement call.** `Customer.discountRate()` is delegation, and delegation added
 mechanically is the Middle Man smell. It is justified here because "a customer's discount
@@ -50,6 +52,11 @@ answer comes from a membership, a promotion or a contract is `Customer`'s privat
 A `Customer.membershipPoints()` forwarder, by contrast, would be structure with a longer
 name. **Trade-off:** the rate table is now harder to see from the checkout code; the test
 for it moves from a service test to a `Membership` test, which is where it becomes cheap.
+
+If pricing owns the table and membership is only input, moving it into `Membership` would create
+Feature Envy in reverse and couple customer data to pricing releases. In that model use one
+`DiscountPolicy.rateFor(MembershipSnapshot)` and let an orchestration boundary obtain the
+snapshot. "Put behavior with data" never outranks authority and change ownership.
 
 ## Chain 2 — fixed by narrowing what is passed
 
@@ -73,11 +80,12 @@ public void send(EmailAddress to, String recipientName,
 ```
 
 The caller — which already holds the `Order` legitimately — performs the navigation once
-and hands over values. `ReceiptSender` no longer imports `Order`, `Customer` or
+and hands over a consistent set of values. `ReceiptSender` no longer imports `Order`, `Customer` or
 `ContactDetails`, and restructuring `ContactDetails` now touches one assembly point instead
 of every consumer. **Trade-off:** the parameter list grew from one to four; if it keeps
-growing, group the values into a small record (`ReceiptRecipient`) — a parameter object,
-not a wrapper around `Order`.
+growing, group them into an immutable purpose-specific `ReceiptData` snapshot and defensively
+copy lines. Four scalars read at different times from mutable/ORM state can be less correct than
+one container, so narrowing must preserve observation consistency.
 
 ## Chain 3 — correctly left alone
 

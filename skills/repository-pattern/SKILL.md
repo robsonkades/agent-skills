@@ -46,8 +46,9 @@ IS NOT: a per-table data access object
 
 ## Workflow
 
-1. **Identify the aggregate roots.** One repository per root. If a candidate is not a root,
-   it is reached through one (`domain-logic-organization`).
+1. **Identify aggregate consistency boundaries.** A repository is normally per aggregate root.
+   Dedicated child/query gateways may exist for bulk operations or read models without granting
+   independent domain mutation (`domain-logic-organization`).
 2. **Write the interface in the domain's language**, in domain types: `Orders.byId`,
    `Orders.overdueFor(customer)`, `Orders.save`. Not `OrderJpaRepository` with
    `findAllByStatusIn`.
@@ -101,12 +102,13 @@ Bulk or set-based work over the aggregate's table
 
 ## Rules
 
-- **One repository per aggregate root.** A repository per table reproduces the schema in the
-  domain layer and dissolves the aggregate boundary — which is the only thing the pattern
-  was protecting.
+- Prefer one domain repository per aggregate root. Per-table gateways are valid infrastructure for
+  set-based/query work; the defect is exposing independent child mutation that bypasses aggregate
+  invariants while calling it a domain repository.
 - The interface belongs to the domain; the implementation belongs to the adapter. That is
   the inversion that makes the domain testable and the persistence replaceable, and it is
-  the only structural reason to hand-write the interface (`layering-and-boundaries`).
+  a strong structural reason to hand-write the interface, alongside narrowing capabilities,
+  domain-specific error semantics, testing seams and multiple adapters (`layering-and-boundaries`).
 - **A repository has no business verbs.** `orders.cancelExpired()` puts a rule in the data
   layer where it cannot be unit tested and where nobody will look for it. The use case loads
   and calls the aggregate.
@@ -122,9 +124,9 @@ Bulk or set-based work over the aggregate's table
 - `existsBy(...)` followed by `save(...)` is a race, not a check. Uniqueness is enforced by
   a constraint; the repository call only produces a better error message
   (`enterprise-transactions`).
-- Repositories participate in transactions; they do not demarcate them. `@Transactional` on
-  a repository method means a use case spanning two of them is two transactions
-  (`service-layer-design`).
+- Repositories may provide local transaction defaults, but an outer application transaction usually
+  joins/overrides them under `REQUIRED`. Without an outer boundary, two sequential repository calls
+  can commit independently. Test the actual propagation and proxy path (`service-layer-design`).
 - **Spring Data does not make the pattern unnecessary; it makes the implementation free.**
   What remains a decision is the interface's shape, its ownership, and whether an aggregate
   boundary exists at all. `extends JpaRepository<Order, Long>` publishes ~20 methods

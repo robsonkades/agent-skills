@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: reactive-and-virtual-thread-selection
-version: 1.2.0
+version: 1.3.0
 description: >-
   Choosing between a reactive pipeline and thread-per-request on virtual threads, and
   deciding where they legitimately coexist: what each model actually gives you, where

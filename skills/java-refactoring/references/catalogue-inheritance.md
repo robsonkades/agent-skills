@@ -13,11 +13,10 @@ are the mechanics once the answer is known.
 
 Identical methods on sibling subclasses move to the superclass.
 
-**Precondition:** after renaming fields and locals to agree, the bodies are textually
-identical _and_ every method and field they name resolves to the same declaration from both
-subclasses. A call that each subclass overrides differently is not identical in effect —
-pulling it up creates an abstract hook, which is a design change with its own decision and
-its own fragile-base risk.
+**Precondition:** after renaming fields and locals to agree, the bodies are structurally
+equivalent and field references preserve meaning. Calls to overridable methods require a dispatch
+proof: pulling up can intentionally retain dynamic dispatch to existing hooks, but introducing a
+new hook or changing overload/super-call resolution is a design change with fragile-base risk.
 
 **What the pull-up actually changes:** every subclass now inherits the method, including
 ones that never had it and ones outside the module. Enumerate them before, not after — and
@@ -53,14 +52,14 @@ method — fix that instead where you can.
 
 A member on the superclass used by only one subclass moves down.
 
-**Precondition, decided before searching: can the subclass set be closed?** If the class is
-`final`, `sealed` or package-private, yes — the compiler enumerates every subclass and "one
-user" is a fact. If it is `public` and extensible, no: external subclasses cannot be
-enumerated by any tool, and pushing a `protected` member down is a breaking change whatever
-the search returns. Seal or finalise the class first, as its own commit and its own
-decision, or route this through java-api-design. Separately, check framework access — a
-JPA-mapped or Jackson-visible member pushed into one subclass changes the mapping for every
-other.
+**Precondition, decided before searching: can the subclass set be closed?** A fully closed sealed
+hierarchy (no reachable `non-sealed` branch) provides an enumerated set. Package-private scope is
+closed only when the package/artifact and class path are controlled and split-package consumers
+are excluded. A public extensible class—or a sealed hierarchy with a `non-sealed` descendant—can
+have external subclasses, so pushing a `protected` member down is breaking whatever repository
+search finds. Close the hierarchy as a separate compatibility decision or route through
+java-api-design. Separately, check framework access: moving a JPA/Jackson-visible member changes
+the mapping even when Java callers are closed.
 
 This is the fix for Refused Bequest when the hierarchy is otherwise sound.
 
@@ -83,8 +82,9 @@ its own commit.
 **In a persistence model this is not a code step.** Extracting an unannotated superclass
 silently unmaps the pulled-up fields; extracting an `@Entity` one defaults to `SINGLE_TABLE`
 and demands one table for both, failing startup under `ddl-auto=validate` or rewriting the
-schema under `update`. Where the parent only shares fields, the answer is `@MappedSuperclass`
-and there is no hierarchy (inheritance-mapping-strategies).
+schema under `update`. Where the parent only shares mappings, `@MappedSuperclass` preserves a Java
+hierarchy without making the parent a polymorphically queryable entity
+(inheritance-mapping-strategies).
 
 **Cost:** a new coupling axis. Every future change to either class must now consider the
 other, and the superclass becomes where unrelated things accumulate.

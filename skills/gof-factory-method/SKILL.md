@@ -80,10 +80,10 @@ subclass-per-kind selection          Map<Kind, Supplier<Product>>
 open extension by third parties      ServiceLoader<ProductProvider>
 ```
 
-The method reference `PdfProduct::new` **is** a factory method — the intent survives; the
-hierarchy does not. Keep the abstract hook when the framework instantiates your subclass and
-therefore cannot hand you a `Supplier`, or when the product type is covariant with the creator's
-and callers rely on that.
+The method reference `PdfProduct::new` is a **creation function**, not the GoF Factory Method
+pattern: it preserves deferred creation while replacing inheritance with composition. Keep the
+abstract hook when the framework instantiates your subclass and therefore cannot hand you a
+`Supplier`, or when the product type is covariant with the creator's and callers rely on that.
 
 ## Decision rules
 
@@ -95,8 +95,9 @@ IF a constructor calls the overridable factory method
 THEN it runs before the subclass's fields are initialised, so the product
      is built from nulls. Move creation to an init step, or out entirely.
 
-IF the subclass count equals the product count and nothing else differs
-THEN the variation is data. Use a keyed map or a sealed kind.
+IF subclasses exist only to select products and the extension set is application-controlled
+THEN composition through suppliers, a keyed map, or a sealed kind is usually simpler.
+     Keep the hook when open framework extension or creator/product covariance is material.
 
 IF the product must vary per call, from an argument
 THEN it is not a subclass hook — it is a function of that argument.
@@ -126,10 +127,10 @@ THEN it is a static factory method. Judge it by naming and instance
   is chosen from externally supplied data (a message type header, a content type), that key must
   be validated against a closed set before it selects a class. Reflective instantiation from an
   unvalidated name is a deserialisation vulnerability, not a factory.
-- **Performance.** One virtual call and one allocation. Where a call site sees many
-  implementations it becomes megamorphic and stops inlining, which matters only in a measured
-  hot loop (`jit-inlining-and-escape-analysis`). This is not a reason to prefer or avoid the
-  pattern in ordinary code.
+- **Performance.** The hook implies neither one allocation nor failed inlining: implementations
+  may cache products, and HotSpot can inline stable virtual calls. A highly polymorphic hot call
+  site can inhibit inlining, but only profiles and compilation evidence establish that
+  (`jit-inlining-and-escape-analysis`).
 - **Testing.** The good seam is an injected `Supplier` — substituted with a lambda, no
   framework. The bad seam is a test-only subclass overriding a `protected` hook, which locks the
   production class's inheritance shape into the test suite and breaks whenever the base class is
@@ -140,8 +141,10 @@ THEN it is a static factory method. Judge it by naming and instance
 - [ ] The creator has real inherited behaviour, not just the hook
 - [ ] No constructor calls the overridable factory method
 - [ ] The hook is not present solely to give tests a substitution point
-- [ ] Subclasses differ in more than which type they instantiate
-- [ ] Any externally supplied product key is validated against a closed set
+- [ ] Subclassing is justified by an inherited algorithm, open extension constraint, or useful
+      creator/product type relationship—not merely by a closed application selection table
+- [ ] Any externally supplied product key is validated against the supported registry; reflective
+      class loading is not driven directly by untrusted input
 - [ ] Lazy caching inside the hook, if present, is correctly published
 - [ ] Covariant return types are declared where callers depend on the product subtype
 - [ ] A `static of/from/valueOf` is described as a static factory, not as this pattern

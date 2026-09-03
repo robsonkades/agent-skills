@@ -36,20 +36,22 @@ is looking at the cache, because the cache is up.
 1. **Classify the cache first: performance or availability.** If the origin cannot serve the
    full request rate with the cache empty, the cache is an availability component, and every
    topology decision below is a durability decision. Say which one it is out loud.
-2. **Do the node-loss arithmetic before choosing a topology.** Losing one of N nodes sends
-   about `total_rate / N` requests to the origin as misses, on top of the existing miss rate.
-   Compare that number to the origin's measured capacity. The worked example is
+2. **Do the node-loss arithmetic before choosing a topology.** Measure the request share owned by
+   each node; `total_rate / N` is only the uniform approximation. Losing node `i` can send its
+   request share to the origin, plus secondary evictions and retries. Compare rate, concurrency,
+   query mix and duration to the origin's measured capacity. The worked example is
    `references/node-loss-and-origin-protection.md`.
 3. **Choose sharding or full replication from the working set.** If the whole working set
-   fits comfortably in one node's memory and reads dominate, replicating everything to every
-   node removes the network hop and the node-loss problem entirely, and costs `N ×` memory.
+   fits comfortably in one node's memory and reads dominate, replicating everything can remove a
+   network hop only when the replica is process-local. It avoids key loss after a node failure if
+   routing and remaining capacity work, and costs roughly `N ×` value memory plus metadata.
 4. **Choose the topology** — client-sharded, proxy, or clustered — on operational cost and
    client complexity, not performance. The comparison is `references/topologies.md`.
 5. **Set the replication factor from step 2**, not from a default. Replication exists here to
    keep the shard served when a node dies; if the arithmetic says the origin survives a node
    loss, RF=1 is a legitimate, cheaper answer.
-6. **Test it by killing a node under load** and asserting a bound on the origin's request
-   rate, not on the cache's hit rate. That test is the only proof that any of this works.
+6. **Exercise failure under load**—crash, partition/timeout, promotion and rejoin—and assert bounds
+   on origin rate/concurrency, client errors and recovery, not only cache hit rate.
 7. **Add a local L1 only for a measured reason**, and accept that invalidation now has to
    reach every instance's L1 as well as the shared tier.
 
@@ -65,7 +67,8 @@ Fully replicated cache (every node holds everything) when:
 - typically the shape of small reference data: feature flags, rates, configuration
 Replicate each shard (RF > 1) when:
 - the node-loss arithmetic says the origin cannot absorb total_rate / N extra misses
-- or one shard is read-hot and a second copy adds read throughput for that shard
+- or one shard is read-hot and the product can route reads to replicas within the required
+  consistency model
 Keep RF = 1 when:
 - the origin demonstrably absorbs a node loss, and the memory is better spent on a larger
   working set — a bigger cache reduces misses every second, RF > 1 only helps on failure
@@ -84,24 +87,23 @@ Do not add a cache node to fix a hot key:
 - **Losing a cache node is an origin-load event.** Size the origin, or the protection in
   front of it, for the loss of one cache node — that is a routine occurrence (upgrade,
   eviction, spot reclaim), not a disaster scenario.
-- A rolling restart of the cache tier is N sequential node losses. Without a pause between
+- A rolling restart of the cache tier is N sequential membership changes. Without a pause between
   nodes long enough to re-warm, it is a sustained elevated miss rate for the whole rollout,
   and it is self-inflicted. Restart one node at a time, with a wait keyed to the observed
   recovery of the hit rate.
 - Consistent hashing is what makes a node loss survivable at all: `hash(key) % N` remaps
   nearly the entire keyspace on a membership change, turning one node's loss into a total
   miss storm. The mapping function belongs to `consistent-hashing`; this is the consequence.
-- Node loss has a **second-order** cost: the remapped keys land on the surviving nodes, whose
+- Node loss has a **second-order** cost when keys remap and refill on survivors: their
   memory did not grow, so eviction rises on shards that were previously fine. The hit-rate
   dip is therefore larger than 1/N and lasts beyond the re-warm.
-- **A replicated cache does not give read-your-writes.** A write applied to one replica and a
-  read served by another returns the old value with no error. If the requirement is that a
+- **Replication alone does not give read-your-writes.** With asynchronous replication, a write
+  acknowledged by one replica and a read served by another may return the old value. If the requirement is that a
   user sees their own change, pin that session's reads to one replica, or invalidate and read
   through the origin — `consistency-models` owns the guarantee, this is where it bites.
-- Replication of a cache is best-effort by construction: replicas converge, and "eventually"
-  has no deadline unless you measure and alert on the lag. A TTL is the bound that makes
-  divergence self-correcting; a cache entry with no TTL and a missed invalidation is
-  permanently wrong on some replicas and correct on others.
+- Replication guarantees are product/configuration-specific. Asynchronous replicas have no useful
+  convergence deadline unless lag is bounded and monitored. TTL bounds how long a missed
+  invalidation can survive only if expiry forces a correct reload; it is not a consistency proof.
 - Client-side sharding puts the topology in every client. Adding a node means every client
   must agree, at the same time, on the same node list, virtual-node count and hash — a
   disagreement is two clients writing the same key to two different nodes, and both of them
@@ -110,10 +112,10 @@ Do not add a cache node to fix a hot key:
   fast. Measure the hop against `T_source` before rejecting it: a fraction of a millisecond
   in front of a source costing tens of milliseconds is usually the right trade, and it buys
   topology changes without client deploys.
-- A clustered cache with its own slot mapping moves membership into the server, and its
-  multi-key operations are constrained to keys hashing to the same slot — primitives and
-  transactions across slots are not available. Check that against the access pattern before
-  adopting the mode, not after.
+- A clustered cache with server-owned placement moves membership out of application config.
+  Cross-slot multi-key semantics vary by product; Redis Cluster rejects many such operations,
+  while other systems coordinate them at extra latency/availability cost. Check the exact command
+  and failure contract against the access pattern.
 - **A near-cache (local L1 in front of the shared L2) is a second cache with its own
   coherence problem**, and it is per-instance: invalidating the L2 invalidates no L1.
   `caching-strategies` owns invalidation propagation and the L1 TTL as the safety net; the
@@ -121,6 +123,12 @@ Do not add a cache node to fix a hot key:
 - Every entry crossing the network is serialised, so the value size is a throughput decision,
   not a detail. A large value multiplied by the fan-out of a warm-up is a network incident —
   `serialization-performance` owns the format cost.
+
+## Primary sources
+
+- [Redis Cluster specification](https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/)
+- [Redis replication](https://redis.io/docs/latest/operate/oss_and_stack/management/replication/)
+- [Amazon Dynamo paper](https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf)
 
 ## References
 

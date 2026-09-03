@@ -1,14 +1,12 @@
 schemaVersion: 1
 
 name: streaming-pipeline-topologies
-version: 1.2.0
+version: 1.3.0
 description: >-
   Composable stage shapes for event-driven pipelines — copier, filter, splitter, sharder,
-  merger — each with the ordering it preserves or destroys, whether it is safe above
-  concurrency 1, the state it needs and how it fails; a stage parallelises safely only when
-  stateless or partitioned by its input key, so re-partitioning is where ordering and
-  exactly-once end; the unbounded-state join; watermarks and a named late-data policy; lag
-  as backpressure; and replay, which wall-clock windows destroy. Use when a stage is
+  merger — with ordering, semantic parallelism, state, shuffle and recovery boundaries;
+  exactly-once scope across source, state and sinks; bounded joins and windows; watermarks,
+  late-data policy, backlog versus flow control, and reproducible replay. Use when a stage is
   parallelised, when a join grows state without bound, when a stage re-keys the stream, when
   late events arrive after a window closed, when a windowed test uses wall-clock, or when
   reprocessing gives a different answer. Not whether to be event-driven

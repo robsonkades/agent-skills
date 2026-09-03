@@ -56,11 +56,12 @@ buys the ability to vary something independently and pays for it in indirection.
 1. **State the problem with no pattern name in it.** "Adding a payment provider touches five
    classes and a `switch` in each" is a problem. "We need a Strategy" is a conclusion wearing a
    problem's clothes. If the first sentence cannot be written, there is nothing to design yet.
-2. **Name the forces, and say which two conflict.** A pattern is justified only where forces
-   compete; where they do not, the direct implementation wins by default.
-3. **Identify the axes of variation and today's cardinality.** One axis with two members that
-   both exist now is a real axis. One axis with one member is not an axis — it is a prediction,
-   and `java-dry-kiss-yagni` owns that economics.
+2. **Name the forces and material tension.** Patterns can resolve competing forces, but may also
+   encode a stable collaboration or safety boundary. If the direct implementation already satisfies
+   the forces with lower lifecycle/debugging cost, keep it.
+3. **Identify axes of variation and evidence.** Two present variants are strong evidence, but a
+   single implementation can still sit behind a justified external, ownership, security or testing
+   boundary. Price forecast variation explicitly (`java-dry-kiss-yagni`).
 4. **Walk the alternatives ladder** below and stop at the first rung that resolves the forces.
    Read [references/alternatives-ladder.md](references/alternatives-ladder.md) for the rung
    definitions and worked eliminations.
@@ -101,8 +102,9 @@ IF the problem statement contains a pattern name
 THEN restate it as what breaks, and re-decide from the restatement.
 
 IF one implementation exists and no second is scheduled
-THEN no structural pattern. An interface with one implementor is
-     indirection, not abstraction.
+THEN do not claim runtime variability. Still retain a structural pattern
+     when it enforces dependency direction, translates a foreign protocol,
+     narrows authority or creates an intentional failure-injection seam.
 
 IF variation is one axis and each variant is one behaviour
 THEN rung 3 — a function value — before Strategy classes.
@@ -128,9 +130,10 @@ IF the collaboration crosses a process boundary
 THEN the design problem is failure semantics, not object structure
      (gof-patterns-and-distribution).
 
-IF the pattern would exist only to make the code testable
-THEN check whether the untestability is the real defect — a hidden
-     static, a constructor doing I/O, a clock read (java-test-design).
+IF the pattern would exist to make failure or nondeterminism testable
+THEN first remove hidden ambient dependencies where possible. A seam over
+     an external system, clock or nondeterministic source may itself be the
+     correct production boundary (java-test-design).
 ```
 
 ## What a pattern costs — price these before adopting
@@ -151,11 +154,11 @@ THEN check whether the untestability is the real defect — a hidden
 ## Review checklist
 
 - [ ] The problem is stated in observable terms, with no pattern name in it
-- [ ] The forces are named and at least two of them conflict
+- [ ] The forces and material tension/boundary are named
 - [ ] What varies is identified, with its axes and today's cardinality
 - [ ] Rungs 0–6 were each rejected for a stated reason
 - [ ] The pattern's consequences are written down, including what got worse
-- [ ] No interface exists with exactly one implementation and no named second
+- [ ] Every one-implementation interface has a concrete boundary, authority or testability reason
 - [ ] The variation is code, not data that belongs in configuration
 - [ ] Any performance claim rests on a measurement, not on structure
 - [ ] If the collaboration crosses a process, failure semantics are designed, not inherited

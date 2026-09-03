@@ -51,7 +51,8 @@ all of them has deferred a cost, not avoided one.
 
 ## The decisions that determine everything else
 
-In dependency order. Taking them out of order produces rework.
+In a useful discovery order, not a universal dependency chain. Existing constraints often require
+iteration—for example, concurrency or a fixed schema may reshape aggregate and transaction choices.
 
 ```text
 1. Where do business rules live?        → domain-logic-organization
@@ -100,8 +101,8 @@ An unfamiliar codebase, and the question is "how is this built?"
 
 Something is slow
         → count round trips and transaction duration first
-          (architecture-and-performance). Most enterprise latency is
-          neither CPU nor the database's own speed.
+          (architecture-and-performance). Then attribute latency across
+          database execution, queues, network, CPU, allocation and contention.
 
 Something is expensive to change
         → count files touched per feature, then look for excessive
@@ -128,17 +129,19 @@ A pattern name is being used as a justification
 - **Enterprise architecture is decided by forces, not by fashion.** A pattern is the output
   of reasoning about a problem; a design that starts from a pattern name is a preference
   being defended.
-- The data usually outlives the application, and frequently predates it. Schema decisions are
-  the least reversible ones in the system, and they deserve proportionate care
+- Data often outlives an application and may predate it. Destructive schema/data semantics can be
+  highly irreversible, while additive schemas can evolve safely; classify reversibility instead of
+  ranking every schema decision as the hardest
   (`architecture-decision-making`).
 - **Different modules of one application legitimately have different architectures.** A
   pricing engine and an admin CRUD screen have different forces; forcing one structure onto
   both is a major source of accidental complexity.
-- Reads and writes have different requirements. Designing as if they are symmetric produces
-  either slow screens or a weakened write model, and the split costs almost nothing
+- Reads and writes can have different requirements. Separate models/projections when measured query
+  shape or invariant needs justify synchronization, mapping and consistency cost
   (`query-objects-and-specifications`).
-- **Layers are cheap; tiers are not.** Rearranging source is reversible; introducing a
-  network is close to permanent (`distribution-boundaries`).
+- **Layers and tiers have different costs.** Source boundaries can still impose widespread API and
+  build migration; a network adds partial failure and operations. Process boundaries are expensive
+  but reversible through consolidation or strangling (`distribution-boundaries`).
 - Frameworks implement many of these patterns already. Knowing which — and what their
   versions actually guarantee — prevents both rebuilding them and relying on guarantees
   nobody makes (`patterns-and-modern-frameworks`).

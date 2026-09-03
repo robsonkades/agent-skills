@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: reactive-backpressure
-version: 1.0.0
+version: 1.1.0
 description: >-
   Backpressure in reactive and asynchronous pipelines: Reactive Streams request semantics,
   the operators that break the protocol, bounded buffers and overflow strategies, blocking

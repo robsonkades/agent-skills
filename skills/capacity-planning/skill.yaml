@@ -1,19 +1,17 @@
 schemaVersion: 1
 
 name: capacity-planning
-version: 1.1.0
+version: 1.2.0
 description: >-
-  Quantitative capacity planning: building an instance-count model from measured data,
-  sizing against both a throughput ceiling and a latency SLO, forecasting headroom against
-  growth, peak versus average provisioning, cost per request, and validating the plan
-  against a real saturation test. Use when deciding how many instances or pods a target load
-  needs, when an autoscaler is configured on a fixed CPU threshold, when adding replicas
-  stopped improving throughput, when someone asks for a saturation date or an infrastructure
-  budget, when p99 spikes during scale-up events, or when a downstream connection limit may
-  be the real ceiling. Does not cover the scalability model and its contention and coherency
-  coefficients (universal-scalability-law), queueing model selection and fitting
-  (queueing-models), or designing and running the saturation experiment itself
-  (load-testing-advanced).
+  Evidence-based capacity decisions for Java services: defining demand and failure
+  scenarios, measuring feasible capacity envelopes, selecting replica and resource
+  configurations, forecasting exhaustion with uncertainty, designing autoscaling
+  headroom, and comparing cost per successful unit of work. Use when deciding pod or
+  instance counts, minimum replicas, scaling signals, saturation dates, infrastructure
+  budgets, rollout or failure-domain headroom, and downstream capacity constraints. Does
+  not own load-test design (load-testing-advanced), queueing-model selection
+  (queueing-models), scalability curve fitting (universal-scalability-law), or overload
+  controls (rate-limiting-and-load-shedding).
 
 license: Apache-2.0
 
@@ -46,6 +44,18 @@ dependencies:
     version: ^1.0.0
   - name: queueing-models
     version: ^1.0.0
+
+suggests:
+  - cascading-failures
+  - connection-pool-sizing
+  - container-awareness
+  - jvm-gc-tuning
+  - kubernetes-service-lifecycle
+  - load-testing
+  - rate-limiting-and-load-shedding
+  - retries-and-backoff
+  - slo-and-alerting
+  - startup-cds-crac-leyden
 
 capabilities:
   - reads-source

@@ -1,18 +1,16 @@
 schemaVersion: 1
 
 name: jfr-and-async-profiler
-version: 1.3.0
+version: 1.4.0
 description: >-
-  Choosing and running the right JVM profiler: JFR as a continuous event bus versus
-  async-profiler for targeted sampling, CPU clock versus wall clock, allocation and lock
-  profiles, sampling adequacy, and the container permissions each engine needs. Use when
-  deciding which profile to take, when a CPU profile "shows nothing" for a latency problem,
-  when JFR is not enabled in production, when a blocking event returns zero results, when
-  async-profiler fails under seccomp, when a profile was taken before warm-up, or when
-  jstack is being run in a loop. Does not cover reading the resulting flame graph
-  (flame-graph-analysis), microbenchmarking (jmh-microbenchmarks), or the investigation
-  process around it (performance-methodology). Event configuration is jfr-advanced, engine
-  selection is async-profiler-advanced, and always-on collection is continuous-profiling.
+  Selecting the least-perturbing JVM evidence source that matches the question: JFR events and
+  timeline versus async-profiler sampling, CPU versus elapsed/off-CPU, allocation versus
+  retention, lock versus queue/I/O, startup versus steady state, and one-off versus continuous
+  capture. Covers adequacy, positive controls, target scope, version discovery, container
+  access, overhead, artifact integrity, and cross-tool reconciliation. Use before a JVM profile
+  is collected or when an empty/disagreeing recording may be a configuration artifact. Graph
+  interpretation, JFR internals, async-profiler engines, and fleet operations have separate
+  owners.
 
 license: Apache-2.0
 
@@ -49,6 +47,11 @@ dependencies:
 suggests:
   - incident-evidence-capture
   - jfr-advanced
+  - async-profiler-advanced
+  - flame-graph-analysis
+  - continuous-profiling
+  - concurrency-diagnostics
+  - performance-regression-ci
 
 capabilities:
   - reads-source

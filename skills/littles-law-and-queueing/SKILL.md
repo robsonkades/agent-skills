@@ -1,8 +1,8 @@
 ---
 name: littles-law-and-queueing
 description: >
-  Sizing and capacity from Little's Law (N = λ × R) and queueing theory: separating service
-  time from queue time, why latency explodes above ~80% utilisation, thread pool and
+  Conservation checks from Little's Law (`L = λW`) and queueing decisions: measurement
+  boundaries, service demand versus residence time, utilisation curves, thread pool and
   executor sizing, bounded queues and rejection policy. Use when choosing a pool size, when
   latency is high while CPU is low, when latency grows over the duration of a run, when
   someone proposes adding threads to a CPU-bound path, or when a ThreadPoolExecutor is not
@@ -17,11 +17,11 @@ description: >
 
 ## Purpose
 
-Turn throughput, latency and concurrency into one equation that can be checked. `N = λ ×
-R` — average concurrency equals arrival rate times residence time. It holds in steady
-state and assumes nothing about distributions, which makes it first a **sanity check**
-and only second a sizing formula: if measured `N`, `λ` and `R` do not reconcile, one of
-the measurements is wrong.
+Turn throughput, residence time and work-in-system into a boundary-consistent conservation check.
+For a stable long-run population, `L = λW`: average work in the chosen system equals its effective
+throughput times average residence time. It is distribution-insensitive, but boundaries still
+matter. Failure to reconcile can mean mismatched cohorts/clocks, censored outcomes, transient
+inventory or measurement error; the identity does not choose a pool size or predict a percentile.
 
 The failure this prevents is capacity reasoning by intuition — adding threads to a
 saturated CPU, sizing a database pool from the number of request threads, or reading 90%
@@ -29,49 +29,70 @@ utilisation as "10% of headroom left".
 
 ## Workflow
 
-1. **Establish steady state.** The law is false outside it. If the queue is growing, `R`
-   is not converging and any number you read is a snapshot of a transient.
-2. **Measure `N`, `λ` and `R` independently and reconcile them.** The most common
-   discrepancy is an APM reporting service time `S` where the law needs residence time
-   `R = S + W`; that makes p99 look optimistic exactly under load.
-3. **Decide whether you are waiting or working.** High CPU with `RUNNABLE` threads is
-   CPU-bound. Low CPU with threads parked or blocked is a queue — and no amount of code
-   optimisation on `S` will move `R` while `W` dominates.
-4. **Size each pool with the `R` of its own component**, never with `R_total`.
-5. **Check the resulting utilisation.** `N_needed / N_configured` must land at or below
-   0.75–0.80 for a latency SLO.
-6. **Bound every queue and choose the rejection policy deliberately.**
+1. **Draw the boundary.** Define admission and departure events, population/outcomes, time window
+   and whether `L` includes queued plus executing work. Use effective departure flow (including
+   whichever terminal outcomes the cohort defines) for `λ` and mean residence `W` for that cohort.
+2. **Classify state.** In steady operation, reconcile long-run averages. During ramp, drain or
+   overload, report inventory change and finite-window edge effects; do not force a stationary
+   formula onto a growing queue.
+3. **Separate demands.** For resource `k`, measure visits `V_k`, service demand `D_k` (resource
+   time per completed transaction), residence `R_k = Q_k + S_k`, queue length and saturation.
+   Wall time, CPU demand and downstream occupancy are different quantities.
+4. **Choose a queueing model only if its assumptions resemble evidence.** M/M/1 is a sensitivity
+   baseline, not an 80% law. Arrival/service variability, server count, scheduling, finite buffers,
+   blocking, priorities and backpressure change the curve (`queueing-models`).
+5. **Separate concurrency demand from capacity.** `L=λW` predicts average in-flight work at a
+   measured operating point. Capacity requires per-resource demand (`U_k=X D_k`), server/quota
+   limits and an SLO model. Configured worker count is neither measured `L` nor utilisation.
+6. **Design admission, queue bound and overload outcome together.** Bound waiting by time and/or
+   count, reserve downstream capacity, choose rejection/cancellation semantics, and validate under
+   burst, sustained overload, shutdown and recovery.
 
 ## Rules
 
-- For CPU-bound work the optimum is near `N_cpus`. Extra threads buy context switching,
-  cache-working-set invalidation and memory-bandwidth contention — throughput falls and
-  latency rises.
-- Size a downstream pool with that component's residence time:
-  `N_db = N_threads × (R_db / R_total)`. Using `R_total` oversizes it in exact proportion
-  to the time the request spends _not_ in that component.
-- 90% utilisation is not efficiency, it is the cliff: under M/M/1 total latency is 10× the
-  service time, and +10% load becomes +200% latency. Healthy systems sit between 50% and
-  70% on the critical resource.
-- Near saturation, capacity returns are super-linear: doubling capacity at 80%
-  utilisation takes latency from 5.0×S to 1.19×S — a 4.2× improvement, not 2×.
-- Model bimodal service times as two paths and sum their utilisations. A 1% slow path at
-  500 ms against a 10 ms typical path owns a third of the utilisation.
-- Never use an unbounded queue. It does not remove the limit; it trades "reject fast" for
-  "fail slowly", with a client timeout and a server `OutOfMemoryError`.
-- `ThreadPoolExecutor` enqueues before it grows. With an unbounded queue,
-  `maximumPoolSize` is dead configuration and is never reached.
-- `CallerRunsPolicy` does not block the producer — it runs the task on the calling
-  thread. Accept the three consequences (the caller stops doing its own work, ordering is
-  lost, and an event loop or I/O thread would be blocked) or reject with 429 instead.
-- The law applies to GC too: `N_gc = λ_alloc × R_gc`. Live set is governed by object
-  **lifetime**, not allocation rate.
+- For a CPU resource, compute demand per completion and `U=X D / m` for `m` equivalent capacity
+  units; then measure scaling across worker counts. “Threads≈CPUs” is a starting experiment for
+  continuously runnable homogeneous work, not an optimum across SMT, NUMA, quotas, GC/JIT and
+  memory bandwidth.
+- For a downstream pool, use `L_k = λ_k R_k`, including visit multiplicity and hold time at that
+  boundary. Do not multiply configured request threads by a residence-time ratio: configured
+  capacity is not average system population.
+- In stationary M/M/1, mean response is `S/(1−ρ)`; at `.9` it is `10S`. Raising arrival rate by
+  10% from there moves `ρ` to `.99` and mean response to `100S`—a 10× latency increase under this
+  idealised model, not a universal production cliff.
+- There is no universal healthy utilisation band. Choose headroom from SLO, burst/error model,
+  service-time variability, failover capacity, autoscaling delay and cost; validate the knee.
+- Unbounded queues can absorb finite bursts safely, but sustained arrival above departure permits
+  unbounded delay/memory growth. Prefer an explicit bound unless a proved external bound and
+  failure policy make the risk acceptable.
+- After reaching `corePoolSize`, `ThreadPoolExecutor` offers to its queue before growing toward
+  `maximumPoolSize`. With an unbounded queue, normal submission therefore does not trigger
+  non-core growth and the maximum is ineffective.
+- `CallerRunsPolicy` creates synchronous feedback by executing on the submitter; it does not wait
+  for queue capacity. Test submitter-role safety, reentrancy, ordering relative to queued work and
+  event-loop/acceptor blockage. Rejection status and retry semantics depend on the protocol and
+  whether the condition is rate limiting (`429`) or temporary capacity loss (`503`).
+- Little's relation can sanity-check object counts/bytes only with consistent units and lifetime-
+  weighted cohorts; it is not a GC sizing formula. Allocation, reachability and live-set ownership
+  belong to `gc-fundamentals` and `object-layout-and-footprint`.
+
+## Required decision artifact
+
+```text
+Boundary/cohort: arrival, admission, departure; queued/running; terminal outcomes
+State/window:    stable / ramp / overload / drain; inventory at start and end
+Measurements:    λ or X, mean L, mean W; reconcile residual and uncertainty
+Resources:       visits, demand, utilisation, queue wait, servers/quotas
+Model:           M/M/1, M/G/1, M/M/c, finite/closed/network; assumptions checked
+Options:         service reduction, capacity, admission, queue bound, batching, shedding
+Decision:        configured workers/queue/rejection; SLO and recovery validation
+```
 
 ## References
 
-- [Sizing worksheet](references/sizing-worksheet.md) — the calculations for thread pools,
-  downstream pools and safety factor, with the ThreadPoolExecutor growth rule and a
-  bounded-queue configuration. Read when choosing or reviewing a pool size.
-- [Reading the utilisation curve](references/utilisation-curve.md) — M/M/1 and Erlang-C
-  numbers, the Universal Scalability Law knee, and how to diagnose saturation from CPU
-  and thread state. Read when latency is high and the cause is not yet known to be code.
+- [Sizing worksheet](references/sizing-worksheet.md) — boundary-consistent demand calculations,
+  CPU and downstream constraints, queue budgets, `ThreadPoolExecutor` admission order and
+  overload policy. Read when choosing or reviewing a pool size.
+- [Reading the utilisation curve](references/utilisation-curve.md) — M/M/1, M/G/1 and Erlang-C
+  assumptions, variability, demand law and evidence-based saturation diagnosis. Read when latency
+  is high and the cause is not yet known to be code.

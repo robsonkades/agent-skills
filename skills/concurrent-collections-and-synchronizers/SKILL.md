@@ -24,24 +24,27 @@ next one: **which member of the family, with which parameter, and what breaks wh
 These failures are rarely exceptions — a consumer that idles with work queued, a limit of 8 that
 admits 12, a latch nobody counts down, a heap dump full of queue nodes. The _rule_ that a
 thread-safe collection does not make a sequence atomic belongs to java-thread-safety-contracts;
-the mechanism it implies is here. Baseline **JDK 25 LTS**; version-sensitive claims say so.
+the mechanism it implies is here. Baseline **Java 25**; vendor support status and
+version-sensitive claims must be checked separately.
 
 ## Workflow
 
-1. **Name the bound before choosing an implementation.** Every queue in a production path has a
-   capacity and a stated policy for full; no nameable policy means it is hidden, not bounded.
+1. **Name the admission policy before choosing an implementation.** If overload can occur, state
+   the capacity or explain why an intrinsically unbounded structure is safe and bounded elsewhere.
 2. **Pick the member from the tables below and write down the cost accepted.** A choice with no
    stated cost was not made.
 3. **Pick the exact method form.** `offer(e, timeout, unit)` not `add`; `while` not `if`;
    `awaitNanos(remaining)` not the original timeout. The form is where the correctness is.
-4. **Acquire as the last statement before `try`; release as the first statement of `finally`** —
-   `unlock`, `release`, `countDown`, `arriveAndDeregister` alike.
+4. **Make cleanup exception-safe.** For owned locks/permits, acquire immediately before `try` and
+   release in `finally` only after successful acquisition. Latches and phasers need their own party
+   accounting rather than a mechanical lock template.
 5. **Verify with the section below**, not by re-reading the code; these failures are silent.
 
 ## Selecting a queue
 
-Default to `ArrayBlockingQueue(n)` or `LinkedBlockingQueue(n)`; go past them only for a property in
-the first column. Mechanism, symptom chains and code: `references/queues.md`.
+Start with the required bound, ordering and handoff semantics; `ArrayBlockingQueue(n)` and
+`LinkedBlockingQueue(n)` are common bounded choices, not universal defaults. Mechanism, symptom
+chains and code: `references/queues.md`.
 
 | You need                                                                    | Pick                     | Cost accepted                                                                                                                   |
 | --------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -61,7 +64,7 @@ Failure modes and worked code: `references/synchronizers-and-conditions.md`.
 | Situation                                                    | Pick                  | Cost accepted                                                                                                                         |
 | ------------------------------------------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | one thread must know N others finished; used once            | `CountDownLatch(n)`   | one-shot, the count cannot be reset; nobody rendezvouses                                                                              |
-| N threads must **meet** repeatedly; something runs per round | `CyclicBarrier(n, r)` | party count fixed at construction, so N−1 live threads park forever; one early leaver breaks it for everyone                          |
+| N threads must **meet** repeatedly; something runs per round | `CyclicBarrier(n, r)` | party count fixed; without timeout/interruption, too few arrivals can wait indefinitely; one early leaver breaks the generation       |
 | parties join and leave between rounds                        | `Phaser`              | ≤ 65535 parties (`IllegalStateException` beyond — tier it); `awaitAdvance` ignores interruption; a negative return means _terminated_ |
 | at most N in flight against a scarce resource                | `Semaphore(n, fair)`  | no ownership — an extra `release()` silently raises the limit and nothing reports it                                                  |
 | two threads swap buffers                                     | `Exchanger`           | pairs exactly two; `exchange(v)` with no partner blocks forever — use the timed overload                                              |
@@ -84,30 +87,28 @@ schedulers, a doubled counter — invisible in tests and load-dependent in produ
 
 ## Rules
 
-- Every queue is constructed with a capacity — `new LinkedBlockingQueue<>()` is
-  `Integer.MAX_VALUE`. An unbounded queue has no backpressure signal at all: `put` never blocks,
-  `offer` never returns false, `remainingCapacity()` always lies.
-- `offer(e, timeout, unit)` is the right default for a service — a `false` you turn into a 503 or
-  a spill, with a deadline attached. `put(e)` when the producer thread is deliberately the
-  throttle; `offer(e)` only where dropping is designed and counted. `add(e)` almost never: it makes
+- Prefer an explicit finite capacity where the queue is the admission boundary — no-arg
+  `LinkedBlockingQueue` uses `Integer.MAX_VALUE`. Structures without a useful finite capacity do
+  not provide overload control; `remainingCapacity()` is contract data, not proof of safety.
+- A timed `offer` fits request paths that must bound admission delay and handle `false`; it is not
+  automatically a 503 or spill policy. `put(e)` fits deliberate producer throttling; `offer(e)`
+  fits designed and counted drop/retry. `add(e)` is rarely useful in a producer loop because it makes
   a capacity condition an `IllegalStateException("Queue full")` and on an unbounded queue can never
   fire. **An `offer` whose boolean is discarded is silent data loss.**
-- `size()` is a gauge with sampling error, never control flow. `if (map.size() < LIMIT) map.put(…)`
-  is a race; CHM's internal striped sum can read transiently negative, which is why `isEmpty()` is
-  `sumCount() <= 0L` while `size()` clamps at 0. Use `mappingCount()` above 2^31. Never export
-  `size()` on `ConcurrentLinkedQueue` or `LinkedTransferQueue` — it traverses.
-- `LinkedTransferQueue.poll()` can return null on a non-empty queue on JDK 21–25 (JDK-8371740,
-  table above), so `if (poll() == null) { /* drained */ }` is incorrect there: the consumer idles
-  or exits with items still queued. Prefer `LinkedBlockingQueue`.
-- `compute`, `computeIfAbsent`, `computeIfPresent` and `merge` run your function while holding the
-  bin head node's monitor (implementation, not specification): keep it short, side-effect-free,
-  touching no map. I/O there serialises every writer to that bin behind the slowest loader. For a
+- Concurrent `size()` is monitoring information, not admission control. `if (map.size() < LIMIT)
+map.put(…)` is a race. Use `mappingCount()` when an approximate `long` count is appropriate. Avoid
+  hot-path or high-frequency scrape calls to `size()` on `ConcurrentLinkedQueue` or
+  `LinkedTransferQueue` because it traverses.
+- OpenJDK bug JDK-8371740 reports `LinkedTransferQueue.poll()` returning null despite a non-empty
+  queue in releases 21–25, fixed in 26. Check the deployed build/backports before relying on the
+  fix; do not use queue emptiness as a durable completion protocol.
+- `compute*` and `merge` may block some updates while the function executes. Keep it short and do
+  not modify the map from the function, as required by the API. Current OpenJDK uses per-bin
+  coordination, but application correctness must not depend on its exact monitor layout. For a
   loader that can block, use the failure-evicting memoiser in `references/collections.md`.
-- A recursive update is detected only when it is **structurally** detectable: re-entering a bin
-  this thread has already reserved, or appending to the tail of the very list `computeIfAbsent` is
-  walking. Everything else — recursion into the same bin when the key already exists, `merge`
-  inside `merge` — completes **silently and non-atomically**. "It lands in the same bin" is not a
-  safety argument.
+- `IllegalStateException("Recursive update")` is only required for a _detectable_ recursive update
+  that would otherwise not complete. It is not an enforcement boundary. Any map mutation from a
+  remapping function violates the API constraint even when a particular build does not throw.
 - Iterators come in two kinds, neither a consistent view. **Weakly consistent** (CHM, skip lists,
   `ConcurrentLinkedQueue`) never throws `ConcurrentModificationException` and may reflect later
   writes; **snapshot** (copy-on-write) never throws CME and definitely will not — a listener
@@ -115,9 +116,9 @@ schedulers, a doubled counter — invisible in tests and load-dependent in produ
 - Copy-on-write cost is **writeRate × size**, not the read:write ratio. Use it for
   configuration-shaped state whose write rate is bounded by human or control-plane action, never
   for request-scoped data; batch with `addAll`. `CopyOnWriteArraySet.contains` is a linear scan.
-- Acquire as the last statement before `try`, release as the _first_ statement of `finally`; not
-  even a log line in between. A missing `countDown()` parks one thread in `CountDownLatch$Sync`
-  forever with nothing logged; a missing `release()` decays throughput over days; a leaked
+- For locks and permits, acquire immediately before `try` and release in `finally`; put no throwing
+  work between them. A missing `countDown()` can park a waiter indefinitely; a missing `release()`
+  erodes capacity; a leaked
   `unlock()` is permanent, because a `ReentrantLock` is **not** released when its holder dies.
 - The untimed `tryAcquire()` and `tryLock()` **ignore the fairness setting** and barge;
   `tryAcquire(0, unit)` honours it and also detects interruption. Whether the limit should be fair
@@ -125,8 +126,9 @@ schedulers, a doubled counter — invisible in tests and load-dependent in produ
 - Wait on a `Condition` in a `while` testing the predicate, never an `if`. Spurious wakeups are
   only one of the three reasons, and not the one that makes `if` unconditionally wrong. Symptom: a
   negative count or an item consumed twice, under load only.
-- `signal()` is safe only when every waiter on _that_ condition waits for the same predicate and one
-  state change enables exactly one of them; otherwise `signalAll()`. Symptom: a **lost wakeup** —
+- `signal()` is appropriate only when every waiter on that condition uses a compatible predicate
+  and progress is preserved if the selected waiter cannot proceed; otherwise consider separate
+  conditions or `signalAll()`. A wrong selection can leave an eligible waiter parked —
   one thread parked forever while everything else runs, and the dump looks like ordinary parking.
 - In a re-wait loop carry the remaining time: `nanosRemaining = cond.awaitNanos(nanosRemaining)`.
   Re-passing the original turns N wakeups into N × timeout — a "5-second timeout" that occasionally
@@ -139,8 +141,9 @@ schedulers, a doubled counter — invisible in tests and load-dependent in produ
   cycle. Downgrade is legal; `readLock().newCondition()` throws. The reader cap is **65535 on JDK
   21** and `Integer.MAX_VALUE` on **JDK 25**; measure against a plain lock before adding an RRWL.
 - `StampedLock` is not reentrant, has no ownership and no fairness policy. Re-entry through a
-  callback, a listener or a guarded object's `toString()` self-deadlocks with **no deadlock report
-  anywhere**. An optimistic read may only copy fields into locals and must `validate(stamp)` first.
+  callback, listener or guarded object's method can self-deadlock and is not represented as an
+  ownable-lock cycle. An optimistic read must not act on a potentially inconsistent snapshot before
+  successful validation; copy only safe fields into locals, validate, then use them.
 - Reach for `AbstractQueuedSynchronizer` last: `BlockingQueue` → `Semaphore` → latch/barrier/phaser
   → `ReentrantLock` + one `Condition` per predicate → `StructuredTaskScope` → atomics. Only a
   blocking synchronizer with a novel acquisition predicate justifies it.
@@ -151,24 +154,22 @@ schedulers, a doubled counter — invisible in tests and load-dependent in produ
   `putIfAbsent` on one key, an `@Arbiter` reading the result, the interleaved outcome `FORBIDDEN`;
   run both shapes so the compound one demonstrably produces it. `Mode.Termination` is the only
   mechanical catch for a lost wakeup or a permit leak — a `STALE` outcome is the lost signal.
-- **Assertions that cost nothing and catch the silent ones**:
-  `assert semaphore.availablePermits() <= CONFIGURED_PERMITS` (over-release is otherwise
-  undetectable), `assert queue.remainingCapacity() != Integer.MAX_VALUE` in the queue factory,
-  `assert lock.getHoldCount() <= 1` against recursion into a non-reentrant design.
+- **Invariant checks in tests and diagnostics:** fixed-limit semaphores should never exceed their
+  configured permit count; queue construction should expose its admission policy; non-reentrant
+  designs should test callback/re-entry. Java assertions are disabled unless enabled and cannot be
+  the production enforcement mechanism.
 - **An architecture test on queue construction** — fail the build on the no-arg
   `new LinkedBlockingQueue<>()` and on any queue reaching a pool whose `remainingCapacity()` is
   `Integer.MAX_VALUE`. The executor factories that hide one are executors-and-task-lifecycle's;
   how to write the rule is architecture-testing's.
-- **JFR, with the threshold lowered first.** `jdk.ThreadPark` (with `parkedClass`) covers every
-  `ReentrantLock`, `Semaphore`, `BlockingQueue` and AQS block; `jdk.JavaMonitorEnter` covers
-  `synchronized`. Both default to **20 ms** (10 ms under `profile.jfc`), so a lock contended 50 000
-  times for 1 ms produces **zero** events — and after a move to `ReentrantLock`, monitor events
-  alone make contention appear to have ended.
+- **JFR with an explicit recording configuration.** AQS-based waits commonly surface through park
+  events, while monitor contention has monitor events. Event enablement and thresholds vary by JDK
+  and recording template; inspect the active settings before treating absence as evidence.
 - **Metrics with the right shape**: bounded queue depth as a _fraction of capacity_ plus a counter
   of `offer` rejections (the rejection is the signal, depth is not); enqueue-to-dequeue latency
   timestamped on the item; `availablePermits()` alerted on a _trend_. `getQueueLength()` is a lock
   method — threads waiting to acquire, not queue depth — documented as monitoring only. A startup
-  `Runtime.version().feature() >= 26` guard pins the `LinkedTransferQueue.poll()` behaviour.
+  deployment build/backport status recorded when the `LinkedTransferQueue.poll()` issue is relevant.
 
 ## References
 
@@ -185,3 +186,6 @@ schedulers, a doubled counter — invisible in tests and load-dependent in produ
 - [Explicit locks](references/locks.md) — the capability table against `synchronized`, the JEP 491
   reframing, the `tryLock` recipe, RRWL upgrade/downgrade and the reader-cap change, `StampedLock`
   with the canonical optimistic read, when AQS is justified. Read when a lock is chosen or blamed.
+- [Java 25 concurrent collections and synchronizers](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
+- [Java 25 lock package](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/package-summary.html)
+- [OpenJDK JDK-8371740: `LinkedTransferQueue.poll()` issue](https://bugs.openjdk.org/browse/JDK-8371740)

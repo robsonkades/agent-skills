@@ -10,7 +10,7 @@
 | `net.ipv4.ip_local_port_range`    | `32768 60999` (28,232 ports)                 | Ephemeral port range for outbound connections                                   |
 | `net.core.somaxconn`              | 128 below kernel 5.4, 4096 from 5.4          | Ceiling on the accept backlog; effective only if `listen()` asks for as much    |
 | `net.ipv4.tcp_max_syn_backlog`    | Scales with available memory                 | Half-open queue (SYN received, final ACK pending)                               |
-| `net.core.rmem_max` / `wmem_max`  | Varies by distribution                       | Absolute ceiling on `SO_RCVBUF`/`SO_SNDBUF` set by the application              |
+| `net.core.rmem_max` / `wmem_max`  | Varies by distribution                       | Ceiling on unprivileged application-requested `SO_RCVBUF`/`SO_SNDBUF`           |
 | `net.ipv4.tcp_rmem` / `tcp_wmem`  | `min default max`, e.g. `4096 87380 6291456` | Per-connection autotuning range; the third value is the real growth limit       |
 | `net.ipv4.tcp_moderate_rcvbuf`    | **1 since kernel 2.6.17**                    | Receive autotuning. Already on; setting it changes nothing.                     |
 | `net.ipv4.tcp_congestion_control` | `cubic`                                      | Active congestion control algorithm                                             |
@@ -36,12 +36,13 @@ Ephemeral port exhaustion follows from the same style of arithmetic:
 ```
 1000 outbound connections/s, no keep-alive, closed actively by this service.
 Steady-state TIME_WAIT sockets = 1000/s x 60 s = 60,000
-Ports actually available          = 60999 - 32768 + 1 = 28,232
-28,232 < 60,000, so exhaustion arrives before steady state:
-    28,232 / 1000 per s ~= 28 seconds of sustained burst.
+Candidate ports in this configured range = 60999 - 32768 + 1 = 28,232
+For repeated connections from one source IP to the same destination, this predicts risk.
+Reserved ports, other sockets and kernel tuple reuse alter the usable count; different
+destinations can reuse local ports. Confirm with an experiment and socket counters.
 ```
 
-## A starting `/etc/sysctl.d/99-java-tcp.conf`
+## An experiment file — not a production starting point
 
 ```conf
 # Buffers: raise the CEILING; autotuning handles the rest
@@ -51,7 +52,7 @@ net.ipv4.tcp_rmem = 4096 87380 33554432
 net.ipv4.tcp_wmem = 4096 65536 33554432
 
 # TIME_WAIT and ports
-net.ipv4.tcp_tw_reuse = 1                    # safe reuse for OUTBOUND connections
+net.ipv4.tcp_tw_reuse = 1                    # outbound reuse experiment; validate path/timestamps
 net.ipv4.ip_local_port_range = 15000 61000   # ~46,000 ports
 net.ipv4.tcp_fin_timeout = 30                # shortens FIN_WAIT_2 — does NOT affect TIME_WAIT
 
@@ -79,9 +80,10 @@ socket.setTcpNoDelay(true);
 channel.setOption(StandardSocketOptions.TCP_NODELAY, true);
 bootstrap.childOption(ChannelOption.TCP_NODELAY, true);
 
-// SO_REUSEPORT (Linux 3.9+) lives in the jdk.net module: add --add-modules jdk.net,
-// or `requires jdk.net;` in module-info.java
-channel.setOption(jdk.net.ExtendedSocketOptions.SO_REUSEPORT, true);
+// SO_REUSEPORT is a standard option when supported by this channel/platform.
+if (channel.supportedOptions().contains(StandardSocketOptions.SO_REUSEPORT)) {
+    channel.setOption(StandardSocketOptions.SO_REUSEPORT, true);
+}
 
 // Buffer override — must be set before connect/bind
 socket.setReceiveBufferSize(4 * 1024 * 1024);
@@ -99,13 +101,13 @@ application heartbeat — WebSocket ping/pong, or gRPC `keepAliveTime` / `keepAl
 
 ## Choosing `TCP_NODELAY`
 
-| Traffic                                               | Setting           | Why                                                              |
-| ----------------------------------------------------- | ----------------- | ---------------------------------------------------------------- |
-| Small request/response (REST, RPC, Redis, unary gRPC) | `true`            | Each message is complete; Nagle adds up to 40 ms for no batching |
-| Bulk transfer of a large file                         | `false` (default) | Nagle coalesces small writes toward MSS, cutting header overhead |
-| Streaming with writes already at MSS                  | irrelevant        | Nagle only holds a small write while an ACK is outstanding       |
-| Multiplexed protocols (HTTP/2, gRPC streaming)        | `true`            | Per-stream latency dominates; frameworks already default to it   |
-| WebSocket control frames                              | `true`            | Ping/pong should not wait 40 ms                                  |
+| Traffic                                           | Setting                                     | Why                                                                |
+| ------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------ |
+| Small request/response with tiny dependent writes | test `true`                                 | Avoid Nagle/ACK stalls if the framework has not already set it     |
+| Bulk transfer of a large file                     | usually irrelevant after batching/zero-copy | Measure segment sizes and CPU, do not rely on Nagle as the batcher |
+| Streaming with writes already at MSS              | irrelevant                                  | Nagle only holds a small write while an ACK is outstanding         |
+| Multiplexed protocols (HTTP/2, gRPC streaming)    | `true`                                      | Per-stream latency dominates; frameworks already default to it     |
+| WebSocket control frames                          | `true`                                      | Ping/pong should not wait 40 ms                                    |
 
 ## Congestion control
 
@@ -122,6 +124,7 @@ sysctl net.ipv4.tcp_available_congestion_control  # what is loaded
 sudo modprobe tcp_bbr && sudo sysctl -w net.ipv4.tcp_congestion_control=bbr
 ```
 
-DCTCP's two host sysctls configure the **sender's** reaction to an ECN mark. If nothing on the
-path marks, hosts behave as CUBIC with ECN never triggered. Confirm the switch configuration
-before proposing it; it is a datacentre decision, not a host flag.
+DCTCP's host settings configure the sender's reaction to ECN marking. Without compatible ECN
+negotiation and path marking, the intended feedback loop does not exist; do not assume a
+specific fallback congestion control without checking the kernel. Confirm marks in packet
+evidence before proposing it as a datacentre-wide change.

@@ -1,104 +1,184 @@
 ---
 name: executors-and-task-lifecycle
 description: >
-  The lifecycle of a task inside an ExecutorService: submit versus execute and which one
-  loses the exception, the enqueue-before-grow rule that makes maximumPoolSize dead
-  configuration, rejection policies as a deliberate choice, ScheduledExecutorService
-  cancelling a periodic task forever on its first throw, and shutdown versus shutdownNow
-  versus close. Use when a submitted task appears never to have run, when a periodic job
-  stopped silently after an incident, when Executors.newFixedThreadPool or
-  newCachedThreadPool is chosen by habit, when a pool is shared between a fast and a slow
-  workload, when shutdownNow is expected to stop work, or when a virtual-thread executor
-  replaced a pool and the concurrency limit went with it. Not deriving the pool size
-  (littles-law-and-queueing), platform versus virtual threads
-  (thread-sizing-and-virtual-threads), the work-stealing pool
-  (forkjoinpool-and-work-stealing), composing stages (completablefuture-composition), or
-  stopping a running task (cancellation-and-interruption).
+  Engineering the full lifecycle of tasks accepted by Java executors: ownership, admission,
+  queue/grow behavior, execution context, result/failure observation, rejection, cancellation,
+  scheduled/periodic semantics, context cleanup, shutdown/drain and recovery. Covers
+  ThreadPoolExecutor, scheduled pools and thread-per-task/virtual-thread executors without treating
+  factory defaults as capacity policy. Use when work disappears, queues grow, rejection or deploy
+  loses work, or a virtual-thread migration removes an implicit bound.
 ---
 
-# Executors and Task Lifecycle
+# Executors and task lifecycle
 
 ## Purpose
 
-Make a task's whole lifecycle — accepted, queued, executed, failed, observed, drained —
-something the code states rather than something the JDK defaults decide. Two failures
-dominate, and both are silent: the task whose exception was captured into a `Future` that
-nobody ever reads, and the executor that either never stops or stops without draining.
+Make each task transition—created, admitted, queued, started, completed/failed/cancelled, observed,
+and drained—owned and observable. An executor schedules Java work; it is not automatically a durable
+queue, downstream limiter, supervisor, retry engine, context carrier or graceful-shutdown policy.
 
-An executor is four decisions, not one: which threads run the work, what happens when
-they are all busy, how failure becomes visible, and what happens at shutdown. The
-`Executors` factory methods answer all four for you, and three of the answers are usually
-wrong for a server.
+## Executor contract
 
-## Workflow
+```text
+task semantics/idempotency/durability and owner:
+arrival/burst/service distribution and scarce resources:
+executor type, thread factory, priority/context/uncaught policy:
+admission bound, queue discipline/capacity and grow rule:
+rejection/overload behavior visible to caller:
+result/failure/cancellation observation:
+deadline and residual work/resource cleanup:
+shutdown trigger, grace, drain/persist/drop/escalation:
+metrics, health and recovery/restart behavior:
+```
 
-1. **Classify the work first.** CPU-bound: a fixed pool sized to cores. I/O-bound at high
-   concurrency: a virtual-thread executor _plus_ an explicit limit on the scarce resource.
-   Recursive decomposition: `ForkJoinPool`. Periodic: `ScheduledExecutorService`.
-2. **Bound the queue and choose the rejection policy out loud.** A rejection you can see
-   is a design; an unbounded queue is the same limit deferred to the heap.
-3. **Decide how a failure becomes visible** before the first submission. `execute` and
-   `submit` differ here, and the difference is the most common cause of "the task never
-   ran".
-4. **Decide the shutdown contract**: who calls it, with what timeout, and what happens to
-   the tasks still in the queue.
-5. **Instrument queue depth, active count and rejections.** The queue grows before latency
-   does; it is the earliest signal available and it is free.
-6. **Give each purpose its own executor.** A shared pool makes every workload's latency
-   depend on the slowest one that uses it.
+## Choose by lifecycle and workload
 
-## Rules
+| Shape                       | Candidate                                        | Conditions/caveats                                             |
+| --------------------------- | ------------------------------------------------ | -------------------------------------------------------------- |
+| CPU parallel work           | bounded fixed/work-stealing design               | effective CPU, granularity, blocking and interference measured |
+| blocking task-per-request   | virtual-thread-per-task or sized platform pool   | explicit resource admission; blocker/provider support          |
+| long-lived bounded workers  | owned `ThreadPoolExecutor`                       | queue/rejection/shutdown designed                              |
+| delayed/periodic local work | `ScheduledThreadPoolExecutor`                    | non-durable, per-process, exception/drift/overlap semantics    |
+| recursive decomposition     | `ForkJoinPool`                                   | join structure and blocking compensation                       |
+| durable business job        | external durable queue/store + executor consumer | delivery/idempotency/recovery owned elsewhere                  |
 
-- `execute(Runnable)` lets an uncaught exception reach the thread's
-  `UncaughtExceptionHandler`. `submit(...)` captures it into the `Future`, where it stays
-  invisible until someone calls `get()`. **A task submitted with `submit` and never joined
-  fails in complete silence** — this is the single most common way work disappears.
-- `ThreadPoolExecutor` **enqueues before it grows**: it creates a thread beyond
-  `corePoolSize` only when the queue _refuses_ an offer. With an unbounded queue,
-  `maximumPoolSize` is dead configuration that will never be reached.
-- `Executors.newFixedThreadPool` and `newSingleThreadExecutor` use an unbounded
-  `LinkedBlockingQueue`; `newCachedThreadPool` uses a `SynchronousQueue` with
-  `maximumPoolSize = Integer.MAX_VALUE`, so it never queues and never stops creating
-  platform threads. Neither is a safe default for work arriving from the network.
-- The rejection policy is a product decision. `AbortPolicy` (the default) throws
-  `RejectedExecutionException` — visible, and the right default. `CallerRunsPolicy` pushes
-  backpressure onto the submitting thread, which is the point and also means the accept
-  loop stops accepting. `DiscardPolicy` and `DiscardOldestPolicy` lose work silently and
-  must never sit under a request with a caller waiting for an answer.
-- **A periodic task that throws is never rescheduled**, and nothing is logged. The
-  exception is held in the `ScheduledFuture` that no code holds. Every
-  `scheduleAtFixedRate` body needs its own `try { … } catch (Throwable t) { log; }`.
-- `ScheduledThreadPoolExecutor` is a core-size-only pool with an unbounded delay queue:
-  `maximumPoolSize` has no effect. One long task on a single-threaded scheduler delays
-  every other schedule on it.
-- `scheduleAtFixedRate` with a task slower than the period does **not** overlap on a given
-  scheduler thread — executions bunch up back-to-back instead. That is not a distributed
-  lock and not an overlap guarantee across replicas.
-- `ExecutorService` is `AutoCloseable` since Java 19, and `close()` is
-  `shutdown()` + **wait indefinitely**, escalating to `shutdownNow()` only if the closing
-  thread is interrupted. try-with-resources around tasks that can hang converts a hang
-  into a hang at shutdown, which is harder to diagnose, not easier.
-- `shutdown()` refuses new work and lets the queue drain. `shutdownNow()` drains the queue
-  into the returned list — that list is the work you just dropped and is your only chance
-  to persist it — and **interrupts** running tasks, which stops only tasks that respond to
-  interruption.
-- `Executors.newVirtualThreadPerTaskExecutor()` has no pool size, no queue and no rejection
-  policy. It cannot reject, so if it replaced a bounded pool, the bound is gone and must
-  be re-declared next to each scarce resource.
-- `Future.get()` with no timeout is an unbounded wait on a thread you own. Bound it, or
-  own the reason it cannot be bounded.
-- `invokeAll` returns only when every task has completed or been cancelled, so it inherits
-  the slowest task's latency; the timed overload cancels the unfinished ones.
-- Instrument `getQueue().size()`, `getActiveCount()`, `getCompletedTaskCount()` and a
-  rejection counter. An executor with no queue-depth metric is an unobservable buffer.
+“CPU-bound = core-count pool” is only a starting hypothesis; quota, SMT, memory bandwidth, other JVM
+work and latency objectives matter. Derive with `littles-law-and-queueing` and measurement.
+
+## ThreadPoolExecutor admission state machine
+
+At a high level, `ThreadPoolExecutor.execute` prefers:
+
+```text
+if workers < corePoolSize -> add worker
+else if queue accepts -> enqueue then recheck run state/worker availability
+else if workers < maximumPoolSize -> add non-core worker
+else -> reject
+```
+
+Exact races are handled by implementation. With an unbounded queue, growth beyond core normally
+does not occur because offers succeed; `maximumPoolSize` is then ineffective for saturation growth.
+With `SynchronousQueue`, direct handoff requires a receiver or growth/rejection. Queue choice defines
+latency, memory, ordering and burst behavior.
+
+Factory methods such as fixed/single pools commonly use unbounded queues; cached pools can create
+many platform threads. They are conveniences, not safe network-ingress defaults. Inspect the exact
+implementation/JDK rather than depending on wrapper internals.
+
+## Failure observation
+
+- `execute(Runnable)` allows an uncaught RuntimeException/Error to escape task execution and reach
+  worker/uncaught handling according to executor implementation; the worker may be replaced.
+- `submit` wraps work in a Future task, capturing failure for `get`; if no owner observes the Future
+  or completion hook, business failure can be invisible.
+- `afterExecute` receives `Throwable` directly for some `execute` failures, but submitted Future
+  failures may require inspecting the completed Future. Hook code must not block/throw recursively.
+
+Define one observation path: join/get by owner, completion callback, supervised wrapper, or executor
+hook. Logs alone do not deliver failure semantics. Track task identity with bounded labels and avoid
+leaking MDC/security/scoped state across reused workers.
+
+## Rejection and overload
+
+Rejection happens after shutdown too, not only saturation. Policies are semantic:
+
+- abort/throw gives immediate visible refusal;
+- caller-runs can slow the submitting thread, but can block an event loop, violate thread affinity,
+  recurse/reenter locks, and does not run tasks after shutdown under the stock policy;
+- discard/oldest changes delivery/order and needs explicit acceptable-loss semantics/metrics;
+- custom persistence/fallback can itself block/fail and must preserve ownership.
+
+Do not call caller-runs “backpressure” without proving the submitter is on the causal producer path
+and slowing it actually reduces arrival. Across asynchronous/network boundaries it may only move the
+queue.
+
+## Scheduled and periodic work
+
+Periodic executions of one task do not overlap with themselves under the scheduler's documented
+contract, and effects of prior executions happen-before later ones. Fixed-rate and fixed-delay have
+different drift/catch-up intent. If an execution throws, subsequent periodic executions are
+suppressed by contract; observe the `ScheduledFuture` or wrap with an explicit error policy.
+
+Do not blindly catch `Throwable` and continue: some Errors should stop/alert, state may be corrupt,
+and retry can amplify. Decide failure classes, backoff/disable/escalate, overlap across replicas,
+clock changes, missed schedules, long run, shutdown and durability. See reference.
+
+## Virtual-thread-per-task executors
+
+`newVirtualThreadPerTaskExecutor` creates a new virtual thread per submitted task and does not impose
+a pool-size concurrency cap. It still rejects after shutdown and has an executor lifecycle. Replace
+old pool-as-throttle behavior with explicit admission next to connections/downstreams/memory. Track
+in-flight tasks, not a nonexistent worker queue as the capacity signal.
+
+Cheap threads do not make task-local memory, ThreadLocals, scoped values, sockets or downstream work
+free. Shutdown can wait on uncooperative tasks.
+
+## Shutdown and drain
+
+`shutdown` rejects new work and allows accepted work to complete; `shutdownNow` is best effort,
+typically interrupts started tasks and returns queued tasks not begun. Neither makes work durable or
+guarantees termination. `ExecutorService.close`/try-with-resources semantics vary with modern API
+contract and can wait for termination; verify target JDK and do not hide an unbounded scope close.
+
+Use a bounded two-phase protocol:
+
+```text
+stop ingress / leadership / scheduling
+mark unready while allowing required health visibility
+shutdown orderly
+await declared grace while measuring active/queued/residual work
+escalate cancellation/abort according to task contract
+persist/requeue/drop never-started work explicitly
+close owned resources and confirm termination
+```
+
+Coordinate orchestration grace, preStop, load balancer drain and downstream deadlines. Returned
+queued `Runnable`s are not automatically serializable/durable jobs.
+
+## Metrics
+
+Collect accepted/started/completed/failed/cancelled/rejected, queue depth/wait age, active/in-flight,
+execution time, deadline expiry, shutdown duration and residual resources. Executor getters are
+estimates/snapshots and queue `size()` cost/consistency depends on implementation; instrument task
+transitions when decisions need accuracy. Metrics are not “free.”
+
+## Tests
+
+- saturation and each rejection policy from worker, event-loop and request submitters;
+- failure under `execute`, `submit`, completion hook and periodic execution;
+- task starts/completes/cancels concurrently with shutdown;
+- queued task drain/replay/drop and duplicate side effects;
+- uninterruptible work past grace and forced process termination;
+- context leakage after success/failure/cancel;
+- periodic long run, exception, clock jump, replica overlap and restart;
+- virtual-thread migration with connection/memory/downstream bounds;
+- executor hook/wrapper throws or blocks.
+
+## Anti-patterns
+
+| Anti-pattern                             | Failure                                              | Better approach                                  | Narrow exception                   |
+| ---------------------------------------- | ---------------------------------------------------- | ------------------------------------------------ | ---------------------------------- |
+| Unobserved `submit` Future               | captured failure disappears                          | owner joins/callback/hook supervision            | explicitly lossy best-effort task  |
+| Unbounded queue                          | overload moves to heap/tail                          | bounded admission and rejection                  | bounded producer/lifetime proof    |
+| CallerRuns by reflex                     | blocks wrong thread/reentrancy                       | analyze causal producer and affinity             | safe synchronous producer feedback |
+| Catch all periodic failures and continue | corrupt/repeating bad state                          | classify disable/retry/escalate                  | known isolated transient           |
+| `shutdownNow` means stopped              | cooperation required                                 | terminal/resource assertions and escalation      |
+| Virtual threads remove rejection         | post-shutdown rejection and resource overload remain | explicit in-flight/resource limits               |
+| Executor metrics exact/free              | estimates/cost/races                                 | transition instrumentation + calibrated sampling |
+
+## Definition of done
+
+- [ ] Task ownership, admission, queue/grow/rejection and overload are explicit.
+- [ ] Result/failure/cancel is observed on every path, including submitted and periodic tasks.
+- [ ] Context/thread-affinity and blocking policy are safe.
+- [ ] Shutdown coordinates ingress, grace, residual work, durability and resources.
+- [ ] Virtual-thread designs restore resource bounds explicitly.
+- [ ] Saturation, failure, cancellation, periodic and deployment tests pass with useful metrics.
 
 ## References
 
-- [Shutdown, rejection and drain](references/shutdown-and-rejection.md) — the factory-method
-  table with each one's real queue and failure mode, the shutdown recipe with a bounded
-  wait, choosing a rejection policy, and draining on SIGTERM. Read when configuring a new
-  executor or when work is lost at deploy time.
-- [Scheduled and periodic tasks](references/scheduled-and-periodic.md) — fixed-rate versus
-  fixed-delay, the swallow-and-die trap with a working wrapper, drift, scheduler starvation
-  and what a scheduler does not give you across replicas. Read when a job runs late, twice,
-  or stopped without a trace.
+- [Shutdown, rejection and drain](references/shutdown-and-rejection.md)
+- [Scheduled and periodic tasks](references/scheduled-and-periodic.md)
+- [`ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+- [`ExecutorService`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html)
+- [`ScheduledThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ScheduledThreadPoolExecutor.html)

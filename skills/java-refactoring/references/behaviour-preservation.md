@@ -46,21 +46,23 @@ Method is Medium between two plain classes and High when either side is a proxie
 
 | Risk       | Widest boundary crossed                                                                                                                                  | Evidence required before commit                                                                                                            |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Low**    | One method body; only locals and one class's private state. Slide Statements only within one lock scope and one `try`                                    | Compiles; existing suite green; the diff contains no edit other than the mechanical one — no reformatting, no reordered members            |
+| **Low**    | One method body; only locals and one class's private state. Slide Statements only within one lock scope and one `try`                                    | Compiles; recorded baseline unchanged; focused tests for any return, failure, ordering or numeric dimension the step can affect            |
 | **Medium** | One package; every caller compiles in this build and no framework reaches the symbol by name                                                             | The above, plus the caller set closed (below), plus a characterisation row for every branch of the moved code that no existing test covers |
 | **High**   | A proxy, a lock, a transaction, a persistence mapping, a serialised or wire form, a published signature, an inheritance hierarchy, or a process boundary | The above, plus the proof that matches the dimension — the table below. A green suite is never sufficient here                             |
 
-The Low row is the one place `SKILL.md`'s "no net, no refactoring" does not bind: a step
-confined to one method body, touching only locals, has no dimension a test could observe.
-Everything above it needs the net first.
+Low means the caller/boundary set is small, not that behavior is unobservable. Local extraction,
+reordering and type changes can still alter numeric promotion, exceptions or evaluation order.
+A purely syntactic rename of a local may need only compile/review evidence; classify the actual
+dimension, not the file scope.
 
 **Closing the caller set** takes two halves, because neither is complete alone. (a) Static
 callers: reduce the symbol's visibility, or rename it to something nothing could reference,
 and compile — the compiler enumerates these exhaustively and grep does not. (b)
 Framework-reached names: search the old name as a **string literal** across resources, YAML,
 XML, SpEL, JPQL, `@Query`, `@Value`, `@Column`, `@JsonProperty` and `Class.forName`
-arguments. No tool enumerates reflective callers; the string search is the substitute, and
-every hit is a caller. The exhaustive list of where a rename never reaches is
+arguments. A generic Java compiler cannot enumerate reflective callers; string/config-aware
+search supplies candidates that must be classified, not assumed to be callers. The catalogue of
+places a rename may not reach is
 refactoring-automation's `tool-capabilities.md` — one home, do not re-derive it.
 
 ## Which proof for which dimension
@@ -87,17 +89,19 @@ _different bean_ usually changes nothing either — the default propagation `REQ
 the caller's transaction. The changes are `REQUIRES_NEW` (an independent commit that
 survives the outer rollback and can block on rows the outer transaction holds) and no
 transaction at all (per-statement autocommit). Lazy access then throws
-`LazyInitializationException` — or does not, because `open-in-view` is on by default and
-keeps the session open for the whole web request, so the failure appears only in jobs,
-listeners and tests. A read extracted between two writes also forces an autoflush, moving a
+`LazyInitializationException` — or does not in a Spring Boot web application where the default
+Open EntityManager in View interceptor has not been disabled. Inspect the deployed setting;
+jobs, listeners and tests do not inherit a web-request context. A query extracted between two
+writes can also trigger autoflush, moving a
 constraint violation from commit to mid-method. A step crossing that edge is transaction
 design (enterprise-transactions), not refactoring.
 
 **Concurrency.** Steps that look alike are not:
 
 - Extracting the _whole body_ of a `synchronized` block into a method called from inside it
-  — safe **only if the extracted method is `private` or `final` and is not itself given a
-  lock**. Non-private makes the critical section overridable: an alien call under a lock.
+  preserves dispatch only when the target cannot be overridden (`private`, `final`, or on a
+  final class) and is not given a different lock. An overridable extraction adds alien dispatch
+  under a lock.
   Re-acquiring inside is reentrant for `synchronized` and `ReentrantLock`, and a
   self-deadlock for `StampedLock` or a semaphore used as a mutex.
 - Sliding a statement across a lock boundary is a lock-scope change, not a slide — in both
@@ -109,12 +113,13 @@ design (enterprise-transactions), not refactoring.
   spanned them and creates a lock-ordering pair. The compiler sees nothing.
 - Replacing two reads of a field with one local **removes a re-read**, and the field's
   declaration decides legality. On a **`volatile`** field, a `VarHandle` acquire read or an
-  `AtomicXxx.get()` it is not legal and not a refactoring: each read is a synchronisation
+  `AtomicXxx.get()`, it is not a refactoring: each read is a synchronisation
   action, and caching one across a loop is exactly how `while (!stopped)` becomes an
   infinite loop. On a **plain** field with no intervening synchronisation action the JIT may
-  already coalesce them — the JMM owes a racy program nothing — so the local usually
-  _removes_ a TOCTOU rather than adding one. The inverse, Replace Temp with Query, _adds_ a
-  re-read and can yield two different values where the code assumed one.
+  coalesce them, but a racy program has no useful cross-thread contract. Caching changes the
+  observations an execution can make and must not be sold as behavior preservation. The inverse,
+  Replace Temp with Query, _adds_ a re-read and can yield two different values where the code
+  assumed one.
 - Lazy-init and double-checked-locking shapes tolerate almost no rearrangement: the field
   stays `volatile`, and the write to it must be the **last** step. Extracting the
   construction into a helper is safe; assigning the field and then configuring the object
@@ -133,9 +138,9 @@ compile-time constant being inlined into stale callers is `compatibility.md`'s.
 make "equivalent" rewrites observable. The full class↔record consequence list — finality,
 equality, accessor names, serialisation — is `compatibility.md`'s. One it does not carry:
 record components are `final`, so class→record _adds_ safe-publication freeze and
-record→class (or making a field non-final so a mapper can set it) _removes_ it. Code that
-relied on `final`-field publication under a race then exposes default values, first
-observably on aarch64.
+record→class (or making a field non-final so a mapper can set it) _removes_ it. Incorrectly
+published code can then expose default or stale values; architecture-dependent frequency does
+not make the program correct on any platform.
 
 ## The evidence ladder
 

@@ -20,21 +20,25 @@ ordering rule checkable: a unit test walks each plan and asserts every step befo
 `Pivot` is `Compensatable` and everything after it is `ForwardOnly`. A step that quietly
 lost its compensation shows up there rather than in an incident.
 
-## Persist the position before the call, not after
+## Persist intent before the call and transition atomically
 
 ```java
-// Conceptual: no retry policy, no locking of the instance row.
+// Conceptual: store transitions use optimistic versions; participant calls are remote.
 void advance(SagaInstance saga, List<SagaStep> steps) {
+    if (!store.tryClaim(saga.id(), saga.version(), workerId, claimDeadline)) return;
     while (saga.position() < steps.size()) {
         SagaStep step = steps.get(saga.position());
-        store.mark(saga.id(), step.name(), STARTED);      // its own committed transaction
+        store.startAttempt(saga.id(), saga.version(), step.name(), attemptId());
         try {
             step.execute(saga.context());
-            store.mark(saga.id(), step.name(), DONE);
-            store.advance(saga.id());
+            saga = store.completeAndAdvance(saga.id(), saga.version(), step.name()); // one tx
         } catch (BusinessRejection rejected) {            // the participant said no
             store.mark(saga.id(), step.name(), FAILED, rejected.getMessage());
-            compensateBackwards(saga, steps);
+            if (step instanceof SagaStep.ForwardOnly) {
+                store.mark(saga.id(), FORWARD_REPAIR_REQUIRED);
+            } else {
+                compensateCompletedBackwards(saga, steps);
+            }
             return;
         } catch (OutcomeUnknown unknown) {                // timeout, connection reset
             store.mark(saga.id(), step.name(), UNKNOWN, unknown.getMessage());
@@ -45,12 +49,16 @@ void advance(SagaInstance saga, List<SagaStep> steps) {
 }
 ```
 
+- The claim/version prevents two coordinators from advancing the same row concurrently; it is
+  a liveness optimization, not a replacement for participant idempotency.
 - `STARTED` commits **before** the call, so a crash mid-call leaves evidence that the step
   may have run; the recovery worker asks the participant for that step's status by saga id
   instead of guessing.
 - Rejection and unknown take different branches. Compensating on a timeout is how a saga
   refunds a payment that actually went through.
-- Nothing about the saga lives in the thread, so a restart resumes from the table — with a
+- Marking `DONE` and advancing position is one local transaction. Separate writes create a
+  crash window in which recovery may misclassify the step.
+- Nothing authoritative about the saga lives only in the thread, so restart resumes from the table — with a
   query that doubles as the numeric definition of "stuck" and the source of the alert:
 
 ```sql
@@ -66,32 +74,32 @@ final class ChargeCard implements SagaStep.Compensatable {
         payments.charge(new ChargeRequest(ctx.sagaId() + ":charge", ctx.amount()));
     }
     public void compensate(SagaContext ctx) {
-        // Keyed on the saga, not a fresh id: a repeated compensation returns the first
-        // refund instead of issuing a second. The key contract is idempotency.
-        payments.refund(new RefundRequest(ctx.sagaId() + ":refund", ctx.amount()));
+        // Stable command key plus the exact original business effect being reversed.
+        payments.refund(new RefundRequest(
+                ctx.sagaId() + ":refund", ctx.chargeId(), ctx.amount()));
     }
 }
 ```
 
-The refund is a **new business fact**, not a deletion of the charge — the statement shows
-both lines, which is what "a compensation is not an undo" means in practice. It must also be
-harmless when there is nothing to reverse: `refund` on an uncharged key returns the
-not-charged state rather than failing, because the step may never have executed.
+The refund is a **new business fact**, not a deletion of the charge. Compensation must resolve
+whether the charge exists and target that identity; inventing a refund for a charge that never
+existed may itself violate the payment API or ledger invariant.
 
 ## When the compensation itself fails
 
 ```java
-void compensateBackwards(SagaInstance saga, List<SagaStep> steps) {
+void compensateCompletedBackwards(SagaInstance saga, List<SagaStep> steps) {
     store.mark(saga.id(), COMPENSATING);
-    for (int i = saga.position() - 1; i >= 0; i--) {
-        if (steps.get(i) instanceof SagaStep.Compensatable c) {
+    for (CompletedStep completed : store.completedStepsDescending(saga.id())) {
+        if (steps.get(completed.position()) instanceof SagaStep.Compensatable c) {
             try {
+                store.markCompensationStarted(saga.id(), c.name());
                 c.compensate(saga.context());
                 store.mark(saga.id(), c.name(), COMPENSATED);
             } catch (RuntimeException e) {   // nothing compensates this
                 store.mark(saga.id(), c.name(), COMPENSATION_FAILED, e.toString());
                 escalation.enqueue(saga.id(), c.name(), saga.context());
-                return;                      // a scheduled worker retries with backoff
+                return;                      // policy retries or routes to manual repair
             }
         }
     }
@@ -99,9 +107,10 @@ void compensateBackwards(SagaInstance saga, List<SagaStep> steps) {
 }
 ```
 
-The retry loop belongs to that worker, never to a request thread, and the escalation row is
-the manual-intervention path. Alert on the count of rows in `COMPENSATION_FAILED`; without
-that alert the queue is a landfill.
+The retry loop belongs to a durable worker, not a request thread. Define max age/attempts and
+whether exhausted work remains automatically retryable or enters manual repair. Alert on age
+and count in `COMPENSATION_FAILED`; without ownership the queue is a landfill. Compensation
+callbacks require authentication and authorization because replaying one mutates business state.
 
 ## Testing: fail every step, assert the invariant each time
 
@@ -112,11 +121,14 @@ void failureAtAnyStepLeavesAConsistentState(int failingStep) {
     var participants = Participants.failingAt(failingStep);   // in-memory or WireMock
     runner.run(sagaFor(order), participants);
 
-    if (failingStep <= plan.pivotIndex()) {
+    if (failingStep <= plan.pivotIndex()) { // definite rejection before pivot committed
         assertThat(participants.inventoryReserved()).isEmpty();
         assertThat(participants.chargesNet()).isZero();        // charge and refund cancel
         assertThat(store.statusOf(order.id())).isEqualTo(COMPENSATED);
     } else {
+        assertThat(store.statusOf(order.id())).isEqualTo(FORWARD_REPAIR_REQUIRED);
+        participants.recover();
+        runner.resume(order.id());
         assertThat(store.statusOf(order.id())).isEqualTo(COMPLETED);
     }
 }
@@ -133,3 +145,7 @@ Three cases the parameterised test does not reach:
   exists and the instance is `COMPENSATION_FAILED`, not `COMPENSATED`. A saga reporting
   success after a failed compensation is the worst outcome available: nothing looks at it
   again.
+- **Concurrent coordinators** — race two claims/transitions for one version and assert one
+  durable transition; participant requests may still duplicate and must collapse by key.
+- **Pivot outcome unknown** — return a timeout after committing the pivot, query by saga/step
+  identity, then prove recovery goes forward rather than compensating pre-pivot work.

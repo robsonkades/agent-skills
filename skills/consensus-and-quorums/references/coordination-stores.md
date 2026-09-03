@@ -1,25 +1,24 @@
 # Coordination stores in practice
 
-etcd, ZooKeeper and Consul are the same shape of thing: a replicated state machine behind a
-consensus protocol (Raft for etcd and Consul, Zab for ZooKeeper), exposing a tiny key space
-with strong ordering. Treat them as **a distributed `compareAndSet` with expiry and change
-notification**, not as a database.
+etcd, ZooKeeper and Consul are coordination-oriented replicated state machines (Raft for etcd and
+Consul, Zab for ZooKeeper), but their read, watch, lease and transaction contracts differ. Treat
+them as versioned metadata/coordination systems, not interchangeable general databases.
 
 ## The four primitives, and what each is for
 
-| Primitive                       | Role                                                            | Correct uses                                                  |
-| ------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------- |
-| Versioned key + compare-and-set | Make one decision single-valued; the version is a fencing token | Shard-map generation, config generation, "who holds the role" |
-| Lease / session with TTL        | A grant that expires without the holder's cooperation           | Liveness of a member, ephemeral registration, leader lease    |
-| Watch                           | Learn that something changed                                    | Invalidate a local cache of the decision; trigger a re-read   |
-| Ordered / sequential keys       | Impose a total order on claimants                               | Queueing for a role so that failover is not a thundering herd |
+| Primitive                       | Role                                                               | Correct uses                                                  |
+| ------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------- |
+| Versioned key + compare-and-set | Make one decision single-valued; revision may seed a fencing token | Shard-map/config generation, role claim                       |
+| Lease / session with TTL        | A grant that expires without the holder's cooperation              | Liveness of a member, ephemeral registration, leader lease    |
+| Watch                           | Learn that something changed                                       | Invalidate a local cache of the decision; trigger a re-read   |
+| Ordered / sequential keys       | Impose a total order on claimants                                  | Queueing for a role so that failover is not a thundering herd |
 
 A lease is the **ensemble's** liveness opinion, not the holder's: the cluster may expire a
 session the holder still believes is alive, because a renewal was lost or the process paused.
 
 ## Operations these stores are wrong for
 
-- **Application data.** The keyspace is expected to fit in memory on every voter, and both
+- **Traffic-proportional business data.** Working sets and revision history replicate across voters, and
   families cap what you can store — a znode is capped around a megabyte (`jute.maxbuffer`) and
   etcd enforces a backend quota (`--quota-backend-bytes`) after which the cluster goes
   read-only until it is defragmented and the alarm is cleared. Discovering this limit in
@@ -29,14 +28,17 @@ session the holder still believes is alive, because a renewal was lost or the pr
   parent — is a herd on every change. Use a broker (`task-queues-and-competing-consumers`).
 - **A job table or a lock per request.** Write rate then scales with traffic, which is exactly
   what a consensus store cannot do.
-- **High-cardinality state.** Watch and revision bookkeeping is per key.
+- **High-cardinality/churn state without a measured envelope.** Storage, revision history and
+  watch cost grow with keys, updates, watchers and retention; benchmark the actual product and
+  compaction policy.
 - **Anything on the synchronous request path without a cached fallback.** A store that needs a
   majority for a linearizable read is unavailable during every leader election.
 
 ## Throughput and failure characteristics
 
-- Write throughput is bounded by **one majority round trip per decision** plus a durable write
-  on each voter. It does not scale with cluster size — it degrades.
+- Writes pass a leader/quorum replication and durability path. Batching/pipelining can amortize
+  round trips, so “one RTT per API call” is not a throughput formula; adding voters does not shard
+  the leader write stream and usually adds work.
 - A leader election is a window with **no writes at all**. Sizing the election timeout is the
   same trade as sizing any lease: short means false elections under GC pause or a network blip,
   long means a longer stall.
@@ -52,8 +54,10 @@ session the holder still believes is alive, because a renewal was lost or the pr
 
 Four properties that catch people:
 
-1. **Coalescing.** Several changes may be reported as one. You learn the key changed, not the
-   sequence it went through, so a consumer needing every intermediate state cannot use a watch.
+1. **Product semantics differ.** etcd watches provide ordered, unique, resumable events within the
+   retained revision window. ZooKeeper's one-shot watch may miss intermediate states during the
+   re-registration gap. Do not apply the weaker contract to every product—or assume the stronger
+   one without revision checkpoints.
 2. **Gaps after disconnection.** History is compacted; a client reconnecting at a revision
    already compacted away must re-read from scratch. ZooKeeper watches are one-shot — after
    firing they must be re-registered, and changes in the gap appear only in the re-read.
@@ -62,9 +66,10 @@ Four properties that catch people:
 4. **No ordering against your own writes** unless you compare revisions. The event you receive
    may predate the write you just made.
 
-The consequence is one rule: **a watch triggers a re-read; it never carries the state.** Every
-watch handler must be correct when it fires spuriously, fires late, or never fires at all —
-which means a periodic full re-read as a backstop, not only the watch.
+For current-state consumers, a watch invalidates or reconciles a versioned local snapshot; resync
+on compaction/gap and consider periodic reconciliation. Event-history consumers may process
+etcd's revision stream within its retention contract, but a coordination watch is not a durable
+message broker.
 
 ## Compare-and-set has three outcomes, not two
 
@@ -111,10 +116,10 @@ chosen by accident.
 
 ## Operational checklist
 
-- [ ] Cluster size is odd; voters sit in at least three failure domains.
+- [ ] Voter count/placement survives each stated failure domain; asymmetric two-domain outcomes are explicit.
 - [ ] Backend size and lease/session counts are monitored, with an alert well below the quota.
 - [ ] Every read call site has declared linearizable or stale.
-- [ ] Every watch consumer re-reads on fire and has a periodic full re-read as a backstop.
+- [ ] Every watch consumer checkpoints versions and has a tested gap/compaction resync path.
 - [ ] Every CAS call site distinguishes rejection from timeout.
 - [ ] Every consumer has a documented behaviour for "store unreachable", tested by blocking the
       client's network path rather than by mocking the client.

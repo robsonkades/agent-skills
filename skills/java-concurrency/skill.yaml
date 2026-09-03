@@ -1,19 +1,15 @@
 schemaVersion: 1
 
 name: java-concurrency
-version: 1.1.0
+version: 1.2.0
 description: >-
-  Entry point for modern Java concurrency: turn a requirement or a symptom into the one construct
-  or investigation that fits it, and hand off to the skill that owns it. Covers the
-  classification that decides everything downstream — concurrency versus parallelism, I/O-bound
-  versus CPU-bound, request-scoped versus long-lived — and routes to executors, virtual
-  threads, structured concurrency, scoped values, CompletableFuture, reactive pipelines, limits,
-  diagnostics and testing. Use when designing concurrent code and the construct is not yet
-  decided, when someone proposes replacing every executor with virtual threads, when "add more
-  threads" is offered as a fix, when a concurrency symptom arrives without a cause, or when two
-  skills in this family seem to give different advice. Does not itself cover any construct in
-  depth, the sizing arithmetic (littles-law-and-queueing), correctness and happens-before
-  (java-memory-model), or general JVM performance triage (java-performance).
+  Entry point for designing or triaging concurrency inside one JVM. Classifies work by
+  lifecycle, blocking and CPU demand, state ownership, arrival shape, ordering, cancellation,
+  failure, and scarce-resource bounds, then routes to executors, virtual threads, structured
+  concurrency, futures, reactive streams, memory-model correctness, diagnostics, or testing.
+  Use before selecting a concurrency abstraction or when “more threads,” “async,” or “reactive”
+  is proposed as a performance fix. Detailed construct internals and distributed coordination
+  have separate owners.
 
 license: Apache-2.0
 
@@ -41,6 +37,8 @@ files:
   - references/
 
 dependencies:
+  - name: concurrent-collections-and-synchronizers
+    version: ^1.0.0
   - name: littles-law-and-queueing
     version: ^1.0.0
   - name: blocking-and-nonblocking-io

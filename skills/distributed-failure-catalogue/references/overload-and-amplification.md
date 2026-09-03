@@ -19,7 +19,8 @@ produces it) → **Owner** (the skill with the fix). No entry contains a remedy.
 ## Retry storm
 
 - **Symptom** — a dependency's inbound request rate **rises** while its success rate **falls**.
-  Nothing else produces that pair: organic growth raises both, a pure fault leaves inbound flat.
+  The stronger discriminator is attempts per logical request rising after failures/timeouts;
+  failover, demand growth and cache-miss amplification can produce the same first two series.
 - **Mechanism** — each timeout produces N attempts, multiplying load onto the thing that is
   already slow. Layered retries multiply rather than add: three layers of three is 27 requests
   per logical call.
@@ -29,23 +30,25 @@ produces it) → **Owner** (the skill with the fix). No entry contains a remedy.
 
 ## Cascading failure
 
-- **Symptom** — the failure spreads to services that never call the failing one, and the
-  system stays down after the trigger is removed.
+- **Symptom** — the failure spreads beyond direct callers, or the system stays degraded after
+  the trigger is removed. These are related but distinct propagation/metastability clues.
 - **Mechanism** — a slow dependency holds caller threads and connections; the caller
   saturates; its callers slow; retries add load; it slows further. The loop feeds itself, and
   the system does more work while completing less.
 - **Where it hides** — one pool shared across dependencies; a health check that calls
   downstream; an unbounded queue; no concurrency limit on the path. Also in the response:
-  adding replicas mid-cascade deepens it.
+  adding cold replicas mid-cascade can deepen it when startup, cache warm-up or connection
+  creation adds load; warm isolated capacity can instead help.
 - **Owner** — `cascading-failures`.
 
 ## Timeout stacking
 
 - **Symptom** — the caller has returned an error and the downstream work is still running:
   in-flight counts at the callee exceeding anything the caller admits to.
-- **Mechanism** — an inner timeout longer than the outer one, or a timeout with no
-  cancellation. Per-hop timeouts compose by addition, so three hops at 5 s is a 15 s worst
-  case nobody configured. Stopping the wait and stopping the work are separate mechanisms.
+- **Mechanism** — an inner timeout longer than the remaining caller budget, or a timeout with
+  no effective cancellation. Sequential hop/attempt budgets can add; parallel branches take
+  a maximum, and retries add further terms. Stopping the wait and stopping the work are
+  separate mechanisms.
 - **Where it hides** — `future.get()` with no bound; a connect timeout with no read or request
   timeout; a retry policy whose total exceeds the caller's budget; `TimeoutException` caught
   without cancelling; a JDBC call with no `setQueryTimeout`.
@@ -53,8 +56,8 @@ produces it) → **Owner** (the skill with the fix). No entry contains a remedy.
 
 ## Unbounded queue growth
 
-- **Symptom** — queue depth and time-in-queue climb steadily, latency rises linearly with
-  time, completions per second fall while the service looks busy. Eventually heap exhaustion.
+- **Symptom** — queue depth and age trend upward while arrival exceeds sustainable goodput;
+  latency grows and may eventually hit memory, retention or caller-deadline limits.
 - **Mechanism** — a queue does not absorb overload, it converts it into latency. Once queue
   wait exceeds the caller's timeout every dequeued item is waste, so the service spends its
   whole capacity producing responses that are discarded.
@@ -114,3 +117,39 @@ produces it) → **Owner** (the skill with the fix). No entry contains a remedy.
 - **Owner** — `failure-models` (the fault class, differential observability);
   `load-balancing-and-routing` (outlier ejection and its fleet-ejection hazard);
   `kubernetes-service-lifecycle` (probe design).
+
+## Asymmetric partition
+
+- **Symptom** — the dependency is healthy from one region, node or protocol path and
+  unreachable from another; aggregate availability hides a sharply segmented failure.
+- **Mechanism** — routing, ACL, DNS, MTU, address-family or one-way network failure violates
+  the assumption that reachability is symmetric and global.
+- **Where it hides** — one synthetic probe location; only server-side metrics; dual-stack
+  resolution with a broken IPv6 path; return traffic through a different firewall.
+- **Discriminator** — a source×destination×protocol reachability matrix, including request
+  and response direction, differs while target process health remains stable.
+- **Owner** — `failure-models`; `distributed-tracing-design` and `linux-for-jvm` for evidence.
+
+## Metastable failure
+
+- **Symptom** — the initiating load spike or dependency fault is gone, yet retries, queues,
+  cache misses or recovery work keep goodput below arrivals and the system does not recover.
+- **Mechanism** — feedback maintains a bad equilibrium: expired work consumes capacity,
+  retries amplify it, cold caches raise dependency load, or recovery competes with serving.
+- **Where it hides** — FIFO processing of already-expired work, eager fleet reconnect, cache
+  flush on restart, recovery without bandwidth/CPU limits.
+- **Discriminator** — offered logical load returns to normal but internal attempt/work rate
+  and saturation remain elevated; controlled shedding or draining breaks the loop.
+- **Owner** — `cascading-failures` and `rate-limiting-and-load-shedding`.
+
+## Correlated/common-mode failure
+
+- **Symptom** — replicas intended to be independent fail nearly together.
+- **Mechanism** — they share software version, credentials, DNS/control plane, quota,
+  availability zone, deployment action or workload trigger; replica count overstated fault
+  independence.
+- **Where it hides** — all replicas in one failure domain; one global secret expiry; one bad
+  configuration rolled everywhere; shared connection pool or upstream quota.
+- **Discriminator** — group failures by failure-domain labels and change/event timeline, not
+  instance ID. Correlation follows a shared dimension.
+- **Owner** — `failure-models`; `architecture-characteristics` for required independence.

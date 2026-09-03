@@ -1,20 +1,18 @@
 schemaVersion: 1
 
 name: cascading-failures
-version: 1.2.0
+version: 1.3.0
 description: >-
   How one slow dependency becomes a total outage: the amplification loop and the four points
   that close it — retry storms, unbounded queues, thread and connection exhaustion, an inner
-  timeout longer than the outer one. Covers why only cutting offered load recovers a
-  cascading system, metastable failure where the trigger is gone and the backlog sustains
-  it, the thundering herd on recovery, and criticality separation. Use when one dependency's
+  timeout longer than the outer one. Covers why cutting offered work is usually the first stabilization step in a
+  cascade, metastability sustained by backlog, recovery herds and criticality separation. Use when one dependency's
   latency rise took down services that never call it, when the dependency recovered and the
   system did not, when adding replicas mid-incident made it worse, or when queue depth grows
   while goodput falls to zero. Does not cover the breaker (circuit-breakers), shedding
   policy (rate-limiting-and-load-shedding), bulkheads (concurrency-limiting-and-bulkheads),
   retry policy (retries-and-backoff), queue arithmetic (littles-law-and-queueing), replica
-  routing (load-balancing-and-routing), the fault model (failure-models), or the patterns
-  individually (distributed-failure-catalogue).
+  routing (load-balancing-and-routing), or the fault model (failure-models).
 
 license: Apache-2.0
 

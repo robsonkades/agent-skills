@@ -89,11 +89,11 @@ extracted first, which is why that is step one and not step three.
 Three ways to move the same decision: who fetches the data.
 
 **Preserve Whole Object** — pass the object rather than three values pulled from it.
-Precondition: the object is immutable, or the callee finishes before any holder mutates it.
-If it is a JPA entity, the callee must run inside the same persistence context — passing the
-entity where three values went is how `LazyInitializationException` appears in a callee that
-never touched the database. Across a serialisation boundary it also puts every field of the
-object on the wire, which is a contract change and sometimes a disclosure
+Precondition: the object is immutable, or mutation cannot race/change the values during the call.
+For a JPA entity, either all required state is initialized or the callee runs in an intended
+persistence context; otherwise replacing scalar snapshots with an entity can introduce
+`LazyInitializationException`, extra SQL, or a later snapshot. Across a serialisation boundary it
+can also put more state on the wire, which is a contract change and sometimes a disclosure
 (remote-facade-and-dto).
 
 **Replace Parameter with Query** — drop a parameter the callee can derive. Precondition: the
@@ -112,10 +112,10 @@ This is the mechanical core of humble-objects-and-functional-core.
 Delete a setter for a field that must not change after construction, moving the value into
 the constructor.
 
-**Precondition:** no framework needs it, and the two common ones differ. Jackson needs a
-mutator only without constructor binding (`-parameters` plus the parameter-names module, on
-by default in Spring Boot; records work as-is) — prefer that configuration to keeping the
-setter. JPA with field access never needed the setter, but **does** require a
+**Precondition:** no framework needs it, and the two common ones differ. Jackson can use creators,
+records, fields or property mutators depending on mapper/module configuration; prove the deployed
+binding mode with a serialization test rather than assuming `-parameters` is sufficient. JPA with
+field access never needed the setter, but a portable entity **does** require a
 public-or-protected no-arg constructor, and no configuration lifts that requirement, so an
 `@Entity` reaches neither a record nor all-final fields. Removing a setter is
 binary-breaking for out-of-reach callers.

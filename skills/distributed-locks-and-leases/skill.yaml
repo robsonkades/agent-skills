@@ -1,20 +1,13 @@
 schemaVersion: 1
 
 name: distributed-locks-and-leases
-version: 1.2.0
+version: 1.3.0
 description: >-
-  Mutual exclusion across processes, and why the naive version does not: a lock with a TTL
-  is a lease, and a lease alone does not exclude — the holder can stall past expiry and keep
-  writing while a second holder is admitted, with no error anywhere. Covers the fencing
-  token as the only correct fix and the resource's duty to enforce it, Redis locking with an
-  owner token, Redlock's contested status, database row and advisory locks, and the
-  alternatives that beat a lock. Use when SET NX appears with a TTL, when a lock is released
-  with a bare DEL, when watchdog renewal is treated as safety, when two workers processed
-  one record with no exception, or when a lock is proposed to make a non-idempotent write
-  safe. Not how a lock service is built (consensus-and-quorums), one long-lived owner of a
-  role (leader-election), surviving duplicates instead (idempotency), in-process locking
-  (java-memory-model), one-database boundaries (enterprise-transactions), or locks across
-  user think time (offline-concurrency-control).
+  Cross-process exclusion through leases, session/transaction locks and fencing: stale
+  holders, owner-safe release, Redis/Redlock assumptions, database advisory locks, resource
+  claims and lock-free alternatives. Use when reviewing SET NX/TTL, watchdog renewal,
+  duplicate workers or a lock around a non-repeatable effect. Consensus implementation,
+  leader election, local JVM locking and user-session concurrency are separate skills.
 
 license: Apache-2.0
 

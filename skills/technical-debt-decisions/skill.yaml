@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: technical-debt-decisions
-version: 1.0.0
+version: 1.1.0
 description: >-
   Deciding when a shortcut is a legitimate trade and when it is just damage: separating
   deliberate debt from mess, the things that are never tradeable at any deadline, containing a
@@ -41,6 +41,10 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - quality-gates
+  - code-review
 
 capabilities:
   - reads-source

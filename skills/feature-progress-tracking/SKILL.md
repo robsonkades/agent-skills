@@ -49,16 +49,19 @@ TODO ──► IN_PROGRESS ──► DONE
 DONE ──► IN_PROGRESS     only when a later change reopens it; say what reopened it
 ```
 
-Everything else is illegal, and two in particular: **TODO never goes straight to DONE** — an
-untracked implementation happened — and **BLOCKED never goes to DONE** without passing back
-through IN_PROGRESS, because unblocking is work.
+The normal path is TODO → IN_PROGRESS → DONE. A direct TODO → DONE transition is acceptable for an
+atomic task completed and validated between observations; record the validation rather than
+inventing historical states. BLOCKED normally returns through IN_PROGRESS, but the blocker may also
+make the resource CANCELLED or prove that no work remained. State transitions serve truthful
+resumption, not workflow accounting for its own sake.
 
 ## Workflow
 
 1. **Create the table when the resources are defined**, all at TODO. A table created later is
    backfilled, and backfilled status is guesswork.
-2. **Update on every transition**, immediately. Not at the end of the resource, not at the end
-   of the session — at the moment the state changes.
+2. **Update at durable handoff points and material transitions.** For multi-session or parallel
+   work, update before ownership changes and before ending a session. Do not turn sub-minute local
+   edits into an event stream that costs more than the work.
 3. **Require a validation line for DONE.** What ran, and what it printed. No line, no DONE.
 4. **Record a blocker with its question**, what it blocks, and what continues meanwhile.
 5. **Append to the execution log** on start, completion, blocking, unblocking and any plan
@@ -97,8 +100,10 @@ THEN there is no tracking artefact. Do not create one to have a process.
 
 ## Constraints
 
-- **One writer at a time.** If work is split across agents, split by resource and let each own
-  its rows; two agents editing one table produce a file that is true for neither.
+- **Make concurrent ownership explicit.** Prefer one owner per resource and mergeable per-resource
+  records or append-only events. If a shared table has multiple writers, use ordinary source-control
+  conflict detection and reconcile from validation evidence; “one writer” is an operating choice,
+  not a guarantee in a distributed workflow.
 - **Never mark DONE optimistically.** "It should work" is IN_PROGRESS with a note.
 - **Never delete a row.** Cancelled and skipped rows are the record of decisions.
 - **Never rewrite the log.** It is chronological; its value is that it was written at the time.

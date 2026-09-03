@@ -56,11 +56,14 @@ Third-party code must contribute a whole family
   knows everything (`gof-pattern-antipatterns`).
 - **The family differs only in constants.** Rates, endpoints, limits and timeouts are data. A
   class per value is the commonest false Abstract Factory; use configuration instead.
-- **Only one family exists, and the second is speculative.** An interface with one implementor
-  is indirection. Add the interface with the second family, not before it.
-- **Testing was the only motivation.** Modern test slices substitute beans directly
-  (`@MockitoBean`, a test `@Configuration`); a production abstraction bought only for tests is
-  paid for on every read.
+- **Only one family exists, and the second is speculative.** This weakens the case, but does not
+  decide it: an interface can still be justified as a module or plugin boundary, an ownership
+  seam, or a stable port. Record that reason; otherwise defer the abstraction until a second
+  family reveals the real common contract.
+- **Testing was the only motivation.** First prefer substituting collaborators at an existing
+  boundary (`@MockitoBean` in Spring Framework 6.2+, or a test `@Configuration`). A production
+  family abstraction can still be warranted when the coherent in-memory family is itself a
+  useful contract, not merely a test hook.
 
 ## Modern Java expression
 
@@ -101,8 +104,9 @@ THEN Abstract Factory keyed by that value, with an explicit failure for
      an unknown key — never a silent default family.
 
 IF the key comes from outside the process
-THEN validate it against a closed set before it selects anything.
-     A factory keyed by untrusted input is a type-selection vulnerability.
+THEN validate it against the supported registry before selection. Never turn an
+     untrusted class name into reflective loading; an extensible plugin key need not
+     be a compile-time closed enum, but it still needs authorization and failure policy.
 
 IF a new product is added to the family
 THEN every implementation must change. If that is unacceptable, the
@@ -123,10 +127,11 @@ THEN that is Flyweight or a singleton scope arriving unannounced;
   objects living elsewhere is a Proxy problem with the failure semantics that implies
   (`gof-proxy`). Where families correspond to protocol or schema versions, the selection is
   capability negotiation and needs an explicit unsupported-version path.
-- **Performance.** Allocation per product plus one extra virtual call. Irrelevant except in a
-  measured hot loop, where the concern is not the factory but the megamorphic call site that
-  many implementations create (`jit-inlining-and-escape-analysis`). Never adopt or reject this
-  pattern on performance grounds without a benchmark.
+- **Performance.** The pattern does not imply allocation: a family may return cached, pooled or
+  newly constructed products. Dispatch may inline at stable call sites and may become
+  megamorphic with many implementations. Neither effect is a design-level reason to adopt or
+  reject the pattern; profile the actual construction and call sites
+  (`jit-inlining-and-escape-analysis`).
 - **Testing.** The legitimate testing benefit is a whole coherent in-memory family, which makes
   integration-style tests fast without mocks. The illegitimate one is a factory added so that a
   single collaborator can be stubbed — inject that collaborator instead.

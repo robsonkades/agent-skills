@@ -1,16 +1,11 @@
 ---
 name: delivery-semantics
 description: >
-  Delivery guarantees stated precisely: at-most-once, at-least-once and effectively-once;
-  why exactly-once delivery is unachievable over a lossy channel; where the acknowledgement
-  sits relative to the side effect; the exact boundary a Kafka read-process-write
-  transaction holds within; and the duplicate causes that are not retries. Use when a design
-  says "exactly-once", when a consumer acknowledges before doing the work, when duplicates
-  land downstream although no retry exists in the code, when isolation.level or
-  transactional.id is being configured, or when a handler makes an HTTP call and then
-  commits. Does not cover making the handler safe to repeat (idempotency), retry policy
-  (retries-and-backoff), ordering (message-ordering-and-partitioning), the permanently
-  failing message (poison-messages-and-dlq), or the fault model (failure-models).
+  Precise end-to-end delivery and processing semantics: acknowledgement placement, loss and
+  duplicate windows, Kafka transactions, visibility leases, ambiguous outcomes and external
+  side effects. Use when reviewing "exactly once", consumer commits, redelivery or a handler
+  that writes outside its broker. Idempotent handler design belongs to idempotency; retries,
+  ordering, poison messages and fault assumptions have their own skills.
 ---
 
 # Delivery Semantics
@@ -37,51 +32,68 @@ produces no error anywhere and is discovered by reconciliation months later.
    is at-most-once for whatever the timer commits ahead of the work.
 3. **Choose the loss/duplication trade explicitly.** Ask what the business does with a lost
    record versus a duplicated one. Losing a metric sample is free; losing a payment is not.
-4. **Default to at-least-once plus a repeat-safe handler.** This is `effectively-once` and
-   it is the competent default. How to make the handler repeat-safe is `idempotency`.
+4. **Usually prefer at-least-once plus an outcome invariant.** Define which durable effect
+   may happen once, how duplicates collapse, how long dedup state lives, and what happens
+   after retention expires. Call this _effectively-once_ only with that scope stated. The
+   handler mechanics are `idempotency`.
 5. **Reach for a transaction only when the whole read-process-write stays inside one
    system.** For Kafka that means consuming and producing within one cluster with offsets
    committed inside the transaction. See `references/exactly-once-boundary.md`.
 6. **Enumerate the duplicate sources that are not retries** — rebalance after a slow poll,
    redelivery after a visibility timeout expires, a duplicate already present upstream —
    and confirm the handler survives each.
-7. **Prove it by fault injection**, not by reading configuration: kill the consumer between
-   the side effect and the commit, and assert the downstream state after recovery.
+7. **Prove every ambiguity window by fault injection:** disconnect, revoke a partition, or
+   kill the consumer immediately before/after the effect and acknowledgement; then reconcile
+   broker position, downstream state and externally visible outcome after recovery.
 
 ## Rules
 
 - Write `at-most-once`, `at-least-once`, `effectively-once`, or "exactly-once **within**
   \<named boundary\>". A guarantee with no named boundary is a marketing claim.
-- **Exactly-once _delivery_ over an unreliable channel is impossible.** The Two Generals
-  result: no finite exchange of messages that can be lost gives both sides common knowledge
-  that the message arrived. The sender either stops retrying (risking loss) or keeps
-  retrying (risking duplicates). Every product that sells exactly-once sells exactly-once
-  _processing_ — deduplication or a transaction — not delivery.
+- A transport acknowledgement cannot resolve an **ambiguous outcome**: after request or ack
+  loss, the caller cannot know from the timeout alone whether the remote effect committed.
+  Stopping risks loss; retrying risks duplication. An exactly-once observable outcome is
+  possible only under named assumptions, such as durable unique IDs plus deduplication, or
+  one atomic transaction containing both effect and progress. Do not turn this into the
+  broader claim that useful exactly-once processing is mathematically impossible.
 - Ack before the side effect and you have chosen at-most-once. Say so in the code review,
   or move the ack.
-- Auto-commit on an interval (`enable.auto.commit=true`) commits offsets the poll loop has
-  fetched, whether or not the handler finished them. It is not a middle ground; it loses
-  records on crash and still redelivers on rebalance.
+- Kafka auto-commit advances offsets for records returned by `poll`, not application
+  completion. It can still provide at-least-once only when every returned record finishes
+  before the next `poll` or close, as the Kafka client documentation requires. Asynchronous
+  workers violate that coupling unless auto-commit is disabled and only completed per-
+  partition offsets are committed.
 - A consumer rebalance redelivers records that were processed but not committed. Duplicates
   therefore exist even in a system with zero retries and zero broker failures.
 - A visibility-timeout queue redelivers whenever the handler outlives the timeout. Slow
   handler plus fixed timeout is a duplicate generator with no failure anywhere.
-- Kafka's `enable.idempotence=true` deduplicates a **producer's own retries** per partition
-  via producer id and sequence number, over a bounded window of recent batches. It does not
-  deduplicate a re-sent record from a restarted application, and it says nothing about the
-  consumer.
+- Kafka producer idempotence deduplicates protocol retries from one producer session using
+  producer identity and per-partition sequence numbers. It does not recognize the same
+  business event reconstructed and sent again by application code, and it does not make an
+  external consumer effect idempotent.
 - `isolation.level=read_committed` is a **consumer** setting. A transactional producer with
   `read_uncommitted` consumers downstream buys nothing — the aborted records are read.
 - The moment the handler performs a side effect outside the transactional system — an HTTP
   call, a JDBC write to another store, a file — the transaction no longer covers the
-  outcome, and the design reduces to at-least-once plus deduplication. The two standard
-  reductions are the transactional outbox and an idempotent consumer with a dedup store;
-  both are in `references/exactly-once-boundary.md`.
-- Do not test the guarantee with a happy-path integration test. Kill the process between
-  the side effect and the commit — Testcontainers plus a `Runtime.halt` in the handler is
-  enough — and assert the recovered state.
+  outcome. The design needs an idempotency key, effect ledger/query-and-reconcile protocol,
+  or a transactional outbox/inbox reduction; a local transaction cannot roll back a remote
+  effect. These reductions are in `references/exactly-once-boundary.md`.
+- At-least-once is conditional, not immortality: retention expiry, exhausted retries, DLQ
+  policy, unrecoverable storage loss and operator deletion can still lose the business work.
+  State those assumptions and provide reconciliation for paths where loss is unacceptable.
+- Preserve per-partition commit monotonicity. With parallel workers, committing offset 42
+  while 41 is unfinished loses 41 on crash; track contiguous completion or pause partitions.
+- An acknowledgement response can itself be lost. A successful effect followed by a commit
+  timeout is an unknown state; blindly treating timeout as failure is a duplicate generator.
+- Do not test the guarantee with a happy-path integration test. Use a disposable consumer
+  process/container or a deterministic fault seam to kill it between effect and commit, and
+  assert both recovered state and externally visible outcome.
 
 ## References
+
+- [Kafka consumer API: offsets and delivery semantics](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
+- [Jakarta Messaging 3.1 specification](https://jakarta.ee/specifications/messaging/3.1/jakarta-messaging-spec-3.1.pdf)
+- [Amazon SQS visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html)
 
 - [Ack placement](references/ack-placement.md) — the three ack positions in a Kafka
   consumer and in a visibility-timeout queue, each with the guarantee it yields and the

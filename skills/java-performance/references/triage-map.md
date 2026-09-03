@@ -1,130 +1,159 @@
 # Triage map
 
-Each fork below is a symptom that maps to more than one cause. The question is what
-separates them, and the evidence column is the cheapest thing that answers it.
+Each symptom admits several causes. The tables identify separating evidence, not deterministic
+routes. Collect only what is safe and available; `incident-evidence-capture` overrides ordinary
+diagnostic convenience during live recovery pressure.
 
-## "It got slow after the deploy"
+## “It became slow after a deploy”
 
-| Question                                      | Answer | Route                                                              |
-| --------------------------------------------- | ------ | ------------------------------------------------------------------ |
-| Does it recover after a few minutes?          | yes    | `jit-compilation` — warm-up                                        |
-| Does it recover only after a restart?         | yes    | `jit-compilation` — code cache                                     |
-| Did pause **frequency** change, not duration? | yes    | allocation → `jit-inlining-and-escape-analysis`                    |
-| Did pause **duration** change?                | yes    | `jvm-gc-tuning`                                                    |
-| None of the above                             | —      | `performance-methodology` — enumerate what else the deploy changed |
+| Candidate                         | Separating evidence                                                             | Owner if supported                                         |
+| --------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| warm-up/JIT/cache priming         | effect tracks process age/compilation/cache hit, recovers repeatably            | `jit-compilation`, startup/cache owner                     |
+| code/config/dependency regression | persists after matched warm state; diff and profile/trace identify changed path | `performance-methodology` + mechanism owner                |
+| rollout capacity/traffic skew     | only draining/new/particular zones; queue/utilization/replica state changed     | `capacity-planning`, `load-balancing-and-routing`          |
+| GC/allocation/live-set shift      | aligned allocation/occupancy/GC phase/pause evidence and work-normalized change | `allocation-profiling`, `gc-log-analysis`, `jvm-gc-tuning` |
+| connection/downstream cold state  | reconnect/DNS/TLS/pool/cache metrics and dependency latency                     | I/O/distributed/pool owner                                 |
+| observability overhead/config     | agent/event/cardinality/export cost changed with deploy                         | `opentelemetry-performance`, `continuous-profiling`        |
+| measurement epoch                 | dashboard/query/client/load generator changed                                   | `latency-statistics`, `performance-methodology`            |
 
-Evidence: `gc.log` around the deploy timestamp, plus `jfr summary` on the continuous
-recording. A deploy carries a process restart, cache invalidation, connection reset and pod
-rotation with it; any of those alone can explain a change.
+“Recovers after minutes” suggests lifecycle state, not specifically JIT. “Persists until
+restart” suggests accumulated/reset state, not specifically code-cache exhaustion.
 
-## "High CPU"
+## “CPU is high”
 
-| Question                                                             | Answer | Route                                                                 |
-| -------------------------------------------------------------------- | ------ | --------------------------------------------------------------------- |
-| Is it mostly **system** time (`top`: sy ≫ us)?                       | yes    | `linux-for-jvm` — page faults, THP, futex storms, syscalls            |
-| Is it GC threads (`jfr view thread-cpu-load`, `G1 Conc`, `ZWorker`)? | yes    | allocation → `jit-inlining-and-escape-analysis`, then `jvm-gc-tuning` |
-| Is it compiler threads, right after a deploy?                        | yes    | `jit-compilation` — warm-up                                           |
-| Is it application threads, throughput also up?                       | yes    | `flame-graph-analysis` (CPU profile) — it may be fine                 |
-| Is it application threads, throughput flat or down?                  | yes    | `flame-graph-analysis`, then `cpu-cache-and-numa` if it spins         |
+First compare CPU demand per completed work, offered/accepted work, errors/retries, user versus
+system/steal/throttled time, and target versus host/cgroup scope.
 
-Evidence: `top -H -p <pid>` for the split by thread, `jfr view thread-cpu-load` on the
-continuous recording for the same split with names. CPU that rises with no change in load is a
-code-cache or deoptimisation question (`code-cache-segments`, `deoptimization`) before it is a
-profiling one.
+| Evidence                                                       | Candidate/route                                            |
+| -------------------------------------------------------------- | ---------------------------------------------------------- |
+| application CPU stack materially changed under same work       | `flame-graph-analysis`, then code/mechanism owner          |
+| GC worker/concurrent phase CPU and allocation/live set changed | `gc-log-analysis`, `allocation-profiling`, collector owner |
+| compiler/deopt/code-cache evidence aligns with lifecycle       | `jit-compilation`, `deoptimization`, `code-cache-segments` |
+| system CPU/syscalls/faults/network/kernel stacks dominate      | `linux-for-jvm`, `ebpf-for-jvm` when needed                |
+| CPU rises because throughput/retries/background work rose      | demand/distributed/workload owner; may be expected         |
+| quota throttling or noisy host despite modest usage metric     | `container-awareness`, `linux-for-jvm`                     |
+| instrumentation/export/label cost changed                      | `opentelemetry-performance`, profiling/metrics owner       |
 
-## "High latency"
+Do not infer code-cache/deoptimization merely because load appears unchanged. Verify workload
+mix, completed work, profiles, and runtime compilation evidence.
 
-| Question                                               | Answer | Route                                                                                       |
-| ------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------- |
-| Is CPU high?                                           | yes    | `flame-graph-analysis` (CPU profile)                                                        |
-| Is CPU low?                                            | yes    | `littles-law-and-queueing` — it is a queue                                                  |
-| Are threads parked?                                    | yes    | `thread-sizing-and-virtual-threads`, or `connection-pool-sizing` if the park is on the pool |
-| Are threads blocked on monitors?                       | yes    | `jfr-and-async-profiler` → `jdk.JavaMonitorEnter`                                           |
-| Does the client-felt pause exceed the logged GC pause? | yes    | `gc-fundamentals` (TTSP), then `linux-for-jvm`                                              |
+## “Latency is high”
 
-Evidence: `asprof -e wall -t` first. A CPU profile on an I/O-bound service reports "no
-bottleneck", which closes the investigation on a false negative.
+Compare the full distribution, timeout/cancellation/error treatment, client/server timing,
+offered/completed load, queue depth/wait, utilization, and fanout.
 
-## "Memory keeps growing"
+| Evidence                                           | Candidate/route                                                              |
+| -------------------------------------------------- | ---------------------------------------------------------------------------- |
+| CPU per work and CPU stacks rise                   | CPU/code/GC/runtime owner                                                    |
+| queue/pool wait and utilization approach a bound   | `littles-law-and-queueing`, pool/bulkhead owner                              |
+| off-CPU/socket/trace dependency duration dominates | distributed/I/O/timeout owner                                                |
+| monitor/park contention with ownership             | `concurrency-diagnostics`, lock owner                                        |
+| GC/safepoint/OS scheduling pause aligns            | `pause-attribution`, `safepoints`, `linux-for-jvm`                           |
+| only client sees delay                             | network/LB/client queue/timing; distributed tracing and packet/host evidence |
+| low load and low resource demand                   | verify whether service is actually slow versus idle/sparse-sample artifact   |
 
-| Question                                        | Answer | Route                                                 |
-| ----------------------------------------------- | ------ | ----------------------------------------------------- |
-| Does the heap floor rise after full collection? | yes    | retention → `gc-log-analysis`, then heap dump         |
-| Is it Metaspace or classloader count?           | yes    | `jvm-class-loading`                                   |
-| Is RSS above heap by more than expected?        | yes    | `jvm-memory-regions`                                  |
-| Does RSS keep rising while the heap is flat?    | yes    | `off-heap-memory` — direct buffers, native leaks, NMT |
-| Was the process killed with no Java exception?  | yes    | `linux-for-jvm`                                       |
+High latency plus low average CPU does not prove a queue, although all waiting systems involve
+some queue/state. Locate where elapsed time resides and who owns the limit.
 
-Evidence: `jcmd <pid> VM.native_memory summary` (needs NMT at start) and
-`jcmd <pid> VM.classloader_stats` before/after N cycles.
+## “Memory keeps growing”
 
-## "Throughput does not scale"
+Split heap committed/used/live-after-collection, metaspace/class loaders, code cache, thread
+stacks, direct buffers, native allocations, mappings/page cache/shared memory, and cgroup RSS/
+working set.
 
-| Question                             | Answer | Route                                                  |
-| ------------------------------------ | ------ | ------------------------------------------------------ |
-| Does throughput plateau?             | yes    | `littles-law-and-queueing` — find the smallest ceiling |
-| Does throughput get **worse**?       | yes    | `cpu-cache-and-numa` — coherency, not capacity         |
-| Do locks appear in JFR?              | yes    | `jfr-and-async-profiler`                               |
-| Do no blocking events appear at all? | yes    | `cpu-cache-and-numa` — false sharing generates none    |
+| Evidence                                                                 | Candidate/route                                               |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| live heap floor/retained set grows under comparable work/cycles          | `heap-dump-analysis`, `java-reference-types-and-leaks`        |
+| allocation rate rises but live floor stable                              | `allocation-profiling`, GC/capacity cost—not necessarily leak |
+| class loader/metaspace grows with redeploy/dynamic generation            | `metaspace-internals`, `jvm-class-loading`                    |
+| direct/native category grows with heap flat                              | `off-heap-memory`, `jni-and-ffm` where calls own it           |
+| RSS differs due to committed/touched pages, code, stacks, mappings/cache | `jvm-memory-regions`, `linux-for-jvm`                         |
+| cgroup OOM/exit 137                                                      | verify reason/events/limits before heap conclusion            | `container-awareness`, `linux-for-jvm`, memory owner |
 
-Evidence: scaling efficiency `(thr_N / thr_1) / N` across two thread counts.
+NMT must be enabled at startup at an appropriate level; absence does not prove no native growth.
 
-## "Only one instance is slow"
+## “Throughput does not scale with concurrency”
 
-| Question                                                                           | Answer | Route                                                                                    |
-| ---------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------- |
-| Does it receive more requests, or longer-lived connections?                        | yes    | `load-balancing-and-routing` — pinning, skew                                             |
-| Is its CPU throttled or its node oversubscribed (`container-cpu-throttling`, PSI)? | yes    | `container-awareness`, then `linux-for-jvm`                                              |
-| Different hardware, socket count or NUMA layout from the others?                   | yes    | `numa-and-cpu-affinity`                                                                  |
-| Same traffic, same node class, still slow after a restart?                         | yes    | data skew — `sql-query-performance` for the hot key, or `hot-partitions-and-rebalancing` |
+Build a curve across enough concurrency/load points and retain latency/errors/queue/resource per
+point.
 
-Evidence: per-pod request rate and connection count side by side; `jfr view
-container-cpu-throttling` on the slow pod versus a healthy one. A control instance is what
-makes this fork cheap — compare, do not profile in isolation.
+| Shape/evidence                                                       | Candidate/route                                     |
+| -------------------------------------------------------------------- | --------------------------------------------------- |
+| plateau at one saturated resource/service center                     | `littles-law-and-queueing`, `queueing-models`       |
+| decline with lock/pool contention                                    | `concurrency-diagnostics`, `connection-pool-sizing` |
+| decline with GC/allocation/working-set expansion                     | allocation/GC/memory owners                         |
+| decline with context switching/oversubscription/quota                | thread sizing/container/Linux owners                |
+| poor scaling without locks and hardware counters/topology support it | `cpu-cache-and-numa`, `false-sharing-and-contended` |
+| downstream/DB/partition limit                                        | data-access/distributed owner                       |
+| load generator saturates or closed-loop masks demand                 | `load-testing`, `coordinated-omission`              |
 
-## "Worse since virtual threads were switched on"
+Two thread counts and one “scaling efficiency” number rarely distinguish these mechanisms.
 
-| Question                                                                      | Answer | Route                                                                    |
-| ----------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------ |
-| Did a pool that was implicitly limiting concurrency disappear?                | yes    | `virtual-thread-migration` — the database or downstream is now the limit |
-| Do `jdk.VirtualThreadPinned` events appear with the threshold lowered?        | yes    | `thread-sizing-and-virtual-threads`, then `virtual-threads-internals`    |
-| Is the work CPU-bound?                                                        | yes    | `thread-sizing-and-virtual-threads` — wrong tool for it                  |
-| Did carrier threads grow past parallelism, or a `ThreadLocal` cache multiply? | yes    | `virtual-threads-internals`                                              |
+## “Only some instances are slow”
 
-Evidence: `jfr view pinned-threads`, `jdk.VirtualThreadSubmitFailed`, and the connection-pool
-wait metric before and after the flip. The stock `.jfc` threshold for pinning is 20 ms, so
-"no pinned events" proves nothing until it is lowered (`jfr-advanced`).
+Match instances on service/JDK/image/config, uptime/warm-up, traffic and connection mix,
+operation/data/partition ownership, zone/node/hardware, cgroup limits, sidecars, and dependency
+path.
 
-## "Slower after the JDK upgrade"
+Candidates include load-balancer skew, hot shard/tenant, node contention/NUMA, throttling,
+partial rollout, cold instance, leak/accumulated state, DNS/network path, and failing sidecar.
+Use per-instance comparison and route only after the differentiator appears.
 
-| Question                                                                         | Answer | Route                                                                |
-| -------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------- |
-| Did a flag stop applying (`-XX:+IgnoreUnrecognizedVMOptions`, a removed option)? | yes    | `jdk-upgrade-impact`, then `jvm-performance-review`                  |
-| Did the default collector or a GC default change for this machine class?         | yes    | `jvm-gc-tuning`                                                      |
-| Only the first minutes are worse?                                                | yes    | `jit-compilation`, `startup-cds-crac-leyden` (AOT cache invalidated) |
-| Does an agent or instrumentation library sit in the dependency tree?             | yes    | `jdk-upgrade-impact` — retransformation cost changed                 |
+Restarting the slow instance destroys whether the cause followed the workload/shard or the
+instance; preserve evidence and, when safe, observe reassignment.
 
-Evidence: `jcmd <pid> VM.flags` on both versions, diffed; the GC log's first line names the
-collector and the heap sizing it derived.
+## “Worse after virtual threads”
 
-## "The measurement itself looks wrong"
+| Separating evidence                                                            | Route                                                            |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| removed executor was the only concurrency bound; downstream/pool now saturated | `virtual-thread-migration`, `concurrency-limiting-and-bulkheads` |
+| carrier pinning/compensation/task-submit evidence on target JDK                | `virtual-threads-internals`, `thread-sizing-and-virtual-threads` |
+| ThreadLocal/context/resource multiplication                                    | `virtual-thread-migration`, `scoped-values` where applicable     |
+| CPU-bound work exceeds effective processors                                    | concurrency bound/parallelism, not more virtual threads          |
+| synchronized/native/library behavior differs by JDK/version                    | JDK/library owner with JFR/thread evidence                       |
+| observability labels/thread assumptions break                                  | profiling/tracing/context owner                                  |
 
-| Question                                                      | Answer | Route                                         |
-| ------------------------------------------------------------- | ------ | --------------------------------------------- |
-| Is the metric a mean, or a percentile without a sample count? | yes    | `latency-statistics`                          |
-| Did the load generator use fixed virtual users?               | yes    | `load-testing`                                |
-| Does the result change with the duration of the run?          | yes    | `performance-methodology` — accumulated state |
-| Is it a microbenchmark?                                       | yes    | `jmh-microbenchmarks`                         |
+JFR event availability/default thresholds differ across Java 21/25 and builds. No event does
+not prove no pinning or scheduling issue; inspect effective metadata/configuration.
 
-## When two candidates survive
+## “Slower after a JDK upgrade”
 
-Collect in this order, because each is cheap and eliminates a whole branch:
+Treat the JDK as a multi-factor epoch:
 
-1. `gc.log` for the incident window — rules GC in or out.
-2. Two minutes of JFR at `settings=profile` — names the class of bottleneck. If a
-   continuous recording is on, `jcmd <pid> JFR.view hot-methods` and `latencies-by-type`
-   answer this from the last ten minutes with no file at all.
-3. Three thread dumps 5–10 s apart (`jcmd Thread.dump_to_file -format=json`) — separates
-   stuck from busy, and the per-thread `cpu=` field separates spinning from waiting.
+- JVM defaults/ergonomics and removed/ignored flags;
+- GC/JIT/runtime implementation;
+- CPU/container detection and security providers/TLS;
+- JFR/agent/instrumentation compatibility;
+- library/framework behavior under the new JDK;
+- class-data/AOT caches and rebuild validity;
+- container image/kernel/CA/locale/time-zone changes bundled with it.
 
-Only then choose. Guessing between two candidates costs more than these three commands.
+Use `jdk-upgrade-impact` and compare effective flags/logs/profiles under matched artifacts/
+workload. A default collector change must be observed, not assumed.
+
+## “The measurement looks wrong”
+
+Check:
+
+- metric semantics, aggregation and percentile estimator/window;
+- success/error/timeout/cancellation inclusion;
+- client versus server clock and coordinated omission;
+- offered versus completed load and generator saturation;
+- sampling/label cardinality/drop and histogram bounds;
+- warm-up/steady-state/memory accumulation and test duration;
+- benchmark dead-code/constant-folding/fork artifacts;
+- dashboard query/filter/time-zone and rollout cohort.
+
+Route to `latency-statistics`, `coordinated-omission`, `load-testing`,
+`jmh-microbenchmarks`, `metrics-and-cardinality`, or `performance-methodology` before tuning.
+
+## Minimal discriminating plan
+
+When several branches survive, write a table:
+
+| Hypothesis | Predicts | Existing evidence | Cheapest safe discriminator | Result |
+| ---------- | -------- | ----------------- | --------------------------- | ------ |
+
+Rank by information gained per risk/cost in the current environment. Several existing signals
+can be read in parallel; intrusive collection remains serialized and budgeted. Stop collecting
+when one mechanism is sufficiently established for a reversible causal experiment.

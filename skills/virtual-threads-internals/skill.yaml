@@ -1,21 +1,13 @@
 schemaVersion: 1
 
 name: virtual-threads-internals
-version: 1.0.0
+version: 1.1.0
 description: >-
-  Virtual thread internals: the continuation freeze algorithm, mount and unmount and
-  StackChunk copying, forced deoptimisation of non-freezable frames, the dedicated
-  ForkJoinPool scheduler and its automatic compensation, what jdk.VirtualThreadPinned
-  actually measures, the heap cost of suspended stacks per collector, and the residual
-  pinning cases on the current baseline. Use when pinning is suspected, when
-  -Djdk.tracePinnedThreads appears in a runbook, when ForkJoinPool worker threads grow
-  past the configured parallelism, when a JNI or FFM call sits on the hot path, when
-  someone proposes replacing synchronized with ReentrantLock to stop pinning, when
-  virtual threads run CPU-bound work, or when GC marking time rose after adopting them.
-  Does not cover the introductory adoption and sizing treatment
-  (thread-sizing-and-virtual-threads), happens-before and correctness
-  (java-memory-model), or work-stealing pool mechanics in general
-  (forkjoinpool-and-work-stealing).
+  Diagnose HotSpot virtual-thread mounting, heap stack chunks, FIFO work-stealing scheduling,
+  carrier capture, residual native/foreign pinning after JEP 491, scheduler compensation boundaries
+  and memory/GC effects without treating implementation details as API guarantees. Use when pin
+  events, scheduler queue/pool growth, native calls, CPU-ready virtual threads or retained suspended
+  stacks explain a scalability regression on Java 21–25.
 
 license: Apache-2.0
 
@@ -46,6 +38,11 @@ files:
 dependencies:
   - name: thread-sizing-and-virtual-threads
     version: ^1.0.0
+
+suggests:
+  - concurrency-diagnostics
+  - blocking-and-nonblocking-io
+  - forkjoinpool-and-work-stealing
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-solid
-version: 1.1.0
+version: 1.2.0
 description: >-
   The five SOLID principles as decision tools for evidence-based Java review, with depth on
   single responsibility, open-closed, Liskov substitution and interface segregation. Use

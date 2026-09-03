@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: timeouts-and-deadlines
-version: 1.0.0
+version: 1.1.0
 description: >-
   Bounding how long a call may take and propagating that bound: per-hop timeouts versus an
   absolute deadline, deadline propagation over HTTP and gRPC, remaining-budget arithmetic

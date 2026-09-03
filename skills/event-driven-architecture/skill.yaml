@@ -1,20 +1,13 @@
 schemaVersion: 1
 
 name: event-driven-architecture
-version: 1.2.0
+version: 1.3.0
 description: >-
-  When a system should publish facts instead of calling services: events versus commands and
-  the imperative name that turns publish/subscribe back into RPC, choreography versus
-  orchestration, temporal coupling traded for schema coupling with an unknown consumer set,
-  fat versus thin events and the read-back stampede, and FaaS versus a long-lived consumer.
-  Use when a broker is proposed between two services that need each other's answer, when an
-  event is named ShipOrder, when the flow exists in no single file, when services exchanging
-  only events must deploy together, when an event carries an id and every consumer calls
-  back, or when a publish sits inside a transaction that can roll back. Not delivery
-  guarantees (delivery-semantics), repeat-safe handlers (idempotency), ordering
-  (message-ordering-and-partitioning), the outbox (distributed-transactions-and-sagas), work
-  queues (task-queues-and-competing-consumers), stage topology
-  (streaming-pipeline-topologies), or schema rules (rpc-and-api-contracts).
+  Choosing facts, asynchronous commands or request/response across services; then designing
+  choreography/orchestration, payload authority, evolution horizon and consumer runtime.
+  Use when a broker masks synchronous outcome dependence, workflows are unreconstructable,
+  consumers read back every event, or publish and database commit form a dual write. Delivery,
+  idempotency, ordering, outbox mechanics and schema evolution remain in their owning skills.
 
 license: Apache-2.0
 
@@ -52,6 +45,7 @@ suggests:
   - connection-pool-sizing
   - distributed-transactions-and-sagas
   - message-ordering-and-partitioning
+  - schema-evolution-and-compatibility
   - startup-cds-crac-leyden
   - task-queues-and-competing-consumers
 

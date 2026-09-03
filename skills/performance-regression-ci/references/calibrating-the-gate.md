@@ -1,152 +1,196 @@
-# Calibrating the gate
+# Calibrating a performance gate
 
-## Measuring natural variation
+## Start with the decision
 
-```
-1. Run the same benchmark 10 times with no code changes, on the SAME runner the
-   pipeline will use.
-2. natural_variation = max_score / min_score - 1
-3. warning_threshold    = natural_variation × 2
-4. regression_threshold = natural_variation × 4
-```
+Calibration asks whether the experiment can make the required decision at tolerable error
+and cost. It does not begin by measuring a range and multiplying it.
 
-Observed orders of magnitude, from teams that adopted this process — not physical
-constants, and not substitutes for measuring your own runner:
+Record:
 
-| Runner              | Natural variation | Workable thresholds                    |
-| ------------------- | ----------------- | -------------------------------------- |
-| Dedicated, isolated | 3–8%              | warning 6–16%, regression 12–32%       |
-| Shared              | 20–50%            | 40%+ — the gate is effectively useless |
-
-A shared runner needs thresholds so wide that a realistic 10–20% regression passes unseen.
-Widening the threshold is not the fix; a dedicated runner is.
-
-The two failure modes at the extremes:
-
-- **1–2% threshold** — constant false positives from the environment's own variation. The
-  team learns to ignore alerts, the label "CI noise" appears, and real regressions land.
-- **30%+ threshold** — serious regressions never alert, and performance degrades silently
-  for weeks.
-
-## Two variance sources, two different fixes
-
-| Source                   | Comes from                                                                          | Reduced by                |
-| ------------------------ | ----------------------------------------------------------------------------------- | ------------------------- |
-| Measurement noise        | Incomplete JIT warm-up, asynchronous GC, hardware jitter (cache, branch prediction) | More iterations and forks |
-| Infrastructure variation | Shared runner, noisy neighbours, CPU frequency scaling, throttling                  | Dedicated hardware only   |
-
-More iterations do nothing for the second one. CPU pinning and frequency scaling are the
-runner's responsibility, not the JVM's, and no JMH configuration compensates for them.
-
-Two JVM-side sources worth pinning explicitly:
-
-- **Ergonomic heap sizing varies between runs.** A runner with less memory available leads
-  G1 to size the heap differently, changing GC frequency and therefore the measured time.
-  Fix `-Xms512m -Xmx512m` and add `-XX:+AlwaysPreTouch` so the first-touch page faults do
-  not land inside the measurement window.
-- **Warm-up cut short to save pipeline time** means the benchmark is partly measuring JIT
-  warm-up rather than steady state. Isolated forks stop compilation state leaking between
-  benchmarks, but they do not fix insufficient warm-up.
-
-## Sign convention
-
-The convention depends on `BenchmarkMode`, and getting it backwards is the most common
-reason a gate approves regressions or blocks improvements.
-
-| Mode                        | Better is | Regression is  |
-| --------------------------- | --------- | -------------- |
-| `AverageTime`, `SampleTime` | Lower     | Positive delta |
-| `Throughput`                | Higher    | Negative delta |
-
-For `Mode.AverageTime`, with `delta = (current - baseline) / baseline`:
-
-```
-delta ≤ warning_threshold                          → pass, within acceptable noise
-warning_threshold < delta ≤ regression_threshold   → warning, manual review
-delta > regression_threshold                       → blocked
-delta < -noise_threshold                           → improvement, recorded, does not block
+```text
+metric and direction:
+decision-relevant configurations:
+smallest practically important regression (MPIR):
+absolute guardrail:
+maximum false-block probability:
+desired power at MPIR:
+maximum inconclusive rate:
+time and compute budget:
 ```
 
-Apply the same convention in the diagram that documents the logic, the script that
-implements it and the workflow that consumes it — with no exception anywhere.
+An MPIR may come from an SLO budget, CPU/cloud cost, capacity headroom, or a cumulative
+regression budget. Translate a percentage into the user or operating consequence. Different
+benchmarks can legitimately have different MPIRs.
 
-## What `scoreError` actually is
+## Build calibration data
 
-JMH reports a `score` (the mean) and a `scoreError`. `scoreError` is **not** the half-width
-of a 95% confidence interval. `Result.getScoreError()` calls `getMeanErrorAt(0.999)`, so it
-is the half-width of a **99.9%** interval. This is stable across JMH 1.37+ and is not
-configurable by annotation — it is a constant of the internal statistics.
+### Null runs
 
-The consequence: a 99.9% interval is considerably wider than a 95% one, because the
-critical t multiplier is larger. Any criterion built on it is therefore _more conservative_
-than assumed — fewer false positives, at the cost of delaying detection of small real
-regressions. If the team expects the gate to catch 5% regressions but `scoreError` already
-spans much of that range, the regression never crosses the significance bar even when real.
+Run the same immutable artifact under the production gate procedure across independent
+sessions, host allocations, and relevant times. Preserve all attempts, including failed and
+outlying ones. This estimates the pipeline's false-block behavior and reveals variance
+components; it is not proof that future environments are stationary.
 
-## Two significance criteria
+### Injected effects
 
-**Non-overlapping intervals** — conservative, strong evidence when it fires:
+Create known perturbations around the MPIR: for example deterministic extra work, a disabled
+optimization, or a controlled allocation increase. Verify with a profiler that the injection
+changes the intended mechanism rather than merely sleeping or measuring a timer artifact.
+These runs estimate detection power and exercise the complete workflow.
 
-```python
-def is_statistically_significant(
-    baseline_score: float, baseline_error: float,
-    current_score: float, current_error: float,
-) -> bool:
-    baseline_low, baseline_high = baseline_score - baseline_error, baseline_score + baseline_error
-    current_low, current_high = current_score - current_error, current_score + current_error
-    overlapping = not (current_high < baseline_low or current_low > baseline_high)
-    return not overlapping
+### Experimental blocks
+
+Where practical, build baseline and candidate artifacts first, then execute randomized
+`A/B` or `B/A` pairs on the same host allocation:
+
+```text
+block 1: A then B
+block 2: B then A
+block 3: B then A
+block 4: A then B
 ```
 
-**Combined noise** — more permissive, better sensitivity to small regressions:
+Analyze the within-block log ratio or another declared directional effect. Blocking removes
+host/day effects only when the versions experience comparable conditions; it does not cure
+carry-over, thermal drift, or shared external contention. Add washout/restart or independent
+blocks when those mechanisms matter.
 
-```python
-combined_noise = (base.score_error + curr.score_error) / base.score
-is_significant = abs(delta) > combined_noise and abs(delta) > noise_threshold
+## Choose the independent unit
+
+Ask what can vary independently after randomization. Common units are a fresh fork, a runner
+allocation, or a deployment/load-test trial. Invocations within one JMH iteration are
+observations of work, not independent version assignments. Iterations in one JVM share
+state. Pooling them as if they were independent is pseudoreplication.
+
+For a hierarchical design, retain at least:
+
+```text
+epoch -> host/session -> version order -> fork -> iteration -> aggregate measurement
 ```
 
-These are two points on the sensitivity/specificity trade-off, not equivalents. Pick one
-deliberately and say which in the script.
+Bootstrap or model at the highest relevant assignment/block level. Do not apply a flat
+Mann–Whitney test to every iteration merely because JMH JSON exposes `rawData`; that discards
+the dependency structure and may produce unjustifiably small p-values.
 
-Mann-Whitney U over the raw per-iteration samples is the natural next step for a mature
-pipeline — non-parametric, so it does not assume normality, which matters because latency
-rarely is. It requires exporting `-rf json` at per-iteration granularity rather than the
-aggregated `primaryMetric` summary.
+## Decision-rule options
 
-## Comparing scores without the error is the classic bug
+| Rule                          | Appropriate when                                   | Main caveat                                            |
+| ----------------------------- | -------------------------------------------------- | ------------------------------------------------------ |
+| Paired interval on log ratios | A/B blocks are valid; positive metrics             | Carry-over/order must be controlled                    |
+| Independent interval/model    | Versions use independent sessions                  | Host heterogeneity needs modeling/stratification       |
+| Bootstrap by block            | Distribution is awkward; enough independent blocks | Resample whole blocks, not nested iterations           |
+| Tolerance/control limits      | Detecting departure from stable trunk process      | Process must be monitored for drift/change points      |
+| Sequential design             | Early stopping materially saves cost               | Boundaries and maximum sample size must be predeclared |
+| Bayesian decision             | Losses and priors can be defended                  | Report sensitivity; probability is model-conditional   |
 
-```python
-# WRONG — compares means only
-delta = (current.score - baseline.score) / baseline.score
-if delta > 0.10:
-    alert()   # ignores that both sides carry ±12% error at 99.9%
+For positive scores, log ratios are often convenient: they model multiplicative effects and
+map back to percentages. For metrics that can be zero/negative or have censored/timeout
+values, use a domain model rather than adding an arbitrary epsilon.
 
-# baseline = 100 ± 15  → [85, 115]
-# current  = 108 ± 14  → [94, 122]   intervals overlap
-# → the 8% difference is not significant at this confidence level
+### Non-inferiority interpretation
+
+Let `d` be normalized so positive is worse and let `[L, U]` be the declared uncertainty
+interval. With MPIR `M > 0`:
+
+```text
+U < M      -> exclude a regression of M or greater: pass
+L >= M     -> evidence of a material regression: regression
+otherwise  -> inconclusive
 ```
 
-## Checklists
+If the objective also includes proving a meaningful improvement, define a separate margin
+and direction. Do not infer improvement merely from a negative point estimate.
 
-Before enabling the pipeline in a repository:
+The confidence level is part of the policy, but it is not enough by itself. Evaluate power
+and actual false-block behavior through calibration. Repeated looks, selecting the worst
+benchmark, and rerunning until a preferred result all change those rates.
 
-- [ ] Natural runner variation measured (10 runs of the same commit, no changes)
-- [ ] Warning and regression thresholds derived from that measurement, not chosen
-- [ ] Benchmarks cover multiple relevant `@Param` values
-- [ ] Heap and GC flags fixed in the forks (`-Xms`/`-Xmx`/`-XX:+AlwaysPreTouch`)
+## What JMH `scoreError` does and does not establish
 
-When triaging a regression alert:
+For AVG aggregation, current OpenJDK JMH `Result.getScoreError()` delegates to
+`statistics.getMeanErrorAt(0.999)`; `getScoreConfidence()` uses the corresponding 0.999
+confidence interval. Other aggregation policies can return `NaN` for score error. Verify the
+source for the pinned JMH release rather than encoding “99.9% forever” as a platform law.
 
-- [ ] The delta exceeds both the combined `scoreError` and the `noise_threshold`
-- [ ] The baseline in use is recent and reflects legitimate merges since it was captured
-- [ ] The regression appears at every `@Param` size, or only some — the latter indicates an
-      algorithmic complexity change rather than a constant-factor one
+This field summarizes one aggregated benchmark result under JMH's statistical machinery. It
+does not encode:
 
-## Baseline policy
+- covariance in paired baseline/candidate blocks;
+- host/session variance across workflow runs;
+- multiplicity across benchmarks and parameters;
+- environment drift or incompatibility;
+- the product's MPIR;
+- a valid general two-version hypothesis test.
 
-Compare against a persisted history, not only one fixed baseline. Save every result with
-its commit and timestamp and keep it queryable: that is what locates the exact commit
-introducing a gradual drift, which no isolated PR-to-PR diff reveals. Update the stored
-baseline only from a green run on the trunk — a stale baseline that does not reflect
-already-merged optimisations produces false positives indefinitely, until someone updates
-it by hand.
+Therefore neither interval non-overlap nor `(errorA + errorB) / baseline` is a principled
+universal comparator. Retain observations at the chosen experimental-unit level and compute
+the comparison specified by the experimental design.
+
+## Power, repetitions, and cost
+
+Use pilot data to simulate the intended gate:
+
+1. Resample complete independent blocks under no effect; estimate false blocks.
+2. Inject or simulate effects at MPIR and larger; estimate detection power.
+3. Reproduce the exact multiplicity, retry, missing-data, and baseline-selection policy.
+4. Vary the number of blocks and plot power, inconclusive rate, and CI duration/cost.
+5. Select the smallest design meeting the declared operating constraints.
+
+Ten runs is neither required nor sufficient. A low-variance benchmark may need fewer; a
+heterogeneous or small-effect decision may need many more or a different environment.
+
+## Multiplicity
+
+Define the family before looking at results. Options include Holm-style family-wise control
+for a small merge-blocking suite, false-discovery-rate control for diagnostics, or one global
+hierarchical decision followed by labeled exploratory drill-down. Parameter combinations are
+tests too.
+
+Keep a short critical suite. More metrics can improve diagnosis while reducing decision
+quality if each independently blocks without correction.
+
+## Drift and baseline policy
+
+Plot compatible results over time with epoch markers for JDK, image, host, dependency,
+dataset, and harness changes. Watch for:
+
+- a step change after infrastructure rollout;
+- gradual ratcheting under a moving baseline;
+- widening dispersion before mean movement;
+- host-specific clusters;
+- survivor bias when failed/timeout runs disappear from history.
+
+A green trunk run is necessary but not sufficient for promotion: if every merge becomes the
+new baseline, small regressions can compound. Keep immutable history and either a champion
+baseline or absolute guardrail alongside recent-history comparison. Expire baselines by
+policy and start a recorded calibration epoch after incompatible changes.
+
+## Edge cases
+
+- **Missing counterpart:** classify a new benchmark separately; missing formerly critical
+  benchmark is invalid unless its removal was explicitly approved.
+- **Unit conversion:** convert only dimensionally equivalent units; record the conversion.
+- **Timeout/OOM/crash:** these are outcomes, not samples to discard. Classify against the
+  benchmark contract and preserve diagnostics.
+- **Zero throughput/no successful operations:** ratio effects are undefined; use an absolute
+  failure guardrail.
+- **Outliers:** investigate and apply only a predeclared robust rule; never delete a slow run
+  because it changes the decision.
+- **Multiple retries:** keep all attempts and include the retry policy in calibration.
+
+## Calibration checklist
+
+- [ ] MPIR and absolute guardrail trace to a product or operating consequence.
+- [ ] Independent unit, blocks, ordering, and carry-over controls are explicit.
+- [ ] Null and injected-effect trials exercise the same pipeline used for decisions.
+- [ ] False-block rate, power, inconclusive rate, and cost meet declared bounds.
+- [ ] Multiplicity and sequential/retry behavior are included in calibration.
+- [ ] History retains failures and epoch markers, not only successful summaries.
+- [ ] Calibration is repeated after an incompatible environment or methodology change.
+
+## Authoritative references
+
+- [OpenJDK JMH source](https://github.com/openjdk/jmh) — harness implementation and samples.
+- [JMH `Result` implementation](https://github.com/openjdk/jmh/blob/master/jmh-core/src/main/java/org/openjdk/jmh/results/Result.java) — inspect the pinned tag for result semantics.
+- [NIST/SEMATECH e-Handbook: process/product comparison](https://www.itl.nist.gov/div898/handbook/prc/prc.htm) — experimental comparison and uncertainty methods.
+- [NIST/SEMATECH e-Handbook: process monitoring](https://www.itl.nist.gov/div898/handbook/pmc/pmc.htm) — control-chart assumptions and process change detection.

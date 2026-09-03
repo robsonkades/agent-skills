@@ -4,8 +4,8 @@ description: >
   Fluent interfaces and builders as API decisions: when a builder pays for itself versus a
   record, constructor or static factory; staged builders and their compatibility cost;
   immutable wither-style APIs; and the debugging and binary compatibility consequences of
-  method chaining. Use when designing or reviewing a type with four or more constructor
-  parameters, several optional ones, or adjacent parameters of the same type; when someone
+  method chaining. Use when designing or reviewing a type with a costly constructor
+  call site, several optional values, or adjacent parameters of the same type; when someone
   proposes a builder, staged builder or DSL; or when a long chain has become hard to read,
   debug or evolve. Does not cover navigation chains through other objects' structure
   (java-law-of-demeter) or general naming and parameter design (java-api-design).
@@ -24,16 +24,18 @@ breaking binary compatibility.
 
 ## Workflow
 
-1. **Count before designing.** Total parameters, how many are optional, and whether any
-   adjacent parameters share a type. Then apply the decision table in
+1. **Inspect call-site risk before designing.** Count parameters/options as signals, then examine
+   same-type transposition, defaults, invalid combinations, construction frequency, API audience
+   and evolution. Apply the decision table in
    `references/builder-decision.md` — the default is the simplest form that survives the
    counts, not a builder.
 2. **Exhaust the cheaper forms first.** A record with a compact constructor, a second
    constructor, or a named static factory each beat a builder when they fit. A record with
    three components does not need a builder.
-3. **If a builder: mutable builder, immutable product.** The builder mutates and returns
-   `this`; `build()` validates every invariant and hands the caller an object that is never
-   observed partially constructed.
+3. **If a builder: mutable builder, immutable product.** Validate each setter's local input when
+   useful; `build()` rechecks required and cross-field invariants, snapshots mutable inputs and
+   returns a valid product. Specify whether builders are reusable; default to confined,
+   non-thread-safe construction.
 4. **If required-at-compile-time matters, price the staged variant.** Staging buys unmissable
    required parameters and pays in one interface per stage plus a frozen evolution path. Take
    it only for widely consumed APIs where a missing parameter is expensive.
@@ -43,22 +45,23 @@ breaking binary compatibility.
 
 ## Rules
 
-- Builder threshold: four or more parameters with at least two optional, or same-typed
-  adjacent parameters that callers can transpose. Below that, a constructor or factory; a
-  pair of overloaded constructors at two to three parameters is not the telescoping
-  anti-pattern.
+- Parameter counts are triage, not a builder threshold. Prefer a builder when named optionality,
+  invalid combinations or positional confusion impose demonstrated call-site cost; prefer a
+  constructor/factory when one coherent required value fits clearly. Distinct role types can
+  solve same-type transposition without a builder.
 - Chaining methods return `this` with the concrete builder type. Changing that return type
   later — even concrete class to interface — changes the method descriptor and breaks
   binary compatibility, even when the call sites still compile. Choose the return type at
   first release.
-- `build()` is the single validation point. A builder whose setters throw on cross-field
-  rules validates in the wrong order-dependent place.
+- Setters may reject context-free invalid values immediately. `build()` is the authoritative
+  completeness/cross-field check; enforcing a cross-field rule in the first setter makes validity
+  order-dependent and is usually wrong.
 - Wither-style immutable APIs allocate a new instance per call. That is a cost mechanism,
   not a verdict: escape analysis may eliminate the copies, and only a profile of the real
   workload justifies abandoning the design.
-- One statement per line. A five-call chain on one line gives stack traces and breakpoints
-  a single position to point at; formatted one call per line, each frame and breakpoint
-  lands on its own call.
+- Prefer one chain call per source line once diagnosis matters. Line-number tables can then point
+  nearer the failing invocation and breakpoints are easier to place; a fluent chain remains one
+  caller stack frame, and compiler/debugger mappings are not guaranteed per call.
 - No conditionals inside a chain. If a caller needs `if` between calls, break the chain
   into statements against a local builder variable — that is what the mutable builder is
   for.
@@ -67,6 +70,20 @@ breaking binary compatibility.
 - A fluent chain that keeps returning the same conceptual object exposes no structure and
   is not a Law of Demeter violation; navigation through distinct objects' structure is —
   see java-law-of-demeter.
+
+## Production failure modes
+
+- **Builder reuse leaks state:** a pooled/shared builder carries an option into the next product.
+  Create per use or implement/test an explicit reset; never publish one mutable builder as a bean.
+- **Aliasing survives `build()`:** copying references to mutable lists/maps lets later builder or
+  caller mutation violate the product. Snapshot defensively at construction.
+- **Repeated `build()` is ambiguous:** state whether it may create equivalent independent values,
+  is single-use, or transfers ownership. Tests should pin the chosen lifecycle.
+- **Generated/reflection APIs:** Jackson, JPA, protobuf, native-image reflection and bean tools may
+  require constructors/accessors or explicit builder metadata. Verify the actual serialization
+  path and schema compatibility, not only Java call sites.
+- **Published API evolution:** run source and binary compatibility checks. Additive overloads and
+  fluent methods can still create source ambiguity, erasure clashes or lambda overload changes.
 
 ## References
 

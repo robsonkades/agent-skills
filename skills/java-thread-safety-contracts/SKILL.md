@@ -1,122 +1,181 @@
 ---
 name: java-thread-safety-contracts
 description: >
-  The thread-safety contract of a class, stated and reviewable: the levels (immutable,
-  thread-safe, conditionally thread-safe, not thread-safe, thread-confined) and how to
-  document each, keeping the lock private, sizing a critical section to the invariant, the
-  alien-call rule that prevents most deadlocks, choosing between confinement, immutability,
-  concurrent collections, atomics and locks, and lazy initialisation without
-  double-checked-locking folklore. Use when a shared class states no contract, when a lock
-  is held across a callback or I/O, when code synchronises on a public or boxed object, when
-  two locks are taken in different orders, when a field is lazily initialised, or when "add
-  synchronized" is the proposed fix. Happens-before is java-memory-model, monitor cost is
-  lock-inflation, lock-free algorithms are lock-free-patterns, and diagnosing a live
-  incident is concurrency-diagnostics.
+  Specifying and reviewing thread-safety as a caller-visible behavioral contract: ownership and
+  confinement, immutability, atomic operations and compound invariants, consistency/iteration,
+  lock identity and scope, callbacks/alien calls, deadlock ordering, progress/fairness,
+  publication, lazy initialization, cancellation, and lifecycle. Use when a shared class has an
+  ambiguous guarantee or a proposed lock/atomic/concurrent collection may preserve individual
+  methods but violate multi-call semantics. JMM proofs, lock-free algorithms and incident
+  diagnostics have separate owners.
 ---
 
-# Java Thread-Safety Contracts
+# Java thread-safety contracts
 
 ## Purpose
 
-Make each class say what it promises to concurrent callers, and make the promise cheap to
-keep. Two failure modes: the class with no stated contract, where every caller guesses — some
-synchronise redundantly, one does not, and the bug appears under load in a component nobody
-suspects; and the class that synchronises defensively everywhere, holding a lock across a
-callback or an I/O call, which converts a correctness question into a deadlock or a
-throughput collapse.
+State what concurrent callers may do and observe, then make implementation and tests prove that
+promise. “Uses a concurrent collection” and “all methods synchronized” describe mechanisms, not the
+atomicity, consistency, progress or callback behavior of the abstraction.
 
-## Workflow
+## Contract template
 
-1. **Decide the level before writing the code.** Immutable, thread-safe, conditionally
-   thread-safe, not thread-safe, or confined to one thread. Most classes should be immutable
-   or not-thread-safe-and-confined; "thread-safe" is a cost, not a default.
-2. **State it where a caller will read it** — the class Javadoc, in the vocabulary below. For
-   a conditionally thread-safe class, name the sequences that need external locking and what
-   to lock on.
-3. **Pick the cheapest mechanism that holds.** Confinement → immutability → a concurrent
-   collection or atomic → a private lock. Reach for a lock last, not first.
-4. **Draw the critical section as small as it can be** and check what it calls: nothing
-   overridable, nothing supplied by a caller, no I/O, no other lock, no unbounded wait.
-5. **Order every multi-lock acquisition** by a documented global order, or restructure so only
-   one lock is held at a time.
-6. **Verify.** A test that exercises the documented contract concurrently
-   (concurrency-testing), and a review pass over every `synchronized` block asking what it
-   calls.
+```text
+ownership/confinement and publication:
+operations safe concurrently:
+atomic operations and compound sequences:
+state invariant and consistency/snapshot semantics:
+iteration/live-view behavior:
+blocking, progress, fairness and reentrancy:
+callback execution thread, ordering and lock state:
+interrupt/cancel/timeout/shutdown behavior:
+failure atomicity and partial side effects:
+external synchronization, if any, and stable lock identity:
+```
 
-## Rules
+## Contract classes
 
-- Document the level explicitly, using consistent terms: **immutable** (no synchronisation
-  ever needed), **thread-safe** (every method safe in any order, no external locking),
-  **conditionally thread-safe** (individual calls safe, some sequences need external locking —
-  name them), **not thread-safe** (callers must provide exclusion), **thread-confined**
-  (belongs to one thread or one request). A class with shared mutable state and no statement is
-  an unreviewable class.
-- Guard state with a **private** lock object, not `this` and not the class object. A public
-  lock lets any caller participate in your locking protocol — and deadlock you, or hold your
-  lock indefinitely — and it makes the protocol part of your published API, which you can then
-  never change. `private final Object lock = new Object();` costs nothing.
-- Name what each field is guarded by, in a comment or a `@GuardedBy` annotation. The annotation
-  is not enforced by the compiler, but it makes the intent reviewable and some static analysers
-  do check it; an unannotated mutable field in a thread-safe class is a question every reader
-  has to re-answer.
-- **Never call an unknown method while holding a lock.** An override, a listener, a callback, a
-  `Comparator`, a `Function` passed by a caller, or any object you did not write can block,
-  acquire another lock, call back into you (re-entering with the invariant broken), or throw.
-  This is the single most common source of deadlock in application code. Take a snapshot inside
-  the lock, release it, then call out — a `CopyOnWriteArrayList` of listeners exists precisely
-  to make that easy.
-- Keep I/O, remote calls, sleeps and unbounded waits out of critical sections. A lock held
-  across a network call converts one slow dependency into a queue of blocked threads and turns
-  a latency problem into an outage — see cascading-failures.
-- Do not synchronise on a `String` literal, a boxed primitive, an interned value or any
-  value-based class (`Optional`, `LocalDate`, `Integer`). Those references are shared or
-  unspecified: two unrelated components can end up on the same monitor, or on different ones
-  for equal values.
-- Prefer confinement to locking. A mutable object created, used and discarded inside one
-  request needs no synchronisation at all, and this covers most objects. Make confinement
-  visible: a local variable, or a documented "one instance per request".
-- Prefer immutability to locking for shared state. A deeply immutable object with final fields
-  is safely published by construction and needs no further discipline — java-immutability.
-- Prefer the concurrency utilities to hand-rolled locking: `ConcurrentHashMap` (with `compute`,
-  `merge`, `computeIfAbsent` for compound operations), `CopyOnWriteArrayList` for
-  read-dominated listener lists, `LongAdder` for hot counters, `BlockingQueue` for hand-off,
-  `CountDownLatch`/`Semaphore`/`CyclicBarrier` for coordination, and the atomics for a single
-  variable. `wait`/`notify` is a last resort and always needs a loop around the condition
-  predicate.
-- A thread-safe collection does not make a compound operation atomic. A `containsKey` followed
-  by a `put` is a race no matter how concurrent the map is; `putIfAbsent`, `compute` and
-  `merge` exist for this. The same applies to check-then-act on any atomic — use
-  `compareAndSet` or `updateAndGet`.
-- Synchronising everything is its own defect. Excessive synchronisation costs throughput,
-  invites deadlock, and hides the real question of which invariant spans which fields. Where
-  the class is used by one thread, synchronisation is pure cost — that is why `ArrayList` and
-  `HashMap` are unsynchronised and `Vector` and `Hashtable` are not used.
-- Lazy initialisation is an optimisation with a correctness cost; use it only when the field is
-  expensive **and** often unused, and prove the cost first. For a static field, the
-  lazy-initialisation **holder class** is the correct idiom — class initialisation gives
-  publication for free with no read-time synchronisation. For an instance field, use a
-  `synchronized` accessor unless a measurement shows it matters; only then double-checked
-  locking with a `volatile` field, written exactly as the idiom requires. java-memory-model owns
-  the proof of why the `volatile` is not optional.
-- On JDK 24 and later (JEP 491), blocking on a monitor no longer pins a virtual thread to its
-  carrier, so the advice to replace `synchronized` with `ReentrantLock` for that reason is
-  obsolete. What has not changed: a lock still serialises the work, and cheap threads mean far
-  more of them arrive at the same critical section — see thread-sizing-and-virtual-threads.
-- A per-process lock is not a distributed lock. `synchronized`, `ReentrantLock` and a
-  `ConcurrentHashMap`-based dedup guard one JVM only; with more than one replica they guarantee
-  nothing about the system. Cross-replica exclusion needs a lease or an election
-  (distributed-locks-and-leases, leader-election), and cross-replica uniqueness usually wants a
-  database constraint or optimistic locking instead.
+| Class                          | Promise                                                                          | Caller obligation                                   |
+| ------------------------------ | -------------------------------------------------------------------------------- | --------------------------------------------------- |
+| immutable                      | observable state does not change after safe construction/publication             | do not mutate reachable state through other aliases |
+| thread-safe                    | documented operations may be invoked concurrently with stated atomicity/progress | obey method preconditions and multi-call semantics  |
+| conditionally thread-safe      | safety depends on an external protocol or operation grouping                     | follow the named protocol/lock/lifecycle            |
+| not thread-safe                | no concurrent-use guarantee                                                      | confine or serialize all access/publication         |
+| thread/task/actor-confined     | one named owner mutates/accesses it                                              | do not leak across that ownership boundary          |
+| thread-hostile/global mutation | affects process-global state beyond instance lock                                | coordinate system-wide or restrict to startup       |
+
+Request scope is not automatically thread confinement: asynchronous callbacks, reactive execution,
+parallel fan-out and virtual threads can move or multiply execution. Name the actual owner.
+
+## Design hierarchy
+
+Prefer, when semantics permit:
+
+1. no shared mutable state / explicit ownership;
+2. immutable snapshots safely published;
+3. library abstraction whose atomic operations match the invariant;
+4. one private lock/condition protecting a coherent state machine;
+5. multiple locks/optimistic/lock-free design only with measured need and stronger proof/tests.
+
+This is a decision order, not “locks are last because they are slow.” A clear lock can be the safest,
+fastest-to-operate solution for a multi-field invariant.
+
+## Atomicity and consistency
+
+A thread-safe collection makes its specified operations safe. It does not make arbitrary sequences
+atomic:
+
+```java
+if (!map.containsKey(key)) map.put(key, value); // compound race
+```
+
+Use `putIfAbsent`, `compute`, `merge`, a lock, or immutable/CAS update according to required
+semantics. Read exact API contracts: mapping functions have reentrancy/blocking restrictions;
+`LongAdder.sum()` is not an atomic snapshot suitable for IDs or money; weakly consistent iterators
+are not point-in-time snapshots.
+
+For multi-field state, choose and document one consistency model:
+
+- lock-guarded transition and snapshot;
+- immutable aggregate replaced through volatile/atomic reference;
+- versioned optimistic read with validation/retry;
+- deliberately weak/approximate observation with acceptable outcomes.
+
+## Lock identity and scope
+
+Private locks protect encapsulation and allow implementation change, but public/intrinsic locks can
+be an intentional external-synchronization contract (for example synchronized wrappers). If a lock
+is externally visible, document stable identity, supported compound operations, reentrancy and
+deadlock responsibility.
+
+The critical section covers exactly the invariant transition, including failure atomicity. Moving
+work outside changes semantics if observers/callbacks require ordering with state. Precompute or
+snapshot outside only after specifying what may become stale and how failures are reconciled.
+
+Avoid blocking I/O, unbounded waits and caller-controlled code while holding a lock by default.
+Sometimes an atomic callback-under-lock is required; then bound/document the callback, analyze
+reentrancy and lock graph, and consider an event/outbox/snapshot design. “Never call alien code” is
+a strong heuristic, not a semantic law.
+
+## Deadlock and liveness
+
+Review monitors, `Lock`s, conditions, class initialization, pool/queue permits, futures and external
+resources in one wait-for graph. JVM monitor deadlock detection does not find every starvation/
+resource cycle.
+
+Prefer single-lock ownership. When multiple acquisitions are unavoidable, define a total stable
+order including tie handling and callbacks. Timed `tryLock` converts indefinite waiting into a
+recoverable failure only if the entire operation can abandon/retry safely; it does not prove absence
+of livelock/starvation.
+
+State progress guarantees: blocking, obstruction-free, lock-free, wait-free, starvation/fairness,
+and whether they apply per operation or system-wide. Do not market a concurrent collection as a
+stronger guarantee than its implementation/API provides.
+
+## Lazy initialization
+
+Prefer eager initialization when it is cheap, commonly used, or should fail before readiness.
+Prefer lazy when avoiding unused cost matters and first-use latency/failure is owned.
+
+| Pattern                             | Use                             | Caveats                                            |
+| ----------------------------------- | ------------------------------- | -------------------------------------------------- |
+| class initialization/holder         | lazy static value               | class-loader scope, recursive init, sticky failure |
+| synchronized instance accessor      | simple single initialization    | lock/blocked initializers, failure/retry semantics |
+| volatile double-check               | hot read path after proven need | exact JMM idiom, initializer side effects/failure  |
+| CAS/single-check duplicate creation | creation can repeat safely      | dispose losers; idempotence and external effects   |
+| future/promise memoization          | callers share result/failure    | cancellation, retry and poisoned failure cache     |
+
+Do not hold a monitor across remote initialization without deadline/cancel/failure policy. See the
+reference for state-machine designs.
+
+## Modern Java considerations
+
+Virtual threads make blocked-thread representation cheaper, not critical sections parallel. Large
+arrival concurrency can expose lock queues and resource bounds previously hidden by a platform-
+thread pool. JEP 491 changes monitor pinning behavior in JDK 24, but does not remove mutual
+exclusion, contention, native/pinning edge cases or need for target-version evidence. Do not replace
+`synchronized` solely from old pinning folklore.
+
+Scoped values are immutable context bindings, not a replacement for all shared state. Structured
+concurrency clarifies subtask lifetime but does not make shared objects thread-safe.
+
+## Verification
+
+- JMM/happens-before proof for publication and every shared invariant;
+- sequential semantic/oracle tests plus concurrent history/invariant tests;
+- jcstress/model testing for primitive patterns;
+- stress/load tests for progress, fairness, contention and memory;
+- deadlock, timeout, interrupt, callback reentry/failure and shutdown tests;
+- documentation tests/examples showing supported multi-call usage.
+
+Finite stress tests do not prove correctness; they validate integration around a reviewable proof.
+
+## Anti-patterns
+
+| Anti-pattern                                      | Failure                                    | Better approach                                 | Narrow exception         |
+| ------------------------------------------------- | ------------------------------------------ | ----------------------------------------------- | ------------------------ |
+| “Every method is synchronized => thread-safe API” | multi-call invariant/escape remains        | caller-visible atomicity contract               |
+| Always private lock                               | breaks intended external compound protocol | private by default; public only as explicit API |
+| `LongAdder` for exact state                       | sum not atomic snapshot                    | `AtomicLong`/lock/database invariant            | telemetry counter        |
+| Snapshot then callback called “equivalent”        | ordering/failure semantics changed         | specify event/callback consistency              | best-effort notification |
+| Request-scoped means thread-confined              | request may fan out/hop                    | task/actor ownership or synchronization         |
+| Lazy by default                                   | first-use herd/failure and complexity      | eager unless avoided cost is material           |
+| `tryLock` fixes deadlock                          | may livelock/partially apply               | lock order or redesigned ownership              |
+
+## Definition of done
+
+- [ ] Callers can understand atomicity, consistency, progress, callbacks and lifecycle without code.
+- [ ] State ownership/publication and every compound invariant have one protocol.
+- [ ] Escaped references, iterators/views, callbacks and failure paths preserve the contract.
+- [ ] Lock/wait-for graph, ordering, interrupt/timeout and shutdown are reviewed.
+- [ ] Lazy initialization defines first-use, failure, retry, cancellation and cleanup.
+- [ ] Correctness and liveness tests cover supported usage and target JDK behavior.
 
 ## References
 
-- [Documenting the contract](references/documenting-thread-safety.md) — read when writing or
-  reviewing the Javadoc of a class shared between threads, when deciding which level to
-  promise, or when callers need to know what to lock on.
-- [Lock scope, alien calls and deadlock](references/lock-scope-and-alien-calls.md) — read when
-  a critical section calls anything it does not own, when two locks are involved, when
-  contention or a deadlock is suspected by design review, or when choosing between
-  confinement, a concurrent collection and a lock.
-- [Lazy initialisation](references/lazy-initialisation.md) — read before making any field
-  lazy, when reviewing double-checked locking, or when a static holder, a `Supplier` memoiser
-  or an eagerly initialised field would each do.
+- [Documenting thread safety](references/documenting-thread-safety.md)
+- [Lock scope, callbacks and deadlock](references/lock-scope-and-alien-calls.md)
+- [Lazy initialization state machines](references/lazy-initialisation.md)
+- [Java concurrency API memory effects](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html#MemoryVisibility)
+- [JLS 17](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
+- [JEP 491](https://openjdk.org/jeps/491)

@@ -1,18 +1,18 @@
 # Attributing time to safepoint
 
-## The three real causes
+## Common causes to distinguish
 
-High `Reaching safepoint` on a counted loop has three causes on this baseline. "The poll was
-removed" is not among them — loop strip mining moved the poll to the back edge of the outer
-loop, once per strip.
+For a confirmed C2 counted loop with strip mining active, the first rows are useful models.
+They are not a complete TTSP taxonomy: OS descheduling/throttling, page faults, runtime stubs,
+native transitions and other no-poll regions can delay acknowledgement too.
 
-| Cause                                                                                         | Evidence that discriminates it                                                                                       | Fix                                            |
-| --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| Loop body expensive enough that one strip takes real time                                     | TTSP ≈ `LoopStripMiningIter` × per-iteration cost. Do the arithmetic; if it lands on the observed number, this is it | Reduce `-XX:LoopStripMiningIter`               |
-| Loop not recognised as counted by C2 (complex control flow, bound depending on mutable state) | The arithmetic does **not** land on the observed TTSP, and the loop's bound is not invariant in the body             | Restructure the loop so the bound is invariant |
-| Not a Java loop at all — a JNI or FFM call, outside strip mining's reach                      | `-XX:+SafepointTimeout` prints a stack in native code                                                                | Batch the native work into shorter calls       |
+| Cause                                                                                         | Evidence that discriminates it                                                                                       | Fix                                                              |
+| --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Loop body expensive enough that one strip takes real time                                     | TTSP ≈ `LoopStripMiningIter` × per-iteration cost. Do the arithmetic; if it lands on the observed number, this is it | Reduce `-XX:LoopStripMiningIter`                                 |
+| Loop not recognised as counted by C2 (complex control flow, bound depending on mutable state) | The arithmetic does **not** land on the observed TTSP, and the loop's bound is not invariant in the body             | Restructure the loop so the bound is invariant                   |
+| Native/runtime path outside the loop-poll model                                               | timeout identifies a non-arrived thread; aligned wall profile/dump shows the native/runtime stack                    | Shorten/batch work or fix host scheduling after proving the path |
 
-The discriminator is arithmetic, not intuition. A body costing ~2.9 ms per call with the
+Arithmetic is a falsifiable hypothesis, not sufficient attribution. A body costing ~2.9 ms per call with the
 default `LoopStripMiningIter=1000` gives a worst case of 1000 × 2.9 ms ≈ 2.9 s — and a log
 showing `Reaching safepoint: 2912000000 ns` on a `G1CollectForAllocation` is that calculation
 coming back. Reducing the strip to 20 iterations gives 20 × 2.9 ms ≈ 58 ms, the same order as
@@ -38,14 +38,14 @@ java -XX:+PrintFlagsFinal -version | grep -E "UseCountedLoopSafepoints|LoopStrip
 Run this against the target runtime before prescribing **or** removing anything. Two symmetric
 failures:
 
-- **Prescribing `-XX:+UseCountedLoopSafepoints`** as a TTSP fix. Default `true` since JDK 10;
-  it changes nothing, is accepted silently, feels like a fix, and leaves the real cause
-  undiagnosed.
+- **Prescribing `-XX:+UseCountedLoopSafepoints`** as a TTSP fix without reading ergonomics.
+  On the verified JDK 25.0.3 build it is true for G1/ZGC/Shenandoah and false for
+  Parallel/Serial; collector and build matter.
 - **A forgotten `-XX:-UseCountedLoopSafepoints`** in a production config, added months earlier
   after an isolated benchmark suggested a small throughput gain. It disables strip mining
   entirely, reverting counted loops to a poll only on the outer `while` back edge. A processing
-  loop whose full pass takes ~800 ms then produces ~800 ms of TTSP — and with a `jstack` loop
-  every 2 s on top, the application spends roughly 800/2000 = 40% of its time in safepoints.
+  loop whose full pass takes ~800 ms can then bound TTSP near that scale. Do not convert that
+  into “40% in safepoints” from a `jstack` cadence; trigger timing and overlap must be measured.
 
 The second case is only visible by reading the effective value out of the running process. The
 throughput gain that justified the flag was never revalidated against its production cost;
@@ -53,10 +53,10 @@ the trade-off had been decided by measuring one side of it.
 
 ## The `LoopStripMiningIter` trade-off
 
-Reducing the strip lowers the TTSP ceiling and raises the poll rate. It also gives C2 fewer
-iterations per strip to vectorise. That is a real throughput cost and it is measurable — run
-the workload at both values rather than assuming the cost is negligible or that it is
-prohibitive.
+Reducing the strip can lower the loop's TTSP ceiling and raises the poll rate. It may affect
+optimisation/vectorisation and throughput; the magnitude is workload/build-specific. Prefer a
+local code/work partition fix where possible, and compare both latency and throughput if a
+global compiler flag is evaluated.
 
 ## When the profiler itself is the suspect
 

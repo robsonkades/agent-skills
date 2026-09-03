@@ -51,8 +51,8 @@ Serialized LOB         a graph is stored as one JSON/XML/binary column.
 
 ## Workflow
 
-1. **Choose the identity strategy first**, because it constrains batching, sharding and how
-   early an object can be compared or put in a set.
+1. **Choose identity with lifecycle and storage topology**, because generation constrains batching,
+   sharding and when equality can be stable. It need not precede every domain decision.
 2. **For each association, name the owner** — the side that writes the foreign key — and
    make the other side consistent in memory.
 3. **Decide identity per concept, not per table.** Whether something is a dependent child,
@@ -73,8 +73,9 @@ Serialized LOB         a graph is stored as one JSON/XML/binary column.
 Identifier for a normal entity
         → a database sequence with an allocation size, or a UUID (v7 or
           another time-ordered form) if identity must exist before insert
-          or across systems. IDENTITY/auto-increment disables JDBC insert
-          batching — measure before choosing it for a high-volume table.
+          or across systems. IDENTITY/auto-increment can constrain batching
+          and generated-key retrieval depending on database, driver and ORM
+          version—measure the actual insert path for a high-volume table.
 
 Identity must be known before the row exists (event id, correlation,
 client-generated)
@@ -94,10 +95,10 @@ Two entities, one reference
 Many-to-many with nothing else to say
         → association table mapping, no entity class.
 
-Many-to-many where the link has ANY attribute (when, by whom, quantity,
-role) — or ever might
+Many-to-many where the link has a domain attribute (when, by whom, quantity,
+role) or independent lifecycle
         → an entity. Retrofitting this later is a migration; the cost of
-          starting with it is one class.
+          starting with it includes identity, lifecycle and repository/query cost.
 
 A child that is never referenced from outside its parent and dies with it
         → dependent mapping: cascade all, orphan removal, no repository
@@ -109,8 +110,8 @@ A value with no identity: Money, Address, DateRange, Coordinates
 
 A structure that is genuinely opaque to the database: a rendered
 document, an audit snapshot, a third-party payload, a variable form
-        → serialized LOB / JSON column. Accept that it cannot be joined,
-          indexed conventionally, or migrated by SQL.
+          → serialized LOB / JSON column. Accept vendor-specific query/index
+          support, coarse update semantics and harder relational constraints/migrations.
 
 The same structure is later needed in a WHERE clause or a report
         → it was never a LOB. Promote it to columns or a table; a
@@ -119,17 +120,18 @@ The same structure is later needed in a WHERE clause or a report
 
 ## Rules
 
-- **The owning side of an association is the side with the foreign key column**, and only
-  changes to it are persisted. Adding to the inverse (`mappedBy`) collection and saving
+- **The owning side is the mapping attribute that controls the foreign key/join table**, which is
+  not always the object residing in the table that physically stores the FK. Only changes to the
+  owning mapping are persisted. Adding to the inverse (`mappedBy`) collection and saving
   writes nothing — a silent no-op that is the most common association bug in JPA. Keep both
   sides consistent through one method on the owner.
 - Bidirectional associations are a cost: two references to keep in step, two ways to load,
   and a serialisation cycle. Map an association bidirectionally only when both traversal
   directions are actually used.
-- **A many-to-many that acquires an attribute is not a many-to-many.** The association table
+- A many-to-many link with domain attributes or lifecycle is usually clearer as an association entity. The association table
   becomes an entity with its own identity, and code that treated it as a set must change.
-  Because so many link tables eventually acquire `created_at` or `role`, prefer the entity
-  form as soon as there is any hint of one.
+  Do not introduce it solely because an attribute might someday appear; use actual lifecycle,
+  querying and evolution requirements.
 - A collection mapped without a stable child identity is deleted and reinserted wholesale on
   change. With a `List` and no order column, or with a `Set` whose elements have unstable
   `equals`, this happens on every save and is invisible until the statement log is read.
@@ -140,7 +142,7 @@ The same structure is later needed in a WHERE clause or a report
 - Nullability of embedded values is subtle: if every column is null, the ORM may hand back
   an object with null fields or a null object depending on version and configuration. If
   the value is optional, decide and test which.
-- **Serialized LOB trades query ability for convenience, permanently.** It is right for
+- **Serialized LOB trades relational query/constraint simplicity for convenience until migrated.** It is right for
   genuinely opaque data and wrong for anything a report will later need. It also breaks
   schema-level constraints, migrations by SQL, and partial updates — the whole column is
   rewritten on any change.
@@ -151,7 +153,7 @@ The same structure is later needed in a WHERE clause or a report
 - Constraints belong in the schema. A mapping that produces nullable columns for mandatory
   values, or that omits a unique constraint the domain relies on, has moved enforcement to
   application code, where a bulk import will bypass it (`domain-logic-organization`).
-- Every one of these decisions is a migration once data exists. Spend the extra hour now
+- Every one of these decisions is a migration once data exists. Spend proportionate analysis now
   (`architecture-decision-making`).
 
 ## References

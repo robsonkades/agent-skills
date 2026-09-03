@@ -1,20 +1,13 @@
 schemaVersion: 1
 
 name: concurrency-diagnostics
-version: 1.2.0
+version: 1.3.0
 description: >-
-  Collecting evidence for a concurrency problem and knowing each tool's blind spot: the two
-  thread-dump formats and why neither is a superset of the other, jstack not listing virtual
-  threads, ThreadMXBean not detecting virtual-thread deadlocks, the JFR events for parking,
-  monitors, pinning and submission failure, and reading a dump with a hundred thousand
-  threads. Use when nothing is progressing and the cause is unknown, when a dump comes back
-  suspiciously short, when a deadlock is suspected but no detector reports one, when threads
-  are BLOCKED or the CPU is idle while latency climbs, when work submitted to an executor
-  disappears, when a runbook still says jstack or -Djdk.tracePinnedThreads, or when a
-  symptom has to be classified before it can be routed to an owner. Not choosing and running
-  a profiler (jfr-and-async-profiler), reading a flame graph (flame-graph-analysis), monitor
-  internals (lock-inflation), pinning internals (virtual-threads-internals), or
-  happens-before (java-memory-model).
+  Evidence-led diagnosis of deadlock, starvation, livelock, saturation, leaks and virtual-thread
+  scheduler problems. Compares traditional platform-thread dumps, jcmd all-thread dumps,
+  ThreadMXBean, VirtualThreadSchedulerMXBean, JFR, wall/CPU profiles and application telemetry,
+  including each tool's visibility and consistency limits. Use when progress stops, CPU and
+  latency disagree, tasks disappear, shutdown hangs, or a virtual-thread dump is inconclusive.
 
 license: Apache-2.0
 
@@ -80,6 +73,7 @@ dependencies:
 
 suggests:
   - concurrency-testing
+  - concurrent-collections-and-synchronizers
 
 capabilities:
   - reads-source

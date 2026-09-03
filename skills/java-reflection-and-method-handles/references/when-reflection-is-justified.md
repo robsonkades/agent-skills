@@ -2,16 +2,16 @@
 
 ## The decision table
 
-| Requirement                                             | Reach for                                                      | Reflection needed?        |
-| ------------------------------------------------------- | -------------------------------------------------------------- | ------------------------- |
-| Several known implementations, chosen at runtime        | interface + `Map<String, Supplier<T>>` in the composition root | no                        |
-| Closed set, exhaustively handled                        | sealed interface + pattern matching                            | no                        |
-| Implementations provided by other modules/jars          | `ServiceLoader`                                                | inside the JDK only       |
-| Class named in configuration                            | allow-list → `Class.forName` → `asSubclass` → interface        | for construction only     |
-| Mapping between types (DTO ↔ domain)                    | hand-written mapper, or an annotation processor                | no                        |
-| Framework binding (DI, ORM, serialisation)              | the framework's own mechanism                                  | it is the framework's job |
-| Test needs to see private state                         | test through the public API; make the seam explicit            | no                        |
-| Tooling: agents, profilers, coverage, migration scripts | reflection, or bytecode tooling                                | yes — this is its home    |
+| Requirement                                             | Reach for                                                      | Reflection needed?                 |
+| ------------------------------------------------------- | -------------------------------------------------------------- | ---------------------------------- |
+| Several known implementations, chosen at runtime        | interface + `Map<String, Supplier<T>>` in the composition root | no                                 |
+| Closed set, exhaustively handled                        | sealed interface + pattern matching                            | no                                 |
+| Implementations provided by other modules/JARs          | `ServiceLoader` + parent-owned service contract                | no explicit reflection in consumer |
+| Class named in configuration                            | allow-list → `Class.forName` → `asSubclass` → interface        | for construction only              |
+| Mapping between types (DTO ↔ domain)                    | hand-written mapper, or an annotation processor                | no                                 |
+| Framework binding (DI, ORM, serialisation)              | the framework's own mechanism                                  | it is the framework's job          |
+| Test needs to see private state                         | test through the public API; make the seam explicit            | no                                 |
+| Tooling: agents, profilers, coverage, migration scripts | reflection, or bytecode tooling                                | yes — this is its home             |
 
 The recurring anti-pattern is the middle of the table: application code using reflection for a
 variability that is fully known at build time. The tell is a `getDeclaredMethod("handle" + type)`
@@ -29,8 +29,8 @@ Map<EventType, EventHandler> handlers = Map.of(
 handlers.getOrDefault(event.type(), EventHandler.NOOP).handle(event);
 ```
 
-The second form also gets dependency injection for free, fails at startup when a handler is
-missing, and can be verified by a test that asserts every `EventType` has an entry.
+The second form makes dependency injection explicit, can fail during composition rather than a
+request, and can be verified by a test that asserts every `EventType` has exactly one policy.
 
 ## ServiceLoader, for genuinely open sets
 
@@ -46,15 +46,19 @@ List<Exporter> exporters = ServiceLoader.load(Exporter.class).stream()
         .toList();
 ```
 
-Why prefer it to scanning: the JDK owns the lookup, the contract is declarative, the module
-system understands it (`uses`/`provides`), native-image tooling can process it, and the
-consumer never names an implementation class. `ServiceLoader.Provider` also lets you inspect
+Why prefer it to scanning: the JDK owns lookup, the contract is declarative, the module system
+understands it (`uses`/`provides`), and the consumer never names an implementation class.
+Native-image/tooling support still depends on reachability metadata and the exact toolchain.
+`ServiceLoader.Provider` lets you inspect
 `type()` before instantiating, which matters when construction is expensive or when a provider
 must be filtered.
 
-Its limits: no ordering guarantee, no constructor arguments (providers need a no-arg
-constructor or a static `provider()` method), and no lifecycle. When providers need
-dependencies, load the provider _factories_ and let the composition root wire them.
+Its limits: do not depend on one global provider order; discovery/instantiation can throw
+`ServiceConfigurationError`; there is no lifecycle or failure isolation. Named-module providers
+may use a public static `provider()` method; classpath/automatic-module rules differ and commonly
+require a public no-arg constructor. When providers need dependencies, load parent-owned provider
+factories and let the composition root wire them. Scope `ServiceLoader` and TCCL so its provider
+cache does not pin a discarded plugin layer.
 
 ## Resolving a class name from configuration, safely
 
@@ -77,12 +81,12 @@ static Codec codecFor(String name) {
 ```
 
 - The allow-list, not the input, decides which classes can exist.
-- `asSubclass(Codec.class)` is the equivalent when the class genuinely must be named by string
-  (`Class.forName(n).asSubclass(Codec.class)`), and it fails at the boundary with a clear
-  message instead of producing a `ClassCastException` later.
-- Never accept a class name from an HTTP body, a message header, a query parameter or a
-  filename. The consequences range from instantiating an unexpected type to full remote code
-  execution through a gadget chain (java-serialization-hardening).
+- `asSubclass(Codec.class)` is a type check when a trusted plugin descriptor genuinely names a
+  class. Use `Class.forName(name, false, contractLoader)` to avoid initialization during identity
+  validation, then verify module/code source/signature policy before constructing it.
+- Never map an HTTP/message/file token directly to a class name. Resolution with initialization,
+  construction or later invocation can execute unintended code/gadgets. A code-owned token map,
+  authenticated plugin catalog and process isolation for untrusted code are distinct controls.
 
 ## What reflection costs, in full
 
@@ -97,25 +101,27 @@ static Codec codecFor(String name) {
 
 **Runtime and packaging**
 
-- `Method.invoke` boxes arguments into an `Object[]` and returns `Object`, so a primitive call
-  allocates. The dispatch itself is fast after warm-up but does not inline like a direct call.
+- `Method.invoke` is a varargs API: ordinary primitive arguments require boxing and a call-site
+  argument array, although escape analysis may remove some allocations. Target returns are boxed.
+  Optimization depends on whether the reflected member is a compiler constant and on JDK policy.
 - Module encapsulation blocks access to non-open packages; `--add-opens` in a production launch
   command is a maintenance liability tied to a specific JDK's internals.
-- Native image requires explicit reflection metadata; anything missing fails only there.
-- Classpath scanning at startup costs time proportional to the number of classes — a real term
-  in cold-start latency for serverless and short-lived processes.
+- Native-image closed-world analysis needs discoverable reachability metadata for dynamic edges;
+  omissions can fail during image build or on a native-only runtime path.
+- Classpath/module scanning performs archive/resource I/O and metadata parsing proportional to
+  the scanned scope; generated indexes or explicit service descriptors bound that work.
 
 **Security**
 
 - Reflective access defeats the encapsulation that other reviewers rely on.
-- Any path from external input to `Class.forName`, `MethodHandles.Lookup.findVirtual`, or a
-  deserialiser's type resolution is an execution primitive.
+- Any path from external input to initialization, construction, invocation, privileged lookup or
+  deserializer type selection needs an explicit authorization boundary. Lookup alone is not the
+  same event as execution, but a leaked handle carries the creator's resolved authority.
 
 ## Testing without reflection
 
-Reaching into private state with reflection makes a test pass while telling you nothing about
-the behaviour a caller can observe, and it fails on the next refactor. The alternatives, in
-order:
+Reaching into private state can couple a test to representation while bypassing caller-visible
+contracts. Before accepting it for legacy characterization/tooling, compare these alternatives:
 
 1. **Assert through the public API.** If the state is not observable, ask whether it needs to
    exist.
@@ -126,3 +132,10 @@ order:
 
 java-test-design covers what a test should assert; the point here is only that reflection in a
 test is a design signal, not a tool.
+
+## Primary references
+
+- [Java 25 `ServiceLoader`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ServiceLoader.html)
+- [Java 25 `Class.forName`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html#forName(java.lang.String,boolean,java.lang.ClassLoader)>)
+- [Java 25 core reflection](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/reflect/package-summary.html)
+- [JEP 416: Reimplement Core Reflection with Method Handles](https://openjdk.org/jeps/416)

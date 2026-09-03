@@ -40,7 +40,7 @@ performs no I/O and touches no map.
 some entries"), and the bulk `forEach`/`search`/`reduce` family, whose result "is not necessarily
 atomic with respect to the map as a whole unless it is somehow known to be quiescent".
 
-## The bin lock, and how little of a recursive update is detected
+## Internal coordination and recursive-update limits
 
 The `compute*`/`merge` methods run the caller's function while holding `synchronized` on the bin
 head node (or on a `ReservationNode` CAS'd into an empty bin). That is what makes them atomic, and
@@ -59,8 +59,9 @@ enforcement is one word:
 *         otherwise never complete
 ```
 
-**`detectably` is the whole guarantee, and it is much narrower than "same bin".** In JDK 25
-detection is structural, not bin-scoped. Only two conditions throw:
+**`detectably` is the whole enforcement guarantee, and it is much narrower than "same bin".** In
+the examined OpenJDK 25 source, detection is structural, not bin-scoped. Two observed conditions
+throw:
 
 1. `computeIfAbsent` finds `pred.next != null` — the function appended to the tail of the very
    list this call was walking.
@@ -68,7 +69,9 @@ detection is structural, not bin-scoped. Only two conditions throw:
    `compute*` on this thread had reserved (an empty bin, mid-computation). This is the **only**
    arm that can fire in `merge`; `merge` has no `pred.next` check at all.
 
-Everything else completes silently and is no longer atomic. Verified on Temurin 25.0.3 with keys
+Other prohibited recursion may complete without that exception. That does not make it supported or
+define its atomicity: the API says the function must not modify the map. Observed on Temurin 25.0.3
+with keys
 1, 17 and 33, all of which hash to bin 1 of a 16-slot table:
 
 ```
@@ -78,23 +81,21 @@ C same-bin put during compute                -> NO THROW  {1=v, 17=new-same-bin}
 D append to the list being walked            -> IllegalStateException: Recursive update
 ```
 
-Case **C** is the one to remember: `m.put(1, "one")` then
-`m.compute(1, (k, v) -> { m.put(17, "new-same-bin"); return "v"; })` — a recursive insert into the
-_same bin_, no exception, and a `compute` that was not atomic. Case **B** is the same for a nested
-`compute`, and a same-key nested `merge` also passes silently. So "I can show it lands in the same
-bin" is not a safety argument, and neither is "our tests never threw".
+Case **C** is useful as a negative test, not a supported technique: `m.put(1, "one")` then
+`m.compute(1, (k, v) -> { m.put(17, "new-same-bin"); return "v"; })` performs a prohibited recursive
+insert with no exception in that build. Case **B** and a same-key nested `merge` also pass silently.
+The API provides no supported semantics for these callbacks, so "our tests never threw" is not a
+safety argument.
 
 Two further outcomes, neither detected:
 
 - **Two threads recursing into each other's bins deadlock** on the two bin-head monitors. A dump
   shows both threads inside `ConcurrentHashMap.computeIfAbsent`, each
   `- waiting to lock <0x…> (a ConcurrentHashMap$Node)`. (Source-derived, not specified.)
-- **A table resize during the callback** leaves the state the function observed stale.
-
-Historically the detection did not exist at all: JDK-8062841 added it in JDK 9 (JBS shows fix
-version 9 and an intent to integrate to 8u; the JDK 8 javadoc documents the exception, but the
-exact 8u is unverified here). Before that fix a recursive `computeIfAbsent` **spun forever** — a
-hung thread at 100% CPU with no exception.
+  Historically the detection did not exist at all: JDK-8062841 added it in JDK 9 (JBS shows fix
+  version 9 and an intent to integrate to 8u; the JDK 8 javadoc documents the exception, but the
+  exact 8u is unverified here). Before that fix a recursive `computeIfAbsent` **spun forever** — a
+  hung thread at 100% CPU with no exception.
 
 `merge`'s `@throws` clause lists `NullPointerException` and "RuntimeException or Error if the
 remappingFunction does so" — but not `IllegalStateException`, unlike its three siblings, even
@@ -166,9 +167,9 @@ Caffeine's `AsyncLoadingCache` removes failed entries for you.
   and `size()` clamps the sum at 0, so `size()` itself never returns a negative `int`.
 - `mappingCount()` returns a `long` and should be preferred over `size()` for maps that can exceed
   `Integer.MAX_VALUE` entries.
-- Iterators, spliterators and enumerations are **weakly consistent**: they never throw
-  `ConcurrentModificationException`, traverse everything present at construction exactly once, and
-  may or may not reflect later modifications. They are for one thread at a time.
+- Iterators, spliterators and enumerations are **weakly consistent**: they do not throw
+  `ConcurrentModificationException` and reflect table state at some point at or since their
+  creation; they may reflect concurrent changes. Each iterator is for one thread at a time.
 
 Choosing a set view:
 
@@ -184,10 +185,10 @@ parallelism entirely and is the right default; `1` maximises it. Reduction funct
 associative and commutative, and a bulk operation may complete abruptly on an exception from a
 supplied function while others are still running.
 
-`concurrencyLevel` is documented as "an additional hint for internal sizing" only. The JDK 8
-rewrite replaced segment striping with per-bin locking (`Segment` survives solely as a
-serialization stub) and per-segment counts with a striped `CounterCell[]`. Tuning it does nothing
-useful.
+`concurrencyLevel` is documented as an additional hint for internal sizing, not as a current number
+of lock stripes or a concurrency guarantee. It can influence initial sizing, so extreme inherited
+values may waste memory; normally size from expected mappings/load and measure rather than tuning it
+as a throughput dial.
 
 ## Synchronized wrappers: the three surviving reasons
 
@@ -205,8 +206,9 @@ Keep `Collections.synchronizedMap` only for:
    permits both. This is a real migration blocker.
 3. **A `LinkedHashMap`** in insertion or access order — there is no concurrent equivalent.
 
-`Hashtable` and `Vector` are strictly worse: the same single lock, a legacy `Enumeration` API, and
-no way to name the mutex.
+`Hashtable` and `Vector` retain legacy per-method synchronization and compatibility semantics. They
+are rarely the best choice for new APIs, but replacing them requires checking compound-operation,
+iteration and null-value contracts rather than declaring behavioral equivalence.
 
 The wrapper _does_ synchronize the Java 8 default methods (`getOrDefault`, `forEach`, `replaceAll`,
 `putIfAbsent`, `remove(k,v)`, `replace`, `computeIfAbsent`, `computeIfPresent`, `compute`, `merge`)
@@ -250,7 +252,7 @@ by human or control-plane action. When writes are naturally batched, a `volatile
 java-memory-model) and no accidental `remove()` calls.
 
 ```java
-private volatile List<Endpoint> endpoints = List.of();      // read: plain field read
+private volatile List<Endpoint> endpoints = List.of();      // read: volatile publication read
 void refresh(Collection<Endpoint> discovered) {             // write: one publication
     endpoints = List.copyOf(discovered);
 }
@@ -264,25 +266,25 @@ void refresh(Collection<Endpoint> discovered) {             // write: one public
 in time buckets, deadline indexes and leaderboard ranges. If you only need sorted _output_, sort a
 snapshot of a CHM: `O(n log n)` once beats a permanent `log n` factor on every `get`.
 
-|                                                     | `ConcurrentHashMap`                   | `ConcurrentSkipListMap`                                  |
-| --------------------------------------------------- | ------------------------------------- | -------------------------------------------------------- |
-| `get`/`put`/`remove`                                | amortised O(1)                        | expected average O(log n)                                |
-| Writes                                              | CAS on an empty bin, else bin monitor | CAS-based, no locks                                      |
-| Memory                                              | one node per entry plus table         | index levels on top of nodes                             |
-| Ordering operations                                 | none                                  | full `NavigableMap`                                      |
-| `null` key/value                                    | forbidden                             | forbidden                                                |
-| Entries returned                                    | live-ish                              | **snapshots**; `Entry.setValue` unsupported              |
-| `putAll`/`equals`/`toArray`/`containsValue`/`clear` | not atomic                            | not atomic                                               |
-| Direction                                           | n/a                                   | ascending views and iterators are faster than descending |
+|                                                     | `ConcurrentHashMap`                | `ConcurrentSkipListMap`                                  |
+| --------------------------------------------------- | ---------------------------------- | -------------------------------------------------------- |
+| `get`/`put`/`remove`                                | amortised O(1)                     | expected average O(log n)                                |
+| Writes                                              | concurrent hash-table coordination | concurrent ordered-index coordination                    |
+| Memory                                              | one node per entry plus table      | index levels on top of nodes                             |
+| Ordering operations                                 | none                               | full `NavigableMap`                                      |
+| `null` key/value                                    | forbidden                          | forbidden                                                |
+| Entries returned                                    | live-ish                           | **snapshots**; `Entry.setValue` unsupported              |
+| `putAll`/`equals`/`toArray`/`containsValue`/`clear` | not atomic                         | not atomic                                               |
+| Direction                                           | n/a                                | ascending views and iterators are faster than descending |
 
-`size()` on both the map and the set has been a `LongAdder`-backed estimate since **JDK 10**
-(JDK-8186226; `ConcurrentSkipListMap` declares `private transient LongAdder adder`, `size()` reads
-`getAdderCount()`, and `baseHead()` is O(1)). It is still an _estimate_ under concurrent update, so
-the `size()` discipline above applies — but it is not a traversal, unlike `ConcurrentLinkedQueue`
-and `LinkedTransferQueue`, where it genuinely is.
+The cost and implementation of skip-list `size()` have changed across JDK releases, while the value
+remains an estimate under concurrent mutation. Do not make hot-path synchronization decisions from
+it; profile the deployed JDK if collection-size telemetry itself is suspected. In contrast,
+`ConcurrentLinkedQueue` and `LinkedTransferQueue` explicitly document traversal cost for `size()`.
 
-**The javadoc has not caught up, and you will see the contradiction.** JDK-8336462 (fix version 24)
-removed the stale "NOT a constant-time operation" wording from `ConcurrentSkipListSet.size()`'s
-**method** javadoc only. The same warning is still in the **class** javadoc on JDK 25.0.3 and in
-openjdk mainline today. Read it as stale, not as current, and do not re-add a `size()`-avoidance
-workaround on its account.
+## Authoritative references
+
+- [Java 25 `ConcurrentHashMap`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html)
+- [Java 25 `ConcurrentSkipListMap`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ConcurrentSkipListMap.html)
+- [Java 25 `CopyOnWriteArrayList`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CopyOnWriteArrayList.html)
+- [Java 25 concurrent package summary](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)

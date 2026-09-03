@@ -23,9 +23,10 @@ Let code depend on an interface it chose, while the object doing the work has a 
 The adapter absorbs the mismatch — signature, model, vocabulary, error style — so that neither
 side has to change and neither side learns about the other.
 
-The measure of a good adapter is what it stops: after it, no vendor type, no vendor exception
-and no vendor vocabulary appears above it. An adapter that forwards a vendor's `SdkException`
-unchanged has moved the coupling, not removed it.
+The measure of a boundary adapter is the coupling it intentionally contains. Domain-facing ports
+usually should not expose vendor DTOs or exceptions; a thin interoperability adapter between two
+libraries may deliberately retain shared standard types. State the boundary goal instead of
+assuming every adapter is an anti-corruption layer.
 
 ## When it is the answer
 
@@ -49,11 +50,12 @@ A test needs a fake implementation of an external dependency
 
 ## When it is not
 
-- **You own both sides.** Change one of them. An adapter between two of your own types is a
-  refactoring that was not finished.
-- **The mapping is one-to-one with no translation.** A class whose every method is
-  `return delegate.sameThing()` adds a stack frame and a file. Delete it and depend on the type
-  directly, or admit the port exists for a different reason and say which.
+- **You own both sides and can change them atomically.** Direct refactoring may be cheaper. An
+  adapter can still be correct across independently released modules, during migration, or where
+  two intentionally distinct models must remain separate.
+- **The mapping is one-to-one with no translation or boundary policy.** A passthrough may be
+  removable, but can still own version isolation, telemetry, authorization or replacement
+  authority. Name and test that reason; otherwise delete it.
 - **It contains business rules.** Deciding, defaulting, validating against domain policy — that
   is domain logic in the boundary layer. Move it inward and leave translation behind.
 - **It aggregates several collaborators into one coarse call.** That is a Facade
@@ -84,17 +86,18 @@ Whole-implementation mismatch       an object adapter: a final class
                                     holding the adaptee in a field
 ```
 
-Class adapters — `extends Adaptee implements Target` — are effectively dead in Java: single
-inheritance spends the one extends slot, the adaptee's entire public API leaks through the
-adapter, and the adaptee cannot be swapped or wrapped. Use an object adapter unless you are
-adapting an interface you cannot instantiate.
+Class adapters — `extends Adaptee implements Target` — spend Java's single inheritance slot and
+expose inherited public API, so composition is usually easier to isolate and replace. Inheritance
+remains useful when a framework requires subclass hooks or the adaptee cannot be delegated
+without losing protected extension behavior. Treat that as tighter coupling, not as impossible.
 
 ## Decision rules
 
 ```text
-IF a vendor type, vendor exception or vendor enum appears above the
-adapter
-THEN the adapter is incomplete. Translation is its whole job.
+IF a vendor type, exception or enum appears above a domain-facing adapter
+THEN decide whether consumers now depend on vendor semantics. Translate when the
+     port is meant to protect that boundary; shared standards or deliberately thin
+     interoperability layers may preserve types explicitly.
 
 IF the adapter throws the adaptee's exception type
 THEN callers must catch a foreign type, and swapping the adaptee is a
@@ -118,9 +121,9 @@ THEN the adapter is not either, whatever it looks like. State the
      constraint or synchronise inside it deliberately.
 
 IF the adaptee is remote
-THEN the adapter's contract includes latency, timeouts and partial
-     failure; it must not present them as ordinary method behaviour
-     (gof-proxy, timeouts-and-deadlines).
+THEN its contract must expose or document latency and partial failure. Transport
+     timeouts belong near the client; end-to-end deadlines, retry and fallback policy
+     may belong to the caller or resilience layer (gof-proxy, timeouts-and-deadlines).
 ```
 
 ## Cross-cutting checks
@@ -134,26 +137,25 @@ THEN the adapter's contract includes latency, timeouts and partial
   be set in the adapter, since the port cannot express "may hang forever"; and unknown enum or
   field values from a newer peer must be handled deliberately rather than throwing deep inside
   the domain (`rpc-and-api-contracts`).
-- **Performance.** One extra call and, where translation is involved, one extra object per
-  call. Negligible except when the adapter copies a large collection on every invocation inside
-  a loop — a common and measurable cost that is invisible in review because the copy looks like
-  a mapping. Where the adaptee returns a lazily loaded structure, translating it eagerly can
-  turn one query into many (`orm-behavioral-patterns`).
+- **Performance.** Dispatch is often inlined and translation cost ranges from zero-copy views to
+  full graph allocation. Inspect large collection copies, encoding conversions and eager
+  traversal; translating a lazily loaded structure can turn one query into many
+  (`orm-behavioral-patterns`). Measure the boundary rather than counting wrapper calls.
 - **Testing.** The port is the seam that lets the application be tested without the dependency;
-  the adapter itself must be tested against the real thing, because its whole content is
-  assumptions about a foreign system. A unit test of an adapter with a mocked adaptee asserts
-  that your mapping matches your mock — use a contract or integration test instead
+  the adapter itself needs tests against an authoritative implementation or compatible sandbox,
+  because its content is assumptions about a foreign system. Where that cannot run on every
+  commit, combine deterministic mapping tests with scheduled/provider contract tests
   (`java-test-doubles`, `java-testing-strategy`).
 
 ## Review checklist
 
-- [ ] No foreign type, exception or enum crosses the adapter outward
+- [ ] Any foreign type, exception or enum crossing outward is an explicit compatibility choice
 - [ ] Adaptee exceptions are translated with the original preserved as the cause
 - [ ] The adapter contains no decisions that belong to the domain
-- [ ] Composition, not inheritance, holds the adaptee
+- [ ] Composition is preferred; inheritance has a documented framework/extension constraint
 - [ ] A single-method adaptation is a lambda, not a class
-- [ ] Timeouts and failure handling are set here when the adaptee is remote
-- [ ] The adapter is covered by a test that exercises the real adaptee
+- [ ] Remote transport timeouts are configured and end-to-end resilience ownership is explicit
+- [ ] The adapter is covered by authoritative integration/contract evidence at an appropriate cadence
 - [ ] A one-to-one passthrough is justified by bounding a foreign model, or deleted
 
 ## References

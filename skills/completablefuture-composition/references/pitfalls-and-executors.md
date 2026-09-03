@@ -1,119 +1,121 @@
-# Executors, exceptions and context
+# Executors, failures and context
 
-## Which thread runs this stage
+## Thread attribution without folklore
 
-| Form                                          | Runs on                                                                  |
-| --------------------------------------------- | ------------------------------------------------------------------------ |
-| `thenApply(f)` — source already complete      | the **calling** thread, synchronously, inside the `thenApply` call       |
-| `thenApply(f)` — source completes later       | the thread that **completed the source** (often a client's I/O thread)   |
-| `thenApplyAsync(f)`                           | `ForkJoinPool.commonPool()`, or a new thread per task if parallelism < 2 |
-| `thenApplyAsync(f, exec)`                     | `exec` — the only form whose answer does not depend on the machine       |
-| `supplyAsync(s)`                              | same default as `thenApplyAsync(f)`                                      |
-| `whenComplete` / `exceptionally` (no `Async`) | same rule as `thenApply`: caller or completer                            |
+For non-async dependent actions, the `CompletableFuture` contract permits the completing thread or
+another caller of a completion method. An already-completed source often runs inline in the attaching
+caller, but code must not depend on that implementation outcome. Instrument thread name, executor
+identity and operation at stage boundaries when diagnosing affinity.
 
-Two consequences that produce real incidents:
+For async methods without an executor, inspect `defaultExecutor()` on the actual stage class. The
+standard class normally uses `ForkJoinPool.commonPool()` when it supports more than one parallel
+thread and otherwise a thread-per-task fallback. A subclass can override the facility. Common-pool
+parallelism can be configured and effective processor count is environment-sensitive.
 
-- **The common pool's parallelism is `availableProcessors() - 1`**, floored at 1, and
-  `defaultExecutor()` uses the common pool only "if it supports more than one parallel
-  thread". A container limited to **one or two** CPUs therefore gets **one new platform
-  thread per async stage**. A service that behaves like a bounded pool on a developer's
-  10-core laptop behaves like an unbounded thread factory in production, and the CPU limit
-  that caused it is nowhere near the code.
-- **A non-`Async` stage after a network client runs on that client's event loop.** Blocking
-  there — a JDBC call, a lock, a synchronous HTTP call — stalls every other connection that
-  loop serves. This is the single most damaging `CompletableFuture` mistake, and it is
-  invisible in a test with one request.
+An explicit executor can execute inline, serialize work, reject, or queue without limit. The
+`CompletionStage` API deliberately does not promise concurrent execution merely because an executor
+argument exists.
 
-## Exception plumbing
+## Failure matrix
 
-| Method                      | Sees success | Sees failure | Can change the result        |
-| --------------------------- | ------------ | ------------ | ---------------------------- |
-| `exceptionally(fn)`         | no           | yes          | yes — substitutes a value    |
-| `handle((v, t) -> …)`       | yes          | yes          | yes — maps both outcomes     |
-| `whenComplete((v, t) -> …)` | yes          | yes          | **no** — passes both through |
-| `exceptionallyCompose(fn)`  | no           | yes          | yes — substitutes a _stage_  |
+| Operation              | Source success         | Source failure         | If action throws                                                      |
+| ---------------------- | ---------------------- | ---------------------- | --------------------------------------------------------------------- |
+| `thenApply`            | maps value             | propagates failure     | returned stage fails                                                  |
+| `exceptionally`        | passes value           | maps failure to value  | returned stage fails                                                  |
+| `exceptionallyCompose` | passes value           | maps failure to stage  | returned stage follows returned stage or fails                        |
+| `handle`               | maps `(value, null)`   | maps `(null, failure)` | returned stage fails                                                  |
+| `whenComplete`         | observes and preserves | observes and preserves | replaces success; source failure has precedence over observer failure |
 
-`whenComplete` is for logging and metrics. If the action itself throws and the source had
-completed normally, the returned stage completes exceptionally with that new throwable —
-so an unguarded logging call can convert a success into a failure.
+Handlers can see the exception with which their triggering stage completed. A direct
+`completeExceptionally(cause)` need not look like failure propagated through dependent stages.
+`join()` reports exceptional completion with `CompletionException` (except cancellation), whereas
+`get()` uses checked `ExecutionException`. Assert the surface you actually expose.
 
-### The wrapper
+Do not catch `Throwable` merely to turn every event into fallback. `Error` often represents a process
+integrity problem, and a fallback that masks it can leave the service corrupted. Define which
+exception classes are recoverable at the operation boundary.
 
-```text
-join()          throws CompletionException  wrapping the cause
-get()           throws ExecutionException   wrapping the cause
-exceptionally   usually receives CompletionException, not the cause
-```
+## Aggregation policy
 
-Type matching without unwrapping is a fallback that never fires and a metric that never
-increments, with no error to indicate it. Use the `unwrap` helper from
-`references/composition-recipes.md` in every handler that inspects a type.
+`allOf` is a completion barrier, not a result collector, quorum, failure accumulator or cancellation
+scope. It completes after all inputs. On failure, record branch outcomes yourself if every cause is
+required; the API does not promise an aggregate of all exceptions.
 
-## What `allOf` and `anyOf` promise
+`anyOf` returns `Object`, completes on exceptional as well as normal completion, and leaves other
+inputs running. A hedge must specify first completion versus first success, loser cancellation,
+late-response resource release and side-effect safety.
 
-| Method  | Completes when                          | Value    | Fails fast | Common misreading                      |
-| ------- | --------------------------------------- | -------- | ---------- | -------------------------------------- |
-| `allOf` | **every** input has settled             | `Void`   | no         | "it aggregates results" — it does not  |
-| `anyOf` | the **first** input settles, either way | `Object` | n/a        | "first success" — it is first _answer_ |
+Java 25 preview `StructuredTaskScope.Joiner.anySuccessfulResultOrThrow()` provides first-success
+scope policy and cancels the scope when a result is available. Cancellation interrupts unfinished
+subtask threads but remains cooperative; it is still not proof that remote work stopped.
 
-`anyOf` returning the first failure is the trap. A hedged request built on `anyOf` returns
-the error from the fastest-failing replica, which is usually the one that was already
-broken. The construct that means "first successful result, cancel the rest" is
-`StructuredTaskScope.open(Joiner.anySuccessfulOrThrow())`.
+## Context transfer
 
-## Context does not cross a stage boundary
-
-MDC, `SecurityContextHolder`, an OpenTelemetry `Context` and any `ThreadLocal` belong to the
-thread, and a stage may run on a different one. `ScopedValue` does not help either: its
-binding is scoped to the dynamic extent of the `run`/`call` that established it, so a stage
-executed later on a pool thread is outside it.
-
-Capture at build time and re-establish inside the stage:
+Capture immutable context at submission and restore it only for the dynamic extent of the action:
 
 ```java
-Map<String, String> mdc = MDC.getCopyOfContextMap();          // captured on the caller
-Context otel = Context.current();
+Context captured = Context.current();
+Map<String, String> mdc = MDC.getCopyOfContextMap();
 
 CompletableFuture.supplyAsync(() -> {
-    MDC.setContextMap(mdc == null ? Map.of() : mdc);
-    try (Scope ignored = otel.makeCurrent()) {
+    Map<String, String> previous = MDC.getCopyOfContextMap();
+    try (Scope ignored = captured.makeCurrent()) {
+        if (mdc == null) MDC.clear(); else MDC.setContextMap(mdc);
         return work();
     } finally {
-        MDC.clear();                                          // pool threads are reused
+        if (previous == null) MDC.clear(); else MDC.setContextMap(previous);
     }
-}, pool);
+}, executor);
 ```
 
-Clearing in `finally` is not optional on a pooled thread: a leftover MDC attributes the next
-request's logs to the previous request's user. Micrometer's
-`ContextSnapshot`/`ContextExecutorService` and OpenTelemetry's `Context.taskWrapping`
-automate exactly this wrapping; prefer them to hand-rolled copies once more than one context
-type is involved.
+Restoring the previous MDC is safer than unconditional clearing for direct/inline executors. Prefer
+OpenTelemetry's supported task wrapping and the logging framework's scoped APIs where available.
+Never copy secrets unnecessarily, and never let request authentication state leak into later work on
+a reused worker.
 
-## Diagnosing a chain
+`ScopedValue` is bound for a dynamic scope and is not a general context carrier for an arbitrary
+stage that may run after that scope ends. Structured child threads inherit scoped bindings according
+to their API contract; unrelated executor tasks do not.
 
-- A stack trace inside a stage starts at the pool worker. The code that constructed the
-  chain is not on it. Log the correlating identity (request id, key) from inside the stage,
-  or accept that failures will be unattributable.
-- `CompletableFuture.toString()` reports `Completed normally`, `Completed exceptionally` or
-  `Not completed`, plus the number of dependents — enough to tell "stuck" from "failed" when
-  a chain hangs.
-- A thread dump of a hung chain shows workers parked in `ForkJoinPool.awaitWork` and the
-  caller in `CompletableFuture.waitingGet`. That pattern means "nothing completed the
-  future", which is nearly always a callback path that returns without completing it.
-- Time each stage rather than the whole chain. A chain that takes 900 ms tells you nothing;
-  per-stage timers tell you which two stages were accidentally serialised.
+## Anti-patterns
 
-## When to stop using it
+### Fire-and-forget branch
 
-Rewrite the chain as structured, blocking code on virtual threads when any of these is true:
+- **Why it happens:** the caller only needs the main result.
+- **Symptoms:** exceptional completion is never observed; deploy/shutdown loses work.
+- **Better:** give the branch a durable queue, explicit owner/terminal observer, or keep it inside the
+  request's structured lifetime.
+- **Acceptable:** only for explicitly lossy telemetry with quantified loss and non-blocking shutdown.
 
-- The chain exists only to avoid blocking a thread — virtual threads removed that reason.
-- Nobody can state, from the code, which stages run concurrently.
-- Failure of one branch should abandon the others, and `allOf` cannot express it.
-- Cancellation has to actually stop work rather than release the caller.
-- The debugging cost has become the dominant cost of changing the code.
+### Timeout as cancellation
 
-Keep it where it still fits: wrapping a callback-only client, a genuinely long-lived
-dependency graph assembled dynamically, and any API whose published contract already returns
-`CompletionStage`.
+- **Why it happens:** the future returned to the caller is done.
+- **Symptoms:** active requests and connections rise after timeout rate rises.
+- **Better:** provider deadline, cooperative cancellation and resource-local admission bound.
+
+### Pool as backpressure
+
+- **Why it happens:** worker count appears bounded.
+- **Symptoms:** executor queue/live futures grow while dependency is saturated.
+- **Better:** bounded admission with rejection/deadline plus bounded construction windows.
+
+### Blanket recovery
+
+- **Why it happens:** a terminal `exceptionally` keeps the endpoint available.
+- **Symptoms:** fallback becomes the normal path; defects and authorization failures are hidden.
+- **Better:** recover only classified failures, expose degradation metrics, and preserve cause.
+
+## Evidence checklist
+
+- Capture a thread dump and executor state during the symptom, not only after recovery.
+- Correlate stage latency with client pool/connection and downstream concurrency.
+- Count timeouts separately from confirmed cancellation and late completion.
+- Log the original causal chain once at its owning boundary; avoid duplicate logs at every stage.
+- Reproduce completion order with controlled futures rather than timing sleeps.
+
+## Authoritative references
+
+- [Java 25 `CompletionStage`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html)
+- [Java 25 `CompletableFuture`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
+- [Java 25 `StructuredTaskScope.Joiner` (preview)](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.Joiner.html)
+- [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)

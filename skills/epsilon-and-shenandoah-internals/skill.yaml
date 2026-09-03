@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: epsilon-and-shenandoah-internals
-version: 2.0.0
+version: 2.1.0
 description: >-
   Epsilon as a measurement instrument (isolating allocation cost, failing fast against an
   allocation budget, sizing from time-to-OOM) and Shenandoah internals (the load reference

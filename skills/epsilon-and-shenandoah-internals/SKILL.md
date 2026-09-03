@@ -40,9 +40,11 @@ the benchmark" is an out-of-memory error with a countdown on it.
 2. **Size Epsilon from the arithmetic, not by feel.**
    `T_oom = (Xmx − initial footprint) / allocation rate`, applied in either direction. See
    `references/epsilon-as-an-instrument.md`.
-3. **Pair Epsilon with a heap dump on OOM** and actually analyse it — the dump is the answer,
-   the OOM is only the alarm. For an allocation-free claim, read the slope of `used` after
-   warm-up, not the fact of an OOM: the interpreter and C1 allocate what C2 later removes.
+3. **Pair Epsilon with allocation evidence and, when useful, a heap dump on OOM.** Because
+   Epsilon never reclaims, the dump contains all still represented allocations—not just objects
+   a real collector would retain—and lacks allocation stacks. Use it for class/graph clues, then
+   attribute sites with JFR/async-profiler. Reserve disk/native headroom for dump creation. For an
+   allocation-free claim, read the post-warm-up slope rather than the mere OOM.
 4. **For Shenandoah, confirm the build and the effective mode before measuring anything.**
    `java -XX:+UseShenandoahGC -version` (Oracle JDK builds have no Shenandoah), then
    `-Xlog:gc+init` for `Mode:` and `Heuristics:`, or `jcmd <pid> VM.flags -all | grep -E
@@ -88,8 +90,9 @@ accrued` per thread. Latency that rises with no pause in the log is usually ther
   Shenandoah 8 bytes per object is a JDK 12 model. Compressed oops work; ZGC's do not.
 - Generational Shenandoah is **product in JDK 25 (JEP 521)**, experimental in JDK 24 (JEP
   404), and **not the default**: `-XX:+UseShenandoahGC` alone runs `satb` (verified). JEP
-  535 (targeted, JDK 28) makes generational the default and deprecates `satb`. State which
-  mode a measurement used; they are different collectors.
+  draft `8379682` proposes making it the default and deprecating `satb`, but as of 2026-09-03 it
+  is unnumbered, Draft and has no target release. State the effective mode from the runtime;
+  never infer it from a future proposal.
 - Generational mode adds a **post-write barrier** feeding a card-table remembered set
   (512-byte cards), on top of the LRB. The LRB cannot serve that purpose: the old-to-young
   relation can only be captured when the reference is written.
@@ -98,8 +101,10 @@ accrued` per thread. Latency that rises with no pause in the log is usually ther
   `-XX:+UnlockExperimentalVMOptions` before them the JVM refuses to start (verified).
   `InitFreeThreshold` governs the learning phase only — at start-up and again after every
   degenerated or full GC; `MinFreeThreshold` is the floor in every phase.
-- For an allocation-spiky workload, **raise** `InitFreeThreshold` above the default. `C_max`
-  grows with `IFT − MFT`; lowering it shrinks the very budget spikes consume.
+- During learning/relearning, raising `InitFreeThreshold` starts earlier and grows the simple
+  headroom term `IFT − MFT`; it can also spend more concurrent CPU and is not the adaptive
+  steady-state control. Change it only when logs show learning-phase/spike degeneration, then
+  validate pacing, CPU, cycle interval and fallback rate. Lowering it reduces that headroom.
 - **The pacer is on by default** (`ShenandoahPacing=true`) and stalls allocating threads up
   to `ShenandoahPacingMaxDelay` (10 ms) per episode before the collector degenerates. It
   shows up nowhere in `-Xlog:gc`; only `-Xlog:gc+stats` reports it. Verified: 51% of a
@@ -124,6 +129,16 @@ progress` upgrades to full GC (immediately in `satb`, after two in generational)
 - Treat every barrier symbol name as a starting point to confirm against the build in use.
   `ShenandoahBarrierSet::need_load_reference_barrier` is a compile-time predicate and never
   appears on a mutator stack; the runtime frames are `ShenandoahRuntime::*`.
+
+## Production and security constraints
+
+- Epsilon is an experiment with a calculated memory and time envelope. Run it in an isolated
+  canary/job with container and native-memory headroom; an automatic OOM dump can prolong failure,
+  consume disk and contain secrets.
+- GC/JFR logs and dumps are production data. Restrict attach/read access, encrypt storage,
+  minimize retention and sanitize thread/object fields before sharing.
+- A collector comparison must pin JDK update/vendor/build, collector mode, heap/container limits,
+  load and warm-up, and report application CPU/throughput/tail latency plus pacing/fallbacks.
 
 ## References
 

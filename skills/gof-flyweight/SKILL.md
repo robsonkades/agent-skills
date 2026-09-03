@@ -3,8 +3,8 @@ name: gof-flyweight
 description: >
   Flyweight in modern Java: sharing one immutable instance across many logical occurrences to
   bound memory, and why the modern JVM makes that pay only for long-lived duplicates. Covers the
-  intrinsic/extrinsic split, why allocation of short-lived objects is nearly free so pooling them
-  loses, the memory arithmetic deciding whether a cache entry costs more than the object it
+  intrinsic/extrinsic split, why cheap TLAB allocation does not make reclamation free, the memory
+  arithmetic deciding whether a cache entry costs more than the object it
   saves, string deduplication and boundary canonicalisation as cheaper alternatives, the
   unbounded intern map as a leak, and the == trap. Use
   when object pooling or interning is proposed, when a heap dump shows millions of duplicate
@@ -23,10 +23,11 @@ Reduce the memory a large population of objects occupies, by storing what they s
 passing in what differs. The state that is shared is _intrinsic_; the state that varies is
 _extrinsic_ and moves to the caller or to a parameter.
 
-In modern Java this pays in one situation: **many duplicates that stay alive**. Short-lived
-objects are allocated by a pointer bump in a thread-local buffer and collected without ever being
-copied, so pooling them adds bookkeeping, cache misses and contention in exchange for nothing.
-Treat any flyweight proposal as a performance claim requiring a measurement
+In modern Java it most clearly pays for **many duplicate values retained at once**. Short-lived
+objects are often allocated cheaply from thread-local buffers, but reclamation, zeroing, survivor
+copying and allocation stalls are not free. Canonicalization can still lose through lookup,
+retention and contention, so treat any flyweight proposal as a performance claim requiring
+live-set and CPU evidence
 (`allocation-profiling`, `heap-dump-analysis`).
 
 ## When it is the answer
@@ -46,17 +47,19 @@ The distinct-value count is small and bounded, and known in advance
 
 ## When it is not
 
-- **The objects are short-lived.** Escape analysis may remove them entirely; if not, young-
-  generation collection of dead objects is close to free. Pooling makes them long-lived, which is
-  strictly worse (`gc-fundamentals`).
+- **The objects are short-lived and allocation/GC is not the measured bottleneck.** Pooling often
+  promotes state and adds lookup work, but high allocation rate can still matter. Compare scalar
+  replacement, compact representations and canonicalization with evidence (`gc-fundamentals`).
 - **The distinct-value count is not much smaller than the occurrence count.** Sharing saves
   nothing and the map costs everything.
-- **The saving is smaller than the cache.** A `HashMap` entry costs roughly 40–50 bytes plus the
-  key; sharing objects that are smaller than that loses memory.
+- **The saving is smaller than the cache.** Measure map/table, key, reference and alignment
+  overhead for the actual JVM options; fixed byte estimates change with compressed references,
+  implementation and load factor.
 - **The shared object is mutable.** A mutable flyweight is shared mutable state, and when it
   carries tenant or user data, one request's mutation is another's data.
-- **Speed was the motivation.** This pattern trades CPU (hashing, lookup, contention) for memory.
-  It is not an optimisation for time.
+- **Speed is asserted without a mechanism.** Sharing can improve cache locality or avoid repeated
+  parsing/compilation, and can also lose through hashing and contention. Benchmark the complete
+  access path rather than classifying it as memory-only.
 - **It is meant to be shared across processes.** A flyweight pool is process-local; see below.
 
 ## Modern Java expression
@@ -68,9 +71,9 @@ FlyweightFactory.get(key)          Map<K, V> canonical, populated at the
 with a HashMap                     boundary; or an enum when the set
                                    is closed
 
-intrinsic state in a shared        a record: immutable by construction,
-mutable object                     safe to share without publication
-                                   concerns
+intrinsic state in a shared        a deeply immutable class or record;
+mutable object                     records are only shallowly final and the
+                                   reference still needs safe publication
 
 extrinsic state stored per         extrinsic state as a method
 occurrence                         parameter, or a parallel primitive
@@ -93,8 +96,9 @@ THEN measure first. "Lots of small objects" is not evidence
      (heap-dump-analysis).
 
 IF the duplicates are Strings
-THEN try -XX:+UseStringDeduplication before writing code. It reclaims
-     the backing arrays automatically and costs nothing to revert.
+THEN evaluate -XX:+UseStringDeduplication on a supported collector before writing
+     an intern table. It consumes concurrent GC CPU/table memory and only deduplicates
+     eligible backing arrays; compare retained bytes and GC overhead.
 
 IF sharing is introduced
 THEN the shared type must be deeply immutable. Enforce it — final
@@ -105,8 +109,9 @@ THEN it is a memory leak with a slow fuse. Bound it and give it an
      eviction policy, or restrict keys to a closed set.
 
 IF the pool is on a hot path shared by many threads
-THEN it is a contention point. computeIfAbsent on a hot key serialises
-     threads on one bin; measure before assuming a map is free.
+THEN test contention and mapping-function cost. `ConcurrentHashMap.computeIfAbsent`
+     provides atomic per-key installation but its blocking/coordination details are
+     implementation-specific; mapping functions must be short and non-recursive.
 
 IF any code compares flyweights with ==
 THEN it works by accident and will break when a value falls outside
@@ -121,9 +126,9 @@ THEN it is not this pattern. Serialisation recreates copies on the
 ## Cross-cutting checks
 
 - **Concurrency.** Two hazards. The pool itself: a `synchronized` map serialises every lookup,
-  and even `ConcurrentHashMap.computeIfAbsent` holds a bin lock while the mapping function runs —
-  an expensive function under a hot key is a stall, and a recursive one deadlocks. And the shared
-  objects: immutability is what makes sharing safe without publication concerns; a mutable shared
+  while `ConcurrentHashMap.computeIfAbsent` may coordinate competing updates for a key. Expensive
+  mapping functions stall peers, and recursive updates can fail or misbehave. The shared
+  objects must be deeply immutable and safely published; a mutable shared
   flyweight under concurrency is both a race and, when it carries request data, a cross-request
   leak (`java-memory-model`, `false-sharing-and-contended`).
 - **Distribution.** Process-local, always. A flyweight pool is not a distributed cache: it shares

@@ -23,10 +23,11 @@ an object useful was assembled at runtime and cannot be re-derived from paramete
 template, a pre-wired processing pipeline, a scenario fixture — or when the copier does not know
 the concrete class it is duplicating.
 
-In modern Java the pattern is mostly a warning. Two forces have eroded it: immutable values need
-no copies at all, and Java's built-in copying mechanism (`Cloneable`) is a broken contract that
-Effective Java advises against. What survives is narrow, and it should be implemented with copy
-constructors or copy factories, never with `clone()`.
+In modern Java the pattern is often a warning. Immutable values usually can be shared, and
+Java's built-in copying mechanism (`Cloneable`) has a weak contract. What survives should
+normally use explicit copy constructors or copy factories; interoperability with a hierarchy
+that already has a correct `clone()` contract is a constrained exception, not a reason to spread
+that API.
 
 ## When it is the answer
 
@@ -47,14 +48,15 @@ A mutable working object must be duplicated so two paths can diverge
 
 ## When it is not
 
-- **The object is immutable.** There is nothing to copy: share the instance. This eliminates the
-  majority of proposed uses (`java-immutability`).
+- **The object is an immutable value and reference identity is irrelevant.** Share the instance.
+  A distinct identity, lifecycle, ownership token, or native resource can still require a new
+  object even when exposed state is immutable (`java-immutability`).
 - **The state can be re-derived from parameters.** Then a factory or builder is clearer, and the
   new object does not inherit whatever the source accumulated.
 - **The concrete type is known.** A copy constructor is more discoverable, type-safe and
   documentable than a polymorphic `copy()`.
-- **Only a few fields differ from the original.** Records' `withX` methods express "the same but
-  for X" directly, without a copy step that must be kept in sync with the field list.
+- **Only a few fields differ from the original.** Hand-written or generated `withX` methods can
+  express "the same but for X" directly; Java records do not generate withers themselves.
 - **The object is an entity with identity.** A copy of an entity is a _different_ entity; see
   the identity rules below before duplicating anything with an id, a version or a lifecycle.
 
@@ -105,19 +107,20 @@ IF the source can be mutated while it is being copied
 THEN the copy can be internally inconsistent. Copy under the same lock
      the mutators use, or snapshot into an immutable value first.
 
-IF the object has a persistent identity (@Id, a version, a natural key)
-THEN the copy must get a new identity and a reset version, and any
-     lifecycle timestamps must be re-stamped. Copying the id produces a
-     duplicate-key failure at best and a silent overwrite at worst.
+IF the object has persistent identity (@Id, a version, a natural key)
+THEN first name the operation: clone-as-new-entity resets generated identity,
+     version and creation lifecycle; snapshot/copy-for-transfer may preserve identity.
+     Never pass a copied detached entity to persist/merge without defining semantics.
 
 IF copying is done by serialising and deserialising
-THEN it is slow, silently deep, ignores transient fields' meaning, and —
-     with any input you did not produce — is a remote code execution
-     surface. Write the copy explicitly.
+THEN account for format-specific cost, graph/identity semantics, transient or ignored
+     fields, constructors and compatibility. Native Java deserialization of untrusted
+     bytes can enable gadget attacks; not every serialization format has that failure mode.
 
 IF a new field is added to the type
-THEN the copy must fail to compile or the copy is now wrong. Prefer a
-     copy constructor that lists fields over reflection that guesses.
+THEN tests or construction structure must expose an omitted copy policy. A constructor
+     call may fail to compile when its signature changes, but mutable classes and defaulted
+     components can still omit fields silently; use semantic copy-contract tests.
 ```
 
 ## Cross-cutting checks
@@ -143,11 +146,13 @@ THEN the copy must fail to compile or the copy is now wrong. Prefer a
 
 ## Review checklist
 
-- [ ] `Cloneable` and `clone()` are absent; copying is a constructor or a named factory
+- [ ] New code prefers an explicit constructor/factory; any retained `clone()` contract is
+      inherited, documented and tested across subtypes
 - [ ] Every field is accounted for: copied, deliberately shared, or deliberately reset
-- [ ] Adding a field breaks compilation of the copy, rather than silently sharing it
+- [ ] Adding a field is caught by construction structure, generated code, or copy-contract tests
 - [ ] Mutable collections and arrays are copied, not aliased
-- [ ] Identity fields — id, version, created-at, correlation ids — are reset, not copied
+- [ ] Identity, version, lifecycle and correlation fields follow an explicit
+      clone-as-new versus snapshot/transfer policy
 - [ ] Copying under concurrency is either locked or performed on an immutable snapshot
 - [ ] No copy is implemented by serialisation round-trip
 - [ ] The type is not simply immutable, in which case the copy should not exist

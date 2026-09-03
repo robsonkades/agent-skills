@@ -2,20 +2,22 @@
 
 ## Identity Field: choosing the generator
 
-| Strategy                        | Identity known before insert | Insert batching | Notes                                                              |
-| ------------------------------- | ---------------------------- | --------------- | ------------------------------------------------------------------ |
-| `IDENTITY` / auto-increment     | no                           | **disabled**    | The ORM must execute each insert to learn the key                  |
-| `SEQUENCE` with allocation size | yes                          | yes             | One round trip per N keys; the default sensible choice             |
-| `TABLE`                         | yes                          | yes             | A row lock per allocation; avoid under concurrency                 |
-| Assigned UUID (v4)              | yes                          | yes             | Random: index fragmentation and poor locality on large tables      |
-| Assigned UUID (v7 / ULID)       | yes                          | yes             | Time-ordered: keeps index locality, identity before insert         |
-| Natural key                     | yes                          | yes             | Only if genuinely immutable; migrations when it is not are painful |
+| Strategy                        | Identity known before insert | Insert batching               | Notes                                                              |
+| ------------------------------- | ---------------------------- | ----------------------------- | ------------------------------------------------------------------ |
+| `IDENTITY` / auto-increment     | no                           | constrained/provider-specific | Generated-key retrieval can prevent ordinary JDBC batching         |
+| `SEQUENCE` with allocation size | yes                          | usually                       | Amortizes sequence access; tune allocation and crash gaps          |
+| `TABLE`                         | yes                          | yes                           | A row lock per allocation; avoid under concurrency                 |
+| Assigned UUID (v4)              | yes                          | yes                           | Random: index fragmentation and poor locality on large tables      |
+| Assigned UUID (v7 / ULID)       | yes                          | yes                           | Time-ordered: keeps index locality, identity before insert         |
+| Natural key                     | yes                          | yes                           | Only if genuinely immutable; migrations when it is not are painful |
 
 Two consequences that decide most cases:
 
-**Batching.** With `IDENTITY`, Hibernate cannot batch inserts — it needs each generated key
-immediately. On an import of 100 000 rows that is 100 000 round trips instead of a few
-hundred. Use a sequence with `allocationSize` matched to the batch size:
+**Batching.** Historically Hibernate executes `IDENTITY` inserts immediately to obtain each key,
+preventing its ordinary JDBC entity-insert batching. Database `RETURNING`, driver APIs, bulk
+operations and newer provider versions can change the available path. Do not derive a round-trip
+count from row count alone; inspect statements and wire/database metrics. Where supported, a pooled
+sequence can amortize key allocation; tune `allocationSize` from concurrency and batching needs:
 
 ```java
 @Id
@@ -148,18 +150,19 @@ otherwise (`orm-behavioral-patterns`).
 
 ## Query cost by association shape
 
-| Shape                               | Cost of loading the parent and the association    |
-| ----------------------------------- | ------------------------------------------------- |
-| `@ManyToOne` lazy, not accessed     | 1 query                                           |
-| `@ManyToOne` lazy, accessed per row | 1 + N (fix with `@BatchSize` on the target class) |
-| `@ManyToOne` eager                  | 1 query with a join — paid by every caller        |
-| `@OneToMany` lazy, accessed per row | 1 + N (fix with `@BatchSize` on the collection)   |
-| `@OneToMany` with fetch join        | 1 query, rows multiplied by collection size       |
-| Two `@OneToMany` fetch joined       | cartesian product — usually a mistake             |
-| `@ManyToMany` fetch joined          | as above, plus the join table                     |
+| Shape                               | Cost of loading the parent and the association                             |
+| ----------------------------------- | -------------------------------------------------------------------------- |
+| `@ManyToOne` lazy, not accessed     | 1 query                                                                    |
+| `@ManyToOne` lazy, accessed per row | 1 + N (fix with `@BatchSize` on the target class)                          |
+| `@ManyToOne` eager                  | provider may join or issue secondary selects; always requested by contract |
+| `@OneToMany` lazy, accessed per row | 1 + N (fix with `@BatchSize` on the collection)                            |
+| `@OneToMany` with fetch join        | 1 query, rows multiplied by collection size                                |
+| Two `@OneToMany` fetch joined       | cartesian product — usually a mistake                                      |
+| `@ManyToMany` fetch joined          | as above, plus the join table                                              |
 
-The general answer for collections is `@BatchSize` on the mapping plus an explicit fetch
-join only on the specific query that needs the whole graph
+No general fetch strategy wins. Batch fetching amortizes lazy traversal; fetch joins reduce round
+trips but multiply rows and complicate pagination; projections avoid entity graphs for reads.
+Choose explicitly per use case and validate query count, bytes and plan
 (`architecture-and-performance`).
 
 ## Constraints belong in the schema

@@ -5,7 +5,7 @@ description: >
   transitions themselves modelled rather than implied by scattered flags. Covers the intent difference
   from Strategy, where transitions should live — in the state classes, in a table, or in one
   exhaustive switch — sealed records against enums, rejecting illegal transitions by default,
-  persisting a state safely (never by ordinal), atomic transitions under concurrency, and timeouts
+  persisting a state through stable codes rather than ordinals, atomic transitions under concurrency, and timeouts
   as transitions in a durable workflow. Use
   when boolean flags multiply on an entity, when a status field is checked in scattered ifs, when
   an illegal transition reaches production, when a workflow must survive a restart, or when two
@@ -34,13 +34,14 @@ makes the compiler enumerate the cases when a state is added.
 ```text
 Same structure. Different intent, and three observable differences:
 
-Who chooses          Strategy: the client, at wiring or call time.
-                     State: the object, as a consequence of events.
+Who chooses          Strategy: policy/configuration/client normally selects.
+                     State: transition rules select as events are applied.
 
-Does it change       Strategy: fixed for the duration of use.
-itself               State: the whole point is that it changes.
+Does it change       Strategy may be replaced dynamically, but replacement is
+itself               not usually the domain behavior being modeled.
+                     State transitions are part of the modeled behavior.
 
-Do variants know     Strategy: never — they are independent algorithms.
+Do variants know     Strategy: preferably independent algorithms.
 each other           State: transitions relate them, whether the states
                      know each other or a table does.
 ```
@@ -66,7 +67,9 @@ A long-running process must be resumable and its position queryable
 
 ## When it is not
 
-- **Two states and one transition.** A boolean is clearer; the machinery is the cost.
+- **A binary property with no transition-specific behavior or history.** A well-named boolean may
+  be clearer. Two states can still deserve explicit types when transitions, data or vocabulary
+  matter.
 - **The "states" never transition.** Strategy, or a sealed type used for dispatch.
 - **The status is derived, not stored.** If `isOverdue` is a function of a date and the clock, it
   is a query, not a state; storing it creates a second source of truth that goes stale.
@@ -104,18 +107,19 @@ grows into a god method (`java-composition-over-inheritance`).
 ## Decision rules
 
 ```text
-IF a transition is illegal
-THEN reject it explicitly, naming the current state and the event.
-     Silently ignoring it is how an order ships twice.
+IF a transition is invalid
+THEN define rejection explicitly. Repeated commands may intentionally be idempotent
+     no-ops returning the existing outcome; distinguish that from silently swallowing
+     a genuinely illegal event.
 
 IF a new state is added
 THEN every exhaustive switch must fail to compile. If a default branch
      absorbs it, the compiler cannot help and the machine has holes.
 
 IF the state is persisted
-THEN store the NAME, never the ordinal — reordering an enum silently
-     rewrites history. Decide too what happens when a row holds a state
-     this version does not know: reject, do not coerce.
+THEN use an explicit stable storage code, not enum ordinal and not an enum name you
+     expect to rename freely. Define unknown-value behavior for rolling upgrades;
+     reject, quarantine, or preserve—not accidental coercion.
 
 IF two requests can transition the same entity
 THEN check-then-act is a race. Use a conditional update (compare the
@@ -124,14 +128,14 @@ THEN check-then-act is a race. Use a conditional update (compare the
      (offline-concurrency-control).
 
 IF a transition has side effects
-THEN they must be idempotent, or applied exactly once with the state
-     change in one transaction. A retried transition otherwise emails
-     the customer twice.
+THEN coordinate them with the state change: one local transaction where possible,
+     or transactional outbox plus idempotent consumer/deduplication. Do not claim
+     exactly-once across an uncoordinated external boundary.
 
 IF time causes a transition (expiry, timeout, escalation)
 THEN it is an event like any other and needs something to deliver it.
-     A state reached only by a scheduled job is a state that does not
-     exist during an outage (distributed-locks-and-leases).
+     Durable due-time records and catch-up semantics must survive scheduler outages;
+     an in-memory timer alone loses progress (distributed-locks-and-leases).
 
 IF the state machine spans services
 THEN it is a saga: each step can fail independently, transitions must
@@ -158,10 +162,10 @@ THEN adding a state edits several classes. Prefer a transition function
   idempotent), timeouts must be real scheduled events rather than in-memory timers, and a state
   can be observed by another service — which makes the state names a published vocabulary
   (`distributed-transactions-and-sagas`).
-- **Performance.** Enum constants are shared and free. Record states allocate per transition,
-  which is negligible outside a hot loop and buys per-state data that flags cannot carry. The cost
-  that does appear at scale is the persistence one: a state column that is filtered on needs an
-  index, and a state machine driven by polling a table needs that query to be cheap.
+- **Performance.** Enum constants are shared but dispatch/storage still has cost. Record states
+  are allocation candidates per transition and buy per-state data; measure only on hot paths.
+  Persistence indexes depend on query shape, selectivity, update rate and partial-index support—a
+  frequently polled due-state query often needs a composite/partial index, not every state column.
 - **Testing.** The transition table is the specification, so test it as one: a parameterised test
   over every `(state, event)` pair asserting either the resulting state or the rejection. That
   single test replaces dozens of scenario tests and fails the moment a state is added without
@@ -171,10 +175,10 @@ THEN adding a state edits several classes. Prefer a transition function
 
 - [ ] The set of states is explicit and closed, not a combination of booleans
 - [ ] The transition function is in one place and is exhaustive with no `default`
-- [ ] Illegal transitions throw, naming the state and the event
-- [ ] Persisted states use names, and an unknown stored value is rejected
+- [ ] Invalid transitions have explicit rejection/idempotent-repeat semantics
+- [ ] Persisted states use stable codes and define unknown-value behavior during upgrades
 - [ ] Transitions are atomic under concurrency by a named mechanism
-- [ ] Side effects of a transition are idempotent or committed with it
+- [ ] Side effects use a local transaction or durable outbox/idempotent delivery protocol
 - [ ] Time-driven transitions have a real delivery mechanism
 - [ ] Every `(state, event)` pair is covered by a test
 - [ ] Adding a state produces compile errors at every dispatch site

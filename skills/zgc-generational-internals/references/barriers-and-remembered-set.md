@@ -2,13 +2,10 @@
 
 ## The pointer, as it is on JDK 25
 
-Multi-mapping is gone — removed with the non-generational mode by JEP 490. One physical page,
-one virtual mapping. Two consequences worth stating explicitly:
-
-- The inflated RSS that `ps` and `top` reported for pre-JDK-24 ZGC processes was an artefact
-  of the same physical page being mapped once per colour. Container limits sized from that
-  observation were reacting to the mapping, not to resident memory.
-- Only **mark and remap state** lives in the pointer bits. Generation does not.
+Legacy multi-mapping history is separate from JEP 490's removal of non-generational ZGC. Do
+not infer current RSS/PSS or cgroup charge from that history. What is stable in the inspected
+JDK 25 source is that generation identity belongs to `ZPage` metadata rather than being
+derived as a simple pointer color.
 
 ```
 [BASELINE — generational ZGC, JDK 25]
@@ -49,9 +46,10 @@ if ((raw_ptr & ZPointerLoadGoodMask) == 0) {    // test bits of the integer valu
 Object* obj = (Object*) (raw_ptr & ZPointerAddressMask);   // only now is the address used
 ```
 
-In the common case — no active GC, or a pointer that already carries the good colour — this
-is an `AND` and a compare: a fraction of a nanosecond per reference read. That the check does
-not depend on reading the object is exactly what makes it safe when the object has been moved.
+This is conceptual pseudocode, not the emitted instruction sequence. Fast-path cost depends
+on architecture, compiler expansion/elision, cache state and collector phase; “a fraction of
+a nanosecond” is not portable evidence. The dependency ordering is the useful invariant:
+validate/decode the reference before dereferencing relocated object memory.
 
 Any pseudocode of the shape `if (obj.color != expected)`, or anything else implying a field
 read on the target before the pointer is validated, inverts the dependency order and describes
@@ -63,7 +61,7 @@ Non-generational ZGC leaned almost entirely on the load barrier. The generationa
 barrier on **writes** as well, to keep the old-to-young remembered set current:
 
 ```
-void zgc_store_barrier(Object* obj_holder, size_t offset, Object* value) {
+void conceptual_store_barrier(Object* obj_holder, size_t offset, Object* value) {
     if (needs_load_barrier(value)) {
         value = zgc_load_barrier_slow_path(&value, (uintptr_t) value);
     }
@@ -87,10 +85,10 @@ Instruction-order cost on the write path:
    can be touched concurrently by other mutator threads — a plain read-modify-write would lose
    concurrent sets.
 
-The common case — same-generation, old-to-old, or young-to-anything — exits at step 1 at the
-cost of a well-predicted branch. Cost only grows for the subset of writes that genuinely cross
-old-to-young, which is why store-barrier overhead has to be measured against the workload's
-promotion pattern rather than inferred from the load-barrier figure.
+Actual generational ZGC barriers perform additional healing/marking/remembering work depending
+on pointer state and phase; the sketch only illustrates why old-to-young slots enter the
+remembered set. Measure generated code and workload write topology rather than reducing every
+non-cross-generation store to one predicted branch.
 
 ## The remembered set is a bitmap, not a card table
 
@@ -111,20 +109,21 @@ During:       mutator store barriers set bits in A, without a lock
 Cycle end:    a synchronisation handshake swaps the roles
 ```
 
-At no instant do a mutator and a GC thread read and write the same bitmap instance. That
-invariant is what removes the need for a lock.
+Current/previous roles let mutators and GC operate on different logical sets during relevant
+phases. The precise flip/clearing synchronization is implementation-specific; inspect the
+target `ZRememberedSet`/`ZPage` source before claiming that no concurrent access is possible.
 
 A lock would serialise precisely what ZGC exists not to serialise: every old-to-young reference
 write in the application would contend against the GC threads for the whole duration of a
 marking cycle — tens of milliseconds. That reintroduces application blocking through the back
 door, even though it never shows up as a formal STW pause. Double buffering does not eliminate
-the cost; it moves it to a point-in-time handshake at the cycle boundary, the same class of
-handshake already present at every STW-to-concurrent transition.
+synchronization cost; role changes occur at collector cycle synchronization points. Do not
+label that mechanism a thread-local handshake without an event/source trace from the target.
 
 ## Attributing barrier overhead in a profile
 
 ```bash
-./profiler.sh -e cpu -d 30 -o flamegraph -f cpu.html <pid>
+asprof -e cpu -d 30 -f cpu.html <pid>
 ```
 
 Frames to separate (symbol names vary by build — confirm against the build in use rather than
@@ -138,38 +137,33 @@ Method:
 
 1. Run under representative load with `-XX:StartFlightRecording=filename=zgc.jfr,settings=profile`
    and async-profiler in `cpu` mode over an equivalent window.
-2. Split samples into the two frame groups. The **ratio** between them is the datum; the
-   absolute value of a single run is not.
-3. Correlate store-barrier peaks with the workload's old-to-young write volume — caches holding
-   references, queues of promoted objects. If the workload rarely promotes and store-barrier
-   cost is still non-trivial, the promotion rate is higher than expected: profile allocation to
-   find out why objects survive longer than the model predicts.
+2. Named slow-path frames are attributable; inlined fast-path instructions may be charged to
+   application frames, so absence is not zero overhead and a load/store-frame ratio is not a
+   complete cost metric.
+3. Compare equivalent workloads/builds and inspect generated assembly/perf counters only when
+   the decision warrants it. Correlate slow paths with GC phase and old-to-young write topology;
+   promotion rate alone does not determine all stores.
 4. Report every overhead percentage as an expected order of magnitude measured in this
    environment, never as a constant transferable between workloads.
 
-## Sizing the heap from the allocation profile
+## Sizing and stall decisions
 
-| Allocation profile          | `-Xmx` over live set | Why                                                                                                                                                                                                    |
-| --------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Steady, no bursts           | ~2.5x                | Headroom for the concurrent collector to finish relocation without exhausting free pages in steady state                                                                                               |
-| Documented sustained bursts | ~3.5-4x              | Steady-state headroom does not cover the window where allocation rate far exceeds the mean; bursts consume free pages faster than relocation returns them, even with `ZAllocationSpikeTolerance` tuned |
+Do not size ZGC with fixed multiples of live set. Establish a time series of live/used/free
+and hard/soft-max heap, allocation-rate distribution, large-page/object requests, relocation
+progress, young/old cycles, concurrent-worker CPU and cgroup throttling. Model whether free
+pages cover allocation until the collector returns capacity under both normal and burst
+regimes, including uncertainty and redeploy/live-set growth.
 
-Both are expected orders of magnitude to be measured. What must not vary is the reasoning:
-start from the steady-state factor and move to the burst range **only** when the workload has
-documented bursts. Applying the larger factor "to be safe" wastes memory on a steady workload;
-applying the smaller one to a bursty workload produces stalls in peak windows.
+For each stall, distinguish:
 
-The diagnostic signature is temporal. Stalls spread evenly across the day are steady-state
-undersizing. Stalls concentrated in peak traffic windows are bursty allocation — measure the
-peak-to-mean allocation ratio during the peaks themselves before fixing a number. Carrying G1's
-1.5-2x rule across a migration is the usual origin of both.
+| Evidence                                                    | Likely decision axis                                                      |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------- |
+| hard/soft heap headroom exhausted while live set is stable  | justified capacity or soft-max policy                                     |
+| concurrent threads starved/throttled                        | CPU quota, `ConcGCThreads`, colocated load                                |
+| short allocation spike outruns otherwise healthy cycles     | admission/backpressure, burst capacity, scoped spike-tolerance experiment |
+| live set/old occupancy trends upward                        | retention/cache policy before heap expansion                              |
+| large page/object allocation fails amid apparent free bytes | page availability/fragmentation and allocation shape                      |
 
-Escalate in increasing cost order:
-
-1. `-XX:ZAllocationSpikeTolerance` — reacts earlier, no infrastructure cost.
-2. `-Xmx` — more headroom for the concurrent collector to absorb the peak.
-3. Reduce the application's allocation rate — outside the GC flag surface entirely.
-
-`-XX:+ZProactive` is not on this list. It is already `true`, and it targets idleness and low
-allocation: the opposite of a sustained peak, where the cycle is already running continuously
-and still not keeping up.
+No remediation is “free”: earlier/more collection spends CPU; more heap spends memory and can
+alter uncommit behavior; lower allocation or admission changes code/service behavior. Validate
+the selected axis against stall count/duration, achieved load, CPU and cgroup headroom.

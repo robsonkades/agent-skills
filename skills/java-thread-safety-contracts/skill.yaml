@@ -1,19 +1,15 @@
 schemaVersion: 1
 
 name: java-thread-safety-contracts
-version: 1.1.0
+version: 1.2.0
 description: >-
-  The thread-safety contract of a class, stated and reviewable: the levels (immutable,
-  thread-safe, conditionally thread-safe, not thread-safe, thread-confined) and how to
-  document each, keeping the lock private, sizing a critical section to the invariant, the
-  alien-call rule that prevents most deadlocks, choosing between confinement, immutability,
-  concurrent collections, atomics and locks, and lazy initialisation without
-  double-checked-locking folklore. Use when a shared class states no contract, when a lock
-  is held across a callback or I/O, when code synchronises on a public or boxed object, when
-  two locks are taken in different orders, when a field is lazily initialised, or when "add
-  synchronized" is the proposed fix. Happens-before is java-memory-model, monitor cost is
-  lock-inflation, lock-free algorithms are lock-free-patterns, and diagnosing a live
-  incident is concurrency-diagnostics.
+  Specifying and reviewing thread-safety as a caller-visible behavioral contract: ownership and
+  confinement, immutability, atomic operations and compound invariants, consistency/iteration,
+  lock identity and scope, callbacks/alien calls, deadlock ordering, progress/fairness,
+  publication, lazy initialization, cancellation, and lifecycle. Use when a shared class has an
+  ambiguous guarantee or a proposed lock/atomic/concurrent collection may preserve individual
+  methods but violate multi-call semantics. JMM proofs, lock-free algorithms and incident
+  diagnostics have separate owners.
 
 license: Apache-2.0
 

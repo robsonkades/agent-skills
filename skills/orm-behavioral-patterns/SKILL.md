@@ -30,9 +30,10 @@ Unit of Work    tracks every object read or created in a transaction,
                 one ordered batch. Consequence: you do not call save();
                 you change objects and the unit of work notices.
 
-Identity Map    guarantees one object instance per row per unit of work.
-                Consequence: repeated loads are free and return the SAME
-                instance, so a modification through one reference is
+Identity Map    maintains one managed object instance per database identity
+                in a persistence context. Consequence: repeated identity lookup
+                may avoid SQL, while queries can still execute and resolve to the SAME
+                managed instance, so a modification through one reference is
                 visible through every other.
 
 Lazy Load       replaces an association with a proxy that fetches on
@@ -57,8 +58,9 @@ magical.
 4. **Budget the queries.** Every lazy association traversed in a loop is a query
    (`architecture-and-performance`). Decide the fetch strategy per use case, not per
    mapping.
-5. **Bound the context's size.** Long-running units of work holding tens of thousands of
-   entities make dirty checking quadratic and the heap unhappy.
+5. **Bound the context's size.** Long-running units of work retain entities and snapshots; flush
+   cost generally grows with managed state and can become worse through cascades/collections. Measure
+   rather than assuming quadratic complexity.
 6. **Verify against the statement log**, not against expectation. These behaviours are
    invisible in the source; the SQL log is the ground truth.
 
@@ -108,9 +110,10 @@ The same row must be seen as two independent objects
   modified for a temporary calculation is persisted at commit. This is the most common
   cause of unexplained updates in a log, and the fix is not to detach defensively but to
   stop mutating managed objects for non-persistent purposes.
-- `save()` on an already-managed entity is a no-op that returns the same instance. On a
-  detached one it becomes a merge, which issues a SELECT and returns a **different**
-  instance — continuing to use the argument after that is a silent bug.
+- JPA dirty checking does not require `save()` for a managed entity. Spring Data's `save()` still
+  invokes persist/merge according to its new-entity detection; `merge` copies state into a managed
+  instance and may require a SELECT depending on identity/version/context. Use the returned instance
+  and verify SQL for the provider/version instead of relying on a universal call shape.
 - Flush order is the ORM's, not your statement order. Inserts, updates and deletes are
   reordered by type, which breaks the mental model that a delete-then-insert of the same
   key will work. Force it with an explicit flush between them, or design the key not to
@@ -126,13 +129,14 @@ The same row must be seen as two independent objects
   more than they appear to. Use a business key or the identifier with care; the default
   identity semantics break when an entity moves between contexts, and generated identifiers
   make `hashCode` change after persist if the identifier is used naively.
-- **Lazy loading is a performance decision made at mapping time and paid at call time**,
-  which is why it goes wrong. Prefer lazy everywhere in the mapping, and make fetching
-  explicit per use case.
-- `LazyInitializationException` is a design signal, not an inconvenience: the code asked
-  for data outside the boundary where the data was available. Open Session In View makes it
-  disappear by extending the boundary through view rendering — which lengthens transactions,
-  holds connections and converts the error into an invisible N+1
+- Lazy loading is a performance/availability decision paid at access time. Prefer explicit use-case
+  fetch plans and conservative default graphs; note that JPA defaults to eager for to-one mappings
+  and `LAZY` can be a provider hint depending on mapping/provider capabilities.
+- `LazyInitializationException` is evidence that the fetch/lifetime contract was violated. Open
+  Session In View extends persistence-context lifetime through rendering; it can trigger unplanned
+  queries and connection churn outside the service transaction. It does not necessarily hold one
+  database transaction or connection for the entire request—connection handling/provider settings
+  matter
   (`architecture-and-performance`).
 - Bulk statements bypass all three patterns. They do not update the identity map, do not
   run entity lifecycle callbacks, and do not increment version columns unless you write it.

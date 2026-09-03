@@ -19,10 +19,10 @@ description: >
 
 ## Purpose
 
-A component is not a folder — it is a unit that can be **released on its own schedule** and
-consumed at a version. That is the whole content of the decision, and it is the one teams
-skip: they extract a module for tidiness, acquire a versioning obligation they never wanted,
-and discover a year later that nothing can be released alone.
+This skill uses **release component** for a unit published or deployed on its own schedule and
+consumed through a versioned contract. Internal Maven or JPMS modules can still be meaningful
+encapsulation/build components; they simply do not acquire the same external compatibility and
+release obligations. State which meaning applies before using component metrics.
 
 The two failures this exists to prevent: the `commons` jar every service depends on, so a
 change to it means a coordinated release of the fleet — a distributed monolith created at
@@ -34,15 +34,17 @@ always bumped together, which is one component wearing twelve `pom.xml` files.
 1. **Ask what is released, not what is grouped.** If two candidate components have never been
    released at different versions and there is no plan to, they are one component. The
    directory split may still be worth having — as packages, not as artefacts.
-2. **Name the consumers.** A component with one consumer is a package. A component with many
-   consumers that upgrade at different times is a real component, and inherits a
-   compatibility obligation (`java-api-design`).
+2. **Name the consumers and ownership boundary.** One consumer does not make a module pointless:
+   plugin isolation, optional deployment, security boundaries and build ownership can justify it.
+   Independent consumers upgrading at different times create the strongest compatibility duty
+   (`java-api-design`).
 3. **Resolve the cohesion tension deliberately** — reuse, common closure and common reuse
    pull in different directions and cannot all be satisfied. Decide which one this component
    optimises for, and record it.
-4. **Break every cycle before it becomes one.** A dependency cycle between releasable
-   components has no valid release order; it is not a smell but an impossibility, which the
-   build hides by releasing both together.
+4. **Prevent source/build cycles and investigate release cycles.** Maven/JPMS reject cycles in the
+   current build graph. Published artifacts can sometimes evolve against previous versions, but a
+   mutually breaking change then requires coordination and exposes that independent evolution is
+   weak.
 5. **Point dependencies toward stability.** A component many things depend on must be hard to
    change; if it is also volatile, its churn reaches everything.
 6. **Recheck against the release history.** Components whose versions always moved together
@@ -69,7 +71,9 @@ deploy that service on its own".
 
 ```text
 Two candidate components have always been released at the same version
-        → one component. Merge the artefacts; keep the packages.
+        → evidence, not proof, that they form one release unit. Check whether
+          separate ownership, optionality, startup isolation or future compatibility
+          justifies keeping the boundary before merging artefacts.
 
 Code is duplicated in two services and a shared library is proposed
         → first ask whether the duplication is coincidental. Two services
@@ -86,8 +90,8 @@ The shared thing is a wire contract between two services
           generate both sides (rpc-and-api-contracts). A shared DTO jar
           makes the consumer's compile depend on the producer's release.
 
-A dependency cycle exists between two components
-        → break it, do not document it. Either move the classes creating
+A source/build dependency cycle exists between two components
+        → break it or merge the release unit. Either move the classes creating
           the edge into one of them, or invert the edge with an interface
           owned by the depended-upon side (java-dependency-inversion).
 
@@ -101,7 +105,8 @@ A component is depended on by many and is hard to change on purpose
           so extension does not require modification.
 
 Nothing outside this repository consumes it
-        → do not publish it. An internal module is cheap; a published
+        → default to keeping it internal. Publish only for a concrete independent
+          consumer or delivery constraint. An internal module is cheap; a published
           artefact carrying a semver promise is not.
 ```
 
@@ -119,9 +124,9 @@ Nothing outside this repository consumes it
 - `SNAPSHOT`, floating ranges and "everyone tracks main" turn an independent release into a
   lockstep one while looking like the opposite. If a consumer cannot stay on last month's
   version for a sprint, the components are not independent.
-- **Depend in the direction of stability, and let abstractness rise with it.** An edge from a
-  stable component to a volatile one imports the volatility. The two failure positions this
-  produces are worked through in `references/component-principles.md`.
+- Prefer dependencies on contracts whose rate of incompatible change is lower than their consumers
+  can tolerate. Instability/abstractness metrics are diagnostic prompts, not laws: generated models,
+  stable concrete value types and internal modules routinely sit away from the proposed diagonal.
 - A `common`/`util`/`shared` component has no common closure by construction: it is grouped
   by "generic", which is not a reason to change. Expect the widest blast radius and the least
   clear ownership. Where one exists, split it by reason to change and let the pieces be

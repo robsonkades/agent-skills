@@ -1,18 +1,11 @@
 ---
 name: distributed-failure-catalogue
 description: >
-  A recognition index of named distributed failure patterns, each given as symptom,
-  mechanism, where it hides in code or config, and the skill that owns the fix: thundering
-  herd, retry storm, cascading failure, timeout stacking, unbounded queue growth, resource
-  exhaustion, gray failure, duplicate processing, split-brain, clock skew, version skew in a
-  rolling deploy, stale work past its deadline, destructive cleanup, input explosion, the
-  optional dependency that is really required, the second-system rewrite, expected errors
-  mixed with unexpected, and the absence of errors as an error. Use when an incident has a
-  shape you recognise but cannot name, when a postmortem needs the pattern's name, when a
-  design review needs failures to argue against, when a consumer stopped silently and no
-  alert fired, or when a cleanup job deleted more than intended. Does not contain the fixes:
-  every entry routes to its owner — cascading-failures, retries-and-backoff,
-  circuit-breakers, failure-models and the rest.
+  Evidence-oriented recognition index for recurring distributed failure shapes: overload
+  amplification, gray and asymmetric failure, split ownership, stale work, mixed versions,
+  correlated faults, silent stagnation and destructive automation. Use to turn incident
+  observations into discriminable hypotheses and route each to the skill owning diagnosis
+  and remediation. It is not a substitute for the owner skill or causal evidence.
 ---
 
 # Distributed Failure Catalogue
@@ -33,14 +26,16 @@ failures to argue a design against rather than a general appeal to robustness.
 1. **Write down the observation, not the theory.** "Inbound rate rose while success rate
    fell", "the queue is empty and no alert fired", "duplicates 1.5 s apart". The index below
    is keyed on observations.
-2. **Match it in the recognition index**, then read the full entry in the reference to check
-   the _mechanism_ against your evidence. Several patterns share a symptom; the entry names
-   the discriminator.
-3. **Check "where it hides"** in your own code and configuration before accepting the match.
+2. **Build a shared timeline and denominator.** Align deploys, topology changes, retries,
+   offered load, admissions, attempts, goodput, saturation and freshness. Rates without
+   logical-request/attempt denominators routinely misidentify amplification.
+3. **Match the recognition index**, then read the full entry and try to falsify the mechanism.
+   Several patterns share a symptom; require its discriminator and a competing explanation.
+4. **Check "where it hides"** in code, config, sidecars, SDKs and control planes before accepting the match.
    A pattern you cannot locate in the system is a hypothesis, not a diagnosis.
-4. **Go to the owner skill for the fix.** Do not improvise a remedy from the entry — the
+5. **Go to the owner skill for the fix.** Do not improvise a remedy from the entry — the
    entries are deliberately too short to implement from.
-5. **In a design review, walk the index as a checklist** and require an answer for each
+6. **In a design review, walk the index as a checklist** and require an answer for each
    pattern the design can exhibit. "That cannot happen here" is an acceptable answer only with
    the reason.
 
@@ -62,26 +57,30 @@ Prefer instead when:
 
 ## Recognition index
 
-| Observation                                                        | Pattern                        | Owner                                 |
-| ------------------------------------------------------------------ | ------------------------------ | ------------------------------------- |
-| Synchronised spike after a restart, deploy, TTL expiry or recovery | Thundering herd                | `cascading-failures`                  |
-| Dependency inbound rate rises while its success rate falls         | Retry storm                    | `retries-and-backoff`                 |
-| Failure spreads to services that never call the failing one        | Cascading failure              | `cascading-failures`                  |
-| Caller gave up but downstream work is still running                | Timeout stacking               | `timeouts-and-deadlines`              |
-| Queue depth and latency grow without bound; goodput falls          | Unbounded queue growth         | `rate-limiting-and-load-shedding`     |
-| Pool acquisition timeouts on unrelated endpoints; FD or OOM errors | Resource exhaustion            | `concurrency-limiting-and-bulkheads`  |
-| Node is up, health check green, answering ten times slower         | Gray failure / slow node       | `failure-models`                      |
-| Two records for one intent; a side effect applied twice            | Duplicate processing           | `delivery-semantics`, `idempotency`   |
-| Two instances both believe they hold the lock or the leadership    | Split-brain                    | `distributed-locks-and-leases`        |
-| Negative durations, leases expiring early, out-of-order timestamps | Clock skew                     | `distributed-locks-and-leases`        |
-| Errors only while a rollout is in progress, then they stop         | Version skew                   | `rpc-and-api-contracts`               |
-| Everything is green and a downstream dataset stopped changing      | Absence of errors as an error  | `slo-and-alerting`                    |
-| Error rate spiked but nothing is broken — or the reverse           | Expected vs unexpected errors  | `rpc-and-api-contracts`               |
-| Work completes long after anyone wanted it; results are rejected   | Stale or obsolete work         | `task-queues-and-competing-consumers` |
-| A cleanup job removed far more rows or objects than intended       | Destructive cleanup            | this catalogue (guard rails)          |
-| One request produces millions of downstream operations             | Input explosion                | `rate-limiting-and-load-shedding`     |
-| An "optional" dependency's outage took the request path down       | Optional-dependency assumption | `failure-models`                      |
-| The replacement is more general, more distributed, less reliable   | Second-system effect           | `architecture-decision-making`        |
+| Observation                                                        | Pattern                        | Owner                                  |
+| ------------------------------------------------------------------ | ------------------------------ | -------------------------------------- |
+| Synchronised spike after a restart, deploy, TTL expiry or recovery | Thundering herd                | `cascading-failures`                   |
+| Dependency inbound rate rises while its success rate falls         | Retry storm                    | `retries-and-backoff`                  |
+| Failure spreads to services that never call the failing one        | Cascading failure              | `cascading-failures`                   |
+| Caller gave up but downstream work is still running                | Timeout stacking               | `timeouts-and-deadlines`               |
+| Queue depth and latency grow without bound; goodput falls          | Unbounded queue growth         | `rate-limiting-and-load-shedding`      |
+| Pool acquisition timeouts on unrelated endpoints; FD or OOM errors | Resource exhaustion            | `concurrency-limiting-and-bulkheads`   |
+| Node is up, health check green, answering ten times slower         | Gray failure / slow node       | `failure-models`                       |
+| Only some callers/regions can reach a dependency                   | Asymmetric partition           | `failure-models`                       |
+| Two records for one intent; a side effect applied twice            | Duplicate processing           | `delivery-semantics`, `idempotency`    |
+| Two instances both believe they hold the lock or the leadership    | Split-brain                    | `distributed-locks-and-leases`         |
+| Negative durations, leases expiring early, out-of-order timestamps | Clock skew                     | `distributed-locks-and-leases`         |
+| Errors only while a rollout is in progress, then they stop         | Version skew                   | `rpc-and-api-contracts`                |
+| Everything is green and a downstream dataset stopped changing      | Absence of errors as an error  | `slo-and-alerting`                     |
+| Error rate spiked but nothing is broken — or the reverse           | Expected vs unexpected errors  | `rpc-and-api-contracts`                |
+| Work completes long after anyone wanted it; results are rejected   | Stale or obsolete work         | `task-queues-and-competing-consumers`  |
+| A cleanup job removed far more rows or objects than intended       | Destructive cleanup            | this catalogue (guard rails)           |
+| One request produces millions of downstream operations             | Input explosion                | `rate-limiting-and-load-shedding`      |
+| An "optional" dependency's outage took the request path down       | Optional-dependency assumption | `failure-models`                       |
+| The replacement is more general, more distributed, less reliable   | Second-system effect           | `architecture-decision-making`         |
+| Trigger is gone but the system remains in a bad equilibrium        | Metastable failure             | `cascading-failures`                   |
+| Independent replicas fail together on one shared dependency/change | Correlated/common-mode failure | `failure-models`                       |
+| Data plane fails because discovery/control plane is unavailable    | Control-plane coupling         | `failure-models`, `caching-strategies` |
 
 ## Rules
 
@@ -95,13 +94,14 @@ Prefer instead when:
   consumer that stopped, a job that did not run, or a producer that went quiet: there are no
   errors because there are no requests. Every pipeline needs a liveness or freshness signal —
   age of the newest record, time since the last successful run — alerted on independently.
-- **Never mix client errors and server errors in one metric.** A 4xx spike from one bad client
-  reads as an incident; a 5xx rise hidden inside a large 4xx baseline reads as normal. Split
-  by class before anything is alerted on.
-- **Every rolling deploy is a mixed-version window**, so any change to a message, a schema or
-  an API must be compatible in both directions across it. A change that is only
-  forward-compatible fails for the duration of the rollout, which is why the errors stop by
-  themselves and the cause is never found.
+- **Do not use one undifferentiated error ratio.** Separate protocol/client rejection,
+  dependency failure, server defect and business outcome, while retaining a bounded status
+  class/reason dimension. Whether a 4xx is expected depends on the contract; authentication
+  outages and rate-limit saturation can be service incidents too.
+- **Every rolling deploy is a mixed-version window.** Compatibility direction depends on who
+  produces/consumes first, rollback requirements, persisted messages and database migration
+  order. Build a version-interoperability matrix and use expand/migrate/contract rather than
+  the slogan “both directions” without a time horizon.
 - **A destructive job needs three guard rails**, and this is the one pattern whose remedy lives
   here because no other skill owns it: a dry-run mode that reports what would be deleted; a
   bounded batch per run; and an **absolute cap that aborts** when the predicate selects more
@@ -117,6 +117,11 @@ Prefer instead when:
   `hot-partitions-and-rebalancing`, and the fault classes themselves are `failure-models`.
 
 ## References
+
+- [Gray Failure: The Achilles' Heel of Cloud-Scale Systems](https://www.microsoft.com/en-us/research/publication/gray-failure-achilles-heel-cloud-scale-systems/)
+- [RFC 9110 — HTTP semantics](https://www.rfc-editor.org/rfc/rfc9110)
+- [Java 25 `ScheduledExecutorService`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ScheduledExecutorService.html)
+- [RFC 5905 — Network Time Protocol v4](https://www.rfc-editor.org/rfc/rfc5905)
 
 - [Overload and amplification patterns](references/overload-and-amplification.md) — thundering
   herd, retry storm, cascading failure, timeout stacking, unbounded queue growth, resource

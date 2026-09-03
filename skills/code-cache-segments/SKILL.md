@@ -1,32 +1,31 @@
 ---
 name: code-cache-segments
 description: >
-  The segmented code cache as three independent CodeHeaps: non-nmethods, profiled and
-  non-profiled nmethods, the GC-driven unloading that replaced the sweeper in JDK 20,
-  fragmentation that no aggregate metric shows, sizing each segment consistently, and
-  reading jcmd Compiler.codecache and CodeHeap_Analytics. Use when CPU rises with no load
-  change while an aggregate "Code Cache usage" dashboard looks healthy, when doubling
-  ReservedCodeCacheSize fixed one incident and not the next, when setting
-  ProfiledCodeHeapSize or NonProfiledCodeHeapSize makes the JVM refuse to start, when GC
-  logs show a CodeCache GC Threshold cause, when an OutOfMemoryError says "Out of space in
-  CodeCache", when a long-running service degrades with the cache reportedly not full, or
-  when only one unnamed CodeHeap appears in the output. Does not cover the introductory
-  code-cache exhaustion signature (jit-compilation), the code cache's share of the container
-  memory budget (jvm-memory-regions), or Metaspace internals (metaspace-internals).
+  The JDK 17-25 segmented code cache, GC-driven unloading, fragmentation, segment sizing,
+  and jcmd Compiler.codecache/CodeHeap_Analytics. Use when aggregate usage looks healthy but
+  one CodeHeap is exhausted, compilation stops or restarts, GC logs show a CodeCache cause,
+  startup rejects manual heap sizes, an OutOfMemoryError reports "Out of space in CodeCache",
+  or a long-running service degrades while aggregate free space remains. Covers runtime-shape
+  discovery so tools do not assume exactly three heaps on every mode or release. Excludes the
+  introductory exhaustion signature (jit-compilation), container memory budgeting
+  (jvm-memory-regions), and Metaspace internals (metaspace-internals).
 ---
 
 # Code Cache Segments
 
 ## Purpose
 
-Treat the code cache as three independent allocators with three separate ceilings, because
-that is what it is since JEP 197. One `CodeHeap` can sit at 99.8% while the consolidated
+On JDK 17-25, treat the normally segmented code cache as three independent allocators with
+separate ceilings. One `CodeHeap` can sit at 99.8% while the consolidated
 number reads 72%, and every tool that stops at the consolidated line reports a healthy
 system. Since JDK 20 the consequence of one full heap is not "the compiler stops": the
 allocator falls back to the other nmethod heap, so short-lived tier-3 code starts landing
 in the heap that was reserved for long-lived C2 code, and the GC-driven unloading that
 replaced the sweeper keys off the **aggregate** free ratio and does not notice. Compilation
-stops only when the fallback heap is full as well.
+stops only when the allocation cannot be satisfied after the applicable fallback. Do not
+hard-code a count of three into tooling: unsegmented and interpreter-only modes have fewer
+heaps, and later HotSpot builds can add heap kinds. Discover the runtime shape from
+`Compiler.codecache` and `jdk.CodeCacheConfiguration`.
 
 The second failure this prevents is the reflexive "double `ReservedCodeCacheSize`". It works
 when the pressured segment happens to be one of the two that split the remainder 50/50, and
@@ -39,10 +38,11 @@ cache was triggering, which a bigger cache also fixes, for a different reason.
    consolidated `CodeCache:` line alone. Also read the last line: `Compilation: enabled` or
    `disabled (not enough contiguous free space left)`, with `stopped_count` and
    `restarted_count`.
-2. **Confirm segmentation is actually on.** Three named heaps means yes; one unnamed heap
-   means `SegmentedCodeCache` was never enabled — it switches on ergonomically only at
-   `ReservedCodeCacheSize` **≥ 240 MB**, so any smaller explicit value de-segments unless
-   `-XX:+SegmentedCodeCache` is also given.
+2. **Confirm the runtime shape.** On JDK 17-25, three named heaps is the normal tiered shape;
+   one unnamed heap means segmentation is off. HotSpot enables it ergonomically only with
+   tiered compilation and `ReservedCodeCacheSize` **≥ 240 MB**, so a smaller explicit value
+   de-segments unless `-XX:+SegmentedCodeCache` is also given. Interpreter-only and
+   non-tiered modes legitimately expose fewer heaps.
 3. **Read the GC log for the code cache's own causes** — `CodeCache GC Threshold` and
    `CodeCache GC Aggressive`. On JDK 20+ the code cache is a GC trigger, and under Serial or
    Parallel each trigger is a **Full GC**. See `references/unloading-and-gc.md`.
@@ -56,12 +56,15 @@ cache was triggering, which a bigger cache also fixes, for a different reason.
 6. **Choose between raising the total and rebalancing** from the measured asymmetry, not from
    the symptom. Both segments high means total capacity; one pinned at 100% while the other
    climbs means the split. See `references/segments-and-sizing.md`.
-7. **Check the arithmetic before applying manual segment sizes.** With `ReservedCodeCacheSize`
-   also on the command line the three heaps must sum to it exactly — greater _or_ smaller is
-   a refused start. Without it, the JVM grows the total to fit and the "check" never fires.
-8. **Validate under the same load that caused the incident**: the pressured segment stable
-   below roughly 80%, no `CodeCache GC` causes in the GC log, and `Compilation:` still
-   `enabled` across a sustained window rather than at one instant.
+7. **Check the arithmetic before applying manual segment sizes.** On JDK 25, with all segment
+   sizes and `ReservedCodeCacheSize` explicitly set, the enabled heaps must sum to the
+   reserved total after alignment. With only a partial configuration HotSpot computes the
+   unset remainder; without an explicit reserved total it can adjust the total. Recheck this
+   version-sensitive startup logic on the exact runtime.
+8. **Validate under the same load that caused the incident**: adequate headroom for the
+   observed growth and deployment/warm-up envelope, an acceptable rate and cost of
+   code-cache-triggered collections, and `Compilation:` enabled across a sustained window.
+   Derive thresholds from the service SLO and restart horizon; 80% is not a universal limit.
 
 ## Rules
 
@@ -94,9 +97,10 @@ cache was triggering, which a bigger cache also fixes, for a different reason.
 - `-XX:+UseCodeCacheFlushing` (the default) now gates the cold-code heuristic and the
   compiler _restart_ after a full heap; with it off a full heap disables the compiler until
   restart. Keep it on in production.
-- The CodeHeap never compacts, and never will. An nmethod embeds absolute addresses — call
-  targets, inline caches, stub references — and threads may be executing it with the program
-  counter inside. Fragmentation is the accepted cost of that design, not a pending fix.
+- JDK 25 CodeHeaps reclaim and coalesce free blocks but do not relocate live nmethods to
+  compact a heap. Relocation would have to preserve active frames, call sites, metadata and
+  runtime references; do not extrapolate this implementation fact into a claim that a future
+  JVM can never compact code.
 - `jcmd Compiler.codecache` reports aggregate `free` and never the largest contiguous free
   block. `jcmd Compiler.CodeHeap_Analytics` does — run `aggregate`, then `FreeSpace`.
 - Fragmentation grows with allocate/free/reallocate cycles, not with raw volume. Frequent
@@ -108,12 +112,16 @@ CodeCache for adapters` (or `for method handle intrinsic`) thrown in an applicat
 - A restart clears fragmentation and discards all accumulated warm-up. It is a legitimate
   named mitigation for ClassLoader-churn fragmentation, never a reflex for any code cache
   symptom.
-- `ReservedCodeCacheSize` reserves address space (hard cap 2048 MB); committed RAM follows
-  each `CodeHeap`'s `used` in `CodeCacheExpansionSize` (64 KB) steps. Confirm with
-  `jcmd <pid> VM.native_memory summary` on the `Code` category rather than assuming a large
-  reservation means large committed memory.
+- On JDK 25, `ReservedCodeCacheSize` reserves virtual address space (hard cap 2048 MB), while
+  pages are committed as heaps expand in `CodeCacheExpansionSize` increments (64 KB on the
+  tested build). Committed can exceed live `used`, and resident memory is a separate OS
+  measure. Compare NMT `Code`, `Compiler.codecache`, and process/container RSS instead of
+  treating reservation, commitment and residency as interchangeable.
 
 ## References
+
+The detailed references use JDK 25 as their executable baseline. Revalidate flags, heap kinds,
+event fields and startup arithmetic on another feature release or JVM implementation.
 
 - [Segments, sizing and rebalancing](references/segments-and-sizing.md) — what each segment
   holds, the ergonomic defaults and where they come from, the tier-to-CodeHeap mapping, the

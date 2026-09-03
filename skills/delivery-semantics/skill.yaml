@@ -1,18 +1,13 @@
 schemaVersion: 1
 
 name: delivery-semantics
-version: 1.1.0
+version: 1.2.0
 description: >-
-  Delivery guarantees stated precisely: at-most-once, at-least-once and effectively-once;
-  why exactly-once delivery is unachievable over a lossy channel; where the acknowledgement
-  sits relative to the side effect; the exact boundary a Kafka read-process-write
-  transaction holds within; and the duplicate causes that are not retries. Use when a design
-  says "exactly-once", when a consumer acknowledges before doing the work, when duplicates
-  land downstream although no retry exists in the code, when isolation.level or
-  transactional.id is being configured, or when a handler makes an HTTP call and then
-  commits. Does not cover making the handler safe to repeat (idempotency), retry policy
-  (retries-and-backoff), ordering (message-ordering-and-partitioning), the permanently
-  failing message (poison-messages-and-dlq), or the fault model (failure-models).
+  Precise end-to-end delivery and processing semantics: acknowledgement placement, loss and
+  duplicate windows, Kafka transactions, visibility leases, ambiguous outcomes and external
+  side effects. Use when reviewing "exactly once", consumer commits, redelivery or a handler
+  that writes outside its broker. Idempotent handler design belongs to idempotency; retries,
+  ordering, poison messages and fault assumptions have their own skills.
 
 license: Apache-2.0
 

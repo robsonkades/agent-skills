@@ -1,19 +1,16 @@
 schemaVersion: 1
 
 name: async-profiler-advanced
-version: 1.2.0
+version: 1.3.0
 description: >-
-  async-profiler beyond `-e cpu`: the perf_events, ctimer and itimer engines and what each
-  can and cannot see, the wall engine's thread coverage, hardware PMU counters, multi-event
-  JFR output, `jfrconv` conversions and native differentials, and reading broken or
-  truncated stacks. Use when a flame graph is empty or dominated by idle, when `-t` is
-  believed to control which threads are sampled, when `perf_event_open` is blocked in a
-  container, when `--cap-add=SYS_PTRACE` did not fix profiling, when `[unknown_Java]` frames
-  appear, when a differential flame graph comes out entirely one colour, when a runbook
-  still says `profiler.sh`, or when combining CPU, alloc and lock in one recording. Does not
-  cover choosing which profile to take or the capability ladder for granting access
-  (jfr-and-async-profiler), reading the resulting graph and its differentials
-  (flame-graph-analysis), or configuring the JFR engine itself (jfr-advanced).
+  Operating async-profiler as an evidence instrument: choosing CPU, ctimer, itimer,
+  wall-clock, allocation, lock, native-memory, trace, and PMU events; proving attach and
+  perf-event access; bounding sampling and instrumentation bias; preserving virtual-thread,
+  native, kernel, and time context; and validating conversions and differentials. Use when
+  profiles are empty, idle-heavy, truncated, permission-blocked, containerized, multi-event,
+  or sensitive to async-profiler/JDK version. Does not own initial profiler selection
+  (jfr-and-async-profiler), visual interpretation (flame-graph-analysis), or JDK Flight
+  Recorder configuration (jfr-advanced).
 
 license: Apache-2.0
 
@@ -42,10 +39,18 @@ files:
   - references/
 
 dependencies:
+  - name: allocation-profiling
+    version: ^2.0.0
   - name: jfr-and-async-profiler
     version: ^1.0.0
   - name: flame-graph-analysis
     version: ^1.0.0
+
+suggests:
+  - concurrency-diagnostics
+  - off-heap-memory
+  - ebpf-for-jvm
+  - continuous-profiling
 
 capabilities:
   - reads-source

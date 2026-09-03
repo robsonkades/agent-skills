@@ -26,9 +26,9 @@ else.
 
 ## Workflow
 
-1. **Check the shape first.** One abstract method and no state of its own → lambda. Needs
-   fields, several methods, a name, or an abstract class → a class (anonymous, nested, or
-   top-level).
+1. **Check the contract first.** A functional interface permits a lambda, but identity, lifecycle,
+   serialization, annotations, diagnostic naming, extra protocol methods and state may justify a
+   named implementation even with one abstract method.
 2. **Write it as a lambda, then try the method reference.** Keep whichever reads better; a
    method reference that forces the reader to work out which of the four kinds it is has not
    paid for itself.
@@ -50,9 +50,8 @@ else.
   object. This is not a stylistic difference — code moved from one form to the other changes
   meaning silently, and a lambda that touches `this` (directly or through an unqualified
   instance member) captures the enclosing object.
-- Keep lambdas to a few lines. A lambda is unnamed and undocumented by construction; when the
-  body needs a comment or a paragraph of logic, extract a named method and pass a method
-  reference — the name then does the documenting.
+- Keep a lambda locally comprehensible. Line count is only a signal; extract a named method/type
+  when policy, failure semantics, reuse, instrumentation or debugging needs a stable name.
 - Captured locals must be effectively final, and captured values are captured by _value_.
   Sidestepping that with a one-element array or an `AtomicInteger` to accumulate state is a
   signal that the code wants a loop or a collector, not a lambda. Where it is genuinely a
@@ -70,8 +69,9 @@ else.
   specialisations cover nearly everything, compose via `andThen`, `compose`, `negate`, `and`,
   `or`, and are what every library API already accepts.
 - Use the **primitive specialisations** (`IntPredicate`, `ToLongFunction`, `IntUnaryOperator`,
-  `ObjIntConsumer`, …) on paths that process primitives in bulk. Boxing a `Function<Integer,
-Integer>` in a loop allocates per element; the specialised form does not. Do not do the
+  `ObjIntConsumer`, …) on measured paths that process primitives in bulk. A
+  `Function<Integer,Integer>` requires boxing semantics; allocation depends on cache ranges,
+  escape analysis and surrounding pipeline, while the specialized form avoids that conversion. Do not do the
   reverse — cluttering a cold API with primitive variants — for a cost nobody measured.
 - Write your own functional interface when a name carries domain meaning at many call sites
   (`RetryPolicy`, `PricingRule`), when the signature is not expressible with a standard one
@@ -81,21 +81,26 @@ Integer>` in a loop allocates per element; the specialised form does not. Do not
 - Do not overload a method with two functional-interface parameter types that a lambda could
   match. Overload resolution with an implicit lambda is ambiguous or surprising, and the fix
   after publication is a new method name.
-- Checked exceptions do not fit the standard interfaces. Decide once per codebase: wrap at the
-  throw site into an unchecked domain exception (usually right — java-exception-design), define
+- Checked exceptions do not fit most standard interfaces. Decide per boundary: preserve an API
+  that declares the exception, wrap with meaningful unchecked semantics, define
   your own throwing interface and adapt at the boundary, or keep the operation out of the
   pipeline. Never "sneaky throw" a checked exception through a generic cast: the caller cannot
   catch what its signature says cannot happen.
-- Non-capturing lambdas are effectively singletons — the JVM links the call site once and
-  reuses the instance. Capturing lambdas allocate per evaluation (unless escape analysis
-  removes it, which it may or may not). This is a reason to hoist a constant lambda out of a
-  loop, and it is not a reason to avoid lambdas; measure before treating either as a cost.
-- A call site that receives many different lambda implementations becomes megamorphic and stops
-  inlining, which can matter on a genuinely hot path. That is a profiling finding, not a design
+- Lambda object identity is deliberately unspecified. HotSpot commonly reuses a non-capturing
+  instance per linked call site and commonly creates state-bearing instances for captures, but
+  code must not depend on `==`, identity hash, locking, or allocation count. Measure before hoisting
+  or refactoring for allocation.
+- A call site receiving many implementation classes can become highly polymorphic and inhibit
+  inlining, but thresholds and profile behavior are JVM/tier dependent. That is a profiling finding, not a design
   rule — see jit-inlining-and-escape-analysis before restructuring anything for it.
-- Do not serialise lambdas. Casting to `Serializable` works and produces a form tied to
+- Avoid serializing lambdas as durable/public contracts. An intersection cast can request
+  `Serializable`, producing a form tied to
   synthetic method names that change with any recompilation; the deserialising side then fails
   in a way that looks like data corruption. Use a named type — see java-serialization-hardening.
+
+- Do not use lambdas as identity-bearing registration keys unless the API returns an explicit
+  subscription/token. Recreating textually identical lambdas need not produce an equal or identical
+  object, so listener removal and map lookup can fail.
 
 ## References
 

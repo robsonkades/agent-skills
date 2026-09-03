@@ -1,173 +1,262 @@
 ---
 name: jvm-performance-review
 description: >
-  Auditing a supplied JVM configuration artefact: a command line or JVM_OPTS, a Kubernetes
-  manifest with resource limits, a GC log or JFR summary offered as evidence, or a bare
-  request for flags. Use when asked to review JVM flags, when inheriting forty accumulated
-  flags, when a JDK upgrade needs old flags checked, when approving a collector or heap
-  change, or when someone asks for "flags to fix p99" — where the answer is usually a
-  missing measurement. Returns prioritised findings, each with the measurement that confirms
-  or kills it. A bare request for flags belongs here even with no artefact: the deliverable
-  is the refusal and the measurement to take. A symptom for diagnosis starts at
-  java-performance. Not the process (performance-methodology), profiler choice
-  (jfr-and-async-profiler), GC log depth (gc-log-analysis), collector and heap sizing
-  (jvm-gc-tuning), container detection (container-awareness), -Xlog construction
-  (unified-logging), source review (code-review), or CI gating (performance-regression-ci).
+  Auditing JVM configuration evidence across the supplied command, effective runtime flags,
+  target JDK build, container/cgroup envelope, workload lifecycle, and stated SLO. Classifies
+  flags by support and origin, detects masking, duplicates and ergonomic interactions, prices
+  heap/non-heap/CPU/startup trade-offs, and emits prioritized falsifiable findings rather than
+  folklore flag lists. Use for JVM options, Kubernetes manifests, JDK upgrades, collector/heap
+  proposals, or claims that a flag fixes latency. Symptom diagnosis, deep GC tuning, profiler
+  selection, and unified-log construction have separate owners.
 ---
 
-# JVM Performance Review
+# JVM performance review
 
 ## Purpose
 
-Take a configuration artefact somebody hands over and return prioritised findings about
-it — not an investigation, not a tuning session.
+Review what the JVM was asked to do, what it actually did, under which resource envelope, and
+which production objective that configuration serves. Static options are intent; effective flags,
+runtime events, and cgroup state are execution evidence.
 
-The failure this prevents is the review performed by pattern-matching a flag list against
-remembered advice, which produces recommendations that are already the ergonomic default,
-already a silent no-op, or already fatal on the target release — delivered with no SLO
-and no measurement behind them.
+The deliverable is a prioritized set of bounded findings with provenance, mechanism, consequence,
+confidence, and a confirming/falsifying observation. It is not a reusable “best flags” block.
 
-## The gate
+## Ownership boundary
 
-**No flag recommendation without (a) the SLO it serves — a percentile, a threshold, and
-the load it holds at — and (b) the measurement showing the JVM's default was
-insufficient.**
+- This skill owns configuration review, flag lifecycle/origin, runtime reconciliation, and change
+  evidence requirements.
+- `java-performance` owns symptom triage.
+- `jvm-gc-tuning` and collector-internals skills own heap/collector decisions.
+- `container-awareness` owns deep JVM/cgroup behavior.
+- `unified-logging`, `jfr-and-async-profiler`, and `gc-log-analysis` own evidence configuration and
+  interpretation.
+- `jdk-upgrade-impact` owns the broader upgrade program.
 
-When the request is "give me flags to fix p99" and nothing has been measured, the correct
-output refuses the premise: name the single cheapest discriminating measurement, give the
-exact command, and state what each possible result would mean. That refusal is this
-skill's most valuable output. It is not a preamble to a flag list — there is no flag list
-after it.
+## Review contract
 
-The gate constrains flags you would **add or change**. It does not constrain findings
-_about_ the artefact: "this flag has been ignored since JDK 24" needs no SLO, because it
-is an observation, not an optimisation.
+```text
+decision/request and owner:
+SLO/SLI, load, business-work denominator and lifecycle:
+target JDK vendor/version/build/architecture and fleet range:
+launcher/image/manifest/options sources and precedence:
+effective command line and runtime flag snapshot:
+collector, heap, compressed-reference/header and compiler state:
+cgroup v1/v2 paths, effective CPU/memory/cpuset and Kubernetes request/limit:
+workload evidence: latency/throughput/errors, GC/JFR/log/OS evidence:
+deployment, startup, shutdown, OOM and rollback constraints:
+```
+
+Missing evidence lowers confidence or changes the next action; it does not justify guessing a flag.
+
+## Evidence precedence and provenance
+
+Use all layers because each answers a different question:
+
+| Layer                                    | Shows                                      | Can miss/mislead                                               |
+| ---------------------------------------- | ------------------------------------------ | -------------------------------------------------------------- |
+| source manifest/env/launcher             | declared intent                            | entrypoint expansion, quoting, admission mutation, later flags |
+| process command line / `VM.command_line` | arguments received                         | ergonomic changes and runtime-manageable values                |
+| `VM.flags -all` / flag origin            | effective values and origin                | application/workload state and some external resource changes  |
+| startup logs/JFR/runtime info            | selected collector, heap/runtime decisions | incomplete settings/window                                     |
+| cgroup/proc/Kubernetes status            | enforced resources and failure state       | JVM's interpretation without correlation                       |
+| workload metrics/traces                  | outcome                                    | configuration cause without runtime evidence                   |
+
+Typical read-only commands, subject to target support and attach policy:
+
+```bash
+java -version
+jcmd <pid> VM.command_line
+jcmd <pid> VM.flags -all
+jcmd <pid> VM.info
+```
+
+Discover commands with `jcmd <pid> help`; impact and output vary by JDK. Preserve exact output,
+timestamp, PID start time, container identity, and JDK build. `VM.flags` does not universally
+“outrank” every source: it complements command-line provenance and resource/workload evidence.
 
 ## Workflow
 
-1. **Pin the target JDK build.** `java -version`, or the base image tag. Every answer
-   below changes by release, so an audit against an assumed release is worthless. If the
-   fleet spans releases, audit against the lowest and the highest and report both — the
-   flags that survive an upgrade are a separate finding from the flags that work today.
-2. **Search for `-XX:+IgnoreUnrecognizedVMOptions` before reading any other flag.** It
-   converts every expired or removed flag on the line from a startup failure into a silent
-   no-op, which means **nothing else on that command line can be assumed to be in effect**.
-   It is exactly the flag someone adds when a copied JDK-8 option stopped the JVM booting,
-   so its presence predicts dead flags elsewhere. If present, this is finding #1 and the
-   rest of the audit is provisional until `jcmd <pid> VM.flags` is produced.
-3. **Classify every flag by lifecycle state** — live, deprecated (warns, still effective),
-   obsolete (warns, value ignored), or expired/removed (JVM refuses to start). Read
-   `references/flag-lifecycle.md`. A flag in the third state is worse than a dead flag: the
-   configuration reads as if it does something.
-4. **For each surviving flag, ask what it buys over the default.** Most do not survive
-   this question. Read `references/flag-cost-and-defaults.md` for the ergonomic defaults
-   by release and for the flags that exist but are near-always a mistake in production.
-5. **Reconcile the JVM's view with the container's**, whenever the artefact is or includes
-   a Kubernetes manifest, or mentions OOMKilled, CPU limits or throttling. Read
-   `references/container-arithmetic.md`. The most common finding in this class is that the
-   JVM sized itself for a machine the pod will never get.
-6. **Apply the gate.** For every change you are about to propose, name the SLO and the
-   measurement. Where either is missing, read `references/missing-measurements.md` and
-   emit the command instead of the flag.
-7. **Prioritise and emit** in the order below.
+1. **Pin builds and deployment variants.** Audit each materially distinct JDK/vendor/architecture,
+   not only the newest developer machine.
+2. **Resolve option composition.** Expand launcher scripts, env variables, image defaults,
+   `JAVA_TOOL_OPTIONS`, `JDK_JAVA_OPTIONS`, service managers, and orchestration mutations. Detect
+   duplicates and ordering.
+3. **Check masking and startup behavior.** Treat `IgnoreUnrecognizedVMOptions` as a material risk,
+   then test questionable options on the exact build without masking in a disposable preflight.
+4. **Classify support and origin.** Live/product, diagnostic/experimental, deprecated, obsolete/
+   ignored, expired/unrecognized, vendor-specific, or unknown. Runtime/source verification beats a
+   copied lifecycle table.
+5. **Reconcile effective runtime state.** Collector, heap min/initial/max, CPU count, GC/compiler
+   threads, compressed references/headers, code cache, native tracking, logging, and manageability.
+6. **Reconcile resources.** Effective cgroup paths/limits/current/events, cpuset, quota/period,
+   Kubernetes request/limit/QoS, node topology, and OOM/throttle history.
+7. **Price every non-default or explicit-default choice.** CPU, memory/headroom, startup/readiness,
+   peak throughput, latency/tail, observability, failure semantics, portability, and operational
+   complexity where relevant.
+8. **Connect the change to an objective and falsifier.** Select the cheapest adequate measurement;
+   use several when hypotheses cannot be separated by one artifact.
+9. **Emit findings and an experiment/rollback.** Do not edit production configuration merely to
+   make the option list shorter.
 
-## Priority order
+## Flag lifecycle and origin
 
-Findings are ranked by how far the running system is from what the artefact claims, then
-by blast radius:
+Lifecycle is release-, vendor-, build-, and sometimes platform-specific. The same spelling can be
+accepted with effect, accepted with warning, accepted but ignored, or rejected. Experimental/
+diagnostic flags may require unlock options; vendor builds can add/remove behavior.
 
-| Rank | Class                                                                                                                                |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| P1   | The JVM will not start, or a flag is accepted and ignored — the written configuration is not the running one                         |
-| P2   | The JVM is running something the author does not believe it is: collector chosen by ergonomics, compressed oops off, wrong CPU count |
-| P3   | A live flag that actively spends something: throughput, headroom, or a failure mode the default handled                              |
-| P4   | A live flag that buys nothing over the default — noise that suppresses adaptation and will become a warning on a later release       |
-| P5   | Missing observability: the measurement that would settle an open question was never configured                                       |
+`-XX:+IgnoreUnrecognizedVMOptions` only masks unrecognized options; it does not make every
+recognized option ineffective. Its presence means static review cannot prove that unknown-looking
+options took effect. Verify each suspicious token on the exact build with masking removed in a
+safe startup preflight and compare effective values/origins.
 
-## Output shape
+An explicit value equal to today's default is not automatically harmful and does not universally
+disable JVM adaptation. It can document intent, pin behavior across releases, alter flag origin or
+ergonomic interactions, or merely add noise. Report the specific consequence rather than “explicit
+default is always a finding.” See `references/flag-lifecycle.md`.
 
-Every finding carries the JDK releases it holds for, **the measurement that would confirm
-it**, and **the measurement that would kill it**. A finding with no falsifier is a
-suspicion; label it as one.
+## Configuration interactions
 
-Use the full block only for findings that change what someone does. Formatting every
-lifecycle triviality this way trains the reader to skim past the one that matters.
+Review options as a constraint system, not independent rows:
+
+- `-Xmx`, RAM percentages, container memory, compressed-reference range, collector structures,
+  direct/native memory, stacks, metaspace, code cache, page cache, and OOM policy share process/
+  cgroup capacity.
+- detected/overridden active processors influence GC, JIT, common-pool and virtual-thread scheduler
+  ergonomics, while quota also controls how much CPU can actually run per period.
+- collector selection and defaults vary by JDK/resource envelope; always read effective collector.
+- fixed initial heap and pre-touch shift commitment/page-fault cost into startup and change RSS,
+  NUMA placement, readiness and rollout concurrency.
+- compilation-level, code-cache, AOT/CDS, and startup flags trade startup resources against later
+  throughput/latency differently by workload and JDK.
+- logging/profiling flags consume CPU/storage and may be essential recovery controls rather than
+  “overhead to remove.”
+
+Avoid hard-coded thresholds such as “31 GB always preserves compressed oops” or “one CPU always
+selects collector X.” Object alignment, heap base, collector, platform, JDK and later releases can
+change the result. Inspect effective heap configuration on the exact target.
+
+## Change gate
+
+Before recommending a performance-affecting change, require:
 
 ```text
-Evidence:       supplied JVM_OPTS, static; no running JVM inspected.
-                "-XX:MaxRAMPercentage=85", no -Xmx. Manifest: node memory 128 Gi,
-                no resources.limits.memory.
-Observation:    a RAM-percentage flag is set explicitly and the heap is unbounded by -Xmx.
-Inference:      setting MaxRAMPercentage makes the JVM disable compressed oops when the
-                resulting heap exceeds the compressed-oops range, instead of capping the
-                heap at it. With no memory limit the base is the node's 128 Gi, so the
-                heap lands near 108 GB — far above the ~32 GB range at the default
-                8-byte object alignment.
-Hypothesis:     this JVM runs with 64-bit references. The live set is larger than the
-                same workload on a 31 GB heap, and GC has more to trace, which is the
-                opposite of the intent behind raising the percentage.
-Recommendation: read usesCompressedOops before changing the number —
-                `jfr view heap-configuration app.jfr`, or `-Xlog:gc+init`.
-                If it is false, the question is whether the workload's live set genuinely
-                exceeds 32 GB, not what the percentage should be.
-Confidence:     LOW
-Reason:         read from a static artefact only. No running JVM, no heap-configuration
-                event, no live-set measurement. The inference depends on the JVM seeing
-                the full node memory, which a limit set elsewhere would falsify.
-Confirms it:    usesCompressedOops = false in jdk.GCHeapConfiguration.
-Kills it:       usesCompressedOops = true — the heap ended below the compressed-oops
-                threshold, so it never reached the size the percentage implies. That
-                says the sizing assumption was wrong, not why: a cgroup memory limit,
-                an -Xmx later on the command line, the JVM seeing less memory than the
-                node advertises, or an explicit -XX:+UseCompressedOops — which on the
-                ergonomic path caps MaxHeapSize at ~32 GB instead of turning compressed
-                oops off. That last one is the trap: measured on 25.0.3, adding the flag
-                to -XX:MaxRAM=128g -XX:MaxRAMPercentage=85 took the heap from 108 GB to
-                30 GB while the artefact still reads MaxRAMPercentage=85. Read
-                MaxHeapSize off the running JVM before choosing between them.
+observed problem and workload window
+mechanism supported by current evidence
+objective and guardrails
+candidate versus status quo/default
+expected direction and minimum useful effect
+experiment unit, rollout cohort, duration and confounders
+abort/rollback criteria
+validation evidence and inconclusive outcome
 ```
 
-## Rules
+A production emergency may justify a reversible risk-reduction change with incomplete evidence.
+Label it mitigation, bound blast radius, preserve evidence, and do not retroactively call it a
+validated optimization.
 
-- **Version-scope every flag claim.** "Removed" without a release number is not a finding.
-  The same flag refuses to start on one release, warns on another, and is silently ignored
-  on a third — that is the point of the lifecycle.
-- **Never quote a performance number without its provenance**: JDK build, hardware,
-  workload, heap size and measurement method. Several widely repeated figures have no
-  published source at all — the throughput cost of `-XX:TieredStopAtLevel=1` and the
-  startup cost of `-XX:+AlwaysPreTouch` among them. For those, state the mechanism, state
-  that the magnitude is unpublished, and name what to measure locally. A number invented
-  to sound concrete is worse than no number.
-- **A flag that restates the default is a finding, not a neutral.** It suppresses the
-  JVM's own adaptation, it survives the release where the default changes, and it makes
-  the real decisions on the line harder to see.
-- **Do not recommend removing a flag whose effect you have not established.** "It looks
-  unnecessary" is a P4 finding with an explicit test, not a change.
-- **`jcmd <pid> VM.flags` outranks the command line.** The artefact says what was passed;
-  only the JVM says what took effect. Where they can disagree — and after step 2 they
-  usually can — say so rather than auditing the text alone.
-- **Emit LOW when the evidence is static.** Most audits are performed on text with no
-  running JVM, and almost every conclusion drawn that way is LOW by construction. A review
-  that reports HIGH on every finding is not calibrated; it has hidden the fact that it
-  read a file rather than a system.
-- **Refuse gracefully.** When the gate blocks the request, give the command, the artefact
-  it produces, and the branch each result leads to. "Profile it" is not an answer; a named
-  command with a named discriminator is.
+## Priority model
+
+Prioritize by realized risk, not flag aesthetics:
+
+| Priority | Finding class                                                                                                        |
+| -------- | -------------------------------------------------------------------------------------------------------------------- |
+| P0       | immediate data/security/safety risk or fleet-wide startup outage                                                     |
+| P1       | startup failure, OOM/kill risk, silent unsupported option, or configuration/runtime mismatch likely causing incident |
+| P2       | material SLO/capacity/reliability trade-off unsupported by evidence; bad resource interaction                        |
+| P3       | upgrade fragility, unnecessary pinning, observability/recovery gap, or uncertain expensive choice                    |
+| P4       | hygiene/documentation issue with no demonstrated runtime consequence                                                 |
+
+Severity, likelihood, exposure, detectability, and reversibility should be stated separately when a
+single priority would hide uncertainty.
+
+## Finding template
+
+```text
+Finding / priority:
+Evidence and provenance:
+Observation (fact):
+Mechanism / inference:
+Production consequence and affected objective:
+JDK/vendor/platform scope:
+Confidence and uncertainty:
+Confirms:
+Falsifies or narrows:
+Recommendation / experiment:
+Guardrails, abort and rollback:
+Owner and follow-up evidence:
+```
+
+Example:
+
+```text
+Finding / priority: P1 — memory headroom is unproven
+Evidence: pod limit 4 GiB; effective MaxHeapSize 4 GiB; no NMT, native/RSS peak, or cgroup events.
+Observation: maximum Java heap equals the cgroup memory limit.
+Inference: heap plus native/non-heap/file-backed resident memory can exceed the limit.
+Consequence: cgroup kill can occur without a Java heap OOME/heap-dump path.
+Scope: this image/JDK/pod class; runtime values captured at T.
+Confidence: high for zero configured headroom; unknown peak non-heap demand and kill likelihood.
+Confirms: memory.current approaches memory.max; memory.events increments; RSS decomposition.
+Narrows/falsifies urgency: measured peak total remains below limit with declared rollout margin.
+Recommendation: measure peak heap/live set and non-heap/native/RSS across lifecycle; size a canary
+with explicit headroom derived from those distributions, then load/failure-test OOM behavior.
+Rollback: restore prior heap/limit if latency, GC, rejection, or memory guardrail regresses.
+```
+
+## Troubleshooting tree
+
+```text
+option appears in manifest but not effective
+  -> quoting/env/entrypoint/admission? inspect received command
+  -> duplicate/later override or ergonomic constraint? inspect origin/effective state
+  -> obsolete/unrecognized/masked/vendor-specific? exact-build startup preflight
+
+pod OOMKilled with no Java OOME
+  -> cgroup limit/event and process RSS peak
+  -> heap commitment/live set versus native/metaspace/code/stacks/direct/mappings/page cache
+  -> rollout concurrency/sidecar/other process and kernel accounting
+
+latency changed after “same” JDK config
+  -> JDK build/default/flag lifecycle changed
+  -> effective CPU/cgroup/collector/heap/compiler state differs
+  -> workload/deployment/lifecycle changed
+  -> collect causal timing evidence before another flag change
+
+startup slower after pre-touch/fixed heap
+  -> expected commitment/page/NUMA cost versus CPU quota and memory bandwidth
+  -> readiness/rollout and RSS policy interaction
+  -> compare startup and steady-state objectives; keep only if trade is favorable
+```
+
+## Anti-patterns
+
+| Anti-pattern                           | Why dangerous                                      | Better alternative                                   | Narrow exception                                |
+| -------------------------------------- | -------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------- |
+| Copy a “production flags” block        | versions/workloads/resources differ                | minimal config plus evidence-backed explicit choices | identical certified appliance image/workload    |
+| Recommend flags from symptom text      | skips mechanism                                    | cheapest discriminating evidence and branch table    | reversible emergency mitigation, labeled        |
+| Trust static manifest                  | misses composition/effective ergonomics            | reconcile command, flags, runtime and cgroup         | pre-deployment review with explicit uncertainty |
+| Remove all explicit defaults           | may erase compatibility intent/interaction         | explain origin and consequence per flag              | mechanical cleanup after exact-build tests      |
+| Set heap as fixed percentage only      | ignores native/live-set distributions              | lifecycle headroom model and canary                  | homogeneous, measured fleet policy              |
+| Increase/decrease GC threads blindly   | trades pause/CPU/progress                          | collector evidence under quota/load                  | bounded incident experiment                     |
+| Treat successful startup as validation | ignored/masked options and bad SLO behavior remain | effective snapshot plus workload/failure test        | syntax-only preflight                           |
+
+## Definition of done
+
+- [ ] Exact target builds/platforms and all option sources are pinned.
+- [ ] Received command, duplicates, masking, support lifecycle, and effective origins are reconciled.
+- [ ] Collector/heap/CPU/compiler/header/code-cache state and cgroup envelope are captured.
+- [ ] Memory, CPU, startup, SLO, failure, deployment, and observability trade-offs are evaluated.
+- [ ] Every material finding separates fact from inference and has confidence plus falsifier.
+- [ ] Recommendations include measurement, practical threshold, guardrails, rollback, and owner.
+- [ ] Claims are scoped; runtime discovery replaces stale default/lifecycle assumptions.
 
 ## References
 
-- [Flag lifecycle matrix](references/flag-lifecycle.md) — the deprecated / obsolete /
-  expired state of the flags that actually turn up in inherited configurations, with what
-  the JVM does today on JDK 21, 25 and 26, and the folklore each row corrects. Read at
-  step 3, for any artefact containing flags.
-- [Flag cost and ergonomic defaults](references/flag-cost-and-defaults.md) — what each
-  commonly-set flag spends, what it buys, and the measurement that would prove it helped;
-  plus the defaults it is competing against by release. Read at step 4, once a flag is
-  known to be live.
-- [Container arithmetic](references/container-arithmetic.md) — how a manifest's `limits`
-  and `requests` become the JVM's processor count, heap and collector, and the one command
-  that settles it. Read at step 5, whenever a container is in scope.
-- [Missing measurements](references/missing-measurements.md) — for each complaint, the
-  single cheapest discriminating evidence, as an exact command, and what its absence means
-  for the audit. Read at step 6, and whenever the request is for flags rather than for a
-  review.
+- [Flag lifecycle and effective-state protocol](references/flag-lifecycle.md)
+- [Flag cost and ergonomic interactions](references/flag-cost-and-defaults.md)
+- [Container and memory arithmetic](references/container-arithmetic.md)
+- [Evidence selection for common requests](references/missing-measurements.md)
+- [JDK 25 `java` command documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
+- [JDK 25 `jcmd` command documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+- [HotSpot VM options source](https://github.com/openjdk/jdk/tree/master/src/hotspot/share/runtime)
+- [Java Virtual Machine specifications](https://docs.oracle.com/javase/specs/)

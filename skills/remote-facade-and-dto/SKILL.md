@@ -45,8 +45,8 @@ DTO              a simple carrier of data across the boundary, shaped by
 
 1. **Start from the caller's use case**, not from the domain model. What does the caller do
    in one interaction? That is one facade operation.
-2. **Count the round trips** for each screen or workflow the caller has. More than one per
-   interaction is the signal to coarsen.
+2. **Count and budget round trips** for each interaction. More than one is not automatically wrong:
+   cacheability, parallelism, reuse, payload size and consistency determine whether coarsening wins.
 3. **Shape the payload from what the caller needs** — not the entity's fields, and not
    everything that might be useful.
 4. **Decide what the boundary owes**: stable field names, documented codes, a version
@@ -61,9 +61,9 @@ DTO              a simple carrier of data across the boundary, shaped by
 ## Decision rules
 
 ```text
-The boundary is remote (HTTP, gRPC, messaging) — any boundary at all
-        → a DTO. The wire shape must be able to change independently of
-          the model, and the model must not be serialised by accident.
+The boundary is remote (HTTP, gRPC, messaging)
+        → an explicit wire schema/type. A dedicated DTO is usual; a stable
+          immutable boundary value or generated message may already be it.
 
 The boundary is a public or partner API
         → DTO, always, plus explicit versioning and documented codes.
@@ -99,7 +99,9 @@ One client needs a screen-shaped payload and others do not
 
 ## Rules
 
-- **A remote interface must be coarser than the local model it fronts.** Ported call for
+- A remote interface normally needs operations coarse enough for its latency and failure budget.
+  Fine-grained operations can be legitimate for streaming, independently cacheable resources or
+  genuinely independent workflows. Ported call for
   call, a local design becomes a chatty remote one, and no serialiser or protocol makes up
   for the round trips (`architecture-and-performance`).
 - **A Remote Facade holds no business logic.** It translates, assembles and delegates. Rules
@@ -122,10 +124,12 @@ One client needs a screen-shaped payload and others do not
 - Do not shape a shared API around one client's screen. That client's UI then owns your
   contract, and the second consumer either gets a bad fit or forces a parallel shape.
   Screen-shaped payloads belong in a BFF (`view-and-representation-patterns`).
-- **Never share a DTO library between services.** It reintroduces compile-time coupling
-  across a boundary whose whole purpose was to remove it, and it forces lockstep upgrades —
-  the defining symptom of a distributed monolith (`distribution-boundaries`).
-- Additive change is compatible; removal and renaming are not. Design the contract so
+- Prefer sharing a language-neutral schema and generating versioned types. A shared DTO artifact can
+  be acceptable within one release train or as generated data-only bindings when consumers may pin
+  old versions; hand-written behavioral types and forced upgrades create lockstep coupling
+  (`distribution-boundaries`).
+- Additive change is often compatible for tolerant readers, but required fields, closed schemas,
+  enums and generated clients can break on additions. Removal/renaming are generally breaking. Design the contract so
   clients tolerate unknown fields, and expand before you contract
   (`rpc-and-api-contracts`).
 - Assemble the payload inside the transaction, from a projection where possible. Assembling

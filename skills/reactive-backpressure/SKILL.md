@@ -34,19 +34,20 @@ linearly with time under load.
 1. **Classify the problem on the right axis first.** Is throughput limited because threads
    or carriers are scarce (concurrency), or because pending work has no ceiling (flow
    control)? The remedies do not substitute for each other.
-2. **Check the three conditions for real backpressure.** A sustained rate mismatch, a need
-   to propagate flow control across a process or protocol boundary, and multiple stages with
-   different sustainable rates. With none of them present, a reactive pipeline is usually
-   the wrong tool. See `references/flow-control-choices.md`.
+2. **Check the workload signals for real backpressure.** A sustained rate mismatch, a need
+   to propagate flow control across a process or protocol boundary, or multiple stages with
+   different sustainable rates each strengthen the case. They are decision signals, not a
+   theorem that all must hold. See `references/flow-control-choices.md`.
 3. **Name the admission-control point.** Something upstream must know how to slow down — a
    `Subscription.request(n)` the publisher honours, a Kafka `pause()`/`resume()`, a
    `Semaphore` before dispatching work. Without one, only an unbounded buffer exists.
 4. **Choose the overflow strategy from the data's semantics**, not from the operator name.
    Losing the newest, the oldest, everything, or failing loudly are four different product
    decisions.
-5. **Isolate every blocking call.** Blocking on a non-blocking scheduler degrades throughput
-   silently and throws nothing. Push it to a bounded elastic scheduler or a dedicated
-   executor, and let BlockHound find the ones review missed.
+5. **Isolate every blocking call.** Reactor's own blocking terminal APIs fail on marked
+   non-blocking threads, but arbitrary JDBC, file or vendor calls may merely stall the event
+   loop. Push them to a bounded elastic scheduler or a deliberately bounded executor, and
+   use BlockHound as a test aid rather than as proof that every blocking path is covered.
 6. **Instrument demand, not just latency.** The requested amount, dropped items and
    protocol violations are the signals that show where flow control is or is not in force.
    See `references/instrumenting-backpressure.md`.
@@ -63,38 +64,44 @@ linearly with time under load.
   `onOverflow` and then **terminates the sequence with an error**. It is not drop-and-
   continue. If drop-and-continue is the intent, pass `DROP_LATEST` or `DROP_OLDEST`
   explicitly, or use plain `onBackpressureDrop()`.
-- Never ship `onBackpressureBuffer()` with no arguments on a hot source. It grows until OOM.
-  Every hot source — Kafka, WebSocket, anything producing before a subscriber exists — needs
-  an explicit overflow strategy.
+- Never place argument-free `onBackpressureBuffer()` after a source that can outpace or
+  ignore downstream demand without proving a finite bound. Hot/cold and backpressure-aware/
+  unaware are different axes: some hot publishers honour per-subscriber demand, while a
+  cold source can still be materialised into an unbounded collection.
 - `doOnDrop` does not exist on `Flux` or anywhere in `reactor-core`, in any version. The two
   real forms are `Hooks.onNextDropped(consumer)` (global, whole process) and
   `onBackpressureDrop(consumer)` (local, this `Flux`). They have different scopes and are not
   interchangeable.
-- Never call `block()` inside a pipeline. Beyond the style objection it can deadlock: the
-  blocked thread may be the one the inner `Mono` needs. Keep the chain asynchronous to the
-  end.
+- Do not call `block()` from an operator callback or a non-blocking scheduler. Reactor rejects
+  its blocking terminal APIs on default `single`/`parallel` threads, and other scheduler
+  cycles can deadlock. A single conversion at an imperative boundary on a virtual or
+  otherwise block-capable thread is a different, explicit interop decision.
 - Never make a blocking call on `Schedulers.parallel()` or a Netty event loop. Wrap it in
   `Mono.fromCallable(...).subscribeOn(Schedulers.boundedElastic())` or a virtual-thread
   executor, and keep `BlockHound.install()` active in test and staging.
 - Do not materialise a sequence that needs end-to-end backpressure. `collectList()` or
   `collect()` before the point where the consumer would apply flow control discards the
   backpressure the source was already honouring.
-- The real Micrometer metrics from `.metrics()` are `%s.subscribed`, `%s.malformed.source`,
-  `%s.requested`, `%s.onNext.delay` and `%s.flow.duration`. `reactor.flow.demand` and
+- The modern `reactor-core-micrometer` metrics from
+  `.tap(Micrometer.metrics(registry))` include `%s.subscribed`, `%s.malformed.source`,
+  `%s.requested`, `%s.onNext.delay` and `%s.flow.duration`; the older `.metrics()` operator
+  is deprecated. `reactor.flow.demand` and
   `reactor.flow.request.size` have never existed — a dashboard querying them matches no
   series, and the silence reads as "no traffic" instead of "wrong metric".
-- A `%s.requested` histogram sitting at `Long.MAX_VALUE` means demand is effectively
-  unbounded and no admission control is in force. A non-zero `%s.malformed.source` is always
-  a bug, never normal operation.
+- A `%s.requested` sample at `Long.MAX_VALUE` means that subscriber requested unbounded
+  demand at the instrumented point. It does not prove the whole system lacks admission
+  control: a broker, connection pool or upstream protocol may still bound it. A non-zero
+  `%s.malformed.source` identifies a Reactive Streams protocol violation at that source.
 - `reactor.util.concurrent.Queues` exposes only `reactor.bufferSize.small` (default 256) and
   `reactor.bufferSize.x` (default 32). `reactor.bufferSize.large` does not exist; setting it
   has no effect and reports nothing.
 - Reactor emits no native JFR events. Bridging backpressure into JFR requires a custom event
   committed inside `Hooks.onNextDropped` — and it is an instant event, so a duration
   threshold does not apply to it.
-- Under `λ > μ` sustained, only admission control at the source both bounds memory and keeps
-  every item. A bounded buffer with a drop policy stabilises output at `μ` with measurable
-  loss; an unbounded buffer only chooses how long until OOM.
+- Under sustained `λ > μ`, source admission is the only in-memory option that both bounds
+  backlog and keeps every item. Durable spill/queueing can preserve data by moving the bound
+  to disk and recovery time; partitioning can raise `μ`; a drop policy accepts measurable
+  loss. An unbounded heap buffer only postpones failure.
 
 ## References
 

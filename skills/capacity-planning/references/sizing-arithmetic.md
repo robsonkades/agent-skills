@@ -1,127 +1,159 @@
-# Sizing arithmetic
+# Sizing Arithmetic
 
-## The two conditions
+Use arithmetic to make assumptions inspectable. Do not use it to infer a latency
+distribution that was not measured.
 
-A candidate instance count `N` is a valid answer only if both hold, and only if `N` is at
-or below the peak `N_max`.
+## 1. Define one workload unit
 
-```
-Condition 1 — throughput:
-    X(N) * utilization_cap >= target_rps
+Let:
 
-Condition 2 — latency:
-    predicted_p99_ms(N, target_rps) <= slo_p99_ms
-```
+- \(\lambda_o(t)\): externally offered work per second;
+- \(\lambda_a(t)\): admitted work per second;
+- \(X_u(t)\): successfully completed useful work per second;
+- \(a_j\): demand on resource/dependency \(j\) per admitted unit;
+- \(C_j\): usable capacity of resource/dependency \(j\) in the same time window.
 
-`X(N)` is the throughput the scalability model predicts for `N` instances. The utilisation
-cap is an operational ceiling above which you do not run regardless of what the latency
-arithmetic permits — 0.70 for synchronous services is the usual default.
+Retries are attempts, not new useful work. If a useful operation makes \(A\) attempts on
+average, attempted rate is approximately \(A\lambda_a\); derive \(A\) from observed
+retry policy and outcomes rather than assuming independence.
 
-An `N` that satisfies both conditions only beyond `N_max` is not a valid answer. It
-contradicts the fit that produced it.
+For a serial resource with stable demand, a necessary condition is:
 
-## N_max, and the direction people get wrong
+\[
+a_j\lambda_a < C_j
+\]
 
-```
-N_max = sqrt((1 - sigma) / kappa)
-```
+This is not sufficient for an SLO: variability, batching, skew, priorities and queue
+topology still matter.
 
-| kappa | N_max (sigma = 0) |
-| ----- | ----------------- |
-| 0.001 | 31.6              |
-| 0.005 | 14.1              |
-| 0.010 | 10.0              |
-| 0.020 | 7.1               |
-| 0.050 | 4.5               |
-| 0.100 | 3.2               |
+## 2. Build the empirical envelope
 
-Coherency sits in the denominator, so `N_max` falls as coherency rises. The intuition
-"more coordination is worse" is right; the numerical direction of "worse" is a _smaller_
-`N_max`, and that only becomes obvious by looking at the formula rather than recalling it.
+For scenario \(s\) and configuration \(c\), define a pass predicate over a complete
+evaluation window:
 
-Worked check: `sigma = 0.05`, `kappa = 0.02` gives `sqrt(0.95 / 0.02) = 6.9` — below 10,
-not in some "10 to 30" band.
+\[
+P_{s,c}(\lambda)=
+P(\text{latency SLO}) \land
+P(\text{error SLO}) \land
+P(\text{resource guardrails}) \land
+P(\text{stable useful throughput})
+\]
 
-## Predicting p99 for a fleet
+If tested point \(\lambda_k\) passes and the next point \(\lambda_{k+1}\) fails, report:
 
-Erlang C with `c` equal to the instance count is wrong whenever coherency is non-zero,
-because M/M/c's benefit comes precisely from assuming the servers are independent — the
-assumption coherency denies. Instead, treat the whole fleet as one aggregated M/M/1
-channel whose service rate is the throughput ceiling the scalability model already
-predicts for that `N`, with the coherency effect baked in:
+\[
+K_{s,c} \in [\lambda_k,\lambda_{k+1})
+\]
 
-```
-rho  = target_rps / X(N)
-t_99 = -ln(0.01 / rho) / (X(N) * (1 - rho))       # seconds of queueing at p99
+provided load increased monotonically and the failure is reproducible. Otherwise report
+the observed points without inventing an interval. Repeat near the boundary and attach a
+confidence interval or run-level distribution to the pass rate.
 
-predicted_p99_ms = p99_at_1_instance_ms + t_99 * 1000
-```
+The configuration is feasible for target demand path \(D_s(t)\) only when its measured
+envelope and transition behavior cover that path. A steady-state QPS comparison cannot
+prove burst feasibility.
 
-Two properties worth stating in any review of this arithmetic:
+## 3. Enumerate configurations and scenarios
 
-- The percentile of a sum is not generally the sum of the percentiles. This composition is
-  a conservative approximation — it tends to overestimate the real p99 slightly, which is
-  the safe side for a provisioning decision.
-- If `target_rps >= X(N)`, the system is unstable at that `N` and the predicted p99 is
-  infinite. Return that, do not clamp it.
+| configuration |       normal peak | rollout | zone/node loss | dependency degraded | burst/recovery |        cost |
+| ------------- | ----------------: | ------: | -------------: | ------------------: | -------------: | ----------: |
+| 6 × 2 CPU     | pass/fail/unknown |       … |              … |                   … |              … | dated basis |
+| 8 × 2 CPU     |                 … |       … |              … |                   … |              … |           … |
+| 4 × 4 CPU     |                 … |       … |              … |                   … |              … |           … |
 
-The right layer for literal Erlang C is _inside_ one instance: how many threads or
-connections that instance needs for its local SLO, given its per-thread service rate.
-Threads sharing one scheduler are far closer to the independence assumption than whole
-instances coordinating over a network. "How many threads per pod" and "how many pods" are
-two different sizing decisions with two different tools.
+Select only among rows that pass all required scenarios. “Unknown” is not “pass.” If a
+model interpolates an untested cell, mark it predicted and validate it before approval.
 
-## Three outcomes, same coefficients
+## 4. Survivorship arithmetic
 
-`sigma = 0.03`, `kappa = 0.002` (so `N_max = sqrt(0.97/0.002) ≈ 22.0`), 4,000 req/s per
-instance, `p99_at_1_instance_ms = 15`, `target_rps = 20,000`, cap 0.70.
+Let replicas be placed across failure domains \(d\), with warm useful capacity
+\(k_{c,d}\) in the target scenario. After failure set \(F\):
 
-| N   | X(N) req/s | X(N) x 0.70 | rho at 20,000 |
-| --- | ---------- | ----------- | ------------- |
-| 10  | 27,586     | 19,310      | 0.725         |
-| 11  | 28,947     | 20,263      | 0.691         |
-| 12  | 30,112     | 21,079      | 0.664         |
-| 13  | 31,100     | 21,770      | 0.643         |
-| 14  | 31,927     | 22,349      | 0.626         |
+\[
+K_{survive}(F)=\sum_{d\notin F}k_{c,d}
+\]
 
-**A — loose SLO (80 ms).** The smallest N meeting Condition 1 is 11 (20,263 >= 20,000).
-At rho = 0.691, `t_99 = -ln(0.01/0.691) / (28,947 * 0.309) ≈ 0.47 ms`, so predicted p99 is
-about 15.5 ms — far inside 80 ms. **Throughput governs**; the SLO never binds.
+Require the **scenario-tested** survivors to support redistributed demand and dependency
+state. Do not compute \(k_{c,d}\) as replicas times a nominal per-pod QPS when load
+balance, shared resources or correlated warmup invalidate linearity.
 
-**B — tight SLO (15.4 ms, i.e. 0.4 ms of queueing budget).** N = 11 already fails: 0.47 ms
-of queueing exceeds the 0.4 ms budget even though Condition 1 passes. At N = 13,
-rho = 0.643 and `t_99 = -ln(0.01/0.643) / (31,100 * 0.357) ≈ 0.375 ms`, which fits. The
-answer is **13, not 11** — **the SLO governs**, costing two instances above the throughput
-minimum.
+For a rollout with \(U\) unavailable replicas and \(S\) surge replicas, account
+separately for old replicas receiving traffic, replicas not ready, ready replicas below
+warm capacity, placement/quota preventing surge and mixed-version effects. “N+2” is a
+topology example, not a universal rule.
 
-**C — impossible SLO (15.2 ms, 0.2 ms of budget).** Even near `N_max ≈ 22`, where `X(N)`
-peaks and rho is at its minimum for this target, `t_99 ≈ 0.281 ms` still exceeds the
-budget. Since `X(N)` decreases past `N_max`, no valid `N` exists. The planner must raise an
-explicit "no N satisfies both" error. The correct action is an architectural change that
-reduces contention and coherency, or a renegotiated SLO — not more instances.
+## 5. Reaction-time and backlog bounds
 
-The three scenarios use identical coefficients and differ only in the SLO. That is the
-whole point: throughput and latency are independent constraints, and a planner that checks
-only throughput gets scenario A right by luck and scenarios B and C wrong in silence.
+For a simplified fluid queue with admitted arrival \(\lambda(t)\) and useful service
+capacity \(\mu(t)\):
 
-## Sanity gates a planner must implement
+\[
+B(t)=\max\left(0, B(0)+\int_0^t[\lambda(u)-\mu(u)]du\right)
+\]
 
-Raise an explicit error — never return a number — when:
+This provides a backlog estimate while an autoscaler reacts. Test whether observed queue
+age stays inside the deadline budget. The model assumes a common fluid queue and
+work-conserving service; partitioning, priorities, abandonment and variable cost require
+simulation or measurement. Do not conclude p99 from \(B/\lambda\).
 
-- the fitted model predicts a peak throughput _below_ a value already measured in the input
-  data (the fit is invalid; do not use those coefficients);
-- the search finds a solution at `N > N_max` (regressive region);
-- no `N` in the valid range satisfies both throughput and SLO;
-- the upstream scalability fit already failed its own sanity gate.
+## 6. Resource-demand checks
 
-A calculator that accepts any result as valid will happily report `N = 28` when the real
-peak is at 17.9.
+For a stable interval:
 
-## Review checklist
+\[
+D_{cpu}=\frac{\text{CPU seconds consumed}}{\text{successful units}}
+\qquad
+X_u \le \frac{C_{cpu}}{D_{cpu}}
+\]
 
-- Fit quality above 0.95 and the peak-prediction gate passed.
-- `N_max` computed and compared against the shape of the raw data.
-- `slo_p99_ms` and `p99_at_1_instance_ms` are measured values, not placeholders.
-- The returned `N` is at or below `N_max` — check the log, not just the return value.
-- The utilisation cap matches the service's load profile rather than a copied default.
-- The hourly cost per instance was passed explicitly at the call site.
+This is a necessary CPU ceiling while demand remains stable. Repeat for database calls,
+connection occupancy time, bytes, broker operations or licence tokens.
+
+Connection concurrency is governed by occupancy:
+
+\[
+L_{db}=\lambda_{db}W_{db}
+\]
+
+where quantities are consistently scoped long-run averages. Include transactions, fan-out,
+retries and hold time.
+
+## 7. USL use and limits
+
+For relative throughput capacity:
+
+\[
+C(N)=\frac{N}{1+\alpha(N-1)+\beta N(N-1)}
+\]
+
+When \(\beta>0\) and \(\alpha<1\), the continuous stationary point is:
+
+\[
+N^*=\sqrt{\frac{1-\alpha}{\beta}}
+\]
+
+It is not an allowed replica count or a safety boundary. Carry coefficient uncertainty,
+evaluate integer neighbors, and validate. Otherwise do not report a finite peak.
+
+Never calculate:
+
+\[
+p99_{fleet}=p99_{single}+\frac{-\ln(0.01)}{\mu-\lambda}
+\]
+
+unless a validated queue model identifies those quantities and their joint composition. A
+fleet is not one exponential server; even valid component percentiles cannot generally be
+added.
+
+## 8. Sanity gates
+
+Reject or qualify a result when:
+
+- offered, admitted and successful load are conflated;
+- workload mix or payload distribution differs from the target;
+- the selected configuration or failure topology was not tested;
+- confidence intervals overlap the decision boundary materially;
+- extrapolation crosses a resource, quota or topology change;
+- headroom double-counts failure reserve, forecast uncertainty and autoscaling reserve;
+- useful throughput falls under overload but attempted QPS is counted;
+- cost excludes warm standby or required failure-domain capacity.

@@ -8,7 +8,7 @@
 | `Consumer<T>`       | `T -> void`    | `accept` | side effect at the end of a chain |
 | `Function<T,R>`     | `T -> R`       | `apply`  | mapping                           |
 | `Predicate<T>`      | `T -> boolean` | `test`   | filtering, matching               |
-| `UnaryOperator<T>`  | `T -> T`       | `apply`  | in-place transformation           |
+| `UnaryOperator<T>`  | `T -> T`       | `apply`  | same-type transformation          |
 | `BinaryOperator<T>` | `(T,T) -> T`   | `apply`  | reduction, merge function         |
 
 Everything else in `java.util.function` is one of these with a prefix:
@@ -50,29 +50,27 @@ into one clear error on the interface.
 
 A lambda is not an anonymous class in disguise. `javac` compiles the body to a private
 synthetic method and emits an `invokedynamic` call site; on first execution the
-`LambdaMetafactory` bootstrap spins the implementing class and links the call site. Practical
+`LambdaMetafactory` commonly links a generated/hidden implementation to the call site; exact
+class generation and caching are runtime details. Practical
 consequences:
 
-- **Non-capturing lambdas are effectively singletons.** With nothing to capture, the metafactory
-  returns the same instance on every evaluation. `list.removeIf(String::isEmpty)` in a loop does
-  not allocate per iteration.
-- **Capturing lambdas allocate per evaluation** — one small object holding the captured values.
-  Escape analysis may scalar-replace it when the lambda does not escape the compiled method;
-  it may equally not. Treat this as "cheap but not free", and hoist a lambda out of a loop when
-  the capture is loop-invariant.
+- **Identity/allocation are unspecified.** HotSpot commonly reuses a non-capturing instance per
+  linked call site and commonly creates an object holding captured values, with possible scalar
+  replacement. Never rely on identity or a fixed allocation count; confirm with allocation and
+  compilation evidence before hoisting loop-invariant functions.
 - **First use has a linkage cost.** Bootstrapping a call site is far more expensive than
   invoking it, and a class with hundreds of distinct lambdas pays that at startup. This is
   visible in short-lived processes, serverless cold starts, and CLI tools; it is one of the
   things AppCDS and AOT caching address (startup-cds-crac-leyden). It is not a reason to avoid
   lambdas in a long-running service.
-- **A polymorphic call site stops inlining.** When one `forEach`/`map` call site receives many
-  different implementations, the receiver type becomes megamorphic and the JIT can no longer
-  inline through it — the multiplier that enables the rest of C2's optimisations
+- **A highly polymorphic call site can inhibit inlining.** Receiver profiles, tier and compiler
+  heuristics determine whether guarded/speculative inlining remains possible
   (jit-inlining-and-escape-analysis). This shows up as a flat profile with time spread across
   interface dispatch, on genuinely hot paths only. Diagnose it with a profile before
   restructuring code around it.
-- **Boxing is usually the larger cost.** `Function<Integer, Integer>` over a million elements
-  allocates two boxes per element; `IntUnaryOperator` allocates none. When a measurement points
+- **Boxing can be the larger cost.** `Function<Integer, Integer>` requires reference boxing and
+  unboxing; caches and escape analysis mean this is not necessarily two allocations per element.
+  `IntUnaryOperator` keeps primitive semantics. When a measurement points
   at allocation pressure in a functional pipeline, this is the first thing to check —
   allocation-profiling shows it directly.
 
@@ -82,16 +80,17 @@ consequences:
   reachable from another thread; the executor's own submission provides the happens-before edge
   for the captured values as of submission, and nothing more. Mutating a captured object after
   submission is a race (java-memory-model).
-- **Request context does not travel with a lambda.** A `ThreadLocal` set on the request thread
-  is not visible inside a lambda running on a pool thread; `ScopedValue` with structured
-  concurrency is the mechanism that does propagate (scoped-values, structured-concurrency).
+- **Request context does not travel merely because code is a lambda.** A `ThreadLocal` is not
+  automatically copied to arbitrary pool tasks. Use explicit context/task wrappers; `ScopedValue`
+  bindings propagate to structured child tasks under the StructuredTaskScope contract, not to
+  unrelated executor submissions (scoped-values, structured-concurrency).
 - **A queued lambda holds its captures until it runs or is discarded.** A bounded queue of tasks
   each capturing a request payload is a bounded memory cost; an unbounded one is a leak with a
   throughput problem in front of it.
 
 ## Reviewing lambda-heavy code
 
-- [ ] No lambda longer than a few lines; longer bodies extracted to named methods.
+- [ ] Lambdas with non-local policy, failure semantics or diagnostic needs are named/extracted.
 - [ ] No captured `AtomicInteger`/array used purely to work around effective finality.
 - [ ] Long-lived lambdas (scheduled, registered, queued) capture only what they need, and do
       not capture `this` unintentionally.

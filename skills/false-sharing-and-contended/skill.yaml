@@ -1,20 +1,14 @@
 schemaVersion: 1
 
 name: false-sharing-and-contended
-version: 1.0.0
+version: 1.1.0
 description: >-
-  Proving and fixing false sharing: hardware-counter evidence, object layout and Compact
-  Object Headers, @Contended mechanics and the two flags it needs, padding strategies and
-  their memory cost, LongAdder and Striped64.Cell internals, and validating the fix under
-  the production thread count. Use when throughput falls or scales sub-linearly as threads
-  are added with high CPU and no I/O wait, when a long array is indexed directly by thread
-  id, when cache-misses or LLC-load-misses are disproportionate to the bytes actually
-  touched, when @Contended produces no measurable change, when a class carries unused
-  p1..p7 padding fields, when a hot AtomicLong is contended, or when
-  -XX:+UseCompactObjectHeaders is weighed for its effect on field adjacency. Not the
-  introductory cache treatment or NUMA (cpu-cache-and-numa), contention on a lock
-  (lock-inflation), thread pinning (numa-and-cpu-affinity), or sizing objects in bytes and
-  what compact headers do and do not save (object-layout-and-footprint).
+  Proving and mitigating cache-line false sharing between logically independent hot writes.
+  Covers ownership and address/layout hypotheses, coherence/HITM evidence limits, JMH topology,
+  arrays and object placement, `@Contended` module/restriction mechanics, grouping and padding,
+  JOL/address validation, manual padding fragility, striping, compact headers, memory cost and
+  cross-socket/NUMA validation. Use after excluding logical contention; cache fundamentals,
+  lock contention and general object sizing have separate owners.
 
 license: Apache-2.0
 
@@ -45,6 +39,11 @@ files:
 dependencies:
   - name: cpu-cache-and-numa
     version: ^1.0.0
+
+suggests:
+  - lock-inflation
+  - lock-free-patterns
+  - object-layout-and-footprint
 
 capabilities:
   - reads-source

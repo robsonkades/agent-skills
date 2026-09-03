@@ -1,103 +1,108 @@
-# Sizing and adoption
+# Sizing and adoption experiments
 
-## The two formulas and which one wins
+## Establish target facts
 
-```
-Little's Law:   L = λ × W          (concurrency needed for the target rate)
-CPU ceiling:    N = N_cpu × U × (1 + W/S)
-```
+Record effective processor count, container CPU quota/period, throttled time, affinity/cpuset, memory
+limit, JDK/vendor/build, stack flags, current executor configuration, offered/completed load,
+service-time distribution, downstream ceilings and failure budgets. `availableProcessors()` is an
+input reported by the runtime, not proof of usable sustained CPU.
 
-The answer is the **smaller** of the two, capped by what the downstream resource can
-actually absorb. Sizing to the larger produces a pool that succeeds at overwhelming
-something else.
+## CPU parallelism sweep
 
-## The utilisation curve
+At representative co-tenancy/data, test parallelism around 1, effective CPUs and modest multiples.
+Measure:
 
-| ρ    | queue wait |
-| ---- | ---------- |
-| 0.50 | ~1.0 × S   |
-| 0.70 | ~2.3 × S   |
-| 0.80 | ~4.0 × S   |
-| 0.90 | ~9.0 × S   |
+- useful completed throughput and latency distribution;
+- process/host CPU and container throttling;
+- runnable queue/context switches;
+- allocation/GC and memory bandwidth/cache/NUMA when relevant;
+- lock/CAS contention and downstream occupancy.
 
-30% headroom is not slack; it is staying on the left of the asymptote.
+Select the smallest parallelism that meets throughput/SLO with recovery headroom. If additional
+threads stop improving throughput, identify the bottleneck before keeping them. CPU pools should
+usually have small/controlled admission queues so stale work does not outlive its deadline.
 
-## Bounded queue with a chosen policy
+## Blocking platform-pool experiment
+
+Measure on-task CPU/service time separately from external wait. A candidate formula such as
+`Ncpu × targetUtilization × (1 + wait/service)` assumes stable averages, independent tasks and a CPU
+bottleneck. Validate a range because correlated waits, long tails, resource caps and burst traffic
+violate those assumptions.
+
+For each size, record queue age, timeout/cancellation, native thread memory, context switching,
+dependency concurrency and useful throughput. Stop before downstream saturation even if local CPU is
+idle.
+
+## Virtual-thread adoption A/B
+
+Compare the same task-per-request code and admission policy using current platform executor versus
+virtual thread per task. Keep client pools/timeouts and load shape controlled. Measure:
+
+- completed throughput and tail latency at rising concurrency;
+- live/queued task and retained heap/thread-local state;
+- scheduler parallelism/pool/mounted/queued estimates (Java 24+);
+- CPU/throttling, native memory and GC;
+- dependency/connection/file descriptor concurrency;
+- cancellation residual work and shutdown drain.
+
+A gain validates removal of platform-thread waiting scarcity only if resource health stays inside its
+envelope. If latency rises because far more calls reach a fixed dependency, add/repair resource-local
+admission instead of pooling virtual threads.
+
+## Bounded production patterns
+
+Application-lifetime executor:
 
 ```java
-// Unbounded queue: not the absence of a limit — the exchange of a fast,
-// diagnosable rejection for a late OutOfMemoryError that loses every
-// pending task with it.
-ExecutorService bad = Executors.newFixedThreadPool(10);
+final class RequestExecutor implements AutoCloseable {
+    private final ExecutorService tasks = Executors.newVirtualThreadPerTaskExecutor();
 
-ThreadPoolExecutor good = new ThreadPoolExecutor(
-    10, 10, 60, TimeUnit.SECONDS,
-    new ArrayBlockingQueue<>(1_000),
-    new ThreadPoolExecutor.CallerRunsPolicy());
-```
+    Future<Response> submit(Request request) {
+        return tasks.submit(() -> handle(request));
+    }
 
-## Thread-per-task, correctly
-
-```java
-// Platform threads: reuse them
-ExecutorService pool = Executors.newFixedThreadPool(50);
-
-// Virtual threads: thread-per-task is the intended model (JEP 444)
-try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {
-    for (Request req : requests) exec.submit(() -> handle(req));
+    @Override public void close() {
+        tasks.close(); // orderly and waiting; deployment grace must cover or escalate externally
+    }
 }
-
-// CPU-bound work: the ceiling is the core count, and that does not change
-ExecutorService cpu = Executors.newFixedThreadPool(
-        Runtime.getRuntime().availableProcessors());
 ```
 
-With virtual threads, "one thread per task" stops being an anti-pattern and becomes the
-recommendation. The inversion is deliberate.
-
-## Naming
+CPU phase isolation:
 
 ```java
-ThreadFactory f = Thread.ofVirtual().name("checkout-", 0).factory();
-ExecutorService named = Executors.newThreadPerTaskExecutor(f);
+// Size by experiment and use explicit bounded admission/rejection in production.
+ThreadPoolExecutor cpu = new ThreadPoolExecutor(
+        cores, cores, 0L, TimeUnit.MILLISECONDS,
+        new ArrayBlockingQueue<>(cpuQueueCapacity),
+        new ThreadPoolExecutor.AbortPolicy());
 ```
 
-An unnamed virtual thread has an empty name and shows as `VirtualThread[#38]/runnable`.
-Name the factory before you need it.
+Resource gate belongs directly around the provider operation, with remaining deadline and exactly-once
+release; see `concurrency-limiting-and-bulkheads`.
 
-## ThreadLocal under virtual threads
+## Thread-local review worksheet
 
-```java
-// Wrong once threads are millions rather than dozens
-private static final ThreadLocal<Connection> CONN =
-        ThreadLocal.withInitial(DriverManager::getConnection);
+For each `ThreadLocal`/`InheritableThreadLocal`, record value size, initialization cost, mutability,
+cleanup, lifetime, inheritance/security implications, projected thread count and reuse expectation.
 
-// Right for a scarce resource: an explicit pool, scoped to use
-try (Connection c = dataSource.getConnection()) { /* ... */ }
+| Intent                                                | Candidate replacement                                           |
+| ----------------------------------------------------- | --------------------------------------------------------------- |
+| immutable dynamic-scope context                       | Java 25 `ScopedValue`                                           |
+| formatter/parser that has immutable modern equivalent | one shared immutable object                                     |
+| expensive mutable reusable helper                     | bounded object pool only if profiling justifies; often redesign |
+| connection/session/transaction                        | operation-scoped resource with deterministic close              |
+| random/scratch tiny state                             | keep only after cardinality/memory review                       |
 
-// Right for immutable per-request context: ScopedValue (JEP 506, final in 25)
-private static final ScopedValue<User> CURRENT = ScopedValue.newInstance();
-ScopedValue.where(CURRENT, user).run(() -> process());
-```
+## Release and rollback
 
-`ScopedValue` replaces `ThreadLocal` as **context**. It does not replace it as a **cache**
-— for that, the answer is a pool.
+Roll out with a concurrency cap and compare canary to control by offered load, not raw instance
+averages. Include rolling overlap in aggregate dependency capacity. Rollback criteria should name
+resource wait, tail SLO, scheduler queue, memory and cancellation residuals. Ensure both old and new
+executor lifecycles drain safely during mixed-version deployment.
 
-## Pre-production checklist
+## References
 
-- [ ] Pool size derived from Little's Law or the CPU ceiling with **measured** λ and W,
-      not inherited from an older configuration
-- [ ] The smallest ceiling on the path identified — and it is the one being sized
-- [ ] Queue bounded, with a consciously chosen rejection policy
-- [ ] `queueSize` and `activeCount` instrumented with alerts (the queue grows _before_
-      latency rises)
-- [ ] Projected peak utilisation below 0.8
-- [ ] Virtual threads: an explicit concurrency limit (semaphore, connection pool) next to
-      **every** scarce resource
-- [ ] Virtual threads: connection pool re-sized, with its own metric
-- [ ] `ThreadLocal` holding expensive objects reviewed — cache became a pool, context
-      became `ScopedValue`
-- [ ] Libraries with blocking JNI/FFM on the hot path identified and isolated on a platform
-      pool
-- [ ] Thread factories named descriptively
-- [ ] Runbooks use `jcmd Thread.dump_to_file`, not `jstack`
+- [Java 25 `Executors`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executors.html)
+- [Java 25 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+- [Java 25 virtual-thread adoption guide](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
+- [Java 25 thread-local guidance](https://docs.oracle.com/en/java/javase/25/core/thread-local-variables.html)

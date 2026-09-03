@@ -28,7 +28,7 @@ aggregate.
 ## The map
 
 ```text
-Provided, complete — use it, do not rebuild
+Mechanism substantially provided — configure before rebuilding
     Front Controller         DispatcherServlet / router
     Unit of Work             JPA persistence context
     Identity Map             first-level cache
@@ -62,8 +62,8 @@ Not provided — you must design it
 
 ## Workflow
 
-1. **Before implementing a pattern, locate it in the map.** If it is in the first group,
-   configure it; do not wrap it.
+1. **Before implementing a pattern, locate it in the map.** If the mechanism exists, compare its
+   actual guarantees and extension points before wrapping or rebuilding it.
 2. **For the second group, separate mechanism from decision.** The framework supplies the
    mechanism; the decision is still yours and is where the value is.
 3. **Check what the framework's version actually guarantees**, not what the pattern
@@ -109,16 +109,18 @@ A pattern appears obsolete
 
 ## Rules
 
-- **Do not wrap a framework abstraction in your own abstraction.** A `CacheService` over the
+- **Do not mechanically wrap a framework abstraction.** A `CacheService` over the
   caching abstraction, a `TransactionService` over `@Transactional`, an `HttpService` over
   `RestClient` — each adds a name, removes features, and will not survive replacing the
-  framework anyway (`enterprise-architecture-smells`).
+  framework anyway unless it narrows capability, owns domain semantics, translates failures or
+  provides a genuine replacement/test seam (`enterprise-architecture-smells`).
 - **Spring Data does not decide your aggregate boundary.** It generates an implementation.
   Which aggregates exist, what the repository's surface is, and whether reads go through it
   remain design decisions and are the whole content of the pattern
   (`repository-pattern`).
-- **The persistence context is a unit of work scoped to the transaction, not to the
-  request** — unless Open Session In View is on, which is a different and worse thing
+- A transaction-scoped persistence context is the common unit-of-work lifetime. Extended contexts
+  and Open Session In View can outlive one service transaction; evaluate their explicit consistency,
+  query and connection behavior rather than calling every longer scope inherently worse
   (`orm-behavioral-patterns`).
 - **The first-level cache is an identity map, not a cache.** It disappears with the
   transaction. Anything that must survive is a second-level cache, with invalidation and
@@ -129,13 +131,15 @@ A pattern appears obsolete
 - **JPA does not require a mutable JavaBean.** It requires a no-arg constructor (which may
   be `protected`) and field access. Setters are a choice, and omitting them is what lets an
   entity protect its invariants (`domain-logic-organization`).
-- Records are the right expression of value objects, DTOs, commands and events — and are
-  **not** the right expression of an aggregate root, which has identity and mutable state by
-  definition. Do not force it.
+- Records are often effective for immutable values, DTOs, commands and events. They are not JPA
+  entities and do not fit aggregates that require in-place mutation/proxying, but aggregate state is
+  not mutable “by definition”; immutable replacement/event-sourced models exist.
 - Sealed interfaces plus exhaustive `switch` give a closed hierarchy with compile-checked
   handling. That is better than a Special Case subclass where callers must distinguish, and
   worse where they must not (`enterprise-base-patterns`).
-- Virtual threads make thread-per-request the sensible default again and change none of
+- Virtual threads make thread-per-task blocking designs competitive for I/O-heavy Java services;
+  they do not make them a universal default. Pinning, native calls, downstream capacity, memory and
+  framework support still decide. They change none of
   these patterns; what they change is the sizing arithmetic around them
   (`thread-sizing-and-virtual-threads`). A pattern that was chosen to avoid blocking a
   platform thread may be worth revisiting; one chosen for a domain reason is not.

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: requirements-and-acceptance
-version: 1.0.0
+version: 1.1.0
 description: >-
   Turning a request into something buildable and checkable before writing code: separating the
   requirement from the implementation someone already chose, finding the ambiguities that

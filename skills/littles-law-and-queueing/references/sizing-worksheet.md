@@ -1,118 +1,159 @@
-# Sizing worksheet
+# Pool, queue and admission sizing worksheet
 
-## Inputs to establish first
+No equation below directly returns a safe executor size. It produces a consistency check, demand
+estimate or model input. The chosen configuration must survive production-shaped load, failure and
+recovery tests.
 
-- `λ_target` — arrival rate at the expected **peak**, not the average.
-- `R` estimated **per component**: `R_total`, `R_db`, `R_http_client` separately.
-- The latency SLO, which fixes the safe utilisation band.
-- A safety factor of 1.2–1.5.
+## 1. Define boundaries and inputs
 
-## Thread pool
-
-```
-N_threads = λ_target × R_total × factor
-```
-
-Then check the resulting utilisation: `N_needed / N_configured ≤ 0.75–0.80`. If it is
-above that band, the pool is sized for throughput and will miss the latency SLO.
-
-That number is the **demand**: how many requests are in flight at the target rate. It says
-nothing about whether the machine can run that many at once, which is the second formula.
-
-## The CPU ceiling, and reconciling it with demand
-
-```
-N_ceiling = N_cpu × U_target × (1 + W/S)
-
-  N_cpu     effective processor count — the container quota (`ActiveProcessorCount`),
-            not the host, minus what GC, JIT and other pools take
-  U_target  the CPU utilisation you are willing to run at (0.7–0.8 for a latency SLO)
-  S         CPU time per request on this pool (service)
-  W         off-CPU time per request on this pool — blocked on I/O, a lock, a downstream
+```text
+λ_offered, λ_admitted, X_completed   rates by outcome and request class
+W_system                              admission-to-terminal mean residence
+R_k / Q_k / S_k                       resource-k residence / queue wait / service time
+V_k                                   visits to resource k per completed transaction
+D_k = V_k S_k                         resource demand per completion
+m_k                                   effective capacity units (cores, connections, workers)
+deadlines and SLO                     include queueing and timeout semantics
+burst/failover model                  magnitude, duration, autoscaling/recovery delay
 ```
 
-Derivation: one thread keeps a core busy for the fraction `S / (S + W)` of its life, so
-`N_cpu × U` busy cores need `N_cpu × U × (S + W) / S` threads. The two limiting cases are
-the ones people quote as rules:
+Use means in Little/demand laws; quantiles do not multiply or add. Preserve distributions for the
+SLO model. Keep the same cohort and clock boundaries on both sides of every equation.
 
-- **CPU-bound (`W ≈ 0`):** `N ≈ N_cpu`. More threads than cores add context switches and
-  cache eviction and reduce throughput; the pool is a bulkhead, not a capacity lever.
-- **I/O-bound (`W ≫ S`):** `N ≈ N_cpu × W/S`, which is why a 4-core service that spends
-  2 ms on CPU and 40 ms waiting on the database runs 60–80 threads at full CPU.
+## 2. Reconcile observed concurrency
 
-Worked, for the same service as above:
+At a stable measured point:
 
-```
-λ_target = 800 req/s, R_total = 200 ms      → demand   N = 800 × 0.200 × 1.25 = 200 threads
-N_cpu = 4, U = 0.75, S = 8 ms, W = 192 ms   → ceiling  N = 4 × 0.75 × (1 + 24) = 75 threads
-
-Demand exceeds the ceiling: the CPU saturates at 75 threads, ρ_cpu = 800 × 0.008 / 4 = 1.6.
-A 200-thread pool does not deliver 800 req/s; it delivers ~375 req/s and a queue that grows for as long as the overload lasts.
-The finding is "CPU capacity", not "pool size".
+```text
+L_system ≈ X_completed × W_system
+L_k      ≈ λ_k × R_k
 ```
 
-Rule: **size the pool at the smaller of demand and ceiling, and when demand is the larger,
-report the ceiling as the capacity limit.** Assumptions the formula depends on, each a way
-it silently goes wrong:
+`L_k` is average work holding or waiting for resource `k`; it is not the configured worker or pool
+maximum. Include multiplicity: if one transaction visits the database twice, `λ_db≈2X` before
+retries/failures. Measure checkout-to-return residence for connections, not just SQL execution.
 
-- `S` is **CPU time**, measured (JFR `jdk.ThreadCPULoad`, or thread CPU time around the
-  request), not wall time minus an estimate. A wall-time `S` counts `W` twice.
-- `W` is time **off** the CPU. A thread that spins, busy-polls or runs a tight retry loop
-  is not waiting; it is `S`. Lock wait counts as `W` only when the lock parks the thread.
-- Requests are homogeneous enough that one `W/S` describes them. A bimodal mix (a 1%
-  report path at 2 s of CPU) needs its own pool; see the utilisation reference.
-- `N_cpu` is what this process actually gets. In a container it is the quota, and GC
-  threads, JIT threads, the common pool and other executors share it; the ceiling is for
-  the sum of all runnable threads, not for one pool.
-- Virtual threads remove the pool but not the ceiling: `N_cpu × U × (1 + W/S)` is still the
-  number of mounted-plus-parked threads the CPU can sustain, and beyond it the carriers
-  saturate. Thread cost and adoption are `thread-sizing-and-virtual-threads`.
+If estimates disagree, check window edges/inventory change, success-only metrics, retries, fan-out,
+clock endpoints and aggregation before adding a “safety factor”.
 
-## Downstream pool
+## 3. Establish resource capacity
 
-Size it with the residence time of _that_ component:
+For `m` equivalent units and mean demand `D` per completion:
 
-```
-N_db = N_threads × (R_db / R_total)
-
-Example: 200 request threads, R_total = 200 ms, R_db = 15 ms
-         N_db = 200 × (15 / 200) = 15 connections
-
-         200 connections would be 13× oversized — and idle connections are not
-         free: memory in the JVM, a backend process on the database server.
+```text
+offered resource load = X × D                  # CPU-seconds/s = cores, for CPU
+utilisation per unit  = X × D / m
+throughput at target utilisation U* = mU* / D
 ```
 
-## The ThreadPoolExecutor growth rule
+`U*` is a decision derived from latency/failure headroom, not a universal 0.75. Effective CPU
+capacity must reflect cgroup quota/cpuset and competition from GC, JIT, kernel and other workloads;
+CPU topology and throttling make “cores” non-equivalent.
 
-`ThreadPoolExecutor` creates a thread beyond `corePoolSize` **only when the queue refuses
-a task**. With a queue bounded at 100, a `(10, 50)` pool stays at 10 threads until 100
-tasks are already waiting. With an unbounded queue it never grows at all, and
-`maximumPoolSize` is dead configuration.
+For blocking platform-thread work, the familiar heuristic
+`threads ≈ mU*(1 + wait/service)` follows from the fraction of time a homogeneous worker consumes
+CPU. Use it only as an initial experiment when wait/service is measured on that pool and does not
+hold a scarcer downstream resource. It fails with mixed classes, asynchronous hand-offs, lock
+convoys, CPU quotas and correlated waits. Sweep worker count under fixed offered load and observe
+throughput, CPU, run queue, queue age, context switches and downstream saturation.
 
-This is why `Executors.newFixedThreadPool` grows its queue to an `OutOfMemoryError`
-instead of rejecting: the queue is a `LinkedBlockingQueue` with no bound.
+Example: `D_cpu=8 ms/request`, effective CPU capacity `m=4`, target `U*=.75` gives
+`X*=4×.75/.008=375 request/s`. If target is 800 request/s, no worker-count formula creates CPU
+capacity; reduce demand, add effective capacity, shed/admit less work, or change the architecture.
+
+## 4. Size downstream permits from its boundary
+
+Start with measured occupancy demand:
+
+```text
+λ_db = X × visits_per_request
+L_db = λ_db × R_checkout_to_return
+```
+
+Then constrain by the downstream's own capacity, SLO and transaction behaviour. Fifteen average
+concurrent checkouts does not imply a pool of fifteen: variability and bursts need headroom, while
+database CPU/locks may make even fifteen excessive. Sweep pool limits while measuring acquisition
+wait, hold-time distribution, database utilisation/locks, throughput, timeout rate and recovery.
+`connection-pool-sizing` owns this decision.
+
+Do not derive `N_db = configured_request_threads × R_db/R_total`; configured threads are not average
+request population, and requests may visit zero or multiple times.
+
+## 5. Give the queue a budget
+
+Queue capacity is an overload policy, not spare throughput. Bound it by the tighter of:
+
+- waiting-time budget before downstream execution can no longer meet the caller deadline;
+- memory/retained-context budget per queued task;
+- burst absorption needed while capacity catches up;
+- fairness/priority and stale-work cancellation requirements.
+
+Measure queue **age** and deadline slack. A count of 100 can be harmless for 1 ms tasks and fatal
+for 10 s tasks. Under sustained `λ>μ`, any finite queue eventually fills; define the admission
+outcome, retry guidance and drain/recovery behaviour before that happens.
+
+## 6. Understand `ThreadPoolExecutor` admission order
+
+For `execute` on a running pool, the implementation conceptually:
+
+1. starts a worker while worker count is below `corePoolSize`;
+2. otherwise offers to `workQueue` and rechecks run state/worker availability;
+3. if the offer fails, tries to add a worker up to `maximumPoolSize`;
+4. rejects if no worker can be added (or if shutting down).
+
+Thus an unbounded queue normally prevents growth beyond core size and makes `maximumPoolSize`
+ineffective. This can deliberately smooth finite bursts, but sustained excess work permits
+unbounded queue delay and memory retention. `Executors.newFixedThreadPool` documents an unbounded
+shared queue; it is safe only when workload/admission bounds prevent uncontrolled growth.
 
 ```java
-// Bounded queue with an explicitly chosen rejection policy
-new ThreadPoolExecutor(
-    50, 50, 0, TimeUnit.MILLISECONDS,
-    new ArrayBlockingQueue<>(500),
-    new ThreadPoolExecutor.CallerRunsPolicy());
+ThreadPoolExecutor executor = new ThreadPoolExecutor(
+    24,
+    24,
+    0L,
+    TimeUnit.MILLISECONDS,
+    new ArrayBlockingQueue<>(queueCapacity),
+    threadFactory,
+    rejectionHandler);
 ```
 
-`CallerRunsPolicy` throttles by occupying the producer, not by blocking it. Accept that
-the calling thread stops doing its own work, that task ordering is no longer guaranteed,
-and that an event loop or I/O thread would be blocked by it. In an HTTP server with an
-external producer, rejecting with `429` is usually the better trade.
+Values are deliberately symbolic. A fixed pool makes concurrency ownership clearer than relying
+on queue-full expansion, but is not universally preferable.
 
-## Validation in production
+## 7. Choose overload semantics
 
-- `N ≈ λ × R` reconciles from three independently measured numbers.
-- Steady state confirmed before any number is reported.
-- Thread state from `jcmd <pid> Thread.dump_to_file -format=json` (`jstack` does not list
-  virtual threads).
-- Connector MBeans: `currentThreadsBusy / maxThreads` below 80% in normal operation.
-- HikariCP MBeans: `ThreadsAwaitingConnection` consistently at 0.
-- `SQLTransientConnectionException` tracked as a saturation metric, not only as an error.
-- Queue depth (`workQueue.size()`) instrumented — it grows _before_ latency rises, which
-  makes it the earlier signal.
+| Policy                        | Useful when                                                      | Failure mode to test                                                                            |
+| ----------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Reject immediately            | caller can retry elsewhere/later and overload must be bounded    | retry storm, wrong 429 vs 503 semantics, lost idempotency context                               |
+| Timed admission               | short bursts are valuable within remaining deadline              | submitter blockage, timeout races, work admitted after caller cancellation                      |
+| `CallerRunsPolicy`            | trusted producer may safely execute task and feedback is desired | event-loop/acceptor blockage, reentrancy, priority inversion, ordering relative to queued tasks |
+| Drop/replace/coalesce         | latest-state or sampling work where every item is not required   | silent data loss, fairness and observability                                                    |
+| Separate bulkheads/priorities | classes have distinct criticality/cost                           | starvation, unused reserved capacity, cross-resource bottleneck                                 |
+
+HTTP `429` means rate limiting; `503` more often represents temporary capacity unavailability.
+Protocol semantics, idempotency and `Retry-After` determine the correct response. Cancellation must
+remove or cheaply skip stale queued work.
+
+Virtual threads remove the need to pool threads merely because they are expensive, but not the
+need to bound downstream permits, queued work and CPU demand. Parked virtual threads consume memory
+and retain context; mounted runnable work still competes for carriers. See
+`thread-sizing-and-virtual-threads`.
+
+## 8. Validate in production-shaped tests
+
+- Reconcile `L≈λW` at each boundary with start/end inventory and outcome counts.
+- Observe offered/admitted/completed/rejected/timeout/cancel rates, queue depth **and age**.
+- Record active workers/permits, service demand, hold time, utilisation and dependency saturation.
+- Exercise cold start, burst, sustained overload, dependency slowdown, failover, shutdown and
+  recovery/drain.
+- Verify deadlines propagate and abandoned work stops consuming scarce capacity.
+- Compare several pool/queue settings under the same open workload; report uncertainty and the
+  chosen headroom rationale.
+
+## Sources
+
+- [Oracle JDK 25 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+- [Oracle JDK 25 `Executors`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executors.html)
+- [Oracle JDK 25 `BlockingQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/BlockingQueue.html)
+- [Oracle JDK 25 `ThreadMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadMXBean.html)
+- [Little, “A Proof for the Queuing Formula: L = λW”](https://doi.org/10.1287/opre.9.3.383)

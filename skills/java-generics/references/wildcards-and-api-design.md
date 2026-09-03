@@ -4,12 +4,12 @@
 
 For a parameter of a generic type, ask what the **method** does with it:
 
-| The method…              | Parameter type           | Callers may pass                        |
-| ------------------------ | ------------------------ | --------------------------------------- |
-| only reads T out of it   | `? extends T` (producer) | `List<T>` and `List<`subtype of T`>`    |
-| only puts T into it      | `? super T` (consumer)   | `List<T>` and `List<`supertype of T`>`  |
-| both reads and writes    | plain `T`                | `List<T>` only                          |
-| ignores the element type | `?`                      | any list; nothing but null can be added |
+| The method…              | Parameter type           | Callers may pass                                  |
+| ------------------------ | ------------------------ | ------------------------------------------------- |
+| only reads T out of it   | `? extends T` (producer) | `List<T>` and `List<`subtype of T`>`              |
+| only puts T into it      | `? super T` (consumer)   | `List<T>` and `List<`supertype of T`>`            |
+| both reads and writes    | plain `T`                | `List<T>` only                                    |
+| ignores the element type | `?`                      | any list; no non-null element can be added safely |
 
 ```java
 public void addAll(Collection<? extends Payment> source) { ... }   // reads from source
@@ -24,12 +24,11 @@ which is why the JDK's own signatures (`Collections.copy`, `Stream.forEach`,
 
 Two corollaries:
 
-- **Never put a wildcard in a return type.** It propagates: every caller must then either use
-  `var`, declare a wildcard themselves, or cast. Returning `List<Payment>` from a method
-  taking `List<? extends Payment>` is the normal shape.
-- **A type parameter appearing exactly once in a signature has nothing to relate**, so it can
-  be a wildcard instead. `void print(Collection<?> c)` is clearer than
-  `<T> void print(Collection<T> c)`.
+- **Usually avoid wildcards in return types.** They propagate complexity, but APIs intentionally
+  returning an unknown subtype (`Class<? extends Annotation>`, covariant views) can require them.
+- **A type parameter appearing only in one parameter and nowhere else often has nothing to
+  relate**, so it can be a wildcard. Count bounds, return type, throws clauses and other parameters
+  before applying this heuristic.
 
 ## Capture: when the wildcard has to become a name
 
@@ -104,10 +103,10 @@ much.
 
 ## Generifying an existing API
 
-Erasure means adding type parameters keeps **binary** compatibility: already-compiled callers
-keep working, because the erased signatures are unchanged. It does not keep **source**
-compatibility for callers that used the raw type — they now get unchecked warnings, and any
-that relied on the raw looseness may stop compiling.
+Adding type parameters often keeps **binary** compatibility when erased descriptors and required
+bridge methods remain compatible. Raw source callers often still compile with warnings, but
+source/binary behavior can change through bounds, erasure clashes, overload resolution, return
+inference and bridges. Verify with old binaries and source rather than inferring compatibility.
 
 The staged approach the JDK itself used:
 
@@ -125,8 +124,8 @@ implementor must otherwise change at once.
 
 - [ ] No raw types outside class literals and `instanceof`.
 - [ ] Every parameter's variance matches the direction data actually flows.
-- [ ] No wildcard in a return type.
-- [ ] Type parameters used more than once; single-use ones replaced by wildcards.
+- [ ] Return wildcards have a deliberate covariance/unknown-subtype reason.
+- [ ] Single-parameter-only type variables are replaced by wildcards when no relationship is lost.
 - [ ] Bounds are `? super` where inheritance of the bound is plausible.
 - [ ] Callers can pass the collections they already hold, without copying or casting.
 - [ ] The signature is readable aloud. Three nested wildcards mean the design, not the

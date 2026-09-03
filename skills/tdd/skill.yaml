@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: tdd
-version: 1.0.0
+version: 1.0.1
 description: >-
   Test-driven development as a judgement call rather than a doctrine: the red-green-refactor
   loop and what each step is actually for, the discipline of watching a test fail for the

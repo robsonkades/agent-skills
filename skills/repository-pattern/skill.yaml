@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: repository-pattern
-version: 1.2.0
+version: 1.3.0
 description: >-
   The repository as a collection-like boundary over aggregates: what belongs behind it, why
   there is one per aggregate root and not one per table, where queries and read models sit
@@ -41,7 +41,7 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
+dependencies: []
 
 suggests:
   - architecture-and-performance

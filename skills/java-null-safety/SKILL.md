@@ -32,32 +32,56 @@ said whether null was allowed.
 2. **Declare the default.** Under JSpecify, `@NullMarked` on the package or module makes
    non-null the default and `@Nullable` the marked exception. An unannotated codebase has
    the contract backwards: everything is implicitly a question.
-3. **Validate where trust changes.** `Objects.requireNonNull(x, "x")` in constructors and
-   public entry points — with the name in the message. Do not re-check on every private
-   hop; inside the boundary the contract holds and re-validation is noise.
+3. **Enforce where ownership/trust changes.** Constructors establish their own invariants;
+   adapters validate external values; public APIs enforce documented non-null preconditions.
+   Remove interior checks only when every construction/call path proves the contract.
 4. **Fence the leaks.** Deserialised DTOs, ORM relations, `Map.get`, array slots and
    varargs all deliver null regardless of your annotations. Convert to your contract at
    the boundary, once.
-5. **Verify.** A checker (NullAway, Error Prone, IntelliJ analysis) wired into the build,
+5. **Verify.** A checker (for example NullAway under Error Prone) wired into the build,
    and a test feeding null through each boundary asserting it is rejected or normalised
-   there — not deeper.
+   there—not deeper. Pin checker/compiler versions and test generics, arrays, overrides and
+   unannotated dependencies because JSpecify support is not identical across tools.
 
 ## Rules
 
-- Every public constructor and entry point rejects the nulls it cannot accept, by
-  `requireNonNull` with the parameter name. In records this belongs in the compact
+- Public constructors and entry points reject values their contract marks non-null, preferably at
+  entry with a stable field/error identifier. In records this belongs in the compact
   constructor; `List.copyOf` rejects a null list and null elements in the same move.
 - Return `List.of()` / `Map.of()` / `Set.of()` for "nothing", never null. A null
   collection forces every caller into a check that an empty one makes unnecessary.
 - Never claim an annotation prevents anything at runtime. `@NullMarked` without a checker
   in the build is documentation; with one, it is a compile-time contract. Say which.
 - `Map.get` returns null for both "absent" and "mapped to null" — resolve it with
-  `getOrDefault` when a default exists, or collapse both to absence with
-  `Optional.ofNullable` at the API edge; only `containsKey` truly distinguishes, and
-  on a concurrent map even that is a race, not a check.
-- Null for absence must not cross a public API: return an empty collection, an Optional
-  (java-optional owns that API), or throw. Null inside a private scope, immediately
-  checked, is fine — locality is what makes it safe.
+  `getOrDefault` when only absence should select a default (an explicitly mapped null remains
+  null), or collapse both to absence with `Optional.ofNullable` at the API edge. Only
+  `containsKey` distinguishes on a stable nullable map; separate calls race under concurrent
+  mutation. `ConcurrentHashMap` forbids null keys/values, making a single `get` unambiguous.
+- Prefer empty collections and Optional/result/domain failures where they communicate absence well.
+  An explicitly `@Nullable` public return is still a valid Java/JSpecify contract when framework
+  conventions, hot-path cost or migration compatibility justify it; callers and overrides must be
+  checked consistently. Unannotated ambient null is the defect, not every nullable API.
+- Nullness has positions: `String @Nullable []` marks the array reference nullable, while
+  `@Nullable String[]` places nullability on its element type; generic element nullness likewise
+  differs from container nullness. Use JSpecify type-use syntax accepted by the chosen checker and
+  add compile tests for published signatures.
+- Override contracts are directional: an implementation must not reject null accepted by its
+  supertype, and may return a non-null value where the supertype permits null. Run the checker on
+  both declarations; framework-generated subclasses and unannotated bytecode can hide violations.
+- Primitive DTO fields cannot represent “missing” separately from zero/false when a binder applies
+  Java defaults. Use boxed/raw DTO fields, required-creator semantics or presence tracking at the
+  wire boundary, then convert to primitives after validation.
+
+## NPE diagnosis
+
+1. Read the helpful-NPE expression and full stack, but treat the dereference as the symptom—not
+   necessarily the producer.
+2. Trace assignments/returns back to the first nullable or unannotated boundary; classify absence,
+   invalid input or lifecycle state.
+3. Fix the producer contract/conversion and let the checker identify affected paths; avoid a local
+   `if (x != null)` that silently drops required work.
+4. Add a boundary regression and a compile-time nullness fixture. Verify logs/errors do not expose
+   sensitive object contents while diagnosing.
 
 ## References
 

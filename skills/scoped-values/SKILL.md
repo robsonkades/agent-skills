@@ -21,11 +21,13 @@ description: >
 
 Carry per-request context — tenant, principal, correlation id, deadline — to indirect
 callees without a parameter on every method, and without the three defects of
-`ThreadLocal`: unconstrained mutation, unbounded lifetime, and expensive inheritance.
+`ThreadLocal`: unconstrained mutation, lifetime that must be cleared manually, and expensive
+`InheritableThreadLocal` inheritance.
 
-The failure this prevents is subtler than a leak. `ThreadLocal` under a pool is a value that
-outlives the task that set it; under virtual threads it is a value that is copied per thread
-when threads number in the millions. `ScopedValue` makes the lifetime syntactic: the binding
+The failure this prevents is subtler than a leak. `ThreadLocal` under a pool can outlive the
+task that set it; under virtual threads, every thread that sets a value owns an entry, so
+per-thread state can multiply dramatically. Only inheritable thread-local maps are copied
+when child threads are created. `ScopedValue` makes the lifetime syntactic: the binding
 exists for the duration of one `run`/`call` and cannot be changed from underneath.
 
 ## Workflow
@@ -61,15 +63,17 @@ exists for the duration of one `run`/`call` and cannot be changed from underneat
   different mechanism.
 - `get()` on an unbound value throws `NoSuchElementException` — deliberately, rather than
   returning null. Use `orElse(default)` where absence is legitimate, `isBound()` to branch,
-  and `orElseThrow(...)` for a domain-specific failure. `orElse` **does not accept null** as
-  of the final API.
+  and `orElseThrow(...)` for a domain-specific failure. Both `where(KEY, null)` and
+  `orElse(null)` are legal in Java 25, so `get() == null` does **not** imply "unbound"; avoid
+  null bindings when absence must stay distinguishable.
 - **Inheritance happens only through `StructuredTaskScope.fork`.** A thread started with
   `Thread.ofVirtual().start(...)`, a task submitted to an `ExecutorService`, a
   `CompletableFuture` stage and a `@Async` method all see **nothing**. There is no
   `InheritableScopedValue`.
-- Inheritance is by reference, not by copy: a scope with a thousand subtasks shares one
-  binding. That is the cost argument against `InheritableThreadLocal`, which copies per
-  child thread.
+- The bound value is shared by reference. The reference implementation inherits the binding
+  set essentially by copying a pointer rather than copying an inheritable-thread-local map.
+  This is why immutable values are the default; a mutable referent still requires ordinary
+  synchronization.
 - `ThreadLocal` is not deprecated and not an anti-pattern. The JDK uses it. Keep it for a
   genuine per-thread cache with a bounded number of threads, and for interop with any API
   that reads one — which is most frameworks.
@@ -78,9 +82,10 @@ exists for the duration of one `run`/`call` and cannot be changed from underneat
 - Reading is fast — comparable to a local variable, with a small per-thread cache — but that
   is an implementation property, not a specification. Do not design around it; do not
   measure a micro-benchmark of `get()` and conclude anything about the application.
-- Under virtual threads the memory argument matters in the direction people forget: a
-  `ThreadLocal` holding 1 KB across a million virtual threads is a gigabyte, while one
-  `ScopedValue` binding shared by a million subtasks is one object.
+- Under virtual threads, reason from retained state rather than slogans: a 1 KB object set
+  in each of one million live virtual threads retains roughly 1 GB of payload before map and
+  object overhead, while one immutable object bound through a structured subtree is shared.
+  Measure live-thread count and retained heap; not every `ThreadLocal` is set on every thread.
 
 ## References
 

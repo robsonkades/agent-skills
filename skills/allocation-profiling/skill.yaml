@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: allocation-profiling
-version: 2.0.0
+version: 2.1.0
 description: >-
   Finding which code allocates and how many bytes: TLAB fast path and slow path, JFR
   jdk.ObjectAllocationSample versus the legacy TLAB events, async-profiler alloc mode,

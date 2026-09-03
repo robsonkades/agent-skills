@@ -89,16 +89,16 @@ which case say it is verified by review rather than pretending otherwise.
 
 ## Definition of done
 
-The standing list that applies to every change, agreed once so it is not renegotiated per
-ticket. A realistic one:
+The standing policy that defines default expectations, with explicit applicability rules so a
+documentation edit is not forced to invent a migration or runtime signal. A realistic one:
 
 - [ ] Acceptance criteria met, each with a test or a stated reason there is none
 - [ ] Gates appropriate to the change's risk pass (quality-gates)
-- [ ] Failure behaviour implemented, not just the happy path
-- [ ] Migration applies to existing data, and rollback is described
-- [ ] The change is observable: a log line, metric or trace for the new failure mode
+- [ ] Failure behaviour implemented where the change introduces or alters a failure mode
+- [ ] For data/schema changes, migration applies to existing data and recovery/rollback semantics are described
+- [ ] For operational behaviour, existing telemetry covers the new failure mode or new telemetry is added
 - [ ] Assumptions and out-of-scope items recorded in the description
 - [ ] Reviewed (code-review)
 
-The value is in it being _standing_. A definition of done rewritten per ticket is a
-negotiation, and under pressure the negotiation always removes the same three items.
+The value is in stable defaults plus visible exceptions. Tailoring by applicability is not waiving
+quality; silently deleting a relevant control under deadline is.

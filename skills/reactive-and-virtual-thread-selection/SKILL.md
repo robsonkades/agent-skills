@@ -64,19 +64,22 @@ Request/response with blocking clients (JDBC, most SDKs, existing code)
           try/catch, and a stack trace that names the request.
 
 Millions of mostly-idle connections on one process
-        → measure. A parked virtual thread's stack is heap; a subscription's
-          state is smaller. At ~10k connections the difference is noise; at
-          1M it can decide the machine size.
+        → measure. A parked virtual thread's stack is heap and a reactive
+          subscription has its own operator/context state. Either can decide
+          machine size at high cardinality; no universal crossover exists.
 
 CPU-bound work
-        → neither. The ceiling is the core count. A fixed pool or ForkJoinPool.
+        → bound parallelism near available CPU. Either API can orchestrate it,
+          but virtual-thread cardinality and reactive demand do not add cores;
+          compare a fixed pool, ForkJoinPool, batching and vectorisation.
 
 An existing reactive system that works, with a team that understands it
         → keep it. "Virtual threads exist" is not a defect report.
 
 A new service, blocking dependencies, ordinary request/response
-        → virtual threads. This is now the default, and the burden of proof
-          has moved to whoever proposes the reactive alternative.
+        → virtual threads are a strong default candidate when the framework,
+          libraries and team support them. Retain reactive when end-to-end
+          demand, existing investment or streaming composition outweighs it.
 ```
 
 ## Rules
@@ -91,12 +94,14 @@ A new service, blocking dependencies, ordinary request/response
 - Thread-per-request has backpressure only where a bounded resource exists. Under a platform
   pool that was the pool; under virtual threads it must be declared explicitly
   (`concurrency-limiting-and-bulkheads`).
-- **Blocking inside a reactive pipeline is the worst of both models** and the single most
-  damaging mistake in this space: it stalls an event loop serving many connections. Reactive
-  code inside a virtual thread is merely pointless, not harmful.
-- The models are not equally diagnosable, and it is fair to weigh that: a thread dump answers
-  "what is this request doing" under thread-per-request and cannot answer it under a
-  pipeline, where the request is a set of operator states with no owning thread.
+- Blocking on an event-loop/non-blocking scheduler combines the models' failure modes: it
+  stalls a thread serving many connections. A reactive client called from a virtual thread
+  is not inherently pointless; make one deliberate conversion at the boundary and avoid
+  alternating `block`/resubscribe layers down the call graph.
+- The models expose different diagnostic evidence. A thread-per-request dump often preserves
+  a request stack; an asynchronous pipeline usually requires assembly checkpoints,
+  correlation context, scheduler metrics and traces because no thread owns the request for
+  its whole lifetime.
 - Neither model changes the downstream. A connection pool of 20, a vendor quota of 600
   requests per minute, or a database that saturates at 4 000 IOPS bound both identically.
   Migrations that report a 10× improvement usually moved the queue, not the ceiling.

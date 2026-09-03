@@ -9,9 +9,10 @@
 | **Node agent (DaemonSet)**     | The signal is already at the node boundary (stdout, cgroup, host) and the rules are uniform | One agent's failure affects every pod on the node; usually needs host access; per-workload rules get awkward |
 | **Change the application**     | You own the code and the format will keep changing                                          | One release now, nothing recurring — the only option whose cost does not compound                            |
 
-Order of preference for a fleet you own: change the app, then in-process, then node agent,
-then adapter sidecar. The order inverts only for workloads you cannot rebuild — which is
-exactly the case the adapter exists for, and exactly the case people generalise from.
+There is no universal order. For code you own, changing the producer or using in-process
+instrumentation usually minimizes recurring translation cost. A node agent wins for uniform
+node-boundary signals; a sidecar wins when isolation, per-workload rules or pod identity justify
+the per-replica cost. Record the selecting constraint.
 
 ## Metrics: the honest counterexample
 
@@ -48,8 +49,9 @@ age of the sample is exported alongside it.
 | **App writes a file to `emptyDir`; sidecar tails**     | Sidecar reads the shared volume, parses, ships                     | The app can only log to files, or one pod's volume is large enough to hurt a shared agent | The volume fills; ephemeral-storage eviction of the pod; a shipper per replica         |
 | **App ships logs itself**                              | An appender writes straight to the log backend                     | Rarely — an in-app network dependency on the log backend                                  | Log backend outage becomes application latency, and buffering becomes heap             |
 
-The default answer for a fleet is the first row, and the reason is arithmetic: a shipper at
-64–256 MiB per pod, times every replica, against one agent per node. The sidecar form is
+The default answer for ordinary container logs is usually the first row, and the reason is
+arithmetic: measured shipper memory per pod times every replica, against measured agent memory
+per node. Do not substitute a generic memory range for profiling your configuration. The sidecar form is
 justified by a specific inability — no stdout, per-pod rules, or a pod whose volume genuinely
 would degrade the shared agent — and that justification should be written in the manifest as a
 comment, because the next person will otherwise copy it.

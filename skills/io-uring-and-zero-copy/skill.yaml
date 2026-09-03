@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: io-uring-and-zero-copy
-version: 1.1.0
+version: 1.2.0
 description: >-
   Reducing the cost of moving bytes through a JVM process: sendfile and
   FileChannel.transferTo, mmap and MappedByteBuffer, direct versus heap buffers at the

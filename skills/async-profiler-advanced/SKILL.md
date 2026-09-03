@@ -1,115 +1,214 @@
 ---
 name: async-profiler-advanced
 description: >
-  async-profiler beyond `-e cpu`: the perf_events, ctimer and itimer engines and what each
-  can and cannot see, the wall engine's thread coverage, hardware PMU counters, multi-event
-  JFR output, `jfrconv` conversions and native differentials, and reading broken or
-  truncated stacks. Use when a flame graph is empty or dominated by idle, when `-t` is
-  believed to control which threads are sampled, when `perf_event_open` is blocked in a
-  container, when `--cap-add=SYS_PTRACE` did not fix profiling, when `[unknown_Java]` frames
-  appear, when a differential flame graph comes out entirely one colour, when a runbook
-  still says `profiler.sh`, or when combining CPU, alloc and lock in one recording. Does not
-  cover choosing which profile to take or the capability ladder for granting access
-  (jfr-and-async-profiler), reading the resulting graph and its differentials
-  (flame-graph-analysis), or configuring the JFR engine itself (jfr-advanced).
+  Operating async-profiler as an evidence instrument: choosing CPU, ctimer, itimer,
+  wall-clock, allocation, lock, native-memory, trace, and PMU events; proving attach and
+  perf-event access; bounding sampling and instrumentation bias; preserving virtual-thread,
+  native, kernel, and time context; and validating conversions and differentials. Use when
+  profiles are empty, idle-heavy, truncated, permission-blocked, containerized, multi-event,
+  or sensitive to async-profiler/JDK version. Does not own initial profiler selection
+  (jfr-and-async-profiler), visual interpretation (flame-graph-analysis), or JDK Flight
+  Recorder configuration (jfr-advanced).
 ---
 
 # Async-Profiler Advanced
 
 ## Purpose
 
-Choose the sampling engine that can answer the question in the environment you actually
-have, and know what the answer omits. The engines differ in where the signal comes from,
-how fairly it reaches threads, whether kernel frames survive, and which syscalls the
-container allows — not in whether they suffer safepoint bias. All of them avoid it, by
-construction.
+Choose a collection mechanism whose signal corresponds to the engineering question, prove
+what the runtime actually enabled, and state what the recording cannot establish. An
+async-profiler file is a sample of selected events under a particular stack walker, filter,
+rate limit, and access envelope—not a complete account of elapsed time.
 
-The failure this prevents is the mental model that reads an engine flag as something it
-is not: concluding that `-e wall` without `-t` does not see blocked threads (it does),
-that `SYS_PTRACE` unblocks `perf_events` (it does not — different mechanism), or that a
-narrow frame in a few-thousand-sample profile is a finding.
+Async-profiler evolves quickly. Pin its release, keep the matching binary and converter, run
+`asprof -v`, `asprof list <pid>`, and `asprof --help`, and consult that tag's documentation.
+Never make a runbook depend on `master`, a historical option name, or an assumed fallback.
 
-## Workflow
+## Ownership boundary
 
-1. **Characterise the symptom before choosing an engine.** High CPU → `cpu` (or `ctimer`
-   where `perf_events` is unavailable). High latency with low CPU → `wall -t`. Frequent
-   GC → `alloc`. Suspected contention → `lock`. Suspected JNI contention →
-   `--nativelock`.
-2. **Confirm the tool.** `asprof -v`; the 3.x series and later ship the single native
-   `asprof` binary. A runbook naming `profiler.sh` is describing a pre-3.0 distribution.
-3. **Pick the engine by what the environment permits**, then record what that costs.
-   `ctimer` gives up kernel stacks and jiffy-level resolution; `itimer` additionally gives
-   up fair per-thread signal distribution.
-4. **Always pass `-t` when the application has more than one thread role.** It appends a
-   thread frame to each stack — a labelling operation. Without it, "60% in `park`" cannot
-   be attributed to the idle HTTP pool or to the starved processing pool.
-5. **Profile for at least 60 seconds under representative load**, longer for intermittent
-   patterns, with only one profiling session per JVM.
-6. **Record multiple events in one JFR file** when the question spans engines, then split
-   with `jfrconv`. HTML and collapsed hold one event type per session.
-7. **Check the sample count of a frame before making any quantitative claim about it**,
-   and confirm the direction against a business metric. A flame graph shows where, not
-   how much.
+- Use `jfr-and-async-profiler` to choose the least-privileged first instrument.
+- Use this skill to configure and validate async-profiler itself.
+- Use `flame-graph-analysis` to reason from stack aggregates and differentials.
+- Use `allocation-profiling`, `concurrency-diagnostics`, and `off-heap-memory` for the owning
+  diagnosis once the event identifies the domain.
+- Use `ebpf-for-jvm` when the question is system-wide or cannot be answered from the JVM
+  process alone.
 
-## Rules
+## Start with a question contract
 
-- `-e wall` samples **all** threads — running, sleeping and blocked — by definition of the
-  mode. `-t` does not change who is sampled, only how the output is grouped.
-- `cpu`, `itimer`, `ctimer` and `wall` all avoid safepoint bias. Never explain a
-  difference between them by invoking it; the real differences are signal origin,
-  per-thread fairness, kernel stacks and resolution.
-- `-e cpu` is the only engine that returns kernel stacks, and the only one that consumes
-  a file descriptor (plus an 8 kB mmap) per thread. When `perf_event_open` fails it falls
-  back **silently** to `ctimer`, then to `wall` (`Profiler::selectEngine`): a CPU profile
-  with no kernel frames on a host that should have them is the tell.
-- `kernel.perf_event_paranoid` governs unprivileged `perf_event_open`: ≤ 1 kernel stacks,
-  2 (upstream default) user-space only, 3 (Debian/Ubuntu patch) nothing. async-profiler
-  does not retry user-only on its own — pass `--all-user` at 2, `--fdtransfer` or `-e
-ctimer` at 3. `CAP_PERFMON` (5.8+) or `CAP_SYS_ADMIN` bypasses the sysctl; a container's
-  seccomp profile can still return `EPERM` before the capability is consulted, and
-  `kptr_restrict ≠ 0` leaves kernel frames unsymbolised. The layer table is in
-  `references/engines-and-events.md`.
-- Attach goes through HotSpot's Unix socket at `/tmp/.java_pid<PID>` and is accepted only
-  from the target's own uid/gid (`asprof` switches credentials when run as root). It never
-  touches `perf_events`, so `--cap-add=SYS_PTRACE` fixes no `perf_events` failure and
-  `CAP_PERFMON` fixes no attach failure.
-- A differential without normalisation is an artefact: use `difffolded.pl -n`, or
-  `jfrconv --diff`, which normalises internally. Red grew, blue shrank, yellow is new.
-- No differential survives different load or different warm-up between the two
-  collections. Same generator, same intensity, same duration, same warm-up.
-- `asprof -o` (what to write at session end) and `jfrconv -o` (conversion output format)
-  are separate option namespaces. Convert an existing `.jfr` with `jfrconv`.
-- JFR is the only output format that carries multiple event types in one recording.
-- Start the target JVM with `-XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints`
-  whenever the agent is not loaded at boot via `-agentpath`, or attribution of small
-  inlined methods degrades.
-- `[unknown_Java]` frames, missing per-frame compilation level, and native frames that
-  precede the Java frames being unrecoverable are limitations of `AsyncGetCallTrace`, not
-  bugs in async-profiler. JEP 435, which proposed a replacement API, is Closed/Withdrawn
-  and is not in any released JDK. Since 4.2 the default stack walker is the VMStructs one
-  (`--cstack vm`) wherever the JDK exposes `gHotSpotVMStructs`; `--cstack vmx` is the one
-  mode that recovers native frames _before_ the first Java frame, and `--cstack dwarf`
-  is for native code built without frame pointers.
-- `--jfrsync <config>` starts a JFR recording with the given settings in the same file as
-  the profiler's samples (implies `-o jfr`): GC, safepoint, socket and lock events on the
-  same timeline as the stacks. Use it instead of running JFR and `asprof` side by side.
-- `--trace` and `--nativemem` are instrumentation, not sampling: their overhead scales
-  with call or allocation frequency, not with wall time. Scope them narrowly and briefly.
-- `--loop` file patterns must contain `%t` or `%n`, or each iteration silently overwrites
-  the previous file.
-- Prefer one hardware PMU event per session. Requesting more simultaneous counters than
-  the microarchitecture has registers forces kernel time-multiplexing and inflates the
-  variance of every estimate.
+| Question                              | Primary event                     | Weight means                     | Major blind spot                                    |
+| ------------------------------------- | --------------------------------- | -------------------------------- | --------------------------------------------------- |
+| Where is on-CPU work?                 | `cpu` or supported CPU timer      | samples/CPU-event weight         | off-CPU delay                                       |
+| Where is elapsed waiting?             | `wall` with thread identity/state | sampled elapsed residency        | causality and queue ownership                       |
+| Who allocates Java heap?              | `alloc`                           | samples or estimated bytes       | retention/liveness unless explicitly selected       |
+| Where is contended waiting?           | `lock`                            | sampled/thresholded wait         | uncontended synchronization and broader queue delay |
+| What native allocation remains?       | `nativemem`/live mode             | tracked native allocation        | unhooked allocators and semantic ownership          |
+| Which selected calls exceed a bound?  | `trace`                           | instrumented calls/latency       | instrumentation perturbation                        |
+| Which PMU event co-locates with code? | named perf event                  | sampled hardware/software events | counter multiplexing/skid/model dependence          |
+
+Write the target process, load window, event, interval/threshold, stack mode, filters, output,
+rate/memory limit, expected sample volume, and validation metric before collection.
+
+## Engine selection
+
+For CPU attribution on Linux, prefer the supported perf-events engine when kernel/user stack
+coverage and per-thread CPU accounting matter. Use `ctimer` when perf events are unavailable
+and current Linux/tool support is confirmed; use `itimer` where the platform lacks the better
+alternatives or for compatibility. These engines do not have identical selection probability,
+resolution, kernel visibility, resource cost, or failure behavior.
+
+Use wall-clock collection for off-CPU residency and latency investigations. Wall mode samples
+eligible threads regardless of whether they are running, parked, sleeping, or blocked.
+`--threads` changes output grouping for non-JFR output; `--filter` changes eligible thread IDs
+where supported. They are different controls.
+
+Do not assert that a requested event ran. Inspect start diagnostics, `status`/`metrics`, output
+event types, sample counts, lost/dropped counters, and kernel/native frame presence. Current
+versions may choose a fallback for a generic CPU request; explicit event requests, platforms,
+and releases differ.
+
+See [Sampling engines, events, and access](references/engines-and-events.md).
+
+## Stack fidelity
+
+Stack collection has three layers:
+
+1. **Trigger/selection:** perf overflow, CPU timer, wall sweep, JVMTI event, or instrumentation.
+2. **Java/JIT walking:** HotSpot-specific VM metadata or another supported mechanism.
+3. **Native/kernel unwinding and symbols:** frame pointers, VM metadata, unwind information,
+   perf call chains, build IDs/debug symbols, and kernel symbol policy.
+
+Current releases can prefer the VMStructs stack walker on supported HotSpot combinations;
+older releases and unsupported combinations behave differently. Options such as `vm`, `vmx`,
+`fp`, `dwarf`, or aliases have changed meaning across releases. Discover them from the pinned
+binary. Do not carry forward blanket advice such as always enabling `DebugNonSafepoints` or
+always using one `--cstack` mode without reproducing the missing-frame symptom on that stack.
+
+Classify broken output rather than guessing:
+
+- unknown Java frames: unsupported/redefined code, walker limitation, truncated/corrupt sample;
+- missing native prefix/suffix: unwinder boundary, omitted call chain, absent unwind metadata;
+- raw native/kernel addresses: symbol visibility/build-ID/kernel policy issue;
+- shallow stacks: stack-depth or memory limit, recursion truncation, rate/drop pressure;
+- missing virtual-thread logical ancestry: carrier-centric sampling or incomplete continuation
+  reconstruction in that profiler/JDK combination.
+
+Virtual-thread coverage is version- and mode-dependent. A platform-thread sample can show a
+carrier without the complete mounted/unmounted logical task history. Validate with a known
+workload and complement with JFR events or application context before attributing ownership.
+
+## Access model and least privilege
+
+Dynamic attach and event acquisition are independent:
+
+- attach requires PID-namespace visibility, compatible filesystem `/tmp` view, attach enabled,
+  target-compatible credentials, and readable/loadable profiler library/output paths;
+- Linux perf events additionally depend on kernel policy, capabilities, seccomp/LSM, resource
+  limits, PMU virtualization, and symbol policy;
+- native/kernel symbolization requires matching binaries/build IDs and permissions beyond
+  merely opening the event.
+
+Diagnose the failing syscall/layer. `SYS_PTRACE` is not a universal fix for
+`perf_event_open`; `CAP_PERFMON`, `CAP_SYS_ADMIN`, `--all-user`, or an fd-transfer helper have
+different scope and security consequences. Avoid privileged containers when a CPU-timer or
+JFR recording answers the question. Record every exception and restore it after collection.
+
+## Sampling economics
+
+Estimate event volume before profiling:
+
+```text
+CPU-like samples ~= active CPU time / interval
+wall candidates  ~= eligible threads * duration / interval
+allocation events ~= allocated bytes / allocation interval
+trace events      ~= selected invocations passing threshold
+```
+
+These are planning estimates, not guaranteed counts. Wall-clock cost can grow with eligible
+thread count; this matters acutely with large platform-thread populations. Batching, filters,
+rate limits, stack depth, memory limits, and longer intervals trade fidelity for overhead and
+file size. Instrumentation modes (`trace`, native-allocation interception) scale with call or
+allocation frequency and require shorter, narrower trials than statistical sampling.
+
+Calibrate overhead against the same workload using an unprofiled control and at least two
+collection intensities. Compare throughput, latency distribution, CPU, allocation/GC, and
+dropped/lost events. “Low overhead” is not an authorization to run every event in production.
+
+## Multi-event recordings and time
+
+JFR output is appropriate when several async-profiler event classes or synchronized JDK JFR
+events need one timeline. Verify which combinations the pinned release supports; conflicts,
+rate budgets, and output semantics change. `--jfrsync` coordinates a JDK recording with the
+profiler, but configuration and event replacement semantics must be checked in that release.
+
+Clock domains, timestamp preservation, chunking, conversion, and rate limits determine
+whether cross-event temporal claims remain valid. A collapsed stack file destroys most event
+metadata and timestamps. Preserve the original JFR plus exact command before conversion.
+
+## Differential evidence
+
+A differential flame graph is descriptive evidence, not a performance test. Before/after must
+share workload, duration or valid normalization, warm-up state, event configuration, filters,
+stack semantics, build symbolization, and enough samples. Prefer paired repetitions and
+validate the performance outcome separately.
+
+Normalization removes unequal total-sample tint; it cannot repair changed load mix or a
+different probability of selecting stacks. Positive/negative colors depend on converter and
+argument order—verify with a synthetic folded-stack pair rather than memorizing a palette.
+
+## Failure modes and troubleshooting
+
+| Symptom                                                          | Distinguish                                                   | Action                                                                                |
+| ---------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Cannot attach                                                    | PID/tmp namespace, credentials, disabled attach, library path | Prove attach separately; align namespaces/UID; use startup agent if approved          |
+| Perf event denied                                                | seccomp/LSM, paranoid policy, capability, PMU virtualization  | Inspect actual denial; use least privilege or explicit timer/JFR alternative          |
+| Profile unexpectedly lacks kernel frames                         | selected engine, user-only mode, symbol restrictions          | Inspect diagnostics/event type; do not infer successful perf collection from filename |
+| Wall profile is huge/perturbing                                  | eligible threads × interval, batching, depth                  | Filter justified roles, increase interval, bound file/rate/memory, remeasure overhead |
+| Mostly idle frames                                               | expected thread population versus incident cohort             | Group/filter by role/state; correlate with requests and queues                        |
+| Unknown/truncated stacks                                         | walker support, depth/memory limits, redefinition, symbols    | Reproduce with pinned newer release/alternate supported walker; retain raw evidence   |
+| Allocation profile finds hot allocators but heap grows elsewhere | allocation versus retention question                          | Switch to live/heap-dump evidence; follow `allocation-profiling`                      |
+| Differential is one-sided everywhere                             | sample totals, argument order, workload mismatch              | Test converter on synthetic input; normalize only after comparability is proven       |
+| No virtual-thread application frames                             | mounted state and tool/JDK capability                         | Use JFR task/context evidence; avoid carrier-as-request conclusions                   |
+
+## Anti-patterns
+
+**Anti-pattern: grant capabilities until it works.** It conflates attach, event access, and
+symbols while expanding blast radius. Identify the failed layer, choose the least-privileged
+event, and make elevated access temporary and auditable.
+
+**Anti-pattern: fixed 60-second recording.** Rare behavior may need longer or trigger-based
+capture; high-frequency instrumentation may need seconds. Choose duration from event rate,
+minimum useful sample count, incident window, overhead, and storage budget.
+
+**Anti-pattern: percentages without denominators.** A 0.3% frame may be a handful of samples;
+wall and CPU percentages answer different questions. Report event, weight, total, interval,
+confidence limits where appropriate, and corroborating system metric.
+
+**Anti-pattern: latest converter over old recording without provenance.** Converter semantics
+and event schemas evolve. Keep original file, producer version, converter version, command,
+and checksum; investigate differences before replacing prior output.
+
+## Production checklist
+
+- [ ] Profiler/JDK/OS/architecture combination and event list were discovered at runtime.
+- [ ] Question, event weight, eligible threads, interval/threshold, duration, and stop trigger
+      are explicit.
+- [ ] Attach and event access were tested independently with least privilege.
+- [ ] Stack walker, native/kernel symbol policy, virtual-thread limitations, and filters are
+      recorded.
+- [ ] Expected volume, rate/memory/chunk limits, disk path, rotation, and upload failure are
+      bounded.
+- [ ] Overhead was calibrated under representative load and lost/dropped events checked.
+- [ ] Original output, exact command, versions, logs, checksums, and business metrics survive.
+- [ ] Differential claims use comparable repeated trials and a separate outcome measurement.
 
 ## References
 
-- [Sampling engines, coverage and events](references/engines-and-events.md) — the
-  `cpu`/`itimer`/`ctimer` comparison, expected sample counts per engine, the container
-  access layers (`perf_event_paranoid`, seccomp, capabilities, `kptr_restrict`) with the
-  exact fix for each, the error-message troubleshooting table, and the thread-state to
-  JFR-event mapping. Read when choosing an engine, when `asprof` prints an error, or when
-  a profile shows a wait you need to trace to code.
-- [Session recipes, output formats and conversion](references/output-and-conversion.md) —
-  `asprof` invocations for each mode, multi-event recordings, `jfrconv` conversions and
-  native differentials, continuous looping, and diagnosing broken stacks. Read when
-  running a session or converting its output.
+- [Sampling engines, events, and access](references/engines-and-events.md)
+- [Session, output, and conversion protocol](references/output-and-conversion.md)
+- [async-profiler repository](https://github.com/async-profiler/async-profiler) — release,
+  source, supported platforms, and matching documentation.
+- [Profiler options](https://github.com/async-profiler/async-profiler/blob/master/docs/ProfilerOptions.md) — use the document from the pinned release tag.
+- [Troubleshooting](https://github.com/async-profiler/async-profiler/blob/master/docs/Troubleshooting.md) — official failure guidance; correlate with the installed release.
+- [Linux perf security](https://docs.kernel.org/admin-guide/perf-security.html) — authoritative
+  capability and `perf_event_paranoid` model.

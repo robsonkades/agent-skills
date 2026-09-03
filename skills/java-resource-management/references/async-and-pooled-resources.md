@@ -25,10 +25,11 @@ supplier, not at the `try`. Three legitimate fixes, in order of preference:
        try (Connection c = pool.get()) { return query(c, id); }
    }, ioExecutor);
    ```
-2. **Move ownership to the completion.** Only when the resource genuinely must span stages:
-   `future.whenComplete((r, e) -> close(c))` — and then the close is on every path,
-   including cancellation.
-3. **Use structured concurrency**, where the scope's `close` is defined to wait for the
+2. **Move ownership to a completion protocol.** Only when the resource genuinely must span stages.
+   Return the dependent stage that performs release and preserve close failures. Do not assume
+   `whenComplete(close)` is enough: cancellation may complete a `CompletableFuture` callback while
+   an underlying task that ignores/does not receive cancellation still uses the resource.
+3. **Use structured concurrency**, where the scope's `close` waits for forked threads;
    forks, so a resource held for the duration of the block really is held for the duration of
    the work. See structured-concurrency for the lifetime guarantee and its limits.
 
@@ -38,15 +39,18 @@ file it reads.
 
 ## ExecutorService and StructuredTaskScope in try-with-resources
 
-Both are `AutoCloseable`, and in both cases `close` is a _join_, not a release:
+Both are `AutoCloseable`, but their lifecycle contracts differ:
 
 - `ExecutorService.close()` (Java 19+) initiates an orderly shutdown and blocks until all
   submitted tasks complete. There is no timeout parameter. If a task hangs, the enclosing
   block hangs — the failure looks like a stuck request with no error. Interrupting the
   waiting thread escalates to `shutdownNow`, waits for the running tasks, and re-asserts the
   interrupt on return.
-- `StructuredTaskScope.close()` requires that the scope was joined first and cancels
-  anything still running; the guarantee is that no subtask thread outlives the block.
+- Java 25's preview `StructuredTaskScope.close()` cancels unfinished subtasks, waits for every
+  forked thread, and then reports missing `join()`/structural misuse. Correct code calls `join()`
+  once to obtain the configured Joiner outcome; `close` is cleanup/confinement, not a replacement
+  for result handling. A configured scope timeout cancels work, but uninterruptible subtasks can
+  still delay close.
 
 Use the `try`-with-resources form when the block owns the work and the tasks are bounded by
 a timeout of their own. When the executor is long-lived — a shared pool held in a field, an
@@ -67,17 +71,19 @@ A pooled `Connection`, an HTTP connection lease, a Netty `ByteBuf` from a pooled
   `Connection is not available, request timed out after 30000ms` under load, with a heap that
   looks fine. Enable the pool's own leak detection (HikariCP's `leakDetectionThreshold` logs
   the acquiring stack trace when a borrow outlives the threshold) before reaching for a heap
-  dump — it names the offending call site directly.
+  dump—it reports the acquisition site of a long-held borrow. Treat it as a lead, not proof: a
+  legitimate long transaction can exceed the threshold and a returned connection may be reported
+  before the detector observes its return.
 
 A borrow that must survive a request boundary is not a pooled resource any more; that is
 session state, and session-state-strategies covers where it should actually live.
 
 ## Virtual threads remove the accidental limit
 
-A thread pool of 200 was also, silently, a limit of 200 concurrent connections, 200 open
-files and 200 in-flight remote calls. `Executors.newVirtualThreadPerTaskExecutor()` removes
-that bound without removing the resources it was bounding. The result is a service that used
-to queue and now exhausts a downstream pool or hits the file-descriptor limit.
+When each platform-thread task acquired one resource, a fixed pool of 200 also accidentally capped
+concurrent acquisitions near 200. `Executors.newVirtualThreadPerTaskExecutor()` removes that thread
+cap without increasing downstream/file limits. Work may move from executor queueing to thousands of
+tasks blocked at a connection pool/semaphore, changing memory, fairness and tail latency.
 
 The bound has to become explicit and local to the resource: the pool's own maximum, a
 `Semaphore` around the acquisition, or a bulkhead per dependency. concurrency-limiting-and-bulkheads
@@ -90,8 +96,9 @@ is the part that is usually missing:
 
 1. Stop accepting new work (readiness off, listener closed) — kubernetes-service-lifecycle
    owns the traffic side.
-2. Drain in-flight work with a bound: `shutdown()` then `awaitTermination(timeout)`, and
-   `shutdownNow()` when the bound expires.
+2. Drain in-flight work with a bound: `shutdown()` then `awaitTermination(timeout)`; on expiry,
+   capture tasks never started, invoke `shutdownNow()`, and wait again with a final bound while
+   recording tasks that ignore interruption.
 3. Close resources in reverse acquisition order — consumers before the connections they use,
    connections before the pool.
 4. Only then let the process exit.
@@ -101,3 +108,19 @@ guaranteed completion — the process may be killed while a hook runs, and `SIGK
 hooks entirely. Treat hooks as a best-effort last resort for closing OS resources, never as
 the mechanism that guarantees a flush of data you cannot lose; that guarantee belongs to a
 durable store or an idempotent retry on the next start.
+
+## Diagnostic sequence
+
+| Symptom                                | Evidence to collect                                                   | Distinguish/remediate                                                            |
+| -------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| pool timeouts with normal heap         | active/idle/waiter metrics, borrow duration, acquisition stack        | leak versus legitimate long transaction versus undersized/slow dependency        |
+| file-descriptor exhaustion             | process FD count/type, open stacks/JFR events, request correlation    | leaked streams/files versus sockets or expected concurrency                      |
+| shutdown never completes               | thread dump, queued/running tasks, interrupt status, dependency calls | non-interruptible task versus missing deadlines versus wrong lifecycle ordering  |
+| closed-resource errors only under load | future cancellation/completion timeline and actual task termination   | lexical scope ended early or completion callback closed during still-running use |
+
+## Authoritative references
+
+- [ExecutorService.close contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html#close()>)
+- [StructuredTaskScope preview contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html)
+- [JEP 505: Structured Concurrency, fifth preview](https://openjdk.org/jeps/505)
+- [CompletableFuture cancellation contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html#cancel(boolean)>)

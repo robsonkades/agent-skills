@@ -73,10 +73,10 @@ the cause `G1 Humongous Allocation` on a `Pause Young (Concurrent Start)` and in
 [gc,humongous] GC(42) Reclaimed humongous region 221 (object size 3145744 @ 0x...)
 ```
 
-`remset N` above `G1EagerReclaimRemSetThreshold` (experimental, ergonomic, 32 on JDK 25),
-`marked 1` or `pinned count > 0` is what makes `reclaim candidate 0`. Run this whenever the
-old generation grows and the application is not retaining anything: short-lived buffers
-larger than half a region read as a leak in every other instrument.
+`remset`, `marked`, `pinned`, allocation timing and object kind feed release-specific eligibility;
+do not turn one field/threshold into a universal predicate. Run this whenever old grows without
+matching retained business state, then correlate candidates with actual `Reclaimed humongous`
+lines and completed marking cycles.
 
 ## Live inspection
 
@@ -137,7 +137,7 @@ Causes, in the order worth checking:
 
 ```bash
 grep -n "Evacuation Failure" gc.log | head      # every failing pause, with its reason
-grep -c "Pause Full" gc.log                     # zero is the expected number
+grep -c "Pause Full" gc.log                     # count, then inspect chronology and cause
 ```
 
 ## Checklist

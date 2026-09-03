@@ -7,7 +7,7 @@ worth naming precisely before deciding how much to hedge.
 
 You integrate the framework across the whole system: its wiring, its lifecycle, its
 conventions, its idioms in every file a new joiner reads. In return the framework's authors
-commit to nothing about your system. They will change the programming model, rename packages,
+commit only to published compatibility/support policies, not your system's lifecycle. They may change the programming model, rename packages,
 deprecate abstractions, drop platform support, and end the maintenance window on a schedule
 set by their release train, not your roadmap.
 
@@ -112,10 +112,10 @@ Is the signature coupling confined to adapters?
         (architecture-decision-making).
 ```
 
-For an upgrade specifically, the calculus is different and simpler: **the cost of upgrading
-rises superlinearly with how far behind you are**, because breaking changes compose and
-because the community's migration knowledge decays. A team that upgrades every minor release
-pays a small, predictable cost. A team that skips three majors pays a project.
+Upgrade cost often grows nonlinearly when skipped releases compound breaking changes, unsupported
+dependencies and lost migration knowledge, but this is a risk model rather than a universal curve.
+Choose a cadence from support windows, exposure, compatibility testing and change cost; validate
+automated dependency updates instead of assuming every minor is cheap.
 
 ## When coupling tightly is the right answer
 

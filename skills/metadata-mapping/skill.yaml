@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: metadata-mapping
-version: 1.2.0
+version: 1.3.0
 description: >-
   Expressing the object-to-schema mapping as metadata rather than hand-written code: where
   the mapping lives (annotations, external XML, programmatic), what reflection costs versus

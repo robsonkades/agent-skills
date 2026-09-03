@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-annotations
-version: 1.1.0
+version: 1.2.0
 description: >-
   Annotations as metadata that only means something if code reads it: retention policies and
   what each one costs, targets and where an annotation on a record component actually lands,

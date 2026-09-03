@@ -3,17 +3,20 @@
 ## Characterisation tests
 
 A characterisation test pins what the code _does_, not what it should do. It is
-scaffolding: written fast, assertion values copied from observed behaviour, deleted or
-replaced by intent-revealing tests once the refactoring lands.
+scaffolding: written quickly and reviewed, with assertion values captured from observed
+behaviour. Replace it with intent-revealing tests once intent is known; retain rows that protect
+valuable regressions instead of deleting them by ritual.
 
 Method: pick inputs that force every branch (read the conditionals and choose values on
 both sides of each boundary); run the code; paste the observed outputs into assertions.
-When an observed output looks wrong, **pin it anyway** and file the bug — the refactoring
-must preserve it, because some caller may depend on it, and "fix while moving" makes both
-changes unverifiable.
+When an observed output looks wrong, capture it and escalate the behavior decision rather than
+silently fixing it while moving code. A security, corruption or compliance defect may require
+an immediate separate fix and must not be knowingly preserved into release merely because a
+caller could depend on it.
 
-Coverage target: every branch of the code being restructured, plus the boundary values
-of every comparison (`> 20` means test 20 and 20.1). Not every input — every _behaviour_.
+Coverage target: branches, meaningful combinations, failure and side-effect paths, and
+comparison boundaries (`> 20` means values at and just above the boundary, using the domain's
+exact numeric representation). Branch coverage alone does not establish behavioral equivalence.
 
 ## Worked example: a shipping-cost method with no tests
 

@@ -16,8 +16,9 @@
 - **It is unenforceable across a hierarchy.** A correct `clone()` must call `super.clone()`, and
   a subclass that forgets, or that adds a mutable field without extending the copy, breaks the
   contract silently for everyone above it.
-- **It interacts badly with `final` classes and records.** Records are implicitly final and
-  cannot usefully participate; the correct record answer is `withX` or a static factory.
+- **It interacts badly with `final` classes and records.** Records are implicitly final and do
+  not generate `withX` methods; use an explicit/generated wither, canonical-copy construction, or
+  a named factory when a distinct instance is semantically needed.
 
 Effective Java's conclusion — provide a copy constructor or copy factory instead — is the
 position to take in review. The only common exception is arrays, where `array.clone()` is the

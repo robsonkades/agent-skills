@@ -1,101 +1,70 @@
 # Scheduled and periodic tasks
 
-## Fixed rate versus fixed delay
+## Semantics
 
-```java
-// Period measured from each start: executions try to keep to a timetable.
-scheduler.scheduleAtFixedRate(this::poll, 0, 10, TimeUnit.SECONDS);
+| Operation      | Schedule basis                      | If execution exceeds period/delay                                  | Failure                                     |
+| -------------- | ----------------------------------- | ------------------------------------------------------------------ | ------------------------------------------- |
+| one-shot delay | relative delay                      | n/a                                                                | Future completes exceptionally              |
+| fixed rate     | intended initial/period cadence     | same task does not overlap; later runs may start late/back-to-back | later executions suppressed after exception |
+| fixed delay    | delay after one execution completes | cadence stretches with runtime                                     | later executions suppressed after exception |
 
-// Delay measured from each end: executions keep a gap, and the timetable drifts.
-scheduler.scheduleWithFixedDelay(this::poll, 0, 10, TimeUnit.SECONDS);
+These are local in-memory executor semantics. They do not provide durability, exactly-once,
+cluster-wide singleton execution, calendar/cron/time-zone semantics or catch-up after process death.
+
+## Failure policy wrapper
+
+Choose explicitly:
+
+```text
+transient known failure -> bounded retry/backoff if idempotent and next schedule policy defined
+permanent/config failure -> disable and alert
+state corruption/fatal error -> fail executor/process according to safety policy
+overrun -> skip/coalesce/queue/catch up, with maximum lag
 ```
 
-| Question                                 | `scheduleAtFixedRate`                      | `scheduleWithFixedDelay` |
-| ---------------------------------------- | ------------------------------------------ | ------------------------ |
-| Interval measured from                   | start of previous run                      | end of previous run      |
-| Run takes longer than the period         | next run starts immediately; runs bunch up | gap is always honoured   |
-| Recovers a missed timetable              | yes — that is what it is for               | no                       |
-| Safe for a job whose duration is unknown | no                                         | yes                      |
+Observe the `ScheduledFuture` and task transitions. Catch only what policy can safely handle; a
+catch-`Throwable` loop can keep corrupt work running forever.
 
-Neither overlaps on a single scheduler thread. That is a property of the scheduler having
-one thread, not a guarantee about the task — a second scheduler thread, a second replica,
-or a manual trigger all break it. If two concurrent executions would corrupt something, the
-mutual exclusion has to be written down: a lock, a database row, a lease.
+## Drift and time
 
-## The trap that stops a job forever
+Relative-delay scheduling is not a complete civil-time scheduler. Test wall-clock jumps, suspend/
+resume, long GC/CPU throttle, missed windows and daylight-saving/time-zone rule changes for calendar
+jobs. Store intended fire time/idempotency key when business semantics require it.
 
-```java
-// The exception is stored in a ScheduledFuture nobody holds.
-// The task is silently unscheduled and never runs again. Nothing is logged.
-scheduler.scheduleAtFixedRate(() -> reconcile(), 0, 1, TimeUnit.MINUTES);
-```
+## Pool behavior
 
-One transient failure — a database blip at 03:00 — and the reconciliation job is dead until
-the next deploy. The symptom arrives days later as missing data, with no error to correlate.
+`ScheduledThreadPoolExecutor` primarily uses core pool size and a delayed work queue; inspect exact
+JDK behavior. Long/blocking jobs can delay unrelated schedules. Separate criticality/blocking
+classes or dispatch due jobs to an owned bounded executor, while preserving rejection and duplicate
+semantics.
 
-```java
-scheduler.scheduleAtFixedRate(() -> {
-    try {
-        reconcile();
-    } catch (Throwable t) {                 // Throwable, not Exception: an Error kills it too
-        log.error("reconcile failed; the schedule survives", t);
-    }
-}, 0, 1, TimeUnit.MINUTES);
-```
+Remove-on-cancel policy can reduce retention of cancelled delayed tasks but changes queue work;
+verify exact API/settings and measure high-churn schedules.
 
-Wrap the body, catch `Throwable`, log, return normally. Then add the metric that proves it
-ran: a "last successful run" gauge, alarmed on staleness. A counter of failures does not
-detect a job that stopped being scheduled — only a freshness signal does.
+## Multi-replica jobs
 
-## Drift, and what a period does not promise
+Every replica normally schedules its own local task. If only one cluster execution is required, use
+a durable scheduler/lease/partition assignment with fencing and idempotency. A local non-overlap
+guarantee is not distributed exclusion.
 
-`scheduleAtFixedRate` schedules against `System.nanoTime`, so it does not skew with wall
-clock changes, and equally it does not align to wall-clock boundaries. "Every hour" means
-"3600 s after the last start", not "on the hour". A job that must run at a specific local
-time needs a calendar scheduler (`cron`, Quartz, `@Scheduled(cron=…)`), and then also needs
-a decision about DST — a cron time that does not exist on the spring-forward day, and one
-that occurs twice in autumn.
+## Observability
 
-## Starving the scheduler
+Measure intended fire time, actual start, lag, duration, terminal status, consecutive failures,
+skipped/coalesced/missed count, next due time, active replica/lease token and shutdown drain. Alert on
+absence using expected schedule plus tolerance; success-only logs cannot detect a dead schedule.
 
-`ScheduledThreadPoolExecutor` is a **core-size-only** pool: `maximumPoolSize` is ignored
-because its `DelayedWorkQueue` is unbounded and never refuses. A pool of one thread with
-five jobs on it means the slowest job sets the punctuality of the other four.
+## Tests
 
-Split by duration, not by domain: fast heartbeat-style schedules on their own scheduler,
-anything that performs I/O on another, anything that can take minutes on a worker executor
-triggered by a scheduled task rather than running inside it.
+- exception/fatal classification and future observation;
+- task longer than rate/delay and scheduler pool starvation;
+- cancellation before/during run and shutdown policies;
+- clock/time-zone/DST/suspend and missed execution;
+- process restart and retained/durable work;
+- multiple replicas, lease loss/fencing and duplicate execution;
+- rejection by downstream executor and backpressure;
+- context cleanup between periodic invocations.
 
-```java
-// The scheduler decides WHEN. It should not be the thing that decides HOW LONG.
-scheduler.scheduleWithFixedDelay(
-        () -> workers.execute(this::rebuildIndex), 0, 5, TimeUnit.MINUTES);
-```
+## Authoritative references
 
-## Virtual threads and schedulers
-
-`Executors.newScheduledThreadPool` has no virtual-thread equivalent, and it does not need
-one: a scheduler thread should be idle, and idleness is exactly what a platform thread is
-cheap at. Keep the scheduler on platform threads and dispatch the _work_ to virtual threads,
-as above. `SimpleAsyncTaskScheduler` in Spring (used when `spring.threads.virtual.enabled`
-is true) does start each execution on a new virtual thread — which also means it no longer
-serialises executions the way a single-threaded scheduler did.
-
-## What a scheduler does not do
-
-- It does not guarantee a job runs **once across replicas**. Two pods run it twice. That
-  needs a lease (`ShedLock`, an advisory lock, a database row with an expiry).
-- It does not survive a restart with its state. A missed window during a deploy is simply
-  missed, unless the job is written to catch up from persisted state.
-- It does not bound how long the task runs. Only the task can do that, with its own
-  timeouts on every I/O call it makes.
-
-## Reviewer checklist
-
-- [ ] Every periodic body wrapped in `try/catch (Throwable)` so a throw cannot unschedule it
-- [ ] A freshness metric ("seconds since last success") exists and is alarmed
-- [ ] Fixed-rate versus fixed-delay chosen from the duration behaviour, not by habit
-- [ ] No job relies on single-threaded scheduling for mutual exclusion
-- [ ] Long or I/O-heavy work dispatched off the scheduler thread
-- [ ] Multi-replica jobs hold a lease with a realistic maximum hold time
-- [ ] Cron-style schedules have a stated DST behaviour
+- [`ScheduledExecutorService`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ScheduledExecutorService.html)
+- [`ScheduledThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ScheduledThreadPoolExecutor.html)

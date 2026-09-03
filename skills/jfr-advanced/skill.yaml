@@ -1,20 +1,16 @@
 schemaVersion: 1
 
 name: jfr-advanced
-version: 1.2.0
+version: 1.3.0
 description: >-
-  JDK Flight Recorder beyond the stock profiles: authoring a custom `.jfc`, event thresholds
-  and periods, custom events extending `jdk.jfr.Event`, `RecordingStream` for live
-  consumption, and programmatic `Recording` control. Use when an event name was guessed
-  rather than checked (`jdk.GCPauseL3`, a `pause` field on `jdk.GarbageCollection`), when
-  `enable()` silently produced no data, when `settings=continuous` or `duration=0` stopped
-  the JVM from starting, when contention under 10 ms is invisible in a recording, when a
-  custom event is allocated in a hot path without `isEnabled()`, when `stackTrace` was
-  turned on for a high-frequency event, or when a `jfr print --json` parser returns an empty
-  table. Does not cover choosing which profile to take or the production baseline
-  configuration (jfr-and-async-profiler), the async-profiler engine
-  (async-profiler-advanced), or always-on fleet profiling infrastructure
-  (continuous-profiling).
+  Engineering JDK Flight Recorder evidence beyond stock settings: discovering event schemas
+  and settings on the target build, designing threshold/period/throttle/stack trade-offs,
+  composing and validating JFC configurations, accounting for concurrent recordings, defining
+  low-cost custom events and relational metadata, operating Recording/RecordingStream/MXBean
+  consumers, and validating loss, parsing, retention, privacy, and Java 25 JFR features. Use
+  when an event is absent, a field/parser is guessed, fine events are thresholded away, custom
+  instrumentation or live export is proposed, or recording overhead/coverage is uncertain.
+  Does not own first-tool selection, async-profiler, or fleet continuous-profiling operations.
 
 license: Apache-2.0
 
@@ -48,6 +44,8 @@ dependencies:
 
 suggests:
   - virtual-threads-internals
+  - continuous-profiling
+  - async-profiler-advanced
 
 capabilities:
   - reads-source

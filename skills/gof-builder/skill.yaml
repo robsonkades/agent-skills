@@ -1,19 +1,16 @@
 schemaVersion: 1
 
 name: gof-builder
-version: 1.1.0
+version: 1.2.0
 description: >-
-  Builder in modern Java: what it actually buys once records, compact constructors and named
-  static factories exist — named arguments the language does not have, whole-object validation at
-  one point, and safe construction of a large immutable value. Covers the arity and optionality
-  thresholds that justify it, staged builders, where validation must live so it cannot be
-  bypassed, the thread-safety hazards of a mutable builder, and test data builders. Use when a
-  constructor has grown past four parameters or several booleans, when telescoping constructors or
-  a half-initialised object appear, when a builder is proposed for a two-field type, when Lombok's
-  @Builder is applied to an entity, or when a builder permits invalid combinations that only fail
-  later. Does not cover selecting which type to create (gof-factory-method, gof-abstract-factory),
-  copying an existing instance (gof-prototype), fluent APIs in general (java-fluent-apis), or
-  record and value semantics (java-immutability).
+  Builder in modern Java: distinguish the original GoF separation of construction process from
+  representation from the Effective Java fluent value builder. Covers selection signals rather
+  than parameter-count thresholds, staged builders, invariant placement, mutable-builder
+  concurrency hazards, Lombok/JPA boundaries, performance evidence, and test data builders. Use
+  for ambiguous or telescoping construction, incremental input, multiple representations, or a
+  builder that permits invalid combinations. Does not cover product-type selection
+  (gof-factory-method, gof-abstract-factory), copying (gof-prototype), fluent APIs generally
+  (java-fluent-apis), or value semantics (java-immutability).
 
 license: Apache-2.0
 
@@ -40,7 +37,7 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
+dependencies: []
 
 suggests:
   - allocation-profiling

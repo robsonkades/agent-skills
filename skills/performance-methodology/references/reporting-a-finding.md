@@ -10,7 +10,7 @@ attachments are the part routinely omitted.
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | **The claim**                       | One sentence, falsifiable. "Deserialisation is 40% of request CPU", not "serialisation is slow".                                             |
 | **The measurement**                 | What was measured, with which tool, under which load, on which JDK and hardware. A number with no method is an opinion with a decimal point. |
-| **The uncertainty**                 | A range, an interval or a sample count. A single number implies a precision that no measurement of a running system has.                     |
+| **The uncertainty**                 | An interval/distribution tied to the experimental unit and analysis; sample count alone is context, not an uncertainty estimate.             |
 | **The mechanism**                   | Why the cause produces the effect. Without it, the finding is a correlation and the fix is a coincidence waiting to be discovered.           |
 | **The falsification you attempted** | What you did to try to make the finding wrong, and what happened. This is the part that separates a finding from a first plausible story.    |
 
@@ -23,24 +23,28 @@ investigation that never tried to break its own conclusion has not tested it.
 Claim      Request p99 falls from 340 ms to 95 ms by replacing the per-request Pattern
            compilation on the validation path.
 
-Method     Load test, open loop, 800 rps for 15 min, warm-up discarded (first 5 min).
+Method     Load test, open loop, 800 rps for 15 min sustained-state window after a
+           separately reported 5 min ramp; process run is the experimental unit.
            Temurin 25.0.3, 4 vCPU / 8 GB container, cgroup v2, G1, -Xms=-Xmx=4g.
            Latency from the generator with coordinated-omission correction on.
 
 Before     p50 21 ms   p99 340 ms   p99.9 890 ms   n = 720,000
 After      p50 19 ms   p99  95 ms   p99.9 210 ms   n = 715,000
-           Three runs each, alternating, p99 spread 88-99 ms after / 331-352 ms before.
+           Six independent process runs each, randomised within three host/time blocks;
+           p99 paired differences and bootstrap interval reported in the attached analysis.
 
 Mechanism  The Pattern was compiled per call on a path executing once per request.
            Confirmed in the flame graph: Pattern.compile at 31% of self time before,
            absent after. gc.alloc.rate.norm on the JMH isolation of the same method
            drops from 4.1 kB/op to 0.
-Falsified  Ran the "after" build with the cache disabled by flag: p99 returns to 336 ms.
-           The improvement tracks the change and not the deploy.
+Falsified  A pre-existing safe flag disabled the cache in the same build; p99 returned to
+           the baseline range. A restarted unchanged control did not improve. These tests
+           reduce—but do not eliminate—the remaining host and traffic explanations.
 ```
 
-The last block is what makes this a finding. Anything can improve after a deploy; only a
-mechanism you can switch off and on again shows that this change caused it.
+The last block is what turns correlation into a stronger causal claim. A safe reversible toggle
+is one design; randomised allocation, a restarted control or bisection may be better for other
+changes. No single test proves causation—state which alternatives remain plausible.
 
 ## The refusals, which are also findings
 
@@ -56,10 +60,12 @@ Three outcomes that people hesitate to write down and should:
 
 ## What not to put in
 
-- **A single number with no interval.** Two means that differ by 3% with overlapping intervals
-  have not been shown to differ at all; `latency-statistics` owns why.
-- **A mean latency.** Latency distributions are heavy-tailed. The mean is dominated by the
-  routine case and hides the event that breaks the SLO.
+- **A single number with no uncertainty.** Two marginal intervals—overlapping or not—are not
+  the interval for their paired difference. Analyse the contrast created by the design;
+  `latency-statistics` owns why.
+- **One summary statistic presented as the distribution.** A mean answers expected work and is
+  tail-sensitive; a quantile answers a threshold question but omits what happens beyond it.
+  Include errors, timeouts/censoring, counts and the summaries the decision actually needs.
 - **A microbenchmark presented as a system result.** A JMH number is a statement about a method,
   and the conversion to a system prediction is arithmetic that must be shown, not assumed.
 - **A percentage with no baseline.** "30% faster" needs the two absolute numbers and the load

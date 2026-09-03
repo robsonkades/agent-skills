@@ -1,78 +1,100 @@
 # Diagnosing the I/O path
 
-Every command here answers one question: _which syscalls is this process actually issuing?_
-Everything else — throughput, CPU, latency — is downstream of that answer.
+Start with one explicitly selected PID. `pgrep java` can return multiple JVMs and silently mix
+evidence. Capture the command line, cgroup/container and workload phase with the trace.
+
+```bash
+pid=12345
+ps -fp "$pid"
+```
 
 ## Which syscalls dominate
 
+`trace=network` does not include `io_uring_enter`. Ask for the mechanisms being compared:
+
 ```bash
-strace -c -p $(pgrep java) -e trace=network 2>&1 | tail -20
+strace -f -c -p "$pid" \
+  -e trace=read,write,readv,writev,sendfile,splice,epoll_wait,epoll_pwait,io_uring_enter
 ```
 
-Classic NIO shows many `epoll_wait` plus `read` and `write`. A process genuinely on io_uring
-shows few `read`/`write` and many `io_uring_enter`.
+Tracing perturbs the process, and counts do not reveal bytes, batching efficiency or latency by
+themselves. Use a bounded representative interval and pair results with application throughput.
+Traditional NIO may show epoll and socket operations; io_uring activity shows
+`io_uring_enter`, but mixed paths and fallbacks are normal.
 
-## Confirming io_uring specifically
+## Confirming ring activity at lower overhead
+
+Available tracepoint names depend on kernel/perf packaging; list them before recording:
 
 ```bash
-perf stat -p $(pgrep java) \
-    -e syscalls:sys_enter_read,syscalls:sys_enter_write,syscalls:sys_enter_io_uring_enter \
-    -- sleep 10
+perf list | grep -E 'io_uring|sys_enter_(read|write)'
+perf stat -p "$pid" \
+  -e syscalls:sys_enter_read,syscalls:sys_enter_write,syscalls:sys_enter_io_uring_enter \
+  -- sleep 10
 ```
 
-The `io_uring_enter` tracepoint is the load-bearing one. Counting only `read` and `write`
-cannot distinguish "uses io_uring with traditional opcodes" from "does not use io_uring".
+An `io_uring_enter` count proves some ring activity. It does not prove all reads/writes use the
+ring, that submissions are well batched, or that payload copies were removed. Correlate counts
+with the exact traffic interval and native-transport metrics/logs.
 
-## Finding the ring file descriptors
+## Finding ring descriptors
 
 ```bash
-for fd in /proc/$(pgrep java)/fdinfo/*; do
-    grep -l "Sq" "$fd" 2>/dev/null && echo "$fd is io_uring"
+for fd in /proc/12345/fdinfo/*; do
+    grep -q '^Sq' "$fd" 2>/dev/null && echo "$fd"
 done
 ```
 
-The real `fdinfo` fields for a ring are CamelCase — `SqMask`, `SqHead`, `SqTail`, `CqHead`,
-`CqMask`, `CqTail`. Grepping for `sq_` matches nothing and reads as "io_uring is not in use".
+Ring `fdinfo` exposes fields such as `SqMask`, `SqHead`, `SqTail`, `CqHead`, `CqMask` and
+`CqTail` on supporting kernels. Field availability is kernel-version-dependent. A snapshot
+identifies a ring but not ownership of each operation; sample queue movement under load.
 
-## Finding the io-wq workers
-
-```bash
-ps -eLo tid,comm | grep iou-wrk
-```
-
-Operations that cannot be completed without blocking are handed to the io-wq pool, whose
-workers appear as separate kernel threads named `iou-wrk-*`. There is **no**
-`/proc/<pid>/io_uring_workers` file; any recipe that cats one is wrong.
-
-## The JFR blind spot
-
-`jdk.SocketRead` and `jdk.SocketWrite` are emitted by instrumentation inside `java.net` and
-`java.nio`. A Netty io_uring transport issues its own syscalls through JNI, below that layer.
-A service on that transport therefore emits **no** socket events while doing heavy network I/O.
-This is expected behaviour, not a broken agent — go back to `strace`, `perf` or `bpftrace` at
-the syscall layer instead of trying to fix the JFR configuration.
-
-## Correction table
-
-| Tool              | Widely repeated wrong form         | Correct form                             |
-| ----------------- | ---------------------------------- | ---------------------------------------- |
-| `perf stat`       | counting only `read` / `write`     | add `syscalls:sys_enter_io_uring_enter`  |
-| `fdinfo` grep     | `grep "sq_"`                       | `grep "Sq"`                              |
-| io-wq workers     | `cat /proc/<pid>/io_uring_workers` | `ps -eLo tid,comm \| grep iou-wrk`       |
-| JFR socket events | expected to cover all network I/O  | not applicable to Netty io_uring traffic |
-
-## Evidence that a copy was actually eliminated
-
-Compare the same counters before and after, on the same machine:
+## io-wq workers
 
 ```bash
-perf stat -p $(pgrep java) -- sleep 10
+ps -eLo pid,tid,comm | awk '$1 == 12345 || $3 ~ /iou-wrk/'
 ```
 
-- **page-faults** falling by orders of magnitude on a file-serving path is the signature of
-  `transferTo` replacing a read-then-write loop.
-- **LLC-load-misses** high relative to loads points at frequent memory copying.
-- CPU dropping while throughput rises is the outcome to claim; either one alone is not.
+io-wq workers may execute operations that would otherwise block. Their names and visibility vary
+across kernel versions, and their presence does not mean every operation is blocking. If worker
+growth or CPU is suspicious, correlate with operation types, filesystem/storage latency and
+queue pressure. There is no portable `/proc/<pid>/io_uring_workers` contract.
 
-Report p50/p95/p99, not a mean or a total. Treat every absolute figure as belonging to the
-environment that produced it.
+## JFR scope
+
+JFR socket events instrument JDK networking paths; native transports can operate below or outside
+those paths. Missing JFR socket events therefore can be an instrumentation-boundary issue, not
+proof of no traffic. Use native-transport telemetry and kernel tracing, while retaining JFR for
+Java allocation, scheduling, locks and surrounding request behavior.
+
+## Evidence for copy reduction
+
+Observe the mechanism and the outcome separately:
+
+- A `sendfile`/`splice` trace or transport-specific zero-copy completion confirms that a
+  candidate mechanism executed for those operations.
+- CPU time and memory bandwidth per transferred byte test whether the path became cheaper.
+- Throughput and p50/p95/p99 under matched payload, concurrency and backpressure test user-visible
+  results.
+- Allocation/native-memory telemetry checks whether the optimization merely moved cost into
+  buffer pooling or retention.
+
+Page faults and LLC misses are supporting signals, not signatures of an eliminated copy. Mapping
+can increase faults, cache behavior has many causes, and buffered I/O may be served from page
+cache. Do not infer an end-to-end copy-free path from either counter alone.
+
+## Troubleshooting flow
+
+```text
+Expected io_uring but see no ring activity
+    -> verify loaded artifact, Netty era, kernel support and IoUring.unavailabilityCause()
+    -> verify transport and channel classes agree
+    -> exercise real traffic while tracing
+    -> inspect fallback metrics/logs
+
+Ring activity exists but CPU/latency does not improve
+    -> compare operations per io_uring_enter and queue depth
+    -> check payload copies, framing, TLS, allocation and io-wq work
+    -> check saturation and backpressure rather than mechanism presence alone
+    -> retain the simpler path when the validated outcome is neutral or worse
+```

@@ -1,21 +1,14 @@
 schemaVersion: 1
 
 name: executors-and-task-lifecycle
-version: 1.2.0
+version: 1.3.0
 description: >-
-  The lifecycle of a task inside an ExecutorService: submit versus execute and which one
-  loses the exception, the enqueue-before-grow rule that makes maximumPoolSize dead
-  configuration, rejection policies as a deliberate choice, ScheduledExecutorService
-  cancelling a periodic task forever on its first throw, and shutdown versus shutdownNow
-  versus close. Use when a submitted task appears never to have run, when a periodic job
-  stopped silently after an incident, when Executors.newFixedThreadPool or
-  newCachedThreadPool is chosen by habit, when a pool is shared between a fast and a slow
-  workload, when shutdownNow is expected to stop work, or when a virtual-thread executor
-  replaced a pool and the concurrency limit went with it. Not deriving the pool size
-  (littles-law-and-queueing), platform versus virtual threads
-  (thread-sizing-and-virtual-threads), the work-stealing pool
-  (forkjoinpool-and-work-stealing), composing stages (completablefuture-composition), or
-  stopping a running task (cancellation-and-interruption).
+  Engineering the full lifecycle of tasks accepted by Java executors: ownership, admission,
+  queue/grow behavior, execution context, result/failure observation, rejection, cancellation,
+  scheduled/periodic semantics, context cleanup, shutdown/drain and recovery. Covers
+  ThreadPoolExecutor, scheduled pools and thread-per-task/virtual-thread executors without treating
+  factory defaults as capacity policy. Use when work disappears, queues grow, rejection or deploy
+  loses work, or a virtual-thread migration removes an implicit bound.
 
 license: Apache-2.0
 

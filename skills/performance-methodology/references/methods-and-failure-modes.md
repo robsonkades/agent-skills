@@ -11,18 +11,18 @@ Pick the method from the question, not from the tool that happens to be open. Ea
 below produces a specific artefact; if the artefact is not on the page, the method was not
 applied.
 
-| Question                                     | Method                                               | What it must produce                                                                                                                  |
-| -------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Is any resource the bottleneck?              | USE — Gregg                                          | One row per resource (CPU, memory, disk, network, connection pool, thread pool, heap): utilisation, saturation (queue length), errors |
-| Is the service meeting its contract?         | RED — Wilkie                                         | Per service: request rate, error rate, duration distribution, over the SLO window                                                     |
-| What is the load, and did it change?         | Workload characterisation — Gregg                    | Who sends it, why, what it is (mix, sizes, hot keys), how it varies over time — with a before/after of each                           |
-| Where in the stack does the time go?         | Drill-down analysis — Gregg, after McDougall & Mauro | Monitoring → identification → analysis: each level names the next level's target and the tool that opens it                           |
-| Which part of one request is slow?           | Latency analysis; Method R — Millsap & Holt          | The response time of one user action decomposed into components summing to the total, ranked by net payoff                            |
-| What changed?                                | Problem statement; baseline statistics — Gregg       | The symptom, when it started, what changed then, who it affects, and the baseline it is compared against                              |
-| Is this fix worth doing?                     | Amdahl's Law — Amdahl 1967                           | The fraction `p` from a profile whose clock matches the SLO, and the ceiling `1/(1−p)`                                                |
-| Will adding capacity help?                   | Gustafson 1988; queueing; the USL                    | Whether the work scales with the machines, and the utilisation at which queueing alone breaks the SLO                                 |
-| Is the difference real?                      | Experimental design — Jain 1991                      | Replicated runs, alternated, with an interval, on the SLO's percentile                                                                |
-| Is the change a regression or a coincidence? | Bisection; the falsification run                     | The fix switched off and on under the same load, with the metric following it both ways                                               |
+| Question                                     | Method                                                                              | What it must produce                                                                                                                    |
+| -------------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Is any resource the bottleneck?              | USE — Gregg                                                                         | One row per resource (CPU, memory, disk, network, connection pool, thread pool, heap): utilisation, saturation (queue length), errors   |
+| Is the service meeting its contract?         | RED — Wilkie                                                                        | Per service: request rate, error rate, duration distribution, over the SLO window                                                       |
+| What is the load, and did it change?         | Workload characterisation — Gregg                                                   | Who sends it, why, what it is (mix, sizes, hot keys), how it varies over time — with a before/after of each                             |
+| Where in the stack does the time go?         | Drill-down analysis — Gregg, after McDougall & Mauro                                | Monitoring → identification → analysis: each level names the next level's target and the tool that opens it                             |
+| Which part of one request is slow?           | Latency analysis; Method R — Millsap & Holt                                         | The response time of one user action decomposed into components summing to the total, ranked by net payoff                              |
+| What changed?                                | Problem statement; baseline statistics — Gregg                                      | The symptom, when it started, what changed then, who it affects, and the baseline it is compared against                                |
+| Is this fix worth doing?                     | Amdahl's Law — Amdahl 1967                                                          | The fraction `p` from a profile whose clock matches the SLO, and the ceiling `1/(1−p)`                                                  |
+| Will adding capacity help?                   | Gustafson 1988; queueing; the USL                                                   | Whether the work scales with the machines, and the utilisation at which queueing alone breaks the SLO                                   |
+| Is the difference actionable?                | Experimental design — Jain 1991; NIST/SEMATECH                                      | Estimand, practical threshold, sampling unit, control, allocation/blocking, sample-size rationale, uncertainty and all planned outcomes |
+| Is the change a regression or a coincidence? | Counterfactual test: randomised control, safe AB/BA, restarted control or bisection | The treatment contrast follows the change under comparable conditions, with guardrails and plausible alternatives tested                |
 
 Sources: Gregg, _Systems Performance_, 2nd ed. (2020), ch. 2 "Methodologies", which also lists
 the anti-methods below; the USE Method as published at brendangregg.com/usemethod.html; the
@@ -49,10 +49,11 @@ Gregg names these because they are what people do by default. Each has a JVM for
 | Traffic light       | Treat a green dashboard as proof of health                                                       | A p99 panel under threshold while the mean exceeds the p99, or a fleet p99 computed by averaging instance p99s          |
 
 The random-change anti-method is the one that most resembles engineering, because it measures.
-What it lacks is a mechanism: a change kept on a single better run has a one-in-twenty chance of
-having been noise at the 5% level, and after ten such trials the chance that at least one "won"
-by noise alone is 40%. A flag with no mechanism attached is a random change that happened to
-pass.
+What it lacks is a mechanism and a predeclared analysis. Under ten independent tests whose null
+hypotheses are all true, testing each at 5% makes the family-wise probability of at least one
+false rejection `1 − .95^10 ≈ 40%`; correlated trials and selective reporting change the exact
+number, not the multiple-comparison problem. A flag with no causal account, control or complete
+run history is a random change that happened to look favourable.
 
 ## Hypothesis, measurement and the ladder
 
@@ -66,14 +67,14 @@ cannot say which of its sentences are which has no way to tell whether it has le
 Every investigation climbs the same ladder. Each rung has an artefact that proves it was
 climbed, and a way of being skipped that looks like progress.
 
-| Rung             | Must produce                                                                                                 | Skipped when                                                                        |
-| ---------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| **Observation**  | Baseline and workload recorded; USE/RED tables; a profile whose clock matches the symptom                    | The first hypothesis arrived before the first profile                               |
-| **Hypothesis**   | Component, mechanism, predicted effect on the SLO metric, and the observation that would refute it           | It cannot be wrong ("the system is under-provisioned")                              |
-| **Measurement**  | The predicted observation taken, with tool, load, duration, sample count and interval                        | A dashboard glance stands in for a measurement; the sample count is not on the page |
-| **Diagnosis**    | The mechanism stated so that it explains the magnitude and the timing, not only the direction                | The finding explains 5% of the gap and is accepted as "the cause"                   |
-| **Optimisation** | One change, its Amdahl ceiling computed beforehand, its expected effect written down before the run          | Several changes shipped together; the expected effect written after the result      |
-| **Validation**   | The SLO metric re-measured by the baseline's method, every other metric checked, the fix switched off and on | A better graph after a deploy; the improvement never reproduced without the deploy  |
+| Rung             | Must produce                                                                                                               | Skipped when                                                                                    |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Observation**  | Baseline and workload recorded; USE/RED tables; a profile whose clock matches the symptom                                  | The first hypothesis arrived before the first profile                                           |
+| **Hypothesis**   | Component, mechanism, predicted effect on the SLO metric, and the observation that would refute it                         | It cannot be wrong ("the system is under-provisioned")                                          |
+| **Measurement**  | The predicted observation taken, with tool, load, duration, sample count and interval                                      | A dashboard glance stands in for a measurement; the sample count is not on the page             |
+| **Diagnosis**    | The mechanism stated so that it explains the magnitude and the timing, not only the direction                              | The finding explains 5% of the gap and is accepted as "the cause"                               |
+| **Optimisation** | Treatment and estimand, expected practical effect, risks and fixed-work bound written before the run                       | Several changes form an unidentified treatment; the expected effect is written after the result |
+| **Validation**   | Same estimand measured under a comparable protocol; mechanism and alternatives challenged with a defensible counterfactual | A better graph after a deploy; no control separates code, restart, traffic and host effects     |
 
 Diagnosis has to account for the size of the effect. A lock that is held for 2 ms per request
 does not explain a 400 ms p99 on its own, whatever the flame graph highlights; the arithmetic
@@ -88,7 +89,8 @@ either closes or the mechanism is incomplete.
 S = 1 / ((1 − p) + p / s)          ceiling as s → ∞:  1 / (1 − p)
 ```
 
-The ceiling is a speedup ratio, and the corresponding reduction in time is `p`, never more.
+The ceiling is a speedup ratio, and under the fixed-work assumptions the corresponding maximum
+reduction in total time is `p`, never more.
 Numerically:
 
 | `p`  | `s = 2` | `s = 10` | `s → ∞` | Maximum time saved |
@@ -107,9 +109,11 @@ Three ways the law is misapplied on a JVM:
   or from the trace of a slow request.
 - **`p` from the mean rather than the tail.** A component at 45% of the average request may be
   2% of the requests above p99, or 90% of them. The SLO names the percentile; measure `p`
-  there.
-- **Speedup read as reduction.** 1.82× is a 45% reduction in time, not "82% faster". State the
-  before and after in the SLO's unit.
+  in an explicitly defined slow-request cohort and along its critical path. Quantiles are not
+  additive, so adding component p99s or applying Amdahl directly to an endpoint p99 is invalid.
+- **Speedup read as time reduction.** A 1.82× speedup means the new elapsed time is about 55%
+  of the old one—a 45% reduction. State both absolute times and the workload instead of an
+  ambiguous “percent faster”.
 
 **Gustafson (1988).** When the problem size grows with the resources — more machines process
 more work in the same wall time, which is the scale-out case — the scaled speedup with `N`
@@ -135,20 +139,24 @@ The parts a production measurement cannot skip:
 
 - **A control.** The unchanged build, on the same hardware, under the same load, in the same
   period. Without it the comparison is against memory or against yesterday's traffic.
-- **Repetition.** One run per arm is a sample of size one; its "p99" has no interval. Three
-  runs per arm is the practical minimum and the spread between them is the first uncertainty
-  estimate. `latency-statistics` owns what to do with the numbers.
-- **Alternation.** A B A B, not A A A B B B. The run order absorbs drift — thermal state,
-  a neighbour's load, a cache filling — and blocks it from lining up with the arm.
-- **Warm-up and steady state.** C2 compiles a method after roughly 5,000 invocations
-  (`Tier4InvocationThreshold`) or 40,000 loop back-edges (`Tier4BackEdgeThreshold`, JDK 25
-  defaults); a path called ten times a second takes minutes, one called ten times an hour
-  never warms. Declare steady state by an observable criterion — throughput stable across two
-  consecutive windows, compilations on a plateau — and discard everything before it. A metric
-  that keeps moving after that point is accumulated state (a filling cache, a growing heap, a
-  queue), and the run is measuring the state, not the code.
-- **The interval before the decision.** Decide in advance what difference counts, and read
-  overlapping intervals as "not decided" rather than "equal".
+- **Experimental unit and replication.** Millions of requests from one process run do not
+  replicate process startup, host placement or run-level drift. Name the independent unit.
+  Choose the number of units or runs from observed variance and the precision or power needed
+  to detect the predeclared practical effect. “Three runs” is a useful pilot, not a universal
+  inferential minimum. `latency-statistics` owns quantile uncertainty and dependence.
+- **Allocation, randomisation and blocking.** Randomise treatment order or traffic assignment
+  when feasible. If time drift is expected, block comparable A/B observations within time
+  windows; deterministic ABAB is vulnerable to periodicity and carry-over. Record the scheme.
+- **Warm-up and state evolution.** Tiered-compilation decisions depend on counters, profiles,
+  code-cache pressure and policy; one invocation threshold is not a portable warm-up clock.
+  Define the state being studied—cold start, ramp, or sustained service—and use observable
+  criteria such as compilation activity, cache occupancy, allocation rate and throughput.
+  Do not silently discard a ramp if startup is part of the SLO. A metric that keeps moving may
+  be the production phenomenon (leak, cache fill, queue growth), not “noise” to trim away.
+- **Decision rule before data.** Define the smallest effect worth shipping, error costs,
+  confidence or credible interval (or another uncertainty method), and stopping rule.
+  Overlapping marginal confidence intervals do not by themselves test the paired treatment
+  difference; analyse the contrast the design created. “Not demonstrated” is not “equal”.
 - **One factor at a time, unless factors interact.** Changing one variable per run makes
   attribution trivial and is the right default. It cannot see an interaction — heap size and
   GC thread count, pool size and timeout — and Jain's argument for a `2^k` factorial design is
@@ -158,9 +166,12 @@ The parts a production measurement cannot skip:
 
 ## The danger of averaging
 
-A mean of latencies is dominated by the routine case and hides the event that breaks the SLO;
-`latency-statistics` owns the percentile discipline. Two further forms belong to the
-investigation rather than to the dashboard:
+A mean and a quantile answer different questions. The mean represents expected latency and,
+multiplied by rate, aggregate time demand; it is sensitive to extreme observations. A p99
+describes a distribution quantile but says nothing about the worst 1%, sample size or censored
+timeouts. Report the statistics the decision requires, their uncertainty, and error/timeout
+mass; `latency-statistics` owns the distribution mechanics. Three invalid aggregations belong
+to the investigation rather than to the dashboard:
 
 - **Averaging over the interval.** A five-minute utilisation of 70% is consistent with three
   and a half minutes at 100% and ninety seconds idle. The queue length and the p99 over the
@@ -211,12 +222,14 @@ microbenchmark number into a system prediction is `jmh-microbenchmarks`.
 
 The investigation splits into observation and experiment, and they belong in different places.
 
-**Observe in production.** The symptom is there, and the observation is mostly passive: a
-continuous JFR recording at `default.jfc` states its own budget at under 1%, traces and metrics
-are already exported, and a two-minute `profile.jfc` recording on one instance is cheap. What
-production forbids is the experiment that could make the outage worse and the experiment whose
-variable cannot be isolated because traffic never repeats. The healthy instance next to the
-slow one is the free control, and the difference between them is often the finding.
+**Observe in production within a budget.** The symptom is there, but observation is an
+intervention. Oracle describes `default.jfc` as typically below 1% overhead and a standard
+time-fixed profiling recording as below 2% for most applications—not as guarantees.
+Lower thresholds, stack traces, heap statistics, high event volume, disk retention and export
+can change CPU, pause, storage and privacy risk. Pilot on one representative instance, monitor
+overhead and stop conditions, and retain a comparable unprofiled instance. A healthy neighbour
+is a useful comparator, not automatically a control: placement, traffic and shard ownership may
+differ.
 
 **Experiment in staging, having stated the gap.** Staging is where a variable can be changed
 and the load replayed. It is a model of production, and every model must state what it does not
@@ -227,11 +240,12 @@ process uptime (JIT state, heap fragmentation, leaked state). A staging result i
 only with those four stated, and the load must be open-loop against a production-shaped
 dataset (`load-testing`).
 
-**Canary as the experiment.** A canary is the cleanest production experiment available: the
-variable is the build, the control is the rest of the fleet, the load is real. Its confounds
-are the ones a fresh process always carries — no JIT profile, empty caches, new connections —
-so compare the canary against a control that was restarted at the same time, not against pods
-with days of uptime, and do not read the first minutes.
+**Canary as a possible experiment.** A canary supplies real load and bounded exposure, but the
+build is not necessarily its only difference. Routing, node, zone, shard, dependency saturation,
+JIT profile, caches and connections can all differ, while shared dependencies create
+interference between arms. Randomise eligible traffic where possible, restart a control under
+the same policy, stratify by important dimensions, define ramp/cold-start treatment explicitly,
+and test for guardrail regressions as well as the target metric.
 
 ## When to stop, and when the fix is architectural
 
@@ -251,10 +265,11 @@ had elsewhere. In SLO terms:
 Signals that the fix is architectural rather than local, each of them a measurement rather than
 an opinion:
 
-- The bottleneck is a **queue** and the resource behind it is genuinely busy: at 75%
-  utilisation an M/M/1 queue's mean response time is already 4× the service time and its p99
-  about 18×; at 90%, 10× and 46× (`littles-law-and-queueing`). Faster code lowers the service
-  time; only capacity or less work lowers the utilisation.
+- The bottleneck is a **queue** and the resource behind it is genuinely busy: in a stationary
+  M/M/1 model, at 75% utilisation mean response time is 4× mean service time and p99 about
+  18×; at 90%, 10× and 46× (`littles-law-and-queueing`). Faster service can lower utilisation,
+  just as capacity or less arrival work can. First verify that measured arrivals, service times,
+  queue discipline and finite limits resemble the model.
 - Throughput **falls** as instances or threads are added: the USL's coherence term, which is
   shared state, not code (`universal-scalability-law`).
 - The dominant `p` is a **call to another system** on the critical path, and its owner has no
@@ -269,3 +284,18 @@ An architectural finding is reported like any other — claim, measurement, unce
 mechanism, falsification — with the difference that the recommendation names the option space
 rather than a change. Sizing the capacity option is `capacity-planning`; the reporting order is
 `engineering-communication`.
+
+## Primary and authoritative references
+
+- [Oracle JDK 25: troubleshoot performance issues with JFR](https://docs.oracle.com/en/java/javase/25/troubleshoot/troubleshoot-performance-issues-using-jfr.html)
+  — application-dependent overhead, event thresholds and production cautions.
+- [Oracle JDK 25 `java` launcher](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#advanced-runtime-options-for-java)
+  — `default.jfc`, `profile.jfc`, event settings and recording controls.
+- [NIST/SEMATECH: choosing an experimental design](https://www.itl.nist.gov/div898/handbook/pri/section3/pri3.htm)
+  — randomisation, blocking, factorial designs and design selection.
+- [Amdahl, “Validity of the Single Processor Approach…”, AFIPS 1967](https://doi.org/10.1145/1465482.1465560)
+  — fixed-work speedup bound.
+- [Gustafson, “Reevaluating Amdahl's Law”, CACM 1988](https://doi.org/10.1145/42411.42415)
+  — scaled-work speedup.
+- [RFC 2330, Framework for IP Performance Metrics](https://www.rfc-editor.org/rfc/rfc2330)
+  — metric definitions, clocks, sampling and repeatability for networked systems.

@@ -119,8 +119,9 @@ A second run of the C2 side on the production OpenJDK build is still worth doing
 because that is the binary the rollback lands on — but it answers "is this OpenJDK build
 different from GraalVM's OpenJDK base", a separate question from "is Graal faster than C2".
 
-Pin the GC explicitly on both runs even though both default to G1: an explicit flag is what
-makes the compiler the only variable in the record.
+Pin the GC and other non-treatment flags on both runs even when defaults currently match.
+Also save `PrintFlagsFinal`: ergonomics can react to CPUs/memory, and “same binary” does not
+prove that every selected runtime value stayed equal.
 
 ## Warm-up: how much is enough
 
@@ -129,9 +130,11 @@ makes the compiler the only variable in the record.
                                      // C2 usually stabilises with fewer
 ```
 
-The stabilisation criterion is the score, not the iteration count: it should not vary by more
-than roughly 5% across the last warm-up iterations. `-v EXTRA` prints the per-iteration score
-so you can confirm that visually instead of assuming a fixed number suffices.
+The stabilisation criterion is evidence of a stationary measurement region, not an iteration
+count or a universal percentage. Use `-v EXTRA` to inspect per-iteration scores, multiple
+forks to separate process effects, and retain raw JSON with uncertainty. If the score still
+trends, compilation events/code-cache growth continue, or forks settle at different levels,
+increase warm-up or report the workload as non-steady rather than averaging it away.
 
 If the run is in jargraal mode the picture is different in kind, not only in degree. Under
 `-XX:-UseJVMCINativeLibrary` on CE 25.0.2, `-XX:+PrintCompilation` shows 1,903 compilations
@@ -208,3 +211,10 @@ Documentation and usage live at `graalvm.org/latest/tools/igv/`; the source is i
 `github.com/oracle/graal`. Dumps come from `-Djdk.graal.Dump` above; narrow them with
 `MethodFilter` or the output is unmanageable. Tool paths move between releases, so check the
 documentation for the GraalVM in use.
+
+## Authoritative sources
+
+- [Graal JIT Compiler Operations Manual](https://docs.oracle.com/en/graalvm/jdk/25/docs/reference-manual/compiler/operations/)
+- [Graal JIT Compiler Configuration](https://docs.oracle.com/en/graalvm/jdk/25/docs/reference-manual/java/options/)
+- [GraalVM 25.3 release notes](https://www.graalvm.org/release-notes/25.3/)
+- [JMH project and samples](https://github.com/openjdk/jmh)

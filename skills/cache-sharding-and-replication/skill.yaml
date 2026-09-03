@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: cache-sharding-and-replication
-version: 1.2.0
+version: 1.3.0
 description: >-
   Topology for a cache that no longer fits one node: client-side sharded, proxy-fronted,
   clustered, and fully replicated, compared on failure behaviour, cost and client

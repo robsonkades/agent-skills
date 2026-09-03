@@ -7,26 +7,29 @@ Useful for a starting point, not a description of how G1 decides:
 ```
 Pause_Young ≈ T_root_scan + T_merge_remset + T_object_copy + T_other
 
-T_root_scan     ≈ 0.5–2 ms   (roughly constant; scales with GC threads and stacks)
+T_root_scan     ≈ measured root work (varies with threads, stacks, roots and workers)
 T_merge_remset  ≈ proportional to the RSet size of the regions in the collection set
 T_object_copy   ≈ live_bytes_in_young / copy_bandwidth
-T_other         ≈ 0.5–1 ms   (bookkeeping, GC thread synchronisation)
+T_other         ≈ measured residual (bookkeeping, reference processing, synchronization)
 
-copy_bandwidth  ≈ 1–4 GB/s — order of magnitude only. It depends on CPU, memory
-                  bandwidth and NUMA topology. Measure it on your own hardware.
+copy_bandwidth  = copied/live-byte estimate divided by Object Copy time, calibrated on
+                  this hardware, object graph, worker count and NUMA placement
 ```
 
-The model fixes `T_root_scan` and `T_other` as constants and puts all variability into
-`T_object_copy`. G1 itself keeps a truncated history of real measurements per cost component
+The model may hold root/residual cost fixed only inside a narrow calibrated regime; roots,
+remembered sets, reference processing, worker imbalance and page state all move. G1 itself
+keeps a truncated history of real measurements per cost component
 and predicts the next value from its moving average and standard deviation, recalibrating
 every collection (`G1Predictions`, `G1ConfidencePercent` default 50). That is why a derived
 young size is usually an optimistic upper bound: the real policy runs slightly smaller to
 keep a confidence margin.
 
-Copy bandwidth is measured, not assumed: `Object Copy` from `-Xlog:gc+phases=debug` divided
-by the bytes that survived (`Survivor regions` after plus the `Old regions` delta, times the
-region size), averaged over at least 30 young collections. `g1-internals` covers the phase
-breakdown.
+Copy bandwidth is measured, not assumed. `Object Copy` from
+`-Xlog:gc+phases=debug` is the time signal; survivor/old region counts provide a coarse
+capacity estimate, not exact copied bytes because regions are partially occupied and old
+growth can mix promotion with region lifecycle. Calibrate against JFR/heap evidence when
+the estimate controls a flag, and report its distribution rather than one average.
+`g1-internals` covers the phase breakdown.
 
 ## Young generation size and GC interval
 
@@ -54,13 +57,14 @@ Two consequences of that arithmetic, both decisions rather than observations:
 - The model puts `T_object_copy` at `live_bytes_in_young / C`, so the young size the
   pause allows is really `survival_ratio × young ≤ (T_slo − T_fixed) × C`. The 75 MB above
   assumes everything in young is live at the pause — a worst case. With a measured
-  survival ratio of 10 percent the same budget allows a young generation ten times larger
-  and an interval ten times longer; the derivation must carry the measured ratio, and the
-  worst case is the value to put in `G1MaxNewSizePercent`.
-- **13.8 percent is above the 10 percent feedback threshold.** When the derivation itself
-  lands there, no G1 flag reaches the SLO at that allocation rate; the choice is to cut
-  allocation (`allocation-profiling`), to accept the overhead knowingly, or to revisit the
-  SLO. Presenting the flags anyway is tuning by transplant with extra steps.
+  survival ratio of 10 percent makes a ten-times-larger young generation arithmetically
+  possible **if other phase costs remain fixed**. They rarely do across that range. Derive
+  from tail survival/cost regimes and retain burst margin; a 100%-survival bound is a
+  stress scenario, not automatically the production ceiling.
+- **13.8 percent must be compared with the service's declared pause/CPU budget.** It is not
+  a universal failure threshold. If the combined latency, capacity and CPU budgets cannot
+  hold at that allocation rate, reduce allocation, add capacity, relax a constraint or
+  reconsider the collector; a flag cannot remove the conservation law.
 
 `G1NewSizePercent` and `G1MaxNewSizePercent` are percentages of the **committed** heap, not
 of `-Xmx` (`G1YoungGenSizer` recalculates from the current region count). With `-Xms`
@@ -109,32 +113,31 @@ marking_time      ≈ live_data_in_old / marking_bandwidth
                       `predicted marking phase length` from gc+ihop=trace
 marking_bandwidth ≈ 1 GB/s — order of magnitude; measure it
 
-margin = promo_rate × marking_time
+margin = old_gen_allocation_rate × marking_time
   80 MB/s × 10 s = 800 MB of old growth DURING marking
 
 IHOP_theoretical_max = 1 − (margin + safety_headroom) / heap_size_mb
 ```
 
-This is the same arithmetic the adaptive controller runs (`G1AdaptiveIHOPControl` in
-`g1IHOPControl.cpp`): threshold = internal target − predicted promotion rate × predicted
+This approximates the terms used by the adaptive controller (`G1AdaptiveIHOPControl` in
+`g1IHOPControl.cpp`): threshold = internal target − predicted old-generation allocation rate × predicted
 marking time − last young size, where the internal target is the heap minus
 `G1ReservePercent + G1HeapWastePercent` (85 percent of a 1 GB heap logs as
 `internal target occupancy: 912680550B`, executed on 25.0.3). So the safety headroom has a
-known floor: **15 percent of the heap plus one young generation** is what the JVM gives
-itself. A static IHOP derived with less margin is a value G1 would never choose, and a
-static IHOP derived with exactly that margin reproduces the adaptive controller at one
-load level — the reason to go static is not a better number but a _predictable_ one under
-load that changes faster than three cycles of samples (`G1AdaptiveIHOPNumInitialSamples`).
+policy-derived constraint on this JDK, not a timeless floor: reserve, waste, young size,
+predictor state and implementation can change. A static approximation neither reproduces
+the adaptive controller nor bounds it universally. Prefer adaptive control unless policy
+logs show a repeatable failure mode that a manually owned threshold and burst margin solve.
 
 The theoretical maximum is a **ceiling**, never the production value: using it removes all
 margin against an unsampled promotion spike. The headroom also pays for the mixed
 collections that follow marking, which need free regions to evacuate into.
 
-Two cases where no IHOP value helps, and the derivation must say so:
+Two cases where IHOP alone is unlikely to solve the problem, and the derivation must say so:
 
-- Old occupancy already sits above the threshold after each cycle: marking restarts
-  immediately (`Pause Young (Concurrent Start)` after every `Pause Cleanup`) and the mixed
-  phase never runs to completion. The live set is too close to the heap — `jvm-gc-tuning`.
+- Old occupancy remains near or above the effective threshold after reclamation and cycles
+  restart rapidly. Distinguish an oversized live set, ineffective candidates, promotion
+  pressure and humongous occupancy; moving IHOP cannot create reclaimable garbage.
 - The trigger is `G1 Humongous Allocation` rather than occupancy: the cycles are being
   requested by large allocations, and the lever is `G1HeapRegionSize` or the allocation
   pattern (`g1-internals`), not IHOP.
@@ -232,13 +235,15 @@ mixed GCs (...)` under `gc+ergo=debug`).
 - `Pause Young (Prepare Mixed)` is a young-only collection, the last before the mixed
   phase. A parser matching `Mixed)` counts it as mixed; match `Pause Young \(Mixed\)`.
 - `Old regions: 50->55` has no third parenthesised value, unlike `Eden regions: 150->0(150)`.
-  A regex requiring `(\d+)->(\d+)\((\d+)\)` matches nothing and yields promotion rate zero.
-- The `Old regions` delta is promotion in **regions**, and a humongous allocation shows in
-  `Humongous regions`, not there. Promotion in bytes is the delta times the region size.
-- `sorted(data)[int(len(data)*0.99)]` is not a p99 — for n below 100 it returns the maximum.
-  Use rank: `ceil(p/100 × n)`.
-- Assert on the output before using it: mixed GCs above zero, promotion rate above zero, if
-  the load promotes at all.
+  A regex requiring `(\d+)->(\d+)\((\d+)\)` matches nothing and yields old growth zero.
+- The `Old regions` delta is a region-capacity proxy for net old growth during that event,
+  not exact promoted bytes. Mixed reclamation and partial regions distort it; humongous
+  occupancy has its own line.
+- `sorted(data)[int(len(data)*0.99)]` chooses a quantile convention and is off by one from
+  nearest rank (`sorted[ceil(0.99 × n)-1]`). Name the estimator and sample count; for fewer
+  than 100 observations nearest-rank p99 is the maximum and highly uncertain.
+- Assert on presence, event counts, observation span and plausible non-zero estimates; do
+  not force a positive value when the workload legitimately has none.
 
 ## Calibrating across load levels
 
@@ -254,9 +259,9 @@ for load_percent in 10 50 90 120; do
 done
 ```
 
-The 120 percent level is not optional: the adaptive IHOP and the young sizer are both
-predictors over recent history, and the configuration that must be defended is the one
-they produce when load exceeds what the samples covered.
+Include overload only when the environment can do so safely and the acceptance model
+requires it. The important requirement is to cover expected peak, burst and recovery
+regimes—including admission control—and not extrapolate a predictor beyond sampled load.
 
 ## Separating GC pause from total application overhead
 
@@ -277,17 +282,18 @@ def correlate_gc_latency(request_log, gc_log):
     return affected
 ```
 
-A request flagged as GC-affected whose latency still far exceeds the associated pause says GC
-is not the dominant cause — the excess is processing, external I/O or thread-pool queueing.
-A pause the client felt that the log does not show is time-to-safepoint or the OS, which is
-`pause-attribution`.
+A request whose latency far exceeds an overlapping pause needs causal analysis: the excess
+may be ordinary processing/external I/O, or queue amplification caused by the pause. Compare
+affected and matched-unaffected requests, queue depth and recovery time. A client stall not
+covered by a logged GC pause can be TTSP, OS scheduling or another layer; use
+`pause-attribution` rather than selecting one by exclusion.
 
 ## Checklist
 
 Before tuning:
 
 - [ ] SLO stated with metric, threshold and evaluation window
-- [ ] Baseline collected under representative load for at least 30 minutes with `-Xlog:gc*`
+- [ ] Baseline covers enough complete cycles and each relevant operating regime; duration and sample sufficiency justified
 - [ ] Current defaults confirmed with `-XX:+UnlockExperimentalVMOptions -XX:+PrintFlagsFinal
 -version` on the target runtime, and the unlock present on any command line that
       sets an experimental flag
@@ -295,7 +301,7 @@ Before tuning:
 
 While measuring:
 
-- [ ] `alloc_rate`, `promo_rate` and `survival_ratio` measured at low, medium and high load
+- [ ] Allocation, old-generation pressure and survival/copy-cost estimates measured across relevant load regimes, with uncertainty named
 - [ ] Analysis output validated against its sanity assertions
 - [ ] Percentiles computed with the rank method
 

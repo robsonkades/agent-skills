@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: gof-composite
-version: 1.1.0
+version: 1.2.0
 description: >-
   Composite in modern Java: treating a leaf and a tree of leaves through one interface, and the
   hazards that come with a recursive structure. Covers the transparent-versus-safe trade-off and
-  why a sealed interface with exhaustive pattern matching now beats both, unbounded depth and
+  when a sealed interface with exhaustive pattern matching changes that trade-off, unbounded depth and
   StackOverflowError, cycles introduced by parent pointers and the infinite recursion they cause
   in equals, hashCode and toString, mutation during traversal, and why a tree whose children live
   in other services is not this pattern. Use when a part-whole hierarchy is being modelled, when a
@@ -40,7 +40,7 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
+dependencies: []
 
 suggests:
   - allocation-profiling

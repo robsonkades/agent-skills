@@ -29,7 +29,7 @@ quoted here.
 It is worth studying precisely because the design reasoning is good. What has drifted is the
 arithmetic and one method call.
 
-### Before
+### Before: password verification
 
 ```java
 import org.bouncycastle.crypto.generators.SCrypt;
@@ -71,8 +71,9 @@ place; and the framing of password storage as a _design_ decision rather than a 
 
 **Superseded or wrong, precisely:**
 
-1. `Arrays.equals` on a hash **short-circuits on the first differing byte** — a byte-at-a-time
-   timing oracle. `MessageDigest.isEqual` is the required call. This is the single most
+1. `Arrays.equals` on a hash **short-circuits on the first differing byte** — a timing side
+   channel whose exploitability depends on the observation boundary and noise.
+   `MessageDigest.isEqual` is the correct fixed-width digest comparison. This is the single most
    instructive line in the chapter for a 2026 reader: a codebase that picked the right KDF and
    the wrong comparison proves that "used a good library" is not "did it correctly".
 2. `SCRYPT_COST = 16384` is `N=2^14`, which the current OWASP table pairs with **`p=5`**; the
@@ -141,17 +142,20 @@ final class PasswordVerifier {
             return false;
         }
         if (encoder.upgradeEncoding(stored)) {            // rehash on successful login
-            repository.updateHash(userId, encoder.encode(password));
+            // Compare-and-set avoids two concurrent logins overwriting a newer credential.
+            repository.replaceHashIfCurrent(userId, stored, encoder.encode(password));
         }
         return true;
     }
 }
 ```
 
-`encoder.matches` is internally constant-time (`constantTimeArrayEquals` in
+`encoder.matches` uses a content-independent comparison (`constantTimeArrayEquals` in
 `Argon2PasswordEncoder`). The dummy hash is what stops the not-found path returning in
-microseconds while the found path takes tens of milliseconds — an enumeration oracle that no
-test catches. Spring's own `DaoAuthenticationProvider` lost this mitigation once
+microseconds while the found path performs a KDF. It does not make both requests perfectly
+indistinguishable: repository/cache paths and downstream work can remain statistically visible,
+so use a common response and rate limiting as well. Spring's own `DaoAuthenticationProvider`
+lost the dummy-hash mitigation once
 (CVE-2025-22234), which is how routine a regression it is. `upgradeEncoding` is what makes a
 future parameter increase, or a bcrypt→Argon2id move behind `DelegatingPasswordEncoder`, a
 config change instead of a project — see `password-storage.md` §3 for the one encoder that does
@@ -164,7 +168,7 @@ not implement it, and for the bcrypt re-encode that now throws.
 
 ## B. Authorisation — from the controller to the domain operation
 
-### Before
+### Before: controller-only authorisation
 
 ```java
 @RestController
@@ -212,11 +216,18 @@ public final class Order {
 }
 ```
 
-**The signature is the control.** There is no way to call `cancelBy` without an `Actor`, so the
-scheduler must supply a system actor explicitly and the decision is auditable at one site. The
-controller keeps `@PreAuthorize` as cheap early rejection — it is simply no longer the only
-check. `NotPermittedException` carries no distinguishing detail, so "not yours" and "does not
-exist" are indistinguishable to the caller.
+**The signature makes the check mandatory; it does not authenticate the actor.** Every caller
+must supply an `Actor`, so a scheduler must use an explicit system identity and the decision is
+auditable at one site. The inbound adapter must construct it from a trusted authentication
+context; accepting roles or tenant from request JSON defeats the design. The controller keeps
+`@PreAuthorize` as cheap early rejection — it is simply no longer the only check.
+`NotPermittedException` must be mapped to the same external shape as absence if resource
+enumeration matters; internal audit records may retain the real reason under access control.
+
+The read, authorisation and state transition must also be consistent. If another transaction
+can transfer ownership or change status between the Java check and persistence, use one
+transaction with appropriate isolation or a conditional update containing owner, tenant,
+expected version and expected state. The domain `if` alone cannot close a datastore TOCTOU gap.
 
 **The trade-off, stated honestly.** `Actor` now threads through the domain API and the domain
 has acquired an authorisation concept it did not have. That is the price. It is worth paying
@@ -230,5 +241,13 @@ counter-example in the body.
   refusal. Before the change that test cannot be written without standing up the web layer.
 - Grep for other callers of the service method. If they exist and did not previously check,
   the change found a live defect, not a hypothetical one.
-- Time the login endpoint for a known-absent user and a known-present one. If the two differ by
-  the cost of one KDF run, the dummy hash is missing or in the wrong branch.
+- Compare login latency distributions for known-absent and known-present users across warm and
+  cold repository paths. If one class omits a KDF run, the dummy hash is missing or misplaced;
+  small residual differences are not proof of an exploitable oracle or of its absence.
+
+## Sources for the claims in this example
+
+- [Java SE 25 `MessageDigest.isEqual`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/security/MessageDigest.html#isEqual(byte%5B%5D,byte%5B%5D)>)
+- [Spring Security advisory CVE-2025-22234](https://spring.io/security/cve-2025-22234/)
+- [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
+- [OWASP Insecure Direct Object Reference prevention](https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html)

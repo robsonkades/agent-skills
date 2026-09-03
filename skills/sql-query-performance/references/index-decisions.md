@@ -38,10 +38,12 @@ be used to satisfy a predicate on `b` alone, or on `c` alone, the way an index o
 
 The ordering rule, in the order to apply it:
 
-1. **Equality predicates first.** Every column compared with `=`.
-2. **Then at most one range predicate** (`>`, `<`, `BETWEEN`, `LIKE 'prefix%'`). After a range,
-   the index is no longer ordered by the following columns for the purpose of further seeking.
-3. **Then the columns needed for ordering**, if the query sorts.
+1. **Start with equality predicates that establish the useful leading prefix.** Their relative
+   order may not matter for this one lookup, but can matter for other queries, ordering,
+   statistics, compression, and vendor-specific access paths.
+2. **Then the range used to bound the scan** (`>`, `<`, `BETWEEN`, `LIKE 'prefix%'`). Columns after
+   it may still filter or cover even when they cannot further narrow that range in a given engine.
+3. **Then the columns needed for ordering**, where direction and engine rules allow the sort to be avoided.
 4. **Then any remaining columns needed only to cover**, which are never seeked on and only exist
    to avoid the lookup back to the table.
 

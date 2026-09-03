@@ -1,136 +1,182 @@
-# Capture order
+# Adaptive capture protocol
 
-Ordered by cost. Work down the list until the budget is spent, then restore service.
+## Triage matrix
 
-| #   | Artefact                                        | Cost to take           | Disrupts?         | Survives a restart?         | Read with                                               |
-| --- | ----------------------------------------------- | ---------------------- | ----------------- | --------------------------- | ------------------------------------------------------- |
-| 0   | Take the instance out of rotation               | seconds                | no                | n/a                         | —                                                       |
-| 1   | GC log, `hs_err`, existing JFR files            | a copy                 | no                | **yes**, if the volume does | `gc-log-analysis`, `jhsdb-and-core-dumps`               |
-| 1b  | `JFR.dump` of the continuous recording          | seconds                | no                | as a file                   | `jfr-and-async-profiler`                                |
-| 2   | Metrics and traces already exported             | nothing                | no                | **yes**                     | `metrics-and-cardinality`, `distributed-tracing-design` |
-| 3   | `jcmd VM.info`, `VM.flags`, `VM.uptime`         | < 1 s                  | no                | no                          | `jvm-performance-review`                                |
-| 4   | Three thread dumps, 5–10 s apart                | seconds                | negligible        | no                          | `concurrency-diagnostics`                               |
-| 5   | `jcmd GC.heap_info`, `VM.native_memory summary` | < 1 s                  | no                | no                          | `jvm-memory-regions`, `metaspace-internals`             |
-| 6   | A 60-second JFR recording                       | ~1 % CPU               | negligible        | as a file                   | `jfr-and-async-profiler`                                |
-| 7   | Host view: CPU, run queue, memory, throttling   | seconds                | no                | no                          | `linux-for-jvm`                                         |
-| 7b  | `jcmd GC.class_histogram`, twice, minutes apart | seconds, **pauses**    | a safepoint       | no                          | `heap-dump-analysis`                                    |
-| 8   | Heap dump                                       | **seconds to minutes** | **stops the JVM** | as a file                   | `heap-dump-analysis`                                    |
-| 9   | Core dump                                       | minutes                | kills or stops it | as a file                   | `jhsdb-and-core-dumps`                                  |
+Capture order depends on the symptom and remaining recovery budget. Preserve existing/exported
+evidence and a timeline in every case.
 
-Rows 0–7 together are usually under a minute and cost the application almost nothing. Row 7b
-walks the heap under a safepoint (`jcmd` rates it _Impact: High_) but writes nothing and needs no
-disk; two of them, spaced, show which class grows. Row 8 is a different category and needs a
-decision. Row 9 is for the case where the JVM will not answer at all.
+| Symptom                        | First volatile evidence                                                  | Escalation                                                             | Usually low-value/risky first move              |
+| ------------------------------ | ------------------------------------------------------------------------ | ---------------------------------------------------------------------- | ----------------------------------------------- |
+| No progress, low CPU           | repeated platform/virtual-thread state, lock/queue/dependency/OS state   | bounded JFR/wall/lock profile; core if truly unresponsive and approved | heap dump without memory evidence               |
+| CPU saturated, GC not dominant | process/thread CPU deltas + CPU profile/JFR + cgroup/host CPU            | native/kernel profile, compiler/deopt evidence                         | class histogram                                 |
+| GC pauses/frequency rising     | GC logs/JFR, heap/config, allocation rate/live-set trend                 | allocation profile; histogram/dump if retention suspected              | thread fleet dump as substitute for GC evidence |
+| Heap near OOM                  | GC/JFR/heap info, OOM/cgroup events, existing allocation/continuous data | histogram or heap dump on approved target; automatic OOM dump          | repeated expensive actions on all replicas      |
+| RSS/native growth              | cgroup/proc maps, NMT if enabled, direct-buffer/native/library evidence  | NMT detail/baseline diff, native allocation profile, core              | assume `-Xmx` explains RSS                      |
+| Container OOMKilled            | cgroup/Kubernetes/node events, prior logs/JFR/dumps, limits/RSS history  | reproduce with pre-enabled evidence                                    | live heap dump—the process is gone              |
+| Tail latency, CPU/GC normal    | JFR I/O/locks/safepoints, wall/off-CPU profile, queues/network/cgroup    | eBPF/kernel capture aligned to workload                                | CPU-only graph treated as negative proof        |
+| Crash                          | `hs_err`, core/minidump, container/node logs, exit status/signal         | matching binaries/symbols; safe reproduction                           | restart before copying local artifacts          |
+| Attach unresponsive            | namespace/UID/socket/filesystem/process/cgroup/OS state                  | approved core/freeze/host tooling                                      | repeated unbounded `jcmd` attempts              |
 
-## The commands
+## Cost classes
 
-```bash
-PID=$(pgrep -f 'java .*app.jar' | head -1)
-OUT=/mnt/diagnostics/$(hostname)-$(date -u +%Y%m%dT%H%M%SZ)   # a path on a mounted volume
-mkdir -p "$OUT"
+Measure these on comparable systems; labels below are relative, not promises.
 
-# 1b — the continuous recording becomes a file only here; begin= bounds the window
-jcmd $PID JFR.dump filename="$OUT/continuous.jfr" begin=-30m
+| Class               | Examples                                              | Risks                                                            |
+| ------------------- | ----------------------------------------------------- | ---------------------------------------------------------------- |
+| Preserve existing   | backend export, copy existing logs/JFR/fatal files    | query/retention mistakes, local-copy I/O, sensitive data         |
+| Small bounded query | version/flags/uptime, cgroup/proc snapshot, JFR check | attach delay, output size, unavailable command                   |
+| Repeated state      | thread dumps, OS thread CPU snapshots                 | safepoint/handshake/output cost, huge virtual-thread population  |
+| Sampling recording  | default-like JFR, CPU profile                         | CPU/storage, signal/event loss, privilege, perturbation          |
+| Heap inspection     | class histogram, object statistics                    | high-impact VM operation and output/CPU cost                     |
+| Heap dump           | live/all heap traversal and HPROF write/compress      | long pause, disk/I/O saturation, secret payload, watchdog kill   |
+| Core/freeze         | coredump/gcore/crash mechanism                        | stop/kill, disk≈address space, shared-node I/O, credentials/keys |
 
-# 3 — what this JVM is
-jcmd $PID VM.info      > "$OUT/vm-info.txt"
-jcmd $PID VM.flags     > "$OUT/vm-flags.txt"
-jcmd $PID VM.uptime    > "$OUT/vm-uptime.txt"
+Commands marked “Impact: Low/Medium/High” by `jcmd` still require workload-specific bounds. The
+rating is not a duration SLA.
 
-# 4 — three dumps, spaced, each with its own timestamp; the JSON dump adds virtual threads
-for i in 1 2 3; do
-  date -u +%Y-%m-%dT%H:%M:%SZ > "$OUT/thread-$i.txt"
-  jcmd $PID Thread.print -l >> "$OUT/thread-$i.txt"
-  jcmd $PID Thread.dump_to_file -format=json "$OUT/threads-$i.json"
-  top -H -b -n 1 -p $PID | head -40 > "$OUT/top-threads-$i.txt"   # CPU per OS thread
-  sleep 8
-done
+## Safe command wrapper contract
 
-# 5 — memory, without touching the heap
-jcmd $PID GC.heap_info                  > "$OUT/heap-info.txt"
-jcmd $PID VM.native_memory summary      > "$OUT/nmt.txt"   # only if NMT was enabled at startup
+Do not paste a monolithic shell script into production. The incident automation should wrap
+each tool with:
 
-# 6 — a short recording
-jcmd $PID JFR.start name=incident settings=profile duration=60s filename="$OUT/incident.jfr"
-
-# 7b — what grows, without a file: run it again after a few minutes and diff the top rows
-jcmd $PID GC.class_histogram | head -40 > "$OUT/histogram-$(date -u +%H%M%S).txt"
-
-# 8 — only after deciding; stops the JVM for the duration
-jcmd $PID GC.heap_dump -gz=1 -parallel=4 "$OUT/heap.hprof.gz"
+```text
+unique artifact path created on approved volume
+UTC and process uptime before/after
+tool/JDK version and exact arguments
+per-command timeout and cancellation behavior tested
+stdout/stderr/exit/signal status preserved
+free bytes/inodes and write-rate guard
+application SLO/CPU/I/O abort guard
+checksum and format/readability verification
+upload with retry, remote verification, and no premature local deletion
 ```
 
-`Thread.print` lines carry `cpu=<ms> elapsed=<s>` per thread, so three spaced dumps also give
-each thread's CPU delta — the CPU-pinned case is solved by the same three files plus `top -H`
-matched on the OS thread id (`nid=`). `Thread.print` omits virtual threads;
-`Thread.dump_to_file -format=json` includes them, and `concurrency-diagnostics` reads both.
+Timeout utilities can terminate the client while the JVM-side VM operation continues. Test
+this for each command/JDK; “client timed out” does not prove capture stopped. Avoid issuing a
+second expensive VM operation until target state is known.
 
-`GC.heap_dump` options that change the budget: `-gz=1` shrinks the bytes written (the pause is
-dominated by the write on a large heap); `-parallel=N` uses N threads for the dump; `-all` skips
-the full collection that a live-only dump performs first, at the cost of dumping garbage too.
+## Baseline identity snapshot
 
-`Thread.print -l` includes lock ownership, which is what makes a deadlock visible. Without `-l`
-the dump shows threads blocked and not what they are blocked on.
-
-**`VM.native_memory` only works if `-XX:NativeMemoryTracking` was set at startup.** It cannot be
-turned on during an incident, which puts it in the same category as the GC log: a decision made
-earlier or not available at all.
-
-## By symptom
-
-| Symptom                             | Take, in order      | Skip                           |
-| ----------------------------------- | ------------------- | ------------------------------ |
-| Nothing is progressing, CPU idle    | 1, 1b, 3, 4, 7      | heap dump — it is not memory   |
-| CPU pinned, GC normal               | 1, 1b, 3, 4, 6, 7   | heap dump                      |
-| Latency climbing, GC pauses growing | 1, 1b, 3, 5, 6      | thread dumps are secondary     |
-| Heap climbing, OOM approaching      | 1–5, 7b, then **8** | —                              |
-| OOMKilled, no Java exception        | 1, 5, 7             | heap dump — it is not the heap |
-| Process gone, no log                | `hs_err`, host logs | everything live                |
-| JVM unresponsive, `jcmd` hangs      | 7, then **9**       | rows 3–8, they will not answer |
-
-The two "skip" columns matter as much as the rest. A heap dump taken during a lock-contention
-incident costs minutes of extra outage and answers nothing.
-
-## The budget conversation
-
-Say it in one sentence to whoever owns the incident:
-
-> "Rows 1 to 7 cost about a minute and no downtime. A heap dump adds roughly N seconds of full
-> stop and we only need it if this is memory. Do we take it?"
-
-N comes from the last dump of a comparable heap, not from a guess, and it is bounded by the
-liveness probe: a container that does not answer for longer than `failureThreshold ×
-periodSeconds` is killed by the kubelet while the file is still being written
-(`kubernetes-service-lifecycle` owns the probe arithmetic). If N does not fit, the answer is
-row 7b now and `-XX:+HeapDumpOnOutOfMemoryError` for next time.
-
-That sentence is the deliverable of this skill during an incident. It makes the trade explicit,
-gives the decision to the person who owns it, and stops both failure modes — the restart with no
-evidence, and the collection that quietly triples the outage.
-
-## When the evidence already exists
-
-Before running any of this, check:
-
-- Is JFR running continuously? Then the incident window is already recorded — note the times,
-  and run row 1b before anything else, because the recording is not a file until dumped.
-- Is there a continuous profiler? `continuous-profiling` — the profile exists.
-- Is the GC log on and rotating? Then row 1 is already satisfied.
-
-If all three are true, the correct action is to note the window, copy the files, and restore
-service now. The most valuable incident capture is the one that happened automatically.
-
-## When `jcmd` is not in the container
-
-A distroless or JRE-only image has no `jcmd`. Run it from an ephemeral container built on the
-same JDK image, sharing the process namespace:
+Collect only approved/non-secret fields:
 
 ```bash
-kubectl debug -it <pod> --image=<same-jdk-image> --target=<container> -- jcmd <pid> Thread.print
+jcmd <pid> VM.version
+jcmd <pid> VM.uptime
+jcmd <pid> VM.flags
+jcmd <pid> JFR.check
 ```
 
-The attach mechanism resolves the target's socket through `/proc/<pid>/root/tmp` (JDK 10+),
-so the two containers need not share `/tmp`; they do need the same UID, or the JVM refuses the
-attach. `kubectl cp` needs `tar` inside the target container, which distroless lacks — write
-artefacts to a volume both containers mount, or stream them out with
-`kubectl exec <pod> -c <container> -- cat <file> > local`.
+Some commands may be missing, renamed, or disabled. Run `jcmd <pid> help` against the target.
+`VM.info` can be large/sensitive and command availability/impact varies; do not make it a
+mandatory “subsecond” step.
+
+Also capture orchestrator desired/ready/available replicas, pod/node/version/image identity,
+recent events, restart count/reason, cgroup limits/stat/pressure, process status/maps/limits,
+host load/memory/I/O/network, and exact SLO query window. Use approved platform commands and
+redact secrets.
+
+## Thread capture protocol
+
+1. Determine platform and approximate virtual-thread counts and output budget.
+2. Discover target commands: `jcmd <pid> help Thread.print` and, if present,
+   `Thread.dump_to_file` help.
+3. Select lock/concurrent-lock detail only if needed and supported.
+4. Capture OS per-thread CPU with TID and monotonic/UTC markers.
+5. Repeat based on symptom timescale; preserve failed/partial dumps.
+6. Confirm the target remained responsive and service impact stayed below abort threshold.
+
+Do not assume `Thread.print` includes virtual threads, that JSON is available on Java 17/21,
+or that every textual dump carries CPU/elapsed fields. Treat output as version-specific. Match
+HotSpot `nid` to OS TID using documented radix/format rather than visual guessing.
+
+For very large virtual-thread populations, JFR events and bounded `Thread.dump_to_file` can be
+more appropriate than terminal output, but measure file size and stop cost.
+
+## JFR protocol
+
+First inspect active recordings and configuration. If the incident is already within a rolling
+recording, dump only the needed supported time range to a unique durable path while preserving
+the ongoing recording where possible.
+
+If starting a new recording:
+
+- choose settings/events from the symptom and target JDK;
+- include a finite duration/stop plan and output bound;
+- verify disk repository/destination and free space;
+- mark workload/incident/deploy window;
+- avoid enabling expensive events wholesale under peak distress;
+- confirm file readability with `jfr summary`/metadata after completion.
+
+`settings=profile` is not a universal incident default. It collects more than `default` and can
+cost more; a custom JFC may be safer and more discriminating.
+
+## Heap protocol
+
+Before histogram/dump:
+
+```text
+memory hypothesis and why heap evidence distinguishes it
+target drained/serving state and minimum capacity
+live-only versus all-object semantics
+measured comparable capture duration/bytes and worst-case margin
+volume free bytes/inodes, IOPS/blast radius, upload bandwidth
+liveness/watchdog/termination/OOM risk during capture
+JDK-supported compression/parallel options and their measured trade-offs
+privacy classification and authorized analysts
+abort/cancel semantics and partial-file handling
+```
+
+Never pipe the dump through a network connection as the only copy unless interruption behavior
+and partial detection are proven. Prefer local durable completion plus verified upload when
+capacity permits.
+
+An automatic `HeapDumpOnOutOfMemoryError` dump is only useful if the process has enough
+headroom/storage/time to create it and the destination survives the failure. Test the exact OOM
+mode; native/container OOM can kill the process before the JVM action.
+
+## Core protocol
+
+Core mechanisms differ: kernel core dump on crash, `gcore`/ptrace capture, `jcmd`-related tools,
+or orchestrator/runtime facilities. They may freeze or kill the target and can write address-
+space-sized sensitive files. Require incident/security approval, exact target/process-start
+identity, sufficient isolated storage, matching executable/libraries/debug symbols/JDK, and
+post-capture integrity.
+
+If the JVM is already destined for termination, coordinate core capture with recovery so a
+replacement restores capacity first when possible. Do not assume core collection is “last and
+therefore harmless.”
+
+## Healthy controls and fleet sampling
+
+One affected + one healthy instance is a useful default only when versions, load, uptime,
+hardware, region, and configuration are comparable. Some failures are fleet-wide, host-specific,
+or heterogeneous. Select cohorts from evidence:
+
+- affected and unaffected within same version/host class;
+- old versus new rollout version;
+- throttled versus unthrottled cgroup/node;
+- leader/shard/partition roles;
+- warm versus newly started instances.
+
+Avoid disruptive artifacts from controls unless the comparison value exceeds risk. Existing
+metrics/JFR/profile data may supply the control.
+
+## Capture completeness report
+
+At handoff list every attempted artifact:
+
+| Artifact      | Target/window | Result                  | Integrity       | Perturbation     | Durable URI     | Owner            |
+| ------------- | ------------- | ----------------------- | --------------- | ---------------- | --------------- | ---------------- |
+| thread series | pod/process   | complete/partial/failed | checksum/read   | observed SLO/CPU | restricted link | concurrency      |
+| JFR           | time range    | ...                     | `jfr summary`   | ...              | ...             | performance      |
+| heap/core     | ...           | ...                     | tool/read check | pause/I/O        | ...             | memory/forensics |
+
+Absence and failed capture are evidence about observability and must appear in the incident
+timeline.
+
+## Authoritative references
+
+- [JDK 25 `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+- [JDK 25 troubleshooting guide](https://docs.oracle.com/en/java/javase/25/troubleshoot/)
+- [Kubernetes debug running pods](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/)
+- [Kubernetes resource metrics pipeline](https://kubernetes.io/docs/tasks/debug/debug-cluster/resource-metrics-pipeline/)

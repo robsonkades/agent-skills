@@ -5,13 +5,13 @@ entirely; the rest block only the resources that depend on them.
 
 ## Understanding
 
-| #   | Item                                                                | Blocking |
-| --- | ------------------------------------------------------------------- | -------- |
-| 1   | The requirement is stated in the domain's terms, not as a solution  | yes      |
-| 2   | Every assumption still standing is written down with its falsifier  | yes      |
-| 3   | Every HIGH-impact unknown is either resolved or explicitly accepted | yes      |
-| 4   | No question marked BLOCKING is open                                 | yes      |
-| 5   | Ambiguities were resolved by the user, not by the agent choosing    | yes      |
+| #   | Item                                                                                                                  | Blocking |
+| --- | --------------------------------------------------------------------------------------------------------------------- | -------- |
+| 1   | The requirement is stated in the domain's terms, not as a solution                                                    | yes      |
+| 2   | Every assumption still standing is written down with its falsifier                                                    | yes      |
+| 3   | Every HIGH-impact unknown is either resolved or explicitly accepted                                                   | yes      |
+| 4   | No question marked BLOCKING is open                                                                                   | yes      |
+| 5   | Scope-changing ambiguities were resolved by an authorised owner; local reversible choices follow recorded conventions | yes      |
 
 ## Scope
 
@@ -23,14 +23,14 @@ entirely; the rest block only the resources that depend on them.
 
 ## Constraints and decisions
 
-| #   | Item                                                                | Blocking |
-| --- | ------------------------------------------------------------------- | -------- |
-| 9   | Mandatory, preferred and prohibited technologies are established    | yes      |
-| 10  | Organisational standards are established, or confirmed not to exist | yes      |
-| 11  | Every decision carries a provenance and an authority                | yes      |
-| 12  | Every user-confirmed decision has actually been confirmed           | yes      |
-| 13  | Decisions that materially affect the system have records            | no       |
-| 14  | No decision rests on "the project already does this" alone          | yes      |
+| #   | Item                                                                                                                                              | Blocking |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| 9   | Applicable mandatory or prohibited technologies are established; preferences are recorded only when decision-relevant                             | yes      |
+| 10  | Relevant organisational standards were checked in available authority sources; unknown external policy is raised only when it can change the work | yes      |
+| 11  | Every decision carries a provenance and an authority                                                                                              | yes      |
+| 12  | Every user-confirmed decision has actually been confirmed                                                                                         | yes      |
+| 13  | Decisions that materially affect the system have records                                                                                          | no       |
+| 14  | No decision rests on "the project already does this" alone                                                                                        | yes      |
 
 ## Context and architecture
 
@@ -72,10 +72,13 @@ Not every feature runs all thirty-two. By depth class:
 - **Direct** — no gate. The change is reversible and local; running a checklist over it is the
   ceremony the depth classification exists to avoid.
 - **Standard** — items 1–14, 17, 20–23, 26–28, 31. Skip what the feature cannot touch.
-- **Significant** — all of them.
+- **Significant** — evaluate all items, but mark non-applicable items N/A with evidence. Significance
+  increases scrutiny; it does not make every feature touch an API, schema, migration, deployment
+  sequence, security boundary, or new telemetry.
 
-Items are skipped by **class**, never by convenience. An item skipped because answering it is
-awkward is the one that will matter.
+Items are selected by depth **and applicability**, never by convenience. An item omitted because it
+is awkward is a likely gap; an item marked N/A because the impact map proves the feature cannot
+touch that concern is valid tailoring.
 
 ## Reporting the gate
 
