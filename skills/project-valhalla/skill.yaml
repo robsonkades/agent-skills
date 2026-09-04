@@ -1,0 +1,36 @@
+schemaVersion: 1
+name: project-valhalla
+version: 1.0.0
+description: >-
+  Evaluating Project Valhalla value-class proposals and Early-Access builds without presenting
+  draft syntax or flattening heuristics as released Java behavior. Use when code or documentation
+  claims value classes remove identity, guarantee flattened storage, eliminate boxing, change
+  object layout, or are available in a particular JDK; and when designing an experiment for a
+  future migration. Does not replace current object-layout measurement
+  (object-layout-and-footprint), escape-analysis diagnosis (escape-analysis-internals), or general
+  JDK upgrade planning (jdk-upgrade-impact).
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/project-valhalla
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/project-valhalla
+keywords: [java, jvm, valhalla, value-classes, object-layout, early-access]
+files: [SKILL.md, skill.yaml, references/]
+dependencies:
+  - name: object-layout-and-footprint
+    version: ^1.0.0
+suggests:
+  - escape-analysis-internals
+  - jdk-upgrade-impact
+  - jmh-microbenchmarks
+capabilities: [reads-source]
+agentOverrides:
+  codex:
+    interface:
+      display_name: Project Valhalla
+      short_description: Verify value-class claims and EA evidence
+      default_prompt: Use Project Valhalla to verify this claim or design a safe experiment.

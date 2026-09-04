@@ -1,0 +1,36 @@
+schemaVersion: 1
+name: stream-processing-runtime-performance
+version: 1.0.0
+description: >-
+  Operating Kafka Streams and Apache Flink for predictable throughput, state and recovery:
+  separating their execution models, sizing partitions or operator parallelism, diagnosing
+  backpressure, bounding native state, and relating commits or checkpoints to result visibility.
+  Use when one partition or operator limits a pipeline, checkpoints grow or stall, RocksDB drives
+  RSS outside the heap, exactly-once changes latency, or effective runtime configuration differs
+  from declared settings. Generic topology and event-time semantics belong to
+  streaming-pipeline-topologies; plain Kafka consumer loops to kafka-consumers-in-java.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/stream-processing-runtime-performance
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/stream-processing-runtime-performance
+keywords: [kafka-streams, flink, streaming, rocksdb, checkpoints, backpressure]
+files: [SKILL.md, skill.yaml, references/]
+dependencies:
+  - name: streaming-pipeline-topologies
+    version: ^1.0.0
+suggests:
+  - kafka-consumers-in-java
+  - delivery-semantics
+  - off-heap-memory
+capabilities: [reads-source]
+agentOverrides:
+  codex:
+    interface:
+      display_name: Stream Runtime Performance
+      short_description: Diagnose Kafka Streams and Flink runtimes
+      default_prompt: Use Stream Runtime Performance to isolate this pipeline bottleneck.

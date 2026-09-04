@@ -10,6 +10,24 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-09-04
+
+### Added
+
+- Seven Level-4 performance-engineering skills covering gRPC/HTTP2/service-mesh paths, JVM ML
+  inference, Kafka Streams and Flink runtime operation, low-jitter JVM systems, performance
+  engineering programs, incident response, and evidence-safe Project Valhalla evaluation.
+- Cloud instance-selection and Kubernetes scaling-control guidance for capacity plans, including
+  sustained-versus-burst limits, interruptible capacity, HPA/VPA/in-place resize boundaries and
+  JVM startup ergonomics.
+
+### Changed
+
+- Capacity planning now routes platform-specific provisioning decisions through dedicated
+  references and distinguishes calculating required capacity from choosing the control that
+  applies it.
+- The registry now publishes 275 skills.
+
 ## [1.4.0] — 2026-09-03
 
 ### Added

@@ -284,6 +284,12 @@ incident that invalidates an assumption.
   configuration selection, controls and decision-record template.
 - [Inputs, forecast and cost](references/inputs-forecast-and-cost.md) — measurement inputs,
   forecast validation and full cost basis.
+- [Kubernetes scaling controls](references/kubernetes-scaling-controls.md) — HPA, VPA,
+  in-place resize, QoS and JVM startup ergonomics. Read when choosing how Kubernetes should
+  change capacity rather than merely calculating how much capacity is needed.
+- [Cloud instance selection](references/cloud-instance-selection.md) — instance architecture,
+  sustained versus burst limits, price-performance and interruptible capacity. Read when a
+  capacity plan chooses VM families or purchase models.
 - [Kubernetes: Horizontal Pod Autoscaling](https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/)
 - [Kubernetes: Resource management for Pods and containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
 - [Google SRE: Addressing cascading failures](https://sre.google/sre-book/addressing-cascading-failures/)

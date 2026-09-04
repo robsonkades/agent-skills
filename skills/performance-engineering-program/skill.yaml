@@ -1,0 +1,37 @@
+schemaVersion: 1
+
+name: performance-engineering-program
+version: 1.0.0
+description: >-
+  Establishing an organization-wide performance engineering program through measurable maturity
+  evidence, service ownership, SLO and baseline adoption, regression gates, incident learning and
+  a rotating champion model. Use when performance depends on one specialist, teams apply different
+  evidence standards, a maturity assessment needs concrete next actions, or a rollout must turn
+  isolated profiling into a durable operating discipline. Does not design individual SLOs,
+  benchmarks, alerts or profiles; their specialist skills own those artifacts.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/performance-engineering-program
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/performance-engineering-program
+keywords: [performance, culture, governance, maturity, champions, adoption]
+files: [SKILL.md, skill.yaml, references/]
+dependencies:
+  - name: performance-methodology
+    version: ^1.0.0
+suggests:
+  - slo-and-alerting
+  - performance-regression-ci
+  - continuous-profiling
+  - performance-incident-response
+capabilities: [reads-source]
+agentOverrides:
+  codex:
+    interface:
+      display_name: Performance Engineering Program
+      short_description: Build a durable performance practice
+      default_prompt: Use Performance Engineering Program to design this adoption program.

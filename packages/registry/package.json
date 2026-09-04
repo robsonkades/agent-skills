@@ -1,6 +1,6 @@
 {
   "name": "@jvm-expert/registry",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Local, Git and HTTP skill registries with precedence-aware federation",
   "license": "Apache-2.0",
   "repository": {
@@ -28,6 +28,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@jvm-expert/core": "1.4.0"
+    "@jvm-expert/core": "1.5.0"
   }
 }

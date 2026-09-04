@@ -1,0 +1,35 @@
+schemaVersion: 1
+name: performance-incident-response
+version: 1.0.0
+description: >-
+  Coordinating a production performance incident from impact declaration through evidence-preserving
+  triage, one-change mitigation, recovery validation and a blameless causal postmortem. Use when a
+  latency, throughput, saturation or resource regression requires a war room; when responders are
+  changing JVM flags before preserving evidence; or when MTTD, mitigation time and recovery time are
+  being conflated. Evidence acquisition belongs to incident-evidence-capture; technical diagnosis
+  to performance-methodology; this skill owns response sequencing and decision records.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/performance-incident-response
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/performance-incident-response
+keywords: [performance, incident, war-room, mitigation, postmortem, root-cause]
+files: [SKILL.md, skill.yaml, references/]
+dependencies:
+  - name: incident-evidence-capture
+    version: ^1.0.0
+  - name: performance-methodology
+    version: ^1.0.0
+suggests:
+  - slo-and-alerting
+capabilities: [reads-source]
+agentOverrides:
+  codex:
+    interface:
+      display_name: Performance Incident Response
+      short_description: Coordinate war rooms and causal learning
+      default_prompt: Use Performance Incident Response to structure this incident and recovery.

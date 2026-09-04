@@ -1,0 +1,39 @@
+schemaVersion: 1
+
+name: grpc-http2-service-mesh-performance
+version: 1.0.0
+description: >-
+  Diagnosing and designing the performance of gRPC and HTTP/2 communication paths, including
+  channel, connection and stream topology, flow control, serialization, Netty event loops, TLS
+  connection churn and service-mesh proxy cost. Use when multiplexed traffic is skewed or stalls,
+  a channel pool or HTTP/2 setting is proposed, mesh overhead consumes a material latency or CPU
+  budget, or retries exist in both client and proxy. API semantics belong to
+  rpc-and-api-contracts; TCP behavior to tcp-tuning; routing ownership to
+  load-balancing-and-routing.
+
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/grpc-http2-service-mesh-performance
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/grpc-http2-service-mesh-performance
+keywords: [grpc, http2, service-mesh, netty, tls, performance]
+files: [SKILL.md, skill.yaml, references/]
+dependencies:
+  - name: performance-methodology
+    version: ^1.0.0
+suggests:
+  - rpc-and-api-contracts
+  - load-balancing-and-routing
+  - timeouts-and-deadlines
+  - tcp-tuning
+capabilities: [reads-source]
+agentOverrides:
+  codex:
+    interface:
+      display_name: gRPC and Mesh Performance
+      short_description: Diagnose multiplexed RPC and proxy costs
+      default_prompt: Use gRPC and Mesh Performance to isolate this communication bottleneck.

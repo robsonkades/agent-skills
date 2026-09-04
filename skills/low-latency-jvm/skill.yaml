@@ -1,0 +1,43 @@
+schemaVersion: 1
+name: low-latency-jvm
+version: 1.0.0
+description: >-
+  Designing and validating JVM systems whose primary objective is bounded jitter rather than low
+  average latency: latency-distribution budgets, allocation strategy, GC choice, warm-up and
+  deoptimization, CPU/NUMA placement, busy-spin cost and evidence for kernel bypass. Use when
+  p99.99-to-p50 spread matters, a trading or real-time path claims to be GC-free, CPUs are isolated,
+  Epsilon or busy waiting is proposed, or an optimization shifts jitter between JVM, OS and network.
+  General tail diagnosis belongs to tail-latency-analysis; individual JVM and OS mechanisms retain
+  their specialist owners.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/low-latency-jvm
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/low-latency-jvm
+keywords: [java, jvm, low-latency, jitter, trading, numa, kernel-bypass]
+files: [SKILL.md, skill.yaml, references/]
+dependencies:
+  - name: performance-methodology
+    version: ^1.0.0
+  - name: latency-statistics
+    version: ^1.0.0
+suggests:
+  - tail-latency-analysis
+  - coordinated-omission
+  - numa-and-cpu-affinity
+  - allocation-profiling
+  - jit-compilation
+  - linux-for-jvm
+  - tcp-tuning
+  - io-uring-and-zero-copy
+capabilities: [reads-source]
+agentOverrides:
+  codex:
+    interface:
+      display_name: Low-Latency JVM
+      short_description: Engineer bounded jitter across JVM and OS
+      default_prompt: Use Low-Latency JVM to design and validate this latency-sensitive path.

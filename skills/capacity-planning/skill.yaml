@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: capacity-planning
-version: 1.2.0
+version: 1.3.0
 description: >-
   Evidence-based capacity decisions for Java services: defining demand and failure
   scenarios, measuring feasible capacity envelopes, selecting replica and resource
