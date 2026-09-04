@@ -1,11 +1,11 @@
 ---
 name: feature-decomposition
 description: >
-  Deciding whether a feature should be split at all and, when it should, into what: stories only
-  where they carry value someone can state, technical stories for work that is real but not
-  user-visible, and below both a flat list of implementation resources with identifiers,
+  Deciding whether a feature should be split at all and, when it should, into what: child features only
+  where they carry independent value someone can state, Tech Features for independently useful
+  engineering outcomes, and below both a flat list of implementation resources with identifiers,
   dependencies and their own validation. Use when a feature is about to be implemented as one
-  undifferentiated lump, when a small change is being ceremonially split into stories nobody
+  undifferentiated lump, when a small change is being ceremonially split into items nobody
   needs, when work has to be ordered because parts depend on each other, when two people or two
   sessions will share the work, or when progress cannot be reported because there is nothing to
   report progress against. Does not write the plan around the breakdown
@@ -23,8 +23,9 @@ independently**, work that must be **ordered** because of a real dependency, and
 be **shared** across people or sessions. Outside those, a breakdown is a table of contents for a
 change that would have been easier to read as a diff.
 
-The output that always matters is the **resource list**. Stories above it are optional and often
-unnecessary; resources are what gets implemented, validated and tracked.
+The output that always matters is the **resource list**. Child Product/Tech Features above it are
+optional and must remain valuable, independently decidable/deliverable, and testable; resources are
+what gets implemented, validated and tracked.
 
 ## Workflow
 
@@ -32,15 +33,14 @@ unnecessary; resources are what gets implemented, validated and tracked.
    one-line list. That is a complete answer.
 2. **Produce the resource list first**, from the impact map. Each element in the map becomes a
    resource or joins one; nothing in the map is unaccounted for.
-3. **Give each resource an identifier, a dependency list and a validation** — the fields are in
+3. **Give each resource a `RES-*` identifier, a dependency list and a validation** — the fields are in
    `references/resource-catalogue.md`. A resource with no stated validation is not finished
    being defined.
-4. **Group into stories only if the grouping adds something.** A story exists when someone can
-   state the value of that group on its own, and when the group could be delivered without the
-   others.
-5. **Use a technical story for work that is real but has no user-facing value** — a migration,
-   an infrastructure change, a test harness. Do not dress it as a user story; nobody is served
-   by "as a developer I want a database index".
+4. **Create child features only when the grouping adds an independently valuable outcome.** A Product
+   Feature uses `PF-*`; a Tech Feature uses `TF-*` and names measurable engineering value.
+5. **Keep enabling work as resources by default.** A migration, component, infrastructure change, or
+   test harness is `RES-*` unless it independently reduces risk/cost or enables a usable capability
+   with its own acceptance. Do not manufacture a Tech Feature from a phase or layer.
 6. **Order the resources** by their dependencies, and say where the order is forced versus
    merely convenient.
 7. **Say why the shape is what it is** — including "not decomposed, because it is one resource".
@@ -64,8 +64,8 @@ transcription of the layer diagram.
 ## Decision rules
 
 ```text
-IF a story cannot be described by what someone can do when it is done
-THEN it is a technical story, or it is not a story.
+IF a child cannot state independent product or engineering value and its own acceptance
+THEN it is not a child feature; keep its work as RES-* under the parent.
 
 IF a resource depends on more than three others
 THEN look again — usually it is two resources, or the dependencies are ordering
@@ -84,7 +84,7 @@ IF a resource is "write the tests"
 THEN it is misplaced: tests belong to the resource whose behaviour they establish.
      A separate test resource is legitimate only for shared harness or fixture work.
 
-IF the feature is Direct-class
+IF the feature is Light
 THEN there is no decomposition. Implement it.
 ```
 
@@ -101,21 +101,21 @@ THEN there is no decomposition. Implement it.
 ## Output
 
 ```text
-Decomposition   stories and resources | resources only | none
+Decomposition   child features and resources | resources only | none
 Because         <the signal that decided it>
 
-US-01  <what someone can do when this exists>
-  R-01  <resource>
-  R-02  <resource>
+PF-01  <independently valuable product outcome and BAC-*>
+  RES-01  <resource>
+  RES-02  <resource>
 
-TS-01  <technical work, and what it enables>
-  R-03  <resource>
+TF-01  <independently valuable engineering outcome and TC-*>
+  RES-03  <resource>
 
-Unassigned resources (when there are no stories)
-  R-04  <resource>
+Parent resources (when there are no child features)
+  RES-04  <resource>
 
-Order       R-01 -> R-02 -> R-03 -> R-04
-Forced by   R-02 needs the column R-01 adds; R-04 has no dependency and may move
+Order       RES-01 -> RES-02 -> RES-03 -> RES-04
+Forced by   RES-02 needs the column RES-01 adds; RES-04 has no dependency and may move
 ```
 
 The order line is the one the execution phase reads. Everything above it is context for a human.

@@ -1,60 +1,67 @@
-# Depth and phases
+# Depth, persistence, and phases
 
-## Classifying
+## Classify depth by the highest evidenced driver
 
-Ask the five questions in order. The first `yes` fixes the class.
+Evaluate every applicable driver; do not stop at the first or choose the lower plausible class.
 
-1. Does the change introduce a technology, dependency or infrastructure component the project
-   does not already run? → **Significant**
-2. Does it break an existing contract — API shape, message schema, database column, public
-   method others call — or require a data migration? → **Significant**
-3. Will the work outlive this session, or be handed to someone else? → **Significant**
-4. Does it touch more than one module, or a contract that is internal but shared? → **Standard**
-5. Otherwise → **Direct**
+### Deep
 
-Two amendments that override the ladder:
+- new runtime technology, infrastructure component, or external integration;
+- public/breaking API, event, data, or operational contract;
+- data migration or coexistence across incompatible versions;
+- material security, privacy, payment, legal, or compliance consequence;
+- feasibility that needs a PoC;
+- costly/irreversible decision or several independent authority domains.
 
-- **The user asked for the analysis.** A request to "plan this properly" is Significant
-  regardless of size. The user owns that call.
-- **A regulated concern is in play** — authentication, authorisation, personal data, payment,
-  audit. Minimum **Standard**, because the questions in those areas are the ones that cannot be
-  answered from the repository alone.
+### Standard
 
-## Which phases each class runs
+- several components or more than one module;
+- an existing shared/internal contract changes compatibly;
+- a meaningful option or operational choice survives;
+- a regulated concern is touched but its obligations are established and contained;
+- impact, ownership, or failure behavior needs explicit analysis.
 
-| Phase                           | Direct                   | Standard                             | Significant                             |
-| ------------------------------- | ------------------------ | ------------------------------------ | --------------------------------------- |
-| Discovery                       | inline, unwritten        | written                              | written                                 |
-| Requirement clarification       | only if something blocks | yes                                  | yes                                     |
-| Context analysis                | read the touched files   | yes                                  | yes                                     |
-| Scope analysis                  | one sentence             | yes                                  | yes                                     |
-| Architecture impact             | no                       | impact map                           | impact map                              |
-| Solution analysis               | no                       | only where a real choice exists      | yes                                     |
-| Decision analysis and records   | no                       | for choices that survive the feature | yes                                     |
-| Decomposition                   | no                       | resources only                       | stories and resources when they earn it |
-| Risk analysis                   | no                       | risks above LOW only                 | yes                                     |
-| Implementation plan             | no                       | short plan                           | full plan                               |
-| Readiness gate                  | no                       | yes                                  | yes                                     |
-| Execution and progress tracking | ordinary implementation  | tracked resources                    | tracked resources                       |
-| Completion review               | verify and report        | yes                                  | yes                                     |
+### Light
 
-"Inline, unwritten" means the thinking still happens — the separation of fact from assumption
-still governs what you may claim — but it produces no file.
+All must hold: one local outcome, known behavior, one authority domain, reversible, no new dependency,
+no boundary/schema change, and no material decision.
 
-## Escalation
+An unknown material driver prevents Light until resolved. State depth and all drivers, not only the
+largest.
 
-Escalate the moment any of these appears, whatever the original class:
+## Classify persistence separately
 
-- A question surfaces that the repository cannot answer and whose answer changes the design.
-- The touched-file list grows past what the class assumed.
-- An existing test has to be changed to accommodate the feature.
-- A second technology becomes necessary to make the first one work.
+- **Inline** — work completes in one session/owner and a cold reader does not need intermediate state.
+- **Dossier** — work crosses sessions or owners, or depth is Standard/Deep.
 
-Escalating means: run the phases the new class requires, from where you are. It does not mean
-restarting. Say in the report that the class changed and what changed it.
+A Light feature handed to another person is Light/Dossier. A Deep feature completed in one session is
+Deep/Dossier. Persistence changes where state lives, not how risky the feature is.
 
-## De-escalation
+## Which phases each depth runs
 
-De-escalate only when a question that drove the classification comes back answered in a way
-that removes the work — for example, a proposed new dependency turns out to be already present
-and already used for this purpose. Record the answer, then drop the phases it retires.
+| Phase                  | Light                       | Standard                                | Deep                                           |
+| ---------------------- | --------------------------- | --------------------------------------- | ---------------------------------------------- |
+| Definition intake      | baseline or concise input   | versioned baseline                      | versioned Product/Engineering or Tech baseline |
+| Discovery              | inline                      | written                                 | written                                        |
+| Repository context     | touched files               | targeted report                         | targeted report plus authority sources         |
+| Clarification          | only consequential gaps     | adaptive rounds                         | adaptive rounds plus challenge                 |
+| Scope                  | one boundary statement      | scope items                             | scope items and revision impact                |
+| Architecture impact    | only if boundary appears    | impact map                              | impact map and independent parties             |
+| Solution analysis      | only if real choice         | real choices only                       | every material choice                          |
+| Feasibility experiment | no                          | only for a blocking uncertainty         | whenever evidence cannot decide                |
+| Decision/ADR           | local line if needed        | material choices                        | material choices and cross-boundary ADRs       |
+| Contract definition    | no boundary, so none        | each changed boundary                   | each changed boundary and coexistence          |
+| Decomposition          | none or RES-* only          | RES-*; child features only if valuable  | valuable child features plus RES-*             |
+| Risk                   | specific discovered risk    | risks above LOW and boundary candidates | full derived register                          |
+| Implementation plan    | inline                      | concise dossier plan                    | full dossier plan                              |
+| Readiness              | concise intake/finish check | selected applicable gates               | full applicable gates                          |
+| Execution/progress     | ordinary execution          | tracked RES-*                           | tracked RES-*                                  |
+
+Applicability still wins: a Deep feature with no persisted data marks migration concerns N/A with
+evidence; it does not invent a migration section.
+
+## Reclassification
+
+Escalate immediately when a new driver appears and run only newly required or invalidated work.
+De-escalate only when evidence removes the driver; record the evidence and preserve completed artefacts
+as history. Never discard analysis to make the current classification look inevitable.

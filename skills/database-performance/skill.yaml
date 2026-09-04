@@ -1,0 +1,73 @@
+schemaVersion: 1
+
+name: database-performance
+version: 1.0.0
+description: >-
+  Evidence-first triage and routing for database performance questions across SQL Server,
+  MySQL/InnoDB, PostgreSQL, JDBC pools, ORM behavior, index portfolios, and bulk loading. Use
+  when the symptom spans layers, the owning mechanism is unclear, or a database choice or
+  migration needs structured comparison. This is a router; it does not replace the specialist
+  skills that own a confirmed engine or mechanism.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/database-performance
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/database-performance
+
+keywords:
+  - database
+  - performance
+  - sql-server
+  - mysql
+  - postgresql
+  - jdbc
+  - triage
+
+files:
+  - SKILL.md
+  - skill.yaml
+
+dependencies:
+  - name: performance-methodology
+    version: ^1.0.0
+  - name: sql-query-performance
+    version: ^1.0.0
+  - name: connection-pool-sizing
+    version: ^1.0.0
+  - name: orm-fetch-and-batching-performance
+    version: ^1.0.0
+  - name: database-index-design
+    version: ^1.0.0
+  - name: database-bulk-loading
+    version: ^1.0.0
+  - name: sql-server-performance
+    version: ^1.0.0
+  - name: mysql-innodb-performance
+    version: ^1.0.0
+  - name: postgresql-performance
+    version: ^1.0.0
+  - name: database-engine-selection-and-migration
+    version: ^1.0.0
+  - name: enterprise-transactions
+    version: ^1.0.0
+  - name: schema-evolution-and-compatibility
+    version: ^1.0.0
+  - name: distributed-transactions-and-sagas
+    version: ^1.0.0
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Database Performance
+      short_description: Triage database symptoms and route to the owner
+      default_prompt: Use Database Performance to classify this database problem and route it.

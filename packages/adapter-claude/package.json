@@ -1,6 +1,6 @@
 {
   "name": "@jvm-expert/adapter-claude",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Claude Code agent adapter for agent-skills",
   "license": "Apache-2.0",
   "repository": {
@@ -28,6 +28,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@jvm-expert/core": "1.3.0"
+    "@jvm-expert/core": "1.4.0"
   }
 }

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-scope-analysis
-version: 1.0.0
+version: 1.1.0
 description: >-
   Fixing what a feature includes and, more usefully, what it deliberately excludes: sorting every
   candidate item into required, recommended, optional, out of scope or future work, tracing each

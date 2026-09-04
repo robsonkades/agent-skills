@@ -532,6 +532,25 @@ skills:
       - version: 1.0.0
         path: skills/coding-agent-discipline
         integrity: sha256-NImnBjPnjbmDq3SRPONLt2D+XmSxJ5cn1LRiAEMdIAI=
+  - name: collaborative-feature-definition
+    description: Co-authoring Product Features and Tech Features through focused question-and-revision rounds. For a Product
+      Feature, separates the business definition from an optional engineering analysis owned by an architect or senior
+      engineer, including PoCs, ADRs, contracts, and engineering premises. Use when the deliverable is an agreed feature
+      brief or ticket, not implementation. The completed package is handed to feature-engineering for lifecycle
+      validation and execution planning.
+    keywords:
+      - feature
+      - product
+      - tech-feature
+      - discovery
+      - collaboration
+      - requirements
+      - acceptance-criteria
+    latest: 1.1.0
+    versions:
+      - version: 1.1.0
+        path: skills/collaborative-feature-definition
+        integrity: sha256-euLc6vdAbydiDYek41chRxpOJ4L9h9PcL4cKDdBoK74=
   - name: compilation-and-inlining-logs
     description: "Reading what the JIT actually did: the columns of -XX:+PrintCompilation and its flag characters,
       -XX:+PrintInlining and its verdict strings, -XX:+LogCompilation with JITWatch, the -Xlog:jit+compilation and JFR
@@ -632,11 +651,11 @@ skills:
       - rate-limiting
       - backpressure
       - resilience
-    latest: 1.3.0
+    latest: 1.3.1
     versions:
-      - version: 1.3.0
+      - version: 1.3.1
         path: skills/concurrency-limiting-and-bulkheads
-        integrity: sha256-oigtOfWMo3TMThKZl3UD/WC8UhAAPaKiLP8qZCjtLTQ=
+        integrity: sha256-H6IF7vnMUz+E+wb66eUnUKQdRjNVRZhP61eFH1+3ajQ=
   - name: concurrency-testing
     description: "Testing concurrent Java so failures appear in CI rather than in an incident: what a passing concurrency
       test does and does not prove, replacing sleeps with latches and deterministic executors, explicitly exercising
@@ -680,11 +699,11 @@ skills:
       - semaphore
       - locks
       - synchronizers
-    latest: 1.2.0
+    latest: 1.2.1
     versions:
-      - version: 1.2.0
+      - version: 1.2.1
         path: skills/concurrent-collections-and-synchronizers
-        integrity: sha256-3N0xnGfRSfpVEcrls50ucNWNeUTZfMXPnj1eOWNusBc=
+        integrity: sha256-y3syDQIx8HbNn0rj2VFmkag5vsDN5s7koQ8uRsKnLHA=
   - name: connection-pool-sizing
     description: "Sizing and diagnosing a JDBC connection pool: L = λ × W where W is connection hold time rather than query
       latency, the database-side ceiling, HikariCP timeouts and lifetimes, transaction boundaries and
@@ -881,6 +900,80 @@ skills:
       - version: 1.3.0
         path: skills/data-source-patterns
         integrity: sha256-F/M+1V27VySRhGJX/K6pE2ghPUqEqpyiKmXRCWmW4RU=
+  - name: database-bulk-loading
+    description: "Designing and diagnosing high-volume database ingestion from the JVM across PostgreSQL, MySQL, and SQL
+      Server: JDBC batching and statement rewrite, native COPY/LOAD DATA/Bulk Copy, staging, transaction and
+      partial-error semantics, idempotent restart, upsert races, logging, parallelism, and post-load validation. Use
+      when a backfill, import, migration, or batch window is too slow or unsafe. Not routine ORM fetch/write tuning,
+      which belongs to orm-fetch-and-batching-performance."
+    keywords:
+      - database
+      - bulk-load
+      - jdbc-batch
+      - copy
+      - load-data
+      - sql-server-bulk-copy
+      - java
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/database-bulk-loading
+        integrity: sha256-Uis/a9P+sAWWqEZaJhCIpKT3Kw3G0h4YycRw4Ft4fe0=
+  - name: database-engine-selection-and-migration
+    description: Choosing among SQL Server, MySQL/InnoDB, and PostgreSQL for a greenfield system, or planning a migration
+      between them, from explicit semantic, workload, operational, JVM-driver, DDL, cost, and team constraints. Use when
+      an ADR, proof of concept, compatibility inventory, shadow validation, or reversible cutover is needed. Not a
+      generic product ranking or live query-tuning workflow.
+    keywords:
+      - database
+      - migration
+      - greenfield
+      - sql-server
+      - mysql
+      - postgresql
+      - adr
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/database-engine-selection-and-migration
+        integrity: sha256-NzNQLcwIttcKUFDqcdjaxJxcWnpnBmKcpTgYwsbPef0=
+  - name: database-index-design
+    description: "Designing and governing an index portfolio across SQL Server, MySQL/InnoDB, and PostgreSQL: deriving
+      composite keys from a workload, equality/range/order trade-offs, covering and partial indexes, write
+      amplification, redundant-index consolidation, engine-specific semantics, and safe production creation or removal.
+      Use when changing schema indexes for several queries or reviewing a table's index set. Not the diagnosis of one
+      slow statement, which belongs to sql-query-performance."
+    keywords:
+      - database
+      - index
+      - b-tree
+      - sql-server
+      - mysql
+      - postgresql
+      - performance
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/database-index-design
+        integrity: sha256-Za+p77+3bqQ3L+54JbBFEXbJnAZRwVKj2Esz18HYzO8=
+  - name: database-performance
+    description: Evidence-first triage and routing for database performance questions across SQL Server, MySQL/InnoDB,
+      PostgreSQL, JDBC pools, ORM behavior, index portfolios, and bulk loading. Use when the symptom spans layers, the
+      owning mechanism is unclear, or a database choice or migration needs structured comparison. This is a router; it
+      does not replace the specialist skills that own a confirmed engine or mechanism.
+    keywords:
+      - database
+      - performance
+      - sql-server
+      - mysql
+      - postgresql
+      - jdbc
+      - triage
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/database-performance
+        integrity: sha256-prDL59HzLymTU74MWAifh7yk5JVAlEz588oNVbVMrv0=
   - name: debugging
     description: "Finding the cause of a fault instead of a change that makes the symptom go away: reproducing before
       diagnosing, shrinking the reproduction until nothing is removable, stating a hypothesis that predicts an
@@ -959,11 +1052,11 @@ skills:
       - hyperloglog
       - distributed-join
       - java
-    latest: 1.3.0
+    latest: 1.3.1
     versions:
-      - version: 1.3.0
+      - version: 1.3.1
         path: skills/distributed-aggregation-and-barriers
-        integrity: sha256-aTM7y6Yu/cddg51Z0DCX9pUgDgujswScZvt3eDarzI8=
+        integrity: sha256-WZDluxZ1iRh3Bp5xL1a0BbK6VXKT0OhWrQx8nZd+QLo=
   - name: distributed-failure-catalogue
     description: "Evidence-oriented recognition index for recurring distributed failure shapes: overload amplification, gray
       and asymmetric failure, split ownership, stale work, mixed versions, correlated faults, silent stagnation and
@@ -1071,11 +1164,11 @@ skills:
       - distributed-transactions
       - orchestration
       - java
-    latest: 1.3.0
+    latest: 1.3.1
     versions:
-      - version: 1.3.0
+      - version: 1.3.1
         path: skills/distributed-transactions-and-sagas
-        integrity: sha256-pYgFXl+s8Qy65kCgYGz8v9+D179TtXlYIzBvsvQCjPk=
+        integrity: sha256-nyIPYe5MCP2HTJRStiX+k3f5JiDOy46oX5OKUQeZmvY=
   - name: distribution-boundaries
     description: "Deciding whether a boundary should be a process boundary, and designing it when it must be: what
       distribution actually costs (latency, serialisation, partial failure, lost atomicity, independent deployment), why
@@ -1181,11 +1274,11 @@ skills:
       - application-types
       - forces
       - navigation
-    latest: 1.2.1
+    latest: 1.2.2
     versions:
-      - version: 1.2.1
+      - version: 1.2.2
         path: skills/enterprise-application-architecture
-        integrity: sha256-1DnY9fz+nA68NHXKvWhgZBJlDJQBXpgoTncqYyAeW30=
+        integrity: sha256-0Ij9gbPPhulxgExlZ2S5+H2ZnBDMrREChtmezvlVZq4=
   - name: enterprise-architecture-smells
     description: "Detecting structural problems in an enterprise application from evidence, and telling genuine harm apart
       from unfamiliar-but-fine: anaemic domain models, god services, transaction-script sprawl, generic repositories,
@@ -1436,11 +1529,11 @@ skills:
       - architecture
       - boundaries
       - compatibility
-    latest: 1.0.0
+    latest: 1.1.0
     versions:
-      - version: 1.0.0
+      - version: 1.1.0
         path: skills/feature-architecture-analysis
-        integrity: sha256-/JW3cYZ2xTgZ+dDe57FNM6ebIwUJ+0ApBTMw8kEMk5c=
+        integrity: sha256-7pPZQU3RLe9MTI6AODzD4L7JfvVu8M560WiDLu0HtsE=
   - name: feature-context-analysis
     description: "Reading the repository for one specific feature: which technologies and patterns are actually present,
       which components the feature can reuse, which questions the code has already answered, and — stated as findings
@@ -1458,11 +1551,29 @@ skills:
       - patterns
       - reuse
       - context
+    latest: 1.1.0
+    versions:
+      - version: 1.1.0
+        path: skills/feature-context-analysis
+        integrity: sha256-kaMGNjKotBwmAUcT3Lh6ZSXgJGe2N8kPO5Ul/iZNCio=
+  - name: feature-contract-definition
+    description: Defining a versioned API, event, data, integration, security, or operational contract for a feature after
+      its behavior is agreed and before implementation is planned. Use when callers, consumers, stored data, or
+      operators will depend on a changed boundary and its success, failure, ownership, compatibility, and verification
+      must be explicit. Does not choose the architecture or transport (feature-solution-analysis), record the decision
+      (feature-decision-analysis), or implement the contract (feature-execution).
+    keywords:
+      - feature
+      - contract
+      - api
+      - events
+      - compatibility
+      - schema
     latest: 1.0.0
     versions:
       - version: 1.0.0
-        path: skills/feature-context-analysis
-        integrity: sha256-hJMqSUiv4VZkYgJtwXsnsWN+FEtfoxypLqIrvGyQ1LI=
+        path: skills/feature-contract-definition
+        integrity: sha256-BEmQAO93ucZcpoQR1FgMYB6+6CtjCZpByU9VHrYmAUU=
   - name: feature-decision-analysis
     description: "Keeping the decision log for a feature and, before each entry, answering the two questions that make it
       trustworthy: where the decision came from — the user, the repository, an organisational standard or the agent —
@@ -1479,31 +1590,32 @@ skills:
       - authority
       - technology-selection
       - adr
-    latest: 1.1.0
+    latest: 1.2.0
     versions:
-      - version: 1.1.0
+      - version: 1.2.0
         path: skills/feature-decision-analysis
-        integrity: sha256-SplfvvHx+aX9DEWk/HW2UM2hyn2U3rCem8pwKRHat9A=
+        integrity: sha256-+mHIEGyIqj7uN/xxzR9tCgAUB1IqvApTjz+agFLOo3w=
   - name: feature-decomposition
-    description: "Deciding whether a feature should be split at all and, when it should, into what: stories only where they
-      carry value someone can state, technical stories for work that is real but not user-visible, and below both a flat
-      list of implementation resources with identifiers, dependencies and their own validation. Use when a feature is
-      about to be implemented as one undifferentiated lump, when a small change is being ceremonially split into stories
-      nobody needs, when work has to be ordered because parts depend on each other, when two people or two sessions will
-      share the work, or when progress cannot be reported because there is nothing to report progress against. Does not
-      write the plan around the breakdown (feature-implementation-plan), does not track the resulting statuses
-      (feature-progress-tracking), and does not estimate any of it (estimation-under-uncertainty)."
+    description: "Deciding whether a feature should be split at all and, when it should, into what: child features only
+      where they carry independent value someone can state, Tech Features for independently useful engineering outcomes,
+      and below both a flat list of implementation resources with identifiers, dependencies and their own validation.
+      Use when a feature is about to be implemented as one undifferentiated lump, when a small change is being
+      ceremonially split into items nobody needs, when work has to be ordered because parts depend on each other, when
+      two people or two sessions will share the work, or when progress cannot be reported because there is nothing to
+      report progress against. Does not write the plan around the breakdown (feature-implementation-plan), does not
+      track the resulting statuses (feature-progress-tracking), and does not estimate any of it
+      (estimation-under-uncertainty)."
     keywords:
       - feature
       - decomposition
       - stories
       - resources
       - breakdown
-    latest: 1.0.0
+    latest: 1.1.0
     versions:
-      - version: 1.0.0
+      - version: 1.1.0
         path: skills/feature-decomposition
-        integrity: sha256-E6j849B1uj+7t66nIhPp6iNqDnVvmZ4G476EAp0HdLg=
+        integrity: sha256-gHECJAhXEqLBC+CpOgJ2NbDAprGXnpMvpf+gJ74zmes=
   - name: feature-discovery
     description: "Separating what is actually established about a feature request from what has been filled in: a ledger in
       which every fact carries its source, every assumption carries what would falsify it, and every unknown carries the
@@ -1521,21 +1633,18 @@ skills:
       - unknowns
       - requirements
       - ledger
-    latest: 1.0.0
+    latest: 1.1.0
     versions:
-      - version: 1.0.0
+      - version: 1.1.0
         path: skills/feature-discovery
-        integrity: sha256-TkWno0OpyF4LVqrrfNI3Vf5aHu0bt+YXFeJz8RaQ+aM=
+        integrity: sha256-w+lmV8ov4M4xwbJ8A7OXh40P9huXJyrxnyviYtw7QWs=
   - name: feature-engineering
-    description: "Owning a feature request from first reading to completion review: choosing how much of the lifecycle the
-      change actually warrants, running the phases in order, holding the gates that stop implementation beginning on
-      unresolved assumptions, and keeping a dossier that lets another agent resume the work. Use when a feature request
-      arrives and the order of work is not obvious, when implementation is about to start on a request whose technology
-      or scope was never agreed, when a half-finished feature has to be picked up from someone else, when the same
-      feature is being re-analysed because nobody wrote down what was decided, or when a change is being declared done
-      because it compiles. Does not own any phase in depth — it routes to the thirteen specialised feature-* skills —
-      and it is not the general order of work for an arbitrary change (clean-delivery-workflow), nor the record format
-      for a decision (architecture-decision-making)."
+    description: "Owning a Product Feature or Tech Feature from definition intake to completion review: selecting
+      proportionate depth, routing iterative analysis and explicit returns, holding readiness gates, and keeping
+      versioned evidence another engineer can resume. Use when feature implementation is being prepared, resumed, or
+      validated and its scope, contracts, decisions, or completion need a trustworthy lifecycle. Does not co-author the
+      initial feature brief (collaborative-feature-definition), own any specialist phase in depth, orchestrate an
+      arbitrary change (clean-delivery-workflow), or define the ADR record format (architecture-decision-making)."
     keywords:
       - feature
       - lifecycle
@@ -1543,11 +1652,11 @@ skills:
       - process
       - delivery
       - routing
-    latest: 1.0.0
+    latest: 1.1.0
     versions:
-      - version: 1.0.0
+      - version: 1.1.0
         path: skills/feature-engineering
-        integrity: sha256-y2GeROZis++QOA7QDDDFfdGxxikqRcEufYV5C4erQh8=
+        integrity: sha256-jXipYPZW/Pfleamwth3DNb8k56kmdAzQNfBEpzXFwQ8=
   - name: feature-execution
     description: "Implementing a planned feature one resource at a time: taking a single resource to done, choosing the
       validation that resource actually warrants, running it and reading the output, and handling the two things that
@@ -1564,11 +1673,29 @@ skills:
       - validation
       - blockers
       - resources
+    latest: 1.1.0
+    versions:
+      - version: 1.1.0
+        path: skills/feature-execution
+        integrity: sha256-5iJsJK+OOU2FjMpBE6gNWdN8cDvZgiyhDHbiyf4a7wU=
+  - name: feature-feasibility-experiment
+    description: Designing and evaluating the smallest PoC or experiment that resolves one decision-relevant uncertainty in
+      a Product Feature or Tech Feature. Use when feasibility, compatibility, capacity, integration behavior, or a risky
+      technical premise cannot be established from existing evidence and a bounded experiment can decide the next step.
+      Does not produce production implementation, replace an ADR, or run broad exploratory research without a decision
+      and threshold.
+    keywords:
+      - feature
+      - feasibility
+      - poc
+      - experiment
+      - evidence
+      - hypothesis
     latest: 1.0.0
     versions:
       - version: 1.0.0
-        path: skills/feature-execution
-        integrity: sha256-YZeMR5cvT4gvovWDuRo/OR6wzqL6PeLi9fJUb9AQofE=
+        path: skills/feature-feasibility-experiment
+        integrity: sha256-bgOvc30myAgnXjf9PdgQiCS4s80E3VEgcjRKdPMqcTU=
   - name: feature-implementation-plan
     description: "Assembling everything established about a feature into one document another engineer could execute without
       re-deriving the architecture: the resources in dependency order, the schema, contract, configuration and security
@@ -1584,11 +1711,11 @@ skills:
       - migration
       - rollback
       - acceptance-criteria
-    latest: 1.0.1
+    latest: 1.1.0
     versions:
-      - version: 1.0.1
+      - version: 1.1.0
         path: skills/feature-implementation-plan
-        integrity: sha256-o53eT8vjh98I7DEUdM6wxFDzLB5rmYpSzyoevxh0vpE=
+        integrity: sha256-YMld7zPLrPHNZdesUFbbpXwL/OXjRF7lPYLXMbxqe2g=
   - name: feature-progress-tracking
     description: "Keeping a feature's state true while it is being built: one status per resource with defined transitions,
       a validation line required before anything reaches done, and a persisted record current enough that another agent
@@ -1604,14 +1731,15 @@ skills:
       - status
       - resumption
       - execution-log
-    latest: 1.1.0
+    latest: 1.2.0
     versions:
-      - version: 1.1.0
+      - version: 1.2.0
         path: skills/feature-progress-tracking
-        integrity: sha256-oQ90vW2AGw4duqFyTCsowKQn+Wt2dgyfO+eX774Ivqg=
+        integrity: sha256-NHcpaxIL54oYGtnttgtlVkH06dIoic73AAxDn/k7j4g=
   - name: feature-readiness-review
-    description: "The two gates around implementing a feature: before, checking that nothing implementation depends on is
-      still unresolved, and after, checking that what was built is what was agreed and that the claim of completion is
+    description: "The intake, pre-implementation, and completion gates for a feature: first validating the
+      Product/Engineering or Tech Feature baseline, then checking that nothing implementation depends on is still
+      unresolved, and after, checking that what was built is what was agreed and that the claim of completion is
       supported. Use before the first line of a planned feature is written, when implementation is about to start with
       an open blocking question, when a feature is about to be declared done, when \"done\" is being claimed on a green
       build, when a feature shipped and the decisions were never written down, or when a reviewer cannot tell which
@@ -1625,11 +1753,11 @@ skills:
       - completion
       - gates
       - checklist
-    latest: 1.1.0
+    latest: 1.2.0
     versions:
-      - version: 1.1.0
+      - version: 1.2.0
         path: skills/feature-readiness-review
-        integrity: sha256-kSHDpHvnPX9zL8nkAz9tZbap7eh1p9NGiIIlGy67hGA=
+        integrity: sha256-JqSIzmLzLIvDSKF+k9svmVQge63dMkBUGBEO2E5vWIM=
   - name: feature-requirement-clarification
     description: "Deciding what to ask the user about a feature, when to ask it, and what stops work until it is answered:
       proving the repository cannot answer it first, pricing each question by what changes if the answer is the other
@@ -1647,11 +1775,11 @@ skills:
       - ambiguity
       - blocking
       - requirements
-    latest: 1.0.0
+    latest: 1.1.0
     versions:
-      - version: 1.0.0
+      - version: 1.1.0
         path: skills/feature-requirement-clarification
-        integrity: sha256-fwAx6nF4AL8MnS7DgLyoq+9i8qcR7FdGjKuOGqSStJE=
+        integrity: sha256-vidcdynN74uY8m5u0IY7MTgcjTMGiRw8s+wgizg4m/k=
   - name: feature-risk-analysis
     description: "Naming what could go wrong with a specific feature in a form that can be acted on: the failure stated as
       an event rather than a worry, how anyone would find out it happened, what reduces its probability or its cost, and
@@ -1668,11 +1796,11 @@ skills:
       - detection
       - mitigation
       - failure-modes
-    latest: 1.1.0
+    latest: 1.2.0
     versions:
-      - version: 1.1.0
+      - version: 1.2.0
         path: skills/feature-risk-analysis
-        integrity: sha256-sDBzzxq181S5cAZFpHJJxxBR0xrjGgVJrDzqSF0ucic=
+        integrity: sha256-5PcAfEQK4bSwpFTsj9/+vevh8Ie7oTEoGxRDgclYjhE=
   - name: feature-scope-analysis
     description: "Fixing what a feature includes and, more usefully, what it deliberately excludes: sorting every candidate
       item into required, recommended, optional, out of scope or future work, tracing each included item back to a
@@ -1689,11 +1817,11 @@ skills:
       - scope-creep
       - boundaries
       - planning
-    latest: 1.0.0
+    latest: 1.1.0
     versions:
-      - version: 1.0.0
+      - version: 1.1.0
         path: skills/feature-scope-analysis
-        integrity: sha256-7iQM0bylLIgouOah85CqwOCAsJ/jzcInEJlMf3xtZr0=
+        integrity: sha256-qcAtBPDZYvFoC2NA7DVnkJYFSLsrum0c9lSflOnhOus=
   - name: feature-solution-analysis
     description: "Producing the option set for a feature-level choice and the block that recommends one: always including
       the simplest thing that satisfies the constraints, keeping the options the same category of thing, evaluating only
@@ -1710,11 +1838,11 @@ skills:
       - trade-offs
       - design
       - recommendation
-    latest: 1.0.0
+    latest: 1.1.0
     versions:
-      - version: 1.0.0
+      - version: 1.1.0
         path: skills/feature-solution-analysis
-        integrity: sha256-BHA4MDdET50d2ERrZLTVi1xjG7rT69W0c9Tt5x1hrjM=
+        integrity: sha256-mMpE54+twybFpZREoyyyTlh9WvFrYcqvacmCEGKtdiU=
   - name: flame-graph-analysis
     description: "Interpreting flame graphs as weighted sampled call-path aggregates: identifying the selection event and
       denominator, separating inclusive from leaf/self attribution, recognizing truncation, inlining, symbol and
@@ -1775,11 +1903,11 @@ skills:
       - upgrade
       - portability
       - jpa
-    latest: 1.2.0
+    latest: 1.2.1
     versions:
-      - version: 1.2.0
+      - version: 1.2.1
         path: skills/framework-coupling-and-independence
-        integrity: sha256-eSQvP4OPzVeVKei7J/CoENDmeoxBYQ/AEtDwovYQt6U=
+        integrity: sha256-/3i2DmJyfv75zPcpjLWgyEU0c7h+3TgpxlbJEkBDe2A=
   - name: g1-concurrent-marking
     description: "G1's concurrent marking cycle: SATB and the pre-write barrier, the five phases and the single mark bitmap
       with TAMS, adaptive IHOP triggering, mark stack overflow and its consequences, humongous allocation and eager
@@ -2659,11 +2787,11 @@ skills:
       - java
       - sealed-types
       - design
-    latest: 1.2.0
+    latest: 1.2.1
     versions:
-      - version: 1.2.0
+      - version: 1.2.1
         path: skills/humble-objects-and-functional-core
-        integrity: sha256-mdjCrggpU9uM6LXDtJVCwvlg/3ns5xRnrgMXRmuR0IY=
+        integrity: sha256-8ou+2ZA/ypn3v50qB4y58xNgzW2sp1DEJ3LP6o3C8wA=
   - name: idempotency
     description: "Making an operation safe to apply more than once: natural idempotency versus an idempotency key plus
       durable operation state; choosing and scoping the key, and why a broker message id covers only one redelivery
@@ -2896,11 +3024,11 @@ skills:
       - sealed
       - decorator
       - hierarchy
-    latest: 1.2.0
+    latest: 1.2.1
     versions:
-      - version: 1.2.0
+      - version: 1.2.1
         path: skills/java-composition-over-inheritance
-        integrity: sha256-PDWsX0szpr++HehrOeXVxy+EnGJLG8FZzC+71iA0axA=
+        integrity: sha256-NjprHRKiGCEX0UsI3ZS2meJOWsBixNUvRVWMTYsb4Aw=
   - name: java-concurrency
     description: Entry point for designing or triaging concurrency inside one JVM. Classifies work by lifecycle, blocking
       and CPU demand, state ownership, arrival shape, ordering, cancellation, failure, and scarce-resource bounds, then
@@ -3127,11 +3255,11 @@ skills:
       - capture
       - invokedynamic
       - boxing
-    latest: 1.3.0
+    latest: 1.3.1
     versions:
-      - version: 1.3.0
+      - version: 1.3.1
         path: skills/java-lambdas-and-functional-interfaces
-        integrity: sha256-dGcwfPGvqrUQQyoXjEDv1bFlPbcZdPCnSa5cL2CDw7I=
+        integrity: sha256-wWMWMgvgwLki+YqoP/K0CcXZ6sbHKEcexO6KXuS+5rM=
   - name: java-law-of-demeter
     description: "Navigation coupling: what the Law of Demeter actually constrains — structure exposure, not dot-counting —
       and how to tell a train wreck from a legitimate chain. Use when reviewing chains like
@@ -3318,11 +3446,11 @@ skills:
       - triage
       - diagnosis
       - routing
-    latest: 2.5.0
+    latest: 2.6.0
     versions:
-      - version: 2.5.0
+      - version: 2.6.0
         path: skills/java-performance
-        integrity: sha256-z0X/urdeSmoAu+YCzoDHzotoN6IMyt2EzhRgDzNnN/0=
+        integrity: sha256-nChuU+ZvsEQYr4nUelek0w4JuidmxEdMpDQ9C8KkLgU=
   - name: java-refactoring
     description: "Refactoring mechanics for Java: characterisation tests, small reversible steps, what behaviour
       preservation actually covers, risk classification, and the catalogue — Extract/Inline, Split Phase, guard clauses,
@@ -3393,11 +3521,11 @@ skills:
       - jpms
       - serviceloader
       - native-image
-    latest: 1.4.0
+    latest: 1.4.1
     versions:
-      - version: 1.4.0
+      - version: 1.4.1
         path: skills/java-reflection-and-method-handles
-        integrity: sha256-E6o7zDZix6R34+I8N4FFVOqobr0I2D7yko1qHFkKhA4=
+        integrity: sha256-PhY4QKlbljU8XIt+YQwKm4F46kpEOA8FH7LbV9PHY0k=
   - name: java-resource-management
     description: "Deterministic release of what a Java program holds open: try-with-resources and the exception semantics
       that make it non-optional, designing an AutoCloseable (ownership, idempotent close, close that fails), decorators
@@ -4222,11 +4350,11 @@ skills:
       - kafka
       - idempotency
       - java
-    latest: 1.3.0
+    latest: 1.3.1
     versions:
-      - version: 1.3.0
+      - version: 1.3.1
         path: skills/message-ordering-and-partitioning
-        integrity: sha256-drRw/cVdp0aRGmECvfSx5w+KysljC9HWANnBRmrs/8w=
+        integrity: sha256-q8+bX9f/kwfWAmGh8zBPp7+swvacjp9rjvdVCu9kwBg=
   - name: metadata-mapping
     description: "Expressing the object-to-schema mapping as metadata rather than hand-written code: where the mapping lives
       (annotations, external XML, programmatic), what reflection costs versus generated code, and how metadata drifts
@@ -4313,6 +4441,25 @@ skills:
       - version: 1.3.0
         path: skills/mvc-and-request-handling
         integrity: sha256-58IBTPcE4FBR9Y4veSBYDpMbreEYPN8w3GrH/cxC2zc=
+  - name: mysql-innodb-performance
+    description: "Diagnosing and tuning MySQL 8.4+ InnoDB from engine evidence: clustered primary-key storage, buffer pool
+      and redo/checkpoint pressure, undo/purge history, next-key/gap locks and deadlocks, optimizer statistics and
+      plans, online DDL, replication durability/lag, and Connector/J prepared statements, batching, fetch, and TLS
+      properties. Use when the symptom or change depends on InnoDB or MySQL behavior. Not generic query-plan, ORM, or
+      pool sizing guidance."
+    keywords:
+      - mysql
+      - innodb
+      - performance
+      - connector-j
+      - redo
+      - gap-lock
+      - database
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/mysql-innodb-performance
+        integrity: sha256-Yo5dEY+yFH6W7svOi1L2+WeSYhjYlsfoLOyNdn2dtiU=
   - name: numa-and-cpu-affinity
     description: "Placing a JVM on real hardware topology: reading the NUMA topology, numactl and taskset pinning
       strategies, interpreting numastat, which collectors UseNUMA actually governs, how CPU sets interact with the JVM's
@@ -4507,11 +4654,11 @@ skills:
       - trade-offs
       - enterprise
       - design
-    latest: 1.3.0
+    latest: 1.3.1
     versions:
-      - version: 1.3.0
+      - version: 1.3.1
         path: skills/pattern-selection-and-composition
-        integrity: sha256-qSPJi+8WYC5BD+08/K51/ZX7gRAKr9R83EpedPgZ6Q0=
+        integrity: sha256-kSq46Xsan6JIt5d8Nos8xQjuP6XD5diR8xB5R0t8Sc0=
   - name: patterns-and-modern-frameworks
     description: Which classical enterprise patterns a modern Java and Spring stack already implements, which it only partly
       implements, and which it does not implement at all — plus the modern Java expression of each. Use when a
@@ -4621,6 +4768,25 @@ skills:
       - version: 1.2.0
         path: skills/poison-messages-and-dlq
         integrity: sha256-7qriZGPQ49TQSNSKi3jjGzKmAu6taPOLaau/KveViBQ=
+  - name: postgresql-performance
+    description: "Diagnosing and tuning PostgreSQL 17/18 from engine evidence: MVCC tuple versions, VACUUM/freeze and bloat,
+      HOT updates and visibility maps, plans and cardinality, work memory/spills, WAL and checkpoints, locks/SSI,
+      connection processes and PgBouncer session semantics, plus pgjdbc prepared-plan, batch, and fetch behavior. Use
+      when the symptom or change depends on PostgreSQL internals. Not generic query-plan, ORM, or HikariCP sizing
+      guidance."
+    keywords:
+      - postgresql
+      - performance
+      - vacuum
+      - mvcc
+      - pgjdbc
+      - pgbouncer
+      - database
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/postgresql-performance
+        integrity: sha256-7ggMyRoWXM+zhcqxLlcZ5oiDvcTQAZIubai+Ty2dPhQ=
   - name: quality-gates
     description: "Choosing which automated checks a change must pass, and making them cheap enough that they stay switched
       on: matching the gate set to the change's risk rather than running everything on everything, where each gate
@@ -4730,11 +4896,11 @@ skills:
       - webflux
       - quarkus
       - architecture
-    latest: 1.3.0
+    latest: 1.3.1
     versions:
-      - version: 1.3.0
+      - version: 1.3.1
         path: skills/reactive-and-virtual-thread-selection
-        integrity: sha256-NpUPS3DyGsBSVnRkBcIk/kLYW/Vhd3SfV4aJh6GRkiA=
+        integrity: sha256-D4YoC+dBWFbVKjbuB70xl+NngqG+3llBeABKs60aRn4=
   - name: reactive-backpressure
     description: "Backpressure in reactive and asynchronous pipelines: Reactive Streams request semantics, the operators
       that break the protocol, bounded buffers and overflow strategies, blocking inside a non-blocking pipeline, and
@@ -4980,11 +5146,11 @@ skills:
       - compatibility
       - kafka
       - versioning
-    latest: 1.2.0
+    latest: 1.2.1
     versions:
-      - version: 1.2.0
+      - version: 1.2.1
         path: skills/schema-evolution-and-compatibility
-        integrity: sha256-lpSoL4S/ikN86gJLsTNcaIdywZwFQk24tFdD2crSUqQ=
+        integrity: sha256-hdeoM84YIDXHlbE9wngUCVS7w1QCaSdennXltA4f8lU=
   - name: scoped-values
     description: "ScopedValue as one-way, immutable, lexically bounded context: where/run/call, rebinding in a nested scope,
       inheritance by StructuredTaskScope subtasks and by nothing else, and the cases where ThreadLocal is still the
@@ -5200,6 +5366,25 @@ skills:
       - version: 1.2.0
         path: skills/sql-query-performance
         integrity: sha256-87mLQQY5Z/foPOZosLfOoZ8mWpKJCSYDlob4Xf9Sj7g=
+  - name: sql-server-performance
+    description: "Diagnosing and tuning SQL Server 2022+ from engine evidence: waits, blocking/deadlocks, RCSI and version
+      store, cardinality and parameter-sensitive plans, memory grants and parallelism, clustered/columnstore storage,
+      statistics and index maintenance, tempdb/files/memory, readable replicas, and mssql-jdbc behavior. Use when the
+      symptom or proposed change depends on SQL Server internals. Not generic single-query tuning, ORM behavior, or
+      HikariCP sizing."
+    keywords:
+      - sql-server
+      - performance
+      - query-store
+      - wait-stats
+      - tempdb
+      - mssql-jdbc
+      - database
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/sql-server-performance
+        integrity: sha256-0W25MeaiqifOrMrmSxASx0xlNml1k4xwkWW0vJ1Rl2s=
   - name: startup-cds-crac-leyden
     description: "Cutting JVM startup and warm-up while staying on the JVM: CDS and AppCDS, the Leyden AOT cache (JEP
       483/514/515), CRaC checkpoint and restore and its constraints, what each mechanism actually accelerates, verifying
@@ -5350,11 +5535,11 @@ skills:
       - visibility-timeout
       - backpressure
       - messaging
-    latest: 1.3.0
+    latest: 1.3.1
     versions:
-      - version: 1.3.0
+      - version: 1.3.1
         path: skills/task-queues-and-competing-consumers
-        integrity: sha256-Sn/x3eRMW6rtWYODmVd96+juMz9adUvRk2HxzagqoQc=
+        integrity: sha256-vaVrhtZ+m7NkN1DJnDI78sEbXYEe9ALoHzWJsS0Z/zE=
   - name: tcp-tuning
     description: "The network stack under a JVM service: listen backlog and accept queues, Nagle and delayed ACK, socket
       buffer sizing against bandwidth-delay product, congestion control choice, keepalive and timeout alignment along
@@ -5436,11 +5621,11 @@ skills:
       - thread-pool
       - pinning
       - sizing
-    latest: 1.3.0
+    latest: 1.3.1
     versions:
-      - version: 1.3.0
+      - version: 1.3.1
         path: skills/thread-sizing-and-virtual-threads
-        integrity: sha256-LRtWGSy6MUb400PzYdCaQQP5T4WmG2k5EbaNy/Xxq0k=
+        integrity: sha256-4AkW7O4+2I22FDExGYVnQhgjXP8qVlnwATaUH9ulAeQ=
   - name: timeouts-and-deadlines
     description: "Bounding how long a call may take and propagating that bound: per-hop timeouts versus an absolute
       deadline, deadline propagation over HTTP and gRPC, remaining-budget arithmetic and refusing work that cannot

@@ -79,13 +79,13 @@ THEN it needs a mitigation or a fallback before implementation starts, not befor
      release. "We will monitor it" is neither.
 
 IF the mitigation is work
-THEN it is a resource with an identifier, and it appears in the execution order.
+THEN it is a RES-* with an identifier, and it appears in the execution order.
 
 IF a risk exists only because an assumption is unconfirmed
 THEN the mitigation is to confirm the assumption, and it is probably a question.
 
 IF a risk is accepted
-THEN say who accepted it and on what basis. An unattributed acceptance is an omission.
+THEN create or link a GAP-* with consequence, accountable owner, expiry and reopening trigger.
 
 IF the register is long and everything is MEDIUM
 THEN it was filled from a template. Delete the rows with no detection and rate again.
@@ -108,23 +108,23 @@ THEN it is a constraint on the design, and it belongs back in the solution phase
 ## Output
 
 ```text
-K-02  The dispatch consumer reprocesses an event after a redeploy
+RISK-02  The dispatch consumer reprocesses an event after a redeploy
       Impact        HIGH   duplicate outbound charges
       Probability   MEDIUM at-least-once delivery, and the handler is not idempotent
       Detection     duplicate rows in dispatch_log with the same event id; no alert
                     exists today, so this would be found in reconciliation, next day
-      Mitigation    R-07: idempotency key on dispatch_log with a unique constraint
+      Mitigation    RES-07: idempotency key on dispatch_log with a unique constraint
       Fallback      reconciliation job identifies duplicates; refunds are manual
       Accepted by   -    (mitigated)
 
-K-05  The V42 migration locks orders for longer than the deploy window
+RISK-05  The V42 migration locks orders for longer than the deploy window
       Impact        MEDIUM  failed requests during deploy
       Probability   LOW     the table is 40k rows (checked); the column is nullable
                             with a default applied without a rewrite on this engine
       Detection     migration duration is logged; deploy fails if it exceeds the window
       Mitigation    none required at this size
       Fallback      migration is reversible; V43 drops the column
-      Accepted by   agent — LOW probability, reversible, detected immediately
+      Accepted by   GAP-02 — Engineering owner; expires at production-readiness review
 ```
 
 Close with the count by impact level, and name every HIGH risk that has no mitigation. If that

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-architecture-analysis
-version: 1.0.0
+version: 1.1.0
 description: >-
   Enumerating what a feature actually touches, with paths: which modules, layers, contracts,
   schemas, message topics, configuration and cross-cutting concerns change, which of those changes

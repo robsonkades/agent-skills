@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-execution
-version: 1.0.0
+version: 1.1.0
 description: >-
   Implementing a planned feature one resource at a time: taking a single resource to done,
   choosing the validation that resource actually warrants, running it and reading the output, and

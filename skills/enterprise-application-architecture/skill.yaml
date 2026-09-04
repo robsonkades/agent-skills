@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: enterprise-application-architecture
-version: 1.2.1
+version: 1.2.2
 description: >-
   The entry point for reasoning about an enterprise application's architecture: what makes
   these systems distinctive (data that outlives the code, concurrent users, integration,
@@ -121,6 +121,6 @@ capabilities:
 agentOverrides:
   codex:
     interface:
-      display_name: Enterprise Application Architecture
+      display_name: Enterprise App Architecture
       short_description: Forces, decisions and where to find each one
       default_prompt: Use Enterprise Application Architecture to orient on this system's architecture.

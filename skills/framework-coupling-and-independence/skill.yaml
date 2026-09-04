@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: framework-coupling-and-independence
-version: 1.2.0
+version: 1.2.1
 description: >-
   Deciding how much of a system may depend on its framework, and pricing that dependency
   honestly: which couplings are cheap and correct, which are expensive and reversible, which are
@@ -71,5 +71,5 @@ suggests:
 agentOverrides:
   codex:
     interface:
-      display_name: Framework Coupling and Independence
+      display_name: Framework Coupling
       short_description: Place framework coupling deliberately and price it

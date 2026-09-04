@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: mysql-innodb-performance
+version: 1.0.0
+description: >-
+  Diagnosing and tuning MySQL 8.4+ InnoDB from engine evidence: clustered primary-key storage,
+  buffer pool and redo/checkpoint pressure, undo/purge history, next-key/gap locks and deadlocks,
+  optimizer statistics and plans, online DDL, replication durability/lag, and Connector/J prepared
+  statements, batching, fetch, and TLS properties. Use when the symptom or change depends on
+  InnoDB or MySQL behavior. Not generic query-plan, ORM, or pool sizing guidance.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/mysql-innodb-performance
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/mysql-innodb-performance
+
+keywords:
+  - mysql
+  - innodb
+  - performance
+  - connector-j
+  - redo
+  - gap-lock
+  - database
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: sql-query-performance
+    version: ^1.0.0
+
+suggests:
+  - database-index-design
+  - connection-pool-sizing
+  - database-bulk-loading
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: MySQL InnoDB Performance
+      short_description: InnoDB storage, locking, plans, and Connector/J
+      default_prompt: Use MySQL InnoDB Performance to diagnose this engine-specific problem.

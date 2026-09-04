@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: feature-contract-definition
+version: 1.0.0
+description: >-
+  Defining a versioned API, event, data, integration, security, or operational contract for a
+  feature after its behavior is agreed and before implementation is planned. Use when callers,
+  consumers, stored data, or operators will depend on a changed boundary and its success, failure,
+  ownership, compatibility, and verification must be explicit. Does not choose the architecture or
+  transport (feature-solution-analysis), record the decision (feature-decision-analysis), or
+  implement the contract (feature-execution).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-contract-definition
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-contract-definition
+
+keywords:
+  - feature
+  - contract
+  - api
+  - events
+  - compatibility
+  - schema
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: delivery-semantics
+    version: ^1.0.0
+  - name: rpc-and-api-contracts
+    version: ^1.0.0
+  - name: schema-evolution-and-compatibility
+    version: ^1.0.0
+
+suggests:
+  - feature-context-analysis
+  - feature-decision-analysis
+  - feature-engineering
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Contract Definition
+      short_description: Define versioned feature boundaries and compatibility
+      default_prompt: Use Feature Contract Definition to make this boundary explicit and verifiable.

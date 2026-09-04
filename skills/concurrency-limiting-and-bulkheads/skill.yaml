@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: concurrency-limiting-and-bulkheads
-version: 1.3.0
+version: 1.3.1
 description: >-
   Engineer process-local concurrency limits and bulkheads around scarce resources, with explicit
   admission deadlines, permit ownership, weighted work, partitioning, fairness, observability and
@@ -53,6 +53,6 @@ capabilities:
 agentOverrides:
   codex:
     interface:
-      display_name: Concurrency Limiting and Bulkheads
+      display_name: Concurrency Limits & Bulkheads
       short_description: Semaphores, bulkheads and where the limit belongs
       default_prompt: Use Concurrency Limiting and Bulkheads to bound this in-flight work next to the resource it protects.

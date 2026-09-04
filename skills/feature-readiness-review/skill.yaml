@@ -1,9 +1,10 @@
 schemaVersion: 1
 
 name: feature-readiness-review
-version: 1.1.0
+version: 1.2.0
 description: >-
-  The two gates around implementing a feature: before, checking that nothing implementation
+  The intake, pre-implementation, and completion gates for a feature: first validating the
+  Product/Engineering or Tech Feature baseline, then checking that nothing implementation
   depends on is still unresolved, and after, checking that what was built is what was agreed and
   that the claim of completion is supported. Use before the first line of a planned feature is
   written, when implementation is about to start with an open blocking question, when a feature is
@@ -46,6 +47,7 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - collaborative-feature-definition
   - feature-engineering
   - feature-progress-tracking
   - feature-scope-analysis

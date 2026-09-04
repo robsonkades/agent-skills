@@ -39,8 +39,9 @@ keeping it true rather than about writing it well the first time.
    and what it must establish.
 5. **Write migration, deployment and rollback as sequences**, with the ordering constraint
    spelled out. "Deploy then migrate" and "migrate then deploy" are different plans.
-6. **Write acceptance criteria a test can be derived from** — observable, with the inputs and
-   the expected outcome. If a criterion cannot be turned into a check, rewrite it.
+6. **Assemble, do not author, acceptance.** Carry accepted `BAC-*` from Product and `TC-*` from
+   Engineering, trace both to `RES-*`, and name planned `EV-*`. If a criterion is missing or cannot
+   become a check, return it to its owning stage instead of repairing intent in the plan.
 7. **Mark every section that has nothing in it** as `none, because <reason>`. An empty section
    is ambiguous between "not applicable" and "not considered", and the difference matters.
 
@@ -65,8 +66,8 @@ THEN check it against the schema section. Once a migration has run, reverting th
      code is not reverting the change.
 
 IF implementation contradicts the plan
-THEN the plan changes, with a dated note saying what changed and why — the plan is
-     the record of intent, and silent drift destroys it.
+THEN create a revision-impact entry, mark traced downstream items stale, and return
+     affected decisions/contracts for approval before continuing.
 
 IF the feature spans sessions
 THEN the plan must be readable cold. Assume the reader has none of the conversation.
@@ -89,13 +90,13 @@ THEN the plan must be readable cold. Assume the reader has none of the conversat
 
 Amend the plan whenever any of these happens, and say so in the execution log:
 
-| Event                                    | Amendment                                                |
-| ---------------------------------------- | -------------------------------------------------------- |
-| A resource turns out to need another one | Add it, with its dependency, and re-derive the order     |
-| A resource turns out to be unnecessary   | Mark it cancelled with the reason; do not delete         |
-| A decision is superseded                 | Update the affected resources and the record pointer     |
-| A file turns out not to need changing    | Correct the file list                                    |
-| Implementation reveals a risk            | Add it to the register and, if it needs work, a resource |
+| Event                                    | Amendment                                                 |
+| ---------------------------------------- | --------------------------------------------------------- |
+| A resource turns out to need another one | Add a RES-*, with its dependency, and re-derive the order |
+| A resource turns out to be unnecessary   | Mark it cancelled with the reason; do not delete          |
+| A decision is superseded                 | Update affected RES-_/CT-_/TC-* and the record pointer    |
+| A file turns out not to need changing    | Correct the file list                                     |
+| Implementation reveals a risk            | Add it to the register and, if it needs work, a resource  |
 
 Amendments are dated and appended. The original is not rewritten, because "the plan was wrong
 here" is the most useful sentence in a post-mortem.

@@ -18,7 +18,7 @@ whoever depends on the changed thing, not to whatever it depends on.
 ## Entry shape
 
 ```text
-<path>[:line]   NEW | MODIFIED | READ   INTERNAL | EXTERNAL   <what changes, in a clause>
+IMP-01  <path>[:line]   NEW | MODIFIED | READ   INTERNAL | EXTERNAL   <change> <- SC-01
 ```
 
 - **NEW** — did not exist. No compatibility question, but a naming and placement question.
@@ -55,12 +55,12 @@ A crossing is any impact where someone outside the change must agree or must dep
 separately from the map, because it changes the process rather than the code:
 
 ```text
-Crossing   Order created event gains a field
+Crossing   IMP-07 Order created event gains a field
 Depends    two consumers (billing, notifications)
 Needs      backward-compatible addition; consumers tolerate unknown fields (verified
            in their deserialiser configuration) -> no coordinated deploy required
 
-Crossing   orders.status gains a value
+Crossing   IMP-11 orders.status gains a value
 Depends    the reporting view groups by status
 Needs      the view updated in the same release, or it silently drops the new rows
 ```

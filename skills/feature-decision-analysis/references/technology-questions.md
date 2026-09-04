@@ -37,8 +37,9 @@ settle, and whose answer changes the work, becomes a question.
 | Deployment           | Ordering constraints, flags, rollback                       |
 
 Most rows resolve to “the project already does this, and it applies here.” Record provenance as
-PROJECT_EXISTING. User confirmation is warranted only when the authority test identifies external
-behaviour, material cost, policy, data, or expensive reversibility—not merely because a row exists.
+PROJECT_EXISTING. Confirmation by the accountable role is warranted only when the authority test
+identifies external behaviour, material cost, policy, data, or expensive reversibility—not merely
+because a row exists.
 
 ## Asking without smuggling
 
@@ -74,7 +75,8 @@ the two facts that actually decide it, and it asks one closed question.
 Adding a library commits the project to its licence, transitive tree, release cadence,
 vulnerability reports and eventual removal. A small, test-only dependency already permitted by the
 project may be an agent-owned implementation choice; a runtime, native, networked, licensed, or
-foundational dependency normally earns explicit review or user confirmation. Before proposing one:
+foundational dependency normally earns explicit review by the accountable engineering/operations
+roles. Before proposing one:
 
 - Does the project, the framework, or the standard library already do this? Check, with a path.
 - What does the project already depend on that is close?

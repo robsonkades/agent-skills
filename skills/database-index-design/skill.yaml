@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: database-index-design
+version: 1.0.0
+description: >-
+  Designing and governing an index portfolio across SQL Server, MySQL/InnoDB, and PostgreSQL:
+  deriving composite keys from a workload, equality/range/order trade-offs, covering and partial
+  indexes, write amplification, redundant-index consolidation, engine-specific semantics, and
+  safe production creation or removal. Use when changing schema indexes for several queries or
+  reviewing a table's index set. Not the diagnosis of one slow statement, which belongs to
+  sql-query-performance.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/database-index-design
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/database-index-design
+
+keywords:
+  - database
+  - index
+  - b-tree
+  - sql-server
+  - mysql
+  - postgresql
+  - performance
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: sql-query-performance
+    version: ^1.0.0
+
+suggests:
+  - schema-evolution-and-compatibility
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Database Index Design
+      short_description: Design and govern multi-engine index portfolios
+      default_prompt: Use Database Index Design to derive and validate this index portfolio.

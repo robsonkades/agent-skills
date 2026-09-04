@@ -46,6 +46,8 @@ absent. Absence is a finding, not a gap in the report.
    or impossible, and what the code says about why.
 7. **Label every technology finding as observed**, never as required. That distinction is the
    whole reason the report is trustworthy.
+8. **Preserve traceability.** Assign or reuse `F-*` for evidence and resolve `U-*` by appending the
+   fact/source; name the input feature revision so later baseline changes can invalidate findings.
 
 ## Decision rules
 
@@ -90,6 +92,7 @@ THEN read the version the project actually depends on, from the build file, befo
 
 ```text
 Existing architecture      <shape, with the paths that show it>
+Input revisions            <Product/Engineering or Tech Feature revision IDs>
 Relevant modules           <path -> what it owns>
 Relevant components        <name, path, what it does>
 Existing patterns          <pattern, count, counter-examples>
@@ -97,7 +100,7 @@ Existing technologies      <name, version, where used, observed>
 Reusable components        <name -> what it would need>
 Potential conflicts        <request item vs what the code makes hard, with evidence>
 Constraints from the code  <what cannot change, and why>
-Questions answered         <U-nn -> answer, evidence>
+Questions answered         <U-* -> F-*, evidence>
 Still unknown              <U-nn, and why the repository cannot answer it>
 ```
 

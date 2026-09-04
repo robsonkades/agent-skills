@@ -1,0 +1,69 @@
+schemaVersion: 1
+
+name: collaborative-feature-definition
+version: 1.1.0
+description: >-
+  Co-authoring Product Features and Tech Features through focused question-and-revision rounds. For
+  a Product Feature, separates the business definition from an optional engineering analysis owned
+  by an architect or senior engineer, including PoCs, ADRs, contracts, and engineering premises.
+  Use when the deliverable is an agreed feature brief or ticket, not implementation. The completed
+  package is handed to feature-engineering for lifecycle validation and execution planning.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/collaborative-feature-definition
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/collaborative-feature-definition
+
+keywords:
+  - feature
+  - product
+  - tech-feature
+  - discovery
+  - collaboration
+  - requirements
+  - acceptance-criteria
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: architecture-decision-making
+    version: ^2.0.0
+  - name: feature-engineering
+    version: ^1.0.0
+  - name: feature-context-analysis
+    version: ^1.0.0
+  - name: feature-contract-definition
+    version: ^1.0.0
+  - name: feature-decomposition
+    version: ^1.0.0
+  - name: feature-discovery
+    version: ^1.0.0
+  - name: feature-feasibility-experiment
+    version: ^1.0.0
+  - name: feature-requirement-clarification
+    version: ^1.0.0
+  - name: requirements-and-acceptance
+    version: ^1.0.0
+
+suggests:
+  - engineering-communication
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Collaborative Feature Definition
+      short_description: Co-author Product and Tech Features through focused rounds
+      default_prompt: Use $collaborative-feature-definition to turn this idea into an agreed feature.

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: concurrent-collections-and-synchronizers
-version: 1.2.0
+version: 1.2.1
 description: >-
   Choosing between the members of java.util.concurrent once the family is settled, and the
   parameter that makes it correct: which BlockingQueue and which of its four insert and
@@ -50,6 +50,6 @@ capabilities:
 agentOverrides:
   codex:
     interface:
-      display_name: Concurrent Collections and Synchronizers
+      display_name: Concurrent Collections & Sync
       short_description: Choosing the java.util.concurrent member and its parameters
       default_prompt: Use Concurrent Collections and Synchronizers to check this choice.

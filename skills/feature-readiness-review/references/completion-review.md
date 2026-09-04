@@ -5,10 +5,10 @@ diff cannot, because they need the analysis to detect.
 
 ## 1. Requirements
 
-Take each Required scope item and name the resources that satisfy it. Anything with no resource
+Take each Required `SC-*` and each `BAC-*`/`TC-*` and name the `RES-*` that satisfy it. Anything with no resource
 is the finding: the feature is incomplete and nothing in the build says so.
 
-Then the reverse: take each resource and name the scope item it traces to. Anything tracing to
+Then the reverse: take each `RES-*` and name the scope/criterion it traces to. Anything tracing to
 nothing entered without a decision.
 
 ## 2. Scope
@@ -28,7 +28,7 @@ Both outcomes are acceptable; the unacceptable one is not noticing.
 
 ## 3. Acceptance criteria
 
-Each criterion, and what checked it — a test identifier, a command with output, or a manual step
+Each criterion, and the observed `EV-*` that checked it — a test identifier, command output, or manual step
 someone performed. A criterion checked by "the implementation does this" is unchecked.
 
 ## 4. Decisions
@@ -95,24 +95,24 @@ Feature      Asynchronous order dispatch
 Complete     no — one Required item has no resource
 
 Requirements
-  S-01 dispatch is asynchronous            R-01, R-03, R-04, R-05   satisfied
-  S-02 caller can observe completion       R-06                     satisfied
-  S-03 duplicate dispatch is suppressed    -                        NOT COVERED
+  BAC-01 dispatch is asynchronous          RES-01, RES-03, RES-04   satisfied
+  BAC-02 caller can observe completion     RES-06                   satisfied
+  BAC-03 duplicate dispatch is suppressed  -                        NOT COVERED
 Scope
   2 unplanned files; 1 kept with the impact map amended, 1 reverted
 Validation
-  9 resources validated; R-06 qualified — no database harness, generated SQL
+  9 resources validated; RES-06 qualified — no database harness, generated SQL
   unverified against the real engine
 Acceptance
-  4 of 5 checked; AC-05 depends on S-03
+  4 of 5 checked; BAC-05 depends on BAC-03
 Decisions
-  11 recorded; D-09 and D-11 recorded retrospectively during implementation
+  11 recorded; ED-09 and ED-11 recorded retrospectively during implementation
 Risks
-  K-02 mitigated by R-07; K-05 accepted by the user 2026-09-05
+  RISK-02 mitigated by RES-07; RISK-05 accepted under GAP-02 by Operations
 Unverified
-  R-06's SQL against PostgreSQL; the migration against a production-sized table
+  RES-06's SQL against PostgreSQL; the migration against a production-sized table
 Remaining
-  S-03 blocked on Q-08. R-07 and R-08 are defined and ready once it is answered.
+  BAC-03 blocked on Q-08. RES-07 and RES-08 are defined and ready once it is answered.
 ```
 
 The headline is the honest one. A report that opens with what worked and mentions the gap in

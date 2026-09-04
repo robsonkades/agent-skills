@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: postgresql-performance
+version: 1.0.0
+description: >-
+  Diagnosing and tuning PostgreSQL 17/18 from engine evidence: MVCC tuple versions, VACUUM/freeze
+  and bloat, HOT updates and visibility maps, plans and cardinality, work memory/spills, WAL and
+  checkpoints, locks/SSI, connection processes and PgBouncer session semantics, plus pgjdbc
+  prepared-plan, batch, and fetch behavior. Use when the symptom or change depends on PostgreSQL
+  internals. Not generic query-plan, ORM, or HikariCP sizing guidance.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/postgresql-performance
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/postgresql-performance
+
+keywords:
+  - postgresql
+  - performance
+  - vacuum
+  - mvcc
+  - pgjdbc
+  - pgbouncer
+  - database
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: sql-query-performance
+    version: ^1.0.0
+
+suggests:
+  - database-index-design
+  - connection-pool-sizing
+  - database-bulk-loading
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: PostgreSQL Performance
+      short_description: PostgreSQL MVCC, VACUUM, plans, WAL, and pgjdbc
+      default_prompt: Use PostgreSQL Performance to diagnose this engine-specific problem.

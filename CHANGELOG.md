@@ -10,6 +10,36 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-09-03
+
+### Added
+
+- **Seven database-engineering skills** for evidence-first database performance routing, index
+  design, bulk loading, engine selection and migration, plus dedicated PostgreSQL, MySQL/InnoDB
+  and SQL Server diagnostics.
+- **Collaborative Product Feature and Tech Feature definition**, with adaptive questioning,
+  explicit Product Definition and Engineering Analysis stages, accountable decision roles and
+  revision-aware handoffs into the feature-engineering lifecycle.
+- `feature-contract-definition` for owned API, event, data, security and operational contracts,
+  including compatibility and evolution rules.
+- `feature-feasibility-experiment` for bounded PoCs and experiments with hypotheses, thresholds,
+  evidence and explicit supported, refuted or inconclusive outcomes.
+
+### Changed
+
+- The feature-engineering suite now uses shared traceable artefact identifiers, adaptive depth and
+  persistence, focused feedback loops, accepted-gap governance and normalized readiness outcomes.
+- Feature decomposition now distinguishes independently valuable Product or Tech Features from
+  supporting implementation resources; planning references accepted business and technical
+  criteria instead of silently authoring them.
+- Java performance triage now routes database symptoms through the database-performance hub and
+  its engine-specific specialists.
+
+### Fixed
+
+- Shortened Codex display titles that exceeded the interface limit while preserving the full skill
+  names and routing semantics.
+
 ## [1.3.0] — 2026-09-03
 
 ### Added

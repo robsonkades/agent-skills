@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: database-engine-selection-and-migration
+version: 1.0.0
+description: >-
+  Choosing among SQL Server, MySQL/InnoDB, and PostgreSQL for a greenfield system, or planning a
+  migration between them, from explicit semantic, workload, operational, JVM-driver, DDL, cost,
+  and team constraints. Use when an ADR, proof of concept, compatibility inventory, shadow
+  validation, or reversible cutover is needed. Not a generic product ranking or live query-tuning
+  workflow.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/database-engine-selection-and-migration
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/database-engine-selection-and-migration
+
+keywords:
+  - database
+  - migration
+  - greenfield
+  - sql-server
+  - mysql
+  - postgresql
+  - adr
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: architecture-decision-making
+    version: ^2.0.0
+  - name: schema-evolution-and-compatibility
+    version: ^1.0.0
+
+suggests:
+  - database-bulk-loading
+  - database-index-design
+  - distributed-systems-testing
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Database Selection & Migration
+      short_description: Evidence-based engine choice and reversible migration
+      default_prompt: Use Database Engine Selection and Migration to evaluate this choice or cutover.

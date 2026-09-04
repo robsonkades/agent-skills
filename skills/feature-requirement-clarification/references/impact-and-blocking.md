@@ -26,7 +26,7 @@ A question is BLOCKING when **any** of these holds:
 - Proceeding on the wrong answer would write or migrate data.
 
 A question is NOT blocking when the work it affects is later in the execution order and the
-answer can arrive before that point. Say so explicitly: "non-blocking until R07".
+answer can arrive before that point. Say so explicitly: "non-blocking until RES-07".
 
 ## Worked examples
 
@@ -38,7 +38,7 @@ Q  Should processing be synchronous or asynchronous?
 
 Q  Should the job history be retained for 30 days or indefinitely?
    Impact: HIGH — decides whether a retention job and an index exist.
-   Status: NON-BLOCKING until R06. The table and the writes are identical either way.
+   Status: NON-BLOCKING until RES-06. The table and the writes are identical either way.
 
 Q  Should the new endpoint be under /api/v1 or /api/v2?
    Impact: MEDIUM — no behaviour differs; the versioning policy does.
@@ -65,6 +65,9 @@ an answer. Record it as still blocking, with the owner named.
 
 Sometimes nobody knows. Then:
 
-- Choose the reversible option, not the better one.
-- Record the choice as an assumption with its falsifier, and as a decision with its provenance.
-- Contain the choice so reversing it touches one place, and say where that place is.
+- Identify the accountable role and the phase/resource that cannot proceed.
+- Prefer the reversible option only for work inside explicitly delegated authority.
+- Otherwise keep it blocked, or create a `GAP-*` with consequence, authorized owner, expiry, reopening
+  trigger and affected work.
+- Record any temporary choice as an assumption with a falsifier and an `ED-*` with provenance; contain
+  it so reversal touches one place.

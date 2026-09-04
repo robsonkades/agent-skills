@@ -50,6 +50,9 @@ a comparison to fill a template is worse than not doing one.
 6. **Recommend one**, with the reason stated as the thing that separated it from the runner-up.
 7. **For each rejected option, say what would have to change** for it to win. That sentence is
    what makes the decision re-openable rather than final.
+8. **Separate uncertainty from preference.** If evidence cannot distinguish viable options and a
+   bounded pass/fail experiment would change the recommendation, hand one hypothesis to
+   `feature-feasibility-experiment`; do not choose by confidence or prototype enthusiasm.
 
 ## Decision rules
 
@@ -76,7 +79,7 @@ IF two options survive with no separating axis
 THEN choose the more reversible one and say that reversibility was the tiebreak.
 
 IF the choice materially affects behaviour, data, operations or cost
-THEN it is the user's to confirm, not the agent's to take.
+THEN name the role accountable for that consequence; the current participant is not automatically it.
 ```
 
 ## Constraints
@@ -110,7 +113,8 @@ Because          <the one thing that separated it from the runner-up>
 Consequences     <what the project accepts by taking it, including the unpleasant part>
 Reversibility    <what undoing it would cost, and where it is contained>
 Would change if  <per rejected option: the observation that would make it win>
-Decision needed  <agent may take it | user must confirm, and why>
+Decision needed  <agent may take it | accountable role must confirm, and why>
+Experiment       <EXP-* when evidence is required, otherwise none with reason>
 ```
 
 Hand the block to the decision phase. This skill produces the analysis; it does not record the

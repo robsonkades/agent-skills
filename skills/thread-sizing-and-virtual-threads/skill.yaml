@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: thread-sizing-and-virtual-threads
-version: 1.3.0
+version: 1.3.1
 description: >-
   Choose and size platform-thread pools or virtual-thread-per-task execution from workload shape,
   capacity evidence and lifecycle constraints. Covers CPU versus waiting, queue/admission policy,
@@ -53,6 +53,6 @@ capabilities:
 agentOverrides:
   codex:
     interface:
-      display_name: Thread Sizing and Virtual Threads
+      display_name: Thread Sizing & Virtual Threads
       short_description: Pool sizing, virtual threads and pinning
       default_prompt: Use Thread Sizing and Virtual Threads to size this concurrency or triage this thread problem.

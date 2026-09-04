@@ -43,6 +43,9 @@ guessing visible, so that later phases can be trusted to know which is which.
    different work. Record both readings; do not choose.
 7. **State the expected outcome** in observable terms: what a user, an operator or a caller can
    do after this feature exists that they cannot do now.
+8. **Preserve input identity and authority.** Name the Product/Engineering or Tech Feature revision
+   being examined. A decision records its accountable role; the current participant is not
+   automatically its owner.
 
 ## The four classes
 
@@ -51,7 +54,7 @@ guessing visible, so that later phases can be trusted to know which is which.
 | **FACT**       | Someone can check it right now without asking anyone | Its source            |
 | **ASSUMPTION** | You supplied it, and it is probably right            | What would falsify it |
 | **UNKNOWN**    | Nobody in this conversation knows it                 | Its impact            |
-| **DECISION**   | A choice was made, and an alternative existed        | Who made it           |
+| **DECISION**   | A choice was made, and an alternative existed        | Owner, source, status |
 
 The classes are exclusive. A statement that is both plausible and unverified is an
 ASSUMPTION — the word "obviously" in front of it does not promote it.
@@ -103,7 +106,10 @@ Constraints        <stated by the request; not inferred>
 Dependencies       <systems, teams or work this feature waits on>
 Ambiguities        <phrase, reading A, reading B>
 Expected outcome   <observable>
+Input revisions    <Product/Engineering or Tech Feature revision IDs>
+Accepted gaps      <GAP-* or none; never convert an unknown silently>
 ```
 
-Carry the ledger forward unchanged. Later phases append to it; they do not rewrite it, because
+Carry the ledger forward unchanged. Later phases append resolutions and stable identifiers; they do
+not rewrite it, because
 the record of what was unknown at the start is what makes a later surprise explicable.

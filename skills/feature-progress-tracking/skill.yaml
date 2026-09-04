@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-progress-tracking
-version: 1.1.0
+version: 1.2.0
 description: >-
   Keeping a feature's state true while it is being built: one status per resource with defined
   transitions, a validation line required before anything reaches done, and a persisted record

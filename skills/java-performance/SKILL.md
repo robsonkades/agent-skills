@@ -98,7 +98,7 @@ Every collection has a time, overhead, privilege, survivability, and perturbatio
 | Pools/virtual threads/carriers/pinning              | `thread-sizing-and-virtual-threads`, `virtual-thread-migration`, `virtual-threads-internals` |
 | CPU scaling/cache/NUMA/affinity                     | `cpu-cache-and-numa`, `numa-and-cpu-affinity`, `false-sharing-and-contended` after evidence  |
 | Blocking/nonblocking/native I/O path                | `blocking-and-nonblocking-io`, `io-uring-and-zero-copy` after evidence                       |
-| Database query/plan/ORM/pool                        | `sql-query-performance`, `orm-fetch-and-batching-performance`, `connection-pool-sizing`      |
+| Database query/engine/index/ORM/pool/bulk/migration | `database-performance`, then the matching specialist                                         |
 | Cache topology/effectiveness                        | `caching-strategies`, distributed cache skills as needed                                     |
 | Serialization cost                                  | `serialization-performance`                                                                  |
 | Instrumentation/tracing cost                        | `opentelemetry-performance`                                                                  |

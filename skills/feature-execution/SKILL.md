@@ -76,12 +76,12 @@ is updated before the next resource starts**, not at the end of the session.
 IF a resource is larger than it looked and splits naturally
 THEN split it in the plan, with both halves recorded, and implement the first.
 
-IF implementing R-n reveals that R-m is unnecessary
-THEN mark R-m CANCELLED with the reason. Do not silently skip it.
+IF implementing RES-n reveals that RES-m is unnecessary
+THEN mark RES-m CANCELLED with the reason. Do not silently skip it.
 
 IF implementation needs a decision that was never taken
-THEN it is a blocker if it is user-confirmed, and a recorded decision if it is
-     agent-owned. It is never an unrecorded choice made in passing.
+THEN it is a blocker when the accountable role is absent, and an ED-* only when
+     authority is established. It is never an unrecorded choice made in passing.
 
 IF a test that already existed fails
 THEN it is a finding about this change until proven otherwise. Do not adjust the
@@ -90,6 +90,9 @@ THEN it is a finding about this change until proven otherwise. Do not adjust the
 IF the work touches a file no resource names
 THEN either the impact map missed it — amend it — or it is scope creep. Decide which,
      out loud.
+
+IF a deviation changes BAC-*, CT-*, TC-*, or an accepted baseline
+THEN stop affected work, create a revision-impact entry, and return to the accountable phase.
 
 IF a resource cannot be validated as planned
 THEN the validation changes before the resource is marked, and the change is recorded.
@@ -115,11 +118,11 @@ THEN leave it IN_PROGRESS with a note saying exactly where it stands and what is
 Per resource, one entry:
 
 ```text
-R-04  Dispatch status endpoint            DONE
+RES-04 Dispatch status endpoint            DONE
       Files       api/DispatchStatusController.java (new)
                   api/DispatchStatusResponse.java (new)
                   api/ApiRoutes.java:31 (modified)
-      Validation  ./mvnw test -Dtest=DispatchStatusControllerTest
+      Evidence    EV-14 ./mvnw test -Dtest=DispatchStatusControllerTest
                   4 tests, 4 passed — covers found, not-found, and unauthorised
       Notes       Reused the existing ProblemDetail error shape (11 controllers,
                   no counter-example), so no new error type was introduced.

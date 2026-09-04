@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: schema-evolution-and-compatibility
-version: 1.2.0
+version: 1.2.1
 description: >-
   Whether a given schema change is safe, in which deploy order, and what breaks when it is
   not: the writer/reader pair, the compatibility levels and who upgrades first, the
@@ -55,6 +55,6 @@ capabilities:
 agentOverrides:
   codex:
     interface:
-      display_name: Schema Evolution and Compatibility
+      display_name: Schema Evolution & Compatibility
       short_description: Which schema changes are safe, and in which deploy order
       default_prompt: Use Schema Evolution and Compatibility to check this schema change.

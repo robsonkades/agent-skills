@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-composition-over-inheritance
-version: 1.2.0
+version: 1.2.1
 description: >-
   Choosing between inheritance, composition and sealed hierarchies in Java: fragile base
   classes, self-use of overridable methods, subclass explosion, the costs of delegation and
@@ -46,5 +46,5 @@ capabilities:
 agentOverrides:
   codex:
     interface:
-      display_name: Java Composition over Inheritance
+      display_name: Java Composition & Inheritance
       short_description: Inheritance vs composition vs sealed hierarchies

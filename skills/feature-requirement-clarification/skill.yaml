@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-requirement-clarification
-version: 1.0.0
+version: 1.1.0
 description: >-
   Deciding what to ask the user about a feature, when to ask it, and what stops work until it is
   answered: proving the repository cannot answer it first, pricing each question by what changes
@@ -54,6 +54,6 @@ capabilities:
 agentOverrides:
   codex:
     interface:
-      display_name: Feature Requirement Clarification
+      display_name: Requirement Clarification
       short_description: Ask only what the repository cannot answer
       default_prompt: Use Feature Requirement Clarification to decide what to ask and what blocks.

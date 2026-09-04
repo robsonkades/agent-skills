@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: pattern-selection-and-composition
-version: 1.3.0
+version: 1.3.1
 description: >-
   Choosing enterprise patterns from forces rather than familiarity, and combining them into
   an architecture whose parts reinforce rather than fight each other: the selection criteria
@@ -63,6 +63,6 @@ capabilities:
 agentOverrides:
   codex:
     interface:
-      display_name: Pattern Selection and Composition
+      display_name: Pattern Selection & Composition
       short_description: Forces in, patterns out, checked for conflict
       default_prompt: Use Pattern Selection and Composition to derive the patterns for this module.

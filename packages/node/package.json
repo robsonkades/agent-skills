@@ -1,6 +1,6 @@
 {
   "name": "@jvm-expert/node",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Node.js implementations of the agent-skills infrastructure ports",
   "license": "Apache-2.0",
   "repository": {
@@ -28,7 +28,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@jvm-expert/core": "1.3.0",
+    "@jvm-expert/core": "1.4.0",
     "tar": "^7.4.3"
   }
 }

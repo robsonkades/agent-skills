@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: database-bulk-loading
+version: 1.0.0
+description: >-
+  Designing and diagnosing high-volume database ingestion from the JVM across PostgreSQL,
+  MySQL, and SQL Server: JDBC batching and statement rewrite, native COPY/LOAD DATA/Bulk Copy,
+  staging, transaction and partial-error semantics, idempotent restart, upsert races, logging,
+  parallelism, and post-load validation. Use when a backfill, import, migration, or batch window
+  is too slow or unsafe. Not routine ORM fetch/write tuning, which belongs to
+  orm-fetch-and-batching-performance.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/database-bulk-loading
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/database-bulk-loading
+
+keywords:
+  - database
+  - bulk-load
+  - jdbc-batch
+  - copy
+  - load-data
+  - sql-server-bulk-copy
+  - java
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: idempotency
+    version: ^1.0.0
+
+suggests:
+  - connection-pool-sizing
+  - orm-fetch-and-batching-performance
+  - schema-evolution-and-compatibility
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Database Bulk Loading
+      short_description: Fast, restartable, validated JVM database ingestion
+      default_prompt: Use Database Bulk Loading to design or diagnose this ingestion job.

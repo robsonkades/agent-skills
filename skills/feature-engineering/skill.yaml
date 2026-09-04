@@ -1,18 +1,16 @@
 schemaVersion: 1
 
 name: feature-engineering
-version: 1.0.0
+version: 1.1.0
 description: >-
-  Owning a feature request from first reading to completion review: choosing how much of the
-  lifecycle the change actually warrants, running the phases in order, holding the gates that stop
-  implementation beginning on unresolved assumptions, and keeping a dossier that lets another
-  agent resume the work. Use when a feature request arrives and the order of work is not obvious,
-  when implementation is about to start on a request whose technology or scope was never agreed,
-  when a half-finished feature has to be picked up from someone else, when the same feature is
-  being re-analysed because nobody wrote down what was decided, or when a change is being declared
-  done because it compiles. Does not own any phase in depth — it routes to the thirteen
-  specialised feature-* skills — and it is not the general order of work for an arbitrary change
-  (clean-delivery-workflow), nor the record format for a decision (architecture-decision-making).
+  Owning a Product Feature or Tech Feature from definition intake to completion review: selecting
+  proportionate depth, routing iterative analysis and explicit returns, holding readiness gates,
+  and keeping versioned evidence another engineer can resume. Use when feature implementation is
+  being prepared, resumed, or validated and its scope, contracts, decisions, or completion need a
+  trustworthy lifecycle. Does not co-author the initial feature brief
+  (collaborative-feature-definition), own any specialist phase in depth, orchestrate an arbitrary
+  change (clean-delivery-workflow), or define the ADR record format
+  (architecture-decision-making).
 license: Apache-2.0
 
 authors:
@@ -53,6 +51,8 @@ dependencies:
     version: ^1.0.0
   - name: feature-context-analysis
     version: ^1.0.0
+  - name: feature-contract-definition
+    version: ^1.0.0
   - name: feature-decision-analysis
     version: ^1.0.0
   - name: feature-decomposition
@@ -60,6 +60,8 @@ dependencies:
   - name: feature-discovery
     version: ^1.0.0
   - name: feature-execution
+    version: ^1.0.0
+  - name: feature-feasibility-experiment
     version: ^1.0.0
   - name: feature-implementation-plan
     version: ^1.0.0
@@ -81,6 +83,7 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - collaborative-feature-definition
   - engineering-communication
   - estimation-under-uncertainty
 

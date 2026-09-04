@@ -5,7 +5,9 @@ Every section appears. A section with nothing in it reads `none, because <reason
 ```markdown
 # <Feature name>
 
-Depth class: Significant
+Input revisions: <Product + Engineering | Tech Feature>
+Depth: Light | Standard | Deep
+Persistence: Inline | Dossier
 Dossier: docs/features/<slug>/
 Updated: 2026-09-04
 
@@ -20,8 +22,8 @@ Out of scope: <each item, its reason, and who excluded it>
 
 ## Decisions
 
-| ID  | Decision | Provenance | Record |
-| --- | -------- | ---------- | ------ |
+| ID  | Decision | Provenance | Owner | Status | Record |
+| --- | -------- | ---------- | ----- | ------ | ------ |
 
 ## Architecture
 
@@ -34,13 +36,13 @@ of the dependencies.>
 
 ## Resources
 
-| ID  | Resource | Depends on | Files | Validation | Status |
-| --- | -------- | ---------- | ----- | ---------- | ------ |
+| ID  | Resource | Trace | Depends on | Files | Planned evidence | Status |
+| --- | -------- | ----- | ---------- | ----- | ---------------- | ------ |
 
 ## Execution order
 
-R-01 -> R-03 -> R-02 -> R-05
-Forced: R-03 needs R-01's column. R-02 and R-05 are independent of each other.
+RES-01 -> RES-03 -> RES-02 -> RES-05
+Forced: RES-03 needs RES-01's column. RES-02 and RES-05 are independent.
 
 ## Schema changes
 
@@ -49,8 +51,8 @@ the compatibility window: what old code does against the new schema.>
 
 ## API and contract changes
 
-<Each endpoint or message, whether it is additive, and what existing callers or
-consumers must tolerate.>
+<Each CT-* with authoritative specification/version, owner, compatibility window,
+and what existing callers or consumers must tolerate.>
 
 ## Messaging changes
 
@@ -90,8 +92,8 @@ once it has run, and what the alternative is.>
 
 ## Risks
 
-| ID  | Risk | Impact | Detection | Mitigation | Fallback |
-| --- | ---- | ------ | --------- | ---------- | -------- |
+| ID  | Risk | Impact | Detection | Mitigation | Fallback | GAP |
+| --- | ---- | ------ | --------- | ---------- | -------- | --- |
 
 ## Dependencies and blockers
 
@@ -99,13 +101,14 @@ once it has run, and what the alternative is.>
 
 ## Acceptance criteria
 
-| ID  | Given / When / Then | Verified by |
-| --- | ------------------- | ----------- |
+| ID       | Type               | Criterion    | Trace          | Verified by |
+| -------- | ------------------ | ------------ | -------------- | ----------- |
+| BAC/TC-* | business/technical | <observable> | <OBJ/BR/ED/CT> | EV-*        |
 
 ## Amendments
 
-2026-09-05 R-06 added. Implementing R-02 showed the consumer needs an idempotency
-key to satisfy K-02; the risk register assumed the handler was idempotent
+2026-09-05 RES-06 added. Implementing RES-02 showed the consumer needs an idempotency
+key to satisfy RISK-02; the risk register assumed the handler was idempotent
 and it is not.
 ```
 

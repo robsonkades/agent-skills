@@ -4,7 +4,9 @@
 
 ```text
 docs/features/<feature-slug>/
-├── analysis.md        discovery, context, scope, impact, options
+├── definition.md      accepted Product/Engineering or Tech Feature revisions
+├── analysis.md        discovery, context, scope, impact, options, experiments
+├── contracts/         authoritative links or repository-owned specifications
 ├── plan.md            the executable plan and the resource list
 ├── progress.md        resource status table — the resumption point
 ├── execution-log.md   append-only chronology
@@ -33,8 +35,12 @@ records to fit the default layout.
 
 ## What each file is for
 
+- **definition.md** — immutable input revision identities, accountable owners, acceptance criteria,
+  gaps and approval. New semantic content creates a revision rather than rewriting the baseline.
 - **analysis.md** — everything established before the plan. It is written once and then
   amended with dated notes; the amendments are what make it trustworthy later.
+- **contracts/** — the repository's authoritative contract artefacts or links to an existing
+  source of truth. Do not duplicate a contract merely to fit this layout.
 - **plan.md** — the living artefact. It changes during implementation, and every change says
   what changed and why.
 - **progress.md** — the only file that must be current at all times. An agent picking the work
@@ -45,6 +51,6 @@ records to fit the default layout.
 
 ## When there is no dossier
 
-A Direct-class change writes nothing here. If it later escalates, create the dossier at that
+A Light/Inline change writes nothing here. If persistence later becomes Dossier, create it at that
 moment and backfill only what is still true — reconstructing a discovery ledger after the fact
 produces a justification, and it should be labelled as one.

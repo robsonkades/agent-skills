@@ -67,6 +67,8 @@ resumption, not workflow accounting for its own sake.
 5. **Append to the execution log** on start, completion, blocking, unblocking and any plan
    change. The log is append-only; a correction is a new entry.
 6. **Leave the files true at the end of every session**, whatever state the work is in.
+7. **Track revision impact.** Record the Product/Engineering or Tech baseline and plan revision. When
+   either changes, reopen only traced `RES-*`, mark their prior `EV-*` stale, and name what triggered it.
 
 Formats for both files, and the resumption procedure, are in
 `references/artefact-formats.md`.
@@ -83,6 +85,9 @@ THEN the resource stays IN_PROGRESS. A failing check is not a footnote on a DONE
 IF a resource is DONE and a later resource breaks it
 THEN it returns to IN_PROGRESS, and the log says which resource reopened it.
 
+IF an accepted baseline or CT-* changes
+THEN trace the impact to RES-*/EV-*, reopen affected rows, and preserve unaffected DONE evidence.
+
 IF a resource is skipped
 THEN say who decided and why, and whether the feature is complete without it —
      usually it means the scope table needs the item moved out of Required.
@@ -94,7 +99,7 @@ IF the progress file and the code disagree
 THEN the file is wrong, and it is corrected before any further work — a stale
      tracker is worse than none, because it is believed.
 
-IF the feature is Direct-class
+IF the feature is Light/Inline
 THEN there is no tracking artefact. Do not create one to have a process.
 ```
 
@@ -116,8 +121,8 @@ The progress table, current, and the report derived from it:
 Feature      Asynchronous order dispatch
 Resources    11 total — 6 DONE, 1 IN_PROGRESS, 1 BLOCKED, 2 TODO, 1 CANCELLED
 Blocked on   Q-08 (uniqueness scope for the idempotency key), asked 2026-09-05
-Next         R-09 (metrics), unaffected by the blocker
-Plan changes R-06 added 2026-09-05; R-11 cancelled 2026-09-04
+Next         RES-09 (metrics), unaffected by the blocker
+Plan changes RES-06 added 2026-09-05; RES-11 cancelled 2026-09-04
 ```
 
 Five lines, all of them checkable against the files. That is the whole report.

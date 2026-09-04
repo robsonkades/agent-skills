@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-lambdas-and-functional-interfaces
-version: 1.3.0
+version: 1.3.1
 description: >-
   Lambdas, method references and the functional interfaces they implement: what a lambda
   captures and what that costs, why its this differs from an anonymous class's, when a
@@ -51,5 +51,5 @@ capabilities:
 agentOverrides:
   codex:
     interface:
-      display_name: Java Lambdas and Functional Interfaces
+      display_name: Java Lambdas & Functional APIs
       short_description: Capture, method references and java.util.function

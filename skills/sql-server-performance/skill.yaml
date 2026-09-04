@@ -1,0 +1,55 @@
+schemaVersion: 1
+
+name: sql-server-performance
+version: 1.0.0
+description: >-
+  Diagnosing and tuning SQL Server 2022+ from engine evidence: waits, blocking/deadlocks, RCSI and
+  version store, cardinality and parameter-sensitive plans, memory grants and parallelism,
+  clustered/columnstore storage, statistics and index maintenance, tempdb/files/memory, readable
+  replicas, and mssql-jdbc behavior. Use when the symptom or proposed change depends on SQL Server
+  internals. Not generic single-query tuning, ORM behavior, or HikariCP sizing.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/sql-server-performance
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/sql-server-performance
+
+keywords:
+  - sql-server
+  - performance
+  - query-store
+  - wait-stats
+  - tempdb
+  - mssql-jdbc
+  - database
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: sql-query-performance
+    version: ^1.0.0
+
+suggests:
+  - database-index-design
+  - connection-pool-sizing
+  - database-bulk-loading
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: SQL Server Performance
+      short_description: SQL Server waits, plans, storage, and JDBC diagnosis
+      default_prompt: Use SQL Server Performance to diagnose this engine-specific problem.

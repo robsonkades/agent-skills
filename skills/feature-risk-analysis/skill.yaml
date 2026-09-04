@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-risk-analysis
-version: 1.1.0
+version: 1.2.0
 description: >-
   Naming what could go wrong with a specific feature in a form that can be acted on: the failure
   stated as an event rather than a worry, how anyone would find out it happened, what reduces its

@@ -1,7 +1,8 @@
 ---
 name: feature-readiness-review
 description: >
-  The two gates around implementing a feature: before, checking that nothing implementation
+  The intake, pre-implementation, and completion gates for a feature: first validating the
+  Product/Engineering or Tech Feature baseline, then checking that nothing implementation
   depends on is still unresolved, and after, checking that what was built is what was agreed and
   that the claim of completion is supported. Use before the first line of a planned feature is
   written, when implementation is about to start with an open blocking question, when a feature
@@ -16,14 +17,26 @@ description: >
 
 ## Purpose
 
-Two moments account for most of the expensive mistakes in a feature, and both are transitions.
+Three transitions account for most expensive feature mistakes: accepting an undefined or
+unauthorized baseline, starting implementation with a blocking gap, and declaring completion without
+evidence.
 
 Starting implementation with an unresolved blocking question produces work that has to be
 undone, and the cost is not the code — it is the decisions that were quietly made to fill the
 gap and then depended on. Declaring completion on a green build produces a feature that
 compiles, passes its own tests, and does something other than what was agreed.
 
-Each gate is a checklist with a stop condition, and the stop condition is the point.
+Each gate has a stop condition and a return owner; “not ready” without where to return is incomplete.
+
+## Gate 0 — definition intake
+
+Validate the exact Product Definition plus required Engineering Analysis revisions, or the Tech Feature
+revision. Establish accountable owners, depth, persistence, authority, traceability, and valid `GAP-*`
+items before planning is treated as authorized. A raw idea returns to
+`collaborative-feature-definition`.
+
+Return `RETURN TO PRODUCT`, `RETURN TO ENGINEERING`, or `DECOMPOSE BEFORE PROCEEDING` with affected IDs;
+do not flatten every intake failure into “not ready”.
 
 ## Gate 1 — before implementation
 
@@ -67,8 +80,10 @@ Every Required scope item is implemented
 AND every resource is DONE, SKIPPED with a reason, or CANCELLED with a reason
 AND every DONE resource names a validation that was run and read
 AND every acceptance criterion has been checked, with what checked it
+AND every BAC-* and TC-* traces through RES-* to observed EV-*
+AND every changed CT-* matches its accepted authoritative version
 AND every significant decision is recorded, and the records match what was built
-AND every HIGH risk is mitigated or accepted by someone named
+AND every HIGH risk is mitigated or linked to a valid GAP-* accepted by its accountable owner
 AND no blocking question is open
 AND the diff contains nothing that no resource names
 AND the plan, progress and log are current
@@ -115,8 +130,9 @@ THEN record it as future work. Do not implement it and call it part of this feat
 
 ## Output
 
-Gate 1: the checklist, the count of open items, and either "clear to implement" or the list of
-what must be answered first.
+Gates 0 and 1: reviewed revisions, checklist, open items, affected IDs, and one normalized result:
+`PASS`, `PASS WITH ACCEPTED GAPS`, `RETURN TO PRODUCT`, `RETURN TO ENGINEERING`, or
+`DECOMPOSE BEFORE PROCEEDING`.
 
 Gate 2:
 
@@ -124,11 +140,11 @@ Gate 2:
 Feature      <name>
 Complete     yes | no
 
-Requirements   <each Required item -> the resources that satisfy it>
+Requirements   <each BAC/TC/SC item -> the RES-* that satisfy it>
 Not covered    <anything Required with no resource>
 Scope          <anything in the diff that no resource names>
-Validation     <what ran; what did not, and why>
-Acceptance     <each criterion -> checked by>
+Validation     <EV-* observed; what did not run, and why>
+Acceptance     <each BAC/TC-* -> EV-*>
 Decisions      <recorded; any recorded retrospectively, marked as such>
 Risks          <mitigated | accepted, by whom>
 Follow-ups     <future work, with what it waits on>

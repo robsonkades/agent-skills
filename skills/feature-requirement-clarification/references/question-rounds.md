@@ -1,71 +1,51 @@
-# Question rounds
+# Adaptive question rounds
 
-Rounds exist because answers change which later questions are worth asking. Sending all four
-rounds at once produces answers to questions that the first round would have retired.
+Rounds exist because an answer changes which later questions are worth asking. The sections below are
+decision areas, not a fixed four-round script. A feature may close after one round or need many.
 
-## Round 1 — Business and functional
+## Select the next area
 
-Asked before any design thinking. Establishes what must become true.
+Choose the unresolved area with the largest consequence for the next decision:
 
-- What must the feature do, stated as an observable outcome?
-- What must it explicitly **not** do?
-- Which business rules govern it, and where do they come from?
-- What is the success condition — how will anyone know it works?
-- Who or what invokes it, and what do they get back?
-- What happens on each failure the user cares about?
-- What volume, and over what window? (A number, or "unknown" — not "high".)
+1. product problem, beneficiary, outcome, evidence and value;
+2. behavior, business rules, boundaries and failures;
+3. externally imposed constraints, authority and compatibility;
+4. architecture/solution choices that remain after repository evidence;
+5. acceptance, decomposition, risks and confirmation.
 
-Skip a question in this round only when the request already answers it in words you can quote.
+Do not ask later-area questions when an earlier answer can make them irrelevant. If the user already
+answered an unasked question, close it from that source instead of asking again.
 
-## Round 2 — Technology and constraints
+## Size one round
 
-Asked once the behaviour is fixed, because the behaviour decides which of these matter.
+- Ask **one** question when its answer determines the next branch.
+- Ask **two or three** when they share one decision area and no answer depends on another.
+- Split compound questions. One question produces one decision.
+- Preface a technology or convention question with what repository evidence already established.
 
-- Which technologies are **mandatory** for this feature?
-- Which are **preferred**?
-- Which are **prohibited**?
-- Are there organisational standards this must follow — architecture, API, data, security,
-  logging, deployment?
-- Are there existing components that must be reused rather than rebuilt?
-- Are there compatibility obligations: existing callers, stored data, published contracts?
-- What are the security and data-handling obligations?
+Each question states the decision, why it matters now, consequences of likely answers, and a
+recommendation when evidence supports one.
 
-Every one of these is prefaced by what the repository already showed, so the user is confirming
-or correcting rather than reciting:
+## Checkpoint after the answer
 
-> The project runs Kafka for the shipping events and has no other broker. Is this feature
-> expected to reuse Kafka, or is the messaging technology open?
+After updating the draft and ledgers, report:
 
-The point of that phrasing is that it does not smuggle "the project uses Kafka" into "the
-feature must use Kafka".
+```text
+Checkpoint  Continue | Close the stage | Blocked
+Because     <remaining consequence or reason no blocker remains>
+Next        <specific decision area another round would resolve>
+Choice      <answer next questions | close | pause>
+```
 
-## Round 3 — Architecture and solution
+- **Continue** — another round has a named quality, scope, risk, contract, or acceptance benefit.
+- **Close the stage** — no blocking gap remains; the user may close or request named optional depth.
+- **Blocked** — authority, evidence, or a decision is missing; dependent work cannot advance.
 
-Asked **only** when two or more genuinely viable approaches survive the constraints. If one
-approach survives, there is nothing to ask — state it and proceed.
+Do not count rounds as progress. Continue while each round earns attention; stop when gates are met,
+not when a template has been exhausted.
 
-Present, in this order: the options, what separates them, the recommendation, and what the
-recommendation costs. Ask for a decision, not for an opinion.
+## Confirmation
 
-## Round 4 — Confirmation
-
-One message, before implementation. Not a re-litigation: a restatement of what will be built
-and what will not, so a misunderstanding surfaces now rather than in review.
-
-- The scope, in and out.
-- The decisions taken and by whom.
-- The assumptions still standing, with their falsifiers.
-- The acceptance criteria.
-- Anything still open, and what it blocks.
-
-Round 4 is skipped for Direct-class work and shortened to the scope line and the assumptions
-for Standard-class work.
-
-## Ordering rules
-
-- A round is closed when its blocking questions are answered, not when all of them are.
-- Non-blocking questions from an earlier round may travel with a later round.
-- A question that only becomes askable because of an earlier answer belongs to the later round;
-  do not ask it speculatively in both forms.
-- If the user answers a question you have not asked yet, close it and skip it. Do not ask it
-  back for confirmation.
+Before a stage closes, summarize scope, decisions with accountable owners, assumptions, criteria,
+accepted GAP-* items, and anything deferred. This confirmation is a stage transition, not a mandatory
+fourth round.

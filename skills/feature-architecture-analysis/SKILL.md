@@ -42,13 +42,15 @@ from outside.
    transactions, concurrency. These are the ones a component-shaped reading misses.
 7. **Flag every boundary crossing**, because it changes who must agree: a contract others
    depend on, a schema holding existing data, a message others consume, or a shared library.
+8. **Identify and trace impacts.** Assign each entry an `IMP-*` linked to its `SC-*` source. Every
+   boundary crossing names the accountable contract/engineering owner or records that owner as open.
 
 ## Decision rules
 
 ```text
 IF an element is MODIFIED and EXTERNAL
 THEN it is a compatibility question before it is an implementation task —
-     it needs a decision, not just a file edit.
+     it needs a decision and CT-* definition, not just a file edit.
 
 IF an element is READ and its behaviour is being relied on more heavily
 THEN it belongs in the map. Load, contention and failure modes travel to callers
@@ -85,11 +87,11 @@ THEN say so — that conclusion legitimately lowers the depth of everything down
 Feature impact map
 
 api/
-  OrderController.java:41            MODIFIED  EXTERNAL   new endpoint; existing signature unchanged
-  CreateOrderRequest.java            MODIFIED  EXTERNAL   optional field added
+  IMP-01 OrderController.java:41     MODIFIED  EXTERNAL   new endpoint <- SC-01
+  IMP-02 CreateOrderRequest.java     MODIFIED  EXTERNAL   optional field added <- SC-01
 application/
-  OrderService.java:88               MODIFIED  INTERNAL   dispatch branch
-  OrderDispatchService.java          NEW       INTERNAL
+  IMP-03 OrderService.java:88        MODIFIED  INTERNAL   dispatch branch <- SC-01
+  IMP-04 OrderDispatchService.java   NEW       INTERNAL   <- SC-01
 domain/
   Order.java:120                     MODIFIED  EXTERNAL   new state; persisted
 infrastructure/
@@ -100,7 +102,8 @@ cross-cutting/
   SecurityConfig.java:66             READ      -          new endpoint inherits the existing rule
   OrderMetrics.java                  MODIFIED  EXTERNAL   new counter name
 
-Boundary crossings   <each, with who depends on it>
+Boundary crossings   <IMP-*, who depends on it, and accountable owner>
+Contracts required   <IMP-* -> CT-* to define through feature-contract-definition>
 Callers of modified external elements   <path -> count>
 Unknowns             <what could not be established, and what it blocks>
 ```

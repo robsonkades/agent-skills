@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: humble-objects-and-functional-core
-version: 1.2.0
+version: 1.2.1
 description: >-
   Splitting a component into the part that decides and the part that acts, so the decision is
   pure, deterministic and cheap to test while the effectful part stays thin enough for a small
@@ -75,5 +75,5 @@ suggests:
 agentOverrides:
   codex:
     interface:
-      display_name: Humble Objects and Functional Core
+      display_name: Humble Objects & Functional Core
       short_description: Split the part that decides from the part that acts

@@ -43,7 +43,7 @@ reason to deviate.
 
 ## The authority test
 
-Four questions. Any **yes** makes it user-confirmed:
+Four questions. Any **yes** means the accountable human role must be identified:
 
 1. **Does it change what the system does**, as opposed to how it does it?
 2. **Is it visible outside the change** — to a caller, a consumer, an operator, or in stored
@@ -51,7 +51,13 @@ Four questions. Any **yes** makes it user-confirmed:
 3. **Is it expensive or impossible to reverse** once it is running with real data?
 4. **Does it touch money, security, personal data, or a legal obligation?**
 
-All four no: agent-owned. Take it. Record it in a line. Do not ask.
+All four no: agent-owned when the choice is also inside explicitly accepted constraints. Take it,
+record it in a line, and do not ask.
+
+Name authority by consequence, not by whoever is chatting: Product for behavior/value; Engineering or
+Architecture for system choices; Security/Privacy/Compliance for their obligations; Data for shared
+semantics; Operations for support/SLO commitments; Finance for material spend. A participant may inform
+a decision without authority to accept it.
 
 ## Calibrating against both failure modes
 
@@ -64,23 +70,27 @@ The second is the failure a rule-following agent falls into, and it is not safer
 asks about everything has not transferred risk to the user; it has trained the user to approve
 without reading, which is worse than deciding alone.
 
-## Recording a decision you had to take without an answer
+## Recording a decision without the accountable role
 
-Sometimes a blocking question cannot be answered in time. Then:
+Sometimes a blocking question cannot be answered in time. Do not present an unconfirmed choice as an
+accepted decision. Either pause dependent work or have the accountable role accept a bounded gap:
 
 ```text
-D-07  Job history retained for 90 days
+ED-07 Job history retained for 90 days
       Provenance:  AGENT_PROPOSED
-      Authority:   user-confirmed — NOT CONFIRMED. Proceeding under assumption A-05.
+      Owner:       Data/Compliance — NOT CONFIRMED
       Assumption:  90 days matches the retention of the audit table (schema, V17).
       Falsified by: a stated retention policy, or a compliance obligation.
       Contained in: one migration and one scheduled deletion; changing the number is
                     a configuration change, changing the mechanism is not.
-      Escalate:    before the feature is released, not before it is merged.
+      Status:      BLOCKED; no data is written under this assumption.
+
+GAP-02 If Data/Compliance explicitly accepts proceeding to implementation, record the
+       consequence, owner, expiry, reopening trigger and affected RES-* separately.
 ```
 
-Three things make this acceptable: the assumption is labelled, the choice is the reversible one,
-and the escalation has a deadline. Without all three it is a silent decision wearing a label.
+Reversibility and an escalation date do not create authority. The gap is valid only when the role that
+owns the consequence accepts it; mandatory legal/security obligations may remain non-waivable.
 
 ## Superseding
 

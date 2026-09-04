@@ -1,6 +1,6 @@
 {
   "name": "@jvm-expert/agent-skills",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Install, update and publish AI coding-agent skills across Claude Code, Codex and future agents",
   "keywords": [
     "agent-skills",
@@ -41,12 +41,12 @@
     "access": "public"
   },
   "dependencies": {
-    "@jvm-expert/adapter-claude": "1.3.0",
-    "@jvm-expert/adapter-codex": "1.3.0",
-    "@jvm-expert/core": "1.3.0",
-    "@jvm-expert/installer": "1.3.0",
-    "@jvm-expert/node": "1.3.0",
-    "@jvm-expert/registry": "1.3.0",
+    "@jvm-expert/adapter-claude": "1.4.0",
+    "@jvm-expert/adapter-codex": "1.4.0",
+    "@jvm-expert/core": "1.4.0",
+    "@jvm-expert/installer": "1.4.0",
+    "@jvm-expert/node": "1.4.0",
+    "@jvm-expert/registry": "1.4.0",
     "commander": "^13.1.0",
     "picocolors": "^1.1.1"
   }

@@ -31,9 +31,13 @@ the entry without them. Everything else follows from those two.
    that feel like defaults. The categories are listed below.
 2. **Assign provenance** from the four classes. This is a question of fact and it is checkable
    (`references/provenance-and-authority.md`).
-3. **Assign authority** — agent-owned or user-confirmed — from the impact, not from convenience.
-4. **If it is user-confirmed and unconfirmed**, it is a blocking question, not a decision.
-5. **If it is agent-owned**, take it, state it and move on. Escalating a low-impact decision is
+3. **Assign accountable authority** from the consequence: Product, Engineering, Architecture,
+   Security, Data, Operations, Compliance, Finance, or another named role. Participation is not
+   approval.
+4. **If the accountable role has not confirmed it**, it is a blocking question or a valid `GAP-*`,
+   not a decision silently assigned to the current participant.
+5. **If it is agent-owned**, take it, state it and move on. Agent ownership is limited to local,
+   reversible choices inside accepted constraints. Escalating every low-impact decision is
    its own failure: it trains the user to stop reading.
 6. **Record it when it is taken**, in the log below. A decision that materially affects
    architecture, behaviour, data, operations, security, performance or reliability also earns a
@@ -67,29 +71,20 @@ for how to ask about one without smuggling the answer into the question.
 
 ## Authority
 
-**Agent-owned** — take it, record it in one line, do not ask:
+**Agent-owned** choices are local, reversible, observable in review, and inside confirmed constraints:
+naming, private structure, file placement within an established convention, or straightforward reuse.
 
-naming, internal structure, private methods, which existing utility to call, test structure,
-file placement inside an established convention, straightforward reuse of a confirmed project
-pattern, formatting, log message wording.
-
-**User-confirmed** — present options, recommend, and wait when the choice changes product behaviour,
-external contracts, operational ownership, material cost, security/privacy/legal posture, stored
-data semantics, or an expensive-to-reverse architecture boundary:
-
-a new runtime technology or externally operated dependency; a new infrastructure component; the persistence strategy; a
-change to a published API contract; anything breaking; business behaviour, including defaults
-and limits nobody stated; security, authentication, authorisation, retention and personal-data
-handling; a messaging or delivery-guarantee choice; a consistency model; adopting or departing
-from an organisational standard; anything that spends money.
-
-The boundary in one line: **the agent owns how, the user owns what and whether.**
+Everything else names the role authorised for its consequence. Product owns behavior and value;
+Engineering/Architecture own solution and system boundaries; Security/Privacy/Compliance own their
+obligations; Data owns shared semantics/retention where established; Operations owns support/SLO
+commitments; Finance owns material spend. One person may hold several roles, but the record names the
+role rather than relying on “the user”.
 
 ## Decision rules
 
 ```text
-IF the decision is user-confirmed and the user has not confirmed it
-THEN it is a blocking question. Not a default, not a placeholder, not "for now".
+IF the accountable role has not confirmed a consequential decision
+THEN it is blocking or a valid GAP-* accepted by that role. It is not a default or placeholder.
 
 IF a technology appears in the repository and is relevant to the feature
 THEN report it as PROJECT_EXISTING. Ask only when reuse changes externally visible behaviour,
@@ -107,6 +102,9 @@ THEN record the unknown alongside it, so the decision is re-openable when it clo
 IF implementation reveals the decision was wrong
 THEN supersede it, say what the implementation showed, and update the plan —
      never overwrite the original entry.
+
+IF a Product Definition or contract revision changes the premise of a decision
+THEN mark the ED-* stale and revisit its traced downstream items before continuing.
 
 IF the same decision is being taken for the third time
 THEN it was never recorded. Record it now, where the next person will find it.
@@ -129,18 +127,19 @@ it, and get it wrong**.
 The log, in the dossier, appended to as the feature proceeds:
 
 ```text
-D-04  Dispatch events are published to the existing Kafka cluster
+ED-04 Dispatch events are published to the existing Kafka cluster
       Category:    messaging
       Provenance:  USER_MANDATED  (round 2: "reuse the cluster we already run")
-      Authority:   user-confirmed — confirmed 2026-09-03
+      Owner:       Architecture — accepted 2026-09-03
+      Consulted:   Product, Operations
       Options:     see analysis.md, choice "how the dispatch is delivered"
       Record:      decisions/ADR-002-dispatch-transport.md
       Depends on:  U-03 (resolved), C-01 (no new infrastructure)
 
-D-05  Retry is bounded at three attempts with exponential backoff
+ED-05 Retry is bounded at three attempts with exponential backoff
       Category:    resilience
       Provenance:  AGENT_PROPOSED
-      Authority:   agent-owned — reversible, contained in DispatchRetryPolicy
+      Owner:       agent-owned — reversible, contained in DispatchRetryPolicy
       Because:     no retry policy exists in the project (context report); three
                    attempts bounds the tail at the stated 30s budget
       Record:      none — contained, reversible, visible in one class

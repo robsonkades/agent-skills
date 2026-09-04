@@ -1,0 +1,54 @@
+schemaVersion: 1
+
+name: feature-feasibility-experiment
+version: 1.0.0
+description: >-
+  Designing and evaluating the smallest PoC or experiment that resolves one decision-relevant
+  uncertainty in a Product Feature or Tech Feature. Use when feasibility, compatibility, capacity,
+  integration behavior, or a risky technical premise cannot be established from existing evidence
+  and a bounded experiment can decide the next step. Does not produce production implementation,
+  replace an ADR, or run broad exploratory research without a decision and threshold.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/feature-feasibility-experiment
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/feature-feasibility-experiment
+
+keywords:
+  - feature
+  - feasibility
+  - poc
+  - experiment
+  - evidence
+  - hypothesis
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: requirements-and-acceptance
+    version: ^1.0.0
+
+suggests:
+  - feature-engineering
+  - feature-solution-analysis
+  - load-testing
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Feature Feasibility Experiment
+      short_description: Resolve a feature uncertainty with a bounded PoC
+      default_prompt: Use Feature Feasibility Experiment to turn this uncertainty into decisive evidence.

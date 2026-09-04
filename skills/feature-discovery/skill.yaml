@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-discovery
-version: 1.0.0
+version: 1.1.0
 description: >-
   Separating what is actually established about a feature request from what has been filled in: a
   ledger in which every fact carries its source, every assumption carries what would falsify it,

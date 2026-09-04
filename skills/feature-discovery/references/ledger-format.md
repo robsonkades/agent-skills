@@ -17,12 +17,13 @@ UNK    U-01  Whether the caller needs to observe completion, and how.
              Impact: HIGH — decides whether a callback, a status endpoint or nothing
              at all is part of the contract.
 
-DEC    D-01  Records live in docs/features/async-order-processing/.
-             Made by: agent (no existing convention found under docs/).
+DEC    ED-01 Records live in docs/features/async-order-processing/.
+             Owner: engineering; proposed by agent (no existing convention found under docs/).
+             Status: accepted. Source: repository convention check and engineering confirmation.
 ```
 
 Identifiers are stable for the life of the feature. Later phases cite them — a plan that says
-"resource R03 exists because of U-01" is auditable; one that repeats the prose is not.
+"RES-03 exists because of U-01" is auditable; one that repeats the prose is not.
 
 ## Impact, defined by consequence
 
@@ -46,9 +47,10 @@ UNK    U-01  Whether the caller needs to observe completion, and how.
              Source: user answer, round 1.
 ```
 
-The resolution says where the answer came from. Three sources, and they are not
-interchangeable: **the repository** (evidence), **the user** (authority), **the agent**
-(a proposal that was accepted). A later disagreement is settled by which of the three it was.
+The resolution says where the answer came from. Three sources are not interchangeable: **the
+repository** (evidence), **a participant** (intent plus their established authority), and **the
+agent** (a proposal that still needs the accountable role when consequential). A later disagreement
+is settled by source, role, and revision rather than conversational recency.
 
 ## Two failure shapes to check the ledger against
 

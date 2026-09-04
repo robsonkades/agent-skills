@@ -65,7 +65,7 @@ engine is not available locally. Then, in this order:
    material. The gap is stated in the completion report either way.
 
 ```text
-R-06  Dispatch repository query          DONE (qualified)
+RES-06 Dispatch repository query          DONE (qualified)
       Planned     integration test against PostgreSQL
       Ran         unit test over the specification; the project has no database test
                   harness and adding one is out of scope (X-03)

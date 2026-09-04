@@ -23,13 +23,13 @@ second as the first is how a project loses the reason it does things.
 
 ```text
 Amendment (plan)
-2026-09-05  R-04 now returns 202 with a Location header rather than 200 with the
-            body. Same decision (D-04, asynchronous dispatch); the original plan
+2026-09-05  RES-04 now returns 202 with a Location header rather than 200 with the
+            body. Same decision (ED-04, asynchronous dispatch); the original plan
             described the response shape incorrectly.
 
 Supersession (decision)
-D-04 superseded by D-09. Implementing R-02 showed the broker cannot give per-customer
-ordering on the existing topic, which D-04 assumed. See ADR-004.
+ED-04 superseded by ED-09. Implementing RES-02 showed the broker cannot give per-customer
+ordering on the existing topic, which ED-04 assumed. See ADR-004.
 ```
 
 ## Blockers
@@ -44,17 +44,17 @@ agent-owned and has not been taken. Those are work.
 Record it where it will be seen, with everything the next person needs:
 
 ```text
-R-07  Idempotency key on dispatch_log       BLOCKED
+RES-07 Idempotency key on dispatch_log       BLOCKED
       Since         2026-09-05
       Reason        The uniqueness scope depends on whether a customer may dispatch
                     the same order twice deliberately (retry after cancellation).
-      Needs         A decision from the user: is a repeated dispatch of the same
+      Needs         A decision from the Product owner: is a repeated dispatch of the same
                     order a duplicate to be suppressed, or a legitimate second
                     dispatch with its own id?
       Asked         2026-09-05, question Q-08
-      Blocks        R-08 (consumer), K-02's mitigation
-      Does not block R-09, R-10 — no forced dependency
-      Meanwhile     Proceeding with R-09.
+      Blocks        RES-08 (consumer), RISK-02's mitigation
+      Does not block RES-09, RES-10 — no forced dependency
+      Meanwhile     Proceeding with RES-09.
 ```
 
 Four things make this useful: the question is stated so it can be answered without context, the
@@ -87,10 +87,10 @@ THEN say in every report which resources are complete but unvalidated because of
 A session can end anywhere. What must survive it:
 
 ```text
-R-05  Dispatch consumer                     IN_PROGRESS
+RES-05 Dispatch consumer                     IN_PROGRESS
       Done so far   Consumer class, deserialisation, happy path handled.
       Next          Poison-message path (the plan's validation requires it) and the
-                    idempotency check, which waits on R-07.
+                    idempotency check, which waits on RES-07.
       Not yet run   DispatchConsumerTest — written but not executed.
       Working notes The existing consumer base class handles acknowledgement; do not
                     acknowledge manually (ShippingConsumer.java:44).

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: distributed-aggregation-and-barriers
-version: 1.3.0
+version: 1.3.1
 description: >-
   Correct and recoverable aggregation across workers: algebraic laws, duplicate attempts,
   numeric reproducibility, mergeable summaries, barriers, joins, skew, checkpointing and
@@ -52,6 +52,6 @@ capabilities:
 agentOverrides:
   codex:
     interface:
-      display_name: Distributed Aggregation And Barriers
+      display_name: Distributed Reduce & Barriers
       short_description: Reduce correctness, barriers and stragglers
       default_prompt: Use Distributed Aggregation And Barriers to check this job's combiner and its synchronisation points.

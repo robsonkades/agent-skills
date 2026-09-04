@@ -7,15 +7,15 @@ implements them one at a time, and progress reports their status.
 ## Required fields
 
 ```text
-R-03  Dispatch state column and migration
+RES-03 Dispatch state column and migration
       Description   Adds orders.dispatch_state with a LEGACY default for existing rows.
       Depends on    none
       Files         src/main/resources/db/migration/V42__order_dispatch_state.sql
                     src/main/java/com/acme/order/Order.java
-      Traces to     impact map (schema), scope R-02
+      Traces to     IMP-08 (schema), SC-02
       Validation    Migration applies to a copy of the current schema; existing rows
                     read back as LEGACY; the entity maps the column.
-      Decisions     D-03 (default value), ADR-001
+      Decisions     ED-03 (default value), ADR-001
       Status        TODO
       Notes         -
 ```
@@ -59,26 +59,26 @@ own. Merge it into the resource whose behaviour it serves.
 
 Three kinds, and only the first two force order:
 
-- **Produces-consumes** — R-02 needs the column R-01 adds. Forced.
-- **Contract** — R-04 implements the interface R-03 defines. Forced.
+- **Produces-consumes** — RES-02 needs the column RES-01 adds. Forced.
+- **Contract** — RES-04 implements CT-01 defined by RES-03. Forced.
 - **Preference** — it is tidier to do the endpoint first. Not forced; say so, so that a blocked
   resource does not stall unrelated work.
 
 Write the order as a line, and mark which arrows are forced. When a resource blocks, the
 unforced arrows are how work continues.
 
-## Stories, when they are used
+## Child features, when they are used
 
 ```text
-US-02  A caller can ask whether a dispatch finished
+PF-02  A caller can ask whether a dispatch finished
        Value      Callers stop polling the order endpoint to infer completion.
-       Resources  R-05, R-06
+       Resources  RES-05, RES-06
        Done when  The status endpoint returns the three states for a known dispatch,
                   and 404 for an unknown one.
 
-TS-01  Dispatch events are carried on the existing cluster
-       Enables    US-01, US-02
-       Resources  R-01, R-02, R-03
+TF-01  Dispatch delivery uses the operated cluster with measurable replay/recovery
+       Enables    PF-01, PF-02
+       Resources  RES-01, RES-02, RES-03
        Done when  An event published by the producer is consumed and acknowledged in
                   an integration test.
 ```

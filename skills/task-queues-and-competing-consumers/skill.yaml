@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: task-queues-and-competing-consumers
-version: 1.3.0
+version: 1.3.1
 description: >-
   Distributing work to a pool of interchangeable workers through a queue: the lease and
   visibility-timeout model, and why an expired lease duplicates work instead of failing it;
@@ -65,6 +65,6 @@ capabilities:
 agentOverrides:
   codex:
     interface:
-      display_name: Task Queues And Competing Consumers
+      display_name: Task Queues & Consumers
       short_description: Leases, worker pools and queue-driven scaling
       default_prompt: Use Task Queues And Competing Consumers to design or review this worker pool.

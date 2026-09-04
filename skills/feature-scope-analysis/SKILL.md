@@ -36,7 +36,7 @@ scope is a decision, and it is the one that stops the argument later.
 4. **Run the creep check** (`references/scope-creep-catalogue.md`) over the Required and
    Recommended buckets. The catalogue lists the additions that arrive without a requirement.
 5. **Give every Out of Scope item a reason and an owner** — who excluded it, and on what basis.
-   "Not needed" is not a reason; "the user confirmed retention is a separate piece of work" is.
+   "Not needed" is not a reason; "the Product owner confirmed retention is separate work" is.
 6. **State the boundary in one sentence** a reviewer can hold in their head.
 
 ## The five buckets
@@ -69,7 +69,7 @@ IF an item exists because a similar system had it
 THEN it needs a requirement here, or it is Out of scope.
 
 IF the request explicitly excluded something
-THEN it is Out of scope with the user as owner, and it stays there even if it
+THEN it is Out of scope with the accountable Product/domain role as owner, and it stays there even if it
      later looks cheap.
 
 IF an item would make the change hard to review or hard to revert
@@ -95,11 +95,11 @@ THEN the growth is a change to the plan: record what justified it and who agreed
 ```text
 Boundary        <one sentence>
 
-Required        R-01  <item>  <- requirement or constraint it traces to
-Recommended     C-01  <item>  <- risk or cost it addresses; consequence if dropped
-Optional        O-01  <item>
-Out of scope    X-01  <item>  <- reason; excluded by user | agent | constraint
-Future work     N-01  <item>  <- what it waits on
+Required        SC-01  <item>  <- OBJ/BR/BAC or constraint it traces to
+Recommended     SC-02  <item>  <- RISK or cost it addresses; consequence if dropped
+Optional        SC-03  <item>
+Out of scope    SC-04  <item>  <- reason; accountable owner who excluded it
+Future work     SC-05  <item>  <- what it waits on
 
 Creep check     <items examined, and what was reclassified>
 ```

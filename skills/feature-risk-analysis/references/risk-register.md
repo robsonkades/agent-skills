@@ -55,16 +55,16 @@ Three shapes get written as risks when they belong upstream:
 ## Worked shapes
 
 ```text
-K-01  Existing rows have no dispatch state and the reader assumes one
+RISK-01 Existing rows have no dispatch state and the reader assumes one
       Impact        HIGH   NullPointerException on every legacy order read
       Probability   HIGH   40k existing rows, all of them affected
       Detection     integration test against a copy of the current schema fails
                     before release; in production it would be immediate and total
-      Mitigation    R-03 sets a non-null default in the migration
+      Mitigation    RES-03 sets a non-null default in the migration
       Fallback      -
       Accepted by   -   (mitigated; verified by the migration test)
 
-K-04  Billing consumer rejects the event once the new field is added
+RISK-04 Billing consumer rejects the event once the new field is added
       Impact        HIGH   dispatch events are dead-lettered, silently
       Probability   LOW    its deserialiser ignores unknown fields (verified,
                            BillingConsumerConfig.java:22)
@@ -83,6 +83,7 @@ Every row is revisited, and each gets one of three outcomes:
 
 - **Mitigated** — the mitigating resource is DONE and validated. Say which.
 - **Still accepted** — nothing changed. It moves to whatever the project uses to track known
-  operational risk; it does not disappear because the feature shipped.
+  operational risk; its GAP-* owner, expiry and reopening trigger do not disappear because the
+  feature shipped.
 - **Materialised** — it happened during implementation. Say what was done, and whether the
   detection worked. A detection that did not fire is the most useful thing the register produces.

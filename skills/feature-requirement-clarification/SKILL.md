@@ -32,13 +32,14 @@ can answer it.
 
 1. **Start from the unknowns**, not from a checklist. Every question traces to a ledger entry;
    a question with no entry behind it is a question you invented.
-2. **Try the repository first.** For each unknown, name the command or file that would settle
-   it and run it. Only what survives that becomes a question. See the routing rule below.
+2. **Use the context report first.** For each unknown, identify repository evidence that would settle
+   it and run a focused check only when the report did not already do so. Only what survives becomes a
+   question.
 3. **Price each surviving question** by impact, and mark BLOCKING or NON-BLOCKING
    (`references/impact-and-blocking.md`). Most questions are neither high-impact nor blocking.
-4. **Group into rounds** (`references/question-rounds.md`). Business before technology,
-   technology before architecture, architecture before confirmation. Do not open a later round
-   while an earlier one has unanswered blocking questions.
+4. **Group dynamically into rounds** (`references/question-rounds.md`). Ask one question when its
+   answer controls what is worth asking next; ask two or three only when they share one decision area.
+   There is no target number of rounds.
 5. **Write each question so it can be answered in one line**, and state the consequence of each
    answer. A question whose consequence you cannot state is not ready to ask.
 6. **Proceed on the non-blocking ones** under a stated assumption, recorded as an assumption
@@ -70,18 +71,18 @@ requirement.
 
 ## Question classes
 
-| Class            | Who can answer                                         | Typical impact |
-| ---------------- | ------------------------------------------------------ | -------------- |
-| Functional       | User                                                   | HIGH           |
-| Business rule    | User                                                   | HIGH           |
-| Compatibility    | Repository, then user for the policy                   | HIGH           |
-| Data and storage | Repository for shape, user for policy                  | HIGH           |
-| API contract     | Repository for style, user for change                  | HIGH           |
-| Security         | User — never inferred                                  | HIGH           |
-| Operational      | Repository, then user                                  | MEDIUM         |
-| Performance      | User for the target, repository for the current number | MEDIUM         |
-| Technical        | Repository                                             | LOW to MEDIUM  |
-| Convention       | Repository                                             | LOW            |
+| Class            | Who can answer                                        | Typical impact |
+| ---------------- | ----------------------------------------------------- | -------------- |
+| Functional       | Product or domain owner                               | HIGH           |
+| Business rule    | Product, policy or domain owner                       | HIGH           |
+| Compatibility    | Repository, then accountable contract/product owner   | HIGH           |
+| Data and storage | Repository for shape, accountable data/policy owner   | HIGH           |
+| API contract     | Repository for style, contract owner for change       | HIGH           |
+| Security         | Accountable security/privacy role — never inferred    | HIGH           |
+| Operational      | Repository, then accountable Operations role          | MEDIUM         |
+| Performance      | Product/SLO owner for target; repository for baseline | MEDIUM         |
+| Technical        | Repository                                            | LOW to MEDIUM  |
+| Convention       | Repository                                            | LOW            |
 
 Security, compliance and business-rule questions never resolve to "the repository says so".
 The code shows what was built, which may be the defect.
@@ -100,14 +101,17 @@ IF the question is about intent, policy, authority or a standard
 THEN it is not discoverable, however much code exists. Ask.
 
 IF a question is BLOCKING
-THEN stop. Do not open the next round, do not start implementation, and do not
-     bury it in a list of twelve.
+THEN stop dependent work. Offer the focused next round or pause; do not start
+     dependent implementation or bury it in a list of twelve.
 
 IF three or more questions can be answered together without ordering between them
 THEN batch them into one round rather than sending them one at a time.
 
 IF a question has been asked and the answer was ambiguous
 THEN restate it as a choice between two named options, not as an open question.
+
+IF the participant can explain a decision but cannot approve its consequence
+THEN record the context and keep the question open for the accountable role.
 ```
 
 ## Constraints
@@ -120,6 +124,9 @@ THEN restate it as a choice between two named options, not as an open question.
   rule an answer out, say so instead of asking.
 - **A silent user is not an answer.** Unanswered blocking questions leave work blocked; they do
   not decay into permission.
+- **After every round, recommend the next transition.** `Continue`, `Close the stage`, or `Blocked`,
+  with the concrete reason. Ask whether to run the next focused round, close, or pause; do not ask a
+  content-free “continue?”.
 
 ## Output
 
@@ -133,8 +140,9 @@ Q-03  Should a failed run be retried automatically, or surfaced for manual retry
       Why:         Automatic retry requires idempotency in the downstream call and a
                    dead-letter path; manual retry requires an operator-facing endpoint.
       Tried:       No retry policy exists in the codebase (grep over the module found none).
-      If A:        R05 (retry policy) and R06 (dead-letter) enter scope.
-      If B:        R07 (operations endpoint) enters scope; R05 and R06 do not.
+      If A:        SC-05 (retry policy) and SC-06 (dead-letter) enter scope.
+      If B:        SC-07 (operations endpoint) enters scope; SC-05 and SC-06 do not.
 ```
 
 Then a one-line summary: how many questions, how many blocking, and what proceeds meanwhile.
+Also report the checkpoint recommendation and the decision area another round would resolve.
