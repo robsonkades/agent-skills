@@ -49,6 +49,9 @@ Prefer the JDK queue unless the missing property is documented and tests cover t
 Striping distributes writers across cells and aggregates later. It changes semantics:
 
 - sum/read is not one atomic point-in-time value under concurrent updates;
+- `LongAdder.sum()` is accurate once updates are quiescent and properly observed (for example,
+  after joining all writers); ordinary `long` overflow still applies. It is not statistical
+  sampling, and exact quiescent reporting does not make it suitable for atomic admission;
 - reset/sumThenReset can race with updates according to API contract;
 - cells consume memory and can false-share without suitable layout;
 - hash/probe collisions and resizing matter;
@@ -76,6 +79,12 @@ padding/layout and cache topology
 Sequence wrap may be practically distant without being mathematically impossible. State the bound
 from maximum rate and lifetime, and test near-wrap with reduced-width model values.
 
+A CAS reservation does not by itself make the entire ring lock-free. Pause a producer after
+claiming a sequence but before publishing its slot: if consumers or later producers cannot
+advance until it resumes, that operation has a blocking dependency. State whether helping,
+cancellation/tombstones or another protocol closes the publication gap; otherwise qualify the
+progress class rather than inferring it from the absence of mutexes.
+
 ## Reclamation choices
 
 | Storage                 | Typical aid                     | Remaining hazard                                       |
@@ -92,5 +101,6 @@ memory reclamation indefinitely while operations remain lock-free.
 
 - [Java concurrent package](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
 - [Java atomic package](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/package-summary.html)
+- [LongAdder sum and reset contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/LongAdder.html)
 - [OpenJDK concurrent source](https://github.com/openjdk/jdk/tree/master/src/java.base/share/classes/java/util/concurrent)
 - [Michael and Scott queue paper](https://www.cs.rochester.edu/research/synchronization/pseudocode/queues.html)

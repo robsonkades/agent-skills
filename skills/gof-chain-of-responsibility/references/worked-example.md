@@ -4,6 +4,10 @@ A payment is approved, referred for review, or declined. The rule that applies i
 specific one that matches: a tenant override, then a contract rule, then a product rule, then the
 catalogue default. New tenants and products arrive continuously, contributed by a configuration
 module.
+This is an illustrative routing/approval policy, not a payment-security recommendation. It assumes
+tenant decisions are authorized overrides. Mandatory fraud, compliance or authorization checks must
+run outside this first-match selection or otherwise be guaranteed before any approval. Examples are
+partial Java 17; Spring/JUnit/property-test fragments require project dependencies, not new upgrades.
 
 ## Before
 
@@ -39,6 +43,7 @@ design — is expressed only by the order of the `if`s.
 
 ```java
 public interface AuthorisationRule {
+    String name(); // stable bounded rule kind, not tenant/payment identifiers
     /** Empty when this rule has no opinion about this payment. */
     Optional<Decision> apply(Payment payment);
 }
@@ -49,15 +54,18 @@ public final class AuthorisationRules {
 
     private final List<AuthorisationRule> rules;      // order is the design
 
+    public AuthorisationRules(List<AuthorisationRule> rules) {
+        this.rules = List.copyOf(rules);             // rejects null list/elements; freezes membership
+    }
+
     public Decision decide(Payment payment) {
+        java.util.Objects.requireNonNull(payment);
         for (AuthorisationRule rule : rules) {
             var decision = rule.apply(payment);
             if (decision.isPresent()) {
-                metrics.counter("authorisation.decided", "rule", rule.name()).increment();
                 return decision.get();
             }
         }
-        metrics.counter("authorisation.unhandled").increment();
         throw new NoAuthorisationRule(payment.id(), payment.productCode());
     }
 }
@@ -68,8 +76,8 @@ Three decisions worth naming:
 - **`Optional<Decision>`, not a boolean plus a getter.** "Do you handle this?" followed by "then
   handle it" is two calls that can disagree; one call that either answers or does not cannot.
 - **The unhandled case throws.** A payment with no applicable rule must not be silently approved,
-  and must not silently vanish. The counter beside it makes the condition visible before a
-  customer reports it.
+  and must not silently vanish. Instrument the owner at the application boundary with bounded
+  rule-kind/unhandled metrics; telemetry failures must not turn a chosen approval into a retry.
 - **Rules do not know each other.** No successor field, no `setNext`. The owner iterates, so the
   order lives in one readable place.
 
@@ -107,7 +115,9 @@ set of payments. Two things made this a five-minute diagnosis rather than an inc
 - `NoAuthorisationRule` carried the product code, so the affected set was obvious from the
   exception.
 
-The fix restored the invariant in the rule itself, and a test asserted it directly:
+Resolve the domain policy before repairing the default. Unknown products may require rejection
+or referral; restoring blanket approval merely to restore totality is not a valid fix. For the
+accepted total-default policy, assert the outcome as well as presence for relevant input classes:
 
 ```java
 @Property
@@ -126,15 +136,19 @@ retry on the enclosing message consumer does — would record it twice.
 The fix keeps rules pure and moves the effect out:
 
 ```java
-public record Decision(Outcome outcome, String reason, List<DomainEvent> events) { }
+public record Decision(Outcome outcome, String reason, List<DomainEvent> events) {
+    public Decision { events = List.copyOf(events); }
+}
 
-// the chain owner, after a decision is chosen
-decision.events().forEach(events::publish);
+// Application boundary, pseudocode: persist decision + event intents atomically under
+// the operation key, then acknowledge. Relay intents and deduplicate downstream effects.
 ```
 
-Rules now describe what should happen; the owner applies it, once, for the winning rule only.
-This is the general answer to partial state in a chain: make the stages pure over a value and
-apply effects at the end (`event-driven-architecture`).
+Rules describe effects for the winning decision; copying the event list freezes membership, not
+mutable event payloads. A simple `events.forEach(publish)` could publish a prefix and fail or publish
+again on redelivery. Where state and messaging must agree, use an appropriate transactional outbox
+and idempotent consumers; test commit-before-ack and relay retry. See
+[Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html).
 
 ## The three tests
 
@@ -156,13 +170,15 @@ apply effects at the end (`event-driven-architecture`).
 }
 ```
 
-The second and third are the ones a chain needs and a branching method did not: order and
-fallthrough are properties of the composition, invisible in any single rule.
+Order and fallthrough also matter in branching code; a chain moves them into composition and
+therefore needs tests there. Add handler-exception, no-invocation-after-match and mandatory-check
+bypass cases, plus replay/partial-commit tests when effects exist.
 
 ## Why not a switch
 
 The alternative considered was a sealed `RuleKind` with an exhaustive `switch`. It was rejected
 because the rule set is genuinely open — the configuration module contributes tenant rules at
-runtime, and products are data. Had the set been the four kinds above and nothing more, the
+runtime. Changing data alone does not prove open behavior: a fixed algorithm can read configurable
+tables. Had the behavior been the four fixed kinds above and nothing more, the
 `switch` would have been the better answer: shorter, exhaustive at compile time, and with the
 order visible without a wiring file (`java-composition-over-inheritance`).

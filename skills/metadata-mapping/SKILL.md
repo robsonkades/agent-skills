@@ -27,7 +27,7 @@ late, and it drifts.
 
 ```text
 Annotations on the class      the mapping lives with the code it maps.
-                              Discoverable, refactor-safe, and it couples
+                              Discoverable, but string values can drift; it couples
                               the class to the persistence framework.
 
 External metadata (orm.xml)   the class stays clean; the mapping is a
@@ -48,17 +48,22 @@ Generated code                a build step produces the mapping or the
 
 ## Workflow
 
-1. **Pick the source of truth for the schema, once.** Migrations own the schema; the
-   mapping describes it. The reverse — annotations generating the schema — is only viable
-   in development.
+Inspect the JDK/compiler, JPA namespace/version, ORM/provider, annotation processors,
+database dialect and schema deployment pipeline first. Examples are partial; this skill
+does not authorize upgrading the stack to match its documentation sources.
+
+1. **Pick the schema deployment authority.** Versioned migrations should control shared
+   production schemas. Model-generated DDL can be reviewed into migrations; avoid independent
+   automatic startup mutation competing with the migration history.
 2. **Decide whether the domain class may carry the metadata.** This is the layering
    question, and the honest answer depends on whether a separate domain model exists at all
    (`data-source-patterns`).
 3. **Validate mapping/schema compatibility in CI and suitable startup environments.** Strict
    startup validation can intentionally reject mixed-version rolling deploys or restricted
    production credentials; decide where it is safe and keep a pre-deploy compatibility gate.
-4. **Remove string literals** from anything that names a column or attribute — generated
-   metamodels and constants exist so that a rename is a compile error.
+4. **Prefer typed generated references where supported.** Regeneration exposes removed/renamed
+   members at compile time when used. Remaining strings/constants need validation; moving a
+   string into a constant does not make its value schema-checked.
 5. **Check for duplicated mapping.** The same fact stated in annotations, in a migration,
    in a DTO mapper and in a view is four places to update and three places to be wrong.
 6. **Resist metadata-driven behaviour** unless a stated driver requires it; see the decision
@@ -74,19 +79,20 @@ Entities are the persistence model, the team is small, the stack is JPA
 A separate framework-free domain model exists
         → the metadata belongs on the persistence model (row/entity),
           not on the domain type. If annotations are appearing on the
-          domain class, one of the two models is redundant.
+          domain class, investigate the leak or an accepted coupling rather than
+          inferring that either model is redundant.
 
 The same classes must map differently per deployment or per tenant
         → external metadata or programmatic configuration. This is the
           case orm.xml was designed for and it is rare.
 
 Column and attribute names appear as strings in queries or projections
-        → generate a metamodel and use it. A rename must be a compile
-          error, not a runtime one.
+        → use typed generated references where possible; validate remaining
+          string-based queries against the target mapping/schema.
 
 The schema is the source of truth and is owned elsewhere
-        → generate from the schema (jOOQ-style). The build then fails
-          when the schema changes under you, which is the point.
+        → generate from a pinned schema (jOOQ-style), regenerate in CI and
+          compile consumers; test compatibility with the deployed schema too.
 
 Mapping between two object shapes (entity ↔ DTO)
         → generated mapper, or explicit hand-written code. Reflection
@@ -95,44 +101,48 @@ Mapping between two object shapes (entity ↔ DTO)
 Someone proposes storing the model definition as data so new fields
 need no deploy
         → require the driver in writing. This buys deploy-free change
-          and costs type safety, validation, testability and every
-          IDE affordance (enterprise-architecture-smells).
+          and moves validation and compatibility checks into a versioned
+          runtime schema/interpreter (enterprise-architecture-smells).
 ```
 
 ## Rules
 
-- **Migrations own the schema; mapping metadata describes it.** `hibernate.ddl-auto` set to
-  anything other than `validate` or `none` outside development means two things generate
-  the schema, and the one that wins depends on startup order.
+- **Use one schema mutation authority.** Spring Boot uses `spring.jpa.hibernate.ddl-auto`;
+  Hibernate's native setting is `hibernate.hbm2ddl.auto`. Avoid `update/create/create-drop`
+  competing with migrations on shared data. Disposable test databases may deliberately
+  generate schemas; model-generated scripts reviewed into migrations are another valid path.
 - Use `validate` where startup failure is an acceptable control and permissions expose enough
   metadata. For rolling deployment, validate both old and new application versions against the
   expanded schema before rollout; do not discover incompatibility by replacing all healthy pods.
 - **Startup validation is not complete validation.** It checks tables, columns and types; it
   does not check nullability the way you would want, nor constraints, nor indexes, nor
-  defaults. A schema diff in CI covers the rest.
+  defaults comprehensively across providers/dialects. A schema diff covers only the objects
+  and properties its extraction includes; exercise permissions, queries and writes separately.
 - Annotations on domain classes are a real coupling and a defensible one. What is not
   defensible is claiming a framework-free domain while the domain classes carry
   `@Entity` — decide which architecture you have and record it
   (`layering-and-boundaries`).
 - **Unchecked string literals naming columns or attributes are a runtime-failure risk.** JPQL text,
-  `Sort.by("cusotmerId")`, projections by name, native queries: all fail at runtime, some
+  `Sort.by("cusotmerId")`, projections by name, native queries: invalid names can fail at runtime, some
   only on a rarely used path. Generate the JPA static metamodel and use `Order_.CUSTOMER`
-  style constants where the API allows it.
+  style constants only when supplied by the chosen processor; they are not the portable
+  typed metamodel contract and string-consuming APIs still need execution/validation tests.
 - Reflection/enhancement/accessor costs are provider, mapping and runtime specific. Metadata parsing
   is primarily startup work, while field access, dirty checking and materialization remain hot-path
   concerns. Do not infer significance; measure startup and query/allocation profiles
-  startup if it matters (`startup-cds-crac-leyden`).
+  where it matters (`startup-cds-crac-leyden`).
 - Bytecode enhancement changes real behaviour, not just performance: lazy attribute
-  loading, dirty tracking without snapshots, and lazy `@ManyToOne` that actually works on
-  the inverse side. It is a build-time step with its own debugging cost — adopt it for a
+  loading, inline dirty tracking, and support for lazy inverse `@OneToOne` in applicable
+  Hibernate mappings. Feature flags, mutable types and provider/version matter; do not
+  assume all snapshots disappear or all associations become lazy. Enhancement has its own debugging cost — adopt it for a
   named reason, not by default.
-- Duplicated mapping is the drift generator. When the same fact — a column's name, a
-  length, a nullability — is stated in a migration, an annotation and a DTO mapping, expect
-  them to disagree within a year. Make one of them generated from another.
+- Repeated facts can drift, but migration DDL, persistence mapping and API validation can
+  intentionally express different contracts. Identify which facts must agree; generate or
+  test those agreements instead of deleting independent constraints by counting repetitions.
 - **Metadata-driven models trade compile-time safety for deploy-free change**, and the trade
-  is much worse than it looks: no type checking, no refactoring, no IDE, no unit tests
-  worth the name, and an interpreter you now maintain. Reach for it only where variation is
-  genuinely per-tenant and unbounded, and even then confine it to a leaf
+  includes an interpreter and runtime validation you must maintain. Versioned schemas,
+  bounded field/type limits and contract tests remain possible and necessary. Require a
+  concrete variability driver and confine dynamic behavior where practical
   (`orm-structural-mapping` on serialized LOB).
 
 ## References

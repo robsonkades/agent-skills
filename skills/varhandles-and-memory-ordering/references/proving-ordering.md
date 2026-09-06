@@ -4,6 +4,9 @@
 
 For a handoff litmus:
 
+Partial jcstress test: annotations/result imports and VarHandle lookup initialization are omitted.
+Use the project's pinned jcstress harness; this block is not a standalone executable class.
+
 ```java
 @JCStressTest
 @Outcome(id = "-1", expect = Expect.ACCEPTABLE, desc = "publication not observed")
@@ -32,9 +35,13 @@ public class Publication {
 Confirm annotation imports/API against the pinned jcstress version. The model assumes one writer,
 no reuse/wrap and one-shot initialization. Expand actors/state for the production algorithm.
 
-Negative control: weaken the anchor access and verify the harness executes the intended paths. A
-forbidden result may remain rare or absent on finite hardware; absence does not prove the weakened
-program correct. The formal proof defines forbidden outcomes.
+Negative control: weaken the anchor access and verify the harness executes the intended paths.
+Reclassify outcomes for that weakened protocol: observing data 0 after the flag can be allowed
+there even though forbidden in the release/acquire original. That result may remain rare or absent
+on finite hardware; absence does not prove the weakened program correct. Do not introduce a latch,
+join or another volatile edge between the actors that accidentally repairs the missing handoff.
+The API/JMM argument determines allowed outcomes; a finite run can expose a defect, not prove
+absence across all legal executions.
 
 ## Store-buffering shape
 

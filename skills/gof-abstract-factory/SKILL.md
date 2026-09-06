@@ -4,7 +4,7 @@ description: >
   Abstract Factory in modern Java: the pattern exists to keep a _family_ of related objects
   mutually consistent when the family varies, not to centralise construction. Covers the family
   invariant that justifies it, why dependency injection already resolves the deployment-time
-  case, when per-request or per-tenant selection makes the factory unavoidable, and how to
+  case, when per-request or per-tenant selection benefits from a family provider, and how to
   express it as a record of suppliers or a sealed provider rather than a four-level interface
   hierarchy. Use when a factory interface is proposed, when profile-specific object graphs are
   being built by hand, when a family of parser/renderer/validator types must never be mixed
@@ -18,10 +18,12 @@ description: >
 
 ## Purpose
 
-Guarantee that objects used together come from the same family. The pattern's product is not
-construction — it is the **impossibility of mixing**: no code path can obtain a Postgres
-repository beside an in-memory unit of work, or a PDF renderer beside an HTML paginator,
-because only the factory hands them out and it only hands out matched sets.
+Select related products together and preserve their compatibility. Abstract Factory alone does
+not make mixing impossible: callers can combine products from different factories, and a public
+aggregate constructor can accept mismatched products. State the enforcement boundary: trusted
+assembly with contract tests, validated family identities, family-typed APIs, or encapsulated
+operations that never expose mixable products. Shared family identity may also require the same
+transaction/session instance, not merely the same vendor or format.
 
 If there is no invariant binding the products to each other, this is not Abstract Factory. It
 is a bag of factory methods, and it should be several separate providers or none at all.
@@ -30,17 +32,16 @@ is a bag of factory methods, and it should be several separate providers or none
 
 ```text
 There are 2+ product types that must agree with each other
-        AND the agreement is not checkable by the type system
-        AND the family is selected at runtime from data
+        AND creation or selection needs a coherent family boundary
                 → Abstract Factory
 
 The family is selected once per deployment (profile, environment)
                 → dependency injection: one @Configuration per family.
-                  The container makes mixing impossible already.
+                  Verify coherent wiring; profiles and qualifiers do not prove compatibility.
 
 The family is selected per request / tenant / document / region
-                → Abstract Factory, keyed by that value. The container
-                  cannot decide what varies per call.
+                → select a coherent provider or prebuilt family by key.
+                  DI may supply that registry; use factory methods when creation varies.
 
 Third-party code must contribute a whole family
                 → Abstract Factory as the SPI shape (ServiceLoader
@@ -67,9 +68,14 @@ Third-party code must contribute a whole family
 
 ## Modern Java expression
 
-Prefer a record of factory functions over an interface hierarchy when each product is a single
-constructor call. It carries the same guarantee — one object, one family — with none of the
-class explosion, and the family is a value that can be put in a `Map`:
+A record of factory functions can package a small family without additional implementation
+classes. Its constructor and suppliers still need compatibility, null, freshness and ownership
+contracts; final references do not make captured state or products thread-safe. A record of
+already-created products is a family bundle, not a factory of fresh products.
+
+The examples target Java 17 without preview features (records and sealed types); pattern switches
+over sealed hierarchies require Java 21 to avoid preview. Inspect the project's actual release and
+dependencies; the pattern also works with ordinary classes on older Java without upgrades.
 
 ```text
 Classical                          Modern
@@ -113,8 +119,8 @@ THEN every implementation must change. If that is unacceptable, the
      family is not stable enough for this pattern — reconsider.
 
 IF the factory starts caching what it creates
-THEN that is Flyweight or a singleton scope arriving unannounced;
-     make the lifetime explicit (gof-flyweight, gof-singleton).
+THEN define sharing, eviction, closure and thread safety. A cache alone is neither Flyweight
+     nor Singleton; select those patterns only if their separate intent fits.
 ```
 
 ## Cross-cutting checks
@@ -139,11 +145,11 @@ THEN that is Flyweight or a singleton scope arriving unannounced;
 ## Review checklist
 
 - [ ] There are two or more products, and a stated invariant binds them
-- [ ] Mixing families is impossible by construction, not by convention
-- [ ] The selection key is named, closed, and validated when externally supplied
+- [ ] The actual compatibility enforcement boundary is explicit and tested
+- [ ] The selection key is named and validated against the authorized supported registry
 - [ ] An unknown key fails loudly rather than falling back to a default family
-- [ ] At least two families exist today
-- [ ] The factory holds no mutable state
+- [ ] Multiple families exist, or a concrete SPI/module boundary justifies the abstraction
+- [ ] Mutable factory, supplier and product state has an explicit concurrency/lifetime contract
 - [ ] The products differ in behaviour, not only in configuration values
 - [ ] Adding a product to the family is an acceptable change to every implementation
 

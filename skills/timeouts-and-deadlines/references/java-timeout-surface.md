@@ -29,16 +29,16 @@ shape. Prefer setting `HttpRequest.timeout` over relying on cancelling the
 
 ## Spring `RestClient` / `RestTemplate`
 
-Both delegate to a `ClientHttpRequestFactory`. Spring Boot exposes the two values it can set
-uniformly across factories as `spring.http.client.connect-timeout` and
+Both delegate to a `ClientHttpRequestFactory`. For example, Spring Boot 3.5 exposes
+`spring.http.client.connect-timeout` and
 `spring.http.client.read-timeout`; the programmatic route is
 `ClientHttpRequestFactorySettings`.
 
-| Knob               | Bounds                                      | Does not prevent                                                                                                           |
-| ------------------ | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| connect timeout    | Establishing the connection                 | A server that connects and then stalls                                                                                     |
-| read timeout       | **Inactivity between reads**, not the total | A server dribbling one byte per interval — the read timeout never fires and the call runs indefinitely                     |
-| pool lease timeout | Waiting for a connection from the pool      | Anything once leased; it also fires before a byte is sent, so it reads as a downstream failure when it is a local shortage |
+| Knob               | Bounds                                          | Does not prevent                                                                                                           |
+| ------------------ | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| connect timeout    | Establishing the connection                     | A server that connects and then stalls                                                                                     |
+| read timeout       | Factory/version-specific read or response phase | When it is inactivity-based, dribbling bytes can keep it alive without a total bound                                       |
+| pool lease timeout | Waiting for a connection from the pool          | Anything once leased; it also fires before a byte is sent, so it reads as a downstream failure when it is a local shortage |
 
 Whether a read timeout is socket inactivity or a broader response bound depends on the selected
 request factory/client and version. A genuine end-to-end total must be imposed and fault-tested
@@ -96,6 +96,16 @@ and make effects repeat-safe—raising `request.timeout.ms` targets the wrong ph
 All mechanisms race completion and may leave an unknown business outcome. The last row is the
 default whenever no cancellation is wired, and it is how timeouts plus retries can increase load.
 
+The Future row assumes an implementation that interrupts its task (for example FutureTask).
+Plain CompletableFuture cancellation does not use `mayInterruptIfRunning` to interrupt the
+computation; `orTimeout` completes the future exceptionally without stopping the supplier.
+Specialized client futures may override cancellation behavior. Wire ownership explicitly.
+
+Unit conversion is part of the policy: JDBC query timeout is integer seconds and zero means
+unlimited. A positive sub-second remainder must not be truncated to zero. Either refuse work,
+use a finer-grained supported limit, or retain an independently enforced outer deadline while
+documenting any rounded-up server/driver timeout. Check range and sentinel semantics before casts.
+
 ## Verification matrix
 
 Test each named phase independently: pool acquisition, DNS/proxy, TCP/TLS, request upload,
@@ -103,3 +113,8 @@ response headers, slow/dribbling body, JDBC execution/result streaming and cance
 caller release, connection/pool return, callee cancellation observation, database session/lock
 release and committed business outcome. Documentation gives API intent; only the deployed JDK,
 HTTP implementation, driver, database and framework versions establish operational behavior.
+
+## Primary references
+
+- [Spring Boot 3.5 HTTP clients](https://docs.spring.io/spring-boot/3.5/reference/io/rest-client.html) — builder and request-factory configuration.
+- [CompletableFuture](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html) — cancellation and timeout completion are not task interruption.

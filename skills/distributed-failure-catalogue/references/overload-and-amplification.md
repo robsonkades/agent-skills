@@ -22,8 +22,9 @@ produces it) → **Owner** (the skill with the fix). No entry contains a remedy.
   The stronger discriminator is attempts per logical request rising after failures/timeouts;
   failover, demand growth and cache-miss amplification can produce the same first two series.
 - **Mechanism** — each timeout produces N attempts, multiplying load onto the thing that is
-  already slow. Layered retries multiply rather than add: three layers of three is 27 requests
-  per logical call.
+  already slow. Three nested layers allowing three total attempts each can produce up to 27
+  leaf attempts; three retries plus the initial attempt at each layer can produce 64.
+  Early success, deadlines and retry budgets reduce the realized count.
 - **Where it hides** — retries in more than one layer, two of which are usually invisible in
   the repository: a mesh sidecar default, an SDK's built-in retries, a driver reconnect.
 - **Owner** — `retries-and-backoff` (budgets, jitter, retrying at exactly one layer).
@@ -58,13 +59,15 @@ produces it) → **Owner** (the skill with the fix). No entry contains a remedy.
 
 - **Symptom** — queue depth and age trend upward while arrival exceeds sustainable goodput;
   latency grows and may eventually hit memory, retention or caller-deadline limits.
-- **Mechanism** — a queue does not absorb overload, it converts it into latency. Once queue
-  wait exceeds the caller's timeout every dequeued item is waste, so the service spends its
-  whole capacity producing responses that are discarded.
+- **Mechanism** — buffering absorbs finite bursts but cannot solve sustained overload.
+  Work that no longer has a valid purpose consumes capacity if still executed; a caller
+  timeout alone does not make a durable payment or background job worthless.
+- **Discriminator** — compare arrival/completion trends, oldest age and demand deadlines;
+  separate sustained overload from a finite backlog that is draining at positive net capacity.
 - **Where it hides** — `new LinkedBlockingQueue<>()` with no capacity in an executor;
   unlimited consumer prefetch; an in-memory batch accumulator; an HTTP client's pending-acquire
   queue; any `submit()` whose rejection path was never written.
-- **Owner** — `rate-limiting-and-load-shedding` (bounds, rejection, oldest-first);
+- **Owner** — `rate-limiting-and-load-shedding` (bounds, rejection, scheduling policy);
   `littles-law-and-queueing` for the arithmetic that predicts it.
 
 ## Resource exhaustion
@@ -101,16 +104,22 @@ produces it) → **Owner** (the skill with the fix). No entry contains a remedy.
   that processes before committing its offset reprocesses after a rebalance or a crash.
 - **Where it hides** — a POST retried after a timeout with no idempotency key; a dedup guard
   written as `if (exists) return;` before an insert, which duplicates under two concurrent
-  copies; an ack placed before the side effect.
+  copies; an effect committed before its acknowledgement was durably recorded.
+- **Discriminator** — correlate stable logical IDs and attempt/commit evidence. Two valid
+  customer intents or duplicated telemetry can resemble double application; ack-before-effect
+  primarily opens a loss window, not this duplicate window.
 - **Owner** — `delivery-semantics` (why duplicates arrive); `idempotency` (surviving them).
 
 ## Gray failure / slow node
 
 - **Symptom** — one instance is up and passing its health check while its clients see ten
   times the normal latency. Fleet averages look fine; per-instance percentiles do not.
-- **Mechanism** — the system's view of health differs from the client's. No failure detector
-  over an asynchronous network can distinguish a slow process from a crashed one, so the slow
-  instance keeps its endpoint, keeps taking traffic, and holds a caller resource per request.
+- **Mechanism** — health detection and affected clients observe different behavior: the
+  probe may omit the failing operation, path, data or load. A node need not be uniformly slow
+  for this differential observability to matter.
+- **Discriminator** — compare probe and affected operation on the same instance/path/time
+  under representative inputs. Rule out a client-only bottleneck or routing skew before
+  calling the target faulty.
 - **Where it hides** — a health endpoint returning a static 200; a check whose timeout exceeds
   the client's; balancing on liveness but not latency; a dashboard of aggregates only, hiding
   the max-to-mean ratio across instances.

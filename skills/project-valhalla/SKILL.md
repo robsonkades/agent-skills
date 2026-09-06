@@ -25,19 +25,24 @@ guidance.
    specialization, storage layout or measured performance.
 2. Check the current JEP header, project page and target-build release notes. Record status and target
    release; never infer availability from a JEP number or old design note.
-3. If executable behavior matters, pin the EA build hash/vendor/platform and preview flags, compile
-   the smallest example and retain compiler/runtime output.
+3. Inspect the project's supported Java/toolchain first. If executable behavior matters, pin the
+   EA build hash/vendor/platform and preview flags, compile the smallest example and retain output.
+   Use an isolated toolchain; do not change the application's supported JDK or add preview flags
+   to its build merely to run an experiment. If no suitable build is available, report that limit.
 4. Separate guaranteed absence of identity from optional flattening or specialization. State what
    remains implementation-dependent.
-5. Measure the current baseline first with ordinary classes, primitive arrays or Structure of
-   Arrays. Then compare an EA variant under the same workload and layout evidence.
+5. Measure the current supported baseline, then ordinary-class and value-class variants on the
+   same EA build. The first comparison includes JDK changes; the second better isolates the
+   representation change. Primitive-array or Structure-of-Arrays alternatives must preserve the
+   required semantics. Compare workload and layout evidence, not just allocation counts.
 6. Produce a migration watch item, not production code, unless the project's supported JDK really
    contains the required feature and preview risk is explicitly accepted.
 
 ## Decision rules
 
 - Current JEP text outranks historical “State of Valhalla” notes for the active design. Historical
-  terms and bytecodes must be labeled historical.
+  terms and bytecodes must be labeled historical. For an older pinned build's actual behavior,
+  consult its own sources and documentation; a newer JEP does not retroactively change that build.
 - A value class is about identity semantics. It does not by itself promise flattened storage in
   every field, array, generic container or calling convention.
 - Reduced headers/indirection are analytical opportunities until the exact build's layout and
@@ -47,6 +52,9 @@ guidance.
 - Migration is not semantics-neutral. Audit identity-sensitive synchronization, identity hash,
   reference equality, identity collections, nullability/default values, serialization and native
   boundaries.
+- Identity-free does not mean primitive, deeply immutable, or universally interchangeable under
+  domain equality. Inspect field-reference semantics, mutable referents and the proposal's
+  distinction between `==` and `equals`; do not substitute operators mechanically.
 - Escape analysis remains relevant to ordinary identity classes and to allocations/layouts the VM
   does not flatten. Valhalla does not make compiler evidence obsolete.
 

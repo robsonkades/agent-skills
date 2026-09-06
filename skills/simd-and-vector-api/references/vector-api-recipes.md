@@ -2,13 +2,16 @@
 
 ## Compiling, running and confirming
 
+Kernel snippets below target JDK 25. Assemble them in `VectorAPILab` with
+`import jdk.incubator.vector.*;` and a test/main entrypoint; they are not standalone files.
+
 ```bash
 javac --add-modules jdk.incubator.vector VectorAPILab.java
 java  --add-modules jdk.incubator.vector VectorAPILab
 
 # Capture the target compilation; decode the loop to prove the lowering
 java --add-modules jdk.incubator.vector \
-     -XX:+UnlockDiagnosticVMOptions -XX:+PrintAssembly \
+     -XX:+UnlockDiagnosticVMOptions \
      -XX:CompileCommand=print,*VectorAPILab.dotProductVector VectorAPILab
 
 # Supporting diagnostic: which intrinsic candidates C2 accepted
@@ -47,6 +50,10 @@ may run slowly or fail on platforms that do not support it well.
 
 ## Loop shape: explicit scalar tail
 
+Arrays must be non-null and exclusively owned during mutation. These zero-offset elementwise
+additions support `c == a` or `c == b`; shifted overlapping segment/slice variants need a separate
+dependency/direction contract. Length validation occurs before any output writes.
+
 ```java
 static final VectorSpecies<Float> FSPECIES = FloatVector.SPECIES_PREFERRED;
 
@@ -76,7 +83,14 @@ static void addArraysVectorMasked(float[] a, float[] b, float[] c) {
         throw new IllegalArgumentException("length mismatch");
     }
     int length = a.length;
-    for (int i = 0; i < length; i += FSPECIES.length()) {
+    int bound = FSPECIES.loopBound(length);
+    int i = 0;
+    for (; i < bound; i += FSPECIES.length()) {
+        FloatVector va = FloatVector.fromArray(FSPECIES, a, i);
+        FloatVector vb = FloatVector.fromArray(FSPECIES, b, i);
+        va.add(vb).intoArray(c, i);
+    }
+    if (i < length) {  // one tail; no final int increment past the array length
         VectorMask<Float> mask = FSPECIES.indexInRange(i, length);
         FloatVector va = FloatVector.fromArray(FSPECIES, a, i, mask);
         FloatVector vb = FloatVector.fromArray(FSPECIES, b, i, mask);
@@ -111,9 +125,11 @@ static float dotProductVector(float[] a, float[] b) {
 ```
 
 This reduction intentionally changes grouping relative to a left-to-right scalar sum, and
-FMA uses one rounding rather than separate multiply/add rounding. Expect last-bit differences,
-NaN/signed-zero subtleties, and platform-dependent reproducibility unless the contract defines
-a tolerance. Keep a strict scalar oracle when exact ordering is required; do not call it a
+FMA uses one rounding rather than separate multiply/add rounding. Cancellation and intermediate
+overflow can produce large differences, not merely last-bit changes. The scalar tail here is
+unfused, so length/species also changes grouping and fusion. Define an error budget including
+NaN/infinity/signed-zero policy; a tolerance does not establish reproducibility. Keep a strict
+scalar oracle when exact ordering is required; do not call it a
 drop-in replacement solely because ordinary inputs look equal.
 
 ## Conditional count via mask
@@ -135,6 +151,10 @@ static int countAboveVector(float[] data, float threshold) {
 
 ## Measuring
 
+Partial JMH fixture: supply imports, `float[] a, b, out` fields and `@Setup` initialization with
+representative nonconstant data, plus equivalent scalar benchmarks. Annotations are starting
+parameters, not a demonstrated warm-up or sample-size requirement.
+
 ```java
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -153,7 +173,7 @@ public class VectorBenchmark {
     }
 
     @Benchmark
-    public void addVectorized(Blackhole bh) {  // void — Blackhole required
+    public void addVectorized(Blackhole bh) {  // one way to expose output
         VectorAPILab.addArraysVector(a, b, out);
         bh.consume(out);
     }
@@ -177,7 +197,7 @@ native code, the mechanism is the FFM API — final since JDK 22, no `--add-modu
 
 ```java
 try (Arena arena = Arena.ofConfined()) {
-    MemorySegment data = arena.allocate(Math.multiplyExact(count, Float.BYTES), 32);
+    MemorySegment data = arena.allocate(Math.multiplyExact((long) count, Float.BYTES), 32);
     // fromMemorySegment/intoMemorySegment still need bounds, lifetime and byte-order policy.
 }
 ```
@@ -186,6 +206,8 @@ Alignment is an allocation property here; assigning 32-byte alignment to each fo
 element layout is not the same thing. Do not assume aligned allocation guarantees aligned
 sub-slices or a faster lowering. Compare aligned and deliberately misaligned offsets on each
 supported JDK/CPU, and keep segment lifetime/thread-confinement rules separate from SIMD.
+Here `count` is a nonnegative element count checked against an application memory budget;
+widen before multiplying so an int count does not overflow before conversion to bytes.
 
 ## Semantic test matrix
 

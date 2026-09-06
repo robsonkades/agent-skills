@@ -2,7 +2,8 @@
 
 ## Commit strategies compared
 
-The offset is the only state consumption changes. Where it is written relative to the side
+Fetching advances local position; committing updates the recovery checkpoint. Where that
+checkpoint is written relative to the side
 effect decides the guarantee; the vocabulary for those guarantees, and the transaction
 boundary, are `delivery-semantics`. What belongs here is the mechanical comparison.
 
@@ -10,9 +11,9 @@ boundary, are `delivery-semantics`. What belongs here is the mechanical comparis
 | ----------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | `enable.auto.commit=true`, synchronous handling | at-least-once if every prior-poll record finishes before next poll/close  | Records since last auto commit                                      | Simple; boundary is implicit and unsuitable for escaped async work |
 | Commit before processing                        | at-most-once                                                              | None; loses instead                                                 | A crash silently drops the batch                                   |
-| `commitSync()` after the batch                  | at-least-once                                                             | The whole batch                                                     | One blocking round trip per batch                                  |
+| `commitSync()` after the batch                  | at-least-once                                                             | Since last successful commit                                        | One blocking round trip per batch                                  |
 | `commitAsync()` after the batch                 | at-least-once if callbacks/order are handled and effects precede commit   | Since last successful commit                                        | Non-blocking; failures are not automatically retried               |
-| Commit per record                               | at-least-once                                                             | One record                                                          | A round trip per record — often the throughput ceiling             |
+| Commit per record                               | at-least-once                                                             | One record if each explicit commit succeeds                         | A round trip per record — often the throughput ceiling             |
 | Offset and effect in one database transaction   | atomic for that sink and partition checkpoint; broker may still redeliver | No duplicate effect in that database if transaction/invariants hold | Custom assignment seek and single-writer/ordering discipline       |
 
 Notes that decide the choice:
@@ -23,18 +24,23 @@ Notes that decide the choice:
 - **Out-of-order async commits.** An async commit that fails and is retried can write an
   _older_ offset over a newer one. Do not retry `commitAsync` blindly; either let the next
   commit supersede it or retry only from a monotonically-checked position.
+- **Per-record means an explicit offset map.** No-argument `commitSync()` commits positions
+  from the whole previous poll, even when called inside a record loop. Use a per-partition
+  safe next offset; otherwise a crash can skip the remainder of that poll. Batch/record
+  duplicate-window estimates assume each intended commit succeeds; failures enlarge it.
 - The last row atomically couples one database sink to a partition checkpoint. It does not
   make other effects atomic, and requires per-partition monotonic updates plus ownership
   control. Kafka transactions are another bounded case for consume-transform-produce within
   Kafka; external systems remain outside that transaction. See `delivery-semantics`.
-- In Spring Kafka the same decision appears as the container's ack mode: the automatic modes
-  commit for you after the listener returns (per record, or per batch), and the manual modes
-  hand an `Acknowledgment` to your code so the commit sits exactly where you put it. The
-  decision is identical to the table above; only the name moves.
+- In Spring Kafka inspect the actual container version, `AckMode`, listener type,
+  `syncCommits`, transactions and error handler. `MANUAL` queues an acknowledgement with
+  batch semantics; `MANUAL_IMMEDIATE` commits immediately when acknowledged on the consumer
+  thread. Off-thread acknowledgements, deferred/out-of-order acknowledgements and transactions
+  change timing. An `acknowledge()` call is not universally a durable commit at that line.
 
 ## `auto.offset.reset`
 
-Current Kafka also supports `by_duration:PnDTnHnMn.nS` in addition to `earliest`, `latest`
+Kafka 4.1 supports `by_duration:PnDTnHnMn.nS` in addition to `earliest`, `latest`
 and `none`. The setting applies **only when the consumer has no initial offset or the current
 offset no longer exists on the server**. Check the deployed client version before using a
 new value. This is not a rare case; it is an incident/bootstrap case:
@@ -47,8 +53,8 @@ new value. This is not a rare case; it is an incident/bootstrap case:
 | Value             | Behaviour with no valid offset                     | The risk you are accepting                                                                                                    |
 | ----------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `latest`          | Start from the end                                 | Earlier retained records are intentionally skipped; this is loss if the application contract required them                    |
-| `earliest`        | Start from the oldest retained record              | **Mass reprocessing.** The whole retained topic replays at once, into every downstream side effect                            |
-| `none`            | Throw on assignment                                | Consumer fails until automation/operator establishes an explicit offset                                                       |
+| `earliest`        | Start from the oldest retained record              | Reprocess retained records in affected partitions; bound the downstream load and preserve repeat safety                       |
+| `none`            | Throw when position cannot be established          | Consumer fails until automation/operator establishes an explicit offset                                                       |
 | `by_duration:...` | Resolve an offset from current time minus duration | Time-to-offset lookup, timestamp semantics and retention determine what is actually available; negative durations are invalid |
 
 Decide per consumer contract and environment, not per cluster. Audit/ledger consumers often
@@ -58,13 +64,15 @@ may deliberately start latest, but only if bootstrap/current-state recovery exis
 
 ## Lag
 
-Consumer lag is the distance between the consumer's position and the end of the partition. It
-comes in two units and they are not interchangeable.
+Name the measurement boundary before interpreting lag: broker group tools commonly use a
+committed checkpoint, while client fetch metrics use consumer position. Neither necessarily
+tracks completed business effects, especially with offloaded work.
 
-- **Lag in records** — `logEndOffset − committedOffset`. Cheap, exposed by the broker and by
-  every tool. Meaningless on its own: 50 000 records is four seconds on a busy topic and four
-  hours on a quiet one, and the same number changes meaning when traffic changes. It also drops
-  to zero during a producer outage, which reads as "healthy".
+- **Offset-distance lag** — often `endOffset − committedOffset` for group monitoring. This
+  is not necessarily a count of consumable records: compaction and transactional records
+  leave gaps. Check the tool's end boundary and isolation; `read_committed` consumption is
+  bounded by the last stable offset, so an open transaction can hold back visible progress.
+  Arrival/service rates and in-flight work are needed to interpret any distance.
 - **Lag in time** — often the age of the next unprocessed record. It approximates business
   queueing delay only when timestamps are trustworthy and semantics are known. Producer
   `CreateTime` can be skewed; broker `LogAppendTime` measures a different boundary; sparse or
@@ -83,21 +91,25 @@ What to do with them:
   `littles-law-and-queueing`.
 - Use bytes/work estimates when record cost varies. `records / net drain rate` predicts
   catch-up only while completion exceeds arrival and future rates remain comparable.
-- **Watch lag going to zero unexpectedly.** It usually means the producer stopped, not that the
-  consumer caught up. Pair the lag alert with a production-rate alert or the outage looks green.
+- **Watch lag going to zero unexpectedly.** Catch-up, a changed group/reset, or a producer
+  outage after the backlog drains can all explain it. A producer outage alone does not erase
+  backlog. Check production rate and expected business arrivals independently of consumer lag.
 
 ## Testing
 
 - **Kill the consumer mid-batch, assert no loss.** Testcontainers with a real broker. Produce N
   records, let the handler process part of a batch, then `Runtime.getRuntime().halt(1)` before
-  the commit. Restart the consumer and assert that all N records are observed downstream — this
+  the commit **only in an isolated test consumer child JVM**, never the test runner or a real
+  user/agent process. Restart the consumer and assert that all N records are observed downstream — this
   is the at-least-once property — and, with a repeat-safe handler, that each produced exactly
-  one effect. If any record is missing, the commit sits ahead of the side effect.
+  one effect. Missing records require tracing produced IDs, retention/reset, sink failures and
+  commit positions; they do not uniquely prove premature commit.
 - **Force a rebalance under load.** Start two consumers, produce continuously, then stop one.
   Assert no record is lost and that duplicates, if any, produced no second side effect. This
   test is what catches a handler that is repeat-safe only for retries and not for redelivery.
 - **Overrun the poll interval on purpose.** Set a small `max.poll.interval.ms`, make the handler
-  slower than it, and assert that the member is evicted and the batch redelivered. It documents
+  slower than it, and assert the protocol-specific departure/reassignment timing and eventual
+  replay from the safe checkpoint; static membership can delay it until session expiry. It documents
   the failure mode as a test rather than as tribal knowledge, and it fails when someone raises
   `max.poll.records` without checking the budget.
 - **Start a group with no committed offset.** Assert the consumer starts where
@@ -105,12 +117,14 @@ What to do with them:
   otherwise only observed during an incident.
 - **Complete out of order.** Delay a lower offset while a higher one finishes; crash after a
   commit attempt and prove the lower record is not skipped. This catches `max(completed)`
-  offset trackers.
+  offset trackers. Include delivered offsets 10 and 14 (no records 11–13), failed/cancelled
+  futures, and an old-epoch completion after reassignment. None may advance past pending work.
 - **Expire/truncate offsets.** Exercise offset-out-of-range and retention loss, including the
   operational approval/bootstrap path rather than only asserting the configured reset.
 
 ## Primary references
 
 - [KafkaConsumer API: offset commits and auto commit](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
-- [Kafka consumer configuration: `auto.offset.reset`](https://kafka.apache.org/documentation/#consumerconfigs_auto.offset.reset)
+- [Kafka 4.1 consumer configuration: reset and isolation](https://kafka.apache.org/41/configuration/consumer-configs/)
 - [Kafka design: delivery semantics and transactions](https://kafka.apache.org/documentation/#semantics)
+- [Spring Kafka container acknowledgement modes](https://docs.spring.io/spring-kafka/reference/kafka/receiving-messages/message-listener-container.html)

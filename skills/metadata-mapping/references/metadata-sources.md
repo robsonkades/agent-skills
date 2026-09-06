@@ -2,17 +2,21 @@
 
 ## The four sources compared
 
-| Dimension                        | Annotations       | External XML (`orm.xml`) | Programmatic        | Generated from schema  |
-| -------------------------------- | ----------------- | ------------------------ | ------------------- | ---------------------- |
-| Coupling of the domain class     | high              | none                     | none                | n/a (it is generated)  |
-| Discoverability                  | excellent         | poor                     | good                | good                   |
-| Refactor safety (rename a field) | compiler follows  | silent break             | compiler follows    | build regenerates      |
-| Varies per deployment            | no                | yes                      | yes                 | no                     |
-| Verbosity                        | low               | high                     | high                | none (generated)       |
-| Review burden                    | low               | high                     | medium              | reviews the schema     |
-| Typical fit                      | most applications | multi-tenant/OEM mapping | Data Mapper by hand | schema owned elsewhere |
+| Dimension                        | Annotations                              | External XML (`orm.xml`) | Programmatic                        | Generated from schema             |
+| -------------------------------- | ---------------------------------------- | ------------------------ | ----------------------------------- | --------------------------------- |
+| Coupling of the domain class     | high                                     | none                     | none                                | n/a (it is generated)             |
+| Discoverability                  | excellent                                | poor                     | good                                | good                              |
+| Refactor safety (rename a field) | typed references only; strings can drift | startup/tool validation  | depends on typed API versus strings | regenerate then compile consumers |
+| Varies per deployment            | no                                       | yes                      | yes                                 | no                                |
+| Verbosity                        | low                                      | high                     | high                                | none (generated)                  |
+| Review burden                    | low                                      | high                     | medium                              | reviews the schema                |
+| Typical fit                      | most applications                        | multi-tenant/OEM mapping | Data Mapper by hand                 | schema owned elsewhere            |
 
 ## Annotations: the default, with its coupling stated
+
+Partial entity mapping: imports, the `order_seq` generator declaration and the mapped
+`customer_id` field are omitted. Supply these in the actual persistence unit and test
+against its migrated schema. Match Jakarta/legacy javax API and provider versions.
 
 ```java
 @Entity
@@ -27,8 +31,8 @@ public class Order {
 }
 ```
 
-The mapping is where the field is, so it cannot be forgotten during a rename and it is read
-by whoever reads the class. The price is that `Order` now imports `jakarta.persistence`.
+The mapping is visible beside the field, but explicit column names, `mappedBy` and index
+column lists remain strings that can drift. The price is that `Order` imports `jakarta.persistence`.
 
 That price is only worth arguing about when a separate domain model exists. If these
 entities _are_ the persistence model and a distinct domain model sits beside them, then
@@ -67,7 +71,8 @@ stays short and the common case stays discoverable.
 ## Programmatic mapping
 
 A hand-written Data Mapper, Spring Data JDBC's conventions, MyBatis or jOOQ. The mapping is
-code: debuggable, testable and explicit, with no reflective magic.
+code: explicit translation can be debugged and tested. Frameworks may still use reflection,
+conventions or generated accessors; programmatic configuration does not imply zero reflection.
 
 ```java
 @Component
@@ -102,15 +107,16 @@ public class Order_ {
 cq.where(cb.greaterThan(root.get(Order_.placedAt), since));
 ```
 
-Enable the processor (`hibernate-jpamodelgen`) and use it wherever the API accepts an
+Enable the metamodel processor matching the Hibernate/JDK version (`hibernate-jpamodelgen`
+in older Hibernate lines; artifact names/configuration evolve) and use it wherever the API accepts an
 attribute reference. Where it does not — JPQL strings, `Sort.by("...")`, native SQL —
 the alternatives are:
 
 - Named constants in one place per entity, so a rename touches one file.
-- An architecture test asserting that every JPQL string parses, which the persistence unit
-  does at startup anyway if the queries are named or on repository interfaces.
-- Integration tests that execute every query at least once; a query never executed in CI is
-  a query that will fail in production.
+- Provider named-query validation plus explicit Spring repository initialization where
+  applicable; deferred/lazy repositories and native SQL need separate tests.
+- Integration tests executing relevant queries with representative and edge-case inputs;
+  lack of CI execution is a coverage gap, not proof of inevitable production failure.
 
 ## Mapping between object shapes
 
@@ -138,12 +144,13 @@ Is there a separate framework-free domain model?
 ├── no  → annotations on the entities. Record that the entities are the
 │         persistence model and the coupling is accepted.
 └── yes → metadata on the persistence model only. If annotations are
-          appearing on the domain type, the two models have collapsed
-          into one and the mapper is now pure overhead.
+          appearing on the domain type, inspect the specific coupling and
+          mapping responsibilities before declaring either model redundant.
 
 Must the same code map to different schemas per deployment?
 ├── yes → annotations plus a small orm.xml override, or programmatic.
-└── no  → do not introduce external metadata.
+└── no  → retain the simplest mapping that meets the independence/tooling contract;
+          external metadata can also isolate framework dependencies.
 
 Do column or attribute names appear as strings anywhere?
 └── yes → generate a metamodel; leave the remaining strings covered by

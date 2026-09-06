@@ -27,7 +27,7 @@ Add a field only when an incident query and retention/access need are known.
 
 Traces can:
 
-- show the recorded critical path and relationships;
+- show recorded operations and relationships that support a critical-path hypothesis;
 - expose retries, waits and selected attributes/events;
 - provide examples of a tail/error cohort.
 
@@ -38,6 +38,13 @@ Traces do not automatically:
 - identify CPU/allocation inside an interval;
 - prove causal attribution from overlap;
 - preserve full payload/business audit state.
+
+Do not sum child durations to infer request latency: parallel work overlaps, parents need
+not await children, and producer/consumer spans may represent different operations. Cross-host
+clock skew and missing spans can distort apparent ordering and gaps. A gap can be queueing,
+uninstrumented work, export loss or clock error; confirm with queue metrics, clocks and logs.
+Missing service edges likewise need export/sampling/resource-identity checks before changing
+SpanKind merely to make a backend service map look connected.
 
 Known probabilistic inclusion can support weighted estimates; tail-sampling policies usually
 require policy-aware analysis rather than raw counts.

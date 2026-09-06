@@ -8,9 +8,13 @@ answer; each has a defensible answer once the context is stated.
 
 `@Service`, `@Component`, `@Repository` and constructor injection are the cheapest rung of
 the ladder. The class is a plain object with a constructor; the annotation tells a container
-how to build it. Constructor injection remains plain Java; removing Spring from an annotated class
+to discover it; wiring also depends on constructor/configuration rules. Constructor injection remains plain Java; removing Spring from an annotated class
 also requires removing/replacing the annotation dependency and wiring, though its business behavior
 can remain directly testable.
+
+The Java excerpts are partial examples; use the project's declared Java, Spring and test-library
+versions and supply imports/collaborator types. The final class below assumes no subclass-based
+proxy is required; adding transactional/cache advice changes that constraint.
 
 ```java
 @Service
@@ -25,8 +29,8 @@ public final class PlaceOrder {                 // plain object, plain construct
 }
 ```
 
-Field injection is the version that is not cheap: `@Autowired` on a field means the class's
-dependencies cannot be supplied without reflection. It can still be unit-tested — with
+Field injection without an explicit constructor/setter leaves dependencies inaccessible through
+ordinary construction. It can still be unit-tested — with
 `ReflectionTestUtils` or `@InjectMocks` — but only by reaching around the type's own
 construction, and the class can never guarantee it was fully initialised. The cost has nothing
 to do with framework independence; it is a design defect the annotation happens to enable
@@ -36,9 +40,10 @@ to do with framework independence; it is a design defect the annotation happens 
 
 ## `@Transactional` and other declarative behaviour
 
-`@Transactional`, `@Scheduled`, `@Cacheable`, `@Retryable` attach behaviour to your methods
-through a proxy. They are the moderate rung: mechanical to move, but numerous, and their
-semantics are framework-specific in ways that matter.
+`@Transactional`, `@Cacheable` and proxy-based retry attach behavior through interception;
+check the actual framework/module and mode. `@Scheduled` registers tasks through a bean
+post-processor, rather than advising every call. Calling its method directly does not schedule
+it. Their syntax may be cheap to move while timing, failure and lifecycle semantics are not.
 
 Two properties are worth knowing regardless of the coupling question, because both cause
 silent failures:
@@ -48,13 +53,16 @@ silent failures:
   and calls through an injected/exposed proxy behave differently. This is a common
   cause of "the transaction annotation is there but nothing rolled back"
   (`enterprise-transactions`).
-- **Placement determines the boundary.** On a repository, the transaction is one query wide,
-  so a use case with two writes is not atomic. On a controller, it spans response rendering
-  and can hold a connection during serialisation. The application service is where it belongs
+- **Invocation and propagation determine the boundary.** A repository method can execute many
+  queries and join an outer transaction; separate repository calls are not automatically one
+  atomic use case. A proxied synchronous controller transaction normally ends on method return,
+  before later response serialization; reactive/asynchronous paths differ. Trace the actual
+  transaction, persistence context and connection separately. A service boundary commonly
+  makes a multi-repository use case explicit
   (`service-layer-design`).
 
-**Verdict:** accept, at the application-service layer. Do not wrap. Do learn the proxy
-semantics, because they are the actual risk — far more than portability.
+**Verdict:** prefer an application-service boundary for use-case transactions; repository defaults
+can remain valid for local operations. Verify rollback/propagation and external-call timing.
 
 ## Persistence annotations on domain types
 
@@ -76,7 +84,7 @@ class that carries the business rules.
 
 - Buys: a domain type that is immutable, validating, final where it wants to be, and readable
   without knowing the schema.
-- Costs: a mapper, a second set of types, and two edits per field — forever, on every change.
+- Costs: mapping and a second representation to maintain when a change crosses the boundary.
   This is the cost that gets omitted when the choice is argued on principle
   (`orm-structural-mapping`).
 
@@ -86,8 +94,8 @@ The pattern-level version of this choice — Active Record versus Data Mapper �
 ```text
 Is the domain logic rich — invariants, state machines, rules that
 change independently of the schema?
-        no  → one model. The entity IS the domain type. A CRUD service
-              with a second model is paying for nothing
+        no  → favor one persistence/domain model unless schema ownership,
+              security or independently evolving contracts justify separation
               (domain-logic-organization).
         yes ↓
 
@@ -97,8 +105,8 @@ a schema owned elsewhere, aggregates spanning several tables?
               explicit is cheaper than distorting the domain.
         no  ↓
 
-Will the invariants tolerate JPA's requirements (no-arg constructor,
-mutable fields, identity semantics)?
+Will the invariants tolerate the target provider/specification's construction,
+hydration, persistent-state and identity requirements?
         yes → one model, with the requirements accepted deliberately.
         no  → two models. This is the strongest case: the domain type
               cannot be correct AND be an entity.
@@ -111,25 +119,24 @@ collection's contents, is the model leaking.
 
 ## The base-class trap
 
-Extending a framework class from business code is the one coupling worth refusing almost
-categorically.
+Prefer composition when business code does not need the inherited framework lifecycle.
 
 ```java
-// Refuse: the extends slot is spent, the lifecycle is imported,
-// and the class can no longer be constructed in a plain test.
+// Review: inherits support lifecycle and protected API.
+// It remains directly constructible and configurable in a plain test.
 public class OrderService extends JdbcDaoSupport { }
 ```
 
 Reasons, in order of importance:
 
-1. Java has single inheritance; the slot is now gone for the rest of the class's life.
+1. Java has single class inheritance; the current superclass constrains other inheritance choices.
 2. The superclass's lifecycle, state and protected surface become part of your class, and
-   change under you on every upgrade (`java-composition-over-inheritance`).
-3. It cannot be undone incrementally — every subclass moves at once.
+   can change with an upgrade (`java-composition-over-inheritance`).
+3. Migration must inspect inherited behavior and caller type dependencies. A delegate or adapter
+   can permit subclass-by-subclass migration; shared superclass contracts may require coordination.
 
-Frameworks that once required base classes have almost all moved to annotations and
-interfaces for exactly this reason. Where a base class is still offered, there is normally a
-compositional alternative; prefer it.
+Check whether the target framework offers a compositional alternative that preserves the
+needed lifecycle and protected behavior before replacing the base class.
 
 **The exception that is fine:** framework-provided base classes in _test_ code and in
 _adapters_ you would rewrite anyway. The cost is bounded because the blast radius is.
@@ -138,15 +145,16 @@ _adapters_ you would rewrite anyway. The cost is bounded because the blast radiu
 
 `@JsonProperty`, `@JsonIgnore` and their relatives on a domain type couple the domain's shape
 to an external contract, which is a coupling to a **consumer**, not merely to a framework.
-Rename a field for clarity and an API breaks.
+Renaming an implicitly exposed property can break an API; an explicit stable `@JsonProperty`
+name can preserve it. Verify actual serialized output and consumer compatibility.
 
 This is why the DTO is usually worth its cost even when a separate persistence model is not:
 the wire contract genuinely evolves independently of the domain, has its own compatibility
 rules, and is read by parties you cannot refactor (`remote-facade-and-dto`,
 `rpc-and-api-contracts`).
 
-The distinguishing test between this and the persistence case: **a schema is yours to migrate;
-a published API contract is not.**
+Determine ownership and compatibility for both boundaries: shared or externally owned schemas
+can be just as constrained as published APIs.
 
 ## Enforcing the decision
 
@@ -175,7 +183,8 @@ one-model decision made explicit and enforced — the domain may be persisted, b
 about the web, the container or the serialiser. Write the rule to match the decision you
 actually made, and let the exclusion list document it.
 
-A complementary rule catches the leak that hurts most in practice:
+A complementary partial rule catches direct raw entity return types. Reuse the imported
+`JavaClasses classes` above in the test fixture and the project's ArchUnit/JUnit dependencies:
 
 ```java
 @Test
@@ -186,6 +195,11 @@ void entitiesDoNotEscapeTheWebLayer() {
             .check(classes);
 }
 ```
+
+This rule misses `List<Entity>`, `ResponseEntity<Entity>`, reactive wrappers, parameters and
+runtime serialization. Extend checks to generic type dependencies for the actual contract and
+test wire output; test that the importer selected the intended classes and that a forbidden
+fixture fails. In a one-model layout, entity packages may differ from `..persistence.entity..`.
 
 ## Quick placement table
 
@@ -201,3 +215,18 @@ void entitiesDoNotEscapeTheWebLayer() {
 | Reactive types in the signature          | no          | decision            | yes           | —    |
 
 "decision" means both answers are defensible and the choice must be recorded, not defaulted.
+The table is a suggested one-model policy, not a framework restriction; repository transaction
+defaults and isolated adapter transaction boundaries can be legitimate exceptions.
+
+## Sources and compatibility
+
+- [Spring scheduling](https://docs.spring.io/spring-framework/reference/integration/scheduling.html)
+  and [caching](https://docs.spring.io/spring-framework/reference/integration/cache/annotations.html)
+  (consulted for Framework 7.0.9): task registration versus interception; cache synchronization
+  depends on the provider. Check the target version and configured interception mode.
+- [Spring Data JPA transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html):
+  inherited repository configuration and outer facade transaction boundaries.
+- [JdbcDaoSupport API](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/support/JdbcDaoSupport.html):
+  public construction and explicit DataSource/JdbcTemplate configuration.
+- [Spring Data Redis cache](https://docs.spring.io/spring-data/redis/reference/redis/redis-cache.html):
+  locking/non-locking writers, null caching and TTL configuration; inspect the deployed provider.

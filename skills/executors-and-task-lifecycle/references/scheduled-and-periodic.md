@@ -38,8 +38,21 @@ JDK behavior. Long/blocking jobs can delay unrelated schedules. Separate critica
 classes or dispatch due jobs to an owned bounded executor, while preserving rejection and duplicate
 semantics.
 
+The scheduler's non-overlap and fixed-delay guarantees cover the scheduled Runnable itself.
+If it dispatches asynchronously and returns, downstream bodies may overlap and their failures
+do not automatically fail the ScheduledFuture. Add explicit in-flight/coalescing and completion
+ownership, or reschedule only after actual completion when completion-relative delay is required.
+
 Remove-on-cancel policy can reduce retention of cancelled delayed tasks but changes queue work;
 verify exact API/settings and measure high-churn schedules.
+
+For ScheduledThreadPoolExecutor, delayed one-shot tasks continue after orderly shutdown by default,
+while periodic continuation defaults to false; remove-on-cancel also defaults to false. Set and
+test `setExecuteExistingDelayedTasksAfterShutdownPolicy`,
+`setContinueExistingPeriodicTasksAfterShutdownPolicy` and `setRemoveOnCancelPolicy` for the owner.
+Long delays or enabled periodic continuation can defeat a bounded drain or an unbounded `close()`.
+Its `afterExecute` Throwable is null for scheduled task failures; inspect a completed Future,
+without blocking on a healthy periodic Future that is not done.
 
 ## Multi-replica jobs
 

@@ -1,13 +1,13 @@
 schemaVersion: 1
 
 name: cache-sharding-and-replication
-version: 1.3.0
+version: 1.3.1
 description: >-
   Topology for a cache that no longer fits one node: client-side sharded, proxy-fronted,
   clustered, and fully replicated, compared on failure behaviour, cost and client
   complexity; and why a read after a write on a replicated cache is not read-your-writes.
-  Owns the arithmetic nobody does before an incident: removing one of N nodes remaps about
-  1/N of keys and every one of those misses hits the origin at once — mitigated by
+  Estimates origin load when a cache node fails from its measured request share and the
+  surviving copies, routing and capacity — mitigated by
   replication, warming, coalescing and admission control. Use when choosing between client
   sharding, a proxy and cluster mode, when a cache node loss or rolling restart took the
   database with it, when replicas of a cache disagree, or when deciding between sharding the

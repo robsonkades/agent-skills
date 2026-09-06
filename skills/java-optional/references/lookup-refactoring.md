@@ -4,6 +4,11 @@ A checkout service resolves the effective price for a SKU: promotional price if 
 running, else the customer's contract price, else the list price. No price at all is a
 data error that must abort the checkout.
 
+This is a fictional teaching fixture, not an observed project audit or performance measurement.
+Code blocks are partial Java 21 snippets: supply imports, ports, `Price`, exception and annotation
+types. `Price` must enforce a non-null amount; otherwise `map(Price::amount)` turns an invalid
+present price into empty and misreports it as a missing price.
+
 ## Before
 
 ```java
@@ -22,14 +27,15 @@ public BigDecimal effectivePrice(String customerId, String sku) {
 }
 ```
 
-Callers, found by inspection: one checks for null and throws, one checks and substitutes
+Assumed callers in this fixture: one checks for null and throws, one checks and substitutes
 `BigDecimal.ZERO` (a free checkout waiting to happen), one does not check.
 
 ## Analysis
 
 Three lookups where absence is a **normal outcome** — exactly Optional's case — feeding
 one point where absence is a **failure** (an unpriceable SKU must not reach payment).
-The null-based version cannot express that transition, so every caller re-decides it and
+The shown null-based version leaves that transition to callers (a null-based implementation
+could also enforce it centrally), so every caller re-decides it and
 one of them decided wrong. The fix is not "wrap everything": it is to put Optional on the
 lookup returns, resolve the fallback chain in one place, and end the chain with a throw so
 the failure semantics stop being the caller's guess.
@@ -76,15 +82,14 @@ public Optional<Price> listPrice(String sku) {  // Optional at the boundary only
 
 Wrapping the private `lookup` itself would allocate an Optional per index probe in a loop
 that runs per line item. Escape analysis may eliminate those allocations; on a batch this
-size, "may" is not a basis for either decision — the team ran the allocation profile,
-found Optional-per-probe measurable, and kept the private path null-based with the
-contract stated by `@Nullable` (java-null-safety). Had the profile shown nothing, keeping
-Optional throughout for uniformity would have been the right call. The measurement
-decides; the default without one is the simpler code you already have.
+size, "may" is not a basis for either decision. No allocation profile is supplied here: profile
+the real pricing batch before making a performance claim, keeping versions, workload, bytes/op
+and escape behavior with the result. This example keeps the private null contract for local
+simplicity, not a demonstrated speedup. Without evidence, preserve the simpler existing code.
 
 ## Trade-offs
 
-- Port signatures changed (`Price` → `Optional<Price>`): a source-incompatible change for
+- Port signatures changed (`Price` → `Optional<Price>`): a source- and binary-incompatible change for
   every implementer and caller — cheap inside one service, a versioning event on a
   published API.
 - The zero-substituting caller's behaviour changed from "silently free" to "aborts

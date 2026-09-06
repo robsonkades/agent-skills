@@ -1,97 +1,130 @@
 # Failure surface and policy composition
 
-## What the application sees when the ambassador misbehaves
+## Diagnose the hop, not just the upstream
 
-| Ambassador state                    | The app observes                                                 | Wrong conclusion usually drawn | What actually to check                                                 |
-| ----------------------------------- | ---------------------------------------------------------------- | ------------------------------ | ---------------------------------------------------------------------- |
-| Stopped / restarting                | `Connection refused` on loopback, instantly                      | "The upstream is down"         | Container restart count for the proxy; pooled sockets held by the app  |
-| Slow (saturated, GC, CPU throttled) | Latency rise on _every_ upstream at once                         | "The network is bad"           | Per-upstream latency inside the proxy versus as seen by the app        |
-| Retrying invisibly                  | One app-side call taking 3× the configured upstream timeout      | "The upstream got slower"      | The proxy's attempt counter per request; the deadline it actually used |
-| Fails closed on a bad route         | 503 for traffic that the upstream would have served              | "Partial outage upstream"      | Route table version; which route the response header names             |
-| Fails open                          | Success with the policy silently not applied — no mTLS, no split | Nothing at all; this is silent | Assert policy application as a metric, not as config presence          |
+| Observation                                       | Candidate explanation                          | Evidence to distinguish it                                               |
+| ------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------ |
+| Loopback connection refused                       | Proxy stopped, wrong port or listener binding  | Listener state, effective config, proxy restart history                  |
+| Several upstreams slow together                   | Proxy saturation or shared downstream problem  | App/proxy timing, pending requests, CPU throttling and upstream timing   |
+| One logical request has several upstream attempts | Retries in one or more layers                  | Correlated attempt logs and effective retry policies, including SDK/mesh |
+| Local 503 with no upstream request                | Route miss, no healthy host or local rejection | Proxy response details, route version and host health                    |
+| Requests succeed after policy failure             | An alternate path bypassed enforcement         | Actual destination and authenticated identity, not just status code      |
 
-The general two-container failure matrix (crash loop, OOM, gray failure, eviction) is in
-`sidecar-pattern`. The rows above are the ones specific to owning outbound traffic: the
-ambassador's failures are indistinguishable from the upstream's unless you instrument both
-sides of the loopback hop.
+These are hypotheses, not diagnoses. Match request populations and time windows before
+comparing metrics. The general two-container lifecycle matrix belongs to `sidecar-pattern`.
 
-## Policy belongs to exactly one layer
+For independent mandatory components, availabilities multiply (two 99.9% components give
+about 99.8%). Shared pod failures and degraded paths invalidate that simple model; measure
+proxy-attributable errors rather than presenting the product as a prediction.
 
-| Policy           | Put it in                                                         | What double-configuration produces                                       |
-| ---------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Retry            | Prefer one owner; otherwise one shared end-to-end attempt budget  | Multiplication: `app_attempts × proxy_attempts` requests upstream        |
-| Timeout          | Both, but as a **budget hierarchy**: app deadline > proxy timeout | Proxy still retrying after the app gave up — work with no consumer       |
-| Circuit breaking | Match the desired scope; a per-pod ambassador sees only that pod  | Two breakers with different views; one open, one closed, flapping        |
-| TLS / mTLS       | The ambassador                                                    | Two handshakes, or an app that thinks it is encrypted and is not         |
-| Load balancing   | The ambassador                                                    | Client-side LB over a single loopback endpoint — a no-op that looks fine |
-| Idempotency key  | The **application** — only it knows business identity             | A proxy-generated key is per attempt, which defeats deduplication        |
+## Assign owners and contracts
 
-The last row is the boundary. A proxy can make a call safe to repeat only if the payload
-already carries something that identifies the intent; it cannot invent that identity.
+| Concern            | Contract to record                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------------------- |
+| Retry              | Owner, retryable operations/failures, total attempt bound and replayability                       |
+| Deadline           | App deadline, proxy total/per-attempt ceilings, queue/backoff accounting and cancellation         |
+| Breaker            | Scope of the observed failures; a per-pod breaker sees only that pod's traffic                    |
+| TLS                | Termination on each hop, trust roots, peer identity/SAN verification, SNI and credential rotation |
+| Load balancing     | Which layer selects the real upstream and which merely selects a local listener                   |
+| Operation identity | App supplies stable intent identity; server enforces deduplication atomically                     |
 
-## The pool moved
+Do not automatically retry non-idempotent operations. A POST that can commit before its
+response is lost needs a verified idempotency contract before proxy replay: key scope,
+retention through the retry window, concurrent duplicate handling, payload mismatch behavior
+and replayed result. A timeout does not prove the operation failed. Streaming bodies also need
+explicit replay support and bounded buffering. See `retries-and-backoff` for retry policy design.
 
-Before: each app pod holds `n` connections to the upstream, so the upstream sees
-`pods × n`. After: each app pod holds a cheap loopback pool, and the ambassador holds
-`m` to the upstream, so the upstream now sees `pods × m`. Three consequences:
+TLS may terminate in the app, proxy, or on both separate hops; two TLS hops are not inherently
+a misconfiguration. TLS pass-through preserves encryption to the upstream but removes HTTP
+routing visibility. For proxy-originated TLS, encryption alone does not establish peer identity:
+configure certificate chain and name validation. Do not silently disable those checks for failover.
 
-- Sizing `m` is the real decision; the app-side number is nearly free and should be small.
-- The ambassador multiplexes — with HTTP/2 or gRPC a single connection carries many concurrent
-  streams, so `m` is no longer proportional to concurrency and the old rule of thumb does not
-  transfer. Size against measured concurrency, using `connection-pool-sizing`.
-- Queueing moved too. Requests now wait _inside the proxy_ when `m` is exhausted, where the
-  app's own pool metrics cannot see it. Export the proxy's pending-request and queue-depth
-  metrics or that saturation is invisible; the arithmetic is `littles-law-and-queueing`.
+## Count actual pools
 
-## Deadline and trace context across the hop
+The estimate `pods × m` holds only when `m` is the total upstream connections per identical
+pod for the population being counted. Sum across replicas and actual pool partitions
+(upstream hosts, worker threads, protocol, priority and TLS identity, as applicable); include
+rollout surge and draining connections. A per-pool limit is not necessarily a pod-wide cap.
 
-```java
-// Conceptual: the app's client for an upstream reached via the ambassador.
-// No discovery, no retry here — one layer owns retry, and it is not this one.
-HttpClient client = HttpClient.newBuilder()
-        .connectTimeout(Duration.ofMillis(200))
-        .build();
+HTTP/2 can multiplex streams, but stream limits, flow control and additional connection
+creation still matter. TCP pass-through does not imply HTTP multiplexing. Loopback pools
+also consume sockets, buffers and queue capacity; making them arbitrarily small can throttle
+the app. Measure connections, active streams, pending requests and queue wait at both hops.
+Use `connection-pool-sizing` for sizing and `littles-law-and-queueing` for queue arithmetic.
 
-Duration remaining = deadline.remaining();          // from the inbound request's budget
-if (remaining.isNegative() || remaining.isZero()) {
-    throw new DeadlineExceededException();          // do not start work already out of budget
-}
+## Deadline and trace propagation
 
-HttpRequest request = HttpRequest.newBuilder(URI.create("http://127.0.0.1:15001/v1/accounts/AC-91823"))
-        .header("x-request-deadline-ms", Long.toString(remaining.toMillis()))
-        .header("traceparent", currentTraceParent()) // forwarded, never regenerated
-        .timeout(remaining)                          // the app's own ceiling, not a fixed constant
-        .GET()
-        .build();
-```
+### Java client compatibility
 
-The ambassador must read `x-request-deadline-ms` (or whatever the fleet's agreed header is)
-and cap its own upstream timeout _and its retry budget_ by it. A proxy retrying past the
-caller's deadline is doing work no one will read while holding a connection someone else
-needs. Deadline semantics are `timeouts-and-deadlines`.
+This skill declares no Java execution baseline and includes no executable Java example;
+its routing contracts are language-independent. Before changing Java client code, inspect
+Maven/Gradle release and toolchain settings, resolved HTTP/gRPC dependencies, CI and runtime
+images. Keep the project's Java and client versions; applying this skill does not authorize
+an upgrade or dependency addition. Verify timeout, cancellation and context propagation in
+that client's version: gRPC Java behavior below is not a JDK HTTP-client guarantee. If version
+evidence is missing, retain a protocol-level design and mark code/API choices conditional.
 
-For gRPC, deadlines are encoded as a remaining timeout to avoid clock-skew problems. Some
-language stacks propagate them automatically for child calls (Java does), while a proxy that
-terminates and re-originates traffic must be verified to preserve and decrement the budget.
-Do not assume an arbitrary proxy/filter chain keeps the semantics intact.
+### Budget and trace contracts
 
-## Testing it
+A local HTTP request timeout does not itself transmit a deadline. Use the selected proxy's
+documented mechanism. A custom header requires implemented parsing and enforcement; it is
+not portable proxy configuration. Define units, trust boundary, malformed/missing/expired
+behavior and a server-side maximum. Strip or clamp untrusted policy-control headers.
 
-Three tests, each proving something a config review cannot:
+For a relative budget, deduct elapsed queueing and processing before forwarding or retrying;
+do not restart the original duration on each attempt. Account for transit/dispatch delay or
+reserve headroom. For an absolute timestamp, specify the clock-skew allowance. Check when the
+proxy's timer actually starts, especially for uploads and streaming calls. Cancellation must
+stop further attempts; stopping server work requires server cooperation and does not undo a
+committed side effect. See `timeouts-and-deadlines` for budget design.
 
-- **No double retry.** Point the app at a stub that counts requests, configure the ambassador
-  for 3 attempts, make the stub fail. Assert the stub saw exactly 3, not 9. This is the test
-  that catches the amplification the day someone re-enables retries in the app's client.
-- **Fault injection at the proxy.** Most proxies can be configured to inject latency or return
-  a status for a fraction of requests. Turn on 100% 503 for one upstream and assert the app
-  degrades the way you claimed — fails open or fails closed, with the right user-visible
-  result — rather than hanging.
-- **Crash the proxy process mid-load.** Run an open-loop client, terminate PID 1 inside the
-  ambassador container or use the platform's supported fault-injection mechanism, and count
-  errors until restart recovery. Kubernetes does not expose deletion of one container as a
-  standalone workload operation. This exercises pooled-socket invalidation and the app's
-  reconnection path; a closed-loop client hides the outage by throttling itself, which is
-  `coordinated-omission`.
+gRPC encodes propagated deadlines as remaining time, and Java supports automatic propagation
+within its RPC context. Verify that the actual terminating proxy/filter chain preserves and
+decrements it. This does not imply automatic propagation by arbitrary HTTP clients.
 
-Run the first of these in CI. The other two belong in a pre-production environment with the
-real proxy image, because a stub proxy has none of the behaviour being tested.
+Continue valid trace context across the hop using instrumentation: a proxy can create a
+child span and inject its span context while preserving the trace ID. Do not require byte-for-byte
+copying of a parent's span ID or start an unrelated root. Preserve trace state under the
+applicable trust policy; use bounded route identifiers, not raw subject keys, in metrics.
+Instrumentation overhead belongs to `opentelemetry-performance`.
+
+## Runtime validation
+
+Use an isolated app → real proxy → counting stub path with the target image/config:
+
+- **Attempt bound:** with one app attempt, three proxy attempts, retryable stub failures,
+  replayable input and enough deadline, expect three stub requests. With early expiry or a
+  non-retryable failure expect fewer; never exceed the bound. Count logical operations as well
+  as attempts. Include commit-then-disconnect to expose duplicate effects.
+- **Deadline:** delay both queueing and upstream response; check elapsed client time, cancellation
+  and absence of later retries. An expired budget must not start a new upstream attempt.
+- **Faults:** stop the proxy under load, inject latency/503 and remove a route separately.
+  Assert bounded failure, reconnection and the specified fallback for each; a synthetic 503
+  alone does not test a process crash. Use open-loop load to expose the outage
+  (`coordinated-omission`), only in an isolated test environment.
+- **Security/config:** present a wrong upstream certificate, forged destination/policy headers
+  and an invalid config update. Assert rejection without bypass, retained last-good config
+  where supported, visible config version and successful rollback.
+
+These are implementation tests, not evidence that the skill improves agent behavior.
+
+## Primary sources and limits
+
+Checked 2026-09-05. Envoy links use its moving latest documentation (then 1.40 development);
+verify configuration fields against the deployed version before emitting runnable config.
+
+- [RFC 9110 §9.2.2](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2):
+  idempotency and restrictions on automatic retries.
+- [Envoy connection pooling](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/connection_pooling):
+  pool partitioning and protocol-dependent concurrency.
+- [Envoy TLS](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/security/ssl):
+  certificate verification requires configuration, beyond simply enabling TLS.
+- [Envoy router](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter):
+  retry and timeout controls are implementation-specific.
+- [gRPC deadlines](https://grpc.io/docs/guides/deadlines/):
+  elapsed-time deduction, propagation and cancellation responsibilities.
+- [W3C Trace Context](https://www.w3.org/TR/trace-context/#processing-model):
+  forwarding versus participating in a trace.
+
+The pool estimate, diagnostic hypotheses and test acceptance conditions above are engineering
+reasoning and proposed checks, not measurements from a running deployment.

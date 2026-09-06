@@ -1,5 +1,9 @@
 # Worked example: a checkout facade
 
+Local examples are Java 17/Spring partial snippets with project domain/port types. The transaction
+contract below assumes an external call through the configured Spring proxy and one database
+transaction manager. The remote example has a separate Java 25 preview requirement.
+
 ## Before — the sequence, repeated
 
 ```java
@@ -35,6 +39,18 @@ public class PlaceOrder {
     private final OrderRepository orders;
     private final DomainEvents events;
 
+    public PlaceOrder(BasketRepository baskets, TariffResolver tariffs, BasketValidator validator,
+                      StockReservation stock, PricingService pricing, OrderRepository orders,
+                      DomainEvents events) {
+        this.baskets = baskets;
+        this.tariffs = tariffs;
+        this.validator = validator;
+        this.stock = stock;
+        this.pricing = pricing;
+        this.orders = orders;
+        this.events = events;
+    }
+
     @Transactional
     public OrderId place(BasketId basketId) {
         var basket = baskets.load(basketId);
@@ -51,8 +67,8 @@ public class PlaceOrder {
 }
 ```
 
-Seven collaborators — at the top of the acceptable range, and a signal to watch. One method, one
-intention, one transaction.
+Seven collaborators serving one intention; assess coherence rather than an acceptable count.
+One effective transaction is an explicit assumption, not a consequence of one method.
 
 ## What deliberately did not move in
 
@@ -75,15 +91,19 @@ The distinction to hold: the facade knows **what happens in what order**; the do
 
 ## The transaction boundary, made explicit
 
-`@Transactional` on `place` fixes three things:
+For this local example, verify these contracts before relying on `@Transactional`:
 
-- The order and the stock reservation commit together. That is intended — a reserved stock line
-  with no order is a leak that only a reconciliation job would find.
-- A database connection is held for the whole method. `pricingService` must therefore be local;
-  when it later became an HTTP call, the transaction was split so the remote call happens before
-  it opens (`connection-pool-sizing`).
-- `events.publish` inside the transaction means listeners must run after commit, or they will act
-  on data that may roll back. Here it enqueues to an outbox written in the same transaction
+- Stock reservation, order save and outbox insertion use the same enlisted database transaction,
+  with rollback configured for the relevant failures. A remote stock service cannot be rolled
+  back by this annotation; it needs its own idempotency/recovery design.
+- Acquired database connections and locks may remain through subsequent calls. Keep remote
+  pricing outside the transaction when feasible, then revalidate price/version-sensitive
+  assumptions within the write boundary; moving the call alone can introduce a stale-price race
+  (`connection-pool-sizing`).
+- `DomainEvents.publish` here means inserting an outbox row in that transaction, not immediate
+  external publication. A dispatcher delivers after commit with retry/idempotency. Synchronous
+  local listeners can be valid if their effects participate in rollback; after-commit callbacks
+  alone do not guarantee durable delivery
   (`event-driven-architecture`).
 
 None of that is visible in the signature, which is why it is written down beside it.
@@ -94,7 +114,8 @@ Six months later the class had `place`, `cancel`, `refund`, `resendConfirmation`
 `exportForAccounting`, and twelve constructor parameters. `exportForAccounting` shared no
 collaborator with `place`.
 
-```java
+```text
+// Structural pseudocode, not Java constructor declarations.
 final class PlaceOrder  { /* 7 collaborators */ }
 final class CancelOrder { CancelOrder(OrderRepository, StockReservation, DomainEvents) { } }
 final class RefundOrder { RefundOrder(OrderRepository, PaymentGateway, DomainEvents) { } }
@@ -112,44 +133,65 @@ aggregates (`query-objects-and-specifications`).
 
 ## The remote variant
 
-The read side of the same domain aggregates three services:
+The read side aggregates three services. This Java 25 preview partial method requires
+`javac --release 25 --enable-preview` and `java --enable-preview`, plus imports for Duration,
+StructuredTaskScope and its Joiner. Do not enable preview without project authorization.
+Deadline is a project abstraction using a monotonic remaining budget; ports honor it and
+interruption. OrderCustomer is a local pair record; DeadlineExpired is a project runtime exception
+for an exhausted input budget. ShippingUnavailable is the explicitly
+recoverable remote-unavailability exception; cancellation, authorization and programming errors
+must not be converted into missing shipping.
 
 ```java
-public OrderView view(OrderId id, Deadline deadline) {
-    try (var scope = StructuredTaskScope.open()) {
-        var order    = scope.fork(() -> orders.byId(id, deadline));
-        var customer = scope.fork(() -> customers.byId(id, deadline));
-        var shipping = scope.fork(() -> shipments.forOrder(id, deadline));
+public OrderView view(OrderId id, Deadline deadline) throws InterruptedException {
+    Duration remaining = deadline.remaining();
+    if (remaining.isZero() || remaining.isNegative()) {
+        throw new DeadlineExpired();
+    }
+    try (var scope = StructuredTaskScope.open(
+            Joiner.<Object>awaitAllSuccessfulOrThrow(), config -> config.withTimeout(remaining))) {
+        var required = scope.fork(() -> {
+            var order = orders.byId(id, deadline);
+            return new OrderCustomer(order, customers.byId(order.customerId(), deadline));
+        });
+        var shipping = scope.fork(() -> {
+            try {
+                return shipments.forOrder(id, deadline);
+            } catch (ShippingUnavailable unavailable) {
+                return Shipping.unavailable();
+            }
+        });
         scope.join();
-
-        return OrderView.of(order.get(), customer.get(),
-                            shipping.state() == SUCCESS ? shipping.get() : Shipping.unavailable());
+        return OrderView.of(required.get().order(), required.get().customer(), shipping.get());
     }
 }
 ```
 
 Three decisions made explicitly, none of which the sequential version made:
 
-- **Concurrent**, so latency is the slowest call rather than the sum
+- **Concurrent branches**, with order→customer sequential within the required branch. Latency
+  follows approximately max(order + customer, shipping) plus scheduling, join and cleanup
   (`structured-concurrency`).
 - **Partial failure is a product decision.** The order and the customer are required; shipping
-  degrades to "unavailable" rather than failing the page. Without this the view's availability is
-  the product of three services' — three dependencies at 99.9% give 99.7%
+  degrades only on the named recoverable failure, before it can fail the default fail-fast joiner.
+  Required failures still fail the view. Multiplying availability assumes independent failures;
+  shared dependencies and this fallback policy change the result
   (`failure-models`).
-- **One deadline is passed down**, so the whole view is bounded even if every dependency is slow.
+- **One deadline is passed down and a scope timeout cancels outstanding tasks.** InterruptedException
+  propagates; scope timeout/failure remains visible. Scope close waits for child termination, so
+  uncooperative clients can exceed the budget. Require transport deadlines and cancellation tests.
 
-If this aggregation later moves out of the process, it becomes a backend-for-frontend: a deployed
-component with its own scaling, authentication and outage surface. That is a different thing from
-this class, and calling both "the order facade" is how a network hop becomes invisible in design
-discussions.
+If this aggregation moves out of process, it becomes a remote boundary with its own scaling,
+authentication and outage surface. It is a backend-for-frontend when tailored to a particular
+frontend. Name those responsibilities alongside its facade role so the network hop stays visible.
 
 ## What the facade bought
 
 ```text
 Before                              After
 ──────────────────────────────────  ────────────────────────────────────
-sequence duplicated in 3 callers    one place; the job's missing
-                                      validation is now impossible
+sequence duplicated in 3 callers    one path for routed callers;
+                                      validate bypass paths separately
 transaction boundary implicit and   one @Transactional, reviewed
   different per caller
 adding a step means finding all     one edit
@@ -160,3 +202,6 @@ testing a caller requires the       callers depend on one intention
 
 What got worse: reading the controller no longer tells you what happens on checkout. That is the
 trade — acceptable because the sequence is stable and the name states the intention.
+
+Primary contracts: [Spring transactional invocation](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html)
+and [JDK 25 StructuredTaskScope](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html).

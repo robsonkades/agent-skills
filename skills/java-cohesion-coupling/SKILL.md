@@ -22,23 +22,29 @@ from numbers with no observed change pain behind them.
 
 ## Workflow
 
-1. **Build the real graph.** `jdeps -verbose:class` over the compiled classes, or
+Inspect compiler release/toolchains, resolved dependencies, production artifacts, module
+descriptors and supported launch configuration first. No single authoring baseline is
+declared; tool references use JDK 25, JPMS requires Java 9+, and the example's `List.copyOf`
+requires Java 10+. Use a compatible analyzer and the project's target versions; do not
+introduce modules, upgrade Java or add tools as an incidental cleanup.
+
+1. **Build the real graph.** `jdeps -verbose:class -filter:none` over the compiled classes, plus
    the `requires` edges under JPMS. Bytecode references are the compile/link graph;
    imports can be unused and miss reflection, services, resources, schemas and shared
    infrastructure. The architecture diagram remains a hypothesis, and runtime/semantic
    edges need separate evidence.
-2. **Find strongly connected components first.** A package cycle removes independent
-   compilation and increases reasoning/migration cost, but does not prove every member
-   changes together. Treat the component as one candidate, identify its actual edges, and
+2. **Find strongly connected components first.** A package cycle prevents a simple clean
+   topological build without prebuilt peers and can increase reasoning/migration cost,
+   but does not prove lockstep releases or changes. Treat the component as one candidate, identify its actual edges, and
    break it when the benefit exceeds compatibility and ownership costs.
 3. **Classify the suspicious edges.** What kind of coupling does each carry —
    content, common, control, stamp, data? The kind determines the fix.
 4. **Choose among the three moves** for each bad edge: move a misplaced class, invert the edge
    (that mechanic is the java-dependency-inversion skill), or merge packages that always change
    together and were never independently releasable concepts. Edge count alone does not choose.
-5. **Corroborate with metrics after suspicion, never before.** Afferent/efferent
+5. **Corroborate with metrics.** Afferent/efferent
    counts and instability support a case built from the graph and the change
-   history; they never originate one.
+   history; a metric can direct investigation but cannot establish a defect by itself.
 6. **Verify.** Recompute static and declared graphs, exercise runtime/service-loading paths, and
    confirm the motivating change or policy is easier to enforce. Inversion may add an interface
    edge while removing the harmful concrete edge, so "fewer packages" is not the universal test.
@@ -69,6 +75,11 @@ from numbers with no observed change pain behind them.
   explicit preventive architecture objective.
 
 ## References
+
+For each finding, report the actual edge and artifact/command that exposes it, observed
+change cost or violated policy, proposed move and compatibility checks. If compiled artifacts,
+dependencies or history are unavailable, label the graph incomplete and the migration benefit
+conditional; do not claim an absent edge or measured improvement from source inspection alone.
 
 - [Coupling and cohesion taxonomy](references/taxonomy.md) — each type translated
   to what it looks like in Java, with detection heuristics and false positives.

@@ -18,6 +18,15 @@ signal; resource close, protocol abort, cancellation tokens, deadlines and proce
 needed. Returning a timeout/cancelled result while work continues is a semantic and capacity state,
 not necessarily successful cancellation.
 
+The authoring/API reference baseline is JDK 25; inspect the target project's compiler
+release/toolchain, deployed runtime, thread type and client/provider versions before selecting
+a mechanism. Virtual threads require JDK 21+ for final support; structured concurrency in
+JDK 25 is preview and requires that release's preview compilation/runtime configuration.
+Do not upgrade Java, enable preview or replace the client merely to apply this skill.
+Use `structured-concurrency` for the exact scope API and `timeouts-and-deadlines` for budget
+selection. If ownership or provider semantics are unknown, identify the missing evidence and
+propose a bounded control experiment; do not claim a stop guarantee from the API name.
+
 ## Cancellation contract
 
 ```text
@@ -134,6 +143,11 @@ Do not count `Future` exceptional completion as task termination without a termi
 
 ## Tests
 
+Select cases for the execution/resource boundaries actually involved. Coordinate entry and
+release with latches/barriers or a controllable server, not sleeps; bound every wait and
+provide an independent teardown path. Isolate deliberately uncooperative work in a child
+process so a failing termination assertion cannot hang the test suite.
+
 - cancel before start, during CPU work, at each blocking point and after semantic commit;
 - multiple sources racing with normal completion/failure;
 - swallowed/cleared interrupt and task/framework boundary translation;
@@ -162,12 +176,19 @@ Do not count `Future` exceptional completion as task termination without a termi
 - [ ] Interrupt propagation/translation/restoration is correct at each ownership boundary.
 - [ ] Partial/unknown side effects and commit races have recovery semantics.
 - [ ] Termination and resource release—not only caller return—meet measured bounds.
-- [ ] Shutdown, load storm, target JDK/provider and residual-work tests pass.
+- [ ] Applicable shutdown, load, target JDK/provider and residual-work tests pass; omitted
+      or unavailable checks are stated explicitly.
+
+Report the owning boundary, observed signal and terminal/release evidence, unresolved outcome,
+and one validating test for each proposed fix. Distinguish measured termination latency from
+a configured deadline or an untested estimate.
 
 ## References
 
-- [Interrupt handling by boundary](references/interrupt-protocol.md)
-- [Blocking operations and cancellation adapters](references/uninterruptible-operations.md)
+- [Interrupt handling by boundary](references/interrupt-protocol.md) — read when reviewing
+  a catch/finally boundary, deferred interruption or executor shutdown.
+- [Blocking operations and cancellation adapters](references/uninterruptible-operations.md) —
+  read when a blocking provider, external cancel handle or resource abort must stop work.
 - [`Thread` interruption API](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html#interrupt()>)
 - [`Future`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html)
 - [`CompletableFuture`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)

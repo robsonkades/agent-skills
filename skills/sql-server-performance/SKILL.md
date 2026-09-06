@@ -28,11 +28,18 @@ CPU/schedulers, file latency/growth, log, tempdb, memory, version store, replica
 mssql-jdbc version/properties, pool role, transaction/timeout and batch behavior:
 ```
 
+The engine baseline is SQL Server 2022+; inspect the deployed build, database compatibility,
+Java runtime and resolved driver artifact before version-sensitive advice. This does not authorize
+upgrades. Missing or inaccessible plans, Query Store history or DMVs leave the diagnosis unknown.
+Use existing authorization for bounded captures; actual-plan collection can execute the statement,
+including its writes. DDL, configuration changes and production workload replay need their own
+authorized scope. Redact literals/parameters and plans that expose sensitive data.
+
 ## Workflow
 
 1. Bound the symptom to a query, session, database, replica, or instance and align its interval with
-   workload and configuration changes. Cumulative wait stats without the server start time do not
-   describe the incident.
+   workload and configuration changes. Use interval deltas with restart/reset history; cumulative
+   wait stats since startup or an explicit clear do not isolate the incident.
 2. Classify the dominant mechanism:
    - data: blocking, deadlock, lock escalation, row versioning, transaction scope;
    - plan: estimates, parameter distribution, plan reuse/SET options, conversion, grant/spill;
@@ -53,11 +60,13 @@ mssql-jdbc version/properties, pool role, transaction/timeout and batch behavior
 - Read deadlocks from the `system_health` `xml_deadlock_report` resource graph. The victim is an
   outcome, not necessarily the faulty participant.
 - RCSI provides statement-level versions; SNAPSHOT provides transaction-level consistency and can
-  raise update conflicts. Both move cost to row versions and `tempdb`; measure the longest reader.
+  raise update conflicts. Version storage is in `tempdb` without ADR, or the database's persistent
+  version store with ADR. Inspect generation, retention and cleanup rather than only the longest reader.
 - Parameter sniffing is useful plan specialization. Diagnose skew and ask how many plans the query
   needs before applying recompilation, forcing, hints, or Parameter Sensitive Plan optimization.
 - `RESOURCE_SEMAPHORE` means a query waits for a memory grant. A bad cardinality estimate can inflate
-  a few grants enough to throttle the instance; adding memory treats the consequence.
+  a few grants enough to throttle the instance. Distinguish oversized grants from legitimate
+  concurrent demand or a restrictive resource limit before choosing query, admission or capacity changes.
 - `CXCONSUMER` and `CXPACKET` are not instructions to set global `MAXDOP 1`. Separate useful
   parallelism, skew, threshold for entering parallel plans, scheduler pressure, and worker pressure.
 - A different plan in SSMS can be a different cache key because SET options differ from JDBC. Do not

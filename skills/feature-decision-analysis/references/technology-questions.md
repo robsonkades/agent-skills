@@ -2,8 +2,9 @@
 
 ## The three questions that settle most of it
 
-Asked once, in round 2, after the repository sweep so that they are confirmations rather than
-interrogations:
+Use these as a checklist after the repository sweep. Reuse answers and delegated authority
+already in the conversation; ask only unresolved questions that materially change the work,
+without requiring a fixed round or a separate technology interview:
 
 1. **Which technologies are mandatory for this feature?**
 2. **Which are prohibited?**
@@ -38,8 +39,9 @@ settle, and whose answer changes the work, becomes a question.
 
 Most rows resolve to “the project already does this, and it applies here.” Record provenance as
 PROJECT_EXISTING. Confirmation by the accountable role is warranted only when the authority test
-identifies external behaviour, material cost, policy, data, or expensive reversibility—not merely
-because a row exists.
+identifies an unresolved commitment beyond existing authorization—not merely because a row
+exists or the feature has externally visible behavior. Inspect Java toolchains, resolved
+dependencies and runtime images before version-sensitive choices; do not infer upgrade permission.
 
 ## Asking without smuggling
 
@@ -57,26 +59,30 @@ Good    The project runs Kafka for shipping events (pom.xml:104, two consumers u
 
         For this feature, delivery is 4k events/day with a replay requirement.
 
-        - Reuse the existing cluster: nothing new to operate, topic ownership to agree.
+        - Reuse the existing cluster: no new broker, but topic ownership, ACLs, quotas,
+          retention and replay operations must fit the accepted constraints.
         - An outbox table plus a poller: no broker dependency, adds a code path we
           would maintain, replay is ours to build.
 
-        I recommend reusing the cluster, because the replay requirement is satisfied
-        natively and the volume does not justify a second mechanism.
+        I recommend reuse if retained history, capacity and consumer replay behavior satisfy
+        the required replay window; daily volume alone does not decide the design.
 
         Should this feature reuse Kafka?
 ```
 
-The good version does three things: it separates observation from proposal, it gives the user
-the two facts that actually decide it, and it asks one closed question.
+Ask the example's final question only if reuse is not already authorized. An outbox and Kafka
+are not mutually exclusive: atomic database-change/event-intent capture may require an outbox
+whose relay publishes to Kafka. The comparison must preserve delivery, replay and failure
+requirements; route detailed option evaluation to `feature-solution-analysis`.
 
 ## Calibrate a new dependency as a decision
 
 Adding a library commits the project to its licence, transitive tree, release cadence,
 vulnerability reports and eventual removal. A small, test-only dependency already permitted by the
 project may be an agent-owned implementation choice; a runtime, native, networked, licensed, or
-foundational dependency normally earns explicit review by the accountable engineering/operations
-roles. Before proposing one:
+foundational dependency needs its material commitments checked against existing authorization
+and applicable review policy. Do not require a new confirmation solely from the dependency category.
+Before proposing one:
 
 - Does the project, the framework, or the standard library already do this? Check, with a path.
 - What does the project already depend on that is close?
@@ -91,10 +97,18 @@ It happens: the existing broker cannot give the ordering guarantee, the existing
 invalidation the feature can use. Say it plainly, with the evidence, and present it as a choice
 between accepting a constraint and adding a mechanism:
 
-> The feature needs per-customer ordering. The existing topic is partitioned by region
-> (`KafkaConfig.java:38`), so ordering per customer is not guaranteed today. Options: repartition
-> the topic, which affects the two existing consumers; add a topic; or relax the requirement to
-> per-region ordering. This is a decision I should not take alone — it changes an existing
-> contract.
+> The feature needs per-customer ordering across region changes. The producer keys by region
+> (`KafkaConfig.java:38`); a customer's events can therefore move between partitions, and no
+> cross-partition sequencing is established. Compare customer-keyed publication with a
+> migration plan, a separate topic or explicit sequencing; changing the ordering requirement
+> is a separate product decision. Existing authorization determines who can accept the change.
 
 That is the shape: the constraint, its evidence, the options, and why it is being escalated.
+
+If each customer's events always use one stable region/partition, region keying can preserve
+their partition order. Still inspect producer ordering/retries and consumer processing;
+partition order alone does not prove business-event order or completion order.
+
+## Primary reference
+
+- [Kafka 4.1 design](https://kafka.apache.org/41/design/design/) — partition ordering, consumer positions and retention/compaction semantics. Verify the deployed version and configuration before promising replay or end-to-end ordering.

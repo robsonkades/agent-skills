@@ -5,12 +5,12 @@ implementation. Everything below serves that one property.
 
 ## The level of abstraction
 
-| Too low (implementation)                     | Right (behaviour)                                               |
-| -------------------------------------------- | --------------------------------------------------------------- |
-| "`OrderService.export()` returns a `byte[]`" | "The user receives a CSV file containing their own orders"      |
-| "A row is inserted into `audit_log`"         | "An administrator can see who exported which customer's data"   |
-| "The Redis cache is populated"               | "A repeated request within 60 s does not re-query the database" |
-| "The method throws `OrderNotFound`"          | "Requesting an unknown order returns 404 with the order id"     |
+| Too low (implementation)                     | Right (behaviour)                                                        |
+| -------------------------------------------- | ------------------------------------------------------------------------ |
+| "`OrderService.export()` returns a `byte[]`" | "The user receives a CSV file containing their own orders"               |
+| "A row is inserted into `audit_log`"         | "An administrator can see who exported which customer's data"            |
+| "The Redis cache is populated"               | "The response meets the agreed latency and freshness contract"           |
+| "The method throws `OrderNotFound`"          | "An unknown order receives the agreed non-disclosing not-found response" |
 
 The right-hand column survives a rewrite of the implementation. The left-hand column is a test
 of the design, and it makes every refactoring look like a requirement change.
@@ -24,7 +24,8 @@ future readers cannot tell a constraint from an accident.
 ```
 Given a customer with 3 orders, one of them cancelled
 When they export their orders
-Then the file contains 3 rows, and the cancelled order shows status "CANCELLED"
+Then the file contains 3 data records (plus the agreed header),
+and the cancelled order shows status "CANCELLED"
 ```
 
 It works because it forces the precondition to be stated — which is where the ambiguity usually
@@ -53,23 +54,28 @@ it applies:
 
 ## Non-functional criteria
 
-Written as a scenario with a number and a condition, or they cannot be checked:
+Use measurable scenarios and explicit conditions where appropriate. Qualitative constraints
+can instead name a verifiable rule or review method. The following numbers and policies are
+hypothetical examples, not defaults to impose:
 
 > **Latency.** p99 of `GET /orders` stays under 200 ms at 500 requests/second, measured at the
-> service, with the database responding within 20 ms.
+> service over a specified steady-state window and workload mix, with dependency latency
+> defined by a measured distribution. Record errors, timeouts and achieved arrival rate too.
 
 > **Availability.** The endpoint serves successfully for 99.9% of requests over a calendar
 > month, excluding scheduled maintenance windows announced 24 hours ahead.
 
 > **Data retention.** Export audit records are retained for 7 years and are not deleted by the
-> personal-data erasure process.
+> personal-data erasure process **only if the applicable, authorized retention policy requires
+> this scope**. Determine retained fields and access controls; do not infer a legal exemption.
 
-Each names what is measured, where, under what conditions, and over what window. "p99 under
-200 ms" without the load and the measurement point is unfalsifiable — it is true at 1 rps and
-false at 5000.
+Before accepting such criteria, finish specifying population, window, measurement boundary
+and exclusions. "p99 under 200 ms" without these is underspecified, not proof that it will
+pass at low load or fail at high load. Scheduled-maintenance exclusions need existing
+agreement; do not add them merely to improve the reported availability.
 
 The measurement point matters more than people expect: p99 at the load balancer, at the service
-and at the client differ by the network and by queueing, and arguments about whether an SLO was
+and at the client use different boundaries and possibly different request populations. Arguments about whether an SLO was
 met are usually arguments about which one was meant (latency-statistics, slo-and-alerting).
 
 ## From criteria to tests
@@ -84,21 +90,26 @@ Criteria and tests are not the same artefact, and one criterion is often several
 | "p99 under 200 ms at 500 rps"                         | A load test, not a unit test (load-testing)                       |
 
 Choose the level per the risk each criterion carries (java-testing-strategy). A criterion with
-no derivable test is either not observable — rewrite it — or genuinely a matter of judgement, in
-which case say it is verified by review rather than pretending otherwise.
+no derivable automated test may need manual observation or review. State that method and
+its evidence; rewrite the criterion only if its outcome remains unobservable.
 
 ## Definition of done
 
 The standing policy that defines default expectations, with explicit applicability rules so a
-documentation edit is not forced to invent a migration or runtime signal. A realistic one:
+documentation edit is not forced to invent a migration or runtime signal. An illustrative set to adapt to existing policy, not new mandatory gates:
 
-- [ ] Acceptance criteria met, each with a test or a stated reason there is none
+- [ ] Each applicable criterion has evidence and a met/unmet/unverified status; missing tests or measurements are not a pass
 - [ ] Gates appropriate to the change's risk pass (quality-gates)
 - [ ] Failure behaviour implemented where the change introduces or alters a failure mode
 - [ ] For data/schema changes, migration applies to existing data and recovery/rollback semantics are described
 - [ ] For operational behaviour, existing telemetry covers the new failure mode or new telemetry is added
 - [ ] Assumptions and out-of-scope items recorded in the description
-- [ ] Reviewed (code-review)
+- [ ] Review performed when required by existing policy (code-review)
 
 The value is in stable defaults plus visible exceptions. Tailoring by applicability is not waiving
 quality; silently deleting a relevant control under deadline is.
+
+A load test demonstrates its workload and window, not a month's future availability. A
+single two-user fixture does not establish authorization for every role and resource; add
+cases for the changed access rules. Keep acceptance evidence separate from a claim of
+exhaustive correctness.

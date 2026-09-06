@@ -35,11 +35,11 @@ operates two architectures and pays for both.
 Avoid a parallel rewrite while the original changes unless a bounded scope,
         compatibility strategy and funded cutover make drift controllable.
 
-Every step ships and delivers value on its own.
-        A step that only pays off at the end will not be funded to the end.
+Keep steps bounded with an observable benefit or prerequisite they unlock.
+        Fund enabling work explicitly rather than assuming immediate revenue.
 
-Decommissioning is the deliverable.
-        New code is not progress; removed old code is.
+Track decommissioning alongside business and risk-reduction outcomes.
+        New code alone does not prove reduced coexistence cost.
 
 Understand before changing; pin before understanding fully.
         Characterisation tests capture behaviour you have not yet
@@ -58,8 +58,8 @@ The legacy model must not infect the new one.
    the HTTP API or the batch output — before touching anything.
 3. **Pick the first slice by value and by risk**, not by architecture: something that changes
    often (so the pain is real), is reasonably self-contained, and whose failure is survivable.
-4. **Establish data ownership before code ownership.** Two writers to one table is the
-   constraint that blocks everything else.
+4. **Establish data ownership before transferring writes.** Shared writers constrain
+   independent semantic changes; compatible additive work and read extraction can proceed.
 5. **Strangle**: route the slice's traffic to new code, keep the old path available, and
    remove it once the new one has proven itself.
 6. **Decommission explicitly**, as a scheduled deliverable with a date. Otherwise both
@@ -94,8 +94,8 @@ There are no tests
           real production inputs where possible.
 
 The programme has produced new services and removed nothing
-        → stop building. Decommission one thing. Two architectures cost
-          more than either.
+        → investigate removal blockers and coexistence cost. Prioritize a
+          bounded retirement path; continue independent justified work.
 
 A slice's old and new paths must both work for a long period
         → route by feature flag per case, with an explicit owner per
@@ -104,6 +104,9 @@ A slice's old and new paths must both work for a long period
 
 ## Rules
 
+- Inspect the project's JDK/toolchain, framework/database versions and compatibility contracts
+  before applying snippets. They illustrate application-specific seams, not a complete program
+  or authorization to upgrade the stack.
 - **A rewrite is a bet that the new system will catch up before the old one moves.** It
   rarely does, and the failure is usually organisational rather than technical: the funding
   outlasts neither the roadmap nor the sponsor.

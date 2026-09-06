@@ -3,7 +3,11 @@
 Three variants — card settlement, direct debit, and an internal ledger sweep — shared a sequence:
 load a batch, validate it, call a settlement provider, record results, emit a report.
 
-## Before — an abstract base with six hooks
+Illustrative scenario, not a measured incident report. Partial Java 17 examples omit domain
+types/imports, persistence and provider adapters. The test snippets need existing JUnit/AssertJ
+dependencies and fixtures; they are not a standalone test suite.
+
+## Before — an abstract base with seven overridable methods
 
 ```java
 public abstract class SettlementRun {
@@ -31,20 +35,20 @@ public abstract class SettlementRun {
 }
 ```
 
-Six hooks, two of them optional, a mutable `batch` field, and a non-final `run`. Three defects
+Seven overridable steps (including report), two optional no-op hooks, a mutable `batch` field,
+and a non-final `run`. Three defects
 followed from that shape.
 
 **One subclass overrode `run`.** The ledger sweep needed no provider call, so it replaced the
-template method entirely — the sequence guarantee was gone and nobody noticed for a year. When a
-mandatory audit step was added to `run`, the ledger sweep silently did not get it.
+template method entirely. If a
+mandatory audit step were added to `run`, the ledger sweep would not get it.
 
 **`validate()` and `settle()` communicated through the field.** `validate` filtered `batch` in
 place; `settle` read it. A change to `validate` that returned early left `settle` operating on
 unvalidated rows.
 
 **The shared instance was not thread-safe.** When two dates were reprocessed concurrently during a
-backfill, the two runs shared one `batch` field. The result was a settlement file containing rows
-from both dates — discovered by reconciliation, three days later.
+backfill, the two runs could share one `batch` field and contaminate results across dates.
 
 ## After — a final template taking composed steps
 
@@ -55,18 +59,32 @@ public final class SettlementRun {
     private final AuditLog audit;
     private final Clock clock;
 
-    public RunReport run(LocalDate date, Deadline deadline) {
-        var context = new RunContext(date, RunId.newId(), clock.instant(), deadline);
+    public SettlementRun(SettlementSteps steps, AuditLog audit, Clock clock) {
+        this.steps = Objects.requireNonNull(steps);
+        this.audit = Objects.requireNonNull(audit);
+        this.clock = Objects.requireNonNull(clock);
+    }
+
+    public RunReport run(LocalDate date, RunId logicalRunId, Deadline deadline) {
+        var context = new RunContext(date, Objects.requireNonNull(logicalRunId), clock.instant(), deadline);
         audit.runStarted(context);
 
-        var batch = steps.load(context);
-        var validated = steps.validate(batch, context);        // returns; does not mutate
-        var results = steps.settle(validated, context);
-        steps.record(results, context);
+        try {
+            var batch = steps.load(context);
+            var validated = steps.validate(batch, context);    // returns; does not mutate
+            var results = steps.settle(validated, context);
+            steps.record(results, context);
 
-        var report = RunReport.of(results, context);
-        audit.runFinished(context, report);                    // cannot be skipped by a variant
-        return report;
+            var report = RunReport.of(results, context);
+            audit.runFinished(context, report);                // success path only
+            return report;
+        } catch (RuntimeException failure) {
+            try { audit.runFailed(context, failure); }
+            catch (RuntimeException auditFailure) {
+                if (auditFailure != failure) failure.addSuppressed(auditFailure);
+            }
+            throw failure;
+        }
     }
 }
 
@@ -80,31 +98,33 @@ public interface SettlementSteps {
 
 What each change bought:
 
-- **`final` class, no inheritance.** No variant can replace the sequence, so the audit calls are
-  guaranteed. The ledger sweep's "no provider call" became a `SettlementSteps` implementation whose
+- **`final` class, no inheritance.** Variants cannot replace the sequence. Completion audit runs
+  only after successful steps; failure audit is attempted without masking the primary exception.
+  Neither guarantees a durable audit across process crashes or audit outages. The ledger sweep's
+  "no provider call" becomes a `SettlementSteps` implementation whose
   `settle` returns results directly — expressed in a step rather than by discarding the algorithm.
 - **State flows through parameters and return types.** `validate` returns a `ValidatedBatch`, which
-  `settle` requires. The type system now enforces the order: settling an unvalidated batch does not
-  compile.
-- **`RunContext` per run.** No fields, so one `SettlementRun` bean serves concurrent backfills
-  safely. The cross-date contamination is not merely fixed but unrepresentable.
+  `settle` requires. This prevents passing Batch directly, but constructors/factories must protect
+  ValidatedBatch invariants; a type name does not prove validation.
+- **`RunContext` per run.** Run data no longer occupies template fields. Concurrent safety still
+  depends on the shared Steps, AuditLog, Clock and their collaborators and callbacks.
 - **Optional hooks disappeared.** `beforeSettle` and `afterRun` were used by one variant each; both
-  became part of that variant's `settle` and `record`. A hook existing for one implementation is
-  usually a sign the sequence belongs to that implementation.
+  may become part of variant steps only after checking ordering/failure behavior. Moving afterRun
+  into record changes its position relative to reporting, so requires an explicit contract decision.
 
 ## The remote step's failure semantics
 
 `settle` calls a provider. The template owns what individual steps cannot decide alone:
 
 ```java
-public RunReport run(LocalDate date, Deadline deadline) {
+public RunReport run(LocalDate date, RunId logicalRunId, Deadline deadline) {
     ...
     Results results;
     try {
         results = steps.settle(validated, context);
-    } catch (SettlementUnavailable e) {                 // transient
+    } catch (SettlementUnavailable e) {                 // may include unknown outcome
         audit.runAbandoned(context, e);
-        throw new RunAbandoned(context.runId(), e);     // the scheduler retries the whole run
+        throw new RunAbandoned(context.runId(), e);     // reconcile/retry under provider contract
     } catch (SettlementRejected e) {                    // permanent
         audit.runFailed(context, e);
         throw e;                                        // no retry; a human looks at it
@@ -119,30 +139,39 @@ And the question a partial run raises is answered explicitly rather than discove
 What a half-finished run leaves behind
   load        nothing — read only
   validate    nothing — pure
-  settle      provider-side effects, keyed by RunId so a retry is
-              deduplicated by the provider (idempotency)
+  settle      provider-side effects; stable logical run/batch identity and
+              per-item operation keys under an explicit provider dedup contract
   record      written in one transaction with the run's status row, so
-              a crash before commit leaves the run re-runnable
+              a crash before commit does not undo provider-side effects
 ```
 
-Making `RunId` the provider's idempotency key is what allows the scheduler to retry the whole run
-safely. Without it, a run that failed after settling half the batch would double-settle on retry —
-the failure that makes people afraid to retry anything.
+Persist logicalRunId before the first attempt and reuse it; attempt IDs may differ for telemetry.
+Pin the batch membership/payload, use per-item keys when calls settle separate items, and verify
+provider scope, retention and payload-binding rules. A fresh ID or changed batch is a new operation.
+After timeout or record failure, reconcile unknown/partial provider outcomes; retrying the whole
+run is not safe merely because it carries an ID. One local transaction cannot cover the provider.
+Provider contracts differ; for example, [Stripe idempotency](https://docs.stripe.com/api/idempotent_requests)
+defines payload comparison and key retention. Do not assume that contract for another provider.
+
+The run deadline must be monotonic and propagated to blocking clients; passing Deadline alone
+does not enforce it. Resource-owning steps need cleanup on success/failure. The failure sketch is
+an alternative policy illustration, not an extra catch layer to paste into the first example.
 
 ## Migration, step by step
 
-The conversion ran over four merges, each independently reviewable:
+An illustrative migration plan, after inspecting callers and compatibility:
 
-1. **`run` made `final`**, which immediately broke the ledger sweep's override — surfacing the
-   defect rather than hiding it. That variant was given a temporary no-op `settle` step.
+1. **Characterize run overrides and public contracts.** Move the ledger sweep's behavior into a
+   real local settlement step; make run final only once permitted overrides are migrated.
 2. **`SettlementSteps` introduced**, with the abstract base implementing it by delegating to its
    own hooks. Behaviour identical; nothing else changed.
 3. **Variants converted one at a time.** Each became independently testable at the moment it was
    converted, which is what kept the work moving.
 4. **The abstract base deleted**, along with `protected Batch batch`.
 
-Step 1 is worth doing on its own even if the rest never happens: it costs nothing and it reveals
-every place where a subclass has quietly taken over the algorithm.
+Making an externally overridable method final can break source and binary clients. Preserve a
+compatibility adapter/deprecation window when external subclasses cannot migrate together.
+See [JLS 17 final-method compatibility](https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html#jls-13.4.17).
 
 ## The one hierarchy that stayed
 
@@ -166,9 +195,7 @@ abstract class SettlementStepsContractTest {
     @Test final void record_and_the_run_status_commit_together() { ... }
 }
 
-class CardSettlementStepsTest extends SettlementStepsContractTest { }
-class DirectDebitSettlementStepsTest extends SettlementStepsContractTest { }
-class LedgerSweepStepsTest extends SettlementStepsContractTest { }
+// Concrete test subclasses must implement steps() and nonEmptyBatch() with isolated fixtures.
 ```
 
 The subclass supplies a value and inherits a specification, base and subclasses live in one module
@@ -176,5 +203,5 @@ and are released together, and the base's self-use is the point. The test method
 because a variant "fixing" a contract test would remove the guarantee the base exists to provide.
 
 The first test in that list encodes the second defect from the original design: `validate` must not
-mutate. It was written the day the bug was found, and it is inherited by every future variant —
-which is what makes it worth more than a fix in one class.
+mutate. It requires a deep enough baseline copy and semantic equality covering mutable contents;
+inheritance alone cannot establish that those assertions detect all changes.

@@ -3,15 +3,16 @@
 ## The wire shape, with contract and diagnostics separated
 
 RFC 9457 (`application/problem+json`) defines `type`, `title`, `status`, `detail` and
-`instance`, and permits extension members. The machine-readable part goes in extension
-members, never encoded inside `detail`.
+`instance`, and permits extension members. `type` is the standard primary problem identifier; application-specific machine data can
+use extension members, never encoded inside `detail`. The body `status` is advisory; use the
+actual HTTP status for HTTP processing and handle inconsistencies conservatively.
 
 ```json
 {
   "type": "https://errors.example.com/payment/insufficient-funds",
   "title": "Insufficient funds",
   "status": 422,
-  "detail": "Balance 12.30 is below the requested 40.00",
+  "detail": "The payment cannot be completed with the available funds.",
   "instance": "/payments/9f2c",
   "code": "PAYMENT_INSUFFICIENT_FUNDS",
   "outcome": "REJECTED",
@@ -30,6 +31,12 @@ Documenting `detail` as non-contract is what stops clients parsing it. Left unsa
 
 ## The record
 
+Partial Java 16+ internal representation, not a serializer-ready wire guarantee. Define
+extension encoding explicitly, including duration units, null/omission and URI handling.
+`Outcome` and `RetryCondition` below stand for application types with conservative handling
+of unknown/missing wire values; ordinary closed-enum deserialization can fail before the
+adapter runs. Decode unknown strings without classifying the effect as rejected.
+
 ```java
 public record ProblemDetails(
         URI type, String title, int status, String detail, URI instance,
@@ -41,7 +48,7 @@ public record ProblemDetails(
         String correlationId) {}
 ```
 
-Spring exposes `ProblemDetail` and the `ErrorResponse` contract for producing this shape from
+Spring Framework 6+ exposes `ProblemDetail` and the `ErrorResponse` contract for producing this shape from
 a handler; the in-process exception hierarchy that feeds it is java-exception-design's
 subject. What matters here is that the mapping from an internal failure to a `code` lives in
 one boundary component, so known mappings are enumerable/testable and unknown values have one
@@ -61,17 +68,22 @@ documented conservative path.
 
 ## The one place a status becomes a decision
 
-```java
-// Conceptual: the adapter boundary. Above this line no caller sees a status code or a body.
-static Failure toFailure(int status, ProblemDetails body) {
-    if (body != null) {
-        return new Failure(body.code(), body.outcome(), body.retryCondition(),
-                body.retryAfter(), body.operationStatus());
-    }
-    // Status alone cannot prove whether a mutating request applied.
-    return Failure.unclassifiedHttp(status, Outcome.UNKNOWN);
-}
+The boundary adapter follows this pseudocode, with HTTP parsing and validation kept outside
+the domain failure type:
+
+```text
+Read actual HTTP status, media type and bounded body.
+If absent, malformed, inconsistent or not an accepted problem contract:
+    preserve status; classify mutation outcome as UNKNOWN after dispatch.
+Resolve the problem type; do not automatically fetch its URI.
+Interpret known extensions using the method's published contract.
+For unknown/missing code, outcome or retry condition, use conservative defaults.
+Validate delay and operation-status URI before returning a domain failure.
 ```
+
+Do not trust an arbitrary non-null body as retry authority. Status URIs need the client's
+allowed scheme/authority and credentials policy; never forward credentials to an arbitrary
+URI supplied by a peer.
 
 The shape this exists to eliminate:
 
@@ -82,7 +94,11 @@ if (e.getMessage().contains("duplicate key")) { ... }   // couples the client to
 
 The client still evaluates method semantics, stable idempotency key, deadline and current
 state. `AFTER_STATE_CHANGE` means reread/recompute; it does not mean replay identical bytes.
-`AFTER_DELAY` supplies a minimum hint, not a reservation. An unstructured HTTP failure after
+`AFTER_DELAY` supplies a minimum hint, not a reservation. HTTP `Retry-After` is an HTTP-date
+or non-negative integer seconds, not a Java Duration JSON value. For relative advice round
+positive fractional seconds up (1 ms → 1 s, 1001 ms → 2 s), reject invalid/overflowing input,
+and respect the remaining deadline; do not shorten the hint just to fit it. Define clock-skew
+handling for dates and precedence if both header and extension advice exist. An unstructured HTTP failure after
 dispatch is `UNKNOWN` for a mutation, even if the status often suggests transient infrastructure.
 
 Classifying the outcome for retry purposes — transient, permanent, ambiguous — and acting on
@@ -97,7 +113,7 @@ The status enum provides vocabulary, not method-specific outcome certainty for f
 | --------------------- | -------------------------------------------------- | ---------------------------------------------------------------------- |
 | `INVALID_ARGUMENT`    | The request is wrong and will stay wrong           | Permanent. Fix the input                                               |
 | `FAILED_PRECONDITION` | System state forbids it right now                  | Do not retry until the state changes                                   |
-| `ABORTED`             | Concurrency conflict, typically a transaction      | Retry the enclosing operation, not the call                            |
+| `ABORTED`             | Concurrency conflict, typically a transaction      | Restart enclosing operation only when safe under its contract          |
 | `ALREADY_EXISTS`      | Resource already exists; identity/cause may differ | Treat as prior success only after matching operation/resource identity |
 | `UNAVAILABLE`         | Service currently unavailable or path failed       | Retry safe operation within policy; mutation outcome may be unknown    |
 | `RESOURCE_EXHAUSTED`  | Quota or capacity limit                            | Back off; honour any advice the server attached                        |
@@ -129,3 +145,4 @@ The status enum provides vocabulary, not method-specific outcome certainty for f
 - [RFC 9457: Problem Details for HTTP APIs](https://www.rfc-editor.org/rfc/rfc9457)
 - [gRPC status codes](https://grpc.io/docs/guides/status-codes/)
 - [Google RPC error details](https://cloud.google.com/apis/design/errors#error_details)
+- [RFC 9110 Retry-After](https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.3) — date or integer delay-seconds.

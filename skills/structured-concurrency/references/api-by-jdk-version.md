@@ -12,29 +12,35 @@
 
 The version lock is the decisive one for anything shipped as an artefact: a preview build is
 not "a jar that runs on 25+", it is "a jar that runs on exactly this JDK". For an
-application deployed as a container image with a pinned JDK that is acceptable; for a
-library or a shared jar it is not.
+application or shared library, acceptability depends on all consumers owning that feature-release
+and preview contract; it is not a universal prohibition on shared jars.
 
-If that is too expensive today, the same fan-out with the same **semantics minus the
-guarantee** is a virtual-thread executor with explicit joins and an explicit cancel in a
-`finally` — more code, no preview flag, and the leak risk back in your hands.
+If that is too expensive, an executor on a compatible final JDK can use explicit joins,
+cancellation and termination waits. Completion policy, context and cleanup remain application
+responsibilities; its semantics are not automatically identical to a scope.
 
 ## Signature drift
 
-| Element                       | JDK 21–24 (JEP 453/462/480/499)                          | JDK 25 (JEP 505)                            | JDK 26 (JEP 525)                    | JDK 27 (JEP 533, proposed)             |
-| ----------------------------- | -------------------------------------------------------- | ------------------------------------------- | ----------------------------------- | -------------------------------------- |
-| Construction                  | `new StructuredTaskScope<>()`, `new ShutdownOnFailure()` | `StructuredTaskScope.open(...)`             | unchanged                           | extra `open` overload                  |
-| All-or-fail policy            | `ShutdownOnFailure` + `throwIfFailed`                    | `open()` or `Joiner.allSuccessfulOrThrow()` | unchanged                           | `…OrThrow` throws `ExecutionException` |
-| First success                 | `ShutdownOnSuccess` + `result()`                         | `Joiner.anySuccessfulResultOrThrow()`       | **`Joiner.anySuccessfulOrThrow()`** | overload taking an exception mapper    |
-| `allSuccessfulOrThrow` result | n/a                                                      | `Stream<Subtask<T>>`                        | **`List<T>`**                       | `List<T>`                              |
-| Wait for everything           | `join()` + inspect futures                               | `Joiner.awaitAll()`                         | unchanged                           | result type revised                    |
-| Stop at a condition           | n/a                                                      | `Joiner.allUntil(Predicate)`                | unchanged                           | unchanged                              |
-| Config parameter              | constructor arguments                                    | `Function<Config, Config>`                  | **`UnaryOperator<Config>`**         | `UnaryOperator<Config>`                |
-| Custom joiner callbacks       | n/a                                                      | `onFork`, `onComplete`, `result`            | adds **`onTimeout()`**              | adds exception type parameter          |
-| `fork` returns                | `Subtask<T>` (since 21)                                  | `Subtask<T>`                                | `Subtask<T>`                        | `Subtask<T>`                           |
-| Failure from `join`           | `ExecutionException` via `throwIfFailed`                 | `FailedException`                           | `FailedException`                   | `ExecutionException`                   |
+| Element                       | JDK 21–24 (JEP 453/462/480/499)                          | JDK 25 (JEP 505)                            | JDK 26 (JEP 525)                    | JDK 27 (JEP 533, delivered)                                 |
+| ----------------------------- | -------------------------------------------------------- | ------------------------------------------- | ----------------------------------- | ----------------------------------------------------------- |
+| Construction                  | `new StructuredTaskScope<>()`, `new ShutdownOnFailure()` | `StructuredTaskScope.open(...)`             | unchanged                           | extra `open` overload                                       |
+| All-or-fail policy            | `ShutdownOnFailure` + `throwIfFailed`                    | `open()` or `Joiner.allSuccessfulOrThrow()` | unchanged                           | `…OrThrow` throws `ExecutionException`                      |
+| First success                 | `ShutdownOnSuccess` + `result()`                         | `Joiner.anySuccessfulResultOrThrow()`       | **`Joiner.anySuccessfulOrThrow()`** | overload taking an exception mapper                         |
+| `allSuccessfulOrThrow` result | n/a                                                      | `Stream<Subtask<T>>`                        | **`List<T>`**                       | `List<T>`                                                   |
+| Wait for everything           | `join()` + inspect subtasks                              | `Joiner.awaitAll()`                         | unchanged                           | `awaitAll()` removed; select/customize policy               |
+| Stop at a condition           | n/a                                                      | `Joiner.allUntil(Predicate)`                | unchanged                           | unchanged                                                   |
+| Config parameter              | constructor arguments                                    | `Function<Configuration, Configuration>`    | **`UnaryOperator<Configuration>`**  | `UnaryOperator<Configuration>`                              |
+| Custom joiner callbacks       | n/a                                                      | `onFork`, `onComplete`, `result`            | adds **`onTimeout()`**              | `onTimeout` replaced by `timeout`; exception type parameter |
+| `fork` returns                | `Subtask<T>` (since 21)                                  | `Subtask<T>`                                | `Subtask<T>`                        | `Subtask<T>`                                                |
+| Failure from `join`           | `ExecutionException` via `throwIfFailed`                 | `FailedException`                           | `FailedException`                   | `ExecutionException`                                        |
 
 Read one column. Mixing two is how code ends up calling a method that exists in neither.
+Examples are partial: supply domain types/functions and imports for the scope, nested
+`Subtask`/`Joiner` and collection/time types. Preview requires the matching feature-release
+compiler, not just a newer javac's `--release`. JDK 27 integration does not establish vendor GA.
+On [JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html),
+fork/shutdown may also be called by contained threads, while join/close are owner-only.
+Do not carry that fork permission into JDK 25's owner-only API.
 
 ## The same fan-out, per version
 
@@ -96,7 +102,7 @@ try (var scope = StructuredTaskScope.open()) {      // the default policy IS shu
 
 Mapping table for the rest:
 
-| JDK 21–24                                  | JDK 25+                                                               |
+| JDK 21–24                                  | JDK 25 migration (recheck 26/27 above)                                |
 | ------------------------------------------ | --------------------------------------------------------------------- |
 | `new ShutdownOnFailure()`                  | `open()`                                                              |
 | `scope.throwIfFailed(f)`                   | `catch (FailedException e)` and map `e.getCause()`                    |
@@ -117,3 +123,6 @@ javap -v YourScope.class | grep -i 'major\|minor'   # minor version 65535 == pre
 
 A `minor version 65535` in a class file is the preview marker. Seeing it in a released
 artefact means that artefact is pinned to one JDK, whether or not anyone intended it.
+
+Primary references: [JDK 25 API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html),
+[JEP 525](https://openjdk.org/jeps/525), [JEP 533](https://openjdk.org/jeps/533).

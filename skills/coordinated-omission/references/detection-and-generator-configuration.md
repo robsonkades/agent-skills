@@ -14,17 +14,24 @@ generator saturation, scenario shutdown/grace period, connection limits, filteri
 shedding or response-coupled workers. Classify where the loss occurred.
 
 ```python
-scheduled = len(schedule)
-started = len(actual_start_times)
+# Partial reconciliation sketch: all IDs refer to the same original-attempt cohort.
+# Retries/hedges have separate attempt IDs and their own stage counters.
+due_ids = {item.id for item in schedule if item.due <= cutoff}
+started_ids = {event.id for event in starts if event.time <= cutoff}
+outstanding_due_ids = due_ids - started_ids
+started = len(started_ids)
 terminal = completed + failed + timed_out + cancelled
 
 assert terminal <= started
-schedule_deficit = scheduled - started
 unreconciled = started - terminal - still_in_flight
 ```
 
-`schedule_deficit > 0` proves the requested schedule was not realised. Coordinated omission is the
-diagnosis only when slow/in-flight work governed those missed or delayed starts relative to the
+Use mutually exclusive terminal outcomes counted by the same cutoff, and snapshot counters
+consistently. A timeout and its late response are one client terminal outcome; track the server's
+late completion separately. Nonempty `outstanding_due_ids` means due starts are outstanding at
+the cutoff, not that they will never start. At final drain, classify them as dropped, cancelled
+before start or unresolved. Counts alone cannot detect lateness after every item eventually starts.
+Coordinated omission is the diagnosis when slow/in-flight work governed missed or delayed starts relative to the
 target arrival model. There is no universal 2% threshold: one missed start can matter for a tiny
 safety test, while an explicitly modelled shed fraction can be acceptable if reported.
 
@@ -34,10 +41,15 @@ For every scheduled item retain:
 
 ```text
 schedule lag   = actual_start − scheduled_start
-service clock  = completion − actual_start
+response clock = completion − actual_start
 end-to-end     = completion − scheduled_start
 inter-arrival  = actual_start[i] − actual_start[i−1]
 ```
+
+The response clock includes network and server queueing as well as execution; it is not pure
+service time. Define actual start precisely (task entry, connection acquisition or wire send).
+Durations require a shared monotonic clock domain; raw `nanoTime` values from different JVMs
+are not comparable. Distributed alignment requires an explicit mapping with uncertainty.
 
 Plot schedule lag and actual inter-arrivals against in-flight count, prior completions, generator
 CPU/event-loop/GC and socket/connection limits. A sawtooth lag, missing starts, or issue gaps aligned

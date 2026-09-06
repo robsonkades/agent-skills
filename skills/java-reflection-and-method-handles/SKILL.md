@@ -28,9 +28,16 @@ which becomes an execution primitive once initialization, construction or invoca
 
 ## Workflow
 
+0. **Inspect the target and ownership contract.** Read compiler release/toolchains, actual
+   JDK/vendor, module descriptors, launch flags, loader boundaries and native-image/tool
+   versions. The Java snippets fit Java 17 unless stated: method handles need Java 7+,
+   VarHandles/JPMS/privateLookupIn Java 9+, sealed types Java 17+ and non-preview pattern
+   switches Java 21+. Preserve the project target; do not enable preview, upgrade or open
+   modules implicitly. Missing launch/loader evidence makes an access diagnosis conditional.
 1. **Ask what varies.** If the set of implementations is known at build time, an interface, a
-   sealed hierarchy, a map of suppliers, or `ServiceLoader` covers it — with compile-time
-   checking. Reflection is for genuinely open sets: plugins, frameworks, tooling.
+   sealed hierarchy or map of suppliers often suffices. `ServiceLoader` keeps invocation
+   typed but provider discovery/instantiation can still fail at runtime. Dynamic access can
+   be appropriate for plugins, frameworks and tooling; inspect the actual variability.
 2. **If it must be dynamic, decide where the openness stops.** One factory, one registry, one
    adapter — never scattered `getDeclaredMethod` calls through business code.
 3. **Validate tokens before resolution.** Map external tokens to code-owned types/operations.
@@ -85,11 +92,10 @@ which becomes an execution primitive once initialization, construction or invoca
   class, to mutate an immutable object, or to "just get this working" makes the private surface
   a de facto API that the next refactor breaks. In tests, prefer constructing the object
   through its real API — java-test-design.
-- Treat native code (JNI, and the Foreign Function & Memory API) as the last option: it forfeits
-  the JVM's safety properties, crashes the process rather than throwing, and complicates GC,
-  debugging and deployment. When it is genuinely required, the FFM API is the modern path — it
-  is safer, statically typed, and requires explicit enabling of restricted operations — and
-  jni-and-ffm and off-heap-memory own the mechanics.
+- Native interop is a different boundary: foreign code can crash or corrupt the process,
+  although Java-side checks may throw. FFM became final in Java 22; API support and native-access
+  configuration depend on the target release. It is not a replacement for ordinary reflection;
+  hand native interop decisions to jni-and-ffm and off-heap-memory.
 - Closed-world native-image analysis may infer constant reflective edges and framework metadata,
   but runtime-computed access needs owned reachability metadata. Missing edges may fail at build
   time or only on an untrained runtime path. Test the native artifact itself; this constraint can
@@ -104,14 +110,19 @@ which becomes an execution primitive once initialization, construction or invoca
 
 ## Acceptance gate
 
-- Resolve all required members/providers at startup and report missing/ambiguous signatures with
-  class loader, module and code source.
-- Test named modules, classpath/unnamed modules, duplicate plugin loaders, reload/unload and the
-  exact JDK/native-image artifact.
+- Resolve mandatory members/providers during their owner's startup and optional plugins during
+  their own lifecycle; report missing/ambiguous signatures with loader/module/code source.
+- Test the deployment modes actually supported: named/classpath modules, duplicate loaders,
+  reload/unload and native artifacts where applicable. Do not build unused modes merely to
+  satisfy this list.
 - Exercise primitive/reference/null/varargs signatures and verify `WrongMethodTypeException`,
   target exceptions and access failures are translated without losing causes.
 - Benchmark only after proving the reflective path is material; include direct/interface,
   `Method.invoke`, stable/unstable handles and generated alternatives with allocation profiling.
+
+Deliver the dynamic boundary, allowed operations, exact signature/access requirements, lifecycle
+and failure mapping, plus checks actually run. Separate structural/access correctness from
+unmeasured speed and untested native-image/reload claims.
 
 ## References
 

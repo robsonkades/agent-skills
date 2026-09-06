@@ -2,90 +2,64 @@
 
 ## Side by side
 
-| Property                   | `Iterator<T>`     | `Stream<T>`                       | `Spliterator<T>`           |
-| -------------------------- | ----------------- | --------------------------------- | -------------------------- |
-| Who drives                 | The caller        | The pipeline                      | Either                     |
-| Laziness                   | Inherent          | Yes, with operation fusion        | Inherent                   |
-| Reusable                   | No                | No — one terminal operation       | No                         |
-| Can pause and resume       | **Yes**           | No                                | Yes (`tryAdvance`)         |
-| Two traversals interleaved | **Yes**           | No                                | Yes                        |
-| Removal during traversal   | `remove()`        | No                                | No                         |
-| Parallelism                | No                | Yes                               | The mechanism for it       |
-| Needs closing              | Sometimes, ad hoc | `AutoCloseable`; required for I/O | Depends on the source      |
-| Cost to implement          | Moderate          | Free once you have a Spliterator  | Moderate — but yields both |
+| Property                   | `Iterator<T>`       | `Stream<T>`                       | `Spliterator<T>`           |
+| -------------------------- | ------------------- | --------------------------------- | -------------------------- |
+| Who drives                 | The caller          | The pipeline                      | Either                     |
+| Laziness                   | Source-dependent    | Yes, with operation fusion        | Source-dependent           |
+| Reusable                   | No                  | No — one terminal operation       | No                         |
+| Can pause and resume       | **Yes**             | No                                | Yes (`tryAdvance`)         |
+| Two traversals interleaved | **Yes**             | No                                | Yes                        |
+| Removal during traversal   | Optional `remove()` | No                                | No                         |
+| Parallelism                | No                  | Yes                               | The mechanism for it       |
+| Needs closing              | Sometimes, ad hoc   | `AutoCloseable`; required for I/O | Depends on the source      |
+| Cost to implement          | Moderate            | Free once you have a Spliterator  | Moderate — but yields both |
 
-The two rows in bold are the only ones that make a hand-written `Iterator` the right answer:
-traversals the caller must control, and algorithms that advance two sequences in step (merge
-join, diff, zip with early termination).
+Caller-controlled traversal and advancing two sequences in step are common Iterator use cases.
+An existing pull protocol or removal contract can also justify it; do not add Spliterator merely
+to match a preferred shape. Iteration need not compute lazily: the source may already be buffered.
 
-## Implement Spliterator, get everything
+## Adapting a traversal
 
-```java
-final class PageSpliterator<T> extends Spliterators.AbstractSpliterator<T> {
-
-    private final PageFetcher<T> fetcher;
-    private Iterator<T> current = Collections.emptyIterator();
-    private Cursor next = Cursor.start();
-
-    PageSpliterator(PageFetcher<T> fetcher) {
-        super(Long.MAX_VALUE, ORDERED | NONNULL);      // not SIZED: the total is unknown
-        this.fetcher = fetcher;
-    }
-
-    @Override
-    public boolean tryAdvance(Consumer<? super T> action) {
-        while (!current.hasNext()) {
-            if (next == Cursor.END) return false;
-            var page = fetcher.fetch(next);
-            current = page.items().iterator();
-            next = page.nextCursor();
-        }
-        action.accept(current.next());
-        return true;
-    }
-}
-```
-
-```java
-Stream<T> stream = StreamSupport.stream(new PageSpliterator<>(fetcher), false);
-Iterator<T> it = Spliterators.iterator(new PageSpliterator<>(fetcher));
-```
-
-One implementation, both abstractions, and the stream gets laziness and short-circuiting for
-free — `stream.limit(10)` fetches one page, not all of them.
+Use `StreamSupport.stream(spliterator, false)` or `Spliterators.iterator(spliterator)`.
+These adapters do not invent resource ownership or cancellation. For a bounded remote example,
+read [the worked example](worked-example.md); it overrides batching `trySplit` to avoid prefetch.
+A sequential `limit(10)` needs as many pages as provide ten events, potentially more with empty
+pages or filtering. It does not universally imply one fetch.
 
 ## Characteristics, and why lying is expensive
 
-| Characteristic | Promise                                             | What the pipeline does with it                             |
-| -------------- | --------------------------------------------------- | ---------------------------------------------------------- |
-| `SIZED`        | `estimateSize()` is exact                           | Pre-sizes arrays and collectors; enables `count()` elision |
-| `SUBSIZED`     | Every split is also `SIZED`                         | Balanced parallel decomposition                            |
-| `ORDERED`      | Encounter order is meaningful                       | Preserves order; makes `findFirst` and `skip` meaningful   |
-| `DISTINCT`     | No two elements are `equals`                        | `distinct()` becomes a no-op                               |
-| `SORTED`       | Elements come out sorted by the reported comparator | `sorted()` becomes a no-op                                 |
-| `NONNULL`      | No element is null                                  | Skips null checks                                          |
-| `IMMUTABLE`    | The source cannot change during traversal           | No need for fail-fast checks                               |
-| `CONCURRENT`   | The source may be modified safely during traversal  | Different traversal strategy                               |
+| Characteristic | Promise                                                   | What the pipeline does with it                             |
+| -------------- | --------------------------------------------------------- | ---------------------------------------------------------- |
+| `SIZED`        | Exact before traversal/splitting absent structural change | Pre-sizes arrays and collectors; enables `count()` elision |
+| `SUBSIZED`     | Every descendant is SIZED and SUBSIZED                    | Exact sizing of descendant splits, not balance             |
+| `ORDERED`      | Encounter order is meaningful                             | Preserves order; makes `findFirst` and `skip` meaningful   |
+| `DISTINCT`     | No two elements are `equals`                              | `distinct()` becomes a no-op                               |
+| `SORTED`       | Elements come out sorted by the reported comparator       | May avoid sorting when order/comparator permit             |
+| `NONNULL`      | No element is null                                        | Allows clients to rely on non-null elements                |
+| `IMMUTABLE`    | The source cannot change during traversal                 | No need for fail-fast checks                               |
+| `CONCURRENT`   | The source may be modified safely during traversal        | Different traversal strategy                               |
 
 These are optimisations that change **results**, not just speed. A spliterator declaring
 `DISTINCT` over a source with duplicates makes `distinct()` do nothing, and the duplicates
 survive. Declaring `SORTED` incorrectly makes `sorted()` a no-op and the output is unsorted.
-Declare only what is true.
+Declare only what is true. SORTED also requires ORDERED and a compatible getComparator();
+IMMUTABLE describes structural interference, not deep immutability of element objects.
 
 `estimateSize()` returning `Long.MAX_VALUE` is the honest answer for an unknown-length source;
 it disables sizing optimisations and nothing breaks.
 
 ## trySplit
 
-`AbstractSpliterator` provides a batching `trySplit` that works for array-like sources. Return
-`null` when the source cannot be split usefully — a paged remote API, a linked list, a socket.
-Returning a badly balanced split is worse than refusing: the parallel pipeline pays coordination
-cost for no parallelism.
+`AbstractSpliterator` implements batching through repeated `tryAdvance`, buffering consumed
+elements into arrays. It can therefore fetch remote pages during splitting. Override it with
+`null` when this prefetch is unsuitable. Linked structures can batch too; splitting cost, balance
+and workload determine benefit. `SUBSIZED` promises sized descendants, not balanced partitions.
+See the [Java 17 Spliterator contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Spliterator.html).
 
 ```java
 @Override
 public Spliterator<T> trySplit() {
-    return null;      // pages arrive sequentially; splitting would fetch out of order
+    return null;      // deliberately suppress batching/prefetch
 }
 ```
 
@@ -94,7 +68,7 @@ public Spliterator<T> trySplit() {
 | Semantics             | Sources                                       | Guarantee                                                           |
 | --------------------- | --------------------------------------------- | ------------------------------------------------------------------- |
 | **Fail-fast**         | `ArrayList`, `HashMap`, most of `java.util`   | Throws `ConcurrentModificationException` on a **best-effort** basis |
-| **Weakly consistent** | `ConcurrentHashMap`, `ConcurrentLinkedQueue`  | Never throws; may or may not reflect changes made after creation    |
+| **Weakly consistent** | `ConcurrentHashMap`, `ConcurrentLinkedQueue`  | No ConcurrentModificationException; may reflect later changes       |
 | **Snapshot**          | `CopyOnWriteArrayList`, `CopyOnWriteArraySet` | Exactly the state at creation; writes copy the array                |
 
 Three consequences worth stating plainly:
@@ -103,14 +77,14 @@ Three consequences worth stating plainly:
   a concurrent modification may go undetected and the traversal then silently skips or repeats
   elements. Never write code whose correctness depends on the exception being thrown.
 - **Weakly consistent means `size()` and iteration can disagree.** Aggregating over a concurrent
-  map while it is being written gives a number that was never simultaneously true. If that matters,
+  map while it is being written may give a number that was never simultaneously true. If that matters,
   the design needs a snapshot or a lock, not a different iterator.
 - **Snapshot costs a copy per write.** Right for listener lists (many reads, rare writes), wrong
   for anything write-heavy.
 
 The common single-threaded `ConcurrentModificationException` is not a concurrency problem at all —
 it is a structural change inside a for-each over the same collection. The fix is
-`Iterator.remove()` or `Collection.removeIf`.
+`Iterator.remove()` if supported, or supported `Collection.removeIf` outside that traversal.
 
 ## Closing
 
@@ -126,24 +100,24 @@ connections until the pool is exhausted, and the failure appears far away as a c
 
 Two rules for authors: if your stream holds a resource, register the closer with
 `Stream.onClose(...)` so `close()` actually releases it, and say so in the Javadoc — callers cannot
-tell from the type. For Spring Data, a `Stream`-returning repository method requires an open
-transaction and a `try-with-resources`; without both it fails or leaks
-(`repository-pattern`).
+tell from the type. Terminal operations do not call close automatically. Establish cleanup even
+if constructing the stream fails after acquiring the resource. For Spring Data JPA streaming,
+check the repository/provider transaction and cursor requirements for the project version;
+consume within the required scope and close it (`repository-pattern`).
 
 ## When a hand-written Iterator is right
 
 ```java
-// merging two sorted sequences — neither can be a Stream, because both must be advanced
-// under the algorithm's control
+// partial merge loop: obtain cursors, buffer heads, and handle remaining tails separately
 while (a.hasNext() && b.hasNext()) {
     if (compare(peekA, peekB) <= 0) emit(advance(a)); else emit(advance(b));
 }
 ```
 
-Streams have no cursor the caller can hold. Merge, diff, zip-with-early-exit and any algorithm
-that decides which sequence to advance need `Iterator`. Everything else is better served by a
-`Spliterator` plus the stream derived from it.
+`Stream.iterator()` supplies a cursor as a terminal escape hatch; keep and close the original
+resource-backed stream. The same stream cannot then run another terminal operation. See
+[BaseStream 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/BaseStream.html).
 
-One contract detail that hand-written iterators routinely break: **`hasNext()` must be
-side-effect-free and repeatable.** An implementation that consumes an element in `hasNext()`
-works with the enhanced `for` and fails for any caller that checks twice.
+Repeated `hasNext()` must not discard the next element. Prefetching and caching it is legitimate
+and may perform I/O; document blocking/failure behavior. `remove()` is optional, and exhaustion
+requires `next()` to throw `NoSuchElementException`; see [Iterator 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Iterator.html).

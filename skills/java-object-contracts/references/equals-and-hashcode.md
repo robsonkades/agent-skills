@@ -22,6 +22,10 @@ the entry is stranded in the wrong bucket.
 
 ## The canonical implementation
 
+Partial Java 16+ sketch: provide a constructor that rejects null `iban`/`country`, the
+`Country` enum and `java.util.Objects` import. Other snippets likewise omit enclosing
+declarations/imports; they are not a standalone test suite.
+
 ```java
 public final class AccountNumber {
     private final String iban;
@@ -44,12 +48,12 @@ public final class AccountNumber {
 Details that matter:
 
 - `instanceof` with a pattern variable replaces the null check, the type check and the cast.
-  An explicit `o == null` line before it is dead code.
+  An explicit `o == null` guard before it is redundant, not unreachable code.
 - Derive `hashCode` from equality-relevant, stable state. Omitting an equality field is legal but
   may weaken distribution. Adding state that can differ between equal objects violates the
   contract; derived state is safe only when equal objects are guaranteed to derive the same value.
-- `Objects.hash(...)` boxes its arguments into a varargs array. That is irrelevant almost
-  everywhere and measurable in a hot loop or a hash-heavy key; there, write
+- `Objects.hash(...)` uses a varargs array and boxes primitive arguments; these reference
+  arguments need no boxing. Allocation may be optimized away. On a measured hash-heavy path, consider
   `31 * (31 * iban.hashCode() + country.hashCode())` or cache the result. Do not do it on
   speculation — allocation-profiling is how you find out whether it matters.
 - Order comparisons cheapest-first and most-discriminating-first when fields differ in cost:
@@ -86,10 +90,12 @@ not a nuance.
 There is no way to add a value-carrying component in a subclass and keep symmetry and
 transitivity with the superclass. The two defensible positions:
 
-1. **`instanceof` plus a `final` class** (or a class whose subclasses add no state). Symmetry
-   and transitivity hold because no subclass can disagree. This is the default and the reason
+1. **`instanceof` plus a `final` class**, or a hierarchy with final equality/hash methods and
+   an explicit shared identity contract. Merely adding no subclass fields does not prevent an
+   override from disagreeing. Final value classes are the simplest default and the reason
    records are `final`.
-2. **`getClass()` equality.** Symmetric and transitive, at the cost of Liskov substitutability:
+2. **`getClass()` equality.** Can preserve symmetry/transitivity when implemented consistently;
+   whether it violates substitutability depends on the supertype's promised equality:
    an instance of a subclass is never equal to an instance of the superclass, even when the
    subclass adds nothing. This is the right choice for entity types under a proxying ORM only
    if you disable proxies — otherwise it breaks (below).
@@ -166,8 +172,9 @@ One hand-written assertion per method proves almost nothing. What is worth writi
 - **The hash obligation:** for every pair where `a.equals(b)`, assert
   `a.hashCode() == b.hashCode()`.
 - **Round-trip through a collection:** `set.add(a); assertTrue(set.contains(b))` for equal
-  instances, and — the one that catches mutable keys — mutate a field after insertion and
-  assert the test _fails_, documenting why the field is excluded.
+  instances. Mutate fields explicitly excluded from identity and verify membership remains
+  stable. For an equality-relevant mutable field, prohibit mutation while stored or remove
+  before mutation and reinsert; do not require unspecified broken-key behavior to fail reliably.
 - **For entities:** add to a `HashSet` before persist, flush, and assert the set still
   contains it; compare proxy/unproxied and cross-context representations in both directions.
 

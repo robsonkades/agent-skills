@@ -7,9 +7,14 @@ insufficient for payments, notifications or audits.
 
 ## 1 — The version guard
 
-The default answer. The record carries a version that is monotonic per key and comes from the
+For a projection that may skip intermediate states, the record carries a version monotonic per key from the
 **source of truth** (the row's version column, the aggregate's sequence number), not from
 publish time. The handler applies a record only if it is newer, in one statement:
+
+This replacement assumes a complete authoritative snapshot of the affected state. Applying
+delta v3 before v2 and discarding v2 can lose an essential change; deltas needing predecessors
+require ordered application/gap repair. Define initial insertion, non-null version, delete
+tombstones and equal-version conflict handling separately.
 
 ```sql
 UPDATE customer
@@ -75,26 +80,29 @@ private static final Map<Status, Set<Status>> LEGAL = Map.of(
     Status.CANCELLED, EnumSet.noneOf(Status.class));
 ```
 
-Terminal states absorbing late records are what stop a reordered create from resurrecting a
-deleted entity. **Distinguish stale from early** — they need opposite responses:
+The table is illustrative Java 9+ initialization, not a complete transition handler. Enforce
+state/version checks atomically with writes. A retained terminal state or versioned tombstone
+can reject a late create; physical deletion of both state and watermark loses that protection.
+Retain recovery metadata for the replay horizon and define legitimate recreation by epoch.
+**Distinguish stale from early** — they need opposite responses:
 
-| Situation                                  | Test                            | Response                                                |
-| ------------------------------------------ | ------------------------------- | ------------------------------------------------------- |
-| Stale — its effect is already applied      | `version <= current`            | Drop and acknowledge                                    |
-| Early — its predecessor has not arrived    | `version > current + 1`, or gap | Park briefly and re-check, or resync from the authority |
-| Illegal — no such transition exists at all | Not in `LEGAL`                  | Park and alert; this is a bug or a corrupt producer     |
+| Situation                                  | Test                                                           | Response                                                |
+| ------------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------- |
+| Stale — its effect is already applied      | `version < current`, or equal with verified same event/payload | Drop and acknowledge                                    |
+| Early — its predecessor has not arrived    | `version > current + 1`, or gap                                | Park briefly and re-check, or resync from the authority |
+| Illegal — no such transition exists at all | Not in `LEGAL`                                                 | Park and alert; this is a bug or a corrupt producer     |
 
 Rejecting an _early_ record as if it were stale loses it permanently, which is the usual way
 this technique is implemented wrongly.
 
 ## Choosing between them
 
-| Technique           | Requires                                                  | Gives up                                           |
-| ------------------- | --------------------------------------------------------- | -------------------------------------------------- |
-| Version guard       | A monotonic per-key version from the authority            | Intermediate states — only the newest is observed  |
-| Commutative handler | Snapshots or idempotent assignments in the payload        | Payload size; deltas are no longer expressible     |
-| LWW                 | A comparable version or a trusted clock, plus a tie-break | Concurrent updates, silently                       |
-| State machine       | A closed status set and a transition table                | Freedom to add states without revisiting the table |
+| Technique           | Requires                                                   | Gives up                                           |
+| ------------------- | ---------------------------------------------------------- | -------------------------------------------------- |
+| Version guard       | Complete snapshots plus atomic authoritative version guard | Intermediate states — only the newest is observed  |
+| Commutative handler | Commutative merge plus duplicate-safe application          | Required merge/dedup metadata; domain constraints  |
+| LWW                 | A comparable version or a trusted clock, plus a tie-break  | Concurrent updates, silently                       |
+| State machine       | A closed status set and a transition table                 | Freedom to add states without revisiting the table |
 
 These techniques relax different requirements. Version guard/LWW can preserve newest final
 state while discarding intermediates; a state machine detects gaps but may need ordered repair;
@@ -107,7 +115,7 @@ recovery path.
 ```java
 @RepeatedTest(50)
 void final_state_is_independent_of_delivery_order() {
-    long seed = System.nanoTime();
+    long seed = Long.getLong("ordering.test.seed", System.nanoTime());
     List<Event> delivery = new ArrayList<>(RECORDS);
     delivery.addAll(RECORDS.subList(0, 2));          // at-least-once: duplicates too
     Collections.shuffle(delivery, new Random(seed));
@@ -119,10 +127,11 @@ void final_state_is_independent_of_delivery_order() {
 }
 ```
 
-- **Print the seed in the failure message.** A shuffle test that cannot be replayed reports a
-  flake instead of a bug.
+- **Print and accept the seed.** Replay with `-Dordering.test.seed=<reported seed>` against
+  the same fixture and algorithm. This is a partial JUnit Jupiter test requiring domain fixtures.
 - **Include duplicates in the shuffle.** At-least-once delivery produces reordering and
-  repetition together, so the test should too — it then proves both properties at once.
+  repetition together, so the test should challenge both properties. Finite permutations do
+  not prove all event histories or concurrent database schedules.
 - Assert final state and every externally relevant invariant/effect. Do not assert incidental
   call order, but do assert required transition/audit/notification semantics.
 - With few enough records, enumerate every permutation instead of shuffling; beyond a handful a

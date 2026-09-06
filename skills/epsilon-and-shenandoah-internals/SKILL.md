@@ -27,9 +27,8 @@ product but not default. Both are misused in the same way: Epsilon as a "GC-free
 mode", Shenandoah as a collector whose only knob is heap size.
 
 The failure this prevents is the conclusion drawn from the wrong configuration. A Shenandoah
-throughput comparison that never named its mode compared the collector without the
-generational hypothesis against ZGC, which has had it built in since JEP 490 — the result may
-be an artefact of the omitted flag. And a service left on Epsilon because it "went faster in
+throughput comparison that never named its mode is underspecified; JDK 25 defaults to `satb`,
+but omission from a report does not prove what ran. A service left on Epsilon because it "went faster in
 the benchmark" is an out-of-memory error with a countdown on it.
 
 ## Workflow
@@ -38,7 +37,8 @@ the benchmark" is an out-of-memory error with a countdown on it.
    verifying an allocation-free path, or making hidden allocation visible are three different
    experiments with three different heap sizes.
 2. **Size Epsilon from the arithmetic, not by feel.**
-   `T_oom = (Xmx − initial footprint) / allocation rate`, applied in either direction. See
+   Estimate remaining time from usable headroom divided by total consumption rate. Budget
+   cumulative startup/warm-up allocation; finite survival does not prove zero allocation. See
    `references/epsilon-as-an-instrument.md`.
 3. **Pair Epsilon with allocation evidence and, when useful, a heap dump on OOM.** Because
    Epsilon never reclaims, the dump contains all still represented allocations—not just objects
@@ -50,18 +50,19 @@ the benchmark" is an out-of-memory error with a countdown on it.
    `-Xlog:gc+init` for `Mode:` and `Heuristics:`, or `jcmd <pid> VM.flags -all | grep -E
 "ShenandoahGCMode|ShenandoahGCHeuristics"`. Product is not default.
 5. **Check the time constraint and the capacity constraint separately.** Time:
-   `C_max = (InitFreeThreshold − MinFreeThreshold)% × Xmx / allocation rate` during learning,
-   then the adaptive rate trigger. Capacity: `Max Evacuation` and `available` in the
+   `(InitFreeThreshold − MinFreeThreshold)% × soft max / allocation rate` is a rough learning
+   headroom model, not a guaranteed failure deadline. Inspect actual triggers. Capacity:
+   the configured `Max Evacuation` budget and actual `available` in the
    `gc+ergo` lines. A heap can satisfy one and violate the other.
 6. **Look for pacing before looking for pauses.** `-Xlog:gc+stats` → `Allocation pacing
-accrued` per thread. Latency that rises with no pause in the log is usually there.
+accrued` per thread. Correlate affected requests; absent pauses alone do not identify pacing.
 7. **Classify a fallback before reacting to it.** The degeneration point (`Mark`,
    `Evacuation`, `Update Refs`, `Roots`, `Outside of Cycle`) and `Good/Bad progress` name
-   the cause; degenerated and full GC have different fixes.
+   the phase and outcome, not a unique root cause.
    See `references/shenandoah-log-and-troubleshooting.md`.
-8. **Isolate barrier cost from concurrent work** with a CPU profile: the slow path is the
+8. **Investigate barrier cost alongside concurrent work** with a CPU profile: the slow path is the
    `ShenandoahRuntime::load_reference_barrier_*` frames in application threads; the fast
-   path has no frame and is measured as a diff against a barrier-free run.
+   path is inlined. A collector comparison changes more than barriers and cannot isolate it by subtraction.
 
 ## Rules
 
@@ -74,8 +75,9 @@ accrued` per thread. Latency that rises with no pause in the log is usually ther
   `catch`, `finally` or shutdown hook runs (verified on 25.0.3). Pass
   `-XX:-ExitOnOutOfMemoryError` when something in-process must observe the error. The heap
   dump is written before the exit.
-- Never run Epsilon in a long-lived service unless the hot path is verified — not assumed —
-  allocation-free, or the process is recycled before `T_oom`. Otherwise it is an OOM on a
+- Epsilon needs a bounded whole-process allocation budget including background work, or
+  recycling before conservative exhaustion. An allocation-free hot path alone is insufficient;
+  otherwise it is an OOM on a
   timer.
 - The Shenandoah barrier is the **Load Reference Barrier**: a load barrier, on reference
   loads. Since JDK 13 (JDK-8221766) it is **conditional** — a thread-local `gc_state` test,
@@ -90,8 +92,8 @@ accrued` per thread. Latency that rises with no pause in the log is usually ther
   Shenandoah 8 bytes per object is a JDK 12 model. Compressed oops work; ZGC's do not.
 - Generational Shenandoah is **product in JDK 25 (JEP 521)**, experimental in JDK 24 (JEP
   404), and **not the default**: `-XX:+UseShenandoahGC` alone runs `satb` (verified). JEP
-  draft `8379682` proposes making it the default and deprecating `satb`, but as of 2026-09-03 it
-  is unnumbered, Draft and has no target release. State the effective mode from the runtime;
+  535 (JDK-8379682) targets JDK 28 for the default change and `satb` deprecation (checked
+  2026-09-05); targeted is not delivered. State the effective mode from the runtime;
   never infer it from a future proposal.
 - Generational mode adds a **post-write barrier** feeding a card-table remembered set
   (512-byte cards), on top of the LRB. The LRB cannot serve that purpose: the old-to-young
@@ -105,23 +107,25 @@ accrued` per thread. Latency that rises with no pause in the log is usually ther
   headroom term `IFT − MFT`; it can also spend more concurrent CPU and is not the adaptive
   steady-state control. Change it only when logs show learning-phase/spike degeneration, then
   validate pacing, CPU, cycle interval and fallback rate. Lowering it reduces that headroom.
-- **The pacer is on by default** (`ShenandoahPacing=true`) and stalls allocating threads up
-  to `ShenandoahPacingMaxDelay` (10 ms) per episode before the collector degenerates. It
+- **The pacer is on by default** (`ShenandoahPacing=true`) and stalls allocating threads
+  against `ShenandoahPacingMaxDelay` (10 ms) per episode; scheduling can overshoot and a
+  request can encounter several episodes. It
   shows up nowhere in `-Xlog:gc`; only `-Xlog:gc+stats` reports it. Verified: 51% of a
   thread's time paced with zero degenerated cycles in the log.
 - `ShenandoahGCMode=passive` and `ShenandoahGCHeuristics=aggressive` are **diagnostic** and
-  need `-XX:+UnlockDiagnosticVMOptions` (verified). `passive` disables every barrier and
-  every heuristic: the log holds only `Pause Degenerated GC (Outside of Cycle)` and
-  `Pause Full`, each on an allocation failure. It does evacuate and compact. Never a
+  need `-XX:+UnlockDiagnosticVMOptions` (verified). `passive` disables collector barriers and
+  concurrent heuristic cycles; allocation failures and explicit requests can cause STW
+  degenerated/full collection. It does evacuate and compact. Never a
   production setting.
 - `Degenerated GC` is not `Full GC`. `(Mark)`, `(Evacuation)`, `(Update Refs)` resume the
   running cycle in STW from that phase; `(Outside of Cycle)` runs a whole cycle STW; `Bad
 progress` upgrades to full GC (immediately in `satb`, after two in generational), as do
   three back-to-back degenerations (`ShenandoahFullGCThreshold`). Recurring degenerated GC
-  means the time budget is short; recurring full GC means fragmentation or capacity, which no
-  threshold fixes.
-- `System.gc()` under Shenandoah starts a **concurrent** cycle: the collector sets
-  `ExplicitGCInvokesConcurrent=true` (verified). A library that "forces a full GC" does not.
+  can reflect insufficient headroom; recurring full GC needs cause/flag/capacity evidence.
+  No threshold creates space for an oversized live set.
+- `System.gc()` normally requests a concurrent cycle in `satb`/generational mode with
+  `ExplicitGCInvokesConcurrent=true`. `DisableExplicitGC`, overrides and passive mode change
+  this; inspect effective flags and logged causes.
 - Enlarging the heap raises `C_max` linearly but does not reduce marking work per cycle:
   single-generation Shenandoah marks every live object, young or old, every cycle. For high
   young-allocation workloads, the generational mode attacks the cause; more heap only buys

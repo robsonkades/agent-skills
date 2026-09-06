@@ -1,12 +1,16 @@
 # Evidence selection for common requests
 
 Choose evidence that separates the live hypotheses with acceptable perturbation. Commands and JFR
-views/events differ by JDK; discover them on the target (`jcmd <pid> help`, `jfr help`, `jfr view
-types`, event metadata/settings) and validate a positive control.
+views/events differ by JDK; discover them on the target (`jcmd <pid> help`, `jfr help view`,
+`jfr view types recording.jfr`, event metadata/settings) and validate a positive control.
+The `types` view needs a completed readable recording; help lists available named views
+without one. Older JDKs may not offer `view`.
 
 ## Minimum context packet
 
-Before flag advice, request:
+Before flag advice, collect the relevant available repository/runtime evidence below.
+Ask only for missing context that changes the decision; a static or pre-deployment review
+can report bounded findings and pending runtime checks without demanding every artifact:
 
 ```text
 exact JDK/vendor/build and image

@@ -6,6 +6,11 @@ unknown. A boolean `processed` flag cannot represent the last case.
 
 ## Durable record
 
+The Java record uses Java 17-compatible syntax and requires `java.time.Instant`; it is a
+schema sketch, not a persistence implementation. Handler snippets below are pseudocode with
+application/framework dependencies. Verify transaction interception, propagation and isolation
+against the target stack rather than treating `@Transactional` alone as an atomicity proof.
+
 ```java
 record IdempotencyRecord(
         String scope,
@@ -19,7 +24,7 @@ record IdempotencyRecord(
         Instant leaseUntil,
         Instant createdAt,
         Instant expiresAt) {
-    enum Status { PENDING, UNKNOWN, COMPLETED, REJECTED }
+    enum Status { PENDING, UNKNOWN, RETRYABLE, COMPLETED, REJECTED }
 }
 ```
 
@@ -42,7 +47,7 @@ This is the strongest and simplest form. One database transaction:
 Response handleLocal(Command command) {
     var key = scoped(command);
     var claimed = records.insertIfAbsent(key, fingerprint(command));
-    if (!claimed) return replayOrWait(records.currentForUpdate(key), command);
+    if (!claimed) return replayOrProcessing(records.currentForUpdate(key), command);
 
     var result = domain.apply(command); // same transaction and database
     outbox.add(eventsFrom(result));      // same commit, if an external publication follows
@@ -54,6 +59,17 @@ Response handleLocal(Command command) {
 The insert must be a unique constraint/conditional write, never `exists()` followed by
 `insert()`. Do not place the claim in a `REQUIRES_NEW` transaction: claim-then-crash would
 suppress work that never committed. A transaction rollback removes both claim and mutation.
+The replay helper checks the fingerprint and returns a terminal result or processing response;
+it does not wait for remote completion while holding this transaction/lock. Send success only
+after commit; commit acknowledgement loss requires retrying with the same key.
+
+Implement the repository contract with the selected database's conflict and isolation semantics.
+For example, PostgreSQL 17 `INSERT ... ON CONFLICT (scope, key) DO NOTHING RETURNING ...`
+can arbitrate the claim. At Read Committed a conflicting row may not appear in that statement's
+snapshot; a subsequent read gets a new snapshot. Do not catch a plain unique-violation exception
+and continue querying an aborted transaction. Handle serialization/rollback retry and a row
+removed by concurrent cleanup without interpreting missing state as permission for an unguarded
+effect. Test this against the real database, not just an in-memory repository.
 
 ## Case 2: external side effect
 
@@ -67,8 +83,9 @@ durable operation state machine:
 4. on a definite pre-dispatch rejection, persist `REJECTED` or make the operation retryable;
 5. on timeout, disconnect, cancellation or crash, persist/retain `UNKNOWN` and query or
    reconcile downstream by operation ID;
-6. only retry an unknown call when downstream deduplicates that same operation ID or when
-   reconciliation proves it did not apply.
+6. only retry an unknown call when downstream deduplicates that same operation ID throughout
+   the retry window, or reconciliation proves both non-application and that the prior attempt
+   cannot subsequently apply. An eventually consistent or point-in-time "not found" is insufficient.
 
 ```java
 try {
@@ -85,6 +102,9 @@ try {
 **Never delete the claim merely because `execute()` threw.** The peer may have applied the
 effect before its acknowledgement was lost. Releasing the row turns ambiguity into a second
 charge on the next retry.
+Persisted `PENDING`/`UNKNOWN` records must drive recovery even if updating state or enqueueing
+reconciliation fails; use a durable scanner/outbox or equivalent recovery path. Handle an epoch
+comparison that affects zero rows as loss of ownership and reload state, not successful completion.
 
 ## Concurrent duplicates
 
@@ -95,6 +115,8 @@ After losing the conditional claim:
 - for `PENDING`/`UNKNOWN`, return a documented processing response (often `202` plus an
   operation-status URI), ask the client to retry, or wait through a bounded notification
   mechanism;
+- for `RETRYABLE`, atomically claim a new attempt epoch before dispatch; preserve the same
+  operation ID and the evidence that makes retry safe;
 - do not hold a database lock or platform thread while waiting on remote work.
 
 An HTTP `409` can be an API choice, but it is not inherently the one correct status and may
@@ -112,9 +134,13 @@ the old attempt may finish late.
 Takeover is safe only when one of these holds:
 
 - local mutation and claim share one rolled-back transaction;
-- downstream enforces the stable idempotency key;
-- status lookup proves no effect before retry;
-- a compensating/reconciliation process can tolerate both outcomes.
+- downstream enforces the stable idempotency key for all overlapping/replayed attempts;
+- authoritative reconciliation proves no effect and rules out later application by the old attempt.
+
+If the business instead tolerates duplicate effects followed by compensation, document that
+weaker recovery guarantee explicitly; it is not idempotent takeover. Check provider retention
+as well as local TTL. For example, Stripe documents that a reused key creates a new request after
+the old key has been pruned; retaining the local operation ID longer does not extend that promise.
 
 TTL expiry is not a takeover protocol. Do not physically delete a live `PENDING`/`UNKNOWN`
 row merely because wall-clock retention elapsed.
@@ -146,6 +172,8 @@ effects committed in that same transaction. Name the guarantee actually provided
   assert epoch fencing and one downstream operation ID;
 - test expiry, DLQ/operator replay beyond expiry, rolling-version fingerprint compatibility,
   dedup-store failover and cleanup competing with live claims;
+- test a status lookup returning absent while an old request is still capable of applying,
+  provider key expiry, credential rotation, and cross-tenant attempts to replay another result;
 - measure new claims, completed replays, in-flight duplicates, fingerprint conflicts,
   unknown age, reconciliation outcomes, takeovers and rows/bytes by status.
 
@@ -158,3 +186,5 @@ proxy or test dependency that applies the operation and then drops the acknowled
 - [IETF HTTPAPI Idempotency-Key header draft](https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/)
 - [Stripe API: idempotent requests](https://docs.stripe.com/api/idempotent_requests)
 - [PostgreSQL unique constraints](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS)
+- [PostgreSQL 17 conflict handling](https://www.postgresql.org/docs/17/sql-insert.html)
+- [PostgreSQL 17 transaction isolation](https://www.postgresql.org/docs/17/transaction-iso.html)

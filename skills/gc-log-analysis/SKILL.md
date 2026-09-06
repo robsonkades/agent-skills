@@ -26,8 +26,9 @@ the missing interval, so a bounded baseline belongs in the service template.
 
 ## Workflow
 
-1. **Confirm the baseline configuration exists** (see Rules). If it does not, fix that
-   first; everything else is guesswork until the next incident.
+1. **Identify the JDK build, collector, process identity, decorators and captured window.**
+   Analyze available evidence with its limits; if logging is missing, arrange an authorized
+   bounded capture without claiming it reconstructs the past. Do not upgrade to match a recipe.
 2. **Read the cause, collector, event type and adjacent lines before forming a
    hypothesis.** The cause routes the investigation but is not a root-cause verdict; one
    trigger can lead to several mechanisms and collectors use different vocabularies.
@@ -38,7 +39,8 @@ the missing interval, so a bounded baseline belongs in the service template.
    `before->after(capacity)`, compare equivalent reclamation points under equivalent load.
    A rising floor is a retention hypothesis, not proof: delayed concurrent reclamation,
    adaptive sizing, humongous occupancy and phase selection can change the number.
-5. **Check headroom** after each collection — capacity minus `after`.
+5. **Check reported committed-capacity headroom** — capacity minus `after`, not necessarily
+   distance to `-Xmx`, usable evacuation space or contiguous allocation capacity.
 6. **Reconcile with the observed pause.** If they disagree, go to the safepoint log; the
    reported pause excludes Time-To-SafePoint.
 7. **If you need to know how much is allocated and how much survives**, the log can
@@ -58,15 +60,16 @@ the missing interval, so a bounded baseline belongs in the service template.
   SLO needs TTSP attribution. Validate its volume and sink as part of the same budget.
 - Unified logging is **synchronous by default**. The thread emitting the line — including
   a GC thread inside the safepoint — waits for the write, so on slow or throttled I/O the
-  instrument adds latency to the pause it is measuring. `-Xlog:async` (JDK 17+) fixes
-  that, at the cost of dropping messages under saturation; accept that trade deliberately.
+  instrument can add latency to the pause it is measuring. `-Xlog:async` (JDK 17+) moves writes
+  to a logging thread; it does not remove formatting/queue overhead. Check the target release's
+  drop/stall mode and dropped-message notices before treating a capture as complete.
 - Never read only the mean pause. Report count, total stop-the-world pause fraction, an
   explicitly defined percentile estimator and max, split by event type and operating
   regime. Small samples make p99 effectively one of the largest observations; attach the
   sample size and window.
-- Do not trust an analysis script using three-argument `match()` — that is a GNU
-  extension. Outside Linux it does not fail, it prints **zero**, which is worse. Use
-  `RSTART`/`RLENGTH`, and test any third-party script against a log you know has pauses.
+- Three-argument `match()` is not POSIX awk; unsupported implementations may reject its syntax.
+  OS name does not identify the awk implementation. Use `RSTART`/`RLENGTH`, inspect stderr and
+  every pipeline stage's status, and test against known events plus empty/unsupported input.
 - `new threshold` below `max threshold` in a `gc+age` line means adaptive tenuring chose an
   earlier promotion age; that can be healthy. Call it premature only when promotion,
   old-generation pressure or downstream collection cost is harmful and the age table
@@ -76,11 +79,11 @@ the missing interval, so a bounded baseline belongs in the service template.
   ergonomic young sizing are common causes; a larger heap can change frequency, young
   size, concurrent-cycle timing and failure headroom, with collector-specific pause
   effects. Confirm the mechanism: estimate allocation rate from the log and compare
-  it with the Eden target `(N)` — a tiny target with a modest rate is the pause target
-  sizing young down, not the workload. See `references/rates-from-the-log.md`.
-- A log whose first uptime is well above zero has rotated, not restarted. The `gc,init`
-  block — region size, `Using N workers` — lives in the oldest file, and any rate must
-  span the first to the last pause in the file, not the process lifetime.
+  it with the Eden target `(N)` and ergonomic logs; a small target alone does not establish
+  why it was chosen. See `references/rates-from-the-log.md`.
+- A first uptime above zero can reflect rotation, late activation, truncation or an excerpt.
+  Inspect file continuity and process identity; rotated suffixes are a ring, not a chronological
+  sort. Use measured window boundaries, not process lifetime, and avoid duplicate overlap.
 - Treat log-derived rates as estimates with explicit blind spots: region rounding,
   humongous allocation, collector phase and rotation boundaries. Cross-check surprising
   values with JFR or another independent counter before changing capacity.

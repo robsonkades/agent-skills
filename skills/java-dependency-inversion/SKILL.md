@@ -22,6 +22,12 @@ for a seam nothing ever uses.
 
 ## Workflow
 
+0. **Check the target and evidence available.** Inspect compiler release/toolchains, build
+   modules, resolved vendor APIs, DI configuration and runtime wiring. The references use
+   Java 17 APIs; the worked records require Java 16+, `String.formatted` Java 15+, JPMS
+   Java 9+, and `RandomGenerator` Java 17+. Do not upgrade or add a framework to apply DIP;
+   ordinary constructors/interfaces work on older targets. If only imports are available,
+   label the graph provisional rather than claiming deployment isolation.
 1. **Draw the actual direction.** Use compiled bytecode/package edges and JPMS `requires`, then
    add reflection, `ServiceLoader`, generated types, configuration and wire/schema dependencies.
    Imports can be unused; the compiler graph constrains source/link change but is not the only
@@ -29,7 +35,8 @@ for a seam nothing ever uses.
 2. **Classify each edge.** Policy decides _what_ happens (pricing rules, order flow,
    eligibility); mechanism is _how_ (HTTP, SQL, SMTP, filesystem, message broker).
    Policy→mechanism edges are inversion candidates. Edges to stable platform types —
-   `java.time`, `BigDecimal`, collections — are not: you will never substitute them.
+   `Instant`, `BigDecimal`, collections — usually need no local wrapper. An operation such
+   as obtaining the current time still benefits from injecting the existing JDK `Clock` seam.
 3. **Apply the seam test before creating any interface.** Require concrete value: an external or
    separately released boundary, quarantined vendor types, an enforced dependency rule, multiple
    implementations, or deterministic/failure testing that the concrete mechanism prevents. No
@@ -37,9 +44,9 @@ for a seam nothing ever uses.
 4. **Invert.** Define the port next to the policy, named in the policy's vocabulary;
    implement it in an adapter beside the mechanism; construct and connect both in
    the composition root; hand the port in through the constructor.
-5. **Verify.** The policy package compiles with the mechanism off the classpath (or
-   the module graph shows no `requires` edge to it), and its tests run with a
-   hand-written double of a few lines — no mocking framework, no container.
+5. **Verify.** Compile policy with the mechanism absent, inspect full module readability
+   (including transitive edges), and exercise policy outcomes with a small double. A container
+   is unnecessary for that check; separately test adapter translation and runtime wiring.
 
 ## Rules
 
@@ -47,9 +54,9 @@ for a seam nothing ever uses.
   needs (`ConfirmationSender`), not for the mechanism (`SmtpClientWrapper`). A provider-owned SPI
   or independently governed protocol contract is a different boundary; do not duplicate it just
   to satisfy a slogan.
-- An interface with a single production implementation and no seam is indirection,
-  not abstraction. Introduce the abstraction on the second implementation or at a
-  boundary you do not own — not before.
+- A single production implementation is not a verdict. Introduce a port when the seam test
+  above demonstrates a benefit, including an owned boundary or failure-testing need; otherwise
+  retain the concrete dependency until evidence justifies the abstraction.
 - Constructor injection is plain Java: a final field, a constructor parameter, a
   `new` in the composition root. A framework wires it conveniently; it is never a
   prerequisite. `new`-ing a mechanism inside policy code is a hidden dependency.
@@ -63,6 +70,17 @@ for a seam nothing ever uses.
 - Testability is one strong proof, not the only one. A port can pay through vendor quarantine,
   independent release, capability narrowing, security policy or failure simulation even when a
   concrete fake was already easy. State the benefit and verify it.
+- Quarantine failure and lifecycle contracts as well as request types. Decide which failures
+  cross the port, whether completion means accepted or completed, and who closes resources.
+  Translate vendor errors in the adapter; do not move transport exceptions into policy or
+  introduce retries merely because the call is now behind an interface.
+
+## Deliverable
+
+Report the observed edge, seam benefit and cost, contract owner, smallest change and validation
+actually run. For an implementation, include assembly and success/failure checks; distinguish
+policy isolation from adapter integration. Name missing runtime/build evidence instead of
+claiming a complete boundary from a clean import list.
 
 ## References
 

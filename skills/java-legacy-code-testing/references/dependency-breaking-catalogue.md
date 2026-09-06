@@ -31,6 +31,12 @@ cost. Apply the cheapest one that removes the obstacle, and no more.
 
 ## Interface techniques
 
+Hierarchy cautions: sealed types restrict permitted direct subclasses rather than banning all
+test subclasses; final classes/methods still block overriding. Calls to overridable methods from
+constructors dispatch before subclass initialization completes. Check initialization order before
+choosing Extract and Override Factory Method. Changing a concrete class to abstract also needs
+binary, reflective and framework compatibility review, not just a search for `new` expressions.
+
 | Technique               | p.  | What it does                                                                                       | Cost / caveat                                                                                                                                                                                                                             |
 | ----------------------- | --- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Extract Interface**   | 362 | Extract **the subset of methods the client actually uses** into an interface the client depends on | Extracting the whole class surface produces an interface that documents nothing — the subset is the whole point. Java-specific cost: a package-private method must widen to `public` to implement the interface                           |

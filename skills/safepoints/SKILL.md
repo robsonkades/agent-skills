@@ -20,7 +20,8 @@ description: >
 ## Purpose
 
 Explain a JVM safepoint interval that the GC operation line does not fully account for. Safepoint `Total` is
-`sync time + operation time + cleanup`, and the GC log publishes only the middle term —
+`Reaching + At + Leaving` on the illustrated JDK 25 build. GC pause timers have their own
+boundaries and need not equal `At` exactly —
 but endpoint p99 also includes queueing, blocking and dependencies. Correlation must prove
 that a request gap overlaps process-wide loss of progress before calling the residual TTSP.
 
@@ -37,16 +38,18 @@ Confirm the default in the target runtime before proposing a flag.
 2. **Enable `-Xlog:safepoint=info` with `time` and `uptime`, and inspect every safepoint** in
    the window — not just the GC ones. `Deoptimize`, thread dump, heap dump and class
    redefinition are safepoints that no GC log mentions.
-3. **Split the pause.** `Reaching safepoint` is sync time (TTSP of the slowest thread);
-   `At safepoint` is the operation. High operation time is not a safepoint problem — it
-   is the operation, and belongs to the collector or the deoptimisation investigation.
+3. **Split the pause.** `Reaching safepoint` is elapsed synchronization time; a late required
+   thread can dominate it, but coordination and scheduling also contribute.
+   `At safepoint` covers VM work after synchronization; `Leaving` covers release work.
+   A high `At` points to the VM operation/cleanup rather than TTSP. Correlate matching GC or
+   VM-operation intervals instead of equating their timers or subtracting percentiles.
 4. **Name the slow thread** when sync time dominates:
    `-XX:+SafepointTimeout -XX:SafepointTimeoutDelay=<ms>` (default 10000) logs
    `Threads which did not reach the safepoint:` with each late thread's name and state,
    at `-Xlog:safepoint` warning level — **no stack** (executed, 25.0.3). Get the stack
    from an async-profiler wall-clock profile over the same window, or, in a test
    environment only, `-XX:+UnlockDiagnosticVMOptions -XX:+AbortVMOnSafepointTimeout`,
-   whose `hs_err` carries every thread's stack.
+   which attempts to write an `hs_err`; fatal-error stacks can be partial or unavailable.
 5. **Classify the cause from aligned evidence** — delayed poll in compiled/interpreted/runtime
    code, transition/critical region, page fault, or a runnable thread not scheduled because of
    host contention/throttling. A stack sample alone is not causal proof.
@@ -56,17 +59,16 @@ Confirm the default in the target runtime before proposing a flag.
 
 ## Rules
 
-- On the tested HotSpot ports, a poll is a load of the thread's own polling word (`JavaThread::_poll_data`) followed
-  by a bit test — or, at method return, a compare against the stack pointer — and a
-  conditional branch to a stub. Arming a safepoint or handshake sets that word; nothing
-  is page-protected and no signal is involved on x86-64 or AArch64 since JDK 16
-  (JDK-8253180, JEP 376; `MacroAssembler::safepoint_poll` in `macroAssembler_x86.cpp`
-  `[source-only]`). The "protected polling page plus SIGSEGV" description is the JDK ≤ 15
-  mechanism. Do not assume the load is always L1-resident or assign a universal cycle cost.
+- Poll encoding depends on compiler and site. In JDK 25 x86 sources, runtime/interpreter
+  paths test the thread-local polling word; return polls compare it with a stack pointer.
+  C2 loop polls also use a thread-local polling address and a memory test: the armed address
+  points at a protected page and the fault transfers control to HotSpot. Thread-local polling
+  did not universally remove fault-based polls. Inspect emitted code and port sources; do not
+  assume L1 residency or assign a universal cycle cost (`reading-jit-assembly`).
 - HotSpot emits polls at selected returns/back-edges and other transition points; optimization
   can move/elide candidates. Threads in JVM-recognized blocked/native-safe states need not run
   Java code to acknowledge, but state transitions and OS scheduling still affect timing.
-- **Counted loops have polls only where strip mining is on.** Loop strip mining splits a
+- **C2 strip mining is one counted-loop polling strategy.** It splits a
   counted loop into an outer loop advancing in strips of `-XX:LoopStripMiningIter` and an
   inner loop that runs a whole strip without a poll; the poll sits on the outer back-edge.
   This bounds that loop's algorithmic poll interval by one strip; descheduling, faults and
@@ -77,8 +79,9 @@ Confirm the default in the target runtime before proposing a flag.
   `LoopStripMiningIter=0`**. That removes counted-loop strip-mining polls; other checks around
   the compiled path may remain. Enabling it is a hypothesis with compiler/throughput
   trade-offs, not an automatic fix. Under the other three it changes no effective default.
-  `-XX:LoopStripMiningIterShortLoop` (default 100, i.e. `LoopStripMiningIter/10`) is the
-  trip count below which C2 skips the transformation.
+  `LoopStripMiningIterShortLoop` was 100 for those three and 0 for Serial/Parallel on this
+  build. It is a C2 short-loop heuristic; inspect effective values and generated code, not
+  a portable guarantee that every counted loop has that exact poll interval.
 - `-XX:+UseThreadLocalHandshakes` was removed in JDK 15. Passing it produces
   `Unrecognized VM option` and the JVM does not start (executed, 25.0.3).
 - `RevokeBias` does not exist on a JDK 18+ runtime. Biased locking was disabled by
@@ -95,6 +98,9 @@ Confirm the default in the target runtime before proposing a flag.
   the JFR sampler), per-thread deoptimisation, concurrent-collector thread-root scanning
   use handshakes in the listed implementation paths and leave unrelated threads running.
   `-Xlog:handshake=info` names each one; the table is in `references/instrumentation.md`.
+- `jcmd Thread.dump_to_file` is a different dump introduced with JEP 444: it avoids a global
+  application pause and has different contents/consistency from `Thread.print`. Do not group
+  all thread-dump commands under the same safepoint cost.
 - A thread executing ordinary JNI/FFM native code is normally in a safepoint-safe native
   state; it does **not** have to return before a global safepoint can proceed. The transition
   back to Java checks synchronization. JNI critical regions, VM/native transitions and
@@ -120,6 +126,9 @@ Confirm the default in the target runtime before proposing a flag.
   separately. Validate both TTSP and throughput after any code/compiler change.
 - Record build, collector, compiler tier/effective flags and logging/JFR loss. None of these
   mechanics is a Java-language portability guarantee.
+- Return the aligned interval, observed timing fields, candidate late thread, supporting
+  evidence and proposed validation. Missing events/stacks leave attribution unresolved;
+  do not infer absent pauses from a configuration that did not record them.
 
 ## References
 
@@ -138,3 +147,6 @@ Authoritative sources: [JEP 312: Thread-Local Handshakes](https://openjdk.org/je
 [JEP 376: ZGC Concurrent Thread-Stack Processing](https://openjdk.org/jeps/376),
 [JEP 518: JFR Cooperative Sampling](https://openjdk.org/jeps/518), and
 [JEP 158: Unified JVM Logging](https://openjdk.org/jeps/158).
+For poll encodings, see [JDK 25 x86 C2 safepoint node](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/x86_64.ad),
+[poll-word/return helpers](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/macroAssembler_x86.cpp), and
+[polling page setup](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/safepointMechanism.cpp).

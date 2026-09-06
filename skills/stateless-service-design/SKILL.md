@@ -53,10 +53,11 @@ N times its value, a job that emails everyone twice.
    replica. Fleet-once work needs partitioning, a scheduler with documented coordination, or
    `leader-election`; TTL leases, session locks and durable job claims have different stale-
    owner/recovery semantics.
-6. **Prove it at multiple replicas.** Route named steps deliberately to different instances
+6. **Exercise multiple replicas.** Route named steps deliberately to different instances
    (random balancing may miss the transition), overlap concurrent requests, then kill/restart
    one during work and deployment. A green run at
-   `replicas: 1` is evidence of nothing.
+   `replicas: 1` does not establish cross-replica correctness. Fault injection belongs in an
+   isolated or already authorized environment; successful cases cover only the paths exercised.
 7. **Check the next ceiling before celebrating.** Replication moves the bottleneck to what
    the replicas share. `replicas × maximumPoolSize` is a number the database has an opinion
    about; that arithmetic is `connection-pool-sizing`.
@@ -77,16 +78,18 @@ Prefer partitioning by key (sharding-and-partitioning) instead when:
   single-writer ordering that shared storage would otherwise have to serialise
 Prefer leader election (leader-election) instead when:
 - the work must happen once per interval across the fleet rather than once per instance
+  (election coordinates ownership; durable claims/idempotent effects are still needed where
+  retries, failover or stale owners can repeat work)
 ```
 
 ## Rules
 
-- A field is authoritative if its loss changes an outcome, not because it is large or
-  long-lived. Classify by consequence of loss; that is the only test that survives contact
-  with a cache.
-- Mutable `static` state written on the request path is a fleet-wide correctness bug at the
-  second replica. Grep for `static.*Map<`, `static.*List<`, and `AtomicLong`/`AtomicInteger`
-  fields on singleton beans, then ask what reads them.
+- Identify which copy owns the decision and can recover it. A field's size or lifetime does
+  not establish authority; inspect loss, divergence and recovery together, including caches
+  that temporarily influence security or correctness.
+- Mutable `static` state on the request path needs a scope and authority check. Local metrics,
+  protective limits and derivable caches can be valid; a local source of truth for a fleet-wide
+  decision is unsafe. Inspect readers, writers, thread safety and divergence consequences.
 - An uncoordinated in-process counter that gates a fleet-wide business decision enforces a
   separate budget per instance. Maximum aggregate allowance can approach N× under spread,
   though routing/skew changes observed behavior. Per-instance protective limits are valid when
@@ -94,32 +97,37 @@ Prefer leader election (leader-election) instead when:
 - Plain Spring `@Scheduled` runs once per application context. With one context per replica it
   runs N times unless an outer scheduler/claim/lease or idempotent work changes semantics.
 - An in-memory idempotency map deduplicates only the requests that land on the same
-  instance. Idempotency needs durable storage with a uniqueness constraint; `idempotency`
+  instance and retention window. Cross-replica/restart guarantees need an atomic shared claim
+  and effect/recovery protocol, such as a durable unique-key record; `idempotency`
   owns the mechanics, this skill owns noticing that the map was never shared.
 - A local cache can diverge after update/invalidation for its refresh/eviction/restart horizon;
   no TTL makes staleness unbounded unless explicit invalidation or replacement succeeds, not
   mathematically permanent. Cache design is
   `caching-strategies`; the multi-replica consequence is here.
-- Writes to local disk (`Files.write` to a relative path, `java.io.tmpdir`, an upload staged
-  under `/tmp` and referenced by a later request) survive exactly as long as the pod. The
-  follow-up request that lands on another replica produces a 404 that no code path explains.
+- Trace local paths to actual mounts. Container writable layers can be lost on container
+  replacement; `emptyDir` survives container restarts but ends with the Pod; persistent volumes
+  have separate retention and access rules. Durability alone does not make a file reachable
+  from another replica. A staged upload referenced by a later request needs that contract.
 - `HttpSession` is in-process state by default. Anything in it a user would notice losing —
-  cart contents, a multi-step form, an authorisation decision — is authoritative. Spring
+  cart contents, a multi-step form, an authorisation decision — needs a loss/staleness policy;
+  it may be authoritative or reconstructible from another authority. Spring
   Session changes the store without changing the servlet API: a placement change, not a
   rewrite.
 - **Sticky sessions give affinity, not a guarantee.** Affinity ends when the replica dies,
   when a rolling update drains it, when the client drops the cookie, or when the balancer's
   table is rebuilt. Each of those is user-visible if the state existed only there.
 - A signed token moves claims to the client; signing provides integrity/authenticity, not
-  confidentiality. Early revocation can use short access-token lifetime, introspection,
-  denylist/session version, key rotation or audience-specific policy—each trades latency,
+  confidentiality. Short expiry bounds token lifetime; revocation before expiry needs a
+  verifier-enforced mechanism such as introspection, denylist/session version, or key/policy
+  changes—each trades latency,
   blast radius and freshness. JWT is a format, not a session architecture.
 - A WebSocket, SSE stream or long poll pins one user to one instance for the connection's
   lifetime. Pushing to that user from another replica needs a broker or a fan-out, and a
-  rolling update terminates every stream, so the client must reconnect and resynchronise.
+  replacing instance can terminate its streams. Clients need bounded reconnect and a
+  cursor/replay or snapshot protocol when missed events affect correctness.
 - Do not claim statelessness because a class has no fields. State hides in the framework
   too: session attributes, a `ThreadLocal` never cleared, a filter's cache, a library's
-  static registry. The inventory proves it; the code shape does not.
+  static registry. Use the inventory and targeted failure evidence; code shape alone does not.
 
 ## Stateful is not a defect
 
@@ -129,6 +137,11 @@ ownership epochs/fencing, failover/rebalance and backup/restore. Calling that se
 because an orchestrator can restart it erases its hardest contract.
 
 ## Security and shutdown
+
+Inspect deployed Java, Spring/Session/Data Redis versions, storage mounts and routing before
+changing placement. No upgrade is implied; ScopedValue is final in Java 25 and preview/incubator
+in earlier supported releases. Missing recovery or durability evidence is unknown. Deliver the
+state inventory, chosen authority/loss contract, checks performed and remaining failure cases.
 
 - Session/auth store failure must fail closed for protected actions. A separately authorized
   public/read-only degraded mode is possible; never reinterpret unknown authentication as

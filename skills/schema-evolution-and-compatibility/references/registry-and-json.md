@@ -38,9 +38,13 @@ carried in a Kafka header rather than the payload, enabled with `key.schema.id.s
 changed. Before, the deserializer would look for the schema ID in the payload prefix. Now, the
 deserializer looks for the schema GUID in the header, and if not found, then looks for the schema ID
 in the payload prefix." The GUID is a fingerprint including references, rules and metadata, stable
-across registries, resolvable at `/schemas/guids/{guid}`. Confluent's migration order is
-**producers → consumers**, because older consumers that ignore headers keep working while producers
-roll out. None of this is Avro's `C3 01` single-object framing; the two are mutually unintelligible.
+across registries, resolvable at `/schemas/guids/{guid}`. Migration order depends on the origin:
+with existing Schema Registry payload-prefix readers, upgrade **consumers → producers** so readers
+understand both framings before producers remove the prefix. With compatible raw payloads and no
+registry, **producers → consumers** can work because old readers ignore added headers. Test actual
+payload bytes, Protobuf message indexes and header preservation through state stores/connectors.
+Rollback to payload-only readers still needs a plan for already retained header-framed records.
+None of this is Avro's `C3 01` single-object framing.
 
 ## Subject-name strategies
 
@@ -68,14 +72,14 @@ Three ways to carry several event types on one topic, with different failure mod
 
 ## Serialiser configuration
 
-Defaults not stated in the skill body, read from `AbstractKafkaSchemaSerDeConfig` on `master`:
+Defaults recorded from `AbstractKafkaSchemaSerDeConfig` on `master`; verify the deployed release:
 `use.latest.version` = `false` (L114), `latest.compatibility.strict` = `true` (L124),
-`id.compatibility.strict` = `true`. The production posture Confluent documents:
+`id.compatibility.strict` = `true`. For a schema-reference wrapper that intentionally selects latest:
 
 ```properties
 auto.register.schemas=false
 use.latest.version=true
-latest.compatibility.strict=false   # ONLY when using schema references
+latest.compatibility.strict=false   # only with separately verified wrapper/reference compatibility
 ```
 
 With `auto.register.schemas=true`, "`use.latest.version` and `latest.compatibility.strict` are
@@ -153,24 +157,30 @@ emitting `REQUIRED_PROPERTY_ADDED_TO_OPEN_CONTENT_MODEL`,
 `OPTIONAL_PROPERTY_ADDED_TO_OPEN_CONTENT_MODEL`. Grepping logs for the old name finds nothing on a
 current registry.
 
-Why the rejection is correct: "If the writer's schema has an open content model, then the writer may
+Why rejection can be correct: "If the writer's schema has an open content model, then the writer may
 have produced JSON documents with `myProperty` using a different type than the type expected for
 `myProperty` in the reader's schema." Confluent's worked example: v1 has only `field1` and is open,
 so `{"field1":"100","field2":123}` is legal under it; v2 adds `field2` as a string; the old data is
-now invalid. The fix — "you need to manually set the `additionalProperties: false` attribute in the
-initial schema" — requires editing v1, because closing it in v2 is itself rejected
-(`ADDITIONAL_PROPERTIES_REMOVED`, reproduced on 8.3.1). `PUT /config
-{"compatibilityPolicy":"LENIENT"}` makes JSON Schema behave like Avro instead, at the cost of no
-longer detecting this case.
+now invalid. Designing a closed initial contract can prevent this particular ambiguity, but do not
+rewrite a published v1: closing an existing open contract can itself fail backward checking
+(`ADDITIONAL_PROPERTIES_REMOVED` in the recorded 8.3.1 probe). A property with schema `true` adds
+no restriction; a typed property requires a compatibility bridge, data migration or new contract
+when existing values violate it. `LENIENT` suppresses some checks without making those values safe.
+Treat the table as the stated provider's representative transitions, not every possible JSON Schema.
+
+JSON Schema `default` is an annotation: validation does not automatically insert missing fields or
+provide enum fallback. A registry checker accepting a default does not prove the runtime binder or
+validator supplies it. Verify explicit transformation and validation separately.
 
 ## Jackson: null versus absent
 
 JSON distinguishes `{"x": null}` from `{}` and JSON Schema distinguishes them
-(`"type": ["string","null"]` versus `required`). Jackson's POJO binding does not: a missing property
-and an explicit `null` both leave the field at its Java default. An API that means "clear this value"
-by `null` and "don't touch it" by absence needs `Optional<T>`/`JsonNullable` wrappers or a raw
-`JsonNode`/`Map` pass. This is the JSON analogue of proto3 implicit presence and it bites the same
-PATCH endpoints.
+(`"type": ["string","null"]` versus `required`). A plain nullable POJO field often collapses them,
+but initializers, setters, creator requirements and null policies can differ: missing may retain an
+initializer while explicit null replaces it. For PATCH semantics, use an explicit presence flag,
+a verified three-state wrapper/module, or `JsonNode.has`/`Map.containsKey` before reading the value.
+Ordinary `Optional<T>` does not represent absent, explicit null and non-null by itself. Test all three
+states on the actual mapper and then validate required business values.
 
 The cost of tolerance is real and worth naming: with unknown properties ignored, `{"ammount": 100}`
 deserialises to a zero amount with no error. `@JsonAnySetter` lets you _observe_ the unknowns instead
@@ -206,3 +216,6 @@ Before trusting any of them, verify four things: what happens when no rule is co
 "transitive" means all versions or a checkpoint; which JSON Schema drafts are implemented; and
 whether the wire framing is Confluent's magic byte plus 4-byte id (Karapace and Apicurio `ccompat`:
 yes; Glue: no, it has its own header).
+
+Sources: [Confluent framing and migration order](https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html),
+[JSON Schema default annotation](https://json-schema.org/understanding-json-schema/reference/annotations).

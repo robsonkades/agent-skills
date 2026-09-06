@@ -20,6 +20,11 @@ benefit justifies a more fragile correctness argument.
 VarHandle does not replace the JMM. Start with `java-memory-model`; route ABA, progress and
 reclamation to `lock-free-patterns`.
 
+Inspect the project's compiler release, runtime and target architectures before choosing APIs.
+Ordinary-field examples target Java 17+ (VarHandle itself arrived in 9); foreign-memory
+layout coordinates here refer to the final Java 22+ API, checked against Java 25. Earlier
+incubator/preview layouts differ. This skill does not authorize a JDK upgrade or preview use.
+
 ## Entry gate
 
 Prefer a volatile field, `Atomic*`, lock, immutable snapshot or concurrent collection unless all
@@ -66,27 +71,34 @@ intentional in a proven algorithm, but is a high-risk review point—not categor
 
 ## Release/acquire publication
 
+Partial one-shot protocol: `State` is immutable, the holder is safely shared, exactly one
+designated writer publishes once, and no path resets or overwrites data afterward. The lookup
+initializer must resolve this holder's `ready` field as `int`.
+
 ```java
 private State data;
-private int version;
-private static final VarHandle VERSION = /* findVarHandle */;
+private int ready; // 0 until the sole publication
+private static final VarHandle READY = /* findVarHandle */;
 
-// single writer
-void publish(State next, int nextVersion) {
-    data = next;
-    VERSION.setRelease(this, nextVersion);
+// Sole writer only; no concurrent callers. Reject accidental sequential reuse.
+void publish(State next) {
+    if (ready != 0) throw new IllegalStateException("already published");
+    data = java.util.Objects.requireNonNull(next);
+    READY.setRelease(this, 1);
 }
 
-State readAfterVersion(int expected) {
-    int observed = (int) VERSION.getAcquire(this);
-    return observed == expected ? data : null;
+State readIfPublished() {
+    int observed = (int) READY.getAcquire(this);
+    return observed == 1 ? data : null;
 }
 ```
 
-The proof requires the consumer's acquire to observe/match the relevant release relationship and
-dependent reads to follow it. Version wrap, skipped versions, reuse, multiple writers, object
-mutation after publication and initial sentinel collisions need separate treatment. A plain write
-on another publisher path does not carry the data.
+The acquire that reads 1 matches the sole release, so prior initialization precedes subsequent
+data reads. It does not freeze the data: in a reusable version/data pair, the writer could
+overwrite data for version 2 after the reader observes version 1. A single writer and unique
+versions do not prevent that race. Use an atomically published immutable version+data snapshot
+when readers need a consistent pair, or prove an acknowledgement/ownership protocol before reuse.
+The plain guard is confined to the sole writer; it does not enforce multiwriter exclusion.
 
 ## Atomic updates
 
@@ -97,10 +109,15 @@ on another publisher path does not carry the data.
   spurious failure but does not add missing ordering.
 - acquire update variants have acquire semantics for the read and plain semantics for the write;
   release variants have plain read and release write semantics. Confirm exact method docs.
+- A failed conditional update performs no successful write/release publication. In particular,
+  a failed release-only compare-and-exchange supplies only a plain witness read; consuming
+  dependent data from it needs a proven acquire edge. Weak false can also be spurious.
 - `getAndAdd`, bitwise and exchange variants are only supported for applicable variable types/modes.
 
-Every VarHandle is signature-polymorphic. The symbolic call-site descriptor, coordinates, variable
-type and return type must match; failures can be `WrongMethodTypeException`, `ClassCastException`,
+VarHandle access-mode methods are signature-polymorphic. Default invocation permits documented
+asType-style casts, boxing/unboxing and widening; `withInvokeExactBehavior()` requires the exact
+access-mode descriptor. Coordinates, variable type and return type must satisfy the chosen
+invocation behavior; failures can be `WrongMethodTypeException`, `ClassCastException`,
 or `UnsupportedOperationException`. Check `isAccessModeSupported` when building generic adapters.
 Write access to read-only/final variables is unsupported for relevant handles.
 
@@ -190,8 +207,8 @@ rare corruption after wrap/reuse
 
 ## References
 
-- [Access-mode selection and API matrix](references/access-mode-selection.md)
-- [Proving ordering and measuring cost](references/proving-ordering.md)
+- [Access-mode selection and API matrix](references/access-mode-selection.md) — when choosing update modes or adapting coordinates/types.
+- [Proving ordering and measuring cost](references/proving-ordering.md) — when defining litmus outcomes or validating a codegen/performance claim.
 - [Java 25 `VarHandle`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/VarHandle.html)
 - [JLS 17.4](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4)
 - [OpenJDK jcstress](https://github.com/openjdk/jcstress)

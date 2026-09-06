@@ -6,8 +6,8 @@ and the **wrong assertion** that makes the test pass without proving anything.
 
 ## 1. Dependency down
 
-- **Inject** — stop the container, or point the client at a closed port. Both matter: a
-  refused connection and a black-holed one fail on different timeouts.
+- **Inject** — use a closed port for refusal and a controlled packet DROP for a blackhole.
+  Stopping a container alone does not establish which network failure the client observes.
 - **Invariant** — the caller fails within its own budget, the fallback ran if there is one,
   and no partial state was written. In-flight counters return to zero afterwards.
 - **Wrong assertion** — `assertThrows(Exception.class, …)`. It passes whether the caller
@@ -36,8 +36,9 @@ and the **wrong assertion** that makes the test pass without proving anything.
 
 - **Inject** — deliver the same message or request twice: sequentially, and then two copies
   concurrently released by a barrier.
-- **Invariant** — exactly one side effect, and both callers observe the same response with
-  the same status. Delivery is at-least-once; the application is what makes the outcome
+- **Invariant** — exactly one side effect, and both callers receive the documented duplicate
+  response (replayed success or an explicit in-progress/conflict result, as the contract permits).
+  Delivery is at-least-once; the application is what makes the outcome
   effectively-once (`idempotency`, `delivery-semantics`).
 - **Wrong assertion** — only the sequential case. It passes against `if (exists) return;`
   followed by an insert, which is precisely the shape that duplicates under concurrency.
@@ -49,8 +50,9 @@ and the **wrong assertion** that makes the test pass without proving anything.
 - **Invariant** — the final state is identical across orders, or is one of an enumerated set
   of legal states. Where a version or timestamp guard exists, assert that a stale update is
   rejected rather than silently applied.
-- **Wrong assertion** — testing only the intended order. Ordering holds per partition, never
-  globally (`message-ordering-and-partitioning`), and any cross-key sequence is unordered.
+- **Wrong assertion** — testing only the intended order. Derive ordering scope from the actual
+  protocol; partitioned brokers often order within a partition, while retries, consumer execution
+  and other systems have different guarantees (`message-ordering-and-partitioning`).
 
 ## 6. Crash mid-operation
 
@@ -111,4 +113,5 @@ overload
 Two closing rules. **A scenario with no invariant does not need a test yet** — it needs the
 invariant written down first, otherwise the test will assert whatever the code currently does.
 And **make each test fail once on purpose** — remove the idempotency guard, disable the
-fencing check — to confirm it can detect the fault it was written for.
+fencing check in an isolated test variant — to confirm detection. Never disable production
+safeguards merely to validate a test oracle.

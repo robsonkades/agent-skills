@@ -6,6 +6,11 @@ want to process "all events since T" without knowing about pages.
 This is the case where iteration's uniform interface hides the most: latency per page, server-side
 cursor state, and consistency while the underlying data changes.
 
+Partial Java 17 example, with domain types/imports and HTTP adapter omitted. Assume immutable
+value cursors, at most 500 non-null events per page, and a fetcher that enforces the remaining
+monotonic deadline in its transport and bounds response bytes. It closes each response before
+returning; cursors here are stateless tokens, not server resources. Exceptions are unchecked.
+
 ## The fetcher — the honest, unhidden layer
 
 ```java
@@ -18,6 +23,11 @@ public interface AuditPageFetcher {
 }
 
 public record AuditPage(List<AuditEvent> items, Cursor nextCursor) {
+    public AuditPage {
+        items = List.copyOf(items);
+        nextCursor = Objects.requireNonNull(nextCursor);
+        if (items.size() > 500) throw new IllegalArgumentException("oversized page");
+    }
     public boolean isLast() { return nextCursor.equals(Cursor.END); }
 }
 ```
@@ -41,19 +51,29 @@ final class AuditSpliterator extends Spliterators.AbstractSpliterator<AuditEvent
 
     AuditSpliterator(AuditPageFetcher fetcher, Cursor from, Deadline deadline, long maxEvents) {
         super(Long.MAX_VALUE, ORDERED | NONNULL);     // size unknown; order is meaningful
-        this.fetcher = fetcher;
-        this.next = from;
-        this.deadline = deadline;
+        this.fetcher = Objects.requireNonNull(fetcher);
+        this.next = Objects.requireNonNull(from);
+        this.deadline = Objects.requireNonNull(deadline);
+        if (maxEvents < 0) throw new IllegalArgumentException("negative event budget");
         this.maxEvents = maxEvents;
     }
 
     @Override
     public boolean tryAdvance(Consumer<? super AuditEvent> action) {
-        if (emitted >= maxEvents) return false;                 // bounded, always
+        Objects.requireNonNull(action);
+        if (!page.hasNext() && next.equals(Cursor.END)) return false;
+        checkBudget();
+        if (emitted >= maxEvents) {
+            throw new IllegalStateException("event budget reached; completeness unconfirmed");
+        }
         while (!page.hasNext()) {
             if (next.equals(Cursor.END)) return false;
-            if (deadline.hasExpired()) throw new AuditDeadline(next, emitted);
+            checkBudget();
             var fetched = fetcher.fetch(next, deadline);        // one network call
+            checkBudget();
+            if (next.equals(fetched.nextCursor())) {
+                throw new IllegalStateException("cursor did not advance");
+            }
             page = fetched.items().iterator();
             next = fetched.nextCursor();
         }
@@ -62,9 +82,14 @@ final class AuditSpliterator extends Spliterators.AbstractSpliterator<AuditEvent
         return true;
     }
 
+    private void checkBudget() {
+        if (Thread.currentThread().isInterrupted()) throw new CancellationException();
+        if (deadline.hasExpired()) throw new AuditDeadline(next, emitted);
+    }
+
     @Override
     public Spliterator<AuditEvent> trySplit() {
-        return null;    // pages are sequential and cursor-chained; splitting is impossible
+        return null;    // deliberately avoid batching/prefetch of the cursor chain
     }
 }
 ```
@@ -73,12 +98,15 @@ Four deliberate decisions:
 
 - **`Long.MAX_VALUE` as the estimate, and no `SIZED`.** The total is genuinely unknown. Claiming a
   size would be a lie the pipeline acts on.
-- **`trySplit` returns `null`.** The cursor chain is inherently sequential. A split that guessed at
-  offsets would fetch overlapping or missing ranges — wrong results, not slow ones.
+- **`trySplit` returns `null`.** Fetching the cursor chain is sequential. Batching fetched events
+  for parallel processing is possible, but adds buffering/prefetch and is intentionally omitted.
 - **A hard `maxEvents` bound.** An unbounded remote walk is an unbounded commitment; a partner
-  whose data grows tenfold should not turn a five-minute job into a five-hour one silently.
-- **The deadline is checked before each fetch and throws.** Returning `false` instead would look
-  like a completed traversal, and the caller would conclude it had seen everything.
+  whose data grows tenfold should not silently truncate a full walk. At the cap, throw unless
+  exhaustion is already known; a further empty terminal page might exist, but completeness is
+  then unconfirmed. An explicit caller `limit(n)` requests a prefix instead.
+- **Deadline/interruption checks include buffered events and fetch boundaries.** The transport
+  must enforce the remaining budget during a blocking call; these checks cannot interrupt it
+  themselves. Repeated cursors fail; longer cycles or empty progressing pages remain deadline-bound.
 
 That last point is the one that separates a correct remote iterator from a dangerous one:
 **exhaustion and abandonment must not be indistinguishable.**
@@ -110,32 +138,44 @@ paging:
 
 ```text
 page 1: events 1..500        (an event is inserted before event 200)
-page 2: offset 500..1000     → event 500 is now at 501; it is never returned
+page 2: skip first 500       → old event 500 is returned again
 ```
 
-Items are skipped when rows are inserted ahead of the cursor and repeated when rows are deleted.
+Insertions before the offset can repeat items; deletions before it can skip items.
 For an audit walk that decides what has been processed, silently skipping events is the worst
-available failure. Keyset paging is stable under insertion because the cursor names a position in
-the data, not a count.
+available failure. An opaque cursor is not proof of keyset or snapshot semantics: verify the
+provider contract. With a stable unique keyset ordering, earlier insertions do not shift offsets,
+but newly inserted rows behind the last key are missed and key updates can skip/repeat rows.
+Complete audit export may require a snapshot/high-water mark and reconciliation policy.
 
 Where only offset paging exists, the mitigation is to state the semantics explicitly ("may skip or
-repeat items if the source changes during the walk") and make downstream processing idempotent.
+repeat items if the source changes during the walk"). Idempotency handles repeats, not missing
+events; reconcile or use a provider snapshot when completeness is required.
 
 ## Closing and cancellation
 
-This spliterator holds no resource, so nothing needs releasing — but the caller still uses
+Under the stateless-cursor and closed-response assumptions above, this spliterator owns no
+persistent resource — but the caller still uses
 try-with-resources, because the return type is a `Stream` and callers should not have to know
-which streams are resource-backed. When a later version cached pages in a temporary file, the
-close became load-bearing and no caller had to change:
+which streams are resource-backed. If a later implementation spills pages to a temporary file,
+attach an unchecked cleanup adapter (handling any IOException) before returning the stream:
 
 ```java
-return StreamSupport.stream(spliterator, false).onClose(spillFile::delete);
+return StreamSupport.stream(spliterator, false).onClose(spillFile::deleteUnchecked);
 ```
 
 Registering the closer with `onClose` is what makes `close()` mean anything. A stream that holds a
 resource and does not register a closer leaks whether or not the caller writes try-with-resources.
+Terminal operations and short-circuiting do not automatically close a stream. Closing is not
+in-flight cancellation: concurrent close/traversal needs a separately designed protocol. Here
+interruption is cooperative at traversal boundaries; transport cancellation belongs to the fetcher.
 
 ## Tests
+
+Illustrative JUnit/AssertJ cases require the project's test dependencies and fixture helpers.
+Use try-with-resources in each stream test. Also test null action even after exhaustion, null
+page items, repeated/empty cursors, budget failure versus exact final-page exhaustion, interruption,
+buffered-event deadline expiry and sequential/parallel result equality on separate fresh sources.
 
 ```java
 @Test
@@ -143,9 +183,9 @@ void stops_fetching_once_the_limit_is_reached() {
     var fetches = new AtomicInteger();
     var client = clientOverPages(fetches, pagesOf(500, 500, 500));
 
-    var first = client.eventsSince(EPOCH, generous()).limit(10).toList();
-
-    assertThat(first).hasSize(10);
+    try (var events = client.eventsSince(EPOCH, generous())) {
+        assertThat(events.limit(10).toList()).hasSize(10);
+    }
     assertThat(fetches).hasValue(1);          // laziness, asserted rather than assumed
 }
 
@@ -154,7 +194,9 @@ void an_expired_deadline_fails_rather_than_looking_like_the_end() {
     var client = clientOverPages(new AtomicInteger(), pagesOf(500));
     var expired = Deadline.in(Duration.ZERO);
 
-    assertThatThrownBy(() -> client.eventsSince(EPOCH, expired).count())
+    assertThatThrownBy(() -> {
+        try (var events = client.eventsSince(EPOCH, expired)) { events.count(); }
+    })
             .isInstanceOf(AuditDeadline.class);
 }
 
@@ -173,11 +215,11 @@ time; only an explicit test distinguishes them.
 
 ## What was rejected
 
-- **Returning `List<AuditEvent>` from a "fetch all" method.** Simple, and it loads an unbounded
-  remote dataset into heap. The bound would then live in the caller, or nowhere.
+- **Returning `List<AuditEvent>` from a "fetch all" method.** Valid for an explicitly bounded
+  dataset, but buffers all results; this use case needs incremental processing.
 - **A hand-written `Iterator`.** It would have given the same laziness with none of the stream
   operations, and `Spliterators.iterator(...)` produces one from the spliterator anyway if a caller
   needs it.
-- **A parallel stream over pages.** Cursor chaining makes it impossible, and even with offset
-  paging it would multiply load on the partner's API while breaking order — the case where "the
-  source is large" is not a reason to go parallel.
+- **Parallel page fetching.** The next cursor is unavailable until the current fetch completes.
+  An API offering independent partitions could support bounded concurrency, but that is a
+  different contract requiring consistency, ordering and partner-load controls.

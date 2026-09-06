@@ -31,6 +31,10 @@ window and aggregation. Select quantiles from user impact and available sample p
 do not mandate p99, p99.9 and maximum for every service. Maximum is highly sample-size and
 duration dependent and is useful as an incident exemplar, not a stable SLO statistic.
 
+Inspect deployed Java/JDK, client/telemetry versions and effective configuration; no upgrade
+is implied. Missing recordings or request outcomes remain unknown. Use existing authorization
+for bounded captures and isolated or authorized load/failure experiments.
+
 Record offered, admitted and successful work. Closed-loop or completion-only measurements
 can underrepresent the worst intervals; check coordinated omission and timed-out/abandoned
 requests first.
@@ -54,15 +58,16 @@ and a component count does not identify causes.
 
 ### 3. Decompose per request, not by percentile arithmetic
 
-For one request:
+For one request, if instrumentation partitions elapsed time into disjoint intervals covering
+the chosen boundary, an accounting model is:
 
 \[
 T_{end}=T_{client}+T_{network}+T_{admission}+T_{queue}
 +T_{service}+T_{downstream}+T_{serialization}
 \]
 
-The exact terms depend on instrumentation boundaries and can overlap in asynchronous
-systems. Reconstruct critical-path spans and waits for sampled slow requests. Per-stage
+Actual spans often overlap or nest, so the displayed sum is not valid on raw span durations.
+Reconstruct critical-path spans and waits for sampled slow requests. Per-stage
 histograms localize candidates, but neither matching stage p99 nor summing stage p99 proves
 ownership: different requests can occupy each percentile and stages can correlate.
 
@@ -84,7 +89,8 @@ dependence; load balancing and mutually exclusive paths can change it differentl
 Estimate joint behavior from request-level traces or bounds. A user budget can be allocated
 backward only after topology, quorum/partial-result rule and dependence assumptions are
 declared. Sequential latency is a sum; parallel latency may be a maximum, order statistic
-or deadline-limited partial result.
+or deadline-limited partial result. The maximum of leaf durations models all-of-N only when
+launch times align; otherwise include launch offsets and parent/merge/cleanup overhead.
 
 ### 5. Correlate candidate causes
 

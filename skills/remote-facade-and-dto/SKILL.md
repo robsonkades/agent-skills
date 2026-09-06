@@ -37,9 +37,22 @@ Remote Facade    a coarse-grained object over a fine-grained model,
                  calls on the local model and assembles the answer.
 
 DTO              a simple carrier of data across the boundary, shaped by
-                 what the caller needs, serialisable, with no behaviour
+                 what the caller needs, encodable by the chosen wire format, with no domain policy
                  and no dependency on the domain's internals.
 ```
+
+## Compatibility and evidence
+
+Inspect the target compiler/runtime, serializer and framework versions, existing payloads
+and consumer contracts before changing types. Records require Java 16+ and serializer
+support; the Spring `ProblemDetail` snippets require Spring Framework 6+ (Java 17+).
+Examples are partial sketches, with application types, wiring and authorization omitted;
+they do not authorize upgrades or new dependencies. A DTO need not implement Java
+`Serializable` to be encoded as JSON or another wire format.
+
+When caller traces, payloads or compatibility tests are unavailable, state the gap and keep
+coarsening/removal recommendations conditional. A local facade can simplify an interface
+without remote serialization or speculative distribution.
 
 ## Workflow
 
@@ -52,7 +65,9 @@ DTO              a simple carrier of data across the boundary, shaped by
 4. **Decide what the boundary owes**: stable field names, documented codes, a version
    policy, and explicit nullability. That is the contract
    (`rpc-and-api-contracts`).
-5. **Assemble inside the transaction** so nothing lazy or managed escapes
+5. **Materialize required persistent state within its valid context**, with a transaction
+   and isolation level when consistency requires them. Pure mapping of materialized values
+   may occur afterwards; nothing lazy or managed should escape
    (`orm-behavioral-patterns`).
 6. **Justify each DTO.** If it is an exact copy of a domain type and there is no independent
    evolution, no security filtering and no serialisation concern, it may not be earning its
@@ -66,7 +81,8 @@ The boundary is remote (HTTP, gRPC, messaging)
           immutable boundary value or generated message may already be it.
 
 The boundary is a public or partner API
-        → DTO, always, plus explicit versioning and documented codes.
+        → explicit wire contract (DTO, generated binding or deliberate boundary
+          value), plus explicit versioning and documented codes.
           The domain must be free to change without breaking clients.
 
 The type is a JPA entity
@@ -75,8 +91,9 @@ The type is a JPA entity
 
 The domain type is already an immutable value with no persistence
 concerns and no hidden fields (a record: Money, DateRange, an event)
-        → it may cross directly. A copy adds no decoupling. Verify the
-          serialised names are stable and no field is secret.
+        → it may cross directly if all components and encoding satisfy the
+          public contract. A separate type can still provide independent evolution;
+          check names, nulls, number/time formats and sensitive fields.
 
 Internal, in-process, same deployable, same team
         → usually no DTO. Passing the domain type is simpler, and the
@@ -88,13 +105,14 @@ The caller needs 3 fields of a 40-field aggregate
           (query-objects-and-specifications).
 
 Several services need "the same" DTO
-        → do NOT share a DTO library. Each service owns its
-          representation; identical is fine, coupled is not
+        → prefer independently owned representations or versioned schema bindings.
+          A shared data-only artifact may work with independent version pinning;
+          avoid forced upgrades and shared domain behavior
           (distribution-boundaries).
 
 One client needs a screen-shaped payload and others do not
-        → a backend-for-frontend facade for that client, not a screen
-          -shaped field on the shared API.
+        → consider a client-specific representation or BFF when separate
+          ownership/evolution pays for its operational cost.
 ```
 
 ## Rules
@@ -117,13 +135,18 @@ One client needs a screen-shaped payload and others do not
   step. Their justification is independent evolution, deliberate exposure, and a stable wire
   shape; where none of those applies, the mapping is ceremony
   (`enterprise-architecture-smells`).
-- Make DTOs immutable — records with explicit component names. Mutable DTOs with setters
-  invite population in stages and produce half-built payloads.
+- Prefer immutable DTOs when the serializer supports them. Records are only shallowly
+  immutable: defensively copy mutable components and ensure nested values are safe to share.
+  A serializer requiring mutable beans needs controlled construction/publication instead.
+- Separate writable request fields from readable response fields. Bind only explicitly
+  allowed input fields; derive tenant/owner/security scope from trusted context and authorize
+  each referenced object. Never let generic mapping populate privilege, balance or version
+  fields merely because their names match. Response/error fields need exposure review too.
 - **Be explicit about what is absent.** A field omitted, a field null, and a field with an
   empty value mean different things to a client; decide which you use and be consistent.
-- Do not shape a shared API around one client's screen. That client's UI then owns your
-  contract, and the second consumer either gets a bad fit or forces a parallel shape.
-  Screen-shaped payloads belong in a BFF (`view-and-representation-patterns`).
+- Avoid letting one screen's evolution accidentally control every consumer's contract.
+  A separate representation in the existing API or a BFF can isolate that change; choose
+  according to ownership, reuse and operational cost (`view-and-representation-patterns`).
 - Prefer sharing a language-neutral schema and generating versioned types. A shared DTO artifact can
   be acceptable within one release train or as generated data-only bindings when consumers may pin
   old versions; hand-written behavioral types and forced upgrades create lockstep coupling
@@ -132,11 +155,18 @@ One client needs a screen-shaped payload and others do not
   enums and generated clients can break on additions. Removal/renaming are generally breaking. Design the contract so
   clients tolerate unknown fields, and expand before you contract
   (`rpc-and-api-contracts`).
-- Assemble the payload inside the transaction, from a projection where possible. Assembling
-  outside it either fails on a lazy association or silently issues queries during
-  serialisation.
+- Prefer bounded scalar projections when they satisfy the read contract. Materialize lazy
+  state before leaving its valid persistence context; mapping detached, already materialized
+  values is safe. A coarse endpoint spanning services does not create a distributed
+  transaction or a consistent snapshot.
 - The mapper is not a place for business rules. A mapper that computes a total or decides a
   status has hidden a rule where no test looks for it.
+
+## Deliverable
+
+Provide the operation/payload change, preserved authorization and wire semantics, measured
+round-trip/payload trade-off or missing evidence, and focused checks for old clients, invalid
+input, sensitive fields and partial/repeated execution. Keep small reviews short.
 
 ## References
 

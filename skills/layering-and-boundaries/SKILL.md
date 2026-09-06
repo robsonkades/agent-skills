@@ -34,18 +34,18 @@ service interface and its single implementation.
    nobody outside touches, a class every feature edits, a schema owned by another team.
    These are the real structure; the diagram is aspiration.
 2. **For each candidate boundary, name what varies across it.** A boundary earns its cost
-   only if the two sides change for different reasons, at different times, or under
-   different ownership. If both sides always change together, the boundary is overhead.
+   when it isolates change, ownership, trust, invariants or a public contract. Co-change
+   is a reason to inspect its cost, not proof that these protections are unnecessary.
 3. **Fix the dependency direction and write it down.** Direction is the whole substance of
    a layering decision; without it you have packages, not layers.
 4. **Decide what crosses.** The type that crosses a boundary is part of the boundary's
-   contract. A JPA entity crossing into the web layer couples the HTTP contract to the
-   schema — usually the single most consequential leak in an enterprise codebase.
-5. **Enforce mechanically.** ArchUnit rules, module boundaries, or compilation units. A
-   boundary policed only by code review is a boundary with a half-life of about a year.
-6. **Recheck the count.** Every layer you keep must have shown, in the last six months of
-   history, a change that stopped at it. Layers with no such evidence are candidates for
-   removal, not for defence.
+   contract. Serializing a JPA entity directly can couple the HTTP representation to the
+   persistence model and lazy-loading behavior; inspect the actual mapping/serialization.
+5. **Enforce mechanically.** ArchUnit rules, module boundaries, or compilation units.
+   Check that forbidden dependencies actually fail; code review alone can miss violations.
+6. **Recheck the count.** Use representative change history and the boundary's protection
+   contract to assess value. Missing history, especially in a new system, is uncertainty;
+   remove a boundary only after checking callers, invariants and migration cost.
 
 ## The classical split, stated as obligations
 
@@ -74,7 +74,8 @@ accident when it happens to a write path (`query-objects-and-specifications`).
 
 ```text
 Two sides change for the same reason, at the same time, by the same team
-        → not a boundary. Delete it and keep one module.
+        → investigate redundant separation; merge only if no independent
+          protection/contract justifies it and compatibility can be preserved.
 
 Two sides differ in what they are about (business rules vs SQL dialect)
         → a boundary, enforced by dependency direction. Cheapest and
@@ -86,13 +87,14 @@ Two sides differ in ownership or release cadence
 
 A dependency must point upward (domain needs to notify, to fetch, to
 schedule)
-        → invert it: the domain declares the interface, the outer layer
-          implements it. This is the one construct worth the indirection,
-          and it is what "ports and adapters" means.
+        → invert it: the consuming domain/application layer owns the port, the outer layer
+          implements it. This makes the dependency follow the inside-owned
+          contract, as in ports and adapters.
 
 An interface exists with exactly one implementation, no inversion, and no
 second implementor in prospect
-        → not a boundary. It is indirection
+        → inspect whether it expresses an API, ownership or testing contract;
+          without such a purpose, consider removing the indirection
           (enterprise-architecture-smells).
 
 The boundary is between features rather than between technical concerns
@@ -109,8 +111,9 @@ The boundary is between features rather than between technical concerns
   and its tests run with the web framework and the ORM off the classpath? Where the answer
   is no, name the specific import and decide whether it is a leak or an accepted trade.
 - Do not confuse **layers** (a dependency rule) with **tiers** (a deployment topology).
-  Layering is a source-code decision, is nearly free, and is reversible. Tiers add a
-  network, serialisation and partial failure, and are not (`distribution-boundaries`).
+  Layering is a source-code decision with indirection and migration costs. Tiers add a
+  network, serialisation and partial failure, making changes operationally more involved
+  (`distribution-boundaries`). Neither is cost-free or inherently irreversible.
 - The type that crosses a boundary is the contract. Decide deliberately whether it is the
   domain type, a dedicated representation, or a projection; each choice is defensible and
   the failure is choosing by default (`remote-facade-and-dto`).
@@ -121,10 +124,10 @@ The boundary is between features rather than between technical concerns
   through the domain to protect invariants; reads frequently do not, and forcing every
   query through an aggregate is a leading cause of N+1 and of over-fetching
   (`architecture-and-performance`).
-- Hexagonal, clean and onion architectures are the same idea — dependencies point inward,
+- Hexagonal, clean and onion architectures share an inward-dependency principle —
   outward dependencies are inverted through interfaces the inside owns — with different
-  vocabularies and different amounts of ceremony. Choose one vocabulary and stop
-  translating.
+  vocabularies and different prescriptions for application/domain structure. Name the
+  concrete dependency rules rather than assuming the labels are interchangeable.
 - Adopting one of those styles is a decision with drivers, not a default. The driver is
   usually "the domain must be testable and outlive this framework" or "we will replace
   this integration". Without such a driver you are buying mapping code.

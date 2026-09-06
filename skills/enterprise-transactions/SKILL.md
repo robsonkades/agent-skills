@@ -3,8 +3,8 @@ name: enterprise-transactions
 description: >
   Transaction boundaries as an architectural decision: where a transaction starts and ends,
   what isolation level actually buys, how propagation and rollback rules behave in practice,
-  why a transaction must not span a network call or a user's thinking time, and what
-  replaces atomicity once it must. Use when a use case writes twice and nobody can say
+  the costs of spanning a network call or a user's thinking time, and how to handle
+  effects outside its atomic scope. Use when a use case writes twice and nobody can say
   whether it is atomic, when @Transactional sits on a repository or a controller, when a
   transaction stays open across an HTTP call or a message publish, when a rollback did not
   happen because the exception was checked or the call was self-invoked, when isolation is
@@ -34,13 +34,18 @@ Application service (use case)       common boundary for business atomicity
         │
 Domain                               unaware of transactions
         │
-Repository / mapper                  participates; must not demarcate
+Repository / mapper                  usually participates; may own a local operation
 ```
 
-One use case, one transaction. The two anti-placements are equally common: on the
-repository, giving one transaction per query so a use case's writes cannot roll back
-together; and on the controller, so request parsing, serialisation and view rendering all
-run inside the transaction and hold a connection while they do.
+Keep the business atomic unit within one transaction. Repository-local transactions alone
+do not combine several calls atomically. A controller boundary may include unnecessary
+work, but interception normally covers the method call, not automatically all request
+parsing or later response rendering. Inspect the actual call and resource lifecycle.
+
+Inspect the target JDK, Spring/provider versions, transaction manager, datasource routing,
+database engine/isolation and proxy mode before applying examples. This skill's Java snippets
+are partial imperative examples, not a complete application; they do not describe reactive
+transaction-context propagation. Do not upgrade the project to match an example.
 
 ## Workflow
 
@@ -51,7 +56,7 @@ run inside the transaction and hold a connection while they do.
    read/write operations and listener/job entrypoints to demarcate when they are the actual unit.
 3. **Push non-transactional work out.** Network calls, message publication, file writes,
    long computations and anything waiting on a human. Each of those inside a transaction
-   holds a connection and locks for its full duration.
+   can extend acquired connection/lock occupancy; lazy acquisition and read-only work differ.
 4. **Choose isolation deliberately, once**, and record why if it is not the default.
    Raising isolation to fix a specific race is legitimate; raising it globally because a
    race exists somewhere is how throughput disappears.
@@ -59,8 +64,14 @@ run inside the transaction and hold a connection while they do.
    transaction interceptor rolls back on `RuntimeException`/`Error`, not checked exceptions.
    Self-invocation in proxy mode does not apply the inner method's transaction attributes; it may
    still execute inside the caller's existing transaction.
-6. **For anything crossing a process boundary**, design the non-atomic outcome explicitly:
-   idempotent retry, an outbox, or a compensating action (`distribution-boundaries`).
+6. **Identify every enlisted resource and external effect.** A local transaction does not
+   cover an ordinary remote API. Choose durable recovery or a supported distributed
+   transaction from the actual contract (`distribution-boundaries`).
+
+Return the atomic unit, actual transaction entry/exit and participating resources, the
+failure or race being addressed, and the check proving the intended commit/rollback outcome.
+When runtime evidence is missing, name the integration test needed instead of claiming
+that an annotation proves atomicity.
 
 ## Decision rules
 
@@ -69,24 +80,24 @@ Two or more writes to one database that must both happen or neither
         → one transaction, demarcated at the use case. Straightforward.
 
 A write plus a message or an HTTP call to another system
-        → NOT one transaction. Choose: outbox (write the intent in the
+        → not atomic under an ordinary local transaction. Choose: outbox (write the intent in the
           same transaction, relay after commit), or make the remote call
           idempotent and retry, or compensate. Publishing inside the
-          transaction is the dual-write bug.
+          transaction does not enlist the remote effect. Explicit XA participation differs.
 
 A read-only query or a report
-        → readOnly transaction, or none at all. readOnly is a hint that
-          lets the ORM skip dirty checking and may route to a replica;
-          it is not a guarantee that writes fail.
+        → choose snapshot/consistency needs first. readOnly is a provider-dependent
+          hint, not portable write enforcement or automatic replica routing.
 
 A long batch over many rows
         → many transactions, one per chunk, with restartability. One
           transaction over a million rows holds locks and undo for its
-          whole duration and cannot be resumed.
+          duration and rolls back the whole unit on failure. Chunking requires
+          accepting partial progress and recording durable checkpoints.
 
 A lock must survive a user's thinking time
-        → no database transaction can do this. Optimistic or pessimistic
-          offline lock (offline-concurrency-control).
+        → do not keep a database transaction open across human delay.
+          Use an offline concurrency protocol (offline-concurrency-control).
 
 A race that isolation could fix (lost update, phantom)
         → prefer a targeted mechanism: a unique constraint, a version
@@ -101,19 +112,20 @@ Nested use cases where the inner must survive the outer's rollback
 ## Rules
 
 - **A transaction is not a concurrency design.** It gives atomicity and an isolation level;
-  it does not stop two users overwriting each other across two requests, and it does not
+  it does not automatically validate a stale observation from an earlier transaction, and it does not
   make an operation safe to retry (`offline-concurrency-control`, `idempotency`).
-- Transaction duration is the resource. Every millisecond holds a connection from a pool
-  that is smaller than the thread count and holds locks that serialise other work. Long
-  transactions are the most common cause of "the database is slow" that is not the database
+- Measure transaction duration alongside acquired connections, locks and retained versions.
+  Long transactions can exhaust pools or delay other work; establish the mechanism from
+  pool/lock/transaction evidence before diagnosing "the database is slow"
   (`architecture-and-performance`).
 - Avoid holding a database transaction across a network call because timeout and retry behavior
   extend lock/connection occupancy. Where correctness requires validation under a lock and no
   non-atomic redesign is acceptable, bound the call, model pool/lock capacity and test failure;
   document the deliberate coupling.
-- Rollback rules are a contract you must state. In Spring, unchecked exceptions and `Error`
-  roll back; **checked exceptions do not**, unless declared with `rollbackFor`. A checked
-  business exception thrown from a service commits the partial work by default.
+- Rollback rules are a contract you must inspect. Spring's ordinary default rolls back on
+  unchecked exceptions and `Error`, not checked exceptions. Explicit rules and configured
+  defaults can override this; Spring 6.2+ supports an all-exceptions default. A checked
+  exception can leave work committed if no rollback rule or rollback-only state prevents it.
 - Self-invocation bypasses interception in Spring's default proxy mode: the callee inherits whatever
   transaction context the caller already has, but its own propagation/isolation/rollback attributes
   are not applied. Method visibility/finality constraints depend on JDK versus class proxies and
@@ -132,10 +144,9 @@ Nested use cases where the inner must survive the outer's rollback
 - `@Transactional` around one repository call can still document application semantics, configure
   isolation/read-only/timeout, or remain stable as orchestration grows. Remove it only when its
   behavior is truly identical to the repository boundary and the convention is clear.
-- Exceptions thrown after a transaction has been marked rollback-only produce a confusing
-  secondary failure (`UnexpectedRollbackException`). When catching an exception inside a
-  transaction and continuing, verify the transaction has not already been poisoned by an
-  inner boundary.
+- If an inner participating boundary marks the shared transaction rollback-only, catching
+  its exception does not restore commitability. The outer commit attempt can raise
+  `UnexpectedRollbackException`; verify persisted state from outside that transaction.
 
 ## References
 

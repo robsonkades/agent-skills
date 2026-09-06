@@ -28,6 +28,11 @@ far from the code that caused it.
 
 ## Workflow
 
+Use Java 21 for stable-API examples and explicitly marked Java 25 preview semantics only for
+StructuredTaskScope. Inspect compiler/runtime, preview policy, driver/pool contracts and the
+actual owner before changing lifetimes; do not upgrade a project or enable preview for a cleanup
+fix. Missing cancellation/close guarantees must remain explicit unknowns.
+
 1. **Name the lifetime authority.** Prefer one owner that acquires/releases. Borrowed,
    reference-counted or shared resources need an explicit protocol instead. A method receiving an
    open resource normally borrows it; consuming/closing must be named and documented.
@@ -36,11 +41,13 @@ far from the code that caused it.
    scope hold it.
 3. **Declare each resource separately.** `try (var raw = open(); var buf = wrap(raw))`, not
    a nested constructor chain: if the outer constructor throws, the inner resource is
-   already open and nothing references it.
-4. **Decide what a failing `close` means.** For a reader, suppression is right. For a
-   writer, `close` is where the flush happens, so a failed `close` means the data was not
-   written and the operation must fail — an unchecked `close()` in a `try`-with-resources
-   already does this; a `close` swallowed in `finally` silently loses data.
+   already open and nothing references it. This shape may close the raw resource twice when
+   the wrapper owns it; verify idempotence or use an explicit success-transfer/failure-cleanup
+   protocol for resources that cannot be released twice.
+4. **Decide what a failing `close` means.** If the body already failed, try-with-resources
+   suppresses cleanup failure; if the body succeeded, close failure propagates, for readers too.
+   A writer's failed flush/close can leave partial or complete writes with uncertain durability.
+   Do not report success or infer that retrying is safe merely because close threw.
 5. **Check every escape route.** A resource captured by a lambda submitted to an executor,
    stored in a field, returned inside a `Stream`, or held across a `CompletableFuture`
    boundary has left the lexical scope. Either the scope must wait, or ownership must move.
@@ -66,7 +73,9 @@ far from the code that caused it.
   strongly advises it, but third-party/reference-counted release protocols may reject double
   release. Never infer idempotence from use in a pool or decorator.
 - `close` must not block indefinitely and must not do work that can fail after the point of
-  no return. A `close` that flushes over a network needs the same timeout discipline as any
+  no return without an explicit partial-result/durability contract. Where the library can block
+  indefinitely, document that limitation and the lifecycle escalation policy rather than promise
+  bounded cleanup. A `close` that flushes over a network needs the same timeout discipline as any
   other remote call — see timeouts-and-deadlines.
 - Most streams need no closing; the ones backed by an I/O resource do—`Files.lines`,
   `Files.walk`, `Files.find`, `Files.list`, and `Files.newDirectoryStream`. A method that returns such a
@@ -100,10 +109,16 @@ far from the code that caused it.
   `newVirtualThreadPerTaskExecutor` it is bounded by nothing until the pool refuses. The
   bound must become explicit — a semaphore or the pool's own limit; see
   concurrency-limiting-and-bulkheads.
+- A permit/pool limit bounds active use, not tasks waiting for it. Bound admission/waiters and
+  acquisition time as well; a timed-out caller must not release a permit while its work still
+  uses the protected resource.
 - `StructuredTaskScope` remains a preview API in Java 25 and changed across previews. Java 25
   `close()` cancels unfinished subtasks, waits for their threads, and reports missing `join()` or
   structural misuse. Cancellation is cooperative; a subtask that ignores interruption can delay
   close indefinitely. Pin the JDK/preview contract and do not transplant examples across releases.
+
+Report the owner on success, partial acquisition, body failure, cancellation and close failure;
+include the targeted tests actually run and remaining guarantees that depend on a driver/runtime.
 
 ## References
 

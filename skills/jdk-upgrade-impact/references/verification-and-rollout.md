@@ -2,18 +2,21 @@
 
 ## The compatibility pass
 
-Run before changing anything. Same artefact, same flags, new runtime.
+Run in an isolated environment using the exact target executable. Preserve the same artifact
+and supported flags for the first comparison. Use the existing integration harness with
+bounded startup/readiness waits, test traffic, stdout/stderr capture, exit status, and cleanup
+of the process it owns on success/failure/timeout. Do not connect the compatibility run to
+production side effects. A service launch by itself is not a completed compatibility test.
 
 ```bash
-# 1. capture startup output in full — the compatibility warnings appear once, on stderr
-java $JVM_OPTS -jar app.jar > run.out 2> run.err &
-
-# 2. read what the JVM objected to
-grep -E "warning|Ignoring option|Unrecognized|deprecated|removed in" run.err
-
-# 3. confirm nothing is hiding the answer
-grep -q "IgnoreUnrecognizedVMOptions" <<< "$JVM_OPTS" && echo "REMOVE IT FOR THIS PASS"
+# Bash: inspect the completed harness capture; case-insensitive includes WARNING.
+grep -Ei "warning|Ignoring option|Unrecognized|deprecated|removed in" run.err
 ```
+
+Keep the entire logs and process result: grep finds candidate diagnostics, not all failures,
+and no match is not a passing test. Capture through exercised runtime paths because Unsafe,
+native-access and agent warnings may appear after startup. Inspect all option sources, not
+only a visible `JVM_OPTS` variable; remove `IgnoreUnrecognizedVMOptions` in this isolated pass.
 
 Three things routinely swallow the evidence, and all three are worth checking before concluding
 the run was clean:
@@ -23,14 +26,15 @@ the run was clean:
 - **A container log pipeline that keeps only stdout.** The compatibility warnings are on stderr.
 - **A JSON log encoder installed early**, which can swallow or reformat pre-logging JVM output.
 
-Then make the deprecation warnings fatal where you can:
+On a target that supports the options (these examples use JDK 25), add focused strict runs
+through the same harness and the real build tool:
 
 ```bash
-# fail on any use of the Unsafe memory-access methods, rather than warning once
-java --sun-misc-unsafe-memory-access=deny -jar app.jar
+# Additional runtime option: exercise Unsafe memory-access paths under denial.
+--sun-misc-unsafe-memory-access=deny
 
-# and for the build
-javac -Xlint:all -Werror ...
+# Additional javac options, passed through the project's existing build configuration:
+-Xlint:deprecation -Xlint:removal -Werror
 ```
 
 `deny` in a test environment is the highest-yield single step in this whole pass, because the
@@ -38,8 +42,10 @@ usage is almost always in a dependency and almost never in code you would think 
 
 ## What to measure, and against what
 
-The baseline must have been taken **before** the upgrade, with the method you will repeat
-afterwards. A baseline taken after the fact is not a baseline.
+Prefer a pre-upgrade baseline with the method repeated on the target. If it was not captured,
+rerun the preserved old image/artifact in a comparable isolated environment alongside the new
+one. Label that reconstructed baseline and its workload/data/environment differences. Without
+a valid comparison, report that performance impact is unproven; do not invent a speedup.
 
 | If the upgrade was justified by   | Measure                                            | Owned by                  |
 | --------------------------------- | -------------------------------------------------- | ------------------------- |
@@ -53,21 +59,20 @@ The last row is the most common and the most often skipped. An upgrade taken for
 still needs a before-and-after, because "no change expected" is a prediction that can be wrong.
 
 **Change one variable.** The temptation during an upgrade is to also switch collector, resize the
-heap, adopt a new default and clean up the flag list. Do not: if the result is worse, nothing in
-that set can be attributed, and the rollback is a rewrite of the configuration rather than a
-version change. `performance-methodology` is the discipline; an upgrade is where it is hardest to
-hold.
+heap or clean up unrelated code. Separate optional tuning from the runtime comparison, while
+retaining required compatibility/security changes and recording their effect on attribution.
+Do not pin an obsolete or insecure default just to claim one variable changed.
 
 ## Staging the rollout
 
 Separate the questions, because they fail differently and at different times.
 
-1. **It starts.** Compatibility pass, in CI, on the new JDK. Catches classes 1, 2, 3 and 5.
+1. **It starts.** Bounded compatibility pass in CI on the new JDK; catches startup-visible failures.
 2. **It is correct.** The full test suite on the new runtime, including whatever exercises
    serialization, cryptography, locale-sensitive formatting and time. These are the areas where a
    changed default (class 4) shows as a wrong answer rather than an error.
 3. **It is correct under load.** One instance, real traffic, watched against the baseline. This
-   is the only gate that catches an ergonomic change.
+   validates actual behavior; inspect selected ergonomic values in the earlier stages too.
 4. **It is correct across the fleet.** Wider rollout.
 
 Between 3 and 4, the two versions run at once. That is a mixed-version deploy with the usual
@@ -87,8 +92,14 @@ must still be deployable. Two things quietly break that:
   a deploy. `flyway`-style expand/contract discipline is what keeps it one.
 - **Artefacts regenerated for the new runtime** — CDS and AOT archives are tied to the JDK that
   produced them. Keep the old ones until the new version is fleet-wide, and regenerate rather
-  than reuse: a stale archive is ignored silently, so the symptom is a startup time that quietly
-  goes back to where it started with no error anywhere.
+  than reuse. Archive incompatibility may cause fallback or startup failure depending on
+  artifact/flags/build. For CDS, `-Xshare:on` makes required archive failure fatal whereas
+  `-Xshare:auto` permits fallback. Check launch output and actual archive use on both images.
+
+## Primary references
+
+- [JDK 25 java launcher](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html) — CDS launch modes, preview and diagnostic options.
+- [JDK 25 javac](https://docs.oracle.com/en/java/javase/25/docs/specs/man/javac.html) — release and warning options.
 
 ## When it stalls
 

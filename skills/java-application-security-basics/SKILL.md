@@ -34,6 +34,12 @@ with no credential store, no untrusted input and no per-instance ownership rule:
 
 ## Workflow
 
+Before recommending APIs or parameters, inspect the project's compiler release/toolchain,
+resolved security-library versions, runtime image, credential format and binding standard.
+Java 21 is this skill's example baseline, not permission to upgrade the target or add Spring
+or BouncyCastle. Version-specific facts below are dated examples; verify them against the
+resolved version. If evidence is missing, state the gap and keep the proposed change conditional.
+
 1. **Name the asset and the reachable attacker.** "A leaked database backup" and "another
    tenant's authenticated user" lead to different code; "make it more secure" leads to none.
 2. **Read the KDF parameters, not the class name.** Spring Security's own defaults sit below
@@ -85,7 +91,8 @@ THEN MessageDigest.isEqual (or the vetted library verifier), never Arrays.equals
 IF a value must be unguessable (session id, reset token, API key, OTP, salt)
 THEN generate an explicit entropy budget with SecureRandom; never Random, ThreadLocalRandom or
      Math.random(). Store reset/API tokens as a digest, bind purpose and subject, expire them,
-     and consume single-use tokens atomically.
+     and consume single-use tokens atomically. Reusable API keys instead need revocation and
+     rotation; do not consume them on their first authenticated request.
 
 IF plaintext must be recovered later
 THEN define the threat model and key custody first; use a vetted AEAD construction with an
@@ -121,7 +128,8 @@ THEN define the threat model and key custody first; use a vetted AEAD constructi
   resources hides detail from the caller but is not the authorisation control.
 - Password-reset and API-key flows are credential systems, not random-string helpers. Generate
   at least the entropy required by the applicable standard, display the raw value once, store
-  only a domain-separated digest, enforce purpose/subject/expiry, and atomically mark it used.
+  only a domain-separated digest and enforce purpose/subject/expiry. Atomically consume reset
+  tokens; enforce revocation and rotation for reusable API keys.
   Rate-limit redemption; do not log query strings containing bearer material.
 - Hash what only needs equality verification; encrypt only what the application must recover.
   With reversible data, `Cipher.getInstance("AES")` delegates mode and padding to the provider.
@@ -129,7 +137,8 @@ THEN define the threat model and key custody first; use a vetted AEAD constructi
   authenticate tenant, record id, schema and key version as AAD where those fields must not be
   swappable. Nonce uniqueness is per key, and decrypt must release no plaintext before tag
   verification. Store algorithm, key version, nonce and ciphertext/tag so rotation is possible;
-  never store the data-encryption key beside the ciphertext it protects.
+  never store a plaintext data-encryption key beside the ciphertext it protects. An encrypted
+  (wrapped) data key may accompany the ciphertext when its wrapping key is separately protected.
 - A record component or Lombok `@Data` field holding a secret is in `toString()` by
   construction, and `log.info("processing {}", request)` is then a leak nobody wrote.
 - Two moves make code worse. **Encrypting what only needs hashing** ("so we can support
@@ -154,6 +163,12 @@ Do not benchmark password verification with JMH alone and call the capacity ques
 Measure the primitive to choose parameters, then load-test the bounded authentication path:
 arrival bursts, dummy-hash misses, rehash-on-login, datastore latency and rate limiting determine
 whether an attacker can turn the KDF into a CPU or memory-exhaustion endpoint.
+
+## Deliverable
+
+For each actionable finding, return its source location, reachable attacker and consequence,
+proposed adjustment, and the test that would verify it. Separate observed behavior from static
+inference; grep matches alone do not prove exploitability. Report tests actually run and gaps.
 
 ## References
 

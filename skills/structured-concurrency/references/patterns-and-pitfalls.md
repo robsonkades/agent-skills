@@ -1,7 +1,8 @@
 # Patterns and pitfalls
 
 Examples target **JDK 25** unless marked. `Joiner` name changes for 26 are in
-`references/api-by-jdk-version.md`.
+`api-by-jdk-version.md`. Application examples are partial; supply domain functions/types,
+metrics and imports. The cancellation test uses JUnit 5; the custom joiner uses `java.util`.
 
 ## The four policies, and what each one is for
 
@@ -38,11 +39,13 @@ List<Panel> render(List<Widget> widgets) throws InterruptedException {
             // available, not necessarily that already-sent remote work stopped.
         }
 
-        return tasks.stream()
-                .map(t -> t.state() == Subtask.State.SUCCESS
-                        ? t.get()
-                        : new Panel("unknown", Optional.empty()))   // degrade, and count it
-                .toList();
+        List<Panel> panels = new ArrayList<>(tasks.size());
+        for (int i = 0; i < tasks.size(); i++) {
+            Subtask<Panel> t = tasks.get(i);
+            panels.add(t.state() == Subtask.State.SUCCESS
+                    ? t.get() : new Panel(widgets.get(i).id(), Optional.empty()));
+        }
+        return List.copyOf(panels);
     }
 }
 ```
@@ -61,7 +64,7 @@ Price price(Sku sku) throws InterruptedException {
     try (var scope = StructuredTaskScope.open(Joiner.<Price>anySuccessfulResultOrThrow())) {
         scope.fork(() -> primary.price(sku));
         scope.fork(() -> secondary.price(sku));
-        return scope.join();            // first success; the loser is cancelled at close
+        return scope.join();            // first success triggers cancellation; close waits
     }
 }
 ```
@@ -99,6 +102,10 @@ try (var scope = StructuredTaskScope.open()) {
 
 `permits.acquire()` (not `acquireUninterruptibly`) keeps the subtask cancellable while it
 waits for a permit — otherwise a cancelled scope waits for permits it will never use.
+This semaphore is local to this fan-out. Share the limiter at the dependency boundary for a
+process-wide cap; it still leaves up to 10,000 threads waiting, so bound admitted fan-out size.
+`enrich` must finish using the protected resource before release. Returning an asynchronous
+handle or timing out does not prove the underlying work stopped.
 
 ## Nesting, and what it buys
 
@@ -125,8 +132,9 @@ Section details(Query q) throws InterruptedException {
 
 Cancelling `outer` interrupts the thread running `details`, which exits its `try`, which
 closes `inner`, which cancels _its_ subtasks and waits for them. Cancellation flows down the
-tree without any code that says so — that is the whole point, and it is why the 2 s deadline
-on the outer scope is genuinely a deadline for the subtree rather than for two threads.
+tree when the intermediate code propagates interruption. The outer timeout requests subtree
+cancellation; it neither forcibly stops nested calls nor automatically configures downstream
+network deadlines. Pass the remaining operation budget where those clients need their own bounds.
 
 The corollary: the deepest uninterruptible call in the tree sets how long the _outer_ close
 takes.
@@ -139,48 +147,51 @@ successes to answer.
 ```java
 final class QuorumJoiner<T> implements Joiner<T, List<T>> {
     private final int needed;
-    private final Queue<T> results = new ConcurrentLinkedQueue<>();
-    private final AtomicInteger successes = new AtomicInteger();
+    private final List<T> results = new ArrayList<>();
 
-    QuorumJoiner(int needed) { this.needed = needed; }
-
-    @Override public boolean onComplete(Subtask<? extends T> subtask) {
-        if (subtask.state() == Subtask.State.SUCCESS) {
-            results.add(subtask.get());
-            return successes.incrementAndGet() >= needed;
-        }
-        return false;
+    QuorumJoiner(int needed) {
+        if (needed <= 0) throw new IllegalArgumentException("needed must be positive");
+        this.needed = needed;
     }
 
-    @Override public List<T> result() {
+    @Override public synchronized boolean onComplete(Subtask<? extends T> subtask) {
+        if (subtask.state() == Subtask.State.SUCCESS && results.size() < needed) {
+            results.add(subtask.get()); // a successful Callable may return null
+        }
+        return results.size() >= needed;
+    }
+
+    @Override public synchronized List<T> result() {
         if (results.size() < needed) throw new IllegalStateException("quorum not reached");
-        return List.copyOf(results);
+        return Collections.unmodifiableList(new ArrayList<>(results));
     }
 }
 ```
 
-`onComplete` is called concurrently from subtask threads and must be thread-safe — a plain
-`ArrayList` here is a data race. It is not called for a subtask that completes after the
+`onComplete` may run concurrently from subtask threads; the monitor protects both accumulation
+and snapshot, including callbacks already in progress during cancellation. It is not called for a subtask that completes after the
 scope has already been cancelled. `result()` runs on the owner after `join` has observed
 either completion or cancellation; cancelled sibling threads may still be winding down,
 and `close()` is what waits for their termination. A production quorum joiner must also
-define the zero-task case, impossible-quorum failure, ordering, and whether results beyond
-the threshold may be included during concurrent completion.
+decide whether a count quorum means agreement on a value. This example chooses at most `needed`
+successful callback arrivals (unordered, null allowed), fails when fewer than `needed` succeed,
+and does not short-circuit when quorum becomes impossible. Validate `needed <= submitted tasks`
+before forking when that count is known. It is not a distributed-consensus quorum.
 
 ## Anti-patterns
 
-- **Treating the scope as an executor.** Storing it in a field, passing it to another class,
-  forking from a non-owner thread. All of these throw at runtime
-  (`StructureViolationException`) — but the design smell arrives first.
+- **Treating the scope as an executor.** A reference can be stored or passed without throwing;
+  misuse of owner-only methods on JDK 25 throws `WrongThreadException`. Keep lifecycle lexical;
+  structure checks do not automatically close a forgotten scope.
 - **Background work in a scope.** A scope ends when its block ends. A consumer loop, a
   scheduler or a warm-up job needs an executor with its own lifecycle.
-- **Reading a `Subtask` before `join()`.** It throws. If the code compiles and passes, the
-  join is somewhere you did not expect.
+- **Owner reading a result before joining.** It throws. Joiner completion callbacks may read
+  successful results; a partial-result join still requires checking each subtask's state.
 - **Catching `FailedException` and continuing without unwrapping.** The useful exception is
   `e.getCause()`; logging the wrapper produces a stack trace that names the scope and not
   the failure.
 - **Assuming close is fast.** It waits for every subtask. Measure it — the difference
-  between "scope failed" and "scope returned" is exactly the uninterruptible work.
+  between "scope failed" and "scope returned" includes termination, cleanup and scheduling.
 - **Reusing a `Joiner`.** One per `open`, always.
 - **Assuming virtual threads add CPU capacity.** They make blocking concurrency cheap; they
   do not increase available cores. For fine-grained recursive CPU work, compare a dedicated
@@ -192,18 +203,25 @@ the threshold may be included during concurrent completion.
 @Test
 void oneFailureCancelsTheSibling() {
     AtomicBoolean siblingInterrupted = new AtomicBoolean();
+    CountDownLatch siblingStarted = new CountDownLatch(1);
 
     assertThrows(StructuredTaskScope.FailedException.class, () -> {
         try (var scope = StructuredTaskScope.open()) {
-            scope.fork(() -> { throw new IllegalStateException("boom"); });
             scope.fork(() -> {
                 try {
+                    siblingStarted.countDown();
                     Thread.sleep(Duration.ofSeconds(30));   // interruptible on purpose
                 } catch (InterruptedException e) {
                     siblingInterrupted.set(true);
                     throw e;
                 }
                 return null;
+            });
+            scope.fork(() -> {
+                if (!siblingStarted.await(2, TimeUnit.SECONDS)) {
+                    throw new AssertionError("sibling did not start");
+                }
+                throw new IllegalStateException("boom");
             });
             scope.join();
         }
@@ -220,6 +238,8 @@ the reason the API exists.
 
 Tests need `--enable-preview` too — including in the IDE, in Maven Surefire
 (`<argLine>--enable-preview</argLine>`) and in whatever runs the build in CI.
+Use a bounded forked-test-process watchdog for deliberately interruption-resistant fixtures;
+an in-process timeout that merely interrupts the owner can itself remain stuck in scope close.
 
 ## Reading the thread dump
 

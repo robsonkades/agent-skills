@@ -14,7 +14,7 @@ Three ways the plan in your hand is for a different query than the one in produc
 - **An estimated plan rather than an executed one.** An estimated plan carries no actual row
   counts and no actual timings, which removes the single most informative comparison there is.
 
-Every engine has both forms. The names differ; the distinction does not.
+Availability and instrumentation prerequisites depend on engine/version. Typical forms:
 
 | Engine     | Estimated      | Executed, with actuals                      |
 | ---------- | -------------- | ------------------------------------------- |
@@ -23,23 +23,27 @@ Every engine has both forms. The names differ; the distinction does not.
 | SQL Server | estimated plan | actual plan / `SET STATISTICS PROFILE ON`   |
 | Oracle     | `EXPLAIN PLAN` | `DBMS_XPLAN.DISPLAY_CURSOR(... 'ALLSTATS')` |
 
-Use the executed form. If the statement is too slow to run, that is itself the reason to reach
-for it on a smaller bound rather than to settle for estimates.
+Collecting actuals requires execution; EXPLAIN ANALYZE itself runs the SQL, whereas reading an
+existing cursor plan does not rerun it. Inspect side effects and use authorized execution with a
+time/resource budget. Oracle cursor actuals require statistics collection and the correct cursor/child; other
+engines also have version/statement restrictions. A smaller bound or added LIMIT changes the
+optimizer problem and is not the original workload. Existing execution evidence or estimates with
+explicit limitations can be the right next step; rollback cannot undo all external/sequence effects.
 
 ## 2. Estimated rows against actual rows
 
-This is the comparison the rest of the plan hangs off. The optimiser chose every join order,
-join algorithm and access path from its estimate. If the estimate is wrong the plan is
-_reasonable given wrong input_, and tuning the plan shape treats the symptom.
+Estimates influence join order, algorithms and access paths, alongside legality and cost models.
+An inaccurate estimate can explain a poor choice; it does not exclude another optimization problem.
 
-Divergence of one order of magnitude or more, per operation, is the threshold worth reacting to.
-Read it bottom-up: the first operation whose estimate is badly wrong is where the error enters,
-and everything above it inherits the error.
+Large divergence is a clue, not a universal tenfold threshold or proof of the bottleneck.
+Read it bottom-up to locate an early divergence, checking loops, partial execution and downstream
+effects before attributing every later choice to it.
 
 Common causes, in the order they are worth checking:
 
 1. **Stale statistics.** The distribution the optimiser is reasoning about is not the one on
-   disk. Cheapest to test: refresh statistics for the table and re-plan.
+   disk. Inspect freshness/sampling first; a scoped statistics refresh has load/plan effects
+   and must be an authorized experiment.
 2. **A predicate the optimiser cannot estimate** — a function result, a correlated subquery, a
    parameter whose value is unknown at plan time, or a comparison across columns of the same
    table. It falls back to a fixed guess.
@@ -51,8 +55,11 @@ Common causes, in the order they are worth checking:
 
 ## 3. Which operation actually costs
 
-Not the top of the tree, and not the widest box in a graphical plan. Sort operations by **actual
-time excluding children**, or if the engine does not offer that, by actual rows produced.
+Use documented exclusive timing where available. PostgreSQL 17 actual node rows/time are
+per-loop averages; multiply by loops to estimate that node's total work, not request latency.
+Inclusive parent/child timing overlaps, as can parallel workers: do not sum/subtract it blindly.
+Rows produced can be tiny for an expensive aggregate/filter; inspect input rows, reads, spills,
+rechecks and waits instead of ranking by output count. LIMIT/EXISTS can stop a node early.
 
 Two shapes account for most of what people miss:
 
@@ -68,14 +75,16 @@ without it invites reading a 10,000× repeated operation as a cheap one.
 
 ## 4. The access path, named plainly
 
-| What it does                                       | Common names                                                            |
-| -------------------------------------------------- | ----------------------------------------------------------------------- |
-| Read every row of the table                        | seq scan, full table scan, table scan, clustered index scan             |
-| Read a contiguous range of an index                | index scan, index range scan, index seek, ref/range                     |
-| Read the index and answer entirely from it         | index-only scan, covering index, "using index"                          |
-| Read the index, then fetch each row from the table | bitmap heap scan, key lookup, table access by index rowid, rowid lookup |
+| What it does                                 | Common names                                                        |
+| -------------------------------------------- | ------------------------------------------------------------------- |
+| Read every row of the table                  | seq scan, full table scan, table scan, clustered index scan         |
+| Read a contiguous range of an index          | index scan, index range scan, index seek, ref/range                 |
+| Read the index and answer entirely from it   | index-only scan, covering index, "using index"                      |
+| Fetch table rows located by an index         | key lookup, table access by index rowid, rowid lookup               |
+| Group candidate tuple locations by heap page | PostgreSQL bitmap heap scan; inspect lossy rechecks and heap blocks |
 
-The fourth row is the one to notice. The first three are all potentially correct answers.
+All paths can be correct. PostgreSQL bitmap access visits heap pages in physical order rather
+than doing a random fetch for every candidate; an index-only plan may still perform heap fetches.
 
 ## What a plan cannot tell you
 
@@ -85,3 +94,6 @@ The fourth row is the one to notice. The first three are all potentially correct
   the connection pool are elsewhere.
 - **Whether the data read came from memory or disk.** Ask the engine for buffer or I/O statistics
   explicitly, and state which state you measured in.
+  A database buffer miss/read can still hit the OS cache; it does not prove physical device I/O.
+
+Source: [PostgreSQL 17 EXPLAIN semantics](https://www.postgresql.org/docs/17/using-explain.html).

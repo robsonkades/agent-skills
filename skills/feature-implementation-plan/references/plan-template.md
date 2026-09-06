@@ -1,6 +1,8 @@
 # Plan template
 
-Every section appears. A section with nothing in it reads `none, because <reason>`.
+Select sections warranted by the feature depth; a Light plan can be a few inline entries. Established
+inapplicability may read `none, because <reason>`; missing evidence is an explicit unknown/blocker,
+not N/A. Reuse authoritative artifacts and links rather than copying their full contents.
 
 ```markdown
 # <Feature name>
@@ -8,8 +10,10 @@ Every section appears. A section with nothing in it reads `none, because <reason
 Input revisions: <Product + Engineering | Tech Feature>
 Depth: Light | Standard | Deep
 Persistence: Inline | Dossier
-Dossier: docs/features/<slug>/
-Updated: 2026-09-04
+Dossier: <existing authorized location, or N/A for Inline>
+Repository baseline: <revision and relevant working-tree changes>
+Status: draft | ready for <scope/resources>, with gate reference
+Updated: <actual date>
 
 ## Summary
 
@@ -17,7 +21,7 @@ Updated: 2026-09-04
 
 ## Scope
 
-In scope: <Required and Recommended items, by identifier>
+In scope: <accepted scope items, by identifier; priority alone does not include an item>
 Out of scope: <each item, its reason, and who excluded it>
 
 ## Decisions
@@ -36,13 +40,14 @@ of the dependencies.>
 
 ## Resources
 
-| ID  | Resource | Trace | Depends on | Files | Planned evidence | Status |
-| --- | -------- | ----- | ---------- | ----- | ---------------- | ------ |
+| ID  | Resource | Trace | Dependencies/gates | Files | Planned evidence | Owner/progress link |
+| --- | -------- | ----- | ------------------ | ----- | ---------------- | ------------------- |
 
 ## Execution order
 
-RES-01 -> RES-03 -> RES-02 -> RES-05
-Forced: RES-03 needs RES-01's column. RES-02 and RES-05 are independent.
+Forced: RES-03 needs RES-01's column.
+Ready initially: RES-01, RES-02, RES-05, subject to ownership/shared-file constraints.
+RES-03 becomes ready after RES-01; RES-02 and RES-05 have no dependency on that chain.
 
 ## Schema changes
 
@@ -107,9 +112,9 @@ once it has run, and what the alternative is.>
 
 ## Amendments
 
-2026-09-05 RES-06 added. Implementing RES-02 showed the consumer needs an idempotency
-key to satisfy RISK-02; the risk register assumed the handler was idempotent
-and it is not.
+<date/revision> RES-06 added within accepted scope to implement TC-02 duplicate-effect
+handling; RES-02 depends on it. Update the current resource graph and risk record, and
+reference the applicable decision/readiness evidence rather than leaving only this note.
 ```
 
 ## Notes on three sections that are usually wrong
@@ -128,11 +133,15 @@ point", which is a legitimate answer that changes how carefully the preceding st
 ```text
 Bad    The dispatch process is reliable.
 Bad    Performance is acceptable.
-Good   Given an order in NEW, when dispatch is requested, then a dispatch event is
-       published exactly once and the order moves to DISPATCHING within 2 seconds.
+Good   Given an order in NEW, when dispatch is accepted, then one durable dispatch intent
+       and DISPATCHING state commit atomically within the accepted latency criterion.
 Good   Given a duplicate dispatch request with the same idempotency key, when it is
-       received, then no second event is published and the response is the original
-       dispatch id.
+       received, then no second logical dispatch intent is created and the original dispatch
+       id is returned; relay/redelivery duplicates do not repeat the consumer's business effect.
 ```
 
 Each one names its verification: a test identifier, a manual step, or a metric.
+These are illustrative criteria to trace to an accepted contract, not new requirements to insert.
+Define the durability/latency boundary, relay recovery and eventual completion separately when
+needed; one logical intent does not imply one broker delivery. The outbox relay can republish after
+a crash ([Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html)).

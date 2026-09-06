@@ -1,5 +1,9 @@
 # Gateways, Row Data Gateway and Active Record
 
+Java examples are partial sketches, not complete application classes: imports, constructors,
+schema and project-specific exception/status types are omitted. Use Java 17 and Spring 6.1+
+for `JdbcClient`; JPA annotations/API here use `jakarta.persistence` on that stack.
+
 ## Table Data Gateway
 
 One object holds every SQL statement for one table. It speaks in primitives, records or
@@ -39,14 +43,24 @@ public record RateRow(long id, String origin, String destination,
 
 ### What belongs here
 
-SQL, parameter binding, result mapping to row records, and nothing else.
+SQL, parameter binding, row mapping, technical validation and affected-row/error handling.
+`find` assumes at most one currently valid rate per route: `.optional()` throws on multiple
+rows, rather than choosing one. Enforce that invariant in the database or return a collection
+when multiple matches are valid. `CURRENT_DATE` uses the database's date/time context; bind
+an explicit business date if the caller owns that policy.
+
+`expireAllFor` is a partial SQL illustration: define whether future rates may be shortened
+past their start date, and preserve interval constraints. Bulk SQL bypasses entity callbacks
+and automatic entity version checks; coordinate managed-state refresh/clear and version
+updates where required by the write contract. Test against the target dialect.
 
 ### What must not
 
 Conditionals that encode a business rule. The moment a gateway method contains
 `if (row.status().equals("BLOCKED")) return Optional.empty();`, a rule has moved into the
-data layer, where nobody will look for it and where it cannot be unit tested without a
-database. Return the row; let the caller decide.
+data layer with unclear ownership. Expose policy deliberately, for example by returning the
+row for a caller decision or by naming an explicit policy-filtered query. A concurrency
+guard in an atomic write must remain in SQL; moving it to a prior read can introduce a race.
 
 ### Where it is the best available option
 
@@ -58,8 +72,8 @@ database. Return the row; let the caller decide.
 
 ### How it degrades
 
-By accumulating methods until it is a 40-method class serving six use cases, and by
-absorbing rules. Both are visible: count the methods, and grep for `if` in the class.
+By mixing unrelated access responsibilities or hiding policy decisions. Inspect callers,
+SQL predicates and change reasons; a method count or grep for `if` is not a diagnosis.
 
 ## Row Data Gateway
 
@@ -68,11 +82,14 @@ logic**. In modern Java it appears mainly as a deliberate boundary rather than a
 pattern, and naming it is useful:
 
 ```java
-// A row object. Not a domain object: it makes no decisions.
+// Passive row data only: this is NOT a Row Data Gateway by itself.
 public record CustomerRow(Long id, String name, String email, String status, long version) { }
 ```
 
-Its value today is diagnostic. When a class named `Customer` contains only accessors plus
+The record above has no database access. A Row Data Gateway additionally owns row-level
+insert/update/delete operations (with affected-row/version checks and a caller-owned
+transaction). A mapper returning a passive record does not turn it into a gateway.
+When a class named `Customer` contains only accessors plus
 persistence, the design has a Row Data Gateway that is being described as a domain model —
 and the business rules are therefore somewhere else, usually a service
 (`domain-logic-organization`).
@@ -93,20 +110,26 @@ public class Subscription {
     private BigDecimal monthlyPrice;
     @Version private long version;
 
-    // Business logic on the row — this is what makes it Active Record.
+    // Assumed policy: cancellation is allowed through renewsOn minus three days, inclusive.
     public void cancel(LocalDate on) {
         if (status == CANCELLED) throw new AlreadyCancelled(id);
-        if (on.isBefore(renewsOn.minusDays(3))) throw new CancellationTooLate(id);
+        if (on.isAfter(renewsOn.minusDays(3))) throw new CancellationTooLate(id);
         status = CANCELLED;
     }
+
+    // Persistence on this object makes this sketch Active Record.
+    // For a new instance only; caller owns the EntityManager and transaction.
+    public void insert(EntityManager em) { em.persist(this); }
 
     public BigDecimal proratedRefund(LocalDate on) { ... }
 }
 ```
 
-In a Spring stack, the persistence half is normally provided by a repository rather than by
-a `save()` method on the class. That is a cosmetic difference: the defining property is that
-**the class's shape is the table's shape**, and the business logic sits on it.
+Without the persistence method, an entity with `cancel` and an external repository remains
+Data Mapper-style persistence, even if it closely mirrors a table. That ownership difference
+is substantive. The `insert` sketch illustrates coupling, not a recommendation to inject an
+EntityManager into existing entities. Pure `cancel` tests do not require a database; insertion,
+flush/commit failures and optimistic locking require integration tests.
 
 ### When Active Record is the right call
 
@@ -129,7 +152,7 @@ using it there is a deliberate decision worth recording rather than an admission
 | Unit tests need a database to exercise a rule                      | The rule is entangled with persistence         |
 | The same class is used as the HTTP payload and the row             | The public API is now the schema               |
 
-Two or three of these together are the trigger to move to a Data Mapper
+Use the observed cost and affected behavior to decide whether to move to a Data Mapper
 (`active-record-vs-data-mapper.md`), and the migration is incremental
 (`architecture-refactoring-paths`).
 
@@ -146,12 +169,19 @@ Two or three of these together are the trigger to move to a Data Mapper
 
 ```text
 Does the code make business decisions about this data?
-├── no  → gateway (table or row). Keep it free of conditionals.
+├── no  → gateway (table or row), or a projection mapper; separate policy from mechanics.
 └── yes → is the object's shape the table's shape, and will it stay so?
-          ├── yes → Active Record
+          ├── yes → Active Record if the object owns persistence; a simple mapper also fits
           └── no  → Data Mapper (active-record-vs-data-mapper.md)
 ```
 
 The second question is about the future, so answer it with evidence: who owns the schema,
 how often it has changed for non-domain reasons, and whether reporting requirements land on
 the same tables.
+
+## Sources
+
+- [Fowler: Active Record](https://martinfowler.com/eaaCatalog/activeRecord.html)
+- [Fowler: Row Data Gateway](https://martinfowler.com/eaaCatalog/rowDataGateway.html)
+- [Fowler: Table Data Gateway](https://martinfowler.com/eaaCatalog/tableDataGateway.html)
+- [Spring Framework 6.1 JdbcClient](https://docs.spring.io/spring-framework/docs/6.1.x/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html)

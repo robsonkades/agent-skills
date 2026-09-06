@@ -1,21 +1,25 @@
 # Investigation checklist
 
-Each concern gets a finding with evidence, or an explicit "not found". Skip a concern only when
-the feature cannot touch it, and say which ones you skipped.
+Use the concerns relevant to the feature. Distinguish supported findings, "not found in searched
+paths", "not examined" and "unavailable"; name meaningful coverage limits without turning a
+small change into a whole-repository survey.
 
 ## Ground truth first
 
-| Question                            | Where to look                                                  |
-| ----------------------------------- | -------------------------------------------------------------- |
-| What builds this, and how is it run | Build file, wrapper scripts, CI workflow, container definition |
-| Which language and runtime version  | Build file, toolchain declaration, container base image        |
-| Which framework and which version   | Build file — never memory, and never a sibling project         |
-| Which modules exist                 | Directory layout, module or project declarations               |
-| What the tests are and how they run | Test directories, the CI job that runs them                    |
+| Question                            | Where to look                                                                           |
+| ----------------------------------- | --------------------------------------------------------------------------------------- |
+| What builds this, and how is it run | Build file, wrapper scripts, CI workflow, container definition                          |
+| Which language and runtime version  | Build file, toolchain declaration, container base image                                 |
+| Which framework and which version   | Relevant module build, parent/BOM/catalog/constraints, resolved graph and runtime image |
+| Which modules exist                 | Directory layout, module or project declarations                                        |
+| What the tests are and how they run | Test directories, the CI job that runs them                                             |
 
 The framework version is the single most common source of wrong guidance: APIs are removed and
 replaced between majors, and an answer correct for one is a compile error in the other. Read the
-version before asserting anything version-sensitive.
+version before asserting anything version-sensitive. A dependency declaration can differ from
+the selected version/scope; identify the target profile or Gradle configuration. Reuse available
+resolution reports or inspect the project's supported dependency-report command. If execution
+needs unavailable artifacts/access, retain that limitation rather than silently selecting a version.
 
 ## Structure and conventions
 
@@ -68,14 +72,18 @@ version before asserting anything version-sensitive.
 Persistence      PostgreSQL 16 via Spring Data JPA. Flyway migrations under
                  src/main/resources/db/migration, 41 files, versioned V<n>__.
                  Evidence: pom.xml:88, src/main/resources/db/migration/
-                 Observed. Counter-examples: none.
+                 Observed in inspected modules; production DB version needs runtime evidence.
+                 Counter-examples: none found in those modules.
 
-Retries          Not found. No retry policy, no backoff utility, no resilience
-                 library in the build. Evidence: grep over src/ and pom.xml.
+Retries          Not found in src/ and pom.xml after searching retry annotations,
+                 client construction and resilience dependencies with rg.
+                 Proxy/platform retry policy was not available in this checkout;
+                 that remains unknown, not disabled.
 ```
 
 "Observed" is the label that keeps this report honest. Nothing here is a requirement until the
-decision phase makes it one.
+decision phase establishes it or a cited existing policy/contract already requires it. Record
+the policy separately from observed implementation; either may disagree with the other.
 
 ## Two traps
 
@@ -85,3 +93,8 @@ finding.
 
 **Generalising from the file you happened to open.** One controller using a pattern is one
 controller. Count before you claim, and report the count.
+
+## Sources for dependency evidence
+
+- [Maven dependency mechanism](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html): mediation, management, inheritance and scopes.
+- [Gradle dependency reports](https://docs.gradle.org/current/userguide/viewing_debugging_dependencies.html): resolved configuration graphs and selection reasons; use the project's wrapper version.

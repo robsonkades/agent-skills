@@ -1,5 +1,11 @@
 # Configuring a cache
 
+These are partial snippets, not standalone applications. Caffeine snippets target the 3.x API
+(Java 11+), checked with Caffeine 3.2.2 and `javac --release 11`; import the Caffeine cache types,
+`java.time.Duration` and `java.util.concurrent.ThreadLocalRandom`. Supply an immutable
+`ProductDto` and a bounded `loadFromSource` implementation. The Redis snippet separately requires
+Spring Data Redis 4/Jackson 3 and its supported Java baseline; inspect the project's versions.
+
 ## Bounded by weight when entry sizes vary
 
 ```java
@@ -30,7 +36,7 @@ Cache<Long, ProductDto> cache = Caffeine.newBuilder()
             private final Duration base = Duration.ofMinutes(10);
             private long jittered() {
                 long b = base.toNanos();
-                return b + ThreadLocalRandom.current().nextLong(b / 5);   // +0..20%
+                return b - ThreadLocalRandom.current().nextLong(b / 5);   // >80%..100%
             }
             public long expireAfterCreate(Long k, ProductDto v, long now) { return jittered(); }
             public long expireAfterUpdate(Long k, ProductDto v, long now, long d) { return jittered(); }
@@ -40,9 +46,9 @@ Cache<Long, ProductDto> cache = Caffeine.newBuilder()
         .build();
 ```
 
-Jitter is unnecessary when entries arrive naturally, one at a time — they are already
-desynchronised. It is necessary exactly when they arrive together: preload, post-deploy
-repopulation, recovery after a bulk invalidation.
+This uses ten minutes as the maximum local lifetime, not the midpoint. Subtract source lag and
+load duration from a business age budget first. Jitter helps when expiry clusters after preload,
+deploys or invalidation; measure correlations even when entries usually arrive individually.
 
 Note that `expireAfter(Expiry)` is **mutually exclusive** with `expireAfterWrite`.
 
@@ -50,6 +56,7 @@ Note that `expireAfter(Expiry)` is **mutually exclusive** with `expireAfterWrite
 
 ```java
 Caffeine.newBuilder()
+        .maximumSize(10_000)
         .refreshAfterWrite(Duration.ofMinutes(5))
         .expireAfterWrite(Duration.ofMinutes(30))
         .recordStats()
@@ -57,13 +64,15 @@ Caffeine.newBuilder()
 ```
 
 `refreshAfterWrite` makes an entry eligible; the first later access initiates asynchronous reload
-and normally receives the old value. Failed refresh retains the old value. `expireAfterWrite` is
-an eligibility/removal policy rather than a wall-clock guarantee, and keys not accessed after
-refresh eligibility may expire. Configure a dedicated executor when common-pool contention or
-blocking loaders matter.
+and normally receives the old value. Failed refresh retains it until expiry; expiration makes it
+invisible to cache lookups even if physical cleanup occurs later. A completed reload can itself
+be stale, so entry lifetime is not source-data age. Configure an owned executor with bounded
+loader concurrency and deadlines when blocking work matters; close it with the application.
 
 For async loading, `AsyncCacheLoader.asyncLoad` takes `(K key, Executor executor)` — **two**
-parameters. A one-argument lambda in `buildAsync` does not compile.
+parameters and returns a future. `buildAsync` also accepts a one-argument `CacheLoader` returning
+a value, which Caffeine executes asynchronously. Choose the overload by loader contract;
+do not accidentally create a cache whose values are themselves futures.
 
 ## Redis
 
@@ -77,12 +86,12 @@ assume concrete types reappear; untyped JSON normally yields maps unless explici
 metadata is configured. Spring Data Redis 4's generic Jackson 3 serializer does not enable
 default typing by default; the deprecated Jackson 2 generic serializer did.
 
-- `maxmemory-policy` explicitly configured — the default `noeviction` **rejects writes**
+- `maxmemory-policy` explicitly configured — the default `noeviction` **rejects memory-growing writes**
   when full.
 - Monitor `evicted_keys`, rejected writes, RSS/allocator fragmentation and host/container swap or
   major faults. `mem_fragmentation_ratio` alone is not a reliable swap detector.
-- Version the key prefix for format changes. `FLUSHALL` in a deploy pipeline is a stampede
-  generator.
+- Version the key prefix for format changes and stage the cold-namespace transition within origin
+  capacity. Coexistence also consumes memory; `FLUSHALL` is not a safe warming strategy.
 
 ## Near-cache (L1 + L2)
 
@@ -95,8 +104,8 @@ default typing by default; the deprecated Jackson 2 generic serializer did.
 - [ ] Invalidation-propagation test running in CI
 
 Redis pub/sub is fire-and-forget. An instance disconnected at publish time misses the
-message and serves stale data until its TTL expires — which is why the TTL is a safety net
-rather than redundancy. Publish only after commit; if loss between commit and publish exceeds the
+message. TTL removes that local entry, but refilling from stale L2 can extend observed staleness.
+Carry source versions/freshness budgets through both layers. Publish only after commit; if loss between commit and publish exceeds the
 staleness policy, an `AFTER_COMMIT` listener is insufficient—use transactional outbox/CDC or
 version-checked cache reads.
 
@@ -105,7 +114,7 @@ version-checked cache reads.
 - [ ] Source latency distribution, origin work and sustainable capacity measured
 - [ ] Access distribution measured from real data
 - [ ] `h` projected from that distribution for the intended `maximumSize`
-- [ ] Decision made on `h × T_source`, not on `h` alone
+- [ ] Saved origin work and full hit/miss latency costs compared with the uncached path
 - [ ] `maximumSize` or `maximumWeight` set — weight if entry sizes vary widely
 - [ ] Logical weight calibrated to retained memory; full-cache post-GC/SLO headroom verified
 - [ ] TTL derived from the business tolerance for stale data

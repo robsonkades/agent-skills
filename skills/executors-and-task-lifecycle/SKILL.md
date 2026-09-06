@@ -17,6 +17,12 @@ Make each task transition—created, admitted, queued, started, completed/failed
 and drained—owned and observable. An executor schedules Java work; it is not automatically a durable
 queue, downstream limiter, supervisor, retry engine, context carrier or graceful-shutdown policy.
 
+Inspect compiler/runtime and executor implementation before applying examples. The references use
+standard platform-executor APIs available on Java 17; `ExecutorService.close` is available since
+19, and virtual-thread-per-task executors since 21. Preserve the target; do not upgrade to fit a
+factory method. With missing workload or durability evidence, record a conditional design and
+the smallest saturation/restart experiment needed before selecting capacity or loss policy.
+
 ## Executor contract
 
 ```text
@@ -78,6 +84,10 @@ Define one observation path: join/get by owner, completion callback, supervised 
 hook. Logs alone do not deliver failure semantics. Track task identity with bounded labels and avoid
 leaking MDC/security/scoped state across reused workers.
 
+`Future.cancel(true)` requests interruption; a cancelled/done Future does not prove the body has
+exited or released resources. Track physical completion separately when releasing admission
+permits or closing dependencies, and route cooperative interruption to `cancellation-and-interruption`.
+
 ## Rejection and overload
 
 Rejection happens after shutdown too, not only saturation. Policies are semantic:
@@ -87,6 +97,10 @@ Rejection happens after shutdown too, not only saturation. Policies are semantic
   recurse/reenter locks, and does not run tasks after shutdown under the stock policy;
 - discard/oldest changes delivery/order and needs explicit acceptable-loss semantics/metrics;
 - custom persistence/fallback can itself block/fail and must preserve ownership.
+
+Non-throwing rejection can leave a Future returned by `submit` permanently incomplete: stock
+discard policies do not cancel it, and CallerRuns silently discards after shutdown. Require a
+visible refusal or explicit terminal completion/cancellation for every result-bearing task.
 
 Do not call caller-runs “backpressure” without proving the submitter is on the causal producer path
 and slowing it actually reduces arrival. Across asynchronous/network boundaries it may only move the
@@ -117,8 +131,10 @@ free. Shutdown can wait on uncooperative tasks.
 
 `shutdown` rejects new work and allows accepted work to complete; `shutdownNow` is best effort,
 typically interrupts started tasks and returns queued tasks not begun. Neither makes work durable or
-guarantees termination. `ExecutorService.close`/try-with-resources semantics vary with modern API
-contract and can wait for termination; verify target JDK and do not hide an unbounded scope close.
+guarantees termination. Since Java 19, default `ExecutorService.close` waits for termination; on
+interruption it attempts `shutdownNow`, continues waiting and restores interrupt status before
+return. It is not a bounded shutdown API, and must not be called by a task whose own completion
+is required for that executor to terminate. Check implementation overrides.
 
 Use a bounded two-phase protocol:
 
@@ -177,8 +193,10 @@ transitions when decisions need accuracy. Metrics are not “free.”
 
 ## References
 
-- [Shutdown, rejection and drain](references/shutdown-and-rejection.md)
-- [Scheduled and periodic tasks](references/scheduled-and-periodic.md)
+- [Shutdown, rejection and drain](references/shutdown-and-rejection.md) — read when designing
+  overload, task wrappers or interrupted shutdown/drain ownership.
+- [Scheduled and periodic tasks](references/scheduled-and-periodic.md) — read for periodic
+  failures, scheduler-to-worker dispatch, cancellation retention or replica execution.
 - [`ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
 - [`ExecutorService`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html)
 - [`ScheduledThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ScheduledThreadPoolExecutor.html)

@@ -1,7 +1,8 @@
 # Collector selection and heap sizing
 
-Read this only after GC has been confirmed as the bottleneck — pause time or pause
-frequency showing up directly in the latency profile.
+Read this when GC pause, frequency or concurrent cost has been implicated, or when sizing
+a new service. For a new workload, treat the choice as an experiment until representative
+measurements exist.
 
 ## Collector selection
 
@@ -19,19 +20,22 @@ collector may take from the application; heap size and throughput break the ties
 **CPU is the dimension most often missed.** GC thread counts come from the processor count
 the JVM sees, measured on 25.0.3 with `-XX:ActiveProcessorCount`: G1 uses
 `ParallelGCThreads = N` up to 8 and `8 + 5/8 × (N − 8)` above (4 CPUs → 4, 16 → 13), with
-`ConcGCThreads` about a quarter of that (16 → 3); ZGC uses roughly `N × 5/8` parallel and
-`N/8` concurrent (8 CPUs → 5 and 2, 2 CPUs → 2 and 1). A concurrent collector on a
-2-CPU pod therefore runs its cycle on the same core the application needs, which is why
-"we moved to ZGC and throughput fell" is a CPU-count finding, not a collector defect.
+`ConcGCThreads` about a quarter of that (16 → 3). ZGC's observed configured counts were
+8 CPUs → 5 parallel and 2 concurrent, 2 CPUs → 2 and 1; these are not a portable formula
+or proof that all workers run simultaneously. A concurrent collector and the application
+share the pod's CPU budget. A throughput drop after switching suggests investigating
+CPU contention/barriers, allocation stalls and workload differences; CPU count alone
+does not establish the cause.
 
 **Ergonomics are release/build inputs:** a JVM that sees one CPU selected Serial on the
 verified 25.0.3 build
 `-XX:ActiveProcessorCount=1` → `UseSerialGC = true {ergonomic}`). The JDK 9-era rule also
 demotes small-memory hosts; that half was not reproducible here without a cgroup, so
 verify on the target with startup logs/`jcmd <pid> VM.flags`. JDK 27 EA documentation says
-G1 is the default, but JEP 523 is still Candidate as of 2026-09-03. Test the exact target
-build and explicitly select the intended collector rather than encoding an EA/JEP status
-as a fleet guarantee.
+G1 is the default; JEP 523 is now Closed/Delivered for JDK 27 (checked 2026-09-05,
+updated 2026-08-19). Integration in a release does not establish deployment or GA
+availability. Test the exact target build and explicitly select the intended collector
+when fleet policy must be independent of ergonomics.
 
 Two decisions this table does **not** make for you:
 
@@ -58,7 +62,9 @@ idle uncommit and peak for the chosen collector/container policy.
 
 **Leave headroom for non-heap.** Metaspace, code cache, thread stacks, direct buffers and
 the collector's own structures are all outside `-Xmx` and all count against the cgroup
-limit. Measure them with NMT under real load rather than estimating; `jvm-memory-regions`
+limit when resident/charged. NMT tracks HotSpot-managed native memory, not all native
+library allocations or the complete cgroup charge; reconcile it with process RSS and
+cgroup measurements, including page cache and other charged consumers. `jvm-memory-regions`
 covers the budget and the `MaxRAMPercentage` arithmetic. On common modern HotSpot server
 ergonomics `MaxRAMPercentage` defaults to 25, but minimum-heap rules, visible memory,
 vendor/build and explicit options can change effective `-Xmx`. Read `MaxHeapSize`,
@@ -82,9 +88,11 @@ collection under representative load, not what the dashboard shows between colle
    universal live-set ratio. Size from measured live set, allocation during the cycle,
    evacuation/reserve margin and workload bursts, then validate policy logs. Rules such as
    “3–4× live set” are only coarse experimental brackets, not recommendations.
-4. Under a concurrent collector, the heap must also absorb `allocation rate × cycle time`
-   while the cycle runs, or the mutators stall on allocation — the sizing and the
-   `Allocation Stall` signal are zgc-and-shenandoah.
+4. Under a concurrent collector, `allocation rate × cycle time` is a first planning
+   estimate of allocation pressure, not an exact extra-space requirement: reclamation
+   overlaps allocation, and bursts, relocation reserves and fragmentation matter.
+   Validate the peak net occupancy/free-space trajectory; insufficient usable space can
+   stall mutators. The sizing and `Allocation Stall` signal are zgc-and-shenandoah.
 5. Fit the result into the container budget (jvm-memory-regions). If it does not fit,
    reduce live state/allocation, increase capacity, change the collector/architecture, or
    accept and quantify a smaller safety margin—never silently erase it.
@@ -138,3 +146,10 @@ help.
 - [ ] Predeclare expected signal, abort/rollback thresholds and capacity guardrails
 - [ ] Revert a change that misses its prediction or causes a material regression
 - [ ] Record result, mechanism, effective flags and vendor/update
+
+## Primary references
+
+- [JEP 523: G1 default in all environments](https://openjdk.org/jeps/523)
+- [JEP 535: Shenandoah generational mode by default](https://openjdk.org/jeps/535)
+- [JEP 490: removal of non-generational ZGC](https://openjdk.org/jeps/490)
+- [Java 25 Native Memory Tracking](https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html)

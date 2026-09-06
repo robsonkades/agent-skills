@@ -2,7 +2,9 @@
 
 ## Which shapes trend which way
 
-Treat this as a prior for choosing what to benchmark, never as a substitute for benchmarking,
+Treat these workload tendencies as hypotheses for choosing what to benchmark, not measured
+comparisons or guarantees for every release. "All lines" identifies conceptual applicability,
+not evidence that Graal wins on every version. Never substitute the table for benchmarking,
 and read the last column: several rows changed with the GraalVM 25.x line, and a prior formed
 on an older compiler is a prior about a different compiler.
 
@@ -54,12 +56,18 @@ audited published methodology behind them; reproduce them for your own workload.
 
 ## What partial escape analysis buys, concretely
 
+Partial Java snippet, with application-specific `Event`, `Result` and `publish` omitted.
+`publish` receives a primitive; the static field deliberately retains the result only on
+the error path. The field is an illustration of escape, not a recommended logging design.
+
 ```java
+static volatile Result lastError;
+
 void processEvent(Event e) {
     Result r = new Result();          // PEA candidate
 
     if (e.isError()) {
-        log.warn("Error: " + r.getMessage());  // r escapes here
+        lastError = r;                 // the object itself escapes here
         return;                        // rare path
     }
 
@@ -68,11 +76,13 @@ void processEvent(Event e) {
 }
 ```
 
-Under C2, `r` escapes inside the error branch, so escape analysis concludes it always escapes
-and heap-allocates it on every execution — including the common path. Under PEA the two paths
-are analysed separately: `r` is virtualised on the common path with no real allocation, and
-materialised only on the rarely executed error path. The saving is proportional to how rare
-the escaping branch is, for that object specifically.
+If both branches remain in C2's compilation graph, its flow-insensitive escape analysis
+cannot scalar-replace `r` only on the common path. Graal PEA can keep it virtual on that
+path and materialise it for the static store. These are optimisation candidates, not
+guaranteed outputs: inlining, profiling (including uncommon traps), field use and heuristics
+can change the result. Exercise both paths with representative frequency and inspect each
+compiler's output. Merely passing `r.getMessage()` to a logger would not establish escape
+of `r` itself.
 
 Two limits the paper and the option defaults impose: an array longer than
 `MaximumEscapeAnalysisArrayLength` (128) is never virtualised, and virtualisation needs the
@@ -82,9 +92,12 @@ therefore the precondition here too, which is why the inliner change in 25.3 can
 result in either direction.
 
 This is also why the shape of your code, not the compiler's reputation, decides the outcome:
-a method with no such branch-asymmetric allocation gains nothing from PEA. Confirm a removed
-allocation the same way as under C2 — it disappears from allocation profiling
-(async-profiler `-e alloc`, JFR `jdk.ObjectAllocationInNewTLAB`) — rather than from a claim.
+a method without an eligible allocation may gain nothing from PEA. Compare allocated bytes
+per operation with equivalent inputs and compiled hot paths; inspect compiler graphs when
+attributing the mechanism. Missing samples in async-profiler allocation mode or JFR do not
+prove zero allocation. `jdk.ObjectAllocationInNewTLAB` records the allocation that triggers
+a new TLAB, not every object allocated within one; sampling and recording settings affect
+visibility.
 
 Source: Lukas Stadler, Thomas Würthinger, Hanspeter Mössenböck, "Partial Escape Analysis and
 Scalar Replacement for Java", CGO 2014, doi:10.1145/2544137.2544157; PDF at
@@ -108,7 +121,8 @@ Scalar Replacement for Java", CGO 2014, doi:10.1145/2544137.2544157; PDF at
 
 ### Before deciding to migrate
 
-- [ ] The workload is long-running — minutes to hours of uptime, not a short-lived function
+- [ ] Measured savings repay compilation costs over the actual instance lifetime, including
+      cold starts, reuse and restart/scale-out frequency
 - [ ] The benchmarked methods are the real hot paths, identified by profiling rather than
       assumed
 - [ ] Results favour Graal consistently across runs, not in a single run
@@ -127,8 +141,8 @@ Scalar Replacement for Java", CGO 2014, doi:10.1145/2544137.2544157; PDF at
 - [ ] Production monitoring confirms the laboratory gain under real load
 - [ ] JFR `jdk.Compilation` in production shows `compiler = "jvmci"` for tier 4 — the
       deployment did not silently land on C2 through a flags-file or image mix-up
-- [ ] A rollback plan exists and has been tested, in case production diverges from the
-      benchmark; the rollback binary is the OpenJDK build the C2 side was also measured on
+- [ ] The chosen rollback is tested: C2 in the same GraalVM image where supported, or the
+      previous production JDK image; benchmark and validate whichever route will be used
 
 ## Licensing and the product line, as of September 2026
 
@@ -174,4 +188,5 @@ changed since this was written; confirm at `graalvm.org/downloads` and
 - [Oracle GraalVM support roadmap](https://docs.oracle.com/en/graalvm/support-roadmap.html)
 - [Oracle GraalVM 25 support and licensing](https://docs.oracle.com/en/graalvm/jdk/25/docs/support/)
 - [Partial Escape Analysis and Scalar Replacement for Java (CGO 2014)](https://ssw.jku.at/Research/Papers/Stadler14/Stadler2014-CGO-PEA.pdf)
+- [JDK 25 JFR event definitions](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml) — allocation event coverage and compilation fields.
 - [JEP 410: Remove the Experimental AOT and JIT Compiler](https://openjdk.org/jeps/410)

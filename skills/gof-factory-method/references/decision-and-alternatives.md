@@ -17,21 +17,22 @@ implementation per arity; `Integer.valueOf` caches. None of that involves a subc
 
 ## The hook against its replacements
 
-| Alternative                         | Resolves                                                  | Fails to resolve                                  |
-| ----------------------------------- | --------------------------------------------------------- | ------------------------------------------------- |
-| Injected `Supplier<Product>`        | Per-instance variation, testing, no hierarchy             | Frameworks that instantiate your class themselves |
-| `Function<Input, Product>`          | Product depends on an argument                            | Same                                              |
-| `Map<Kind, Supplier<Product>>`      | Data-driven selection, the whole set visible in one place | Third-party contribution                          |
-| Sealed `Kind` + exhaustive `switch` | Compile-time proof that every kind is handled             | Kinds contributed by code you do not compile      |
-| Dependency injection                | Deployment-time selection and lifecycle                   | Selection that varies per call                    |
-| `ServiceLoader<ProductProvider>`    | Open extension by unknown modules                         | Any compile-time guarantee; ordering              |
-| Abstract Factory                    | Several products that must agree with each other          | A single product (that is over-application)       |
+| Alternative                         | Resolves                                                  | Fails to resolve                                   |
+| ----------------------------------- | --------------------------------------------------------- | -------------------------------------------------- |
+| Injected `Supplier<Product>`        | Per-instance variation, testing, no hierarchy             | Framework APIs with no supported injection seam    |
+| `Function<Input, Product>`          | Product depends on an argument                            | Same                                               |
+| `Map<Kind, Supplier<Product>>`      | Data-driven selection, the whole set visible in one place | Discovery/registration must be supplied separately |
+| Sealed `Kind` + exhaustive `switch` | Compile-time proof that every kind is handled             | Kinds contributed by code you do not compile       |
+| Dependency injection                | Deployment-time selection and lifecycle                   | Per-call selection needs a provider or registry    |
+| `ServiceLoader<ProductProvider>`    | Open extension by unknown modules                         | Discovery failures and provider-selection policy   |
+| Abstract Factory                    | Several products that must agree with each other          | No family invariant to protect                     |
 
-The rule of thumb: **the abstract hook survives only where the framework, not your code,
-constructs the creator.** `HttpServlet` subclasses, `AbstractProcessor`, JUnit extension points
-and Spring's `AbstractRoutingDataSource` all instantiate the subclass and then call into it, so
-there is no moment at which a `Supplier` could have been passed in. Application classes you
-construct yourself do not have that constraint.
+Inspect who constructs the creator and which injection/registration seams that exact framework
+version supports. Framework ownership does not itself prevent constructor injection or explicit
+registration. Retain a required creation hook, a public extension contract or useful covariance;
+prefer composition when application-controlled subclasses only select products. Maps can collect
+third-party registrations too, with duplicate-key validation; DI can supply a provider/registry
+for per-call selection. A named single-product SPI may convey more than a generic Supplier.
 
 ## The constructor trap
 
@@ -45,16 +46,17 @@ abstract class Importer {
 }
 
 final class CsvImporter extends Importer {
-    private final char delimiter = ';';
+    private final char delimiter;
+    CsvImporter(char delimiter) { this.delimiter = delimiter; }
     @Override protected Parser createParser() {
-        return new CsvParser(delimiter);   // delimiter is '�' here
+        return new CsvParser(delimiter);   // reads NUL during super()
     }
 }
 ```
 
-`createParser()` runs before `CsvImporter`'s field initialisers, so `delimiter` is still the
-default value. The bug is silent — a parser configured with a NUL delimiter — and survives code
-review because both halves look correct in isolation.
+`new CsvImporter(';')` calls the superclass constructor before assigning `delimiter`, so the
+hook reads NUL. Do not demonstrate this with `final char delimiter = ';'`: that constant
+variable can be inlined and masks the defect. See [JLS 17 initialization order](https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html#jls-12.5).
 
 Three fixes, in order of preference:
 
@@ -91,21 +93,21 @@ and the closed map also gives you a readable error and a place to see every supp
 
 ## Naming that keeps the distinction visible
 
-- `create*` / `new*` — returns a fresh instance every call.
+- `create*` / `new*` — often suggests freshness; verify the actual API contract.
 - `of` / `from` / `valueOf` — a static factory; may return a cached or shared instance.
-- `get*` — implies an existing instance is being fetched; do not use it for construction.
+- `get*` — may construct: `Supplier.get()` does not guarantee freshness or reuse.
 - `newInstance` on an injected object — you have a `Supplier`; name the field for what it
   produces (`parsers`, not `parserFactory`).
 
-A `*Factory` class with exactly one method and no state should be a `Supplier` field with a
-descriptive name. The class name is the last thing to remove, and removing it is usually the
-change that makes the code shorter to read.
+A one-method factory can become a Supplier when its domain contract, checked exceptions and
+public compatibility permit. Specify nullability, freshness, thread safety and resource ownership;
+the [Java 17 Supplier contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Supplier.html)
+does not promise a distinct result for each invocation.
 
 ## Relationship to the neighbouring patterns
 
-- **Template Method.** Factory Method is Template Method whose varying step happens to be
-  construction. If the base class has other hooks too, do not describe the design as Factory
-  Method — it is a template with several steps, one of which creates (`gof-template-method`).
+- **Template Method.** An algorithm skeleton may contain a Factory Method creation step plus
+  other hooks; both patterns can coexist (`gof-template-method`).
 - **Abstract Factory.** An Abstract Factory's methods are usually factory methods. The
   difference is the invariant: Abstract Factory exists because the products must agree with each
   other. One product, no invariant, no Abstract Factory (`gof-abstract-factory`).

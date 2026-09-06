@@ -1,10 +1,10 @@
 schemaVersion: 1
 
 name: gof-flyweight
-version: 1.2.0
+version: 1.2.1
 description: >-
   Flyweight in modern Java: sharing one immutable instance across many logical occurrences to
-  bound memory, and why the modern JVM makes that pay only for long-lived duplicates. Covers the
+  reduce retained memory, with benefits dependent on duplicate lifetimes and lookup cost. Covers the
   intrinsic/extrinsic split, why cheap TLAB allocation does not make reclamation free, the memory
   arithmetic deciding whether a cache entry costs more than the object it saves,
   string deduplication and boundary canonicalisation as cheaper alternatives, the unbounded intern
@@ -60,5 +60,5 @@ agentOverrides:
   codex:
     interface:
       display_name: Flyweight
-      short_description: Sharing pays only for long-lived duplicates
+      short_description: Sharing with measured memory and lookup costs
       default_prompt: Use Flyweight to check whether this pooling is justified.

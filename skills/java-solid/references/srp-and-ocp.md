@@ -15,9 +15,8 @@ needed for new code. Review those before shape.
   fields, another group touches another, and nothing crosses. The class is two
   classes sharing a name. (The vocabulary for this is cohesion — see
   java-cohesion-coupling.)
-- **A constructor mixing unrelated mechanisms.** A parameter list holding a price
-  table, an SMTP client and a template engine says the class answers to at least
-  the pricing team, the ops team and the design team.
+- **A constructor mixing mechanisms.** A price table, SMTP client and template engine suggest
+  distinct pressures; establish the actual authorities before inferring responsibility count.
 - **The purpose sentence needs "and".** If the honest one-line description is
   "computes duty _and_ renders the declaration", the "and" is the seam.
 - **Stakeholder test.** List who requests changes to this class. Two independent
@@ -25,9 +24,9 @@ needed for new code. Review those before shape.
 
 ### SRP false positives — do not flag
 
-- **Many methods, one reason.** A `Money` type with twenty arithmetic and
-  formatting operations changes only when monetary arithmetic changes. Size is not
-  responsibility count.
+- **Many methods, one reason.** A `Money` type with twenty coherent arithmetic operations may
+  have one authority. Presentation formatting can change independently, so inspect that
+  contract rather than assuming every method on a value type has the same responsibility.
 - **A facade.** Its single responsibility _is_ aggregating a subsystem behind one
   surface. Many dependencies, one reason to change: the subsystem's shape.
 - **A mapper or serialiser touching every field.** It changes whenever the mapped
@@ -68,8 +67,9 @@ contract is speculation, and it costs indirection, API surface and comprehension
 - **A switch over a sealed type.** Exhaustive pattern switches over a sealed
   hierarchy — no `default` — are the designed alternative to OCP: the author chose
   "compiler tells me every place a new variant must be handled" over "new variants
-  slot in silently". Recommending a visitor or a strategy here removes that
-  guarantee.
+  slot in silently". A required visitor method can also force implementations to handle new
+  variants; a default/fallback can weaken either design. Compare the actual compile-time
+  coverage and change axis instead of attributing guarantees to pattern names.
 - **An enum switch with all constants covered.** Same trade, older tool.
 - **A conditional edited once.** One edit is weak historical evidence. Do not wait mechanically
   for a third when a published extension requirement or high-cost second variant already makes

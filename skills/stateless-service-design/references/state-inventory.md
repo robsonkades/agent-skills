@@ -6,8 +6,10 @@ shape that finds it, and where it goes.
 
 ## The classification
 
-- **Derivable** — reconstructible from an authoritative source. Loss costs latency only.
-- **Per-request** — created and discarded inside one request. Never survives to matter.
+- **Derivable** — reconstructible from an authoritative source; verify freshness, rebuild cost
+  and availability/security consequences before declaring loss harmless.
+- **Per-request** — intended to end with the request; inspect escaping references, async work
+  and effects already committed or acknowledged.
 - **Authoritative** — it participates in correctness and no durable recoverable copy owns it.
   Move it to a shared authority or explicitly design this service as partitioned/replicated
   stateful infrastructure.
@@ -17,21 +19,21 @@ outcome now wrong?_
 
 ## The table
 
-| State in the process                        | Class                | Failure at replicas > 1                                                                                   | How to find it                                                           | Where it goes                                                 |
-| ------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------- |
-| `HttpSession` attributes                    | authoritative        | Request lands on another replica; the user is logged out or the wizard restarts                           | `setAttribute(`, `@SessionAttributes`, `@SessionScope`                   | Spring Session store, or a token — see `session-placement.md` |
-| Local cache (Caffeine, `ConcurrentHashMap`) | derivable            | Replicas can disagree for an unbounded interval without expiry/invalidation                               | `Caffeine.newBuilder`, `@Cacheable` on a local cache manager             | Stays if bounded with declared staleness; shared L2 if needed |
-| Rate-limit / quota counter                  | scope-dependent      | Fleet quota becomes separate per-instance allowances; protective local cap may be intended                | `AtomicLong` or `LongAdder` field compared against a threshold           | Name local scope or use shared/escrow budget                  |
-| Idempotency / dedup map                     | authoritative        | Duplicates pass whenever the retry lands on a different replica                                           | `Set<String> seen`, `Map<String, Result>` keyed by a request id          | Durable table with a unique constraint (`idempotency`)        |
-| `@Scheduled` job                            | effect-dependent     | Plain scheduler invokes per context; duplicate effect may or may not be safe                              | `@Scheduled`, `ScheduledExecutorService`, `TaskScheduler`                | Partition/idempotency or coordinated scheduler/election       |
-| One-time startup work (`ApplicationRunner`) | effect-dependent     | Runs per replica/restart; migration or side effect duplicates                                             | `ApplicationRunner`, `CommandLineRunner`, `@PostConstruct` doing I/O     | Idempotent bootstrap or externally coordinated migration/job  |
-| Local file / `java.io.tmpdir`               | durability-dependent | Follow-up on another/replaced instance cannot find ephemeral file                                         | `Files.write`, `new File(`, `createTempFile`, `MultipartFile.transferTo` | Finish in request or use declared durable/shared storage      |
-| In-memory queue / unbounded `BlockingQueue` | authoritative        | Work accepted then lost on any pod replacement, with a 2xx already returned                               | `LinkedBlockingQueue` field, `executor.submit` after responding          | A broker or an outbox table; ack only after durable write     |
-| Sequence / ID generator counter             | design-dependent     | Identical unnamespaced seeds collide; per-node/epoch scheme may be safe                                   | `AtomicLong` used to build an identifier                                 | Prove node/epoch uniqueness or use DB/standard ID scheme      |
-| WebSocket / SSE registry                    | authoritative        | A push from another replica reaches nobody                                                                | `Map<UserId, WebSocketSession>`, `SseEmitter` registry                   | A broker fan-out; the registry stays local per instance       |
-| Feature-flag or config snapshot             | derivable            | Replicas act on different config for as long as the refresh interval                                      | `@RefreshScope`, a field loaded once at startup                          | Stays, but bound the staleness and make it observable         |
-| `ThreadLocal` set on a request              | per-request          | Not a replica problem — a **leak** problem: on a pooled platform thread it survives into the next request | `ThreadLocal` without a `remove()` in a `finally`                        | Clear it, or use a request-scoped bean / `ScopedValue`        |
-| Connection pools, buffers, JIT state        | derivable            | None. This is what "warm" means                                                                           | —                                                                        | Stays                                                         |
+| State in the process                        | Class                  | Failure at replicas > 1                                                                                   | How to find it                                                           | Where it goes                                                 |
+| ------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| `HttpSession` attributes                    | authority-dependent    | Request lands on another replica; the user is logged out or the wizard restarts                           | `setAttribute(`, `@SessionAttributes`, `@SessionScope`                   | Spring Session store, or a token — see `session-placement.md` |
+| Local cache (Caffeine, `ConcurrentHashMap`) | derivable              | Replicas can disagree for an unbounded interval without expiry/invalidation                               | `Caffeine.newBuilder`, `@Cacheable` on a local cache manager             | Stays if bounded with declared staleness; shared L2 if needed |
+| Rate-limit / quota counter                  | scope-dependent        | Fleet quota becomes separate per-instance allowances; protective local cap may be intended                | `AtomicLong` or `LongAdder` field compared against a threshold           | Name local scope or use shared/escrow budget                  |
+| Idempotency / dedup map                     | authoritative          | Duplicates pass whenever the retry lands on a different replica                                           | `Set<String> seen`, `Map<String, Result>` keyed by a request id          | Durable table with a unique constraint (`idempotency`)        |
+| `@Scheduled` job                            | effect-dependent       | Plain scheduler invokes per context; duplicate effect may or may not be safe                              | `@Scheduled`, `ScheduledExecutorService`, `TaskScheduler`                | Partition/idempotency or coordinated scheduler/election       |
+| One-time startup work (`ApplicationRunner`) | effect-dependent       | Runs per replica/restart; migration or side effect duplicates                                             | `ApplicationRunner`, `CommandLineRunner`, `@PostConstruct` doing I/O     | Idempotent bootstrap or externally coordinated migration/job  |
+| Local file / `java.io.tmpdir`               | durability-dependent   | Follow-up on another/replaced instance cannot find ephemeral file                                         | `Files.write`, `new File(`, `createTempFile`, `MultipartFile.transferTo` | Finish in request or use declared durable/shared storage      |
+| In-memory queue / unbounded `BlockingQueue` | authoritative          | Work accepted then lost on any pod replacement, with a 2xx already returned                               | `LinkedBlockingQueue` field, `executor.submit` after responding          | A broker or an outbox table; ack only after durable write     |
+| Sequence / ID generator counter             | design-dependent       | Identical unnamespaced seeds collide; per-node/epoch scheme may be safe                                   | `AtomicLong` used to build an identifier                                 | Prove node/epoch uniqueness or use DB/standard ID scheme      |
+| WebSocket / SSE registry                    | local live connections | A push from another replica reaches nobody                                                                | `Map<UserId, WebSocketSession>`, `SseEmitter` registry                   | A broker fan-out; the registry stays local per instance       |
+| Feature-flag or config snapshot             | derivable              | Replicas act on different config for as long as the refresh interval                                      | `@RefreshScope`, a field loaded once at startup                          | Stays, but bound the staleness and make it observable         |
+| `ThreadLocal` set on a request              | per-request            | Not a replica problem — a **leak** problem: on a pooled platform thread it survives into the next request | `ThreadLocal` without a `remove()` in a `finally`                        | Clear it, or use a request-scoped bean / `ScopedValue`        |
+| Connection pools, buffers, JIT state        | derivable              | Cold recovery, reconnect load and in-flight transaction outcomes need a policy                            | —                                                                        | Stays                                                         |
 
 ## Grep pass
 
@@ -50,27 +52,31 @@ rg -n 'setAttribute\(|@SessionScope|@SessionAttributes|HttpSession' src/main/jav
 ```
 
 A hit is a question, not a defect. `static final Map` used as an immutable lookup table built
-at class initialisation is fine; the same declaration written to on the request path is the
-bug. Read the writers, not the declaration.
+at class initialisation is fine; the same declaration mutated on the request path requires authority and concurrency analysis.
+Read both writers and consumers, not only the declaration.
 
 ## False positives — in-process state that is not a violation
 
-- **A bounded local cache with a TTL.** Derivable by definition. Divergence within the TTL is
-  the price you already agreed to pay; if it is not acceptable, the problem is the TTL, and
-  the design is `caching-strategies`.
-- **Request-scoped and transaction-scoped objects.** They cannot outlive the request that
-  made them, so no other replica can observe them.
+- **A bounded local cache with a TTL.** Valid only with a reconstruction source and acceptable
+  freshness/loss policy. TTL does not prove durability or bound source lag, refresh failures
+  and invalidation races; route those mechanisms to `caching-strategies`.
+- **Request-scoped and transaction-scoped objects.** Scope conventions do not prevent Java
+  references escaping into static fields or background tasks. Verify ownership, cleanup and
+  transaction boundaries; a transaction need not coincide with one HTTP request.
 - **A `ScopedValue` binding for per-request context.** Bound for the dynamic extent of one
-  call and inherited by forked subtasks; it is per-request state with an enforced end.
+  call and inherited through supported structured task scopes, not arbitrary executor tasks.
+  The binding ends, but referenced mutable objects can escape. Java 25 makes this API final;
+  preserve an older project's baseline rather than introducing preview APIs implicitly.
 - **A metrics registry.** Per-instance by construction. Aggregation happens in the metrics
   backend, and combining percentiles across replicas is `latency-statistics`, not a
   statelessness problem.
 - **A connection pool.** Per-instance and derivable, but it multiplies: N replicas open N
   pools against one database. That is capacity, not correctness — `connection-pool-sizing`.
 
-## Proving the inventory is complete
+## Exercising the inventory
 
-Configuration review does not prove this; two runs do.
+Review plus targeted runs can reveal omissions; no small set proves the inventory complete.
+Run these scenarios in an isolated or authorized environment and record the exercised scope.
 
 1. **Explicit cross-replica journey and kill/restart.** Address instances directly or attach
    instance IDs so setup runs on A and continuation on B; random balancing is insufficient.
@@ -91,3 +97,8 @@ Configuration review does not prove this; two runs do.
 For each item record owner, scope (request/instance/key/fleet), durable copy, consistency,
 maximum staleness, loss behavior, reconstruction source/time, size/cardinality bound, security
 classification and shutdown handoff. “Map” or “Redis” is an implementation, not a state model.
+
+## Primary references
+
+- [Kubernetes ephemeral volumes](https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/) — Pod lifetime versus container restarts; inspect persistent mounts separately.
+- [Java 25 ScopedValue](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ScopedValue.html) — dynamic binding lifetime, structured inheritance and mutable values.

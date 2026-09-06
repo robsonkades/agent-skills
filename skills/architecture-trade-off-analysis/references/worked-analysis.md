@@ -1,162 +1,125 @@
-# Worked Analysis
+# Worked analysis: payment processing boundaries
 
-One decision carried end to end. The subject is the authors' own payment-granularity example
-from _The Hard Parts_ ch. 15, run in the order the method prescribes. Read it for the shape of
-each step's output, not for the answer — the answer is theirs, for their system.
+Read when a generic topology comparison needs to become a decision with explicit
+conditions. This is an **illustrative analysis with stipulated inputs**, not a quotation
+from a book, a benchmark, or a validated production recommendation.
 
-## Step 0 — refuse the generic question
+## 1. Bound the question and evidence
 
-Not "are microservices better for payments?" but: **"should this application process payments
-through one service, or one service per payment type?"** Generic solutions _"are rarely useful in
-real-world architectures without applying additional situation-specific context."_ The authors'
-conference framing puts every question in the same form — _should **I** use queues or topics_,
-_should **I** use a strict or loose contract_ — because the pronoun is where the analysis lives.
+Question: should the existing payment application keep its shared implementation,
+introduce internal payment-type modules, or deploy a service per payment type?
 
-Deliverable: one sentence naming this system and the options.
+Illustrative inputs supplied by the team:
 
-## Step 1 — find the entangled dimensions
+- One existing payment deployable and an application-owned payment-state database.
+- Card and reward-point payments, including orders that combine both.
+- Payment-type changes currently release together; independent release is desired, but
+  no delay/incident history demonstrates that coordinated release is the current bottleneck.
+- External payment providers cannot participate in the application's local database
+  transaction. An unknown provider outcome must be reconciled before retrying an effect.
+- The required behavior is no duplicate financial effect for a retried operation, an
+  observable outcome for each leg, and an explicit partial-failure policy for mixed payments.
+- No comparable performance measurements or accepted operating-cost estimates are available.
 
-_"Discover what dimensions are entangled, or braided, together. This is unique within a
-particular architecture but discoverable by experienced developers, architects, operations folks,
-and other roles familiar with the existing overall ecosystem and its capabilities and
-constraints."_
+These inputs support mode B, with targeted C if an uncertain quantity becomes decisive.
+They do not establish that a split or a monolith is faster. Missing evidence is not
+permission to invent latency numbers or treat a risk as a demonstrated incident.
 
-Note what that sentence licenses and what it forbids. It licenses a room of people who know the
-system. It forbids importing a dimension list from a book, this one included. For the payment
-decision the entangled set came out as **extensibility, data consistency, performance,
-maintainability, testability, deployability** — six, because those are the ones that move when
-granularity moves.
+## 2. Describe complete candidates
 
-Deliverable: a list of dimensions, each with the name of the person who said it moves.
+| Candidate                                    | Deployment and state                                                | Relevant consequences to investigate                                                                     |
+| -------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| A — retain the current shared implementation | Existing deployable/database, shared payment code                   | Least migration work; changes remain coupled in code and release                                         |
+| B — internal payment-type modules            | Same deployable and state owner, explicit module interfaces         | Can reduce code-change overlap; still one release and shared resource/failure exposure                   |
+| C — per-type services                        | Separate deployment/state ownership, coordinator for mixed payments | Can permit independent releases if contracts allow; adds network, workflow and recovery responsibilities |
 
-## Step 2 — map the coupling
+A centralized coordinator with selectively extracted handlers is another credible staged
+option if a particular type needs independent operation. It is not an automatic improvement:
+identify which boundary changes and what coordination remains. Do not enumerate every
+possible topology if none would alter the recommendation.
 
-The test is single: _"if someone changes X, will it possibly force Y to change?"_ Coupling is not
-badness — the book quotes Paracelsus, _"the dosage alone makes it so a thing is not a poison"_,
-and warns that everything can be _"so decoupled that nothing can communicate with anything else."_
+The alternatives differ on both code organization and deployment. Make that visible:
+if comparing B and C to isolate deployment effects, hold the logical module interfaces and
+required behavior comparable. Do not credit extraction for all benefits of modularization.
 
-**Static coupling** — how the parts are wired. Build the picture from the five things the book
-lists for one service: operating system and container dependencies; dependencies arriving through
-transitive dependency management (frameworks, libraries); persistence dependencies on databases,
-search engines and cloud environments; architecture integration points required to bootstrap; and
-messaging infrastructure required to talk to other quanta. There is no tool: _"no generic tool
-exists to build this because each architecture is unique."_
+## 3. Separate obligations from ranking
 
-**Dynamic coupling** — how they call one another at runtime, along three axes: communication
-(synchronous / asynchronous), consistency (atomic / eventual), coordination (orchestrated /
-choreographed).
+No duplicate effect and correct handling of partial/unknown outcomes are obligations for
+**every** candidate, including A. Independent release and reduced operating effort are
+preferences unless stakeholders establish them as mandatory requirements.
 
-Deliverable: for each candidate, a static diagram and a position on the three dynamic axes.
+Create an obligation check for each candidate rather than granting compliance by topology:
 
-## Step 3 — enumerate, then drop the infeasible
+- What identifies the same operation across retries?
+- Where is progress durable, and what happens after a crash or ambiguous timeout?
+- Which effects can be reversed or compensated, with what limits and owner?
+- Can the system observe conflicting or partial outcomes and complete reconciliation?
 
-_"Model the possible combinations in a lightweight way. Some of the combinations may not be
-feasible, allowing the architect to skip modeling those combinations."_ The purpose is stated
-plainly: _"to determine what forces the architect needs to study — in other words, which forces
-require trade-off analysis?"_
+A single process can use a local transaction for its local state **only within that
+transaction's actual scope**. It does not make two external provider effects atomic.
+Separate services need an explicit cross-service consistency/recovery design; a saga is
+not a transparent rollback or isolated transaction. AWS's
+[saga considerations](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/saga-orchestration.html)
+identify idempotency, compensation complexity and lack of transaction isolation.
+Detailed transaction design must be established before implementation approval.
 
-Then make the survivors comparable and decision-complete. MECE is the source method's aspiration;
-in an open market, document credible exclusions rather than claiming literal exhaustiveness. Two
-failures to check for by name:
+## 4. Apply the same scenarios
 
-- **Not mutually exclusive** — _"it is invalid to compare a message queue to an entire ESB because
-  they aren't really the same category of thing."_
-- **Not collectively exhaustive** — evaluating high-performance message queues while considering
-  _"only an ESB and simple message queue but not Kafka."_
+| Scenario                                         | A / B                                                                             | C                                                                                        | Evidence needed before concluding                                               |
+| ------------------------------------------------ | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Update card processing without changing rewards  | Shared release; B may narrow code/test scope                                      | Independent release is possible if coordinator/contracts remain compatible               | Actual change diff, contract tests and deployment dependencies                  |
+| Add a new payment type                           | Extend shared implementation or add a module; shared release                      | Add service and integrate routing, state visibility and operations                       | Expected change frequency, provisioning/support work and contract evolution     |
+| Pay with card plus rewards; second leg fails     | Local state can be coordinated together, but external effects still need recovery | Coordinator must manage distributed progress and recovery                                | Failure traces, retry/reconciliation design and business partial-failure policy |
+| A provider responds slowly or loses its response | Need bounded resources and outcome reconciliation                                 | Deployment separation alone does not bound coordinator wait or prevent duplicate retries | Timeout/idempotency behavior, isolation tests and completion metrics            |
 
-And re-date the list: _"an architect should make sure a new capability hasn't just arrived that
-changes the criteria."_
+The first two scenarios make release independence attractive; the latter two expose costs
+shared by all options and extra coordination in C. They need not reverse a ranking.
+The output is a mechanism-based comparison, not generic High/Low labels for “consistency”
+or a claim that more coupling always means less scalability.
 
-## Step 4 — rate in isolation, consolidate, read for correlation
+## 5. Give a conditional recommendation
 
-_"When building these ratings lists, we considered each design solution (our named patterns) in
-isolation, combining them only at the end to see the differences."_ The book's own consolidated
-table rates eight patterns on four dimensions using **Very low / Low / Medium / High / Very high**
-— words, on a five-point ordinal scale, with no arithmetic anywhere.
+These inputs do not yet justify paying B's refactoring cost over A: shared release alone
+does not establish harmful code-change overlap. Have the payment owner review representative
+recent changes and estimate the proposed module boundary's migration/test cost. If that
+review identifies material overlap that B can reduce at worthwhile cost, prefer **B as the
+next design direction**. Its accepted costs are a shared deployment, potential shared-resource
+contention and the refactoring itself; this does not establish rollout readiness.
 
-What it is read for is stated explicitly: _"notice the direct inverse correlation between coupling
-level and scale/elasticity: the more coupling present in the pattern, the worse its scalability"_,
-plus a second, weaker correlation between coupling and responsiveness/availability.
+A is still reasonable if change overlap is negligible or the internal refactor's cost
+exceeds its benefit, subject to the same obligation checks. C becomes more compelling if
+concrete release contention, isolation
+or ownership needs outweigh its extra operating and recovery costs. Keep those preference
+conditions visible; do not promise that a future extraction from B will be cheap.
 
-```text
-The product of a consolidated matrix is a sentence of the form
-  "in this system, X and Y move against each other"
-It is never a sentence of the form
-  "option 3 scored 17"
-```
+Before implementation, validate the invariants and failure behavior above. If performance
+separates the options, compare equal completed-payment semantics under the same workload
+and resource/cost basis, including mixed-payment and failure cases. If a candidate cannot
+meet a mandatory obligation, exclude or revise it regardless of its release advantage.
 
-If your matrix cannot produce the first sentence, you have a scorecard, not an analysis.
+Useful review signals include demonstrated cross-type change contention, an accepted
+independent-release requirement, or evidence of resource interference. Each needs an
+observer and evidence source. A service deploying at twice an estate median is not proof
+of wrong ownership; product demand and team practices can explain the same metric.
 
-## Step 5 — delete the dimensions your context makes irrelevant
+## 6. Do not hide acknowledgement semantics in the summary
 
-The authors' shared-service versus shared-library example starts with eight dimensions:
-heterogeneous code, high code volatility, ability to version changes, dependency management,
-overall change risk, performance, fault tolerance, scalability. On the generic matrix the shared
-library wins — _"the architect seems justified in choosing the shared library approach, as the
-matrix clearly favors that solution … overall."_
+A related choice is how a client waits for payment or credit-approval work:
 
-Then the actual context arrives, verbatim from their deck: _"We leverage polyglot programming and
-have services written in 4 different languages in our application ecosystem. Performance and fault
-tolerance aren't concerns for us — it's all about managing change to shared functionality."_
+| Interaction                               | What a successful response establishes                                                            | Failure/cost that remains                                                         |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Wait for a synchronous response           | Only what the API contract commits before that response: acceptance, start, or completion         | Timeouts may leave an unknown outcome; client wait depends on the contracted work |
+| Durably accept and process asynchronously | Accepted work if persistence/acknowledgement guarantees support it; not started or completed work | Backlog, broker/storage availability, retries, status delivery and recovery       |
 
-Five of the eight dimensions are now irrelevant, and the apparent winner no longer holds. The
-general form: _"when the extra context for the problem becomes clear, the decision criteria
-changes."_ The compensation is real — _"finding the best context for a decision allows the
-architect to consider fewer options, greatly simplifying the decision process."_
+Async submission can return promptly while completion takes longer; it is not “no wait”
+or independence from every dependency. A synchronous call does not guarantee immediate
+start merely by being synchronous. Microsoft's
+[asynchronous request-reply pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply)
+separates acceptance from eventual completion and status retrieval.
 
-## Step 6 — model domain scenarios until one inverts the answer
-
-A scenario here is a **change applied to both candidate topologies**, not a user story. Three were
-modelled for payments:
-
-| Scenario                                      | Which option gains                                              |
-| --------------------------------------------- | --------------------------------------------------------------- |
-| Update credit card processing                 | separate services — maintainability, testability, deployability |
-| Add a new payment type (reward points)        | separate services — extensibility                               |
-| Use several payment types in a single payment | single service — performance and data consistency               |
-
-After the first two the book says _"so far, separate services look appealing."_ The third inverts
-it. The example demonstrates why analysis should seek scenarios that challenge the current
-preference. There is no universal minimum count or guarantee of an inversion; stop using a
-documented saturation/value-of-information criterion rather than a round number.
-
-Their conclusion, verbatim: _"the real trade-off analysis comes down to which is more important:
-performance and data consistency (a single payment service) or extensibility and agility (separate
-services)."_
-
-## Step 7 — reduce to one question in business language
-
-_"Rather than show all the information they have gathered, an architect should reduce the trade-off
-analysis to a few key points."_ The reason is not simplification for its own sake: _"eliminating
-confusing technical details allows the nontechnical domain stakeholders to focus on outcomes rather
-than design decisions."_
-
-Their second worked reduction — synchronous versus asynchronous kick-off of credit approval:
-
-```text
-Sync    + credit approval guaranteed to start before the customer request ends
-        - customer waits; application rejected if the orchestrator is down
-Async   + no wait; submission does not depend on the orchestrator
-        - no guarantee the process has started
-
-Put to the business as one question:
-  "Which is more important, a guarantee that the credit approval process
-   starts immediately, or responsiveness and fault tolerance?"
-```
-
-Four technical rows collapse into one business decision. Technology names may remain when vendor,
-regulatory or operational constraints are themselves decision-relevant; the test is whether the
-accountable stakeholder can see consequences and authority, not whether jargon count is zero.
-
-## Step 8 — fix the fundamental dimension, iterate, stop
-
-_"We focused on synchronous versus asynchronous communication, a choice that creates a host of
-possibilities and restrictions … choosing a fundamental dimension like synchronicity first limits
-future choices. With that dimension now fixed, perform the same kind of iterative analysis on
-subsequent decisions encouraged or forced by the first."_
-
-Termination is explicit: _"an architect team can iterate on this process until they have solved the
-difficult decisions — in other words, decisions with entangled dimensions. What's left is design."_
-
-When you run out of entangled dimensions you are finished analysing. Continuing past that point is
-mode D wearing mode B's clothes.
+A useful stakeholder question is: “Must this interaction return a completed result, or
+can it return durable acceptance and expose completion later, within which bound?”
+If acceptance, completion time and operating cost are all independently constrained, keep
+all three visible. Do not collapse them into “speed versus consistency” and lose the
+required behavior. Carry the resulting recommendation and evidence into an ADR only when
+that additional artifact is requested or required by local practice.

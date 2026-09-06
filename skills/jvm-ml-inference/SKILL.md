@@ -24,15 +24,22 @@ pre/post-processing, in-process or remote boundary, session/predictor ownership,
 settings, admitted concurrency/queue, warm-up state, latency SLO, useful throughput, heap/RSS/native
 memory and failure/fallback semantics.
 
+Inspect build toolchains, compiler release, runtime image, resolved Java/native artifacts and
+provider/device support. This skill prescribes no universal JDK baseline; engine requirements
+and virtual-thread guidance are version-specific (virtual threads are final in JDK 21).
+Do not upgrade Java or the engine merely to apply an example from current documentation.
+
 ## Workflow
 
 1. Decide in-process versus remote serving from latency, isolation, scaling, model cadence,
    accelerator sharing, failure domain and operational ownership.
 2. Inventory every native resource and lifetime. Bound sessions, predictors, arenas, tensors and
-   direct buffers; close them deterministically.
+   direct buffers; close resources that expose ownership/close contracts and bound retained
+   storage where reclamation is GC-managed. Reuse only after actual native completion.
 3. Build a concurrency matrix across outer requests, session count, intra-op/inter-op threads and
    device streams. Measure absolute goodput and tail latency, not speedup alone.
-4. If batching is used, bound both batch size and oldest-item wait. Test sparse and burst traffic;
+4. If batching is used, bound size/storage and maximum wait, and dispatch before the earliest
+   member deadline minus the execution/remaining-work budget. Test sparse and burst traffic;
    full-batch throughput is not a latency policy.
 5. Warm the JVM code path and the model/engine separately, then gate readiness on a representative
    successful inference rather than model-file load.
@@ -43,8 +50,9 @@ memory and failure/fallback semantics.
 
 - Pool only resources documented as non-thread-safe or expensive to create. Pool size must match a
   measured useful concurrency limit, not request concurrency.
-- Reuse direct, native-order buffers when the API permits. Moving allocation from heap to direct
-  memory inside the hot path does not remove allocation.
+- Reuse direct, native-order buffers when the API permits, with exclusive ownership across
+  filling, native execution and result consumption. Moving allocation from heap to direct
+  memory inside the hot path does not remove allocation or guarantee zero device copies.
 - Native CPU work can retain a virtual-thread carrier and does not gain throughput from virtual
   threads. Isolate/admit it with a bounded executor when necessary.
 - NMT excludes many third-party native allocations. Compare process/cgroup RSS with NMT categories

@@ -58,9 +58,12 @@ logical outcome without double-counting service calls.
 | one process span per record       | record outcomes/retries are operated individually | span volume               |
 | receive batch plus process spans  | acquisition and record processing both actionable | more topology/volume      |
 
-Cap link/event counts and define truncation attributes; giant batches can exceed SDK/backend
-limits. Sampling a batch trace retains all or none of its linked record detail unless a
-separate policy exists.
+Cap link/event counts and inspect exported dropped-count fields; define a bounded custom
+summary only when necessary. Giant batches can exceed SDK/backend limits. Sampling a batch
+span does not retain the spans it links to: linked traces can have independent sampling and
+retention decisions. Even same-trace spans can be missing through policy differences, export
+loss or late arrival. Verify link-aware sampling behavior with `opentelemetry-performance`;
+adding a link at creation only makes it available to the sampler, not an automatic keep rule.
 
 ## Long-running workflows
 

@@ -67,12 +67,12 @@ in the table class that owns the set.
 4. **Check the volatility.** Rules that change monthly reward the organisation that makes a
    change local. Rules that have not changed in five years reward the one with least
    ceremony.
-5. **Decide per module, not per system.** A pricing engine and an admin CRUD screen in the
-   same application should not use the same organisation, and forcing them to is a
-   significant source of accidental complexity.
-6. **Write down the criterion that would flip the decision** — "if the third conditional
-   discount rule arrives, this becomes a domain model" — so the re-decision happens on
-   evidence rather than after the third production incident.
+5. **Decide per module, not per system.** A pricing engine and an admin CRUD screen may
+   benefit from different organisations. Require evidence for uniformity rather than
+   forcing either sameness or difference.
+6. **Write down the criterion that would flip the decision** — for example, independent
+   pricing operations repeatedly diverge on one stateful invariant. Rule count alone is
+   not that criterion. Record the selected owner, rejected alternative and validation case.
 
 ## Decision rules
 
@@ -80,15 +80,15 @@ in the table class that owns the set.
 Data in, validate, write out; rules do not interact; a few branches
         → Transaction Script. The domain model here is pure cost.
 
-Rules interact: rule B's applicability depends on rule A's outcome, and
-there are more than a handful
-        → Domain Model. This is the condition the pattern exists for.
-          Interaction is what makes procedures duplicate each other.
+Rules interact and coordinating their state across operations is costly
+        → Consider Domain Model with explicit invariant ownership; compare
+          a shared policy/function when stateful objects add no benefit.
 
 An invariant must hold across several operations that update the same
 data
-        → Domain Model, with the invariant enforced by the object that
-          owns the data (ddd-style aggregate boundary).
+        → Give the invariant one logical owner; a Domain Model can enforce
+          object transitions, while constraints and transaction/concurrency
+          rules must also protect competing writers.
 
 Logic is genuinely per-table and set-shaped; the platform gives strong
 record-set tooling; reporting and bulk updates dominate
@@ -127,8 +127,9 @@ Cannot tell yet, module is new and small
   can be material when correctness or change frequency is high; use divergence and change cost,
   not an occurrence threshold.
 - Domain Models fail in three ways worth watching for: aggregates too large to load, logic
-  that leaked into services anyway, and read paths forced through the write model. All
-  three are visible in the query log before they are visible in the design.
+  that leaked into services anyway, and read paths forced through the write model.
+  Load amplification is visible in traces/query logs; leaked business decisions require
+  source and change-history inspection as well.
 - Table Module is dismissed too quickly in Java, where record-set tooling is weaker than
   the platforms it was written for — but its idea survives as a gateway or a service that
   owns set-based SQL for one table, and that is frequently the right home for bulk work
@@ -144,6 +145,13 @@ Cannot tell yet, module is new and small
   (`architecture-refactoring-paths`).
 
 ## References
+
+For implementation changes, inspect compiler/runtime, Spring/JPA versions, persistence access
+strategy and transaction proxy configuration. Examples are partial sketches with fixture types
+omitted; the JdbcClient variant needs Spring 6.1+ and Java 17+, while sealed/pattern constructs
+have the release requirements stated below. Preserve the target rather than upgrading it.
+When rules or workload evidence are missing, document the provisional choice and the smallest
+example/measurement that could change it.
 
 - [Transaction Script and Table Module](references/transaction-script-and-table-module.md)
   — both patterns worked properly: how to keep scripts from becoming a god service, where

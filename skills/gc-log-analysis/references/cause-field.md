@@ -5,17 +5,19 @@ the collector, event type, phase lines and the events immediately before it.
 
 | Cause                    | Meaning                                       | Investigate                                                                    |
 | ------------------------ | --------------------------------------------- | ------------------------------------------------------------------------------ |
-| `G1 Evacuation Pause`    | normal young collection                       | nothing, unless frequency changed                                              |
+| `G1 Evacuation Pause`    | G1 evacuation event, including mixed pauses   | type, duration, frequency and phase/work counts                                |
 | `G1 Evacuation Failure`  | evacuation could not obtain usable to-space   | free-region headroom, promotion/survival spike, pinning, humongous topology    |
-| `Metadata GC Threshold`  | Metaspace pressure triggered a collection     | **not a heap problem** — see `jvm-class-loading`                               |
+| `Metadata GC Threshold`  | Metaspace pressure triggered a collection     | inspect metaspace and class-loader evidence — see `jvm-class-loading`          |
 | `GCLocker Initiated GC`  | GC-locker coordination triggered collection   | collector/JDK behavior and native critical regions                             |
 | `System.gc()`            | explicit collection was requested             | identify caller and required semantics; compare disable vs concurrent handling |
 | `Allocation Failure`     | allocation could not be satisfied             | allocation rate, then heap sizing                                              |
-| `Heap Dump Initiated GC` | a tool asked for it                           | expected during diagnosis; exclude from analysis windows                       |
+| `Heap Dump Initiated GC` | a tool asked for it                           | tag diagnostic intervention; retain in user-impact totals, separate for tuning |
 | `Proactive`              | ZGC's proactive policy initiated a collection | usually expected; investigate only if CPU/headroom/SLO evidence shows harm     |
 
 `Metadata GC Threshold` recurring is the one most often misread. It looks like a heap
-event, it appears in the heap log, and raising `-Xmx` does nothing at all.
+event and appears in the heap log, but raising `-Xmx` does not directly address the metaspace
+trigger. Inspect class-loader reachability, churn and metaspace settings rather than asserting
+the rest of the heap cannot affect the overall workload.
 
 ## The ZGC log format changed
 
@@ -26,7 +28,8 @@ ZGC is generational on the JDK 25 baseline, and its log reflects that:
 
 Examples showing bare `Pause Mark Start` / `Pause Mark End` describe the **non-generational
 ZGC removed in JDK 24**. If a runbook's example lines do not match what you see, the
-runbook predates the baseline — that mismatch is information, not a parsing error.
+runbook may target another release/mode. Establish the actual format before deciding whether
+the parser or the input assumptions are wrong.
 
 ## Alerting on causes
 

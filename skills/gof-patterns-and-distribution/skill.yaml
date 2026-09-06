@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: gof-patterns-and-distribution
-version: 1.3.0
+version: 1.3.1
 description: >-
   What happens to a Gang-of-Four pattern when the collaboration crosses a process boundary,
-  and which architectural pattern it becomes. Covers the classification into process-local,
-  boundary, interaction and algorithm patterns; the guarantees that evaporate at a boundary
-  — shared memory, a shared clock, atomic calls, ordering, exactly-once; the transformations
+  and which additional architectural contracts it may require. Covers process-local,
+  boundary, interaction and algorithm patterns; assumptions that need rechecking at a boundary
+  — shared state, clocks, atomicity, ordering and delivery; the transformations
   (Singleton to leader election, Observer to pub/sub, Iterator to pagination, Mediator to an
   orchestrator); and the level confusion that treats a design pattern as a substitute for an
   architectural one. Use when a local design is being distributed, when a pattern name is

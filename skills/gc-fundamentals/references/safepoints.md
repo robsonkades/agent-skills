@@ -13,9 +13,9 @@ A stop-the-world pause has two parts:
   ^ NOT in the GC log   ^ this is what "Pause Young 16ms" reports
 ```
 
-TTSP is the time between the VM requesting a safepoint and the **last** thread reaching
-one. Every thread must arrive; one slow thread stalls all the others, and none of that
-time appears in the GC log.
+TTSP is the time needed to bring the relevant Java threads into safepoint-safe states.
+Threads already blocked or safely in native code need not execute a poll to become safe;
+one running thread can delay the operation. Individual threads need not stop for all of TTSP.
 
 So: if the GC log says 12 ms and the client felt 200 ms, that GC event alone does not
 explain the observation. Check TTSP, request queueing, scheduling and timestamp alignment
@@ -33,42 +33,40 @@ decorators and sink. On 25.0.3 each line reads
 Safepoint "G1CollectForAllocation", Time since last: 48521900 ns, Reaching safepoint: 4700 ns, At safepoint: 496200 ns, Leaving safepoint: 2100 ns, Total: 503000 ns, Threads: 0 runnable, 11 total
 ```
 
-`Reaching safepoint` is TTSP; `At safepoint` is the operation the GC log reports;
-`Total` is what the application saw. Read the tail and maximum of `Reaching safepoint`
+`Reaching safepoint` measures synchronization; `At safepoint` includes safepoint work and
+need not equal one GC sub-operation. `Total` is the logged interval, not every thread's stop
+time or a client's added latency. Read the tail and maximum of `Reaching safepoint`
 over the window together with event count; a mean hides rare stalls, while a single
 maximum may be an outlier or a different operating regime. The JFR equivalents are
 `jdk.SafepointBegin`,
 `jdk.SafepointStateSynchronization` (the TTSP part) and `jdk.SafepointEnd`.
 
-## Causes of high TTSP, ranked by measurement
+## Distinguishing causes of high TTSP
 
-The classic answer — assume every counted loop has no safepoint poll — is usually obsolete
-on a current baseline. Loop strip mining (JDK-8186027, JDK 10) made
-`UseCountedLoopSafepoints` the
-default with a poll every `LoopStripMiningIter` (1000) iterations, and long-counted loops
-have been counted loops with the same treatment since JDK-8223051 (JDK 16). Executed on
-25.0.3 with a thread requesting a safepoint every 150 ms while another thread ran each
-shape for three seconds, maximum `Reaching safepoint` per shape:
+Loop strip mining (JDK-8186027, JDK 10; long-loop support JDK-8223051, JDK 16) depends on
+compiler and collector configuration. On Temurin 25.0.3, `PrintFlagsFinal` showed
+`UseCountedLoopSafepoints=true`, `LoopStripMiningIter=1000` for G1/ZGC/Shenandoah, but
+`false`/`0` for Serial/Parallel. Inspect effective flags and compiled code before assuming
+that a particular optimized loop polls; the iteration setting is not a wall-clock deadline.
 
-| Thread was executing                            | Max TTSP  | Why                                                    |
-| ----------------------------------------------- | --------- | ------------------------------------------------------ |
-| `for (int i …)` compute loop, 400 M iterations  | 0.28 ms   | strip-mined: a poll every 1000 iterations              |
-| `for (long i …)` compute loop, 400 M iterations | 0.15 ms   | same since JDK 16                                      |
-| `System.arraycopy` of a 256 MB `int[]`          | 58–67 ms  | one intrinsic call, no poll until it returns           |
-| `new int[64_000_000]` (256 MB zeroed)           | 18–108 ms | the allocation zeroes the whole array before returning |
+| Operation              | Evidence needed                                            | Potential issue                                |
+| ---------------------- | ---------------------------------------------------------- | ---------------------------------------------- |
+| Counted int/long loop  | collector/compiler flags and generated polls               | long work between absent or sparse polls       |
+| Bulk copy/fill/clone   | implementation path, array size and aligned safepoint logs | sparse polls on some intrinsic paths           |
+| Large-array allocation | allocation/zeroing path, faults and stall events           | zeroing or memory pressure, not necessarily GC |
 
-The causes that remain on 25 are therefore:
+Candidate causes on 25 include:
 
 - **Bulk operations without a poll.** `System.arraycopy`, `Arrays.fill`, `Object.clone`
   of a large array, large-array allocation, and any intrinsic that processes a whole
-  buffer. The pause scales with the buffer: a 256 KB copy is invisible, a 256 MB one is
-  the whole p99.9. Bound the buffer or split the operation.
+  buffer. Actual polling and time depend on generated code, size and hardware. Measure before
+  bounding or splitting; preserve overlap, atomicity and publication semantics when changing code.
 - **Distinguish native state, VM runtime work and GC-critical access.** A thread that has
   completed the Java-to-native transition is normally safepoint-safe and checks on
   re-entry; do not generalize that to every transition or critical region. A thread _in
-  the VM_ — inside a runtime call such as a large allocation, class loading or a
-  `jcmd` handler — must finish that call first. What native code delays is the
-  **collection**, not the safepoint: a `GetPrimitiveArrayCritical` region or an FFM
+  the VM_ may have to reach a safe transition or explicit check; some VM calls can block
+  safely rather than run to completion. Critical native access can constrain collection:
+  a `GetPrimitiveArrayCritical` region or an FFM
   `Linker.Option.critical()` downcall that touches the heap can constrain collection or
   pin heap access. With G1 since JEP 423 (JDK 22), relevant regions are pinned instead of
   blocking the whole collector; pinned regions still affect evacuation choices and may
@@ -80,34 +78,36 @@ The causes that remain on 25 are therefore:
 - **Page faults.** A thread waiting on major faults is not running, and cannot arrive.
 - **Thread count.** TTSP is the maximum over every thread; the more platform threads, the
   more likely one of them is in one of the states above. Virtual threads do not count —
-  only their carriers do.
+  their executing carriers participate instead. Suspended virtual-thread stack chunks remain
+  relevant to heap/root work even though they do not each rendezvous as OS threads.
 
 To find the thread, `-XX:+SafepointTimeout` with `-XX:SafepointTimeoutDelay=<ms>`
-(default 10000 ms; both product flags on 25) prints the threads that had not reached the
-safepoint after the delay, and `-XX:+AbortVMOnSafepointTimeout` (diagnostic) turns that
-into a crash with a full `hs_err`.
+(default 10000 ms; both product flags on 25) reports delayed threads. The diagnostic
+`-XX:+AbortVMOnSafepointTimeout` requires diagnostic unlocking and deliberately crashes
+the JVM; use only in an authorized disposable reproduction, not routine observation.
 
 ## Safepoint operations other than GC
 
 A safepoint is not only for garbage collection. Thread dumps (`jcmd Thread.print`),
 deoptimisation, class redefinition, some `jcmd` operations and several JVMTI calls all
 request one; single-thread operations have moved to handshakes (JDK-8185640, JDK 10) and
-stop only the target. Periodic guaranteed safepoints are gone as a default on 25
-(`GuaranteedSafepointInterval` is a diagnostic flag defaulting to 0), so an idle JVM no
-longer pauses on a timer.
+stop only the target. `GuaranteedSafepointInterval=0` disables that particular periodic
+trigger in the tested 25 build; other VM operations can still request safepoints while idle.
 
-This is why `jstack` in a loop is a latency generator: each invocation stops **every**
-thread while the dump is produced. For profiling, use a sampling profiler that does not
+Repeated traditional `jstack` dumps request global safepoints and can add latency.
+For profiling, use a sampling profiler that does not
 require a safepoint; for a point-in-time dump on an application with virtual threads, use
-`jcmd <pid> Thread.dump_to_file -format=json` (present on 25; it still safepoints, once).
+`jcmd <pid> Thread.dump_to_file -format=json <path>`: [JEP 444](https://openjdk.org/jeps/444)
+specifies that this dump does not pause the application. It is not an atomic snapshot and
+omits some traditional dump details. Account for command/output overhead separately.
 
 ## Reconciling the numbers
 
-| Log pause | Client-observed pause  | Reading                                      |
-| --------- | ---------------------- | -------------------------------------------- |
-| 16 ms     | ~16 ms                 | the collector is the cost                    |
-| 16 ms     | 200 ms                 | TTSP or something outside the JVM            |
-| 16 ms     | 16 ms but too frequent | allocation rate, not collector configuration |
+| Log pause | Client-observed pause | Reading                                              |
+| --------- | --------------------- | ---------------------------------------------------- |
+| 16 ms     | ~16 ms                | GC may contribute; align request and event intervals |
+| 16 ms     | 200 ms                | examine TTSP, queueing, dependencies and scheduling  |
+| 16 ms     | 16 ms but frequent    | compare allocation, capacity and collection triggers |
 
-Do this reconciliation before touching a collector flag. It is a two-minute check that
-routinely redirects the entire investigation.
+Correlate event intervals with affected requests before touching collector flags; similar
+durations or unmatched maxima do not establish causation.

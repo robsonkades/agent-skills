@@ -3,18 +3,28 @@
 Run these against the runtime in question. Every default cited elsewhere is a starting point,
 not a substitute for `-XX:+PrintFlagsFinal` on the exact build.
 
+Commands below are Bash templates: replace `MyApp`/`MyClass`, classpath and log paths
+with the existing application's launch configuration. In PowerShell use `Select-String`
+instead of `grep` and native continuation syntax. Check `java -Xlog:help` before using
+release-sensitive logging tags; a missing tag or flag is a tooling limitation, not evidence
+that no compilation or deoptimization happened. Retain the complete log before filtering:
+fixed context windows can truncate nested inlining trees and mix compilation identities.
+
 ## Flag classes: which flags a product JVM will even accept
 
-| Class          | Needs                                                | Examples verified on Temurin 25.0.3                                                                          |
-| -------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `product`      | nothing                                              | `PrintCompilation`, `PrintCodeCache`, `Tier*Threshold`, `DoEscapeAnalysis`, `EliminateAllocations`           |
-| `diagnostic`   | `-XX:+UnlockDiagnosticVMOptions` **before** the flag | `PrintInlining`, `LogCompilation`, `TraceDeoptimization`, `CompilerDirectivesFile`, `PrintOptoAssembly`      |
-| `experimental` | `-XX:+UnlockExperimentalVMOptions` before the flag   | `EnableJVMCI`, `UseJVMCICompiler`, `UseGraalJIT`                                                             |
-| `develop`      | a **debug build** — a product JVM refuses to start   | `PrintEscapeAnalysis`, `PrintEliminateAllocations`, `PrintIdeal`, `PrintFieldLayout`, `CodeCacheSegmentSize` |
+| Class          | Needs                                                | Examples verified on Temurin 25.0.3                                                                     |
+| -------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `product`      | nothing                                              | `PrintCompilation`, `PrintCodeCache`, `Tier*Threshold`, `DoEscapeAnalysis`, `EliminateAllocations`      |
+| `diagnostic`   | `-XX:+UnlockDiagnosticVMOptions` **before** the flag | `PrintInlining`, `LogCompilation`, `TraceDeoptimization`, `CompilerDirectivesFile`, `PrintOptoAssembly` |
+| `experimental` | `-XX:+UnlockExperimentalVMOptions` before the flag   | `EnableJVMCI`, `UseJVMCICompiler`, `UseGraalJIT`, `CodeCacheSegmentSize`                                |
+| `develop`      | a **debug build** — a product JVM refuses to start   | `PrintEscapeAnalysis`, `PrintEliminateAllocations`, `PrintIdeal`, `PrintFieldLayout`                    |
 
 The class is printed in braces by `-XX:+PrintFlagsFinal` (`{C2 diagnostic}`, `{JVMCI
-experimental}`); a `develop` flag does not appear there at all on a product build, which is how
-to tell "misspelled" from "debug-only". The unlock must precede the flag on the command line —
+experimental}`); include the appropriate unlock when listing locked options. Absence from a
+plain flag listing does not distinguish a misspelling, a locked option or a debug-only flag:
+check the explicit option error and the target source. `CodeCacheSegmentSize` is
+`pd experimental` (128 bytes on the measured build), not `develop`.
+The unlock must precede the flag on the command line —
 `Error: The unlock option must precede 'PrintInlining'` otherwise. `CompileCommand` options
 inherit the class of the flag they scope: `-XX:CompileCommand=PrintInlining,...` needs the
 diagnostic unlock too, and a `develop` name is `Unrecognized option` — the JVM does not start.
@@ -36,8 +46,8 @@ Method suspected of being under-optimised
 |
 +-- 3. Is there an allocation that "should" have disappeared?
 |      product JVM: compare normalized allocation-rate/profile deltas; samples can miss it
-|      debug build only: PrintEscapeAnalysis state other than NoEscape -> that is the answer
-|                        PrintEliminateAllocations says not eliminated -> confirm the cause
+|      debug build only: inspect escape state AND scalar replaceability/elimination result
+|                        NoEscape alone does not prove allocation removal
 |
 +-- 4. Unstable compilation (recurring "made not entrant: uncommon trap")?
        -Xlog:deoptimization=debug / JFR jdk.Deoptimization -- a deoptimisation problem,
@@ -196,17 +206,18 @@ scoped experiment rather than declaring one universal lever.
 
 ## Not measuring an empty loop
 
-C2 will remove a loop or a computation entirely when the result is unused (dead code
-elimination), when every value is known at compile time (constant folding), or when the loop
-has no observable side effect. Consume the result:
+C2 may remove a loop or computation whose result is unused and whose removal preserves
+observable behavior, or replace a computation by a constant. Consume the result, but also
+use runtime inputs so consumption does not merely preserve a precomputed constant.
+This is a partial method for an existing JMH benchmark class with a nonconstant `array`
+state field and JMH imports/dependencies; it is not a standalone Java program:
 
 ```java
 @Benchmark
-public long sumArray(Blackhole bh) {
+public long sumArray() {
     long sum = 0;
     for (int i = 0; i < array.length; i++) sum += array[i];
-    bh.consume(sum);
-    return sum;  // belt and braces
+    return sum;  // JMH consumes a returned result
 }
 ```
 

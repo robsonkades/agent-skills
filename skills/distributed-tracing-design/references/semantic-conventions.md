@@ -57,7 +57,7 @@ conventions and sensitive-data policy.
 - [ ] domain and convention version pinned
 - [ ] stable versus development status recorded
 - [ ] span name cannot contain instance data
-- [ ] kind matches remote direction and sync/deferred form
+- [ ] kind matches the protocol operation, not blocking versus asynchronous Java syntax
 - [ ] start/end include the documented operation
 - [ ] status/error rules cover cancellation and expected outcomes
 - [ ] retry/resend/batch behavior follows domain convention

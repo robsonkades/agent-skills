@@ -3,12 +3,13 @@
 ## Verify the topology first
 
 ```bash
-numactl --hardware        # if there is only one node, there is nothing to tune
+numactl --hardware        # topology visible to this Linux environment
 ```
 
-On a virtual machine presenting a single node to the guest, `-XX:+UseNUMA` fragments TLAB
-allocation for no locality gain. That is the worst class of configuration: silently
-accepted, doing nothing, and producing the feeling of having solved something.
+Also inspect allowed CPUs/memory nodes and the effective JVM flags/startup logs. One visible
+node provides no guest-level cross-node placement choice, though host placement can still matter.
+JDK 25 HotSpot on Linux disables NUMA support when only one node is available or the process is
+bound to one memory node; do not infer TLAB fragmentation merely from a requested flag.
 
 ## The costs involved
 
@@ -19,26 +20,27 @@ nanosecond ratio into capacity arithmetic.
 
 ## Which collectors respond to the flag
 
-`-XX:+UseNUMA` is implemented by **Parallel GC and G1 only** (JEP 345, JDK 14, Linux), and
-it improves **allocation** locality — where new objects are placed — not the locality of
-everything already on the heap.
+`-XX:+UseNUMA` enables supported collector NUMA policies, including Parallel GC and G1
+(G1 support: JEP 345, JDK 14, Linux). G1's young-region placement aims at allocation locality;
+it does not guarantee local access to everything already on the heap.
 
-ZGC has collector-specific NUMA work that is not governed by `UseNUMA`, and that behavior is
-JDK-version-specific (allocation and relocation support have evolved). CPU confinement can
-change the visible topology. Verify target-build logs/source and measure placement rather
-than extrapolating the G1 flag contract.
+ZGC also uses `UseNUMA`: JDK 25's `ZArguments` enables it by default, and Linux `ZNUMA`
+initialization reads that flag. Allocation/relocation policies and platform support are
+version-specific. Verify target-build logs/source and placement rather than extrapolating G1.
 
-With Serial or Shenandoah, the flag is accepted and produces no effect.
+Do not infer another collector's support from flag acceptance; inspect effective behavior in the
+target build. A requested flag can be changed by ergonomics or topology constraints.
 
 ## Measuring
 
 ```bash
-numastat -p <pid>     # local_node vs other_node
+numastat -p <pid>     # per-node process memory residency, typically MB
 ```
 
 Per-process `numastat` reports where pages reside, not which CPUs access them or whether an
-access was remote. Use it with CPU placement and PMU/topology evidence; no universal
-`other_node` percentage proves a problem.
+access was remote. `local_node`/`other_node` belong to the system allocation-statistics view,
+not this per-process table; even those counters describe allocation rather than current access
+traffic. Correlate residency with CPU placement and PMU/topology evidence.
 
 ## Distributing versus pinning
 
@@ -47,19 +49,29 @@ Two strategies, and the choice depends on whether the workload fits in one node:
 - **Distribute** (`-XX:+UseNUMA` under Parallel/G1): allocation follows the thread's node.
   Appropriate when the process legitimately spans nodes.
 - **Pin** (`numactl --cpunodebind=0 --membind=0`): confine the process to one node.
-  Appropriate when it fits, and usually simpler and more predictable.
+  This is a launch prefix; append the application command. Evaluate only when node 0 is allowed
+  and its CPU, memory and bandwidth cover heap, native memory and workload demand. Strict memory
+  binding can cause allocation failure despite free memory elsewhere.
 
 A diagnostic signal for the choice: if the scalability curve's knee coincides with the core
-count of a single node, the workload is crossing the node boundary and pinning is worth
-evaluating.
+count of a single node, crossing a node boundary is one hypothesis. Verify actual CPU placement;
+SMT, frequency, bandwidth or contention can create a similar knee. Compare matched CPU capacity
+where possible and measure the capacity lost by confinement.
 
 ## Checklist for multi-socket systems
 
 - [ ] `numactl --hardware` confirms more than one node
-- [ ] The scalability knee coincides with one node's core count
+- [ ] The scaling hypothesis is supported by actual CPU placement, not just matching core counts
 - [ ] Per-process page residence interpreted with CPU placement and access evidence, without
       a universal `other_node` threshold
-- [ ] The collector in use actually responds to `-XX:+UseNUMA` (Parallel or G1) — and if it
-      is ZGC, that its default awareness has not been switched off by CPU confinement
+- [ ] Effective collector NUMA policy, flag value and any topology-based disablement are recorded
 - [ ] Pinning with `numactl` evaluated as an alternative to distributing
 - [ ] `numastat` measured before **and** after the change
+
+## Sources
+
+- [JDK 25 ZGC Linux NUMA initialization](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/os/linux/gc/z/zNUMA_linux.cpp)
+  and [ZGC arguments](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/gc/z/zArguments.cpp).
+- [JDK 25 Linux topology checks](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/os/linux/os_linux.cpp).
+- [numactl project's numastat manual](https://github.com/numactl/numactl/blob/master/numastat.8).
+- [Linux NUMA memory policy](https://www.kernel.org/doc/html/latest/admin-guide/mm/numa_memory_policy.html).

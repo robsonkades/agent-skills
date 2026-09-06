@@ -10,9 +10,10 @@ diagnostic patterns, not an exhaustive state machine.
 **Shape 1 — thrashing under `UseCodeCacheFlushing` (the default).** Once allocations since
 the last unloading exceed a threshold — `SweeperThreshold=15`% of the cache when it is
 empty, shrinking towards zero as free space approaches `StartAggressiveSweepingAt=10`% —
-the JVM asks the GC to unload cold nmethods (`CodeCache::gc_on_allocation`; the log line
+the JVM requests GC that can reclaim eligible code (`CodeCache::gc_on_allocation`; the log line
 below prints both percentages). If the cache is simply too small for the working set, the
-this can become a sustained unload/recompile loop. The strongest signature is in the GC and
+cache can enter a sustained reclaim/recompile loop. Confirm repeated compilations and reclaim
+activity; a GC request does not prove particular cold nmethods were removed. The signature is in GC and
 code-cache logs:
 
 ```
@@ -90,7 +91,7 @@ rebalancing.
   enough; size it from measured `max_used` per heap, not from a rule of thumb.
 - **`-XX:-TieredCompilation` and `-XX:TieredStopAtLevel=1` drop the default to 48 MB** and
   switch segmentation off. A service that changed the mode and then saw `CodeCache is full`
-  has hit ergonomics, not a leak; set the size explicitly with the mode.
+  may have hit changed ergonomics; verify working-set growth/leaks independently and size explicitly.
 - Segmentation is ergonomic: verified off at `-XX:ReservedCodeCacheSize=200m`, on at
   `240m`. Below that, `Compiler.codecache` shows one unnamed heap and per-segment
   monitoring shows nothing.
@@ -115,10 +116,12 @@ Occasional deoptimisation is normal — it is how speculative optimisation stays
 is a signal when it **recurs on the same method**: the profile is unstable, usually
 because a call site that used to be monomorphic now sees several types, or because an
 uncommon trap keeps being hit. `made not entrant: not used` in `PrintCompilation` is not a
-deoptimisation at all; it is the tier-3 code being retired by the tier-4 version.
+proof of deoptimisation; in a tier-up sequence it can be lower-tier code replaced by its successor.
 
-Recurring deoptimisation also means the method keeps re-entering the compile queue, which
-is one way an application appears never to finish warming up, and each recompilation
+Recurring deoptimisation can lead to new compiler tasks, but some actions keep the compiled
+method usable. Verify successor compile IDs and queue activity rather than assuming each event
+implies recompilation. Repeated recompilation is
+one way an application appears never to finish warming up, and each recompilation
 consumes code cache the flushed version gave back. The reason codes and mitigations are
 `deoptimization`.
 

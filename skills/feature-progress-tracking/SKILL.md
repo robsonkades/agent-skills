@@ -17,25 +17,25 @@ description: >
 
 ## Purpose
 
-Progress kept in the conversation disappears when the conversation does. What survives is
-whatever was written down, and if that was written at the end it is a reconstruction — which is
-reliably wrong in the same place every time: the resources that were nearly done.
+Durable records preserve evidence and unfinished work across handoffs. Reconstruction is
+possible from diffs, logs and test results, but uncertainty must remain visible; do not invent
+start times or past validation merely to complete a table.
 
 This skill exists so that a second agent, opening the repository with no history, can read one
-file and know exactly where the work stands and what to do next.
+entry point and find the current state, supporting evidence and next ready work.
 
 ## The status set
 
-| Status          | Means                                               | Entered when                           |
-| --------------- | --------------------------------------------------- | -------------------------------------- |
-| **TODO**        | Defined, not started                                | The resource is created                |
-| **IN_PROGRESS** | Being worked on now                                 | Work starts — before the first edit    |
-| **BLOCKED**     | Cannot proceed for a reason outside the work        | The blocker is identified              |
-| **DONE**        | Implemented and validated                           | The validation ran and passed          |
-| **SKIPPED**     | Deliberately not done in this feature; still wanted | A decision, with a reason and an owner |
-| **CANCELLED**   | No longer needed at all                             | The reason it existed went away        |
+| Status          | Means                                                | Entered when                           |
+| --------------- | ---------------------------------------------------- | -------------------------------------- |
+| **TODO**        | Defined, not started                                 | The resource is created                |
+| **IN_PROGRESS** | Started, with implementation or validation remaining | Work starts; may be paused for handoff |
+| **BLOCKED**     | Cannot proceed for a reason outside the work         | The blocker is identified              |
+| **DONE**        | Implemented and validated                            | The validation ran and passed          |
+| **SKIPPED**     | Deliberately not done in this feature; still wanted  | A decision, with a reason and an owner |
+| **CANCELLED**   | No longer needed at all                              | The reason it existed went away        |
 
-Legal transitions:
+Common transitions (additional evidence-based transitions are described below):
 
 ```text
 TODO ──► IN_PROGRESS ──► DONE
@@ -52,17 +52,19 @@ DONE ──► IN_PROGRESS     only when a later change reopens it; say what reo
 The normal path is TODO → IN_PROGRESS → DONE. A direct TODO → DONE transition is acceptable for an
 atomic task completed and validated between observations; record the validation rather than
 inventing historical states. BLOCKED normally returns through IN_PROGRESS, but the blocker may also
-make the resource CANCELLED or prove that no work remained. State transitions serve truthful
+make the resource CANCELLED or prove that no work remained. DONE still requires valid acceptance
+evidence, even when a resolved blocker needs no new code. State transitions serve truthful
 resumption, not workflow accounting for its own sake.
 
 ## Workflow
 
-1. **Create the table when the resources are defined**, all at TODO. A table created later is
-   backfilled, and backfilled status is guesswork.
+1. **Create the table when resources are defined**, initially TODO for unstarted work. When
+   tracking begins later, reconstruct only evidence-supported state and label unknowns.
 2. **Update at durable handoff points and material transitions.** For multi-session or parallel
    work, update before ownership changes and before ending a session. Do not turn sub-minute local
    edits into an event stream that costs more than the work.
-3. **Require a validation line for DONE.** What ran, and what it printed. No line, no DONE.
+3. **Require relevant acceptance evidence for DONE.** Link what ran, results and the checked
+   code/contract revision and environment; a command name alone is not a passing result.
 4. **Record a blocker with its question**, what it blocks, and what continues meanwhile.
 5. **Append to the execution log** on start, completion, blocking, unblocking and any plan
    change. The log is append-only; a correction is a new entry.
@@ -77,10 +79,12 @@ Formats for both files, and the resumption procedure, are in
 
 ```text
 IF a resource has been implemented but not validated
-THEN it is IN_PROGRESS. There is no status for "code written".
+THEN it is IN_PROGRESS, or BLOCKED when an external impediment prevents required validation.
+     Record implemented work and missing evidence; do not call it qualified DONE.
 
 IF validation was run and something failed
-THEN the resource stays IN_PROGRESS. A failing check is not a footnote on a DONE.
+THEN investigate the cause; an implementation defect stays IN_PROGRESS, an external
+     impediment can be BLOCKED. A required failing check does not support DONE.
 
 IF a resource is DONE and a later resource breaks it
 THEN it returns to IN_PROGRESS, and the log says which resource reopened it.
@@ -93,11 +97,13 @@ THEN say who decided and why, and whether the feature is complete without it —
      usually it means the scope table needs the item moved out of Required.
 
 IF the same resource has been IN_PROGRESS across three sessions
-THEN it is too big or it is blocked. Split it or mark it BLOCKED.
+THEN inspect remaining work, session length and dependencies. Split only when useful;
+     session count alone proves neither oversizing nor an external blocker.
 
 IF the progress file and the code disagree
-THEN the file is wrong, and it is corrected before any further work — a stale
-     tracker is worse than none, because it is believed.
+THEN reconcile accepted scope, code revision and evidence before changing state. The tracker
+     may be stale, the implementation may have regressed, or a supersession may be missing.
+     Record what was established and reopen affected work; do not rewrite acceptance to fit code.
 
 IF the feature is Light/Inline
 THEN there is no tracking artefact. Do not create one to have a process.
@@ -111,7 +117,10 @@ THEN there is no tracking artefact. Do not create one to have a process.
   not a guarantee in a distributed workflow.
 - **Never mark DONE optimistically.** "It should work" is IN_PROGRESS with a note.
 - **Never delete a row.** Cancelled and skipped rows are the record of decisions.
-- **Never rewrite the log.** It is chronological; its value is that it was written at the time.
+- **Preserve decision history.** Append corrections, identify actor/resource/revision, and
+  distinguish event time from recording time. Concurrent wall-clock order is not dependency
+  order. Avoid secrets and personal payloads; if sensitive material was recorded, follow the
+  repository's redaction procedure and retain a sanitized correction trail.
 
 ## Output
 
@@ -119,10 +128,11 @@ The progress table, current, and the report derived from it:
 
 ```text
 Feature      Asynchronous order dispatch
-Resources    11 total — 6 DONE, 1 IN_PROGRESS, 1 BLOCKED, 2 TODO, 1 CANCELLED
+Resources    10 total — 4 DONE, 1 IN_PROGRESS, 2 BLOCKED, 2 TODO, 1 CANCELLED
 Blocked on   Q-08 (uniqueness scope for the idempotency key), asked 2026-09-05
 Next         RES-09 (metrics), unaffected by the blocker
 Plan changes RES-06 added 2026-09-05; RES-11 cancelled 2026-09-04
 ```
 
-Five lines, all of them checkable against the files. That is the whole report.
+Keep the report proportionate; include material validation gaps and changed assumptions when
+the five-line summary would hide them. Resource counts are not effort percentages or release readiness.

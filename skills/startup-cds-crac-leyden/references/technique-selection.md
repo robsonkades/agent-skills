@@ -40,17 +40,22 @@ Is slow startup a real, measured problem?
 
 ## JEP status at the JDK 25 baseline
 
-| JEP / issue | What it delivers                                                  | Status                                                                                              |
-| ----------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| 310         | Application classes in the shared archive (AppCDS)                | Delivered, JDK 10                                                                                   |
-| 341         | Default CDS archives; `-Xshare:auto` is the factory behaviour     | Delivered, JDK 12                                                                                   |
-| 350         | Dynamic CDS: `-XX:ArchiveClassesAtExit`                           | Delivered, JDK 13                                                                                   |
-| JDK-8261455 | `-XX:+AutoCreateSharedArchive` (an enhancement, not a formal JEP) | Delivered, JDK 19                                                                                   |
-| 483         | AOT class loading and linking; three-step `record`/`create` flow  | **Delivered, JDK 24**, not preview                                                                  |
-| 514         | One-command AOT ergonomics: `-XX:AOTCacheOutput`                  | Delivered, JDK 25                                                                                   |
-| 515         | AOT method profiling persisted into the cache                     | Delivered, JDK 25                                                                                   |
-| 516         | AOT cache with any collector, ZGC included                        | Delivered, JDK 26 (not on 25)                                                                       |
-| JDK-8377932 | Affected AOT-cache builds accepted a modified application JAR     | Fixed in mainline and at least some JDK 25 updates (including Corretto 25.0.3); verify vendor build |
+Status checked against OpenJDK on 2026-09-05: 514 is Closed/Delivered for 25 and 516 for 26.
+These are release integration facts, not a promise about installed/vendor builds or GA artifacts
+on a target platform. Verify vendor release availability separately. Leyden's project page still
+lists native-code AOT compilation as proposed work; the JDK 25 column above remains profile-based.
+
+| JEP / issue | What it delivers                                                  | Status                                                                                                     |
+| ----------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 310         | Application classes in the shared archive (AppCDS)                | Delivered, JDK 10                                                                                          |
+| 341         | Default CDS archives; `-Xshare:auto` is the factory behaviour     | Delivered, JDK 12                                                                                          |
+| 350         | Dynamic CDS: `-XX:ArchiveClassesAtExit`                           | Delivered, JDK 13                                                                                          |
+| JDK-8261455 | `-XX:+AutoCreateSharedArchive` (an enhancement, not a formal JEP) | Delivered, JDK 19                                                                                          |
+| 483         | AOT class loading and linking; three-step `record`/`create` flow  | **Delivered, JDK 24**, not preview                                                                         |
+| 514         | One-command AOT ergonomics: `-XX:AOTCacheOutput`                  | Delivered, JDK 25                                                                                          |
+| 515         | AOT method profiling persisted into the cache                     | Delivered, JDK 25                                                                                          |
+| 516         | AOT cache with any collector, ZGC included                        | Delivered, JDK 26 (not on 25)                                                                              |
+| JDK-8377932 | Affected AOT-cache builds accepted a modified application JAR     | Corretto develop changelog lists the fix under 25.0.4.7.1; qualify the exact vendor build, not just 25.0.x |
 
 ## Measurement contract
 

@@ -72,8 +72,10 @@ collector. Verified on 25.0.3 with `-Xlog:gc`:
 This is the decision this reference exists for. A service on Parallel GC with a small code
 cache and a high compilation rate — warm-up, runtime class generation, a `MethodHandle`-heavy
 framework — will show periodic Full GCs that no heap metric explains. The fix is code cache
-capacity, not heap tuning: the triggers are percentages of `ReservedCodeCacheSize`, so
-raising it lowers the trigger frequency directly. `gc-log-analysis` covers reading the cause
+capacity or unnecessary compilation/class-generation churn, rather than assuming heap tuning:
+the triggers depend on total code-cache capacity, allocation rate and free ratio, so test a
+larger cache against the observed workload instead of promising a fixed frequency reduction.
+`gc-log-analysis` covers reading the cause
 column; this reference covers why it says what it says.
 
 ## The cold-code heuristic (`update_cold_gc_count`, `nmethod::is_cold`)
@@ -109,10 +111,10 @@ All `product`, all present in `-XX:+PrintFlagsFinal` on 25.0.3:
 | `SweeperThreshold`          | `15.0`  | Percentage of the total allocated since the last unloading that requests a threshold GC. "Threshold when a code cache unloading GC is invoked" is the flag's own description                                                                                                      |
 | `StartAggressiveSweepingAt` | `10`    | Percentage free (aggregate) below which the request is an aggressive GC and `cold_gc_count` drops to 2                                                                                                                                                                            |
 
-None of these is a routine tuning target. The one that earns a change is `ReservedCodeCacheSize`,
-because it moves both thresholds at once; `NmethodSweepActivity=0` is defensible only when the
-recompilation churn of cold flushing has been measured to exceed the cost of the extra GCs
-it prevents, which is rare.
+None of these is a routine tuning target. Evaluate capacity and avoidable compilation churn
+first. `NmethodSweepActivity=0` disables cold unloading, not threshold GC requests; an experiment
+must compare saved recompilation against retained code, collection cost and exhaustion risk.
+Do not claim that disabling cold unloading prevents those collections.
 
 ## Compiler stop and restart
 

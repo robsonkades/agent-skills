@@ -2,8 +2,10 @@
 
 ## Physical model
 
-SQL Server reads 8 KiB pages. The clustered index is the table, and its key becomes the row locator
-stored in every nonclustered index. Evaluate clustered keys for width, uniqueness, insertion order,
+For disk-based rowstore, SQL Server uses 8 KiB pages. A clustered rowstore index's leaf level holds
+the data; its key forms the locator in nonclustered rowstore indexes (a heap uses a RID instead).
+Do not apply that layout literally to clustered columnstore or memory-optimized tables.
+Evaluate clustered keys for width, uniqueness, insertion order,
 immutability, nullability, and fixed-width storage. A random 16-byte key costs both locality and
 width; UUID v7 in `uniqueidentifier` does not sort by timestamp bytes as a binary value would.
 
@@ -18,8 +20,9 @@ last update, modification count, sampling, and compatibility-level cardinality e
 targeted `UPDATE STATISTICS` before attributing a rebuild improvement to fragmentation. Generic
 calendar thresholds and `sp_updatestats` do not establish that the important histogram is accurate.
 
-Query Store supplies plan history and runtime intervals; use it to distinguish data distribution,
-statistics, parameter values, compatibility changes, and a plan regression.
+Query Store supplies plan history and aggregated runtime intervals. Correlate it with independently
+captured parameter distributions, statistics and compatibility changes; history alone does not
+prove which change caused a regression. See the concurrency/plans reference for capture limits.
 
 ## Layout decisions
 
@@ -40,3 +43,8 @@ the database grows.
 
 For online/resumable index work, state edition support, boundary-lock behavior, write amplification,
 log/replica impact, scratch space, stop conditions, and validity after resume/failure.
+
+## Primary references
+
+- [Index architecture](https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-index-design-guide?view=sql-server-ver16) — rowstore, locators and layout alternatives.
+- [GUID comparison](https://learn.microsoft.com/en-us/sql/connect/ado-net/sql/compare-guid-uniqueidentifier-values?view=sql-server-ver17) — SQL Server ordering differs from binary timestamp ordering.

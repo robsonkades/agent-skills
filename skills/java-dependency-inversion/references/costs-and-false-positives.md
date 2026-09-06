@@ -10,9 +10,11 @@ is wrong.
 - **Vocabulary duplication.** A port speaks policy language, so data crossing it is
   translated (a `Confirmation`, not an `SmtpMessage`). That translation code is
   real code with real bugs.
-- **API surface.** A public port is a published contract: adding a method breaks
-  implementors outside your compilation unit (a `default` method avoids the source
-  break at the cost of a possibly meaningless fallback).
+- **API surface.** An externally consumed port is a published contract: adding an abstract
+  method breaks source recompilation of concrete implementors that lack it. Old binaries
+  may still load but fail with `AbstractMethodError` when that method is invoked. A `default`
+  may avoid that failure, but needs meaningful semantics and a check for inherited conflicts.
+  See [JLS 17 interface evolution](https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html#jls-13.5.7).
 - **Dead flexibility.** An unused seam still costs reading time on every visit.
   Speculative ports are inventory, not investment.
 - **Object-graph assembly.** Someone must construct and connect the pieces. One
@@ -25,18 +27,17 @@ The pattern to name in review: `FooService` + `FooServiceImpl`, pairwise, across
 the codebase. Detection is mechanical — for each interface, count production
 implementations and look for a seam:
 
-- One implementation, no test double in use, no module boundary → the interface is
-  ceremony. The honest fix is deletion (inline the class), not a second
-  implementation invented to justify it.
-- The interface's methods mirror the impl one-for-one, including parameter names →
-  nobody designed a contract; they extracted a surface.
-- Callers are all in the same module and the interface is not exported anywhere →
-  no boundary exists for it to guard.
+- One implementation, no test double in use, no module boundary → investigate other seam
+  benefits below before deletion. If none exists, inline the interface dependency instead
+  of inventing another implementation to justify it.
+- Mirroring an implementation's methods is a review signal, not proof of an undesigned
+  contract. Inspect exposed types, capabilities, failure semantics and external consumers.
+- Same-module, unexported interfaces can still guard package-level capabilities, vendor
+  quarantine or deterministic tests; physical module count is not the boundary test.
 
-Say why it happened without dogma: usually a style rule from the EJB era, or a
-mocking framework habit — modern test doubles are hand-written classes against a
-port that _earns_ its existence, and classes need no interface to be constructed
-in a test.
+Do not infer historical motives from naming. Demonstrate the unused seam and check callers,
+framework proxies and reflection/configuration before removal. A hand-written double often
+clarifies the port contract; a project's existing mocking framework is not itself a defect.
 
 ## Single-implementation interfaces that are justified
 

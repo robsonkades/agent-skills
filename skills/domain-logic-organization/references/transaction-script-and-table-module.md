@@ -7,7 +7,7 @@ what it needs, computes, writes, and returns. Data is carried in structures — 
 rows, DTOs — with no behaviour of their own.
 
 ```java
-public final class RegisterShipment {
+public class RegisterShipment {
 
     private final ShipmentGateway shipments;   // Table Data Gateway
     private final RateGateway rates;
@@ -86,7 +86,7 @@ simulating sets with loops over objects.
 
 ```java
 @Component
-public final class ContractRateModule {
+public class ContractRateModule {
 
     private final JdbcClient db;
 
@@ -113,9 +113,16 @@ public final class ContractRateModule {
 
 ### When this is the right home
 
-- **Bulk recalculation and indexation.** The domain-model version of the method above
-  loads 400 000 aggregates, dirty-checks them and issues 400 000 updates. It is not
-  slightly slower; it is unusable (`architecture-and-performance`).
+The Spring sketches assume managed beans invoked through the configured transaction proxy;
+plain construction and self-invocation do not activate proxy advice. Classes are non-final to
+permit class-based proxies. JdbcClient was introduced in Spring 6.1 (Java 17 baseline). Pin the
+project's framework and SQL dialect instead of treating the snippet as a standalone program.
+For indexation, define positive factor, null indexed-year handling, skipped-year catch-up and
+version-column policy; `indexed_year < :year` applies one factor even when several years were missed.
+
+- **Bulk recalculation and indexation.** Per-row hydration and writes can dominate this
+  workload; compare measured round-trips, allocation and database work for behaviorally
+  equivalent implementations (`architecture-and-performance`).
 - **Rules genuinely expressed over a set**: ranking, allocation across rows, "close every
   position older than N days", period aggregations.
 - **Legacy schemas with strong table semantics** where the object model would be a
@@ -131,8 +138,9 @@ optimistic locking. Therefore —
   ordinary domain operations.
 - They must state which invariants they assume and which they cannot check.
 - They must consider stale in-memory state: a running persistence context does not see the
-  bulk update, and a subsequent flush can overwrite it. Bulk work belongs in its own
-  transaction, with the persistence context cleared afterwards
+  bulk update, and a subsequent flush can overwrite it. Coordinate transaction/flush ordering
+  and clear or refresh affected contexts without discarding pending changes. A separate
+  transaction does not refresh other active contexts or shared caches
   (`orm-behavioral-patterns`).
 - Version columns must be handled deliberately — a bulk update that ignores them silently
   defeats optimistic locking for every row it touches (`offline-concurrency-control`).
@@ -143,3 +151,9 @@ Table Module scales with table count, not with concept count, so a business rule
 six tables has no natural owner and lands in whichever module the author touched first.
 That is the same failure as the god service, arriving from a different direction. Where
 rules span tables and interact, a Domain Model earns its keep (`domain-model.md`).
+
+## Sources
+
+- [JdbcClient API](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html): API introduced in Spring Framework 6.1.
+- [Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) — final classes and proxy/self-invocation boundaries.
+- [Fowler: Table Module](https://martinfowler.com/eaaCatalog/tableModule.html) — record-set organization, distinct from a gateway's persistence responsibility.

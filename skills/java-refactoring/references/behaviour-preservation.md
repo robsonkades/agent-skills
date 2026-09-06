@@ -137,8 +137,9 @@ compile-time constant being inlined into stale callers is `compatibility.md`'s.
 **Identity and publication.** `Integer` caching, interned strings and `==` on boxed types
 make "equivalent" rewrites observable. The full class↔record consequence list — finality,
 equality, accessor names, serialisation — is `compatibility.md`'s. One it does not carry:
-record components are `final`, so class→record _adds_ safe-publication freeze and
-record→class (or making a field non-final so a mapper can set it) _removes_ it. Incorrectly
+record components are `final`; class→record changes final-field initialization guarantees only
+if the original fields lacked them. A record→class conversion can retain final fields and
+proper construction; making them non-final removes those guarantees. Incorrectly
 published code can then expose default or stale values; architecture-dependent frequency does
 not make the program correct on any platform.
 
@@ -160,8 +161,9 @@ reached as a set.
 4. Differential test: keep the old implementation for one commit, generate inputs, assert
    `old(x)` equals `new(x)` over a seeded generator or jqwik. Available whenever both forms
    coexist and the computation is pure, and it finds what a hand-written row set does not
-   think of — empty, null, locale, rounding mode, the trailing separator. Delete both in the
-   next commit.
+   think of — empty, null, locale, rounding mode, the trailing separator. Retire the duplicate
+   reference implementation when no longer needed; retain useful generated regression cases
+   or a maintainable independent oracle. Never delete the replacement implementation.
 5. Contract evidence and dual-run, per the proof table. **Dual-run has a non-negotiable
    precondition:** the compared path is free of external side effects, or the new
    implementation's writes are routed to a sink. Running both halves of a path that writes,

@@ -20,9 +20,8 @@ description: >
 ## Purpose
 
 Pick the data-access pattern that matches the logic it will serve, and know precisely what
-each one couples to what. The four patterns differ in one dimension that predicts almost
-everything else: **how much the in-memory representation is allowed to differ from the
-table.**
+each one couples to what. Inspect both **who owns database access** and how independently
+the object model must evolve from the schema. Shape alone does not classify a pattern.
 
 The failure this prevents is choosing by default — JPA entities for everything because the
 starter is on the classpath, or a hand-rolled DAO layer because the previous project had
@@ -32,7 +31,7 @@ problem but is a pattern-selection problem.
 ## The four patterns
 
 ```text
-Table Data Gateway     one object per table; all SQL for that table lives
+Table Data Gateway     one gateway for a table or view; its SQL lives
                        there; methods take and return primitives or record
                        sets. No domain objects, no per-row identity.
 
@@ -51,20 +50,26 @@ Data Mapper            a separate mapper moves data between objects and
 
 An ORM like JPA/Hibernate is a Data Mapper implementation with an identity map and a unit
 of work attached. Spring Data JDBC is closer to a Data Mapper with a simpler contract;
-`JdbcClient` with a repository class is a Table Data Gateway.
+`JdbcClient` is a JDBC facade, not a pattern choice: its caller can implement a table
+gateway, aggregate repository or mapper. Classify responsibilities, not class names.
 
 ## Workflow
+
+Examples are partial Java 17 snippets; `JdbcClient` requires Spring Framework 6.1+.
+Inspect the project's compiler/toolchain, resolved Spring/JPA versions, database dialect,
+schema constraints and transaction configuration before adapting them. Use existing JDBC
+APIs on older stacks; adopting this skill does not authorize a dependency/runtime upgrade.
 
 1. **Start from the logic organisation**, which is the prior decision
    (`domain-logic-organization`). Transaction scripts pair naturally with gateways; a
    domain model needs a mapper — or Active Record if the model happens to mirror the tables.
 2. **Measure the shape gap.** Compare the object model you want with the schema you have:
    count the places where one concept spans several tables, one table serves several
-   concepts, or the schema is owned elsewhere. A wide gap forces a Data Mapper; a narrow
-   one makes Active Record honest.
+   concepts, or the schema is owned elsewhere. A rich model with a wide gap favors a mapper;
+   a reporting projection against that same schema may only need a gateway.
 3. **Establish who owns the schema.** If it is yours and it can follow the model, Active
-   Record is cheap. If a DBA team, another service or a legacy system owns it, assume the
-   gap will widen and choose a mapper.
+   Record may be economical. If it is externally owned, inspect actual constraints and change
+   history: isolate translation when domain behavior needs independence, without inventing a domain model for reports.
 4. **Check the work shape.** Set-based and reporting work belongs in a gateway with SQL,
    whatever the write side uses. Mixing is normal and correct.
 5. **Decide per module.** A pricing engine with a mapper and an admin CRUD area with Active
@@ -77,19 +82,20 @@ of work attached. Spring Data JDBC is closer to a Data Mapper with a simpler con
 
 ```text
 Transaction scripts, set-based work, reporting, imports
-        → Table Data Gateway. SQL is the point; objects would be
-          overhead. Keep the gateway free of conditionals.
+        → Consider Table Data Gateway for explicit set-oriented access.
+          Keep business-policy ownership outside it; technical checks are allowed.
 
 Simple CRUD, schema mirrors the model, you own the schema, thin rules
-        → Active Record. Honest, compact, fastest to write. Say so
-          explicitly rather than apologising for it.
+        → Active Record is a candidate if persistence methods on the
+          object fit the existing stack; a simple mapper is also reasonable.
 
 Rich interacting business rules; model and schema will diverge
         → Data Mapper. This is what the pattern exists for and the cost
           is the mapping layer.
 
 Schema owned elsewhere, or legacy, or shaped for reporting
-        → Data Mapper, plus translation. Do not let the foreign schema
+        → Mapper plus translation when a domain model needs isolation;
+          a read/reporting gateway may suffice. Do not let the foreign schema
           become the model (legacy-enterprise-modernization).
 
 Domain model already chosen, and the schema currently matches it
@@ -97,28 +103,27 @@ Domain model already chosen, and the schema currently matches it
           Acceptable and common; the risk is that the annotations start
           shaping the model (orm-structural-mapping).
 
-Needs testing without a database, or the persistence technology is
-genuinely expected to change
-        → Data Mapper with the interface owned by the domain. Note that
-          "might change" is not evidence (architecture-decision-making).
+Rules need testing without a database
+        → First isolate rule execution from I/O. Both a JPA entity and an
+          Active Record can have pure rule methods. Add a separate domain
+          model only when mapping constraints justify it.
 
 Read path of an application whose write path uses a mapper
-        → a gateway or a projection. Do not route reads through the
-          write model (architecture-and-performance).
+        → Consider a gateway/projection when loading the write model adds
+          measured cost; ordinary aggregate reads remain legitimate.
 ```
 
 ## Rules
 
-- **Active Record is not a beginner's pattern.** It is the correct pattern when the object
-  and the row are the same concept, and it stays correct as long as that holds. It fails
-  when the model must diverge from the schema — and the failure is gradual, which is why
-  the decision deserves a stated trigger for revisiting.
-- Active Record's real cost is not "impure objects"; it is that **the object's shape is
-  pinned to the table's shape**. Every schema change is a model change and every model
-  change is a migration, so the two evolve in lockstep whether or not they should.
+- **Active Record is not a beginner's pattern.** A close object/row correspondence and
+  simple rules can make combined access and behavior economical. Revisit when observed
+  mapping or testing constraints obstruct the model, rather than on a pattern label alone.
+- Active Record combines persistence and domain behavior in one object, often keeping a
+  close row shape. Mapping features can absorb column renames or value types; inspect actual
+  change propagation rather than asserting every domain change needs a migration.
 - Data Mapper's real cost is the mapping layer: code to write, code to test, and a place
   for bugs that neither the model nor the schema exhibits alone. It is worth paying when
-  the shapes genuinely differ and wasteful when they do not.
+  independence or mapping complexity warrants it, even when current shapes happen to match.
 - A JPA entity without persistence methods remains part of a Data Mapper-style unit of work, even
   when persistence constraints distort its design; call that **persistence leakage**, not Active
   Record. If the model has an `Integer` where the domain means an enum, a flattened
@@ -128,8 +133,9 @@ Read path of an application whose write path uses a mapper
 - Do not build a DAO layer that wraps a repository that wraps the ORM. Each layer must add
   behaviour — a translation, a policy, an aggregate boundary — or it is indirection
   (`enterprise-architecture-smells`).
-- Table Data Gateway pairs with transaction scripts and stays healthy as long as it holds
-  no conditionals. Business logic migrating into the gateway is the pattern degrading, and
+- Table Data Gateway pairs with transaction scripts. Resource handling, row-count checks,
+  SQL predicates and optimistic concurrency checks are legitimate conditionals. Hidden
+  business-policy decisions migrating into the gateway are the concern, and
   it is hard to find later because nobody looks for rules in a data-access class.
 - Row Data Gateway is rarely chosen deliberately today, but it names a useful boundary: a
   row object with no business logic. When a "domain object" has only accessors and
@@ -139,9 +145,13 @@ Read path of an application whose write path uses a mapper
   deliberately partitioned operations, but they must share invariant, versioning and transaction
   rules with explicit write authority. Uncoordinated writers are the defect
   (`offline-concurrency-control`).
-- SQL is not a failure of abstraction. Reporting, bulk updates and set-based rules are
-  clearer, faster and more maintainable as SQL owned by a gateway than as object graphs
-  loaded to be looped over.
+- SQL can avoid object loading for reporting and bulk changes; verify plans, rows touched,
+  round trips and application latency. Set-based writes must preserve invariants, versioning
+  and transaction semantics; ORM callbacks and managed state may be bypassed.
+
+Deliver a pattern choice grounded in one representative read/write path, ownership and
+coupling costs, plus a validation case and revisit trigger. If schema or lifecycle evidence
+is missing, state the conditional choice instead of prescribing a migration.
 
 ## References
 

@@ -3,6 +3,11 @@
 Five components, one optional, and a cross-field rule: a beneficiary is identified by an IBAN
 _or_ by an internal account id, never both and never neither.
 
+Java 17 partial examples, without preview features. Supply `java.time.Instant`, `java.util.*`
+and project value types Money/AccountId; both are assumed immutable and validated. IbanFormat
+is an existing project validator, not supplied payment-validation code. Nest the builder in the
+PaymentInstruction record; alternatives and test-fixture sketches are not one compilation unit.
+
 ## Before — telescoping constructors
 
 ```java
@@ -15,23 +20,27 @@ public class PaymentInstruction {
 }
 ```
 
-Three problems. `(amount, debtor, iban)` and `(amount, debtor, creditor)` differ only in the
-third parameter's type, so a refactor that changes `AccountId` to a `String` silently selects
-the wrong overload. Adding one optional field doubles the constructor count. And there is
-nowhere to express "IBAN or account id, not both", because each overload sees only one of them.
+The overloads already exclude supplying both identifiers in one call, but a null third argument
+is ambiguous. Changing a call-site argument from AccountId to String can select another overload;
+changing both declarations to String produces duplicate signatures. Optional combinations can grow
+the overload set. Shared constructor/factory validation can enforce invariants; a builder is not
+required for that. Model the beneficiary choice to make intent explicit across every path.
 
 ## Step 1 — model the choice, not the fields
 
 The cross-field rule disappears if the alternatives are one component:
 
 ```java
-public sealed interface Beneficiary permits Iban, InternalAccount {
+public sealed interface Beneficiary permits Beneficiary.Iban, Beneficiary.InternalAccount {
     record Iban(String value) implements Beneficiary {
         public Iban {
+            Objects.requireNonNull(value, "iban");
             if (!IbanFormat.isValid(value)) throw new IllegalArgumentException("invalid IBAN");
         }
     }
-    record InternalAccount(AccountId id) implements Beneficiary {}
+    record InternalAccount(AccountId id) implements Beneficiary {
+        public InternalAccount { Objects.requireNonNull(id, "accountId"); }
+    }
 }
 ```
 
@@ -62,7 +71,7 @@ Four required components of four distinct types, one optional. At this size a bu
 optional — but the call site is already showing strain:
 
 ```java
-new PaymentInstruction(amount, debtor, new Iban(iban), valueDate, Optional.empty());
+new PaymentInstruction(amount, debtor, new Beneficiary.Iban(iban), valueDate, Optional.empty());
 ```
 
 ## Step 3 — the builder
@@ -106,23 +115,39 @@ Two properties to keep:
   here, nothing beyond presence. If the builder later grows a rule the record could enforce, it
   belongs in the record.
 
-## Step 4 — staged, when the type is public API
+## Step 4 — a staged API when missing-step mistakes justify it
 
-If this instruction is a published SDK type, move the required set to compile time:
+The builder above intentionally permits arbitrary setter order and validates at runtime.
+A different entrypoint can expose staged interfaces, sketched below; their implementation is
+omitted and must delegate to the same constructor. Being a public SDK alone does not require stages.
 
 ```java
-PaymentInstruction.builder()
+public interface AmountStep { DebtorStep amount(Money amount); }
+public interface DebtorStep { BeneficiaryStep debtor(AccountId debtor); }
+public interface BeneficiaryStep { DateStep to(Beneficiary beneficiary); }
+public interface DateStep { OptionalStep valueDate(Instant date); }
+public interface OptionalStep {
+    OptionalStep reference(String reference);
+    PaymentInstruction build();
+}
+// A separately implemented stagedBuilder() returns AmountStep, not the Builder above.
+```
+
+Its intended call site would be:
+
+```java
+PaymentInstruction.stagedBuilder()
     .amount(Money.of("120.00", EUR))
     .debtor(debtorId)
-    .to(new Iban("DE89370400440532013000"))
+    .to(new Beneficiary.Iban("DE89370400440532013000"))
     .valueDate(Instant.now(clock))   // last required step returns the optional stage
     .reference("INV-2291")
     .build();
 ```
 
-`build()` does not exist on the earlier stages, so omitting `debtor` fails to compile rather
-than at runtime. The cost is four extra interfaces and a fixed call order — worth it for a type
-constructed by people who cannot read your validation code, rarely worth it inside one module.
+Through this staged API, build() is unavailable on earlier steps. The sketch adds five interfaces
+and a fixed order; callers can still pass null or invalid values, so runtime checks remain.
+Compile a skipped-step caller against the implemented API before claiming that protection.
 
 ## Test data builder
 
@@ -132,12 +157,15 @@ only the field under test:
 ```java
 public final class APaymentInstruction {
     private Money amount = Money.of("10.00", EUR);
-    private Beneficiary beneficiary = new Iban("DE89370400440532013000");
+    private AccountId debtor = AccountId.of("test-debtor"); // adapt to the project's factory
+    private Beneficiary beneficiary = new Beneficiary.Iban("DE89370400440532013000");
     private Instant valueDate = Instant.parse("2026-01-15T00:00:00Z");
 
     public static APaymentInstruction valid() { return new APaymentInstruction(); }
     public APaymentInstruction withAmount(Money amount) { this.amount = amount; return this; }
-    public PaymentInstruction build() { ... }
+    public PaymentInstruction build() {
+        return new PaymentInstruction(amount, debtor, beneficiary, valueDate, Optional.empty());
+    }
 }
 ```
 
@@ -145,17 +173,18 @@ public final class APaymentInstruction {
 var overLimit = APaymentInstruction.valid().withAmount(Money.of("1000000.00", EUR)).build();
 ```
 
-The value is that adding a required component to `PaymentInstruction` breaks one file rather
-than forty tests. Note the fixed `valueDate`: a test fixture that calls `Instant.now()` makes
-tests depend on wall-clock time (`java-test-design`).
+Defaults reduce unrelated fixture edits, but tests of a new requirement must still supply and
+assert its meaningful values; convenient defaults can hide missing coverage. The fixed valueDate
+avoids wall-clock dependence, but time-relative rules need a fixed Clock aligned with the fixture.
 
 ## What changed
 
-| Version                  | Call-site readability | Illegal states reachable           | Cost               |
-| ------------------------ | --------------------- | ---------------------------------- | ------------------ |
-| Telescoping constructors | Poor                  | Yes — both identifiers, or neither | 4 constructors     |
-| Sealed `Beneficiary`     | Same                  | No — the choice is one type        | 3 small types      |
-| Record + builder         | Good                  | No                                 | 1 builder class    |
-| Staged builder           | Good, guided          | No — enforced at compile time      | 4 extra interfaces |
+| Version                  | Call-site readability | Illegal states reachable                                                         | Cost                             |
+| ------------------------ | --------------------- | -------------------------------------------------------------------------------- | -------------------------------- |
+| Telescoping constructors | Context-dependent     | Null/invalid values unless constructor validates; both IDs excluded by overloads | overload set                     |
+| Sealed `Beneficiary`     | Explicit choice       | Null/invalid payloads rejected by constructors                                   | 3 small types                    |
+| Record + builder         | Named setters         | Product invariants checked at runtime                                            | 1 builder class                  |
+| Staged API sketch        | Guided order          | Missing steps prevented through stage types; invalid values still runtime        | 5 interfaces plus implementation |
 
-The largest single improvement was step 1, which is not the Builder pattern at all.
+Step 1 encodes the exclusive choice structurally; validation still rejects a null beneficiary
+or invalid component values. This improvement does not require Builder.

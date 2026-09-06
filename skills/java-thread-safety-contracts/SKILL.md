@@ -18,6 +18,11 @@ State what concurrent callers may do and observe, then make implementation and t
 promise. “Uses a concurrent collection” and “all methods synchronized” describe mechanisms, not the
 atomicity, consistency, progress or callback behavior of the abstraction.
 
+Guidance is authored against Java 25 API/JLS contracts; inspect the target compiler/runtime,
+preview policy, framework scopes and synchronization paths before applying it. Do not upgrade or
+enable preview for a contract fix. Missing ownership/publication evidence is an open question,
+not proof of thread safety. Snippets are partial examples, not complete lifecycle implementations.
+
 ## Contract template
 
 ```text
@@ -35,17 +40,19 @@ external synchronization, if any, and stable lock identity:
 
 ## Contract classes
 
-| Class                          | Promise                                                                          | Caller obligation                                   |
-| ------------------------------ | -------------------------------------------------------------------------------- | --------------------------------------------------- |
-| immutable                      | observable state does not change after safe construction/publication             | do not mutate reachable state through other aliases |
-| thread-safe                    | documented operations may be invoked concurrently with stated atomicity/progress | obey method preconditions and multi-call semantics  |
-| conditionally thread-safe      | safety depends on an external protocol or operation grouping                     | follow the named protocol/lock/lifecycle            |
-| not thread-safe                | no concurrent-use guarantee                                                      | confine or serialize all access/publication         |
-| thread/task/actor-confined     | one named owner mutates/accesses it                                              | do not leak across that ownership boundary          |
-| thread-hostile/global mutation | affects process-global state beyond instance lock                                | coordinate system-wide or restrict to startup       |
+| Class                          | Promise                                                                           | Caller obligation                                  |
+| ------------------------------ | --------------------------------------------------------------------------------- | -------------------------------------------------- |
+| immutable                      | observable state cannot change after construction; mutable internals never escape | use the documented publication/access protocol     |
+| thread-safe                    | documented operations may be invoked concurrently with stated atomicity/progress  | obey method preconditions and multi-call semantics |
+| conditionally thread-safe      | safety depends on an external protocol or operation grouping                      | follow the named protocol/lock/lifecycle           |
+| not thread-safe                | no concurrent-use guarantee                                                       | confine or serialize all access/publication        |
+| thread/task/actor-confined     | one named owner mutates/accesses it                                               | do not leak across that ownership boundary         |
+| thread-hostile/global mutation | affects process-global state beyond instance lock                                 | coordinate system-wide or restrict to startup      |
 
 Request scope is not automatically thread confinement: asynchronous callbacks, reactive execution,
 parallel fan-out and virtual threads can move or multiply execution. Name the actual owner.
+If stability depends on callers not mutating an aliased object, document that ownership protocol
+as a condition rather than claiming the abstraction is unconditionally immutable.
 
 ## Design hierarchy
 
@@ -138,6 +145,7 @@ exclusion, contention, native/pinning edge cases or need for target-version evid
 
 Scoped values are immutable context bindings, not a replacement for all shared state. Structured
 concurrency clarifies subtask lifetime but does not make shared objects thread-safe.
+An immutable binding can still refer to a mutable object; its payload needs its own protocol.
 
 ## Verification
 
@@ -149,6 +157,9 @@ concurrency clarifies subtask lifetime but does not make shared objects thread-s
 - documentation tests/examples showing supported multi-call usage.
 
 Finite stress tests do not prove correctness; they validate integration around a reviewable proof.
+Report the contract change, evidence for each relevant invariant/publication edge, tests actually
+run and unresolved lifecycle/liveness cases. Route detailed JMM proofs to java-memory-model and
+primitive algorithm verification to concurrency-testing rather than declaring safety from stress alone.
 
 ## Anti-patterns
 
@@ -173,9 +184,9 @@ Finite stress tests do not prove correctness; they validate integration around a
 
 ## References
 
-- [Documenting thread safety](references/documenting-thread-safety.md)
-- [Lock scope, callbacks and deadlock](references/lock-scope-and-alien-calls.md)
-- [Lazy initialization state machines](references/lazy-initialisation.md)
+- [Documenting thread safety](references/documenting-thread-safety.md) — when writing caller guarantees, views or ownership rules.
+- [Lock scope, callbacks and deadlock](references/lock-scope-and-alien-calls.md) — when moving work across a lock or reviewing a wait-for graph.
+- [Lazy initialization state machines](references/lazy-initialisation.md) — when choosing initialization, retry or close-race semantics.
 - [Java concurrency API memory effects](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html#MemoryVisibility)
 - [JLS 17](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
 - [JEP 491](https://openjdk.org/jeps/491)

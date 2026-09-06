@@ -4,6 +4,12 @@
 
 ### Propagating API
 
+Partial Java sketch: application-specific types and methods are placeholders. Here `acquire`
+must clean up a partially acquired resource itself if it fails, and `release` must be bounded
+and nonthrowing. Otherwise use try-with-resources where suitable, or explicitly preserve the
+primary exception and attach cleanup failure as suppressed; an ordinary throwing `finally`
+would replace the interruption.
+
 ```java
 Result load() throws InterruptedException {
     Resource r = acquire();
@@ -16,14 +22,25 @@ Cleanup must not erase the original interruption if it also fails; define suppre
 
 ### `Runnable`/callback unable to declare
 
+Partial Java sketch for a boundary that must restore status to its caller. `cleanup` here must
+be bounded, noninterruptible and nonthrowing; report cleanup failure through an explicit
+owner-visible channel. If cleanup can throw, add primary-exception suppression as above.
+Deferring restoration until cleanup completes avoids presenting the caught interrupt to cleanup
+as a fresh request to abort. It does not prevent a second interrupt arriving during cleanup.
+
 ```java
 public void run() {
+    boolean interrupted = false;
     try {
         loop();
     } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+        interrupted = true;
     } finally {
-        cleanup();
+        try {
+            cleanup();
+        } finally {
+            if (interrupted) Thread.currentThread().interrupt();
+        }
     }
 }
 ```
@@ -31,6 +48,10 @@ public void run() {
 Restoration lets an outer owner observe status when one exists. At a terminal thread/task owner,
 cleanup and termination can consume the signal deliberately; document it rather than restoring by
 ritual.
+
+If cleanup itself must block interruptibly, design a separate bounded cleanup policy: preserve
+each interruption, use the remaining cleanup budget, and report/escalate failure to release.
+Do not repeatedly restore and retry an interruptible wait: it may throw immediately forever.
 
 ### Preserve invariant then honor
 
@@ -61,6 +82,14 @@ exception versus interrupt, and cancel versus durable commit.
 `shutdownNow()` is best effort: it commonly interrupts started tasks and returns tasks never
 commenced. Test tasks that block, swallow signals or own resources. Returned `Runnable`s are not
 automatically durable business work.
+
+Draining the executor queue does not guarantee that the corresponding submitted Futures become
+cancelled. Retain owned Future handles and explicitly resolve/cancel never-started submissions
+according to policy, then notify their waiters. Do not assume an arbitrary queue wrapper is the
+same object as the caller's Future. `awaitTermination` observes executor termination; the
+cancelled state of a Future alone does not establish it. On JDK 19+, `ExecutorService.close()`
+waits for termination without a timeout, so try-with-resources is not a bounded shutdown policy
+for uncooperative work.
 
 ## Review checklist
 

@@ -3,17 +3,21 @@
 Classify before fixing. The five have different diagnostics, different costs and different
 reversibility, and treating them as one list is how an upgrade turns into a quarter.
 
-| Class                   | How it announces itself                             | Cost to fix         | Reversible? |
-| ----------------------- | --------------------------------------------------- | ------------------- | ----------- |
-| 1. Retired flag         | Startup message, or silence                         | Minutes             | Yes         |
-| 2. Strong encapsulation | `IllegalAccessError`, `InaccessibleObjectException` | Hours to weeks      | Partly      |
-| 3. Removed/changed API  | `NoSuchMethodError`, compile error                  | Hours               | Yes         |
-| 4. Changed default      | Nothing — behaviour differs under load              | Varies              | Yes         |
-| 5. Third-party bytecode | Failure inside a library at class load              | Depends on upstream | No          |
+| Class                   | Possible signal                                        | What determines the fix                          |
+| ----------------------- | ------------------------------------------------------ | ------------------------------------------------ |
+| 1. Retired flag         | Startup message or ignored setting                     | Replacement semantics and availability           |
+| 2. Strong encapsulation | `IllegalAccessError`, `InaccessibleObjectException`    | Supported API/dependency or bounded access grant |
+| 3. Removed/changed API  | Linkage error, compile error or changed runtime result | Call sites and behavioral compatibility          |
+| 4. Changed default      | Effective configuration or behavior differs            | Target support, security and workload contract   |
+| 5. Third-party bytecode | Failure when a library/agent reads a class             | Upstream support and compatible version range    |
+
+Effort and reversibility depend on the actual change and deployed data/contracts, not the
+category. A bytecode-tool update may be reversible; a changed default that writes incompatible
+data may not be. Record that evidence instead of assigning universal time estimates.
 
 ## 1. Retired flags
 
-Three states, and only one of them is loud:
+Three lifecycle states have different effects; both warnings and fatal errors matter:
 
 - **Deprecated** — starts, warns, **the flag still takes effect**.
 - **Obsolete** — starts, warns, **the value is ignored**. The dangerous one: the configuration
@@ -102,23 +106,26 @@ The class with no error message. Something the JVM decided for you decides diffe
 a collector, an ergonomic heap or thread count, a cipher or TLS default, a locale or charset
 default, a serialization filter.
 
-It cannot be found by reading logs, only by measuring. That is what makes step 6 of the workflow
+Release notes, effective configuration, contract tests and measurements expose different
+default changes; absence of warnings is not evidence of compatibility. That makes step 6 of the workflow
 — measuring against the pre-upgrade baseline — a compatibility step and not just a performance
 one.
 
-Where a default is known to have moved, the safe posture for the first deploy is to **pin the old
-value explicitly**, verify the upgrade in isolation, and adopt the new default as a separate
-change. One variable at a time survives contact with an incident review.
+Where a default moved, pin the old value for comparison only if still supported and compatible
+with the upgrade's purpose. Do not re-enable disabled TLS algorithms or other retired security
+behavior merely to preserve a baseline. Separate optional tuning from compatibility fixes;
+record required differences that prevent a pure runtime-only comparison.
 
 ## 5. Third-party bytecode
 
 Agents, mocking frameworks, bytecode generators, proxy libraries and coverage tools parse class
-files. A new class file version breaks them on day one, before any of your code runs, and the
-failure appears inside the library with a stack trace that does not obviously mention the JDK.
+files. Unsupported versions may fail at startup or later as classes are encountered; consult
+the actual library/agent support matrix and exercise affected paths.
 
 Consequences:
 
-- **Upgrade these first, as their own change**, on the old JDK. Then upgrade the JDK.
+- **Upgrade these separately on the old JDK where supported.** Otherwise stage a validated
+  combined transition; do not require a library version to run below its documented baseline.
 - Their support for a new release frequently arrives after the release does. That constraint sets
   the upgrade date, and finding it early is worth more than any other item on this list.
 - An APM or instrumentation agent is in this class and is usually operated by a different team.

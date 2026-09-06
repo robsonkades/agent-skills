@@ -42,12 +42,12 @@ available answers.
 
 ```text
 Optimistic offline lock    detect the conflict at write time by comparing a
-                           version. No lock held. Conflict is a business
+                           version. No lock across think time. Conflict is a business
                            outcome to present, not an error to swallow.
 
 Pessimistic offline lock   prevent the conflict by recording ownership before
                            the edit begins. Needs an owner, an acquisition
-                           time and an expiry, because owners crash.
+                           time and abandonment recovery, because owners crash.
 
 Coarse-grained lock        one version or lock for a whole aggregate, so
                            related changes share one concurrency boundary;
@@ -55,7 +55,7 @@ Coarse-grained lock        one version or lock for a whole aggregate, so
 
 Implicit lock              the mechanism is applied by the framework or a
                            base class rather than by each developer, so it
-                           cannot be forgotten — at the cost of being
+                           is harder to omit — at the cost of being
                            invisible when it fires.
 ```
 
@@ -65,17 +65,17 @@ Implicit lock              the mechanism is applied by the framework or a
    transaction, this is an isolation or row-locking question
    (`enterprise-transactions`), not an offline one.
 2. **Measure or estimate the conflict rate** on the actual data. Two users editing the
-   same order in the same minute is rare; two nightly jobs touching the same summary row is
-   certain. The rate decides optimistic versus pessimistic more than anything else does.
+   same order or jobs touching the same summary row have workload-dependent overlap.
+   Combine observed conflict frequency with the cost of discarded work and waiting.
 3. **Choose the lock granularity from the invariant**, not from the table layout: whatever
    must stay consistent together should be versioned together.
 4. **Design the conflict experience before the mechanism.** What does the user see, and
    what can they do about it? A pattern that produces an unusable error is not implemented.
 5. **Make the mechanism implicit** once chosen — a mapped superclass, a repository base, a
-   framework feature — so a new code path cannot omit it, and make it observable so it can
+   framework feature — and audit bypass paths such as bulk/native writes. Make it observable so it can
    still be diagnosed.
 6. **Verify with a concurrent test**, not by reasoning. Two threads, real transactions,
-   asserting that exactly one wins.
+   synchronized after both load the same version, asserting exactly one commits.
 
 ## Decision rules
 
@@ -89,15 +89,15 @@ Conflicts are frequent, or the work lost on conflict is expensive
           instead of after the effort is spent.
 
 Conflicts are frequent AND the work is cheap to redo
-        → optimistic with a merge or a retry that re-reads. Do not lock.
+        → consider optimistic merge or retry when intent remains valid on fresh state.
 
 Several people must work on different parts of one consistent whole
         → coarse-grained lock on the aggregate. Accept that they will
-          block each other; that is the invariant asking for it.
+          conflict or wait; that is the invariant's concurrency boundary.
 
 An unattended process (batch, integration) competes with users
-        → optimistic for the process too, plus a bounded retry. Never a
-          pessimistic lock without an expiry — batches crash.
+        → optimistic for the process too; retry only valid intent in fresh
+          transactions. Any pessimistic checkout needs abandonment recovery.
 
 The mechanism can be forgotten on a new write path
         → make it implicit, and add a test that fails when a versioned
@@ -111,12 +111,12 @@ The mechanism can be forgotten on a new write path
   outcome ("this order changed while you were editing; here is what changed"), never as a
   500 and never as a silent overwrite.
 - **Do not blindly retry an optimistic conflict.** A retry that re-reads and re-applies the
-  user's _intent_ is correct. A retry that re-applies the user's _stale data_ is a lost
+  user's _intent_ may be correct after domain revalidation and effect deduplication. A retry that re-applies the user's _stale data_ is a lost
   update with extra steps, and it is the most common misuse of `@Retryable` in this area.
 - A version column must be checked in the `WHERE` clause of the update and the update's
-  affected-row count must be tested. An ORM does this for you; hand-written SQL and bulk
-  updates do not, and a bulk `UPDATE` that does not touch the version silently defeats
-  every optimistic lock on those rows (`orm-behavioral-patterns`).
+  affected-row count must be tested. Normal versioned entity writes get this from the ORM; hand-written SQL and bulk
+  updates need explicit participation. Incrementing the version invalidates old snapshots,
+  but does not replace a predicate protecting the bulk operation's own expected state (`orm-behavioral-patterns`).
 - Pessimistic offline locks need ownership and abandonment recovery. A lease uses acquisition time,
   expiry and safe renewal; a durable checkout may instead require explicit release plus an audited
   administrative recovery procedure. Expiry is valuable but unsafe if work can outlive it without
@@ -129,12 +129,12 @@ The mechanism can be forgotten on a new write path
   invariant but can create false conflicts between independent edits
   (`domain-logic-organization`).
 - Coarse granularity trades throughput for correctness, and the trade is real: one version
-  on a hot aggregate serialises all its writers. If that hurts, the aggregate is probably
-  too big — resize it rather than weakening the lock.
+  on a hot aggregate makes its writers compete. If that hurts, measure contention and
+  reconsider boundaries only where the required invariant remains enforceable.
 - **Implicit locking is a safety property, not a convenience.** Its cost is diagnosability:
   when a conflict fires, the reason is in a superclass or an interceptor and not in the
   code being read. Pay that cost back with logging that names the entity, the version
-  expected and the version found.
+  expected and the version found when known; a later read observes a later state.
 - Optimistic locking and idempotency solve different problems and are frequently confused.
   Versioning stops a _stale_ write; an idempotency key stops a _duplicate_ write. After the first
   successful update increments the version, a duplicate carrying the old version normally fails
@@ -143,15 +143,21 @@ The mechanism can be forgotten on a new write path
 - Test concurrency with concurrency. A unit test with a mocked repository cannot observe a
   lost update; two threads against a real database can.
 
+Before proposing a change, inspect the Java toolchain, ORM/provider, database dialect and
+isolation level, client version contract and all affected write paths. Return the chosen
+concurrency boundary, conflict/recovery behavior and a test exposing stale-client or
+stale-owner writes. Treat missing mapping or database evidence as a reason to keep the
+implementation recommendation conditional, not to assume a generic SQL/JPA guarantee.
+
 ## References
 
 - [Optimistic and pessimistic offline locks](references/optimistic-and-pessimistic.md) —
-  both patterns implemented in Java and JPA, the version-check SQL, conflict presentation
-  and merge, safe versus unsafe retry, the lock table with owner and expiry, lock renewal,
-  and a concurrent test that actually proves the behaviour. Read when implementing or
+  partial Java/JPA examples, version-check SQL, conflict presentation and merge,
+  conditional retry, a lease protocol with ownership validation, and reproducible
+  integration-test recipes. Read when implementing or
   reviewing either mechanism.
 - [Granularity, implicit locks and their failure modes](references/lock-granularity-and-implicit-locks.md)
   — choosing what to version together, root-version bumping for child changes, contention
   and deadlock arising from lock ordering across aggregates, making locking implicit
-  without making it invisible, and the ways bulk operations and caches quietly defeat it.
+  without making it invisible, bulk-write bypasses and cache-related stale reads.
   Read when conflicts are frequent, spurious, or absent when they should not be.

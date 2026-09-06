@@ -12,11 +12,14 @@
 
 The two rules that follow:
 
-- **Resolve once, invoke many.** Looking up a `Method` or `MethodHandle` per invocation is the
-  expensive part; the invocation itself is comparatively cheap.
+- **Resolve once per owned lifecycle.** Repeated lookup adds work; whether it dominates
+  invocation or target execution is a measurement question, not a universal cost ordering.
 - **Make stable targets compiler-visible where lifecycle permits.** A `private static final`
   handle is a useful shape for application-lifetime members. Per-plugin handles need scoped
   caches so they do not retain loaders. Inlining remains a measured compiler decision.
+
+The accessor sketch needs `java.lang.invoke` imports and accessible `Order`/`Money` types.
+It assumes `Order.total()` declares no checked failures; adapt the catch policy if it does.
 
 ```java
 public final class Accessors {
@@ -86,13 +89,15 @@ A `MethodHandles.Lookup` carries the access rights of the class that created it.
 
 - `MethodHandles.lookup()` — full access to what the _calling class_ can see, including its own
   private members.
-- `MethodHandles.publicLookup()` — public members of public types in exported packages only.
+- `MethodHandles.publicLookup()` — public members of public types in unconditionally exported
+  packages; it does not inherit a caller's qualified exports or private rights.
 - `MethodHandles.privateLookupIn(Target.class, MethodHandles.lookup())` — private access into
-  another class when the caller lookup has required modes, its module reads the target module,
-  and the target package is open to it. The returned lookup is a transferable capability.
+  another class when the caller lookup has required modes. Across modules, its module must read
+  the target module and the target package must be open to it; within the same module no
+  `opens` directive is required. The returned lookup is a transferable capability.
 
-`privateLookupIn` respects module encapsulation; it does not bypass it. If the package is not
-open, it throws `IllegalAccessException` — which is the correct behaviour and the point at which
+`privateLookupIn` respects module encapsulation; it does not bypass it. If a required cross-module
+opening is absent, it throws `IllegalAccessException` — the point at which
 the application must decide whether to open the package deliberately.
 
 Access is checked when a method handle is created, not on every later invocation. Never return a
@@ -102,7 +107,9 @@ document exactly which lookup modes/member set the library consumes.
 
 ## Module encapsulation, `opens` and `--add-opens`
 
-Under JPMS, reflective access to non-public members requires the package to be _open_:
+Under JPMS, suppressing private access checks across modules requires the target package to
+be open to the caller. Same-module access suppression does not require `opens`. The following
+separate module descriptor is illustrative; verify the actual Jackson artifact's module name:
 
 ```java
 module com.acme.app {
@@ -112,8 +119,8 @@ module com.acme.app {
 ```
 
 - `exports` allows compile-time and public reflective access; `opens` allows deep reflection.
-  They are different, and a framework failing with `InaccessibleObjectException` needs the
-  second.
+  They are different; for an inaccessible private member first consider supported public
+  access/constructor binding, then a targeted opening if that access is required.
 - `open module` opens everything — convenient, and it discards the guarantee the module system
   exists to provide. Prefer targeted `opens … to`.
 - `--add-opens java.base/java.lang=ALL-UNNAMED` on the command line is the classpath-era escape
@@ -164,12 +171,16 @@ injection — because they are the ones the analyser can follow. See graalvm-nat
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | `WrongMethodTypeException`                    | Print `handle.type()` and the call site's static argument/return types; include defining loaders | Fix exact descriptor/casts or adapt once with `asType`                                          |
 | `IllegalAccessException` from lookup          | Record lookup class/modes, source/target modules, readability and `opens`/`exports`              | Use caller-provided/narrow lookup or targeted module directive; do not blanket-open first       |
-| `InaccessibleObjectException` from reflection | Deep reflection attempted after `trySetAccessible()`/`setAccessible`                             | Supported API or targeted `opens`; treat JDK-internal access as migration debt                  |
+| `InaccessibleObjectException` from reflection | `setAccessible` module denial; `trySetAccessible` normally returns false for that denial         | Supported API or targeted `opens`; treat JDK-internal access as migration debt                  |
 | `ServiceConfigurationError`                   | Inspect provider descriptor/module, provider factory/constructor and original cause              | Reject only the bad optional provider if contract permits; fail startup for mandatory ambiguity |
 | Metaspace/loaders grow after plugin reload    | Find parent-root path through member/handle/lambda/`ServiceLoader` cache                         | Lifecycle eviction or `ClassValue`; close provider resources and clear TCCL                     |
 
 ## Primary references
 
+- [Java 17 MethodHandles lookup rules](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.html)
+- [Java 17 AccessibleObject](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/AccessibleObject.html)
+  distinguishes `setAccessible` throwing on module denial from `trySetAccessible` returning
+  false for that denial; neither bypasses other access/security restrictions.
 - [Java 25 `MethodHandles.Lookup`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html)
 - [Java 25 `MethodHandle`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandle.html)
 - [Java 25 `VarHandle`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/VarHandle.html)

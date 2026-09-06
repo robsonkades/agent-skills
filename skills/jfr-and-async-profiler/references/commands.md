@@ -31,6 +31,7 @@ Use binaries from the same target JDK where possible:
 jcmd <pid> help JFR.start
 jcmd <pid> help JFR.check
 jcmd <pid> help JFR.dump
+jcmd <pid> help JFR.stop
 jcmd <pid> JFR.check
 jfr help
 ```
@@ -49,9 +50,29 @@ jcmd <pid> JFR.start name=incident settings=default duration=120s \
 jcmd <pid> JFR.check name=incident verbose=true
 ```
 
+Use a unique recording name and artifact path. JFR filenames and custom JFC paths resolve in
+the target JVM's filesystem/permissions, not necessarily the invoking debug container's.
+The destination is distinct from JFR's chunk repository; budget and preserve both. A duration
+limits time, not bytes; maxsize/maxage govern retained repository data rather than a strict
+filesystem quota or a guarantee that the entire incident window survives.
+
 `default` is not automatically adequate or safe for every question. Inspect the effective
 events, thresholds, periods, stack traces, disk mode, and path. A custom `.jfc` should be reviewed
 and versioned; see `jfr-advanced`.
+
+`JFR.check ... verbose=true` describes recording settings. Concurrent recordings combine
+settings; those settings do not strictly filter each exported file. Preserve the other
+recordings' configuration and inspect actual events/active settings where available.
+
+If the abort threshold is crossed, stop only the recording owned by this capture, using its
+verified unique name or ID; include a destination if preserving the partial artifact is safe:
+
+```bash
+jcmd <pid> JFR.stop name=<owned-recording-id> filename=/durable/path/partial.jfr
+```
+
+If storage failure is the reason to abort, choose a verified alternative destination or
+explicitly accept artifact loss. Do not stop unrelated continuous recordings.
 
 For an already-running recording, dump without assuming that dumping must stop it:
 
@@ -75,6 +96,10 @@ duration=120s,filename=/durable/path/startup.jfr -jar app.jar
 Quoting and option separators depend on the launcher, shell, manifest, and orchestration layer.
 Exercise the deployed command in a representative environment. Confirm that readiness failure,
 SIGTERM, restart, and disk exhaustion still leave a recoverable artifact.
+
+Test graceful-exit dumping explicitly; SIGKILL or node loss cannot run JVM shutdown dumping.
+A final filename alone does not make an unfinished capture crash-durable; repository survival
+and supported recovery/periodic dumps require a separate plan (`jfr-advanced`).
 
 ## Validate JFR artifacts
 
@@ -128,7 +153,7 @@ CPU question:
 ./asprof -e cpu -d 60 -f /durable/path/cpu.jfr <pid>
 ```
 
-Elapsed/off-CPU residency question:
+Elapsed thread-residency question (includes CPU and waiting):
 
 ```bash
 ./asprof -e wall -d 60 -f /durable/path/wall.jfr <pid>
@@ -150,6 +175,10 @@ The last two do not prove retention or all waiting, respectively. Record the eff
 event engine, filters, stack mode, sample/weight semantics, lost/unknown frames, and tool output.
 HTML is convenient for viewing; JFR or another machine-readable supported output is usually better
 for repeatable comparison and artifact validation.
+
+The `.jfr` extension describes a format, not a promise of HotSpot GC/CPU-load events.
+Async-profiler recordings may use different events and weights. Inspect their actual schema
+and a compatible converter before applying the JVM-event print filters above.
 
 ## Access failures are layered
 
@@ -245,4 +274,5 @@ result, and state the evidence limitations. A command that exits zero is not eno
 - [JDK `jfr` command documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)
 - [JDK Flight Recorder API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/module-summary.html)
 - [async-profiler README and command documentation](https://github.com/async-profiler/async-profiler)
+- [async-profiler v4.4 profiling modes](https://github.com/async-profiler/async-profiler/blob/v4.4/docs/ProfilingModes.md)
 - [Linux perf security documentation](https://docs.kernel.org/admin-guide/perf-security.html)

@@ -21,7 +21,7 @@ computes placement; this skill is where any hashing arithmetic belongs.
 
 The failure this prevents is `hash(key) % N`. With a sufficiently uniform hash it can
 distribute keys evenly, but it stays operationally stable only
-until the day N changes, at which point nearly every key maps somewhere new — for a cache a
+until N changes, at which point a large fraction may map somewhere new — for a cache a
 fleet-wide miss storm in one step, for a store a migration of nearly the whole dataset,
 discovered when someone adds a node to relieve pressure and the rebalance becomes the outage.
 The second failure is subtler: a ring with one point per node is _not_ well balanced, so a
@@ -31,10 +31,10 @@ share.
 ## Workflow
 
 1. **State the disruption and migration budget.** How many keys, bytes and requests may
-   change owner, at what transfer rate, and under what availability target? `% N` remaps
-   nearly every key; with equal nodes, a ring or rendezvous moves about K/(N+1) on a join and
+   change owner, at what transfer rate, and under what availability target? `% N` can remap
+   a large fraction; with equal nodes, a ring or rendezvous moves about K/(N+1) on a join and
    the removed node's approximately K/N share on a removal.
-2. **Count the nodes.** With a small, rarely changing membership, rendezvous hashing is fewer
+2. **Count the nodes.** With a small membership, rendezvous hashing is fewer
    moving parts than a ring and needs no virtual-node tuning. A ring earns its complexity at
    larger N or where lookup must be sub-linear.
 3. **Specify the placement contract completely:** algorithm and variant, seed, byte encoding,
@@ -48,9 +48,10 @@ share.
 5. **Implement the wrap-around explicitly.** `ceilingEntry(h)` returning `null` means the key
    hashed past the last point on the ring and belongs to the first entry. This single branch
    is the most commonly omitted line in the pattern.
-6. **Test the property, not the output.** Assert that adding one node to N moves
-   approximately K/(N+1) keys and no more, and that every key not moved still resolves to its
-   previous owner. The implementation and the test are in `references/ring-in-java.md`.
+6. **Separate invariants from statistical expectations.** With existing points unchanged,
+   a join may move keys only to the new node; a removal may move only the removed node's
+   keys. Measure movement against K/(N+1) or K/N using a justified tolerance, not a hard
+   upper bound. See `references/ring-in-java.md` for implementation and tests.
 7. **Model heterogeneous capacity explicitly.** Proportional virtual-point counts are one
    coarse mechanism, but CPU, memory, I/O and workload costs may not scale together. Prefer
    fixed logical partitions or an assignment service when placement needs constraints.
@@ -61,6 +62,13 @@ share.
 
 ## Decision block
 
+For Java changes, inspect compiler release/toolchains, runtime images and resolved hash
+library versions first. The ring example requires Java 16+ syntax/APIs and Guava; this is
+an example prerequisite, not authorization to upgrade the target or add a dependency.
+If topology or workload evidence is missing, keep the algorithm/V recommendation conditional
+and identify the simulation or measurement needed. Deliver the placement contract, chosen
+trade-off, movement/balance evidence and handoff risks; keep simple reviews concise.
+
 ```text
 Use a ring with virtual nodes when:
 - membership changes are routine (autoscaling, rolling replacement) and the disruption
@@ -68,13 +76,13 @@ Use a ring with virtual nodes when:
 - N is large enough that O(log N) lookup matters, or nodes have different capacities and
   weighting by virtual-node count is the natural expression of that
 Use rendezvous (highest random weight) hashing when:
-- N is small and changes rarely; O(N) hashes per lookup is cheaper than a ring plus its
-  virtual-node tuning, and it gives even shares with no tuning at all
+- N is small enough for O(N) hashes per lookup within the measured budget; it avoids
+  virtual-node tuning and gives probabilistically even shares, even with frequent churn
 - you need the ordered list of candidates for a key (primary, then replicas) — rendezvous
   produces it directly, with probabilistic balance under a suitable hash
 Use bounded-load consistent hashing when:
-- a node has a hard capacity limit and overflow to the next node is preferable to
-  overloading it, and clients can tolerate a key's owner depending on current load
+- the chosen algorithm's capacity unit matches the workload, allocation state is agreed,
+  and displacement is acceptable; a key-count cap alone does not bound bytes or QPS
 Use hash(key) % N when:
 - N is fixed for the lifetime of the data, and changing it is understood to be a full
   migration — a fixed set of logical partitions, for example, later mapped to physical nodes
@@ -85,8 +93,9 @@ Prefer a directory (sharding-and-partitioning) instead when:
 
 ## Rules
 
-- `hash(key) % N` is a full remap on any change to N. The only safe use is with N fixed
-  forever; if the code can ever add a node, the modulo is a latent migration.
+- `hash(key) % N` can remap a large fraction when N changes. For uniform residues on an
+  N-to-N+1 change, about N/(N+1) move; not literally every key. Fix logical partition count
+  independently of physical membership, or explicitly budget a rehash migration.
 - With equal nodes, a join moves **about K/(N+1)** keys to the new node; removing one moves
   its **about K/N** share. These are expectations over the hash and key population. This is
   not a guarantee for a particular key set, and it says nothing about how much _traffic_
@@ -135,7 +144,7 @@ Prefer a directory (sharding-and-partitioning) instead when:
 - [Consistent hashing and random trees](https://www.cs.princeton.edu/courses/archive/fall09/cos518/papers/chash.pdf)
   — the original consistent-hashing model and disruption result.
 
-- [The ring in Java](references/ring-in-java.md) — a `TreeMap<Long, String>` ring with
+- [The ring in Java](references/ring-in-java.md) — a collision-safe `TreeMap<RingPoint, String>` ring with
   virtual nodes, add and remove, the wrap-around branch, replica selection across distinct
   physical nodes, the hash-stability requirement in code, and a test that measures the
   fraction of keys that move when a node is added. Read when implementing or reviewing

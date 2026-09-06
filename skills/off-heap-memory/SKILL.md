@@ -19,10 +19,10 @@ description: >
 ## Purpose
 
 Decide whether data belongs outside the Java heap, and find native growth that no heap dump
-will ever show. Off-heap is not faster by definition — it is a **different memory budget
+shows directly (heap dumps can still identify retaining wrappers). Off-heap is not faster by definition — it is a **different memory budget
 with a different cost**. On the heap the dominant cost is GC work for as long as the object
-lives; off-heap it moves to the allocation and release itself, and to the absence of any
-automatic safety net.
+lives; off-heap adds allocation/release and lifetime-management costs. Managed segments
+provide safety checks, while raw addresses do not.
 
 The failure this prevents is unmanaged native growth. A direct `ByteBuffer` normally releases
 through Cleaner/reference processing, so wrapper reachability affects timing. HotSpot also
@@ -33,11 +33,14 @@ arena ownership.
 
 ## Workflow
 
-1. **Establish both heap and process/cgroup state.** A busy heap does not exclude native
+1. **Establish the runtime and both heap and process/cgroup state.** Inspect the project's
+   Java/toolchain and library versions; FFM examples require Java 22+ without an implied upgrade.
+   A busy heap does not exclude native
    growth. Correlate GC/heap, RSS/PSS, cgroup `memory.current` and workload on one timeline.
 2. **Classify the symptom.** `OutOfMemoryError: Direct buffer memory` names the direct-buffer
-   reservation path. Exit 137 or Kubernetes `OOMKilled` only proves a SIGKILL/cgroup event;
-   inspect `memory.events`, pod/node events and all JVM/native domains before attributing it.
+   reservation path. Exit 137 alone is consistent with SIGKILL, not proof of an OOM;
+   Kubernetes `OOMKilled` adds runtime evidence of an OOM event, not its allocation owner.
+   Inspect `memory.events`, pod/node events and all JVM/native domains before attributing it.
 3. **Compare RSS/PSS, cgroup charge and used/committed heap over time.** Divergence is a
    native-residency hypothesis, not proof of a leak: allocator arenas/fragmentation, stacks,
    mapped files, page cache accounting, code and delayed uncommit can produce it.
@@ -69,20 +72,17 @@ arena ownership.
 - Do not encode an ordinary Java object reference as an unmanaged native address. The GC does
   not treat it as a root or update it. Store values/IDs/handles governed by a supported JNI/FFM
   interop contract, with their reachability and lifetime explicit.
-- `sun.misc.Unsafe` splits into two families with different fates. The **raw address access**
-  methods (`allocateMemory`, `reallocateMemory`, `freeMemory`, `copyMemory`, and `getX`/`putX`
-  by `long` address) are deprecated for removal by **JEP 471** (JDK 23) with a runtime warning
-  from **JEP 498** (JDK 24). The **object-plus-offset CAS** methods (`compareAndSetLong`,
-  `objectFieldOffset`, `getAndAddInt`, the `getXVolatile`/`putXVolatile` variants) are **not**
-  targeted by either JEP, emit no warning, and remain the internal mechanism of `AtomicLong`,
-  `VarHandle` and `LongAdder`. Do not migrate those as if they were affected.
+- **JEP 471/498 cover on-heap, off-heap and bimodal `sun.misc.Unsafe` memory access.**
+  Object-plus-offset operations such as `compareAndSwapLong`, `objectFieldOffset`,
+  `getAndAddInt` and volatile access are affected too. Migrate supported field/array access
+  to `VarHandle`; use FFM for native memory. JDK classes using `jdk.internal.misc.Unsafe`
+  do not make application calls to the distinct `sun.misc.Unsafe` API exempt.
 - Treat a JEP 498 warning as scheduled work, not log noise to filter. The flip from `warn`
-  to `deny` has **not landed as of JDK 27** — `MemoryAccessOption.defaultValue()` still
-  returns `WARN` on that branch, and no release has been announced for it. Test for the day
-  it moves with `--sun-misc-unsafe-memory-access=deny`: the change is coming, its release
-  is not.
-- `MemorySegment` and `Arena` (JEP 454) have been **final since JDK 22** — no preview flags.
-  Material still citing `--enable-preview` for FFM is out of date.
+  to `deny` must be checked on the target build; JEP 498's future schedule is not proof
+  of integration in a release. JDK 25 GA source defaults to `WARN`. Exercise affected
+  paths with `--sun-misc-unsafe-memory-access=deny` before upgrading.
+- `MemorySegment` and `Arena` (JEP 454) have been **final since JDK 22** — no preview flags
+  for FFM on 22+. Older baselines used preview APIs; other features may still require preview.
 - There are **four** `Arena` factories: `ofConfined()` (single-owner thread), `ofShared()`
   (multi-thread), `ofAuto()` (GC-managed — the **non**-explicit mode;
   `close()` throws `UnsupportedOperationException`) and `global()` (process lifetime, `close()`
@@ -114,6 +114,8 @@ arena ownership.
 ## Decision and failure checklist
 
 - Define owner, maximum bytes, maximum concurrent allocations, release event and shutdown path.
+- Cancellation/timeout is not proof native work stopped. Keep its allocation or pool lease
+  alive until actual completion; a shared arena permits thread access, not data-race freedom.
 - Specify whether data must be zeroed before reuse/release and whether untrusted sizes can drive
   allocation; use checked arithmetic and enforce per-request/per-tenant quotas.
 - Test allocation failure, partial initialization, double close, access after close, concurrent
@@ -136,4 +138,5 @@ arena ownership.
 Authoritative sources: [JEP 454](https://openjdk.org/jeps/454),
 [JEP 471](https://openjdk.org/jeps/471), [JEP 498](https://openjdk.org/jeps/498),
 [`Arena` API, JDK 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Arena.html),
-and the OpenJDK [`Bits.reserveMemory` implementation](https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/nio/Bits.java).
+and the OpenJDK 25 GA [`Bits.reserveMemory` implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/nio/Bits.java)
+and [`sun.misc.Unsafe`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/jdk.unsupported/share/classes/sun/misc/Unsafe.java).

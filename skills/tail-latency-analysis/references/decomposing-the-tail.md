@@ -14,6 +14,12 @@ Record:
 If the SLO is “successful user operations,” retain failed/timed-out operations separately;
 excluding them can make latency improve during an outage.
 
+A client timeout is an observed terminal client outcome/duration, but can censor the latent
+server completion time. Do not substitute the timeout as a successful completion or infer how
+long the server would have run. Record still-open requests at observation-window end separately;
+completion-window samples differ from arrival cohorts. Join retries into logical operations
+without losing attempt-level cost. Any censoring model must state its assumptions.
+
 ## Critical-path analysis
 
 For each sampled slow request construct:
@@ -30,6 +36,9 @@ client queue/connect/TLS
 Calculate critical-path duration from timestamped intervals. Sibling parallel spans cannot
 be summed; overlapping CPU/wait intervals need semantic attribution. Missing spans are
 unknown time, not automatically application time.
+
+Use elapsed time from a monotonic clock within each process. Cross-host timestamp subtraction
+needs measured clock offset/uncertainty; NTP synchronization alone is not proof of exact ordering.
 
 Compare slow requests with matched normal controls by operation, payload, tenant, instance,
 load and time. This avoids declaring a large-payload path a “tail anomaly.”
@@ -64,6 +73,13 @@ P(\cup_i A_i)\le\sum_iP(A_i)
 
 They may be loose; state that limitation.
 
+The useful bound is `max(p_i) <= P(any slow) <= min(1, sum(p_i))`. With 100 leaves at
+1% each, perfect co-occurrence gives 1%, independence gives about 63.4%, and mutually exclusive
+slow events can give 100%. The same marginals therefore do not identify the user tail.
+Leaf durations also exclude dispatch offsets: take the maximum of launch offset plus duration
+for all-of-N, and account for result validation/merge and cleanup. First completion is not
+necessarily first valid success, and a numerical k-of-N is not automatically a consistency quorum.
+
 ## Mixture analysis
 
 Overall CDF:
@@ -82,6 +98,11 @@ If A and B are rarely slow on different requests, p99(A) and p99(B) can each be 
 p99(A+B) is large. If slow events coincide, component sums behave differently. Therefore
 no universal inequality such as p99(A+B) less than p99(A)+p99(B) is safe.
 
+Concrete nearest-rank example: among 1,000 matched requests, A costs 100 ms on requests 1–6,
+B on 7–12, and both are zero otherwise. Each component p99 is 0 ms, but p99(A+B) is 100 ms.
+Move B's six slow observations onto requests 1–6: component p99 values stay zero and the sum's
+p99 becomes zero too. Marginal percentiles alone cannot recover their joint behavior.
+
 Use:
 
 - request-level sums for sequential stages;
@@ -94,6 +115,10 @@ Use:
 Head sampling can miss rare tails; tail sampling can bias population estimates. Use metrics
 for population quantiles and traces/exemplars for attribution, while documenting sampling
 selection. Ensure errors/timeouts and unsampled root causes remain countable.
+
+Metrics are not automatically representative either: verify boundaries, omitted outcomes,
+histogram range/overflow and recording overhead. Slow-trace exemplars identify mechanisms;
+their prevalence is not a population rate without a valid sampling correction.
 
 ## Deliverable
 

@@ -4,6 +4,11 @@ Both directions of the same judgement. The first method is too big because it mi
 abstraction levels; the second class is too small in every piece because state that should
 be local was smeared across fields. Neither "long" nor "short" was the problem.
 
+These are partial snippets with omitted domain types, collaborators and imports, not
+standalone programs. Batch snippets need Java 10+ for `List.copyOf`; import the used
+`java.util` and `java.math` types. Verification sections specify checks for a concrete
+implementation, not test results obtained from these sketches.
+
 ## Under-factored: a settlement method mixing three levels
 
 ### Before: under-factored settlement
@@ -93,8 +98,10 @@ can duplicate money movement even though the method is beautifully readable.
 
 ### Verification of the settlement refactoring
 
-Existing tests unchanged and green. `settle` states its policy in six lines; no helper
-requires reading its caller to understand.
+Run existing tests unchanged and compare both versions at the capture cutoff (equal
+timestamps remain included), the exact 50000 fee threshold, platinum precedence and
+half-even rounding ties. Verify the empty-input exception and ledger entry/effect count,
+including post failure; extraction must not reorder effects or change retry behaviour.
 
 ## Over-fragmented: a batch processor smeared across fields
 
@@ -160,8 +167,14 @@ final class PayoutBatchProcessor {
 ```
 
 One method, twelve lines, one abstraction level ("approve while under the daily limit").
-All state is local, so the class became stateless: reusable, thread-safe, and
-`resetState` ceased to exist rather than being fixed.
+Scratch state is local, so independent calls no longer share the accumulator, and
+`resetState` ceased to exist rather than being fixed. Concurrent safety still requires
+stable input iteration and safe `Payout` access; a caller concurrently mutating the list
+or its elements can invalidate that claim. `List.copyOf` does not deep-copy the payouts.
+
+Despite the constant's name, both versions enforce a limit per invocation. Neither tracks
+a shared daily budget across batches; adding that policy would be a separate semantic
+change requiring coordinated state and a defined day/time zone.
 
 The example assumes one currency, non-null payouts, strictly positive validated amounts and
 an order-sensitive "first items that fit" policy. Without those preconditions, negative values
@@ -177,5 +190,9 @@ _then_, with the policy as a parameter-taking function, not fields.
 
 ### Verification of the batch refactoring
 
-Same tests green; additionally two `process` calls on one instance now behave identically
-— a property the before-version failed without `resetState`.
+Compare both versions for empty input, exact limit, an oversized item followed by one
+that fits, and order-sensitive acceptance. Sequential reuse already works in the original
+because it calls `resetState`; do not claim otherwise. Check overlapping calls with
+independent stable inputs against serial expected results to expose shared accumulator
+interference, and verify returned-list structure cannot be mutated. A passing concurrency
+test covers its interleavings, not every possible schedule.

@@ -6,6 +6,9 @@ Record effective processor count, container CPU quota/period, throttled time, af
 limit, JDK/vendor/build, stack flags, current executor configuration, offered/completed load,
 service-time distribution, downstream ceilings and failure budgets. `availableProcessors()` is an
 input reported by the runtime, not proof of usable sustained CPU.
+Quota/period is a CPU-equivalent ceiling, possibly fractional, further constrained by affinity,
+ancestor quotas and contention. Reserve measured capacity for GC/JIT and other work; do not
+multiply a host-core count by a utilization target and call it the application's CPU budget.
 
 ## CPU parallelism sweep
 
@@ -24,9 +27,13 @@ usually have small/controlled admission queues so stale work does not outlive it
 
 ## Blocking platform-pool experiment
 
-Measure on-task CPU/service time separately from external wait. A candidate formula such as
-`Ncpu × targetUtilization × (1 + wait/service)` assumes stable averages, independent tasks and a CPU
-bottleneck. Validate a range because correlated waits, long tails, resource caps and burst traffic
+Let `C` be mean CPU seconds per task and `W` mean non-CPU seconds occupying a platform worker,
+excluding time waiting to enter that worker pool. With available task CPU budget `B` in
+CPU-equivalents, `threads ≈ B × (1 + W/C)` is a saturation hypothesis for stable independent work,
+not an SLO guarantee. `C` is not total service/residence time and must be positive. For `B=1.5`,
+`C=0.010 s`, `W=0.090 s`, the candidate is 15 workers and CPU ceiling about 150 tasks/s.
+Demand of 300 tasks/s is infeasible under those assumptions; extra threads do not double CPU.
+Validate a range because correlated waits, long tails, resource caps and burst traffic
 violate those assumptions.
 
 For each size, record queue age, timeout/cancellation, native thread memory, context switching,
@@ -45,13 +52,18 @@ virtual thread per task. Keep client pools/timeouts and load shape controlled. M
 - dependency/connection/file descriptor concurrency;
 - cancellation residual work and shutdown drain.
 
-A gain validates removal of platform-thread waiting scarcity only if resource health stays inside its
-envelope. If latency rises because far more calls reach a fixed dependency, add/repair resource-local
+A gain with resource health inside its envelope is consistent with removing platform-thread waiting
+scarcity; use thread/CPU profiles and controlled variables before attributing the cause. If latency
+rises because far more calls reach a fixed dependency, add/repair resource-local
 admission instead of pooling virtual threads.
 
-## Bounded production patterns
+## Lifecycle and admission sketches
 
-Application-lifetime executor:
+Partial snippets: import `java.util.concurrent.*`; supply application `Request`, `Response`,
+`handle`, and measured positive `cores`/`cpuQueueCapacity`. The first needs Java 21+, the
+platform-pool snippet compiles on Java 17. They do not implement a complete admission policy.
+
+Application-lifetime executor (task count is unbounded here):
 
 ```java
 final class RequestExecutor implements AutoCloseable {
@@ -79,6 +91,12 @@ ThreadPoolExecutor cpu = new ThreadPoolExecutor(
 
 Resource gate belongs directly around the provider operation, with remaining deadline and exactly-once
 release; see `concurrency-limiting-and-bulkheads`.
+The request executor still needs bounded ingress; parking unlimited requests on a resource semaphore
+does not bound retained heap. `close()` has no timeout and must be called by the lifecycle owner,
+not by one of the executor's own tasks. Cancellation/interrupt is a request, not proof of task
+termination. Observe completion/failure of submitted Futures; orderly close does not report their
+task exceptions. A bounded CPU queue rejects via `AbortPolicy`; handle rejection and shut down that
+executor explicitly, including during partial application startup failure.
 
 ## Thread-local review worksheet
 
@@ -103,6 +121,8 @@ executor lifecycles drain safely during mixed-version deployment.
 ## References
 
 - [Java 25 `Executors`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executors.html)
+- [Java 25 `ExecutorService.close`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html#close()>)
+- [Java 25 `Future.cancel`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html#cancel(boolean)>)
 - [Java 25 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
 - [Java 25 virtual-thread adoption guide](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
 - [Java 25 thread-local guidance](https://docs.oracle.com/en/java/javase/25/core/thread-local-variables.html)

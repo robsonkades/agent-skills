@@ -6,6 +6,11 @@ A value object with no identity, stored as columns of its owner's table. This is
 cheapest possible upgrade from primitive obsession: a real type in the model, no extra
 table, no join.
 
+This partial example assumes the application permits only currencies using two fractional digits;
+it is not a general monetary model. Choose precision, scale and currency validation from
+the domain, and match the database columns so persistence cannot silently round values.
+Normalize scale to make record equality consistent for numerically equal amounts.
+
 ```java
 @Embeddable
 public record Money(BigDecimal amount, String currency) {
@@ -13,7 +18,7 @@ public record Money(BigDecimal amount, String currency) {
     public Money {
         Objects.requireNonNull(amount);
         Objects.requireNonNull(currency);
-        if (amount.scale() > 2) throw new IllegalArgumentException("scale > 2");
+        amount = amount.setScale(2, RoundingMode.UNNECESSARY);
     }
 
     public Money plus(Money other) {
@@ -28,15 +33,21 @@ public record Money(BigDecimal amount, String currency) {
 public class Invoice {
     @Embedded
     @AttributeOverrides({
-        @AttributeOverride(name = "amount",   column = @Column(name = "total_amount")),
-        @AttributeOverride(name = "currency", column = @Column(name = "total_currency"))
+        @AttributeOverride(name = "amount",   column = @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)),
+        @AttributeOverride(name = "currency", column = @Column(name = "total_currency", nullable = false, length = 3))
     })
     private Money total;
 }
 ```
 
-Records as `@Embeddable` work from Hibernate 6.2, which removes the old objection that
-value objects had to be mutable classes with a no-arg constructor.
+Record embeddables are supported by Hibernate 6.2+ and standardized by Jakarta Persistence
+3.2. Java record syntax alone (Java 16+) does not establish provider support. Inspect the
+project's actual provider/API baseline; older mappings may need a regular embeddable class.
+This does not establish record support for every identifier use.
+
+See [Hibernate 6.2 embeddable types](https://docs.hibernate.org/orm/6.2/introduction/html_single/#embeddable-types)
+and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+for record, ownership and converter contracts.
 
 ### Points that bite
 
@@ -46,10 +57,12 @@ value objects had to be mutable classes with a no-arg constructor.
   others an object with null components. If the value is optional, pick one and write a test
   for it; if it is mandatory, make the columns `NOT NULL` and the question disappears.
 - **Immutability pays here.** An immutable embeddable cannot be mutated behind the owner's
-  back and can be shared safely; a mutable one can be modified through a reference obtained
+  back. Still follow JPA's owner-specific embedded-instance semantics rather than sharing
+  one embedded instance between persistent owners. A mutable one can be modified through a reference obtained
   from a getter, bypassing the owner entirely.
 - **Querying works normally**: `where i.total.amount > :x`. This is the property a JSON
-  column does not have, and it is the main reason to prefer embedding.
+  column generally lacks through portable JPQL path navigation. Database JSON operators
+  and provider extensions can still query JSON; compare required portability and plans.
 
 ## Single-column values: converters
 
@@ -67,37 +80,41 @@ public class EmailConverter implements AttributeConverter<Email, String> {
 }
 ```
 
-Two constraints worth knowing before relying on it: a converted attribute cannot be used in
-a JPQL function that needs the underlying type, and `autoApply` is global — an explicit
-`@Convert` on the field is easier to trace when someone is reading the mapping later.
+Do not assume portable JPQL functions operate on the converted database type; provider
+support must be verified. `autoApply` applies to eligible attributes of that Java type in
+the persistence unit, not every field in every application. An explicit `@Convert` is
+local, and `disableConversion` can opt out. Ids, versions and relationships are not ordinary
+auto-apply targets.
 
 ## Dependent Mapping
 
-A child with no identity of its own, reachable only through its parent, and dying with it.
+A child whose write lifecycle belongs to its parent. A JPA entity child still needs an
+identifier; dependent lifecycle does not mean absence of row or entity identity.
 
 ```java
 @Entity
 public class Order {
     @OneToMany(mappedBy = "order", cascade = ALL, orphanRemoval = true)
-    private final List<OrderLine> lines = new ArrayList<>();
+    private List<OrderLine> lines = new ArrayList<>();
 }
 ```
 
-The three rules that make it a dependent mapping rather than just a relationship:
+Keep aggregate mutations behind the root's operations. Select cascades for the lifecycle
+operations needed; `ALL` is convenient but is not the definition of dependence.
+`orphanRemoval` is appropriate when removing a managed child from the relationship must
+delete it; reassignment, detached/new children and bulk operations need explicit handling.
 
-1. **No repository for the child.** `OrderLineRepository` is the standard signal that the
-   dependency has been abandoned (`repository-pattern`).
-2. **No independent loading.** The child is loaded with the parent and never queried by its
-   own identifier from application code.
-3. **Lifecycle follows the parent** — `cascade = ALL` and `orphanRemoval = true`.
-
-When the child needs to be found on its own (a report over all lines, an external system
-referencing a line), it has independent identity and is a full entity. Say so, and give it a
-proper identifier; a half-dependent child is where cascade surprises come from.
+A read-only projection or report over all lines does not make lines independently mutable
+aggregate roots. Independent commands, external references and reassignment requirements
+may justify revisiting the boundary, but a child query alone does not require its own
+write repository (`repository-pattern`).
 
 ## Serialized LOB
 
-The whole structure in one column — JSON, XML or binary.
+The whole structure in one column — JSON, XML or binary. Native JSON types are not the
+same as opaque binary LOBs. This partial example is Hibernate 6 JSON mapping with PostgreSQL
+`jsonb`; it needs an appropriate JSON format mapper/serialization library and is not
+portable JPA or a generic `@Lob` mapping.
 
 ```java
 @Entity
@@ -112,57 +129,55 @@ public class InsuranceApplication {
 
 ### The honest trade
 
-| Gain                                        | Loss                                                     |
-| ------------------------------------------- | -------------------------------------------------------- |
-| No schema change when the structure changes | No schema validation of the structure either             |
-| Arbitrarily deep and variable shapes        | No joins, no foreign keys, no referential integrity      |
-| One row, one read                           | The whole column is rewritten on any change              |
-| Trivial to add                              | Reporting must parse it; ad-hoc SQL becomes hard         |
-| No mapping code                             | Migration means an application job, not an `ALTER TABLE` |
+An opaque binary value generally cannot be queried structurally. Native JSON can support
+path queries, indexes, CHECK constraints and SQL transformations. For example,
+[PostgreSQL 17 JSON types](https://www.postgresql.org/docs/17/datatype-json.html) document
+`jsonb` operators and indexing. These capabilities have dialect, index maintenance and
+portability costs; they are legitimate designs, not automatically temporary workarounds.
 
-### When it is right
+Prefer native JSON for variable shapes, retained payloads or snapshots where document
+access is natural. Prefer relational columns/tables for stable heavily queried fields,
+ordinary foreign keys, shared references and invariants spanning records. Reporting alone
+does not settle the choice: compare actual query plans, selectivity and update patterns.
 
-- The data is genuinely opaque to the database: a rendered document, a third-party
-  payload retained for audit, an event body, a point-in-time snapshot.
-- The structure is variable per row — a form definition, per-tenant configuration — and no
-  query filters on its contents.
-- The whole value is always read and written together.
+An ORM often replaces a JSON value as a whole. Database JSON path-update functions may
+express logical partial changes, but do not assume an in-place physical write or independent
+row locks. Test dirty detection for in-place POJO mutations; immutable replacement may be
+clearer. Two whole-document writers can lose updates without version checks. With proper
+optimistic locking, one conflicts instead; a path update must still preserve invariants and
+coexist safely with snapshot writers (`offline-concurrency-control`).
 
-### When it is wrong
+If keeping JSON:
 
-- Anything that will be searched, aggregated or reported on. "We will never query it" is
-  the claim that ages worst in enterprise systems; the first request for "how many
-  applications had X" arrives within a year.
-- Anything with referential integrity to real tables. Ids inside JSON have no foreign keys,
-  and orphan detection becomes a scheduled script.
-- Anything concurrently edited in parts: the column is written whole, so two edits to
-  different fields conflict as a lost update (`offline-concurrency-control`).
-
-### Making a JSON column survivable
-
-If you keep it:
-
-- **Version the payload.** A `schema_version` field inside the document, from the first
-  release. Without it, evolving the structure means guessing which shape each row holds.
-- **Index what you must query.** PostgreSQL GIN or an expression index on an extracted path;
-  SQL Server a computed persisted column plus an index. Treat this as a stopgap that
-  signals the field should be promoted.
-- **Never let it be the only copy of a business-critical value.** Amounts, statuses and
-  identifiers belong in columns; the LOB may keep a copy for fidelity.
-- **Validate on write** with an explicit schema check in the application, since the database
-  will not.
+- Version the payload shape and define compatible readers/writers. This shape version is
+  distinct from the optimistic concurrency version.
+- Validate required structure, types and bounds in the application and enforce critical
+  database-expressible constraints. Valid JSON syntax is not a business schema.
+- Use extracted/generated columns and indexes where justified by the deployed database.
+  Keep foreign-key relationships in enforceable relational columns when required.
+- If duplicating values in columns and JSON, name the authoritative representation and
+  update them atomically or reconcile explicitly. Duplication is not inherently safer.
+- Test serialization round trips, optional/missing/null fields, numeric precision and
+  dirty checking on the actual mapper.
 
 ## Promoting a LOB to columns
 
 The migration when the requirement changes, in the safe order using expand/contract:
 
-1. Add the new columns, nullable.
-2. Write both — the application populates the columns and continues to write the LOB.
-3. Backfill existing rows in chunks, with a restartable cursor.
-4. Switch reads to the columns; keep writing both.
-5. Add the constraints (`NOT NULL`, checks, indexes).
-6. Stop writing that part of the LOB, and remove it from the payload after the retention
-   requirement is satisfied.
+1. Add compatible nullable columns and define how each payload version is interpreted.
+2. Deploy atomic dual writes and keep old readers working. Account for every old writer
+   during rollout; do not backfill while an old writer can silently change only JSON unless
+   a trigger, capture/reconciliation protocol or other guard keeps the columns synchronized.
+3. Backfill in bounded restartable chunks. Derive from the row being updated atomically,
+   or predicate on the version read and retry conflicts, so stale backfill cannot overwrite
+   newer dual-written data.
+4. Reconcile mismatches and missing values, then introduce/validate required constraints
+   and indexes using the database's supported migration procedure.
+5. Switch reads after verification. Retain compatible writes and payload data throughout
+   the rollback window.
+6. Stop redundant writes and remove payload fields only after older binaries and rollback
+   requirements no longer need them.
 
-Each step is independently deployable and reversible, which is the property that makes it
-safe to start on a large table (`architecture-refactoring-paths`).
+Expansion can preserve rollback options; dropping fields or tightening constraints is not
+automatically reversible. Rehearse concurrent edits during backfill, restart after failure,
+and rollback to the previous application version (`architecture-refactoring-paths`).

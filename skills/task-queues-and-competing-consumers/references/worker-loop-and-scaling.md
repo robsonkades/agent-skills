@@ -6,48 +6,40 @@ Three properties distinguish a correct competing-consumer loop from the naive on
 concurrency permit is acquired **before** the fetch, the ack is after the side effect, and
 shutdown stops the fetch before it stops the work.
 
-```java
-// Conceptual: error classification and the DLQ decision are poison-messages-and-dlq's.
-final class Worker implements AutoCloseable {
-    private final Semaphore permits;                 // one per resource, not per queue
-    private final ExecutorService handlers;          // virtual threads: the work is I/O-bound
-    private final Queue queue;
-    private volatile boolean polling = true;
+Pseudocode for a pull consumer; receive/renew/ack operations are broker-specific:
 
-    Worker(Queue queue, int maxInFlight) {
-        this.queue = queue;
-        this.permits = new Semaphore(maxInFlight);
-        this.handlers = Executors.newVirtualThreadPerTaskExecutor();
-    }
+```text
+poller owns each permit until a handler explicitly accepts it
+while intake is open:
+  acquire one permit interruptibly
+  try bounded receive of at most one delivery
+  if receive fails or returns empty: release permit in finally; classify/back off; continue
+  unknown receive outcome may leave a broker-side delivery hidden until recovery
+  under lifecycle gate shared with shutdown:
+    if intake closed: retain delivery for bounded return/recovery; release permit
+    otherwise transfer delivery + permit only after successful handler submission
+  on submission rejection: try bounded recovery; release permit exactly once in finally
 
-    void run() throws InterruptedException {
-        while (polling) {
-            // Acquire first: this, not the executor's queue, is what bounds in-flight leases.
-            if (!permits.tryAcquire(1, TimeUnit.SECONDS)) continue;
-            var message = queue.receive(Duration.ofSeconds(20));   // long poll, one message
-            if (message == null) { permits.release(); continue; }
-            handlers.submit(() -> {
-                try (var lease = LeaseKeeper.start(queue, message)) {
-                    handler.apply(message);          // must be repeat-safe — idempotency
-                    queue.delete(message);           // ack after the side effect
-                } catch (Exception e) {
-                    queue.nack(message, backoffFor(message.deliveryCount()));
-                } finally {
-                    permits.release();
-                }
-            });
-        }
-    }
+handler owns accepted delivery + permit:
+  start bounded, observable lease renewal where the broker supports it
+  execute repeat-safe effect
+  record effect success, then attempt ack/delete
+  distinguish effect failure, ack failure/unknown outcome, and renewal cleanup failure
+  do not issue a second nack just because cleanup failed after confirmed ack
+  stop/join renewal and release permit in outer finally, even when recovery calls fail
 
-    @Override public void close() throws InterruptedException {
-        polling = false;                             // 1. stop taking new work
-        handlers.shutdown();                         // 2. let in-flight work finish
-        if (!handlers.awaitTermination(drainBudget(), TimeUnit.SECONDS)) {
-            handlers.shutdownNow();                  // 3. interrupt; leases lapse and redeliver
-        }
-    }
-}
+shutdown:
+  atomically close intake through lifecycle gate
+  cancel/wake bounded receive and wait for poller exit; resolve any fetched delivery
+  close handler submission and drain to a shared monotonic deadline
+  at deadline request cooperative cancellation and stop renewal as policy requires
+  report still-running handlers; recover unstarted deliveries through broker semantics
+  release delivery early only with old-work overlap covered by the effect contract
 ```
+
+Reserve one permit per delivered item for batch receive. For push consumers, align broker
+credit/prefetch with bounded dispatch instead. Serialize ack on its owning channel/session where
+the client requires it; JMS session-wide acknowledgement is not a per-message operation.
 
 Why each line is the way it is:
 
@@ -58,14 +50,16 @@ Why each line is the way it is:
   the work, but the messages sitting in it are leased and invisible to the broker: depth reads
   zero while the process holds a backlog. The permit leaves unclaimed work where the depth and
   age metrics can see it. Sizing the limit is `concurrency-limiting-and-bulkheads`.
-- **Virtual threads** are right here only because the handler blocks on I/O. A CPU-bound handler
-  wants a fixed pool sized to cores; `thread-sizing-and-virtual-threads` owns that choice.
+- **Executor choice** follows the deployed baseline and work. Java 21+ virtual threads can
+  suit blocking I/O but do not bound demand; platform pools remain valid. CPU-heavy work needs
+  bounded execution; `thread-sizing-and-virtual-threads` owns that choice.
 - **The drain budget** must be smaller than the platform's grace period, or the process is
   killed mid-handler with leases still running; `kubernetes-service-lifecycle` owns the
   arithmetic and the `preStop` ordering.
 
-`shutdownNow()` interrupting a handler is not data loss here: the lease was never acked, so the
-message is redelivered. It _is_ a duplicate-work window, which is why the handler is repeat-safe.
+`shutdownNow()` requests interruption; handlers may continue and queued tasks may never start.
+No-ack recovery depends on broker durability, retention, channel/lease state and DLQ policy.
+An external effect may already have committed even when its acknowledgement outcome is unknown.
 
 ## The autoscaling signal
 
@@ -97,33 +91,38 @@ capacity, the low class is never served, and the queue's own metrics look health
 high class drains fine. Bound it explicitly, and state the bound:
 
 - **Ageing** — promote an item to the next class once its time-in-queue exceeds a stated
-  threshold. That threshold _is_ the starvation bound. Implement it as a scheduled promotion or
-  an age-ordered scan; no broker does it for you.
+  threshold. This bounds promotion time only if the promotion mechanism runs promptly; actual
+  service delay also needs bounded competing demand and reserved capacity. Inspect broker support.
 - **Weighted shares** — dedicate a fraction of workers to each class (say 80/20). The low class
-  then drains at 20% of capacity regardless of high-class arrivals: simpler to reason about
-  than ageing, at the cost of high-class throughput at peak.
-- **A queue per class with its own pool** is what makes either policy observable, because each
-  class gets its own age metric. One queue with a priority field hides the starving class
-  inside an aggregate.
+  receives a worker share, not necessarily 20% of item throughput: service costs and shared
+  dependencies matter. Bound its admitted demand to establish a useful waiting-time guarantee.
+- **Per-class observability** needs age/backlog/completion metrics by class. Separate queues/pools
+  are one option; an instrumented shared priority queue can also expose them.
 
 ## Testing
 
-Two fault-injecting tests. Neither is a happy path.
+Use isolated worker processes and test queues; never halt the test runner or an unapproved
+production process. LocalStack emulates SQS and does not establish real SQS guarantees.
 
-- **Kill a worker mid-lease.** Testcontainers with the real broker (LocalStack for SQS,
-  RabbitMQ, or Postgres for a database queue). Block the handler on a latch after its side
+- **Kill a worker mid-lease.** Use a broker-specific fixture (RabbitMQ/Postgres container, SQS emulator,
+  or authorized SQS test queue), stating its fidelity. Block the handler on a latch after its side
   effect but before the ack, then `Runtime.getRuntime().halt(1)` the worker. Assert redelivery
-  after the timeout, `deliveryCount > 1` on the second delivery, and **one** applied side effect
+  through the configured visibility/channel/claim mechanism, using available redelivery evidence and **one** applied side effect
   downstream. That last assertion is what fails when the handler is not repeat-safe.
-- **Overrun the lease deliberately.** Timeout 2 s, handler 5 s: assert both deliveries complete
-  and the observable outcome is still singular. This is the duplicate-work window as a
+- **Overrun the lease deliberately.** In a visibility-based fixture, use timeout 2 s and a
+  first handler held for 5 s; explicitly observe a second delivery and control its progress.
+  Assert one durable outcome, not exactly two invocations. This is the duplicate-work window as a
   regression test — it fails the day someone adds an increment.
 
 Also assert shutdown behaviour: send N messages, close the worker while they are in flight, and
-check that `N` items are either completed or still visible in the queue. `N − k` is data loss
-and means the ack moved ahead of the side effect.
+reconcile logical IDs after bounded recovery across effects, visible/in-flight/delayed deliveries,
+retry queues and DLQ. A temporarily invisible item is not proof of loss or premature ack.
 
 Add broker-specific cases: partial batch-ack/visibility failures, stale receipt handle, duplicate
 inside the nominal visibility period where the broker permits it, FIFO group head-of-line
 blocking, extension outage, DLQ transfer and redrive under tenant quotas. Observe eventual state;
 do not assert exactly one handler invocation when the contract only promises one durable effect.
+
+Also inject receive exceptions, submission rejection, shutdown during receive, renewal failure,
+ack-success followed by cleanup failure, and cancellation-resistant handlers. Assert no leaked
+permit, no unowned delivery and no false claim of handler termination.

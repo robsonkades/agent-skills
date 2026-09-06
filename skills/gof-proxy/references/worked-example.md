@@ -2,9 +2,10 @@
 
 ## 1. A virtual proxy over an expensive report engine
 
-The engine loads a 200 MB template set and compiles expressions. Most requests never render a
-report, so paying that cost at startup delays readiness by 40 seconds and wastes the memory in
-every replica that idles.
+Hypothetical Java 17 example: suppose an engine loads a 200 MB template set in 40 seconds and
+many replicas never render. These are illustrative inputs, not measured results. Application types
+and test helpers are omitted. The factory must clean up partial resources on failure; the owner
+must close a successfully constructed engine at shutdown and prevent calls during disposal.
 
 ```java
 public interface ReportEngine {
@@ -15,9 +16,11 @@ public final class LazyReportEngine implements ReportEngine {
 
     private final Supplier<ReportEngine> factory;
     private volatile ReportEngine target;          // written once, published safely
+    private RuntimeException failure;              // guarded by this; permanent for this proxy
+    private boolean initializing;                  // detects recursive factory entry under this lock
 
     public LazyReportEngine(Supplier<ReportEngine> factory) {
-        this.factory = factory;
+        this.factory = java.util.Objects.requireNonNull(factory);
     }
 
     @Override
@@ -30,7 +33,19 @@ public final class LazyReportEngine implements ReportEngine {
         if (local == null) {
             synchronized (this) {
                 local = target;
-                if (local == null) target = local = factory.get();   // exactly once
+                if (local == null) {
+                    if (failure != null) throw failure;
+                    if (initializing) throw new IllegalStateException("recursive initialization");
+                    initializing = true;
+                    try {
+                        target = local = java.util.Objects.requireNonNull(factory.get(), "factory result");
+                    } catch (RuntimeException e) {
+                        failure = e;
+                        throw e;
+                    } finally {
+                        initializing = false;
+                    }
+                }
             }
         }
         return local;
@@ -40,17 +55,19 @@ public final class LazyReportEngine implements ReportEngine {
 
 Why the lock rather than the racy `volatile` form: `factory.get()` opens files and registers
 metrics, so initialising twice would leak descriptors and double-count. Where the initialiser is
-pure, the lock-free variant is preferable.
+pure and different identities are acceptable, compare the duplicate-construction variant instead.
+Successful publication does not make render thread-safe: the engine must support concurrent calls
+or the owner must confine/synchronize them.
 
 Two things this proxy must not do, and does not:
 
-- **Swallow initialisation failure.** If templates are missing, `render` throws, every time; it
-  does not cache a `null` and it does not retry silently. A virtual proxy that caches its own
-  failure makes the process permanently broken; one that retries on every call turns a
-  configuration error into a load problem.
-- **Hide readiness.** The health check calls `engine()` explicitly during warm-up, so the pod is
-  not marked ready while the first real request would pay 40 seconds
-  (`kubernetes-service-lifecycle`).
+- **Retry permanent initialization failures silently.** This example caches RuntimeException,
+  including a null-result rejection, for this proxy's lifetime. Repair requires replacement/restart;
+  transient failures need a different explicit bounded retry policy. Errors propagate and are not
+  cached; this is not a claim of exactly one attempt after arbitrary VM failure.
+- **Hide the first-use cost.** Warming every replica during readiness gives up lazy startup/memory
+  savings. Choose eager warm-up for required report capability or expose first-use latency and a
+  bounded loading policy for optional capability (`kubernetes-service-lifecycle`).
 
 ### Testing the paths that only exist because of the proxy
 
@@ -67,9 +84,11 @@ void initialises_at_most_once_under_concurrency() throws Exception {
 
 @Test
 void propagates_an_initialisation_failure_on_every_call() {
-    var proxy = new LazyReportEngine(() -> { throw new TemplatesMissing("/templates"); });
+    var built = new AtomicInteger();
+    var proxy = new LazyReportEngine(() -> { built.incrementAndGet(); throw new TemplatesMissing("/templates"); });
     assertThatThrownBy(() -> proxy.render(aSpec())).isInstanceOf(TemplatesMissing.class);
     assertThatThrownBy(() -> proxy.render(aSpec())).isInstanceOf(TemplatesMissing.class);
+    assertThat(built).hasValue(1); // runtime failure is cached, not silently retried
 }
 ```
 
@@ -91,20 +110,19 @@ public interface CustomerDirectory {
 The interface was written when the directory was a local table. When it moved to another service,
 the implementation was swapped and nothing else changed — which was presented as the benefit.
 
-What happened in production:
+Illustrative cost model, assuming 2,000 uncached sequential calls and 18 ms each:
 
 ```text
 Enrichment loop over 2 000 orders:
     for (Order o : orders) enrich(o, directory.byId(o.customerId()));
 
     → 2 000 HTTP calls, sequential, ~18 ms each = 36 s per batch
-    → the directory's p99 rose; the batch's timeout was 30 s
-    → the batch retried whole, issuing 2 000 more calls
-    → directory saturated; every caller of it degraded
+    → exceeds a hypothetical 30 s budget unless interrupted earlier
+    → a whole-batch retry can repeat completed calls; amplification depends on retry/timeout policy
 ```
 
 Nothing in the call site suggested a network. `byId` returning a `Customer` looked like a lookup.
-And `all()` — harmless over a local table — transferred 400 MB.
+An unbounded all() can exhaust memory locally as well as incur large transfers remotely.
 
 ### After — an honest client
 
@@ -115,6 +133,7 @@ public interface CustomerDirectory {
      * @throws DirectoryUnavailable transient; the caller decides whether to retry
      * @throws DirectoryTimeout     the deadline expired; the request may still be executing
      */
+    // At most 500 IDs; missing IDs omitted; oversized input rejected; response bytes bounded.
     Map<CustomerId, Customer> byIds(Set<CustomerId> ids, Deadline deadline);
 
     /** Paged; there is no operation that returns the whole directory. */
@@ -124,16 +143,16 @@ public interface CustomerDirectory {
 
 Four changes, each removing one part of the lie:
 
-- **Bulk, not per-item.** The enrichment loop became one call for 2 000 ids — 40 ms instead of
-  36 s. Granularity is the single largest effect and it is a property of the interface, not of the
-  implementation (`rpc-and-api-contracts`).
-- **A deadline parameter.** The caller's budget reaches the transport, so a doomed call stops
-  rather than running after the caller has given up (`timeouts-and-deadlines`).
+- **Bounded batches.** With 2,000 distinct IDs and a 500-ID limit, expect four application calls,
+  not one unbounded call. Transport retries and response sizing need separate checks; no latency
+  improvement is measured here (`rpc-and-api-contracts`).
+- **A deadline parameter.** Propagate the remaining budget through batching and transport; a local
+  timeout does not prove remote work stopped (`timeouts-and-deadlines`).
 - **A named failure vocabulary**, with the timeout case explicitly stating that the operation may
   have executed. That sentence is what lets a caller decide whether retrying is safe
   (`idempotency`).
-- **`all()` deleted.** An operation that is harmless locally and unbounded remotely should not
-  survive the move; a paged form replaced it.
+- **A bounded paged alternative.** Define page/response limits and mid-walk consistency; migrate
+  published all() consumers compatibly instead of deleting their API without coordination.
 
 ### What did not change
 
@@ -147,19 +166,28 @@ already admits; it is a trap when it is used to avoid admitting it
 
 ```java
 @Test
-void enrichment_makes_one_directory_call_regardless_of_batch_size() {
+void enrichment_uses_bounded_directory_batches() {
     var calls = new AtomicInteger();
-    CustomerDirectory counting = (ids, deadline) -> { calls.incrementAndGet(); return stub(ids); };
+    CustomerDirectory counting = new CustomerDirectory() {
+        public Map<CustomerId, Customer> byIds(Set<CustomerId> ids, Deadline deadline) {
+            assertThat(ids.size()).isBetween(1, 500);
+            calls.incrementAndGet();
+            return stub(ids);
+        }
+        public Page<Customer> page(PageRequest request, Deadline deadline) {
+            throw new AssertionError("unexpected pagination");
+        }
+    };
 
     new OrderEnricher(counting).enrich(ordersFor(2_000), Deadline.in(ofSeconds(5)));
 
-    assertThat(calls).hasValue(1);
+    assertThat(calls).hasValue(4); // fixture must contain 2,000 distinct IDs
 }
 ```
 
-This is the test that would have prevented the incident. It asserts a property of the call
-pattern rather than of the result, which is the only kind of test that catches a hidden fan-out —
-the code that caused it passed every functional test it had.
+This partial test checks application call granularity. Also assert complete enrichment, empty and
+duplicate-ID inputs, missing customers and expiry between batches. A stub does not measure HTTP
+request count, response limits or latency; add transport integration evidence for those contracts.
 
 ## What the two examples share
 

@@ -4,16 +4,16 @@
 
 Message texts as JDK 25.0.3 emits them:
 
-| Message                                                                                     | Region                  | Raising `-Xmx` does                                      | Raised by                                                                                                                                                            |
-| ------------------------------------------------------------------------------------------- | ----------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Java heap space`                                                                           | heap                    | may help—or hide ownership pressure                      | VM-reported failed heap allocation after collector-specific recovery attempts; not every path is literally one Full GC                                               |
-| `GC overhead limit exceeded`                                                                | heap/policy             | may postpone                                             | Applicable HotSpot overhead-limit policy detected little progress under extreme GC time; verify selected collector and effective flag rather than generalizing to G1 |
-| `Requested array size exceeds VM limit`                                                     | heap (array length)     | nothing                                                  | the VM: a length near `Integer.MAX_VALUE`, independent of free memory                                                                                                |
-| `Metaspace`                                                                                 | Metaspace               | nothing                                                  | metadata allocation failed at a configured/effective limit or native commit boundary                                                                                 |
-| `Compressed class space`                                                                    | compressed class space  | nothing                                                  | class-space allocation/reservation limit; commonly 1 GiB by default but release/layout configurable                                                                  |
-| `Cannot reserve N bytes of direct buffer memory (allocated: A, limit: L)`                   | direct/native           | nothing                                                  | **Java code** (`Bits.reserveMemory`) — see the flag coverage below                                                                                                   |
-| `unable to create native thread: possibly out of memory or process/resource limits reached` | threads/native/OS       | helps only if heap consumes the proven limiting resource | the VM, when native thread creation fails—PID/rlimit, cgroup memory, commit/address space and stack requirements compete                                             |
-| no Java exception, exit code 137                                                            | SIGKILL (cause unknown) | larger heap can increase memory-kill risk                | kernel delivered SIGKILL; distinguish cgroup/node OOM, orchestrator timeout and manual action externally                                                             |
+| Message                                                                                     | Region                  | Raising `-Xmx` does                                                     | Raised by                                                                                                                                                            |
+| ------------------------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Java heap space`                                                                           | heap                    | may help—or hide ownership pressure                                     | VM-reported failed heap allocation after collector-specific recovery attempts; not every path is literally one Full GC                                               |
+| `GC overhead limit exceeded`                                                                | heap/policy             | may postpone                                                            | Applicable HotSpot overhead-limit policy detected little progress under extreme GC time; verify selected collector and effective flag rather than generalizing to G1 |
+| `Requested array size exceeds VM limit`                                                     | heap (array length)     | nothing                                                                 | the VM: a length near `Integer.MAX_VALUE`, independent of free memory                                                                                                |
+| `Metaspace`                                                                                 | Metaspace               | nothing                                                                 | metadata allocation failed at a configured/effective limit or native commit boundary                                                                                 |
+| `Compressed class space`                                                                    | compressed class space  | nothing                                                                 | class-space allocation/reservation limit; commonly 1 GiB by default but release/layout configurable                                                                  |
+| `Cannot reserve N bytes of direct buffer memory (allocated: A, limit: L)`                   | direct/native           | may raise the implicit direct limit; does not create native headroom    | **Java code** (`Bits.reserveMemory`) — see the flag coverage below                                                                                                   |
+| `unable to create native thread: possibly out of memory or process/resource limits reached` | threads/native/OS       | does not create native headroom; reducing proven heap pressure may help | the VM, when native thread creation fails—PID/rlimit, cgroup memory, commit/address space and stack requirements compete                                             |
+| no Java exception, exit code 137                                                            | SIGKILL (cause unknown) | larger heap can increase memory-kill risk                               | kernel delivered SIGKILL; distinguish cgroup/node OOM, orchestrator timeout and manual action externally                                                             |
 
 The last row is not an `OutOfMemoryError`: exit 137 conventionally means SIGKILL, which the
 JVM cannot intercept. It does **not** identify who sent it. Check cgroup `memory.events`,
@@ -32,11 +32,13 @@ jcmd <pid> GC.heap_info               # heap summary by generation
 Via JFR:
 
 ```bash
-jcmd <pid> JFR.start duration=60s settings=profile filename=/tmp/mem.jfr
+jcmd <pid> JFR.start name=mem_capture duration=60s settings=profile filename=/secure/diagnostics/mem.jfr
+# Wait for this recording to finish, or take a supported dump of its verified ID.
+# Copy the completed artifact from the target JVM's filesystem to the analysis host.
 
-jfr print --events jdk.GCHeapSummary  /tmp/mem.jfr   # heap over time
-jfr print --events jdk.CodeCacheFull  /tmp/mem.jfr   # code cache exhausted
-jfr print --events jdk.ClassLoad      /tmp/mem.jfr   # class loading
+jfr print --events jdk.GCHeapSummary  /secure/diagnostics/mem.jfr   # heap over time
+jfr print --events jdk.CodeCacheFull  /secure/diagnostics/mem.jfr   # code cache exhausted
+jfr print --events jdk.ClassLoad      /secure/diagnostics/mem.jfr   # class loading
 ```
 
 `jdk.CodeCacheFull` deserves special attention, but its presence proves an exhaustion
@@ -55,28 +57,29 @@ distinct constraints that can fail in different orders.
 
 ## What the JVM does on the next OOM
 
-Left alone, an `OutOfMemoryError` is an exception like any other: the thread that hit it
-dies or catches it, and the process keeps running with whatever state the failed allocation
-left behind — a half-initialised request, a pool with a missing connection, a thread pool
-one worker short. Three flags change that, and they fire in this order, once per process
-(executed on 25.0.3): heap dump, then the `OnOutOfMemoryError` command, then crash or
-exit.
+An `OutOfMemoryError` is an Error whose propagation depends on application/thread handling:
+the task/thread may fail or catch it, and the process may continue with partial state —
+a half-initialised request, a pool with a missing connection, a thread pool
+one worker short. On HotSpot's covered `report_java_out_of_memory` path, enabled handlers
+run in this order: heap dump, OnOutOfMemoryError command, then crash (which takes precedence)
+or immediate exit. This is not a hook for every VM/native allocation failure.
 
-| Flag                              | Effect                                                                                                                                      | Prefer when                                                                                                                                | Becomes problematic when                                                                                                        |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `-XX:+ExitOnOutOfMemoryError`     | Terminates after a covered VM-reported OOM; observed HotSpot builds may use exit status 3, which is not an application portability contract | An orchestrator restarts and replacement is safer than unknown partial state                                                               | Availability/restart loop or an intentionally handled bounded task failure requires a different policy                          |
-| `-XX:+CrashOnOutOfMemoryError`    | Fatal error: hs_err written (`fatal error: OutOfMemory encountered: …`) and a core if `CreateCoredumpOnCrash` and the ulimit allow          | A core with the heap _and_ native memory is wanted for correlation — a suspected native leak alongside the Java OOM (jhsdb-and-core-dumps) | The core's size (whole address space) on a node with no room; the hs_err is mistaken for a native crash                         |
-| `-XX:OnOutOfMemoryError="cmd %p"` | Runs the command before exiting or crashing                                                                                                 | Something must be captured that the JVM cannot write itself — an NMT report, a thread dump to a sidecar                                    | The command needs the JVM's cooperation (it is inside the failing process) or takes longer than the orchestrator's kill timeout |
-| none of the three                 | Exception propagates; the failing thread may catch it, terminate, or bring down the process depending on thread/application structure       | An explicitly tested recovery contract exists for that OOM class                                                                           | Partial state, lost critical thread or repeated OOM can make health checks misleading                                           |
+| Flag                              | Effect                                                                                                                                                       | Prefer when                                                                                                                                | Becomes problematic when                                                                                                                          |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-XX:+ExitOnOutOfMemoryError`     | Terminates after a covered VM-reported OOM; observed HotSpot builds may use exit status 3, which is not an application portability contract                  | An orchestrator restarts and replacement is safer than unknown partial state                                                               | Availability/restart loop or an intentionally handled bounded task failure requires a different policy                                            |
+| `-XX:+CrashOnOutOfMemoryError`    | Fatal error: hs_err written (`fatal error: OutOfMemory encountered: …`) and a core if enabled and permitted by OS, dumpability, collector and storage policy | A core with the heap _and_ native memory is wanted for correlation — a suspected native leak alongside the Java OOM (jhsdb-and-core-dumps) | The potentially large core/dump size (OS filters and policy determine contents) on a node with no room; the hs_err is mistaken for a native crash |
+| `-XX:OnOutOfMemoryError="cmd %p"` | Runs the command before exiting or crashing                                                                                                                  | A bounded external notification/capture needs no attach response from the failing JVM                                                      | The external command needs attach/JVM cooperation while the failing JVM is handling OOM or takes longer than the orchestrator's kill timeout      |
+| none of the three                 | Exception propagates; the failing thread may catch it, terminate, or bring down the process depending on thread/application structure                        | An explicitly tested recovery contract exists for that OOM class                                                                           | Partial state, lost critical thread or repeated OOM can make health checks misleading                                                             |
 
-Coverage limits, all executed on 25.0.3: the three flags and the automatic heap dump fire
-for errors the VM raises — `Java heap space`, `Metaspace`, `Requested array size exceeds VM
+Coverage examples previously exercised on 25.0.3: these handlers fire on covered report paths — `Java heap space`, `Metaspace`, `Requested array size exceeds VM
 limit` — and **not** for `Cannot reserve N bytes of direct buffer memory`, which is a plain
-`new OutOfMemoryError` in Java code: a direct-memory exhaustion leaves the process running
-whatever the flags say, which is why off-heap-memory tells you to bound and monitor the
+`new OutOfMemoryError` in Java code: these flags alone do not terminate for that direct-buffer OOME; uncaught propagation
+or application policy can still terminate the process, which is why off-heap-memory tells you to bound and monitor the
 pool instead. `unable to create native thread` was not exercised here; treat it as
-uncovered until tested on the target. The dump's own once-only behaviour and its cost are
-heap-dump-analysis.
+uncovered until tested on the target. The shared reporting gate is consumed at the first covered report, even if dumping is
+then disabled or its file write fails. Arming HeapDumpOnOutOfMemoryError afterwards does not
+reset it. Budget a unique writable destination beforehand; a later manual dump is a separate
+operation with its own safety constraints (`heap-dump-analysis`).
 
 ## Preventive configuration
 
@@ -90,3 +93,10 @@ Judge comparable trends, not an instant: equivalent post-reclamation occupancy, 
 class count, native categories and cgroup charges. A rising heap floor means more remains
 reachable under those conditions; it may be legitimate working set, cache or a defect. A
 collector flag cannot remove an unwanted strong owner.
+
+## Primary sources
+
+- [HotSpot JDK 25 OOM reporting](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/utilities/debug.cpp)
+  — once-only report gate and handler ordering.
+- [JDK 25 Bits.reserveMemory](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/nio/Bits.java)
+  — Java-thrown direct-buffer OOME and reservation accounting.

@@ -16,6 +16,10 @@ An explicit executor can execute inline, serialize work, reject, or queue withou
 `CompletionStage` API deliberately does not promise concurrent execution merely because an executor
 argument exists.
 
+Rejection can be synchronous at a factory/submission boundary (`supplyAsync`) or appear as
+exceptional completion of a dependent stage when its action is scheduled. Test already-complete
+and delayed sources; do not assume one catch around graph construction observes both paths.
+
 ## Failure matrix
 
 | Operation              | Source success         | Source failure         | If action throws                                                      |
@@ -35,6 +39,10 @@ Do not catch `Throwable` merely to turn every event into fallback. `Error` often
 integrity problem, and a fallback that masks it can leave the service corrupted. Define which
 exception classes are recoverable at the operation boundary.
 
+Observe the stage returned by `whenComplete` when observer failure matters. Discarding it can
+hide logging/cleanup failures even though the source future remains successful. A terminal
+observer intended never to throw must have its own bounded error-reporting contract.
+
 ## Aggregation policy
 
 `allOf` is a completion barrier, not a result collector, quorum, failure accumulator or cancellation
@@ -52,6 +60,10 @@ subtask threads but remains cooperative; it is still not proof that remote work 
 ## Context transfer
 
 Capture immutable context at submission and restore it only for the dynamic extent of the action:
+
+The following partial snippet assumes the project's OpenTelemetry `Context`/`Scope` and SLF4J
+`MDC`, appropriate imports and an executor. Verify the resolved versions and instrumentation
+wrappers; these are library types, not Java SE APIs.
 
 ```java
 Context captured = Context.current();

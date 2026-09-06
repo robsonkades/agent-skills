@@ -95,6 +95,13 @@ timeout, a retry policy, or partial-failure handling — one failing mapper fail
 fan-out where those matter, use structured concurrency (structured-concurrency) and keep the
 policy explicit; concurrency-limiting-and-bulkheads covers choosing the limit.
 
+The limit applies to one pipeline evaluation, not all requests sharing a dependency; use shared
+admission control where required. A downstream short circuit can leave speculative mapper calls
+whose results are never consumed. Cancellation is best effort and does not undo side effects;
+encounter-ordered results do not imply ordered mapper effects. Set client timeouts explicitly.
+Fixed windows include a final short batch, and both window gatherers produce unmodifiable lists;
+verify that the batch consumer accepts those contracts.
+
 Writing a custom `Gatherer` is worthwhile for a genuinely reusable stream transformation
 (deduplicate-consecutive or chunk-by-predicate). Prefer it to a custom `Spliterator`,
 which is far harder to get right, and prefer both to a `peek`-plus-external-state hack, which

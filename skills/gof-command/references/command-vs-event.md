@@ -2,16 +2,16 @@
 
 ## The contrast, in full
 
-| Dimension           | Command                                    | Event                                            |
-| ------------------- | ------------------------------------------ | ------------------------------------------------ |
-| Grammar             | Imperative: `PlaceOrder`, `CancelShipment` | Past tense: `OrderPlaced`, `ShipmentCancelled`   |
-| Semantics           | A request that may be refused              | A fact that already occurred                     |
-| Recipients          | Exactly one logical handler                | Zero or more subscribers                         |
-| Coupling direction  | Sender knows the operation exists          | Publisher knows nothing about subscribers        |
-| Failure ownership   | The handler owes the sender an outcome     | A failing subscriber is the subscriber's problem |
-| Validity            | Can be rejected as invalid                 | Cannot be invalid; it happened                   |
-| Versioning pressure | The sender and handler evolve together     | The publisher must not break unknown subscribers |
-| Replay              | Re-executes an intent — needs idempotency  | Re-states a fact — subscribers need idempotency  |
+| Dimension           | Command                                    | Event                                               |
+| ------------------- | ------------------------------------------ | --------------------------------------------------- |
+| Grammar             | Imperative: `PlaceOrder`, `CancelShipment` | Past tense: `OrderPlaced`, `ShipmentCancelled`      |
+| Semantics           | A request that may be refused              | A fact that already occurred                        |
+| Recipients          | Exactly one logical handler                | Zero or more subscribers                            |
+| Coupling direction  | Sender knows the operation exists          | Publisher knows nothing about subscribers           |
+| Failure ownership   | The handler owes the sender an outcome     | A failing subscriber is the subscriber's problem    |
+| Validity            | Can be rejected as invalid                 | Claimed fact still requires trusted, valid delivery |
+| Versioning pressure | The sender and handler evolve together     | The publisher must not break unknown subscribers    |
+| Replay              | Re-executes an intent — needs idempotency  | Re-states a fact — subscribers need idempotency     |
 
 Two failure modes follow directly:
 
@@ -21,8 +21,8 @@ Two failure modes follow directly:
 - **A "command" with several handlers.** Nobody owns the outcome, partial failure is
   unrepresentable, and adding a handler silently changes the operation's meaning.
 
-A useful review habit: read the type name aloud with "please" in front. If it sounds wrong, it is
-an event.
+Grammar is a review hint. Establish whether the message requests a decision or reports a fact;
+malformed, unauthorized or unsupported event deliveries may be rejected without undoing a fact.
 
 ## Command bus dispatch
 
@@ -80,8 +80,9 @@ Rules:
   change.
 - **An explicit version field.** Inferring the version from which fields are present works until
   two changes overlap.
-- **Tolerant reading.** Unknown fields are ignored (a newer producer), and missing optional fields
-  get documented defaults (an older producer).
+- **Compatible reading.** Ignore unknown fields only when their omission preserves the accepted
+  meaning; reject unsupported versions and missing required/security-critical data. Missing optional
+  fields need documented defaults tested against retained commands.
 - **A staleness rule.** A command sitting in a queue through an outage may execute hours later.
   Decide whether it should: a `PlaceOrder` from six hours ago against a price that has changed may
   need rejecting rather than executing (`delivery-semantics`).
@@ -91,8 +92,8 @@ Rules:
 
 ## Idempotency
 
-Every at-least-once transport will deliver a command twice, and so will a retry, and so will an
-operator replaying a dead-letter queue.
+At-least-once delivery permits duplicates; retries and operator replay can also repeat execution.
+It does not guarantee that a duplicate will occur.
 
 ```java
 @Transactional
@@ -108,6 +109,11 @@ Two details that decide whether this works: the deduplication record must be wri
 transaction** as the effect, or a crash between them re-executes; and the stored result must be
 returned, not merely "already done", so a retrying sender gets an answer rather than an error
 (`idempotency`).
+
+This flow also requires an atomic unique claim or equivalent serialization: two concurrent handlers
+can both pass `contains`. Bind the scoped key to the payload, reject mismatched reuse, and retain
+deduplication for the permitted replay horizon. The transaction covers only enlisted resources;
+external effects require provider idempotency or reconciliation, not just `@Transactional`.
 
 ## Undo: three different mechanisms
 
@@ -130,7 +136,7 @@ commands must be genuinely independent, which is a property to state rather than
 
 ```java
 // wrong: executes against whatever the entity looks like later
-var command = () -> order.cancel();
+Runnable command = () -> order.cancel();
 
 // wrong: a managed entity outside its session
 record CancelOrder(Order order) implements Command { }

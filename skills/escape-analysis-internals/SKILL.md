@@ -29,23 +29,26 @@ code/compiler-log evidence.
 
 ## Workflow
 
-1. **Confirm the baseline is not the explanation.** Check `DoEscapeAnalysis`,
-   `EliminateAllocations`, `EliminateLocks` and `ReduceAllocationMerges` are `true` with
-   `-XX:+PrintFlagsFinal`, and that no `CompileCommand` names `PrintEscapeAnalysis` — the
-   JVM would not have started.
+1. **Confirm the baseline is not the explanation.** Record vendor, full JDK build, compiler,
+   tiering and effective flags; this material targets HotSpot C2, chiefly JDK 25. Check
+   `DoEscapeAnalysis`, `EliminateAllocations` and `EliminateLocks` with unlocked
+   `-XX:+PrintFlagsFinal`; inspect `ReduceAllocationMerges` only where available (JDK 22+).
+   Preserve the project's target rather than upgrading it. Check diagnostics against the exact VM.
 2. **Establish that allocation is really happening, then that EA is the mechanism.**
    `gc.alloc.rate.norm` at the object's full size is the reason to continue. At zero, rerun
-   with `-XX:-DoEscapeAnalysis`: still zero means the object had no use and was yanked, and
-   the measurement says nothing about escape analysis.
-3. **Ask the compiler before theorising.** On any product JVM,
+   with `-XX:-DoEscapeAnalysis`: still zero means EA dependence was not demonstrated. Inspect
+   dead-code removal, caching, untaken paths and measurement scope before attributing a mechanism.
+3. **Ask the compiler before theorising.** On the target HotSpot product build,
    `-XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation` writes `<eliminate_allocation>` and
-   `<eliminate_lock>` per tier-4 task; an absent element for the class and `bci` is the
-   verdict. See `references/diagnosing-elimination.md`.
+   `<eliminate_lock>` in C2 tasks. Join compile IDs to installed C2 nmethods and match the
+   allocation's method/BCI and inline context; absence alone is inconclusive.
+   See `references/diagnosing-elimination.md`.
 4. **Find the inlining boundary.** `-XX:+PrintInlining`, tier-4 tree — is there a refusal on
    the chain that carries the object? Confirm the callee's real bytecode size with
    `javap -c -p`, never by eyeballing the source.
 5. **Decide which state is achievable, then set the expectation accordingly.** A callee that
-   fits within `MaxBCEAEstimateSize` and stores nothing reaches ArgEscape via BCEA — that
+   fits within `MaxBCEAEstimateSize` and receives a successful non-escaping BCEA summary
+   can leave its argument ArgEscape — that
    can enable lock elision, not scalar replacement across that call. NoEscape is necessary for
    scalar replacement, but not sufficient: identity-sensitive uses, array/field limits, unsafe
    access, merges, and other graph shapes can still preserve the allocation.
@@ -62,9 +65,10 @@ code/compiler-log evidence.
 
 ## Rules
 
-- ArgEscape never yields scalar replacement. Categorical — every argument of a non-inlined
-  call is at least ArgEscape, and there is no partial scalar replacement in C2. If the goal is
-  removing the allocation, the target must be NoEscape, which only inlining produces.
+- ArgEscape is not eligible for scalar replacement in the examined C2 implementation.
+  An object argument to an ordinary non-inlined Java call is at least ArgEscape; inlining
+  can remove that boundary. Intrinsics and specially modelled runtime operations need their
+  own graph analysis; do not apply the ordinary-call rule to every source-level invocation.
 - The analysis is flow-insensitive over the **compiled** graph. A branch that stores the
   object marks it for every path **when that store is present in the compiled graph**. Profiles
   may instead lead C2 to replace a sufficiently unlikely branch with an uncommon trap; “taken
@@ -84,16 +88,17 @@ code/compiler-log evidence.
   fields; both are refusals to hold that many scalars live at every safepoint, not a bug.
 - `PrintEscapeAnalysis`, `PrintEliminateAllocations` and `PrintEliminateLocks` are `develop`
   flags: a product JVM refuses to start on them, and `PrintEscapeAnalysis` is not a
-  `CompileCommand` option in any spelling — both `option,C::m,PrintEscapeAnalysis` and
-  `PrintEscapeAnalysis,C::m` are `Unrecognized option` and the JVM exits. There is no
+  `CompileCommand` option on the examined build — both `option,C::m,PrintEscapeAnalysis` and
+  `PrintEscapeAnalysis,C::m` report `Unrecognized option`. On Temurin 25.0.3 both exited 1
+  before `-version` ran; check exit status and actual execution on the target VM. There is no
   per-method form even on a debug build. `LogCompilation` is the product-build substitute.
 - For allocation evidence in production use `jdk.ObjectAllocationSample`.
   `jdk.ObjectAllocationInNewTLAB` and `jdk.ObjectAllocationOutsideTLAB` are `enabled=false`
   in **both** `default.jfc` and `profile.jfc` on JDK 25 (JDK-8257602), so a zero count from
   them proves nothing unless the event was enabled by name. Even `ObjectAllocationSample` is
   throttled sampling — in the lab, JMH `-prof gc` remains the primary metric.
-- Neither C2 nor Graal performs stack allocation. C2 decomposes the object (scalar
-  replacement); Graal decides **when** to materialise on the heap, per path. Do not describe
+- Scalar replacement is not stack allocation. C2 decomposes the object into scalars;
+  Graal's partial EA decides **when** to materialise on the heap, per path. Do not describe
   either as "stack allocation", and do not describe Graal's partial escape analysis as a
   more sophisticated version of C2's — it is a different technique, run iteratively
   interleaved with inlining rather than after parse-time inlining settles.
@@ -101,17 +106,19 @@ code/compiler-log evidence.
   the deoptimizing safepoint; total cost also grows with deoptimization rate. Count allocation,
   field restoration, frame reconstruction, and downstream GC alongside recompilation.
   `-XX:+TraceDeoptimization` can expose objects on a controlled test run when supported.
-- Not every ArgEscape is worth attacking. Where the callee genuinely needs the object beyond
-  the caller's scope — a logger, a serialiser, a registered listener — forcing NoEscape
-  means inlining something that should not be inlined. The case worth investigating is
-  ArgEscape where the callee only reads fields.
+- Not every call boundary is worth attacking. If the callee retains the object in escaping
+  state, inlining cannot erase that semantic escape. Distinguish actual retention from an
+  ArgEscape argument whose callee only reads fields; assess code size and workload benefit
+  before trying to inline the latter.
 - Project Valhalla may reduce identity and flattening costs structurally, but do not design from
-  an EA draft as if it were a shipped guarantee. As of the current JDK 28 early-access work,
-  JEP 401 value classes and strict-field support appear in draft/preview specifications, while
-  JEP 402 enhanced primitive boxing remains Draft. Recheck JEP status and the deployed release;
+  an EA draft as if it were a shipped guarantee. Recheck JEP status and the deployed release;
   JDK 17, 21, and 25 code still depends on existing object and EA behavior.
 - Label any speedup figure taken from a composite or third-party case as such. Measure
   `gc.alloc.rate.norm` before and after on the same load rather than inferring it.
+
+Deliver the allocation site/compile ID, observed allocation rate, supported mechanism or remaining
+hypothesis, and the smallest confirming check. Missing compiler/runtime evidence means a conditional
+diagnosis, not a flag recommendation.
 
 ## References
 
@@ -128,6 +135,6 @@ code/compiler-log evidence.
   `LogCompilation`'s `eliminate_allocation` / `eliminate_lock` elements, the corrected JFR
   event matrix, lock elision timings, and the checklists. Read while running an
   investigation.
-- [HotSpot C2 escape analysis source](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/opto/escape.cpp)
+- [HotSpot C2 escape analysis source, JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/escape.cpp)
 - [JDK-8287061: allocation-merge rematerialization](https://bugs.openjdk.org/browse/JDK-8287061)
 - [Project Valhalla status](https://openjdk.org/projects/valhalla/)

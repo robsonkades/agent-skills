@@ -15,7 +15,9 @@
 
 ## Where validation must live
 
-Three places can validate, and the difference is not stylistic.
+Three places can validate, and the difference is not stylistic. This Java 17 partial example
+uses a legacy two-nullable-field Beneficiary, unlike the sealed alternative in the worked example.
+Money, AccountId and Beneficiary are project types; supply their imports and implementations.
 
 ```java
 public record PaymentInstruction(Money amount, AccountId debtor, Beneficiary beneficiary,
@@ -23,9 +25,12 @@ public record PaymentInstruction(Money amount, AccountId debtor, Beneficiary ben
 
     public PaymentInstruction {                       // 1. canonical constructor
         Objects.requireNonNull(amount, "amount");
+        Objects.requireNonNull(debtor, "debtor");
+        Objects.requireNonNull(beneficiary, "beneficiary");
+        Objects.requireNonNull(valueDate, "valueDate");
         if (amount.isNegativeOrZero()) throw new IllegalArgumentException("amount must be positive");
-        if (beneficiary.iban() == null && beneficiary.accountId() == null) {
-            throw new IllegalArgumentException("beneficiary needs an iban or an accountId");
+        if ((beneficiary.iban() == null) == (beneficiary.accountId() == null)) {
+            throw new IllegalArgumentException("beneficiary requires exactly one of iban and accountId");
         }
     }
 }
@@ -62,6 +67,8 @@ public interface OptionalStep {
 
 What it buys: `build()` is unreachable until every required value is supplied, and the IDE
 offers exactly the legal next call.
+It does not prove non-null arguments, valid amounts or business authorization; validate values
+at construction. Keep mutable implementations private and document that stages do not confer thread safety.
 
 What it costs: one interface per required field, a fixed call order the caller cannot vary, and
 a type that is awkward to construct partially in tests. Use it when the object is central, the
@@ -71,17 +78,18 @@ domain command used across modules. For an internal type with three required fie
 
 ## Lombok `@Builder` — the three failure modes
 
-- **On a JPA entity.** It generates a constructor that bypasses the entity's own invariants and
-  leaves associations null, so an entity can be persisted in a state the aggregate forbids. It
-  also tends to arrive with `@NoArgsConstructor(force = true)`, which nulls final fields. Keep
-  entities constructed through their own named factories
+- **On a JPA entity.** Class-level generation can introduce an all-arguments path without domain
+  checks or association defaults. Annotating an explicit validating constructor/factory can preserve
+  them. Inspect delomboked code and provider hydration requirements; `@NoArgsConstructor(force=true)`
+  initializes final fields to Java defaults rather than establishing invariants. Prefer clear domain factories
   (`domain-logic-organization`, `orm-structural-mapping`).
 - **On a record.** Lombok's generated builder normally invokes the canonical constructor, so a
   compact constructor remains the invariant boundary. Verify generated code after Lombok/JDK
   upgrades and ensure framework deserialization follows an equivalent path.
-- **`@Builder.Default` omitted.** A field initialiser is silently ignored by the generated
-  builder, so the default becomes `null`/`0` for every builder-constructed instance while
-  direct construction still sees the initialiser. Two construction paths, two behaviours.
+- **Defaults misunderstood.** An unset builder parameter normally supplies `null`/`0`/`false`;
+  class-level field initializers are not generally builder defaults without `@Builder.Default`.
+  Explicitly supplied null differs from omission. Constructor/method targets and final fields
+  can behave differently; verify generated and direct paths rather than assuming equality.
 
 `@Singular` can improve collection ergonomics and Lombok currently emits compact unmodifiable
 results, but it is generated-code policy rather than a domain guarantee. Verify null handling,
@@ -91,25 +99,27 @@ ordering, duplicate semantics and the concrete Lombok version.
 
 ```java
 public Builder items(List<LineItem> items) {
-    this.items = List.copyOf(items);      // copy in: caller cannot mutate afterwards
+    this.items = new ArrayList<>(List.copyOf(items)); // mutable private accumulator, reject nulls
     return this;
 }
 public Builder addItem(LineItem item) {
-    this.items = ...;                     // accumulate
+    this.items.add(Objects.requireNonNull(item, "item"));
     return this;
 }
 ```
 
-Two rules, both routinely broken: copy on the way in, so the caller's later mutation does not
-reach the built object; and hand out an unmodifiable view on the way out, so the built object
-cannot be mutated through its own accessor. A record component holding a mutable `List` is not
-an immutable value however carefully it was built (`java-immutability`).
+Initialize the accumulator to `new ArrayList<>()`. This is a partial builder excerpt.
+The product constructor must independently snapshot it, for example `items = List.copyOf(items)`
+in a record compact constructor. An unmodifiable view over the builder's mutable backing list
+is insufficient: later builder mutations would change prior products. Copies are shallow;
+LineItem must be immutable or independently copied. List.copyOf also rejects null elements.
 
 ## Reuse hazards
 
 - A builder reused after `build()` continues to hold the previous values; a second `build()`
-  produces a near-duplicate that differs only where the caller remembered to overwrite. Either
-  reset in `build()`, or document single-use and enforce it with a flag.
+  produces a near-duplicate that differs only where the caller overwrote fields. Choose and test
+  documented snapshot reuse or enforced single-use; do not silently reset unless that is the API
+  contract. Define whether failed builds preserve state and ensure later builds cannot mutate earlier products.
 - A builder held in a field of a singleton is shared mutable state under concurrency, and the
   symptom is a value from one request appearing in another's object — rare, non-reproducible,
   and expensive to diagnose.
@@ -117,3 +127,12 @@ an immutable value however carefully it was built (`java-immutability`).
   a longer fuse.
 
 The safe default: create the builder, build, discard, within one method.
+
+## Sources
+
+- [JLS 17 record constructors](https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.10.4):
+  canonical-constructor invariant placement; inspect framework-specific reconstruction separately.
+- [List.copyOf, Java 17](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>):
+  unmodifiable snapshot semantics, null rejection and mutable-element limitations.
+- [Lombok Builder](https://projectlombok.org/features/Builder): constructor/method targets,
+  defaults, toBuilder and Singular behavior; verify the project's actual Lombok version.

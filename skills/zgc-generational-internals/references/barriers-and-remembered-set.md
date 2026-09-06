@@ -11,16 +11,14 @@ derived as a simple pointer color.
 [BASELINE — generational ZGC, JDK 25]
 64-bit pointer:
   +-----------------------+------------------+
-  | state metadata        | address          |
-  | (marked, remapped)    |                  |
+  | encoded address       | state metadata   |
+  | high-order bits       | low-order bits   |
   +-----------------------+------------------+
 ```
 
-Generation is metadata on the `ZPage`. The reasoning is cost placement: pointer bits are
-tested on **every reference read**, in a path executed billions of times a second, and they
-compete with usable address bits. Generation is only consulted when a page-level decision is
-taken — which page to process in which cycle — an operation already paid per page. Putting
-generation in the page metadata leaves the hottest path in the system untouched.
+Generation is metadata on the `ZPage`; barrier slow paths also consult the generation of
+a slot or referent, not only once per page. Pointer metadata records collector state, not
+a simple object-generation bit. Barrier elision/expansion depends on the compiler.
 
 The exact bit layout, and the names of the `ZPointer*` masks in `zpointer.hpp` /
 `zaddress.hpp` / `zGlobals.hpp`, evolve between releases — the pointer representation was
@@ -35,15 +33,12 @@ happens before the pointer has been validated:
 ```
 // field_address: address of the FIELD holding the reference (e.g. an array slot)
 
-uintptr_t raw_ptr = *field_address;             // read the pointer value —
-                                                // the OBJECT has not been touched
-
-if ((raw_ptr & ZPointerLoadGoodMask) == 0) {    // test bits of the integer value;
-                                                // no memory of the object is read
-    raw_ptr = zgc_load_barrier_slow_path(field_address, raw_ptr);   // rare
-}
-
-Object* obj = (Object*) (raw_ptr & ZPointerAddressMask);   // only now is the address used
+encoded = read_reference_bits(field_address)
+if reference_requires_relocation_processing(encoded, current_phase):
+    address = process_reference_and_optionally_heal_slot(field_address, encoded)
+else:
+    address = decode_address(encoded)
+// Only now dereference object memory. Helpers are conceptual, not C++ APIs.
 ```
 
 This is conceptual pseudocode, not the emitted instruction sequence. Fast-path cost depends
@@ -58,37 +53,23 @@ a mechanism that could not work.
 ## Store barrier
 
 Non-generational ZGC leaned almost entirely on the load barrier. The generational mode needs a
-barrier on **writes** as well, to keep the old-to-young remembered set current:
+barrier on **writes** as well, for SATB marking and remembered-set maintenance:
 
 ```
-void conceptual_store_barrier(Object* obj_holder, size_t offset, Object* value) {
-    if (needs_load_barrier(value)) {
-        value = zgc_load_barrier_slow_path(&value, (uintptr_t) value);
-    }
-
-    obj_holder[offset] = value;
-
-    if (page_generation(obj_holder) == OLD &&
-        value != nullptr && page_generation(value) == YOUNG) {
-        size_t bit_index = remembered_set_bit_index_for(obj_holder, offset);
-        active_bitmap().atomic_test_and_set(bit_index);
-    }
-}
+previous = read_reference_bits(slot)
+if store_barrier_work_required(previous, current_phase):
+    preserve_previous_referent_for_marking_if_needed(previous)
+    remember_slot_if_in_old_generation(slot)
+store(slot, encode_store_good(new_reference))
+// Simplified ordering; generated fast paths, buffering and healing differ.
 ```
 
-Instruction-order cost on the write path:
-
-1. Test the source page's generation — a page-metadata read, not a pointer test.
-2. Old source, young target: compute the bit index for the field address and test that bit.
-3. Bit already set: nothing further (early out).
-4. Bit not set: one atomic single-bit set. Atomic because neighbouring bits in the same word
-   can be touched concurrently by other mutator threads — a plain read-modify-write would lose
-   concurrent sets.
-
-Actual generational ZGC barriers perform additional healing/marking/remembering work depending
-on pointer state and phase; the sketch only illustrates why old-to-young slots enter the
-remembered set. Measure generated code and workload write topology rather than reducing every
-non-cross-generation store to one predicted branch.
+The normal fast path examines metadata of the reference already in the slot before overwrite.
+SATB work preserves the previous referent, including when the new value is null. Remembering
+filters on the slot being old, not the new referent being young; GC examines current slot
+contents later. Buffered slow paths and metadata checks avoid repeating all work on every
+store. Do not charge every write for a page lookup and bitmap operation. Atomic bitmap
+updates prevent losing concurrent sets in shared words.
 
 ## The remembered set is a bitmap, not a card table
 
@@ -98,27 +79,24 @@ page. There is no card — no fixed-size memory slice — in the real structure.
 schedule. The exact bit-to-address mapping and the size of `_bitmap[2]` should be checked
 against `zRememberedSet.hpp` / `zGranuleMap.hpp` on the build in use before citing.
 
-### Double buffering instead of a lock
+### Double buffering
 
-Two bitmaps, `_bitmap[2]`, swapping roles each cycle via `flip()`:
+Two bitmaps, `_bitmap[2]`, with roles flipped at young mark-start synchronization:
 
 ```
-Cycle start:  A = active (mutators set bits here), B = previous (GC drains this)
+Young mark start: prior current becomes previous for this collection
 During:       mutator store barriers set bits in A, without a lock
-              marking threads consume the frozen snapshot in B
-Cycle end:    a synchronisation handshake swaps the roles
+              GC scans previous B while current A is built
+// A/B denote roles after the flip, not permanent identities.
 ```
 
 Current/previous roles let mutators and GC operate on different logical sets during relevant
 phases. The precise flip/clearing synchronization is implementation-specific; inspect the
 target `ZRememberedSet`/`ZPage` source before claiming that no concurrent access is possible.
 
-A lock would serialise precisely what ZGC exists not to serialise: every old-to-young reference
-write in the application would contend against the GC threads for the whole duration of a
-marking cycle — tens of milliseconds. That reintroduces application blocking through the back
-door, even though it never shows up as a formal STW pause. Double buffering does not eliminate
-synchronization cost; role changes occur at collector cycle synchronization points. Do not
-label that mechanism a thread-local handshake without an event/source trace from the target.
+Double buffering separates mutation and scanning roles; it does not eliminate synchronization
+or establish that all collector operations are lock-free. Do not label the flip an end-of-cycle
+thread-local handshake or assume an immutable snapshot throughout relocation.
 
 ## Attributing barrier overhead in a profile
 
@@ -129,9 +107,11 @@ asprof -e cpu -d 30 -f cpu.html <pid>
 Frames to separate (symbol names vary by build — confirm against the build in use rather than
 quoting from memory in an incident report):
 
-- Load barrier: frames under `ZBarrierSetAssembler` / `ZBarrierSet::load_barrier*`
-- Store barrier and remembered-set update: frames under
-  `ZBarrierSetAssembler::store_barrier*` and remembered-set symbols
+- Runtime load/store slow paths: confirm `ZBarrier`/`ZBarrierSetRuntime` symbols in the target.
+- Remembered-set work: distinguish collector scanning from mutator slow-path updates.
+
+`ZBarrierSetAssembler` generates instructions; samples in those C++ methods describe code
+generation, not execution of the generated mutator barrier.
 
 Method:
 
@@ -143,8 +123,8 @@ Method:
 3. Compare equivalent workloads/builds and inspect generated assembly/perf counters only when
    the decision warrants it. Correlate slow paths with GC phase and old-to-young write topology;
    promotion rate alone does not determine all stores.
-4. Report every overhead percentage as an expected order of magnitude measured in this
-   environment, never as a constant transferable between workloads.
+4. Separate measurements from estimates; retain baseline, denominator and uncertainty.
+   An estimate is not a measurement or a transferable workload constant.
 
 ## Sizing and stall decisions
 
@@ -154,16 +134,26 @@ progress, young/old cycles, concurrent-worker CPU and cgroup throttling. Model w
 pages cover allocation until the collector returns capacity under both normal and burst
 regimes, including uncertainty and redeploy/live-set growth.
 
+SoftMaxHeapSize is a collection target, not an allocation hard limit: ZGC may grow beyond it
+up to Xmx. Soft headroom differs from remaining hard capacity and available cgroup memory.
+Budget heap residency plus native/JVM/thread/direct-buffer and other charged memory; neither
+Xmx nor virtual-address reservation equals RSS or memory.current.
+
 For each stall, distinguish:
 
-| Evidence                                                    | Likely decision axis                                                      |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------- |
-| hard/soft heap headroom exhausted while live set is stable  | justified capacity or soft-max policy                                     |
-| concurrent threads starved/throttled                        | CPU quota, `ConcGCThreads`, colocated load                                |
-| short allocation spike outruns otherwise healthy cycles     | admission/backpressure, burst capacity, scoped spike-tolerance experiment |
-| live set/old occupancy trends upward                        | retention/cache policy before heap expansion                              |
-| large page/object allocation fails amid apparent free bytes | page availability/fragmentation and allocation shape                      |
+| Evidence                                                                        | Likely decision axis                                                      |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| hard capacity constrained with stable live set; soft target assessed separately | capacity or collection policy within process/cgroup budget                |
+| concurrent threads starved/throttled                                            | CPU quota, `ConcGCThreads`, colocated load                                |
+| short allocation spike outruns otherwise healthy cycles                         | admission/backpressure, burst capacity, scoped spike-tolerance experiment |
+| live set/old occupancy trends upward                                            | retention/cache policy before heap expansion                              |
+| large page/object allocation fails amid apparent free bytes                     | page availability/fragmentation and allocation shape                      |
 
 No remediation is “free”: earlier/more collection spends CPU; more heap spends memory and can
 alter uncommit behavior; lower allocation or admission changes code/service behavior. Validate
 the selected axis against stall count/duration, achieved load, CPU and cgroup headroom.
+
+Sources: [JEP 439](https://openjdk.org/jeps/439),
+[JDK 25 store ordering](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zBarrierSet.inline.hpp),
+[barrier work](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zBarrier.inline.hpp),
+[remembered-set roles](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zRememberedSet.cpp).

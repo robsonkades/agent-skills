@@ -8,12 +8,16 @@ java -XX:+UseZGC \
      -jar app.jar
 
 java -XX:+UseShenandoahGC \
+     -XX:ShenandoahGCMode=generational \
      -Xlog:gc*:file=shen.log:time,uptime,level,tags \
      -jar app.jar
 ```
 
 Add `gc+phases=debug` when the question is where the concurrent time goes rather than how
 long the pauses were.
+These shell sketches assume an existing application jar and supported JDK 25 build. The second
+selects generational mode explicitly; choose `satb` instead when that is the intended comparison.
+Set bounded rotation/retention for production logs and inspect startup warnings and effective mode.
 
 ## What the ZGC log gives you
 
@@ -30,9 +34,10 @@ Generational ZGC labels cycles by generation, so young and old work can be read 
 
 Illustrative shape, not a promise about your build — verify the exact text before writing a
 parser against it. The reading discipline is fixed, though: the `Pause *` lines are the
-STW axis, the `Concurrent *` lines are the CPU-while-running axis, and the two must be
-summarised separately. A report that adds them together has destroyed the distinction the
-collector exists to create.
+STW axis, while `Concurrent *` lines measure elapsed phase time, not CPU consumed. A phase
+can run on several workers or be delayed by throttling/descheduling. Measure CPU separately
+with appropriate worker/process accounting or profiles. Overlapping phases/cycles must not
+be added as though they were one application pause or additive CPU time.
 
 ## What the Shenandoah log gives you
 
@@ -79,8 +84,9 @@ per phase name. Two traps when scripting this:
 - A regex that matches nothing yields an empty list, not an error. Assert the match count
   is non-zero before indexing, or an `IndexError` becomes the only signal that the parse
   was wrong.
-- Percentile-by-index over a small sample is not a percentile. A handful of cycles in a
-  short window gives you the second-slowest pause, not a p99.
+- An empirical percentile on a small sample is definable but weak tail evidence. State the
+  sample count and estimator; nearest-rank p99 of ten observations is the maximum, not an
+  established population p99. Preserve the maximum and collect enough events for the decision.
 
 ## Locating barrier cost in a profile
 
@@ -88,15 +94,14 @@ per phase name. Two traps when scripting this:
 asprof -e cpu -d 30 -f cpu.html <pid>
 ```
 
-Frames to look for, with the caveat that symbol names vary by build and by async-profiler
-version:
-
-- ZGC: `ZBarrierSetAssembler::load_barrier_on_oop_field_preloaded`
-- Shenandoah: `ShenandoahBarrierSet::need_load_reference_barrier`,
-  `use_native_load_reference_barrier` (both declared in `shenandoahBarrierSet.hpp`)
-
-Read the exact symbol out of the profile in front of you. Quoting an LRB frame name from
-memory in an incident report is how a build-specific detail becomes folklore.
+Look for runtime barrier slow paths and generated code with the target build's symbols.
+`ZBarrierSetAssembler` methods taking a `MacroAssembler` emit code; their own execution is
+not necessarily execution of the emitted barrier on an application
+load. Header predicates are not automatically runtime cost frames either. Inlined fast paths
+can be charged to application methods and absent as named frames; use annotated assembly or
+focused measurements if attributing their cost. Absence of a barrier symbol is not zero overhead.
+See the [OpenJDK 25 x86 ZGC barrier assembler](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/gc/z/zBarrierSetAssembler_x86.cpp)
+to distinguish emission from generated runtime paths.
 
 ## Quick live inspection
 

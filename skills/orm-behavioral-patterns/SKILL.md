@@ -25,10 +25,10 @@ designed while the developer expected something else.
 ## The three patterns
 
 ```text
-Unit of Work    tracks every object read or created in a transaction,
-                works out what changed, and writes it all at commit in
-                one ordered batch. Consequence: you do not call save();
-                you change objects and the unit of work notices.
+Unit of Work    tracks managed state and pending persistence operations,
+                synchronizing at flush (possibly before commit).
+                Dirty changes need no save() on managed entities;
+                SQL ordering is distinct from optional JDBC batching.
 
 Identity Map    maintains one managed object instance per database identity
                 in a persistence context. Consequence: repeated identity lookup
@@ -36,7 +36,7 @@ Identity Map    maintains one managed object instance per database identity
                 managed instance, so a modification through one reference is
                 visible through every other.
 
-Lazy Load       replaces an association with a proxy that fetches on
+Lazy Load       defers data access using proxies, collections or enhancement on
                 first access. Consequence: a query happens where the code
                 shows a getter, possibly outside a transaction, possibly
                 once per row of a loop.
@@ -48,14 +48,16 @@ magical.
 
 ## Workflow
 
-1. **Establish the boundary of the unit of work.** In JPA that is the persistence context,
-   whose lifetime is normally the transaction. Every behaviour below is scoped to it.
+1. **Establish the runtime and unit of work.** Inspect JPA/Hibernate, Spring and Java versions,
+   mappings, flush mode and context ownership. A transaction-scoped persistence context
+   commonly ends at commit; extended/application-managed contexts or OSIV can outlive it.
 2. **Know which objects are managed.** Managed (tracked, changes flushed), detached (not
    tracked; changes silently lost), transient (never persisted), removed. Most "the change
    did not save" bugs are an object in the wrong state.
 3. **Predict the flush points.** Commit, an explicit flush, and — the one people miss — a
    query whose results might be affected by pending changes.
-4. **Budget the queries.** Every lazy association traversed in a loop is a query
+4. **Budget the queries.** Lazy traversal can issue queries depending on loaded state,
+   cache and batch/fetch configuration
    (`architecture-and-performance`). Decide the fetch strategy per use case, not per
    mapping.
 5. **Bound the context's size.** Long-running units of work retain entities and snapshots; flush
@@ -67,17 +69,17 @@ magical.
 ## Decision rules
 
 ```text
-An entity was loaded in this transaction and modified
-        → it will be written at commit. Calling save() is redundant, and
+An entity remains managed, writable and dirty in a context joined to a committing transaction
+        → expect synchronization at flush/commit. Calling save() is redundant, and
           NOT calling it does not prevent the write. If you do not want
           the write, do not modify a managed entity.
 
-An entity was loaded in a previous transaction and modified now
-        → detached; nothing happens. Re-read it, or merge deliberately
-          knowing merge issues a SELECT and returns a DIFFERENT instance.
+An entity's persistence context ended or it was detached, then modified
+        → changes are not automatically synchronized. Re-read or merge deliberately;
+          merge returns the managed target and may issue a SELECT.
 
 A collection is traversed once per row of a result set
-        → N+1. Fix with a join fetch, an entity graph, batch fetching, or
+        → inspect for N+1. Consider a join fetch, an entity graph, batch fetching, or
           a projection. Do not fix it by making the association eager —
           that moves the cost to every other use case.
 
@@ -88,15 +90,15 @@ An association is needed by only some callers
 LazyInitializationException outside a transaction
         → the fetch was not planned. Fetch what the caller needs inside
           the boundary, or map to a DTO there. Turning on Open Session In
-          View hides it and creates N+1 during serialisation.
+          View may hide it while allowing unplanned queries during serialisation.
 
 A batch processes more than a few thousand entities
-        → flush and clear per chunk, or use a stateless session. Dirty
-          checking scans every managed entity at every flush.
+        → measure retained state and flush cost; flush/clear bounded chunks
+          or assess stateless semantics. Context size is not the only transaction cost.
 
 A bulk UPDATE/DELETE via JPQL or SQL ran in this transaction
-        → already-loaded entities are now stale, and the version column
-          was probably not incremented. Clear the context, and mind
+        → affected loaded entities may be stale; inspect explicit version handling.
+          Flush required pending changes before bulk work, then clear/refresh deliberately, and mind
           optimistic locking (offline-concurrency-control).
 
 The same row must be seen as two independent objects
@@ -106,8 +108,8 @@ The same row must be seen as two independent objects
 
 ## Rules
 
-- **The unit of work writes what changed, whether or not you asked.** A managed entity
-  modified for a temporary calculation is persisted at commit. This is the most common
+- **Writable managed changes can persist without save().** A managed entity
+  modified for a temporary calculation can persist on successful flush/commit. This is a
   cause of unexplained updates in a log, and the fix is not to detach defensively but to
   stop mutating managed objects for non-persistent purposes.
 - JPA dirty checking does not require `save()` for a managed entity. Spring Data's `save()` still
@@ -118,12 +120,12 @@ The same row must be seen as two independent objects
   reordered by type, which breaks the mental model that a delete-then-insert of the same
   key will work. Force it with an explicit flush between them, or design the key not to
   collide.
-- **A query can flush.** Hibernate flushes before executing a query that might read tables
+- **A query can flush.** With applicable AUTO flush behavior, Hibernate flushes before a query that might read tables
   with pending changes, so a write inside a loop that also queries produces a flush per
   iteration — a common cause of a batch job that is inexplicably slow.
-- The identity map is per unit of work, not a cache across transactions. Two transactions
-  loading the same row get two instances with two independent copies of the data. Anything
-  spanning transactions is a second-level cache, with invalidation and staleness of its own
+- The identity map belongs to the persistence context. Separate contexts have independent
+  managed instances; an extended context can span transactions without becoming a second-level
+  cache. A second-level cache has separate invalidation and staleness concerns
   (`caching-strategies`).
 - Because the identity map returns the same instance, entity `equals`/`hashCode` matter
   more than they appear to. Use a business key or the identifier with care; the default
@@ -138,15 +140,21 @@ The same row must be seen as two independent objects
   database transaction or connection for the entire request—connection handling/provider settings
   matter
   (`architecture-and-performance`).
-- Bulk statements bypass all three patterns. They do not update the identity map, do not
+- Bulk statements bypass managed entity change tracking. They do not update loaded state, do not
   run entity lifecycle callbacks, and do not increment version columns unless you write it.
-  They remain the right tool for set-shaped work; they simply require the context to be
-  cleared and optimistic locking to be handled explicitly.
+  They remain useful for set-shaped work; reconcile pending changes and stale managed state,
+  and handle optimistic locking explicitly. A fresh context or selective refresh can avoid
+  clearing unrelated managed work.
 - Never put a managed entity into a cache, a session or an HTTP response. It carries
   proxies that fail outside the context and a lifecycle that the consumer does not expect
   (`session-state-strategies`, `remote-facade-and-dto`).
 
 ## References
+
+Return the observed state/SQL behavior, its likely mechanism and confirming evidence, the
+smallest correction, and validation gaps. SQL shows execution, not proof of commit; verify
+persisted results from a fresh context after transaction completion. Examples are partial
+JPA/Hibernate/Spring snippets; adapt to resolved versions, without upgrading to use this skill.
 
 - [Unit of Work and Identity Map](references/unit-of-work-and-identity-map.md) — entity
   states and the transitions that lose data, flush timing and ordering, dirty checking cost

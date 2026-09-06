@@ -99,14 +99,15 @@ configurations evolve independently. `safepoints` owns what a poll triggers.
 The check is one unsigned compare of index against length followed by `jae` to a trap; the
 unsigned form rejects a negative index in the same instruction. Inside a counted loop, range
 check elimination and loop predication (`UseLoopPredicate`, `RangeCheckElimination`, both
-default `true`) move it out to a pre-loop, so the main loop has no `cmp/jae` per access —
-and the check has not vanished, it has been hoisted. To confirm elimination, look for the
-compare above the loop head, not for its absence inside.
+default `true` on this build) can remove per-access checks or replace them with pre-loop
+guards when the loop/range proof permits it. Inspect pre/main/post loops, dominating guards
+and fallback paths; a flag being enabled does not establish that this transformation occurred.
 
 A trap is `mov $imm,%edx ; call UncommonTrapBlob`. The immediate packs the deoptimisation
 reason and action; `-Xlog:deoptimization=debug` or the JFR `jdk.Deoptimization` event names
-them (`deoptimization` owns that). A hot method whose listing is mostly trap stubs is a
-method C2 compiled on a narrow profile — not a code-size problem.
+them when a trap actually executes (`deoptimization` owns that). Emitted trap stubs alone
+prove neither that a trap ran nor why it was emitted. Compare code size and execution profile
+separately before attributing a problem to narrow profiling.
 
 ## Allocation: the TLAB fast path
 
@@ -170,12 +171,17 @@ shape. A `lock cmpxchg` alone is ambiguous: monitor protocols, atomics/VarHandle
 runtime code all use CAS. Bytecode mapping, object address and slow-path target distinguish
 them; `lock-inflation` owns why the inflated path is being taken.
 
+Emitting both lightweight and inflated paths does not show which one executed. Conversely,
+no local lock instruction can reflect coarsening, inlining, elimination or a cropped path;
+inspect the entire compiled region and corroborate with compiler/runtime evidence.
+
 ## ZGC barriers
 
 Generational ZGC (JEP 439; non-generational mode removed by JEP 490 in JDK 24) colours
 pointers. In this capture, a load is `mov field,%r8 ; shr $imm,%r8 ;
-ja <stub>` — the shift both strips the colour bits and sets the carry flag when the pointer
-is not "load-good" — and the stub calls
+ja <stub>` — the shift strips colour bits and sets flags. `ja` branches when CF=0 and ZF=0;
+the shifted-out load-good bit provides CF, while a zero result avoids the stub. It does not
+branch because carry was set. The stub calls
 `load_barrier_on_oop_field_preloaded_runtime_stub`. A store first tests the field's current
 colour (`testl $mask,field`, `{barrier format=4}`), then colours the new value
 (`shl $imm ; or $colour`, `{barrier format=0}` / `{barrier format=5}`) and stores 64 bits —
@@ -186,7 +192,9 @@ colour scheme.
 
 ## Vectorised and unrolled loops
 
-`ymm`/`zmm` registers with `v`-prefixed mnemonics are SuperWord output; several accesses at
+Packed lane operations using `ymm`/`zmm` show vector instructions, but can come from SuperWord,
+intrinsics or Vector API expansion; register names/prefixes alone do not identify the producer.
+Several accesses at
 fixed offsets (`0x10`, `0x14`, `0x18`, …) before one back-edge are unrolling. The two are
 not the same finding, and unrolled scalar code is not evidence that vectorisation "broke":
 on 25.0.3 the plain `int[]` sum reduction compiled to an 8-way unrolled scalar
@@ -210,8 +218,9 @@ listing only tells you whether it was.
 
 ## Primary references
 
-- [HotSpot x86 C2 macro assembler](https://github.com/openjdk/jdk/blob/master/src/hotspot/cpu/x86/c2_MacroAssembler_x86.cpp)
-- [HotSpot x86 shared runtime](https://github.com/openjdk/jdk/blob/master/src/hotspot/cpu/x86/sharedRuntime_x86_64.cpp)
+- [JDK 25 x86 C2 macro assembler](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/c2_MacroAssembler_x86.cpp)
+- [JDK 25 x86 shared runtime](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/sharedRuntime_x86_64.cpp)
+- [JDK 25 ZGC C2 barrier emission](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/gc/z/z_x86_64.ad)
 - [JEP 312: Thread-Local Handshakes](https://openjdk.org/jeps/312)
 - [JEP 376: ZGC Concurrent Thread-Stack Processing](https://openjdk.org/jeps/376)
 - [JEP 439: Generational ZGC](https://openjdk.org/jeps/439)

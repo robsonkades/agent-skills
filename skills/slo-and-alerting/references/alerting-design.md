@@ -42,11 +42,16 @@ Choose:
 1. objective period \(T\);
 2. budget fraction \(f\) worth action;
 3. long window \(w_l\) satisfying detection needs;
-4. burn \(b=fT/w_l\);
+4. under approximately stable event rate, burn \(b=fT/w_l\); otherwise derive the relevant
+   budget share from valid-event counts and state any traffic forecast;
 5. short window long enough for stable data and short enough to reset promptly.
 
 Canonical Google Workbook values are tested starting points for a 30-day event SLO, not
 laws. Recompute for different periods/policies and validate with replay.
+
+Both windows above threshold means recent aggregate evidence, not proof the fault is still
+occurring at this instant. Ingestion delay, scrapes, evaluation, any `for`, notification grouping
+and delivery add response latency. Exercise end-to-end notification as well as expression firing.
 
 ## Low traffic
 
@@ -60,6 +65,8 @@ At small denominators, one event dominates a ratio. Options:
 - review low-volume outcomes manually.
 
 Do not hide actual user harm by adding fake denominator traffic solely to dilute failures.
+Minimum-event gates also suppress detection of real sparse outages; keep a separate critical-event,
+expected-demand or representative synthetic path when that risk is unacceptable.
 
 ## Missing data
 

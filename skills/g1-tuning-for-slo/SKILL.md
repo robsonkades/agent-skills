@@ -164,7 +164,7 @@ defaults during each JDK upgrade. Rotate and protect verbose logs as production 
   plus three complete starting configurations with a per-flag justification for that
   workload. Read when choosing a value or when reviewing an existing command line.
 - [Deriving values from an SLO](references/derivation.md) — the pause, young size,
-  interval, overhead, IHOP and mixed-cost formulas as G1 itself computes them, a fully
+  interval, overhead, IHOP and mixed-cost approximations with implementation boundaries, a fully
   worked case, and the measurement and calibration protocol. Read when turning measured
   rates into flag values, or when validating that a change produced the predicted effect.
 - [The policy log and the symptom table](references/policy-log-and-troubleshooting.md) —

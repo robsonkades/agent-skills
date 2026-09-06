@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: cancellation-and-interruption
-version: 1.1.0
+version: 1.1.1
 description: >-
   Designing cooperative cancellation in Java across interruption, Future/CompletableFuture,
   executor/scope shutdown, deadlines, resource close/abort, CPU loops, blocking APIs, native calls,
@@ -39,6 +39,9 @@ files:
 dependencies:
   - name: timeouts-and-deadlines
     version: ^1.0.0
+
+suggests:
+  - structured-concurrency
 
 capabilities:
   - reads-source

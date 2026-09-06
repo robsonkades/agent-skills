@@ -1,7 +1,7 @@
 # What breaks quietly
 
-None of these throws. Each one changes behaviour that something else depended on, and the
-symptom arrives later and elsewhere.
+These changes can be silent, throw immediately or surface later in another component. Audit
+the required behavior rather than relying on the absence of an exception.
 
 ## Thread names, log correlation and metrics
 
@@ -12,21 +12,29 @@ Breaks: log patterns containing `%thread`, MDC populated from the thread name, m
 by thread name, log filters that select a pool's threads, and any dashboard grouped by thread.
 
 ```java
+// Partial Java 21+ snippet: import java.util.concurrent.*; lifecycle owner must close exec.
 // Use a stable role prefix; do not embed secrets or unbounded tenant cardinality.
 ThreadFactory f = Thread.ofVirtual().name("checkout-", 0).factory();
 ExecutorService exec = Executors.newThreadPerTaskExecutor(f);
 ```
 
 Then check the logging pattern still produces something useful, and that anything grouping by
-thread now groups by something with meaning — a request id, an endpoint — because thread
-identity is no longer a stable dimension when there is one thread per request.
+thread uses a dimension appropriate to the signal. Request/trace IDs can correlate logs;
+metrics need bounded labels such as an endpoint template or role, not per-request IDs or
+the unbounded numeric suffix of each thread name.
+
+Thread naming does not propagate MDC, security context or transactions. Check capture at
+submission and lexical restoration/cleanup, including exceptions, nested tasks and reused
+platform executors. InheritableThreadLocal may copy sensitive state into many children.
+Do not transfer a transaction-bound session to concurrent child tasks merely because they
+are virtual; follow the framework's thread/transaction ownership contract.
 
 ## `ThreadLocal` that was a cache
 
 ```java
-// Fine with 200 pooled threads. A memory multiplier at 200 000 virtual threads.
+// Budget even at 200 pooled threads; much larger if 200 000 virtual threads initialize it.
 private static final ThreadLocal<byte[]> BUFFER =
-        ThreadLocal.withInitial(() -> new byte[1 << 20]);     // 1 MB each
+        ThreadLocal.withInitial(() -> new byte[1 << 20]);     // 1 MiB payload when first accessed
 ```
 
 Other candidates for review include legacy mutable formatters/serializers, large buffers,
@@ -40,7 +48,7 @@ The fix depends on which property was wanted:
 | -------------------------- | ------------------------------------------------------------------------- |
 | Avoid allocation           | shared immutable/thread-safe instance, redesign, or measured bounded pool |
 | Avoid contention           | a striped structure, or accept the allocation                             |
-| Per-request context        | `ScopedValue`                                                             |
+| Immutable lexical context  | Java 25 final `ScopedValue` when binding/lifetime semantics fit           |
 | Scarce resource per worker | an explicit pool with a size                                              |
 
 Measure allocation before and after: replacing a per-thread buffer with a per-request one is
@@ -58,9 +66,15 @@ Replace it with per-task virtual threads and entries interleave. Nothing fails; 
 wrong.
 
 Find them, and for each decide: keep the single-threaded executor (usually correct and
-costs one platform thread), or make the ordering explicit with a lock, a per-key queue, or a
-sequence number the consumer sorts by. What is not acceptable is discovering the property
+costs one platform thread), or use an explicitly ordered per-key queue/consumer. A lock enforces
+mutual exclusion, not submission order; sequence numbers need a defined gap/retry/reordering
+policy before effects occur. Sorting results after unordered side effects cannot repair them.
+What is not acceptable is discovering the property
 existed after removing it.
+
+A serial executor orders task bodies, not asynchronously detached effects after a body returns.
+State whether the required order is submission, start, completion or external commit, and test
+that exact boundary under failure/retry and while old/new executors overlap during rollback.
 
 The same audit applies to scheduled/actor-like designs, but note that one periodic task submitted via
 `scheduleAtFixedRate`/`scheduleWithFixedDelay` is already specified not to overlap with itself even in
@@ -87,6 +101,10 @@ Framework flags can change request, async and scheduled executors differently, a
 change across versions. Inventory the effective runtime executor and framework version; do not infer
 `@Async`/`@Scheduled` ordering or bounds from the request-thread flag. Route framework-specific
 selection to `reactive-and-virtual-thread-selection` and official versioned documentation.
+For example, Boot 3.5 documents virtual-thread auto-configuration conditional on Java 21+,
+the enabling property and bean selection/backoff; custom executors can change the outcome.
+Virtual threads are daemon threads, so verify application keep-alive and shutdown ownership
+for scheduler/batch-only applications. Keep these checks distinct from choosing a framework flag.
 
 ## Tests
 
@@ -101,10 +119,11 @@ than on scheduling — see `concurrency-testing`.
 
 ## Native and third-party libraries
 
-A library with a JNI backend pins the carrier for the duration of its native call, and
-pinning is not compensated. Compression, cryptography, image processing, some database
-drivers and some observability agents are the usual suspects. Isolate them on a sized
-platform executor rather than hoping the scheduler absorbs it.
+A virtual thread cannot unmount across a native/foreign frame; blocking there can retain a
+carrier, including callbacks into Java on JDK 24+. Native CPU work consuming a carrier is
+not by itself a blocking defect. Measure duration/rate, scheduler pressure and SLO impact
+before isolating a path on bounded platform execution; the handoff adds queueing and needs
+deadline, rejection, context and lifecycle ownership.
 
 A library with its own internal thread pool is unaffected by your migration and keeps its own
 limit — which is often a good thing, and always worth knowing about, because that limit is
@@ -127,8 +146,8 @@ now one of the few left.
 4. Downstream error rate — did we start overwhelming something?
 5. Everything above — did a limit, an ordering guarantee or a metric disappear?
 
-Most post-migration surprises are (2) or (5), and both are answered by the limit inventory
-from Stage 1 rather than by profiling.
+Use the limit inventory to test missing-bound hypotheses and runtime evidence to discriminate
+them from scheduler, allocation or provider effects; this ordering is not a frequency claim.
 
 ## Authoritative references
 
@@ -136,3 +155,6 @@ from Stage 1 rather than by profiling.
 - [Java 25 `ScheduledThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ScheduledThreadPoolExecutor.html)
 - [Java 25 thread-local variables](https://docs.oracle.com/en/java/javase/25/core/thread-local-variables.html)
 - [JEP 444](https://openjdk.org/jeps/444)
+- [Java 25 ReentrantLock fairness contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/ReentrantLock.html)
+- [Boot 3.5 task execution and scheduling](https://docs.spring.io/spring-boot/3.5/reference/features/task-execution-and-scheduling.html)
+- [Boot 3.5 virtual-thread lifecycle guidance](https://docs.spring.io/spring-boot/3.5/reference/features/spring-application.html#features.spring-application.virtual-threads)

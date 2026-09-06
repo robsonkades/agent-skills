@@ -3,7 +3,7 @@
 ## The cycle from trigger to mixed collection
 
 ```
-Young GC allocates in Eden
+Application allocates in Eden
   |  old occupancy crosses the effective IHOP (initial static value or adaptive prediction),
   |  or a humongous allocation requests a cycle (cause: G1 Humongous Allocation)
   v
@@ -30,7 +30,7 @@ Pause Young (Prepare Mixed)        one more young GC
 Pause Young (Mixed) × N            selects candidates using the bitmap's liveness data
 ```
 
-`Pause Cleanup` is sub-millisecond to a few milliseconds. `Concurrent Cleanup for Next Mark`
+`Pause Cleanup` duration depends on workload and environment. `Concurrent Cleanup for Next Mark`
 is, by definition, not a pause; a report calling it a short STW pause is self-contradictory.
 `Concurrent Cleanup` without a suffix is a pre-JDK-20 name.
 
@@ -98,8 +98,8 @@ as the **cause** of a concurrent-start pause and, per region, at `gc+humongous=d
 [gc,humongous] GC(2634) Reclaimed humongous region 221 (object size 3145744 @ 0x...)
 ```
 
-`reclaim candidate 0` with a non-zero `remset`, or `marked 1`, is the object that will wait
-for a complete cycle.
+`reclaim candidate 0` means ineligible in that pause, not necessarily until the next complete
+cycle. Inspect all eligibility fields and subsequent pauses before attributing retained pressure.
 
 ## Logging flags
 
@@ -174,7 +174,7 @@ name, which is why it is the one to keep in a runbook.
 
 ## How the adaptive predictor decides
 
-With `G1UseAdaptiveIHOP=true`, `InitiatingHeapOccupancyPercent` is the floor used only until
+With `G1UseAdaptiveIHOP=true`, `InitiatingHeapOccupancyPercent` is the initial threshold used until
 the predictor has enough samples (`G1AdaptiveIHOPNumInitialSamples`). Once calibrated, G1
 estimates the old generation's observed growth rate in bytes per second and the historical
 duration of a complete marking cycle, then starts the next cycle early enough that marking
@@ -186,9 +186,9 @@ Consequences worth predicting correctly:
   at a **lower** occupancy percentage, to keep the same time margin before old fills.
 - If the peak is too fast for the predictor to accumulate samples covering the new regime, the
   opposite happens: it keeps applying the previous regime's model and fires too late.
-- Bursty traffic is therefore the case where `-XX:-G1UseAdaptiveIHOP` plus a conservative fixed
-  value is defensible — worse on average, but predictable, against a predictor that is
-  chronically one regime behind.
+- A fixed threshold is a candidate experiment only when repeated evidence shows prediction lag.
+  It forfeits adaptation; neither better predictability nor worse average performance follows
+  automatically. Compare reclamation headroom and application outcomes over representative bursts.
 
 The exact prediction formula (moving average, percentile, safety margin) is not stable across
 releases. Read the effective threshold from `gc+ergo+ihop=debug` on the runtime before

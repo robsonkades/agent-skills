@@ -28,6 +28,12 @@ convention or magic string doing a job an annotation would do with compile-time 
 
 ## Workflow
 
+0. **Establish compatibility.** Inspect compiler release/toolchain, processor configuration,
+   resolved framework versions and runtime. No authoring baseline was previously declared:
+   language references here use Java 17; records require Java 16+ without preview, and
+   `Deprecated.since`/`forRemoval` require Java 9+. Adapt to the project without upgrading it,
+   enabling preview or adding dependencies implicitly. If configuration is missing, keep
+   enforcement diagnoses conditional and name the evidence needed.
 1. **Name the consumer before defining the annotation.** It may be the compiler, processor,
    framework, static-analysis tool, documentation generator or a human-facing API contract. If no
    consumer benefits from structured metadata, Javadoc is usually clearer.
@@ -64,9 +70,10 @@ convention or magic string doing a job an annotation would do with compile-time 
   It does not make an annotation inherited from an interface, and it does not apply to methods
   or fields. Framework meta-annotation mechanisms (Spring's `@AliasFor`, `MergedAnnotations`)
   implement their own richer rules — those are the framework's semantics, not the language's.
-- An annotation on a **record component** is distributed according to its `@Target`: it can
-  land on the field, the accessor, the constructor parameter, or several of these — and if it
-  targets none of them it does not compile. A validation annotation that targets only
+- An annotation on a **record component** follows target and declaration rules, including
+  `RECORD_COMPONENT` and `TYPE_USE`. Explicit accessors and normal canonical constructors
+  differ from generated members; read the retention reference before changing either.
+  A validation annotation that targets only
   `FIELD` will not be seen by a framework reading the constructor parameters. State the
   targets, and test that the constraint actually fires.
 - Annotations do not validate anything. Jakarta Bean Validation constraints run only when a
@@ -82,7 +89,7 @@ convention or magic string doing a job an annotation would do with compile-time 
   depends on framework indexing, scan scope and caching; native-image reachability depends on what
   build-time analysis can discover and supplied metadata. Prefer annotation processing or
   build-time generation when it provides equivalent semantics and its build/debugging cost is
-  acceptable. On JDK 24+, command-line `javac` runs processors only when annotation processing is
+  acceptable. On JDK 23+, command-line `javac` runs processors only when annotation processing is
   explicitly configured (for example `--processor-path`, `-processor`, or `-proc:full`); ensure
   the build tool declares processors rather than relying on classpath discovery.
 - Do not put secrets or environment-specific policy in annotation elements. Element values are
@@ -95,6 +102,14 @@ convention or magic string doing a job an annotation would do with compile-time 
 - Deprecate with `@Deprecated(since = "…", forRemoval = …)` plus `@deprecated` Javadoc saying
   what to use instead. `forRemoval = true` turns usage warnings into a stronger signal and is
   part of the API contract — see java-api-design.
+
+## Deliverable
+
+Identify the reader and call path, observed metadata/configuration, consequence, smallest
+correction and a check that confirms it. Distinguish static evidence from executed rejection
+tests. For a new annotation, supply its retention/target contract and consumer integration
+with positive and negative checks. Annotation presence or reflection visibility alone does
+not demonstrate enforcement.
 
 ## References
 

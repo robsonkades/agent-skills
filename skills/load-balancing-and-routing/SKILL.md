@@ -40,8 +40,8 @@ rate is uneven while connection counts are not.
    session, tenant or key lead to different behavior. Header/path routing and semantic retries
    require application parsing; ownership routing may require a key-aware client or directory.
 2. **Check the connection lifetime against the protocol.** HTTP/1.1 with keep-alive, HTTP/2
-   and gRPC all hold connections open; only HTTP/2 and gRPC multiplex, which is what makes an
-   L4 hop pin load. See `references/connection-lifetime-and-l4.md`.
+   and gRPC all hold connections open. Sequential HTTP/1.1 reuse also pins repeated work;
+   HTTP/2 multiplexing can amplify it. See `references/connection-lifetime-and-l4.md`.
 3. **Measure offered work, admitted work and cost before choosing an algorithm.** Normalize
    per-endpoint requests, active streams, bytes, CPU/service time, queueing and capacity.
    Connection counts alone do not mean equal load because connections carry different work.
@@ -58,7 +58,8 @@ rate is uneven while connection counts are not.
    endpoint/LB draining behavior must be verified. Budget arithmetic is
    `kubernetes-service-lifecycle`.
 7. **Verify with a rollout, not a review.** Run an open-loop client through a deploy and a
-   scale-up, and assert both the non-2xx count and the per-replica request-rate spread.
+   scale-up, recording HTTP errors, gRPC terminal statuses, resets/timeouts and per-replica
+   capacity-normalized work share. HTTP 200 alone does not establish RPC success.
 
 ## Decision block
 
@@ -87,6 +88,8 @@ Prefer routing by key (sharding-and-partitioning) instead when:
 
 ## Rules
 
+- Inspect deployed JDK, grpc-java transport/resolver, proxy and Kubernetes versions before
+  applying API or policy guidance. The Java example is partial; no stack upgrade is implied.
 - State the balancer's unit of work. L4 usually balances transport flows; L7 can balance
   requests or streams. Verify actual connection pooling and upstream routing rather than
   inferring it from a product label.
@@ -103,17 +106,18 @@ Prefer routing by key (sharding-and-partitioning) instead when:
   Graceful HTTP/2 GOAWAY plus jitter avoids synchronized reconnects, but recycling is a coarse
   mitigation and can increase handshake/TLS/connection pressure. Ensure clients re-resolve
   and retry only safe streams.
-- Round-robin distributes **requests**, not **work**. With heterogeneous request cost it
-  produces even request counts and uneven latency; that is not a broken balancer, it is the
+- Round-robin distributes configured routing units (requests at L7, flows at L4), not
+  **work**. With heterogeneous request cost it
+  can produce even routing-unit counts and uneven latency; that is not a broken balancer, it is the
   wrong metric being equalised.
 - Least-request and least-connections are not synonyms under multiplexing. Least-request can
   react to outstanding request count; that count still misses heterogeneous cost and can bias
   toward a freshly started/cold endpoint. Select weighted least-request, EWMA latency,
   power-of-two choices or round-robin from measured workload and locality constraints.
-- Global least-loaded is worse than random-two in a distributed balancer, and the reason is
-  staleness, not cost: every balancer sees the same slightly old view and sends the next
-  request to the same "idlest" replica, so they herd onto it together. Two random choices
-  plus a local comparison removes the shared signal that causes the herd.
+- Distributed least-loaded can herd when balancers share stale load information and choose
+  the same endpoint. Independent random candidate selection can reduce that correlation,
+  but power-of-two choices is not universally superior: weights, locality, signal quality
+  and the freshness/cost of global coordination determine the comparison.
 - **A health check is a timeout-based observation, not ground truth.** Aggressive thresholds turn a
   shared-dependency blip into a fleet-wide ejection: every replica fails at once, the balancer
   ejects them all, and there is no backend left. Cap ejection at a fraction of the upstream
@@ -151,7 +155,7 @@ Prefer routing by key (sharding-and-partitioning) instead when:
 
 - [Connection lifetime and why L4 pins load](references/connection-lifetime-and-l4.md) — how
   HTTP/2 and gRPC multiplexing defeats connection balancing, the metric comparison that
-  proves it, and the four fixes with their costs including the Java client and server
+  investigates it, and the four fixes with their costs including the Java client and server
   settings that matter. Read when request rate is skewed across replicas, when a scaled-up
   pod stays idle, or before putting gRPC behind an L4 hop.
 - [Routing modes](references/routing-modes.md) — the algorithms compared by the property each

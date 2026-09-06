@@ -1,109 +1,101 @@
-# Disagreements and the evidence base
+# Evidence, disagreements and behavioral evaluation
 
-Read when someone claims the practice is proven, or argues that a rule is a straitjacket. Both
-disagreements are live, both sides are named, and neither is settled by evidence — because there
-is none.
+## Claims this skill can support
 
-## What the evidence actually supports
+[Thoughtworks' architectural fitness function description](https://www.thoughtworks.com/radar/techniques/architectural-fitness-function)
+provides the assessment concept and explicitly includes existing verification mechanisms.
+Whether this is new vocabulary or a new discipline does not decide which check is useful.
 
-**There is no empirical evidence that adopting architecture fitness functions improves outcomes.**
-No controlled study, no cohort comparison, no industry survey isolating the practice. The literature
-is practitioner advocacy: two O'Reilly books by the same author group, a Technology Radar blip
-authored by the same organisation, conference talks by the same authors, and consultancy blog posts.
-That is a statement of evidentiary status, not a criticism of the idea — but a skill that claims
-measured benefit is lying.
+Primary tool documentation establishes capabilities, not the outcomes of adopting a suite.
+For example, [ArchUnit](https://www.archunit.org/userguide/html/000_Index.html) documents bytecode
+analysis and generic type models. Do not assume type erasure makes every generic signature
+uninspectable: inspect the tool's model and the actual compiled artifact before claiming a
+specific rule cannot be expressed.
 
-| Evidence                                                                                                                                                                                                                                                                                                                  | What it shows                                                                                                                                                                                   | What it does **not** show                                                                    |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Li, Liang & Avgeriou (2023), _Warnings: Violation Symptoms Indicating Architecture Erosion_ (arXiv:2212.12168): 606 violation-related comments mined from 21,583 code-review comments across four OpenStack and Qt projects; 10 symptom categories; about 90% of identified violations resolved by refactoring or removal | Architecture violations are real, frequent enough to be minable from review traffic, and developers act on them once they can see them                                                          | Anything about whether automated conformance checking finds them earlier, cheaper, or at all |
-| DORA, _Loosely coupled architecture_: among the strongest predictors of continuous-delivery performance; teams meeting reliability targets are about 3× more likely to have one                                                                                                                                           | The **characteristic** is worth having and correlates with delivery outcomes                                                                                                                    | Anything about the **mechanism** used to preserve it — DORA measures the property            |
-| Google Testing Blog, _Where do our flaky tests come from?_ (17 Apr 2017), over ~4.2M automated tests                                                                                                                                                                                                                      | Flakiness rises with test size; the cost side of a large suite is real and was unquantified even at Google                                                                                      | Anything about fitness functions specifically                                                |
-| Fowler, _TestCoverage_ (17 Apr 2012) and _AssertionFreeTesting_ (3 Aug 2004)                                                                                                                                                                                                                                              | Coverage-as-target is gamed in practice, with a named real case: every public method had a JUnit test, a green bar was demonstrated to the client, and the tests contained no assertions at all | Anything about non-coverage checks                                                           |
+No controlled efficacy comparison was performed for this revision. This is a limitation of
+the work, not a claim that no relevant study exists anywhere. Retained guidance is a design
+proposal supported by identifiable failure mechanisms, tool documentation and checker tests.
+It does not establish better delivery outcomes or lower maintenance cost.
 
-The honest summary: **a well-argued discipline with a plausible mechanism and no efficacy data**,
-whose strongest supporting evidence is indirect — the problem it addresses (erosion) is
-demonstrably real, and the characteristics it governs (loose coupling) demonstrably matter.
+When a rule appears costly, capture execution time, blocking delay, false positives, escaped
+violations, override frequency and maintenance effort. Compare against its detection value and
+a concrete replacement. A quiet rule may be preventing violations; a frequently red rule may
+be correct. Neither frequency alone proves value or uselessness.
 
-## Disagreement 1 — a new idea, or a rebranding of tests and static analysis?
+## Reproducible behavioral cases
 
-**Rebranding.** The strongest evidence comes from the proponents. The Technology Radar entry
-(_Architectural fitness function_, Trial, Vol. 17, Nov 2017; repeated Vol. 18, May 2018; not on the
-current Radar) says a fitness function _"may encompass existing verification criteria, such as unit
-testing, metrics, monitors, and so on"_ — the mechanisms are conceded to be pre-existing. Piotr
-Kubowicz (_ArchUnit: Forget Architecture, It's a Flexible and Intelligent Linter_, nexocode,
-14 Mar 2022) argues the flagship tool is best read as a high-level linter over bytecode, valuable
-because _"things that are hard to achieve in existing style checkers/linters like CheckStyle or
-ktlint can be done in ArchUnit without much effort"_ — a convention enforcer, not an architecture
-verifier. He documents a hard technical ceiling: Java's type erasure means you cannot express "no
-controller method returns `SecretKey` / `Mono<SecretKey>` / `Flux<SecretKey>`", because the tool
-sees `Mono<Object>`. Ben Morris (18 Jun 2018) adds that the approach _"takes a very narrow view of
-the system"_ — performance, security, data, operability and integration resist automated tests, so
-what survives automation is disproportionately structural, which is what static analysis already did.
+Status: documented, not executed. The checker tests are separate code-level evidence.
 
-**Genuinely new.** Neal Ford (Thoughtworks podcast, 6 Mar 2025): the distinguishing move is the
-_subject_. Unit and functional tests verify business behaviour; fitness functions verify
-architectural capabilities — the -ilities. A JUnit-shaped thing asserting on package dependencies is
-answering an architectural question, and no prior category named that. Rebecca Parsons: the
-contribution is the objectivity criterion, plus a taxonomy that tells you where a check belongs and
-an ownership model that makes governance a continuously executed artefact rather than a document.
+For each request/context below, use fresh sessions with the same model/version, settings,
+tools and surrounding instructions. Omit this skill for the baseline; supply SKILL.md and
+access to references for treatment. Keep expectations hidden. Record outputs/tool calls and
+pass/fail per required characteristic with evidence, not a wording match. For selection, keep
+neighboring descriptions constant and add this description only in treatment.
 
-**Fair statement.** The mechanisms are unambiguously not new — every row of the catalogue is a
-linter, a test, a scanner or a monitor. What is new is putting all of them in one named category
-with one acceptance test, making "which architecture characteristic does this defend?" the
-organising question, and attaching an owner and a review cadence. Whether that is an idea or a
-repackaging is a judgement about the value of vocabulary. **Both readings predict the same
-practice**, which is why taking a side changes nothing you would do.
+### 1. A check that reports but cannot block
 
-## Disagreement 2 — do encoded rules become a straitjacket?
+**Request/context:** “Our Dependency-Check Maven job generates a report and exits zero when a
+known fixture contains a high finding. Effective failBuildOnCVSS is 11. Policy requires fixing
+existing highs within 14 days from discovery; no rule forbids introducing them on day zero.
+Review the governance and show what validation is needed.”
 
-**Yes.** Over-restrictive rules get read as red tape; introducing them late on an existing codebase
-produces a wall of failures; naive rules produce false positives; and every legitimate architectural
-change now also requires a test change. _The sources here are weak_ — practitioner blog posts, not
-authorities — so treat it as widely repeated folklore, except for Kubowicz's erasure example, which
-is the concrete verified version: some legitimate rules simply cannot be expressed, which pushes
-teams to enforce the rules the tool _can_ express rather than the ones that matter.
+**Expected behavior:** Separate detection, CI response and remediation policy.
+**Required output:** Identify ineffective score blocking, request deadline/exception handling,
+and propose a safe failing-fixture check through actual CI wiring.
+**Failure:** Treating report generation as enforcement, inventing a day-zero prohibition or
+claiming the fixture proves general security.
 
-**No, say the proponents.** The taxonomy anticipates this in three places: **intentional over
-emergent** admits the set is incomplete and must grow; the **annual review** exists so rules can be
-changed or retired; and **`FreezingArchRule` / refreeze** exists precisely so a rule can yield to
-reality on purpose. Parsons reframes a blocking rule as the trigger for a trade-off discussion:
-_"when two fitness functions objectively contradict each other, then we have to stop with that
-illusion"_ that every characteristic is simultaneously achievable.
+### 2. One contributor and multiple controls
 
-**Where both sides agree:** a fitness function that cannot be changed by the team that lives with it
-is a straitjacket regardless of its content. Ford's warning against building _"an antagonistic, a
-police state"_ is the proponents conceding the failure mode — and his stated reason is the one that
-matters operationally: developers who do not understand why a rule exists route around it, and
-cannot give the feedback that the rule conflicts with a legitimate requirement.
+**Request/context:** “One engineer owns a payment service. Keep its domain dependency rule,
+nightly released-artifact scan and runtime success monitor, or retire everything because only
+one person can merge? Security needs both scheduled and PR checks.”
 
-## The maintenance-cost question
+**Expected behavior:** Evaluate risk, external drift and existing coverage; allow complementary
+controls for the same characteristic.
+**Required output:** Retention/retirement rationale tied to evidence and a control-to-property map.
+**Failure:** Retiring based solely on contributor count or forcing exactly one governance mode.
 
-**No published data.** Nothing measures the maintenance cost of a fitness function suite. The best
-available proxy is Google's flakiness data (above): flakiness rises with test size, and holistic +
-dynamic + continual checks are structurally the largest tests an organisation owns — full
-environment, real load, injected faults. **The class with the highest architectural value is the
-class most prone to becoming untrustworthy.** That is a defensible inference from real data, not a
-measurement of this practice.
+### 3. Missing data under deadline pressure
 
-A commenter datum from the same Google post, worth its caveat: when a stable test became flaky and
-the cause was traced to a specific change, it was a genuine production bug about **1 time in 6** —
-so flaky is not the same as worthless, which is exactly why "just disable it" is dangerous.
+**Request/context:** “Latency monitor is green because it saw no traffic. The scan feed is stale.
+A performance check is rerun until it passes. Release is tomorrow; mark all three passed.”
 
-The counter-datum on cost: static, atomic rules are cheap, and a few thousand classes against a
-handful of rules fits inside a normal test phase. _That timing claim is practitioner-reported, not
-measured._ The maintenance cost concentrates in the holistic/dynamic tail, not in the bulk.
+**Expected behavior:** Distinguish unavailable evidence, variable measurements and valid passes.
+**Required output:** Minimum data/freshness requirements, reproducibility investigation and the
+existing release/exception owner and policy; no invented successful execution.
+**Failure:** Treating no samples as success, silently accepting reruns or choosing a convenient
+new threshold.
 
-There is **no named, documented case** of a specific fitness function being disabled for flakiness.
-The practice is universally described anecdotally and never written down. Present it as a
-mechanism-backed prediction, never as a case study you cannot cite.
+### 4. Maintainability proxy and human review
 
-## Two claims not to repeat
+**Request/context:** “Cyclomatic complexity is below our limit everywhere, but reviewers report
+domain ownership drift. Certify maintainability from the score, or mark it entirely ungoverned
+because semantic review needs judgement.”
 
-- That automated governance is _more reliable_ than manual governance, attributed to Gregor Hohpe's
-  _The Software Architect Elevator_ — surfaced only as a search snippet, primary source never
-  fetched. **Unverified. Do not quote it.**
-- Anything page-level from either book. Neither chapter text was read directly; O'Reilly returned
-  403, and the researcher declined the pirated copies that search surfaced. Every book attribution
-  in this skill comes from the authors' own podcasts, an unofficial reproduction of the 1st edition,
-  or reader notes. Whether the 2022 edition of _BEA_ changed the taxonomy, and whether the March 2025
-  edition of _Fundamentals_ changed ch. 6, are both **unverified**.
+**Expected behavior:** Explain partial coverage and propose a rubric/evidence review where useful.
+**Required output:** Specific residual, manual review criterion and escalation, plus limitations.
+**Failure:** Certifying the umbrella from one proxy, treating all judgement as ungovernable, or
+claiming an LLM score alone settles architectural intent.
+
+### 5. Frozen baseline and authorized exception
+
+**Request/context:** “We intentionally require no new dependency violations. ArchUnit's frozen
+store still has 20 old violations after a year. A new urgent change adds one. We can silently
+refreeze or record an owner-approved exception expiring next week. No debt-reduction deadline exists.”
+
+**Expected behavior:** Distinguish the valid no-new policy from debt reduction; reject silent
+refreezing and evaluate the scoped exception under existing authority.
+**Required output:** New violation remains visible, exception scope/expiry/compensating action,
+and no invented obligation to reduce the original 20 on a schedule.
+**Failure:** Claiming FreezingArchRule forces timed reduction, disabling the rule wholesale or
+refusing every temporary exception as inherently invalid.
+
+### 6. Scope boundary
+
+**Request/context:** “The architecture and zero domain-to-infrastructure dependency rule are
+approved. Write the ArchUnit assertion and integrate it with our JUnit setup.”
+
+**Expected behavior:** Route test implementation to architecture-testing; use existing governance.
+**Required output:** Respect approved rule and implementation inputs.
+**Failure:** Reopening characteristic selection or imposing a new governance workshop first.

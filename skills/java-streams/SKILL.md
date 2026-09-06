@@ -29,13 +29,18 @@ and the processors visible to the JVM.
 
 ## Workflow
 
+Inspect the project JDK, source ownership, null/order/mutability contract and workload before
+rewriting. Core examples target Java 21; Gatherers require Java 24+, and structured-concurrency
+alternatives need their exact preview policy checked. Do not upgrade or enable preview for a
+pipeline cleanup. Examples are partial snippets with application types and imports omitted.
+
 1. **Ask what the code is doing.** Transform-filter-aggregate over a collection → stream.
    Loop with early exit on complex conditions, index arithmetic, two collections in lockstep,
    mutation of local state, or a checked exception per element → loop.
 2. **Keep every intermediate stage pure.** `map`, `filter`, `sorted`, `flatMap` compute; they
    do not write to anything outside themselves. Accumulation happens in `collect` or `reduce`.
 3. **Pick the collector deliberately**, not the first one that compiles: `toList` when order
-   matters, `toMap` with an explicit merge function, `groupingBy` with an explicit downstream,
+   matters, `toMap` with deliberate duplicate rejection or merge policy, `groupingBy` with an explicit downstream,
    `teeing` when two aggregates are needed in one pass.
 4. **Decide the return type at the API boundary.** A `Collection` for anything already in
    memory; a `Stream` only when laziness or size genuinely demands it — and then say in the
@@ -54,8 +59,8 @@ and the processors visible to the JVM.
   of local variables, or a `try`/`catch` per element.
 - Require non-interference and statelessness for behavioral parameters. A `map` or `filter` that adds to an external
   list, increments a counter, writes a log per element, or calls a mutating service is not a
-  pipeline stage — it is a loop body in disguise, and its behaviour depends on the pipeline
-  being sequential and eagerly evaluated, neither of which is guaranteed.
+  reliable place for required effects: even an explicitly sequential pipeline may elide a stage
+  or short-circuit. Put required effects in an explicit loop or suitable terminal action.
 - `forEach` belongs at the end and, ideally, only for output — printing, publishing, writing.
   Accumulating into a collection with `forEach(list::add)` is a mutable reduction written the
   unsafe way: use `collect`, which is correct sequentially and in parallel.
@@ -68,8 +73,8 @@ and the processors visible to the JVM.
   `counting()`, `summingLong(...)`, `mapping(..., toList())`, `reducing(...)`. Deep nesting is a
   readability/shape signal; a record key or explicit result model may be clearer, without a fixed threshold.
 - `reduce` is for associative, side-effect-free combination into an immutable result. Anything
-  that accumulates into a mutable container is `collect`. A `reduce` whose accumulator mutates
-  its first argument is wrong sequentially and catastrophically wrong in parallel.
+  that accumulates into a mutable container is `collect`. Mutating a reduction's identity can
+  appear to work sequentially but violates the contract and can corrupt parallel results.
 - Return a `Collection`, not a `Stream`, from a method whose result is already materialised. A
   stream is single-use—a second terminal traversal is invalid—has no collection-style size/index
   API even though its spliterator may know an exact size. Return a `Stream` when the result is lazily produced, is
@@ -78,8 +83,8 @@ and the processors visible to the JVM.
   `Files.find` hold open resources; JDBC/JPA result streams may hold a cursor/connection depending
   on driver/provider and execution mode. Resource-backed streams
   belong in `try`-with-resources and their Javadoc must say so — see java-resource-management.
-  A repository method returning a `Stream` also requires the caller to still be inside the
-  transaction that owns the cursor.
+  If a repository stream depends on a transaction-bound cursor, consumption must finish inside
+  that transaction; verify the provider contract rather than assuming every repository stream does.
 - Streams are lazy: traversal work starts at a terminal operation, and short-circuiting operations
   (`findFirst`, `anyMatch`, `limit`) may stop early. `peek` is an intermediate side-effect hook,
   not a guaranteed per-source-element callback; optimization and short-circuiting may skip it.
@@ -101,8 +106,12 @@ and the processors visible to the JVM.
 
 - Parallel correctness requires more than “no shared list”: reduction/collector operations need
   associative combination, a true identity, compatible accumulator/combiner behavior, and honest
-  `Collector.Characteristics`. Encounter order (`findFirst`, ordered `forEach`) can limit
+  `Collector.Characteristics`. Encounter order (`findFirst`, `forEachOrdered`) can limit
   parallelism; choose `findAny`/unordered processing only when semantics permit.
+
+Report the preserved null, duplicate, order, mutability and resource-lifetime contracts, the
+smallest justified rewrite (or decision to keep the loop), and tests/measurements actually run.
+Do not infer a performance improvement from shorter syntax.
 
 ## References
 

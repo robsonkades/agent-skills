@@ -28,13 +28,14 @@ guessing visible, so that later phases can be trusted to know which is which.
 ## Workflow
 
 1. **Read the request literally.** Write down what it says, in its own words, before
-   interpreting it. Interpretation is a separate line in the ledger.
+   interpreting it. Quote only the material phrases; interpretation is a separate line.
 2. **Split every statement into one of four classes.** Facts, assumptions, unknowns, decisions
    — the classification rules are below and the entry format is in
    `references/ledger-format.md`.
 3. **Give every fact a source.** A file path with a line, a command and its output, or the
-   message the user actually sent. A statement with no source is an assumption, however
-   confident you are.
+   message the user actually sent. A claim with no supporting evidence stays unresolved;
+   classify it as an assumption only if provisionally adopted. Record relevant revision/environment/time and the scope the source
+   supports; code or a comment is not proof of current production behaviour.
 4. **Give every assumption a falsifier.** What observation would show this is wrong? An
    assumption nobody can contradict is not an assumption, it is a hidden requirement.
 5. **Give every unknown an impact.** HIGH, MEDIUM or LOW, defined by what changes if the answer
@@ -42,22 +43,29 @@ guessing visible, so that later phases can be trusted to know which is which.
 6. **Name the ambiguities separately.** An ambiguity is a phrase with two readings that lead to
    different work. Record both readings; do not choose.
 7. **State the expected outcome** in observable terms: what a user, an operator or a caller can
-   do after this feature exists that they cannot do now.
+   do after this feature exists that they cannot do now. Trace it to stated intent; if missing,
+   record the gap rather than inventing a goal or acceptance criterion.
 8. **Preserve input identity and authority.** Name the Product/Engineering or Tech Feature revision
    being examined. A decision records its accountable role; the current participant is not
    automatically its owner.
+9. **Check the ledger before handoff.** Resolve duplicate entries, preserve conflicting
+   sources as separate scoped claims, and verify every impact/falsifier is meaningful. Reuse
+   authority and answers already established in the supplied context; missing lifecycle IDs
+   do not prevent a provisional ledger with source links and explicit unmapped items.
 
 ## The four classes
 
-| Class          | Test                                                 | Must carry            |
-| -------------- | ---------------------------------------------------- | --------------------- |
-| **FACT**       | Someone can check it right now without asking anyone | Its source            |
-| **ASSUMPTION** | You supplied it, and it is probably right            | What would falsify it |
-| **UNKNOWN**    | Nobody in this conversation knows it                 | Its impact            |
-| **DECISION**   | A choice was made, and an alternative existed        | Owner, source, status |
+| Class          | Test                                                  | Must carry             |
+| -------------- | ----------------------------------------------------- | ---------------------- |
+| **FACT**       | Supplied evidence establishes this scoped proposition | Source and scope       |
+| **ASSUMPTION** | An unverified interpretation is provisionally used    | Basis and falsifier    |
+| **UNKNOWN**    | Available context does not establish an answer        | Consequence and impact |
+| **DECISION**   | A choice was made, and an alternative existed         | Owner, source, status  |
 
-The classes are exclusive. A statement that is both plausible and unverified is an
-ASSUMPTION — the word "obviously" in front of it does not promote it.
+Classify each atomic proposition, splitting compound sentences. "The user requested X" can
+be a fact while "X already works in production" remains unknown. A proposed decision stays
+proposed until its authority/status is evidenced; do not imply confidence merely because
+an interpretation is convenient. A sourced claim may later be superseded or disproved.
 
 ## Decision rules
 
@@ -71,13 +79,16 @@ THEN it is a FACT about the code, sourced to path:line —
      it is not a fact about what the feature must do.
 
 IF the request uses "should", "probably", "I think" or "we usually"
-THEN the statement is an ASSUMPTION even when the user wrote it.
+THEN interpret its role: "the API should reject duplicates" can state desired behaviour;
+     "it probably already rejects them" is an unverified system claim. Preserve the wording
+     and authority instead of classifying by a keyword alone.
 
-IF a number appears without a unit, a window or a source ("fast", "high volume", "soon")
-THEN it is an UNKNOWN, not a requirement.
+IF a target is vague ("fast", "high volume", "soon") or lacks relevant units/window/basis
+THEN preserve the stated goal and record its missing threshold/unit/window as UNKNOWN;
+     do not invent a measurable acceptance condition.
 
-IF an unknown's two possible answers lead to the same implementation
-THEN its impact is LOW — record it and move on.
+IF plausible answers change no material behaviour, acceptance, security, operation or design
+THEN its impact may be LOW; explain the consequence rather than guessing from code scope.
 
 IF a phrase has two readings that produce different work
 THEN it is an ambiguity: record both readings and stop resolving it here.
@@ -88,10 +99,11 @@ THEN it is an ambiguity: record both readings and stop resolving it here.
 - **Never promote an assumption by repetition.** A statement restated in the plan is still the
   assumption it was in the ledger, and the plan must say so.
 - **Do not answer unknowns here.** Closing them from the repository belongs to the context
-  phase; asking about them belongs to the clarification phase. Mixing the two loses the
-  distinction between what was found and what was told.
-- **Do not rank or filter.** A ledger that records only the interesting unknowns cannot be used
-  to argue that nothing important is missing.
+  phase; asking about them belongs to the clarification phase. Incorporate answers and evidence
+  already supplied without pretending they require rediscovery, and label their provenance.
+- **Keep material uncertainty visible.** Merge duplicates and omit unrelated speculation;
+  do not hide an inconvenient issue because it is low priority. Impact classification is
+  not a decision about question order or whether a gap may be accepted.
 
 ## Output
 
@@ -102,6 +114,7 @@ Goal               <what becomes possible>
 Facts              <each with source>
 Assumptions        <each with falsifier>
 Unknowns           <each with impact HIGH | MEDIUM | LOW>
+Decisions          <owner, source and proposed/accepted/superseded status>
 Constraints        <stated by the request; not inferred>
 Dependencies       <systems, teams or work this feature waits on>
 Ambiguities        <phrase, reading A, reading B>
@@ -110,6 +123,7 @@ Input revisions    <Product/Engineering or Tech Feature revision IDs>
 Accepted gaps      <GAP-* or none; never convert an unknown silently>
 ```
 
-Carry the ledger forward unchanged. Later phases append resolutions and stable identifiers; they do
-not rewrite it, because
-the record of what was unknown at the start is what makes a later surprise explicable.
+Preserve original entries and identifiers while recording dated resolutions, corrections and
+supersession. Keep the current status easy to find, with links to the supporting revision;
+history must remain available without making stale claims look current. Hand off material
+unknowns to context/clarification without solving or prioritizing them here.

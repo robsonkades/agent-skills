@@ -28,6 +28,11 @@ Which parameters you feed it, and which assumption you have quietly broken, is t
 
 ## Workflow
 
+Inspect the project's compiler release, resolved executor/framework configuration and runtime
+before applying Java examples. The lifecycle snippet is partial Java 8+ code; management/JFR
+observations are scoped to JDK 25 and need verification on the deployed build. No model choice
+authorizes changing Java, dependencies or runtime configuration.
+
 1. **Write down the Kendall notation you are claiming** — `A/S/c` at minimum, plus `K` if
    the system rejects and `N` if the population is fixed. Naming the arrival distribution,
    the service distribution and the number of servers forces each assumption into the open
@@ -73,7 +78,9 @@ Which parameters you feed it, and which assumption you have quietly broken, is t
   universal factor; isolation, affinity and head-of-line effects are competing objectives.
 - Do not confuse Kingman (G/G/1, carries `c_a`) with Pollaczek-Khinchine (M/G/1, which
   assumes `c_a = 1` and has no such term). Setting `c_a = 1` in Kingman reproduces P-K. For a
-  pool with `c_s ≠ 1` use Allen–Cunneen — Kingman's factor on the Erlang C wait.
+  shared homogeneous pool, an Allen–Cunneen-style mean approximation is one candidate when
+  arrival/service assumptions and held-out validation support it; non-unit `c_s` alone does
+  not select a model.
 - Kingman is a heavy-traffic mean approximation, not a general upper bound. Validate it over the
   load range; no `c_s` converts an exponential percentile formula into a general-service tail.
 - Retries, hedges, health checks and fan-out are visits/arrivals at their respective boundaries.
@@ -91,9 +98,10 @@ Which parameters you feed it, and which assumption you have quietly broken, is t
 - Priority conservation results require their stated Poisson, service, discipline and
   work-conserving assumptions. Priority moves risk between classes and can starve low classes;
   validate per-class SLOs and aging/admission policy.
-- M/D/1 and bimodal service distributions have **no** simple closed-form wait CDF. The
-  exponential service case is the only one here with one; measure the percentiles empirically
-  for the others.
+- The exponential tail formulas here do not apply to M/D/1 or arbitrary bimodal service.
+  Specific non-exponential models can have analytical distributions, but two moments alone
+  cannot select one. Use a justified distributional solution, numerical method, simulation
+  or measurement for their tail decisions.
 
 ## Required model card
 

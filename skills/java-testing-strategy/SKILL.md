@@ -24,8 +24,13 @@ decides which one you get: the suite that stays green while production is broken
 boundary mocked, the mocks agreeing with themselves — and the suite nobody trusts, slow and
 flaky enough that a red build means "run it again" rather than "stop".
 
-A test earns its place by making a specific failure impossible to ship unnoticed. A test
+A test earns its place by detecting a named failure in the exercised conditions. A test
 that cannot fail for a reason you can name is cost without cover.
+
+This strategy has no language-specific Java minimum. Before choosing tooling, inspect the
+project's compiler release, runtime, resolved Spring/testing versions, CI services and
+existing tests. Do not upgrade them to match an example. Without suite timings or a
+reproduction, state a proposed selection and its evidence gap, not a verified diagnosis.
 
 ## Workflow
 
@@ -41,8 +46,13 @@ that cannot fail for a reason you can name is cost without cover.
 4. **Price it**: feedback latency, probability of flaking, and how tightly it binds to
    structure that will change. A test that must be rewritten by every refactoring is a
    change detector, and it will be deleted under deadline pressure.
-5. **Run it and watch it fail for the stated reason** before trusting it. A test never
-   observed red proves only that it compiles.
+5. **Check detection**, preferably against the unfixed bug or a controlled defect. A passing
+   test alone does not establish that it detects the intended failure. If a red run is
+   unavailable, report that limitation; do not alter production merely to manufacture one.
+
+Return the risk, chosen scope, decisive assertion or reproduction, uncovered boundary and
+how it is covered or accepted, plus commands/results actually observed. A short paragraph
+is enough for a single change.
 
 ## Rules
 
@@ -50,26 +60,26 @@ that cannot fail for a reason you can name is cost without cover.
   often and slow ones are not — nothing more. Where integration tests run in seconds
   (container reuse, a real engine started once per suite), lean on them; where they take
   minutes, do not. Decide from your measured suite time, not from the picture.
-- Every mocked boundary is a claim that must be verified somewhere else, once: schema and
+- Every mocked boundary carries assumptions to verify at an appropriate real boundary: schema and
   query behaviour by an integration test against the real engine, HTTP shape by a contract
-  test, serialisation by a round-trip test. An unverified mock is an assumption written in
+  test, serialisation by expected wire fixtures as well as round trips. An unverified mock is an assumption written in
   green.
-- Do not test the framework, the language, or the mapping tool. Asserting that a getter
-  returns what a setter set, or that an annotation is present, tests nothing that can break
-  in production without the framework itself breaking.
-- One end-to-end test per critical journey. They are the slowest, flakiest and least
-  diagnostic tests you own; their value is proving the parts are wired together at all, and
-  that value does not multiply with count.
+- Test application configuration and mapping through observable behavior; missing validation,
+  security or mapping annotations can break production while the framework works correctly.
+  Skip trivial getter/setter tests unless the accessor enforces a meaningful contract.
+- Keep the smallest end-to-end portfolio covering distinct critical risks. One case can
+  suffice for a simple journey; different authorization or payment paths may require more.
 - A bug gets a regression test at the narrowest level that reproduces it, written before the
   fix and observed failing. If no level below end-to-end reproduces it, that is a finding
   about the design, not a licence to skip the test.
-- Coverage is a diagnostic, never a gate target. An uncovered branch is a question worth
-  asking; a mandated percentage produces assertion-free tests that execute code and verify
-  nothing. Read the uncovered lines instead of the number.
+- Coverage diagnoses unexecuted code; it does not measure assertion strength. Keep existing
+  gates unless their change is in scope. A gate may detect lost coverage, but hitting its
+  percentage is insufficient: inspect uncovered risks and whether assertions detect defects.
 - Never test private methods directly. Behaviour unreachable through the public surface is
   either dead or evidence the class boundary is wrong (java-cohesion-coupling).
-- Slow, flaky and quarantined are three names for "deleted". Fix it or delete it
-  deliberately; a `@Disabled` test with no owner is a comment that costs a build step.
+- Diagnose slow or flaky tests before deleting coverage. Temporary quarantine needs an
+  owner, repair deadline and explicit risk; it is not a pass. A slow valuable test may belong
+  in a scheduled suite with a defined release policy.
 
 ## References
 

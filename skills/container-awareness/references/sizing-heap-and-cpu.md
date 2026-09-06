@@ -4,14 +4,16 @@
 
 | Criterion                                    | Fixed `-Xmx` / `-Xms`                             | `MaxRAMPercentage` / `MinRAMPercentage`                          |
 | -------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------- |
-| One image across pods of different sizes     | Needs one image or config per size                | Scales automatically with `limits.memory`                        |
-| Predictability of native headroom            | High — you know exactly what is left outside heap | Low — 25% of 512Mi and 25% of 8Gi leave very different absolutes |
+| One image across pods of different sizes     | Same image with per-size runtime configuration    | Scales heap from detected memory at startup                      |
+| Predictability of native headroom            | Fixed maximum heap; remaining charges still vary  | Absolute remainder varies with container size                    |
 | Limits changed while JVM is running          | Heap maximum does not automatically recompute     | Percentage was resolved at startup; restart is normally required |
-| Native footprint already measured and stable | Preferred — size from the NMT figure              | Acceptable, but revalidate the real headroom                     |
+| Native footprint already measured and stable | Size using reconciled process/cgroup measurements | Acceptable, but revalidate the real headroom                     |
 
-Working rule: start with `MaxRAMPercentage` where pod sizes vary or a vertical autoscaler
-is in play; move to fixed `-Xmx`/`-Xms` once NMT has measured the native footprint and you
-want maximum predictable heap. Never set `-Xmx` numerically equal to `limits.memory`.
+Choose percentage sizing when startup memory-relative sizing is useful; choose fixed `-Xmx`
+when the heap budget is explicit. Neither provides automatic adaptation to in-place limit
+changes. Set `-Xms` separately from the maximum, based on startup/footprint needs; fixed
+maximum sizing does not require equal initial size. If `-Xmx` is explicit, do not expect
+`MaxRAMPercentage` to override it. Never set `-Xmx` numerically equal to `limits.memory`.
 
 ## Memory headroom procedure
 
@@ -33,9 +35,11 @@ function of `Xmx`.
 
 1. Measure deltas of `nr_periods`, `nr_throttled` and `throttled_usec` over a timestamped
    peak-load window.
-2. Use `Δnr_throttled / Δnr_periods` for frequency and
-   `Δthrottled_usec / elapsed_usec` for denied time, then correlate with runnable demand and
-   latency. There is no universal percentage threshold.
+2. Use `Δnr_throttled / Δnr_periods` for the fraction of active enforcement periods affected,
+   only when the denominator is positive. Inspect `Δthrottled_usec` separately: it can
+   aggregate per-CPU throttled durations and is not a bounded fraction of wall time or a
+   direct measure of CPU work denied. Handle counter resets/recreated cgroups. Correlate with
+   runnable demand, usage and latency; there is no universal percentage threshold.
 3. Before changing collector, check the simpler hypothesis: `limits.cpu` is too low for the
    parallelism the JVM is already trying to use, with GC threads, JIT compiler threads and
    application threads competing for the same small quota.
@@ -53,19 +57,19 @@ Before a new Deployment ships:
       policy; declaring one caps runaway CPU but can worsen tails.
 - [ ] `-Xmx` or `MaxRAMPercentage` chosen from the criteria above, not copied from another
       service.
-- [ ] If `-Xmx` is fixed, an NMT measurement exists that supports the `limits.memory` value.
+- [ ] Correlated heap/NMT/process/cgroup measurements support the memory budget for either sizing mode.
 
 During an OOM incident:
 
 - [ ] Local `oom_kill` delta correlated with this container's terminated status and time;
-      otherwise investigate runtime, signals and node pressure.
+      kernel OOM context distinguishes local/ancestor limits from node pressure.
 - [ ] Heap usage at the moment of the kill known: near `Xmx`, or well below it (which
-      points at native footprint).
+      suggests charges outside used heap, including committed resident heap, cache or other processes).
 - [ ] NMT summary collected close to the incident, not only at boot.
 
 When measuring throttling:
 
-- [ ] Counters read from the correct cgroup v2 path, with no `/cpu/` subdirectory.
+- [ ] Counters read from the resolved target cgroup and relevant ancestors, using version-specific fields/units.
 - [ ] Measurement window correlated by timestamp with the client-side latency spikes.
 - [ ] The "limits.cpu is simply too small" hypothesis explicitly ruled out.
 

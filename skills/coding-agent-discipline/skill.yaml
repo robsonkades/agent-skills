@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: coding-agent-discipline
-version: 1.0.0
+version: 1.0.1
 description: >-
   The reporting and restraint rules for an AI agent changing someone's codebase: never claiming
   a result that was not observed, saying which commands ran and what they printed, reporting

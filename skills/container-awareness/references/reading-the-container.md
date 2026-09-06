@@ -1,7 +1,9 @@
 # Reading the container
 
-Every command below is run **inside** the container. Numbers taken from the host answer a
-different question.
+Shell examples assume Linux tools inside the target container. A new `java` process only
+probes its own binary, flags and cgroup; use the application's binary/options, including
+environment-injected options, or inspect the live JVM. A debug container may have a different
+cgroup. `jcmd` requires a compatible tool, target attach access and the actual JVM PID.
 
 ## One question, one command
 
@@ -9,14 +11,14 @@ different question.
 | -------------------------------------- | ---------------------------------------------------------------------------------- |
 | Is container support on?               | `java -XX:+PrintFlagsFinal -version 2>&1 \| grep -w UseContainerSupport`           |
 | How many CPUs did the JVM detect?      | `java -XshowSettings:system -version 2>&1 \| grep -i "effective cpu count"`        |
-| Same, from JDK 17 or older             | `Runtime.getRuntime().availableProcessors()` from application code                 |
+| Count used by the live JVM             | `Runtime.getRuntime().availableProcessors()` from application code                 |
 | What did the JVM read from the cgroup? | `java -Xlog:os+container=trace -version 2>&1 \| grep -iE "container\|cpu\|memory"` |
 | What heap did ergonomics resolve to?   | `java -XX:+PrintFlagsFinal -version 2>&1 \| grep -w MaxHeapSize`                   |
 | What are the RAM percentage defaults?  | `java -XX:+PrintFlagsFinal -version 2>&1 \| grep -E "RAMPercentage"`               |
 | Which flags is a live process using?   | `jcmd <pid> VM.flags -all`                                                         |
-| What is the RSS made of?               | `jcmd <pid> VM.native_memory summary`                                              |
+| What native memory does NMT track?     | `jcmd <pid> VM.native_memory summary` (requires startup enablement; not RSS)       |
 
-Two parsing traps in that table:
+Parsing traps in that table:
 
 - `grep -w` is not optional. Without it, `MaxHeapSize` also matches `SoftMaxHeapSize`.
 - The `PrintFlagsFinal` line is `<type> <name> = <value> {tags}` — the value is field `$4`,
@@ -24,7 +26,7 @@ Two parsing traps in that table:
 - `grep -i` on the container trace is not optional either: the real output mixes cases
   (`[os,container]`, `Memory Limit is:`).
 
-On the baseline the RAM percentage defaults read:
+On JDK 17–25 HotSpot the RAM percentage defaults read (verify the actual build):
 
 ```
 double InitialRAMPercentage = 1.562500  {product}   # JDK <= 25 only
@@ -45,15 +47,20 @@ JVM switches between the two is internal and not exposed as a flag — measure w
 v2 is a single unified hierarchy: no per-controller subdirectory, and several fields were
 renamed. A v1 command run on a v2 host simply finds no file.
 
-| Quantity           | cgroups v1                                      | cgroups v2                                                  |
-| ------------------ | ----------------------------------------------- | ----------------------------------------------------------- |
-| Memory limit       | `memory/memory.limit_in_bytes`                  | `memory.max`                                                |
-| Memory in use      | `memory/memory.usage_in_bytes`                  | `memory.current`                                            |
-| OOM evidence       | controller/version-specific event files         | `memory.events.local` → `oom` / `oom_kill`                  |
-| CPU quota + period | `cpu/cpu.cfs_quota_us`, `cpu/cpu.cfs_period_us` | `cpu.max` as `"$QUOTA $PERIOD"`                             |
-| Throttle counters  | `cpu/cpu.stat` → `throttled_periods`            | `cpu.stat` → `nr_periods`, `nr_throttled`, `throttled_usec` |
+| Quantity           | cgroups v1                                                           | cgroups v2                                                  |
+| ------------------ | -------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Memory limit       | `memory/memory.limit_in_bytes`                                       | `memory.max`                                                |
+| Memory in use      | `memory/memory.usage_in_bytes`                                       | `memory.current`                                            |
+| OOM evidence       | controller/version-specific event files                              | `memory.events.local` → `oom` / `oom_kill`                  |
+| CPU quota + period | `cpu/cpu.cfs_quota_us`, `cpu/cpu.cfs_period_us`                      | `cpu.max` as `"$QUOTA $PERIOD"`                             |
+| Throttle counters  | `cpu/cpu.stat` → `nr_periods`, `nr_throttled`, `throttled_time` (ns) | `cpu.stat` → `nr_periods`, `nr_throttled`, `throttled_usec` |
 
-All v2 paths are directly under `/sys/fs/cgroup/`:
+The paths above are schematic. Resolve `/proc/<pid>/cgroup` against the appropriate
+mount root and mount point from `/proc/<pid>/mountinfo`, in the same namespace. For v1,
+controller mounts may be combined or differently named. For v2, mount-root examples below
+apply only when it exposes the target's cgroup as its root. Otherwise use the resolved
+subdirectory. Inspect visible ancestor limits as well; `memory.max=max` or `cpu.max=max ...`
+at the leaf does not establish unlimited effective resources.
 
 ```bash
 cat /sys/fs/cgroup/memory.max                 # bytes, or the literal "max"
@@ -63,16 +70,19 @@ cat /sys/fs/cgroup/cpu.max                    # "$QUOTA $PERIOD", microseconds
 cat /sys/fs/cgroup/cpu.stat | grep -E "nr_periods|nr_throttled|throttled_usec"
 ```
 
-`limits.cpu: "2"` becomes `cpu.max = "200000 100000"` — 200 ms of CPU time per 100 ms
-period.
+With a configured 100 ms period, `limits.cpu: "2"` commonly becomes
+`cpu.max = "200000 100000"` — 200 ms of CPU time per period. Read both fields; the period
+is configurable. Fractional quota is CPU-time capacity, whereas JVM processor counts are
+integers (typically rounded up, bounded by affinity/cpuset). A count of 1 can still throttle
+heavily under a 500m quota. `ActiveProcessorCount` changes ergonomics, not the kernel quota.
 
 ## From outside the pod
 
 ```bash
-kubectl exec <pod> -- jcmd 1 VM.flags -all
-kubectl exec <pod> -- jcmd 1 VM.native_memory summary
-kubectl exec <pod> -- cat /sys/fs/cgroup/memory.current
-kubectl exec <pod> -- cat /sys/fs/cgroup/memory.stat
+kubectl exec <pod> -c <container> -- jcmd <jvm-pid> VM.flags -all
+kubectl exec <pod> -c <container> -- jcmd <jvm-pid> VM.native_memory summary
+kubectl exec <pod> -c <container> -- cat <resolved-cgroup-directory>/memory.current
+kubectl exec <pod> -c <container> -- cat <resolved-cgroup-directory>/memory.stat
 ```
 
 ## Enabling Native Memory Tracking
@@ -84,8 +94,19 @@ jcmd <pid> VM.native_memory summary                  # JVM-tracked native view, 
 
 ## Version notes worth checking before trusting a reading
 
-- Container detection appeared experimentally in JDK 9 (JDK-8146115);
-  `UseContainerSupport` has been on by default since JDK 10.
-- **Complete** cgroups v2 support landed in JDK 15 (JDK-8230305). On JDK 11–14 against a v2
-  host, the JVM can fall back to host values in some scenarios.
-- `-XshowSettings:system` is Linux-only and JDK 19+.
+- `UseContainerSupport` defaults on in supported Linux HotSpot builds since JDK 10;
+  older update trains have backports, so inspect the exact vendor/update.
+- Cgroups v2 support landed in JDK 15 (JDK-8230305), with backports including 11.0.16.
+  Detection fixes continued afterward; major version alone is not sufficient evidence.
+- `-XshowSettings:system` is Linux-only and already documented in JDK 17, not a JDK 19 feature.
+- CPU-share-based processor sizing changed in JDK 19 with backports to update trains
+  (JDK-8281181/JDK-8281571). Check runtime behavior before diagnosing a requests/limits mismatch.
+
+## Sources
+
+- [JDK 17 launcher options](https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html)
+- [JDK 11.0.16 fixes, including cgroups v2](https://www.oracle.com/java/technologies/javase/11-0-16-bugfixes.html)
+- [JDK 26 initial heap change](https://inside.java/2026/03/02/jdk-26-rn-ops/)
+- [Kernel cgroup v2 paths, hierarchy and OOM counters](https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html)
+- [CFS bandwidth control and v1 statistics](https://docs.kernel.org/scheduler/sched-bwc.html)
+- [HotSpot CPU shares change](https://bugs.openjdk.org/browse/JDK-8281571)

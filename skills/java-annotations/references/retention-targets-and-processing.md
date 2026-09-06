@@ -8,7 +8,7 @@
 | `CLASS` (default) | yes                    | **no**                | bytecode tools, weavers, static analysers reading class files   |
 | `RUNTIME`         | yes                    | yes                   | anything a framework or your own code reflects over at runtime  |
 
-The default is `CLASS`, and that default is the single most common reason a hand-written
+The default is `CLASS`, and that default is one reason a hand-written
 annotation "does nothing": the framework calls `getAnnotation(...)` and gets `null`, with no
 error anywhere. Declare the retention explicitly on every annotation you define.
 
@@ -20,6 +20,9 @@ annotation".)
 
 ## Targets, and the record-component case
 
+Java blocks here are partial declarations: annotation imports/static imports are omitted,
+and `Money` is a domain placeholder.
+
 ```java
 @Retention(RUNTIME)
 @Target({ FIELD, PARAMETER })          // no METHOD: this must not be put on an accessor
@@ -27,8 +30,8 @@ public @interface Sensitive { }
 ```
 
 `@Target` is a constraint on where the annotation may be written, and therefore on where a
-reader can find it. Omitting it allows every declaration context, which sounds permissive and
-in practice produces annotations sitting where nothing reads them.
+reader can find it. Omitting it permits declaration contexts except type parameters, but not
+type-use contexts; it can still allow annotations where the consumer never looks.
 
 Record components are the case that surprises people. An annotation written on a component:
 
@@ -36,8 +39,8 @@ Record components are the case that surprises people. An annotation written on a
 public record Payment(@Sensitive String cardNumber, Money amount) { }
 ```
 
-is _propagated_ to every declaration the annotation's `@Target` allows — the private field, the
-accessor method, the canonical constructor parameter, and the record component itself. The
+is retained on the component for `RECORD_COMPONENT` and propagated to eligible generated
+members: the private field, implicit accessor and derived constructor parameters. The
 consequences:
 
 - If the annotation targets only `METHOD`, it lands on the accessor and a framework reading
@@ -47,6 +50,11 @@ consequences:
 - If it targets none of the applicable contexts, the code does not compile — which is the
   helpful case.
 - `RECORD_COMPONENT` is its own target, readable via `RecordComponent.getAnnotation`.
+- `TYPE_USE` alone is legal; inspect `getAnnotatedType()` and the relevant annotated
+  return/parameter types instead of declaration `getAnnotation()`.
+- Explicit accessors receive no component annotation propagation. Normal explicit canonical
+  constructors use their own parameter annotations; compact constructors still derive
+  parameters and eligible annotations from the record header.
 
 Choose targets from the declarations the actual consumer inspects. Adding all four does not make a
 constraint universally enforced and can cause duplicate validation when a framework inspects more
@@ -107,8 +115,8 @@ validation, mapping and dependency metadata towards processors and build-time tr
   to be `open` (or qualified `opens`); exported public API has different access rules. Failures may
   throw access exceptions rather than silently omit metadata, so test the modular runtime.
 
-Since JDK 24, command-line `javac` does not implicitly run processors discovered only from the
-ordinary class path: configure processing explicitly (`--processor-path`, module path,
+Since JDK 23, command-line `javac` does not implicitly run processors discovered only from the
+ordinary class path: configure processing explicitly (`--processor-path`, `--processor-module-path`,
 `-processor`, `-proc:full`/`only`, or the build tool's processor dependency mechanism). This both
 stabilizes builds and limits execution of processor code during compilation.
 
@@ -118,10 +126,22 @@ An annotation whose effect is invisible is a maintenance hazard: the reader of t
 cannot tell that something happens. Two mitigations that cost little:
 
 - **Fail loudly at startup** when an annotation is present but its precondition is not
-  (a `@Scheduled` method on a bean that is not proxied, an annotated class the processor did
-  not process). A container that validates its own annotation usage at boot converts a silent
+  (scheduling infrastructure is disabled, or required generated code is absent). `@Scheduled`
+  registration uses a bean post-processor and does not itself require an AOP proxy.
+  A container that validates its own annotation usage at boot converts a silent
   runtime no-op into a startup failure.
 - **Make the behaviour visible in telemetry.** If an annotation causes a retry, a transaction
   or a cache lookup, that should appear as a span or a metric, so the behaviour is discoverable
   from an operational view rather than only from the source. See distributed-tracing-design and
   metrics-and-cardinality.
+
+## Primary sources
+
+- [JLS 17 record members and constructors](https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.10.3)
+  specifies propagation and explicit-member exceptions.
+- [JLS 17 annotation interfaces](https://docs.oracle.com/javase/specs/jls/se17/html/jls-9.html#jls-9.6.4.1)
+  specifies target, retention and inheritance contracts.
+- [JDK 23 release notes: annotation processing](https://www.oracle.com/java/technologies/javase/23-relnote-issues.html)
+  documents explicit processing configuration; use the compiler version, not merely `--release`.
+- [Spring scheduling](https://docs.spring.io/spring-framework/reference/integration/scheduling.html)
+  documents scheduling infrastructure; check the project's Spring version when applying it.

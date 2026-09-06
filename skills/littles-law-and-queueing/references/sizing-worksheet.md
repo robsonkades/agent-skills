@@ -30,21 +30,43 @@ L_k      ≈ λ_k × R_k
 ```
 
 `L_k` is average work holding or waiting for resource `k`; it is not the configured worker or pool
-maximum. Include multiplicity: if one transaction visits the database twice, `λ_db≈2X` before
-retries/failures. Measure checkout-to-return residence for connections, not just SQL execution.
+maximum. Match its residence boundary: acquisition-request-to-return includes waiting and
+holding, while checkout-to-return predicts checked-out connections only. Include multiplicity:
+if one transaction visits the database twice, `λ_db≈2X` before retries/failures. SQL execution
+alone omits other time holding the connection.
 
 If estimates disagree, check window edges/inventory change, success-only metrics, retries, fan-out,
 clock endpoints and aggregation before adding a “safety factor”.
+
+For a wall-clock window `[a,b)` with tracked admission/departure events:
+
+```text
+N_end = N_start + admitted_in_window − departed_in_window
+mean L = sum(overlap of each request's residence interval with [a,b)) / (b−a)
+```
+
+Include requests already present at `a` and those still present at `b`. Full residence times
+of only requests completing inside the window generally do not reproduce that area, even
+when start/end counts happen to match. An admission cohort is a different measurement: track
+its eventual terminal outcomes and outstanding members. Client timeout is an observed client
+departure, but server work may continue; do not remove it from server occupancy until that
+boundary actually releases it. An unfinished server residence is censored at observation end,
+not a completed duration equal to the client timeout. See `latency-statistics`.
 
 ## 3. Establish resource capacity
 
 For `m` equivalent units and mean demand `D` per completion:
 
 ```text
-offered resource load = X × D                  # CPU-seconds/s = cores, for CPU
+realised resource demand rate = X × D          # CPU-seconds/s = cores, for CPU
 utilisation per unit  = X × D / m
 throughput at target utilisation U* = mU* / D
 ```
+
+Here `X` is the matching realised flow, not all offered requests. For capacity projection use
+target admitted rates and corresponding demands. Account separately for failed/cancelled
+classes and background work, for example `sum(X_class × D_class)` plus background CPU;
+success-only throughput with success-only demand does not explain total utilisation.
 
 `U*` is a decision derived from latency/failure headroom, not a universal 0.75. Effective CPU
 capacity must reflect cgroup quota/cpuset and competition from GC, JIT, kernel and other workloads;
@@ -107,9 +129,10 @@ unbounded queue delay and memory retention. `Executors.newFixedThreadPool` docum
 shared queue; it is safe only when workload/admission bounds prevent uncontrolled growth.
 
 ```java
+// Partial configuration: derive workers/queueCapacity; supply factory and rejection policy.
 ThreadPoolExecutor executor = new ThreadPoolExecutor(
-    24,
-    24,
+    workers,
+    workers,
     0L,
     TimeUnit.MILLISECONDS,
     new ArrayBlockingQueue<>(queueCapacity),
@@ -134,6 +157,14 @@ HTTP `429` means rate limiting; `503` more often represents temporary capacity u
 Protocol semantics, idempotency and `Retry-After` determine the correct response. Cancellation must
 remove or cheaply skip stale queued work.
 
+`CallerRunsPolicy` runs the task directly only while the executor is not shut down. On shutdown
+it discards without throwing; `submit()` can return a Future that never completes. A policy
+that drops/coalesces work must explicitly resolve its completion/cancellation contract. Also
+test many simultaneous callers: their inline tasks bypass the executor's maximum worker count.
+Use a separate shared permit when the downstream requires a strict total concurrency limit.
+Timed admission requires an explicit deadline-aware admission mechanism; do not implement it
+by blindly inserting into `getQueue()`, bypassing executor lifecycle checks.
+
 Virtual threads remove the need to pool threads merely because they are expensive, but not the
 need to bound downstream permits, queued work and CPU demand. Parked virtual threads consume memory
 and retain context; mounted runnable work still competes for carriers. See
@@ -153,6 +184,7 @@ and retain context; mounted runnable work still competes for carriers. See
 ## Sources
 
 - [Oracle JDK 25 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+- [CallerRunsPolicy shutdown behavior](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.CallerRunsPolicy.html)
 - [Oracle JDK 25 `Executors`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executors.html)
 - [Oracle JDK 25 `BlockingQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/BlockingQueue.html)
 - [Oracle JDK 25 `ThreadMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadMXBean.html)

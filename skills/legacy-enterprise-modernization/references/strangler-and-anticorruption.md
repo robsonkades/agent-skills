@@ -23,6 +23,8 @@ route by flag — with no infrastructure at all.
 
 ## Routing a slice
 
+Partial Spring application snippets below omit constructor injection and domain types.
+
 ```java
 @Component
 class OrderPricingRouter implements PricingPort {
@@ -45,7 +47,9 @@ Requirements that make this safe:
 - Route at the smallest key that preserves consistency and supportability. Per-tenant/order routing
   reduces blast radius but can split workflows or related data; a global/region switch may be safer
   when state cannot straddle implementations.
-- **The flag is data, not a deploy.** Rolling back must not require a release.
+- Prefer an operational routing switch where feasible, but test data compatibility too:
+  old code must understand state written after cutover. After incompatible writes, reverting
+  a flag or binary is not a rollback plan; require reverse synchronization or forward repair.
 - **Someone owns each case.** "Which implementation served this request?" must be answerable
   from the logs, always.
 
@@ -61,7 +65,11 @@ public Money priceFor(OrderId orderId) {
             divergences.record(orderId, legacyResult, modernResult);   // sampled, not logged raw
         }
     } catch (RuntimeException e) {
-        divergences.recordFailure(orderId, e);            // never fails the request
+        try {
+            divergences.recordFailure(orderId, e);
+        } catch (RuntimeException telemetryFailure) {
+            // Best-effort diagnostics must not replace the authoritative result.
+        }
     }
     return legacyResult;
 }
@@ -80,8 +88,12 @@ Before switching this on, decide and write down:
 Without those four, parallel run produces a stream of alerts nobody actions, and the
 migration stalls because nobody will sign off the switch.
 
-Note the shape: the shadow call is wrapped so it can never fail the request, and divergences
-are recorded (sampled, structured) rather than logged at volume.
+This synchronous sketch isolates ordinary shadow/diagnostic exceptions, not hangs, resource
+exhaustion or JVM-fatal failures. Use it only for bounded read-only computation within the
+request's spare budget. For expensive work, use separately bounded replay/shadow execution
+with an overload/drop policy. Suppress external effects (charges, messages, emails) or use an
+isolated sink; invoking both production write paths is not safe shadowing. Compare equivalent
+inputs/state and control clocks/randomness before interpreting divergences as defects.
 
 ## The anti-corruption layer
 
@@ -150,20 +162,20 @@ goes.
 The step that realises the benefit, and the one that gets postponed.
 
 ```text
-1. Prove disuse       Instrument the legacy path. Zero traffic for a
-                      defined period INCLUDING the periodic paths
-                      (month-end, year-end, the quarterly report).
+1. Establish disuse   Combine instrumented traffic with caller/owner and
+                      recovery contracts, including evidence for periodic
+                      paths (month-end, year-end, quarterly reports).
 
-2. Disable            Make the legacy path fail loudly rather than
-                      deleting it. Keep it for one release cycle. This
-                      surfaces the caller nobody knew about.
+2. Disable            Use a bounded cohort/observation period, alerts and
+                      a tested recovery path. Do not deliberately break
+                      unknown critical callers to discover them.
 
 3. Delete             Code, jobs, configuration, monitoring, credentials,
                       firewall rules, the runbook page.
 
-4. Data               Archive per the retention requirement, then drop
-                      the tables. Usually the longest wait, and it should
-                      have a date rather than a condition.
+4. Data               Archive per retention/recovery requirements and verify
+                      restore. Drop only after consumer, ownership and
+                      rollback gates pass; a target date does not replace them.
 
 5. Decommission       The server, the licence, the vendor contract. This
                       is where the money is, and it needs someone
@@ -171,8 +183,8 @@ The step that realises the benefit, and the one that gets postponed.
 ```
 
 **Step 1's periodic caveat is not pedantry.** A legacy path with no traffic for three weeks
-may still be the month-end invoicing run. The observation window must cover the longest
-business cycle the code participates in.
+may still be the month-end invoicing run. Cover relevant cycles with observation or
+controlled replay and owner/contract evidence for rare paths not observed live.
 
 ## Sequencing the whole programme
 

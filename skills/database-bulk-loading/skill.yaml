@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: database-bulk-loading
-version: 1.0.0
+version: 1.0.1
 description: >-
   Designing and diagnosing high-volume database ingestion from the JVM across PostgreSQL,
   MySQL, and SQL Server: JDBC batching and statement rewrite, native COPY/LOAD DATA/Bulk Copy,

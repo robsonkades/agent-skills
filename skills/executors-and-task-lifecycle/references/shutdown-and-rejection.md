@@ -30,18 +30,24 @@ semantics without automatically retrying into overload.
 
 A wrapper can record started/terminal transitions and rethrow so executor semantics remain visible:
 
+Partial sketch: `installContext` returns an AutoCloseable scope that restores the previous context
+on close (including caller-runs and nested submissions), not a blanket clear. The instrumentation
+methods below must be bounded and non-throwing by their adapter contract; otherwise isolate their
+failures before using this wrapper so telemetry cannot prevent work or replace its exception.
+Context installation must roll back partially installed state if it fails.
+
 ```java
 Runnable supervised(TaskId id, Runnable task) {
     return () -> {
-        metrics.started(id.kind());
-        try {
-            task.run();
+        try (ContextScope scope = installContext(id)) {
+            metrics.started(id.kind());
+            try {
+                task.run();
+            } catch (RuntimeException | Error failure) {
+                metrics.failed(id.kind(), classify(failure));
+                throw failure;
+            }
             metrics.completed(id.kind());
-        } catch (Throwable failure) {
-            metrics.failed(id.kind(), classify(failure));
-            throw failure;
-        } finally {
-            clearContext();
         }
     };
 }
@@ -49,24 +55,41 @@ Runnable supervised(TaskId id, Runnable task) {
 
 Avoid high-cardinality IDs in metrics and avoid catching/continuing from fatal errors without policy.
 If using `afterExecute`, understand Future-wrapped failures and protect hook failures.
+`ContextScope.close()` restores state without checked exceptions; test success, failure and inline
+caller-runs restoration. This wrapper records body outcomes, not Future cancellation or rejection:
+tasks that never start need an admission/owner observation path.
 
 ## Bounded shutdown protocol
 
 ```java
 executor.shutdown();
-boolean done = executor.awaitTermination(grace.toMillis(), TimeUnit.MILLISECONDS);
-if (!done) {
-    List<Runnable> neverStarted = executor.shutdownNow();
-    handleNeverStarted(neverStarted);
-    if (!executor.awaitTermination(forceGrace.toMillis(), TimeUnit.MILLISECONDS)) {
-        reportResidualWork();
+try {
+    if (!executor.awaitTermination(grace.toMillis(), TimeUnit.MILLISECONDS)) {
+        handleNeverStarted(executor.shutdownNow());
+        if (!executor.awaitTermination(forceGrace.toMillis(), TimeUnit.MILLISECONDS)) {
+            reportResidualWork();
+        }
+    }
+} catch (InterruptedException interrupted) {
+    try {
+        handleNeverStarted(executor.shutdownNow());
+    } finally {
+        Thread.currentThread().interrupt();
     }
 }
 ```
 
-This is a skeleton. Preserve interrupt status/outer cancellation correctly; do not block the only
-thread needed for tasks to finish. `handleNeverStarted` must match durability/idempotency. After the
-second grace, process/container escalation may be the only bound.
+This is a skeleton for an owning lifecycle method that records/restores interruption rather than
+propagating it. It must not block a worker needed for termination. Validate nonnegative durations
+and budget both waits plus recovery/telemetry under the outer deadline; helper calls must themselves
+be bounded. An interrupted wait takes the cancellation path without claiming termination.
+
+`shutdownNow` may return FutureTask wrappers and does not guarantee those returned Futures are
+cancelled. The owner must associate wrappers with logical tasks, settle their Futures and choose
+persist/requeue/drop independently; do not serialize or resubmit wrappers blindly. Capture the
+drained list durably or in an owned recovery handoff before a fallible helper can lose it. Running
+tasks can continue after interruption: do not close their dependencies merely because grace expired.
+After the second grace, process/container escalation may be the remaining bound.
 
 ## Deployment sequence
 
@@ -83,7 +106,8 @@ telemetry flush within budget
 process termination/restart
 ```
 
-A pod termination grace shorter than application drain guarantees forced loss. A liveness endpoint
+A pod termination grace shorter than unfinished application drain risks forced termination;
+durability/idempotency determine whether work is lost or replayed. A liveness endpoint
 that fails during drain can trigger premature kill; readiness and liveness have different roles.
 
 ## Authoritative references

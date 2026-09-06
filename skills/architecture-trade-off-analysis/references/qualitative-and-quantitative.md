@@ -1,169 +1,156 @@
-# Qualitative and Quantitative Analysis
+# Qualitative and quantitative analysis
 
-Which mode is honest for the question in front of you, and what each one is allowed to claim.
+Read when building a comparable option set, choosing evidence, reviewing a scorecard or
+designing an experiment. Qualitative reasoning, numerical models and measurements can
+support the same decision; they are not mutually exclusive verdicts.
 
-## What "qualitative" means here
+## Target compatibility
 
-Not hand-waving. _Hard Parts_ ch. 15 uses it in the strict sense — _"measuring the quality of
-something rather than the quantity"_ — and the ratings in the book's own tables are backed by a
-survey of a large set of representative architectures, not by opinion in a room.
+The analysis method has no Java runtime baseline and includes no executable Java example.
+For a Java-dependent candidate, inspect the target project's compiler release, toolchains,
+resolved dependencies, CI and runtime images before marking compatibility as passed.
+Distinguish the author's or prototype's JDK from the supported deployment environment.
+Check version-specific primary documentation for API, framework and JVM requirements,
+including preview/incubator status and flags where relevant. Missing evidence remains
+unknown. An upgrade can be a separately costed candidate if in scope; this skill does not
+authorize changing JDKs, dependencies or runtime flags to make an alternative feasible.
 
-The claim about why it is usually the only option available:
+## Comparable options and coverage
 
-> "You may have noticed that virtually none of our trade-off tables are quantitative—based on
-> numbers—but are rather qualitative—measuring the quality of something rather than the quantity,
-> which is necessary because two architectures will always differ enough to prevent true
-> quantitative comparisons."
+Define each candidate at the decision boundary: behavior offered, components required,
+ownership/deployment, state and failure handling. Comparing a queue product with an entire
+integration platform is not automatically forbidden, but compare the **complete solutions**
+needed to meet the same requirement, including missing capabilities and their costs.
 
-> "We recommend you hone the skill of performing qualitative analysis, as few opportunities for
-> true quantitative analysis exist in architecture."
+Keep three different tests separate:
 
-The quotation makes a strong methodological claim, not a physical impossibility. Competing
-architectures can be compared numerically under a controlled workload and cost model; what cannot be
-claimed without further evidence is equivalent implementation maturity or broad external validity.
-Distinguish “measurable in this experiment” from “universally better.”
+| Test          | Question                                                                 | Adjustment                                                                    |
+| ------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| Comparability | Do candidates solve the same scoped problem under the same obligations?  | Complete missing pieces or separate decisions at different abstraction levels |
+| Distinctness  | Are these competing alternatives or compatible dimensions of one design? | Remove duplicates; model viable combinations or stages explicitly             |
+| Coverage      | Is a credible feasible alternative missing that could affect selection?  | Include it or explain the exclusion; do not claim exhaustive market coverage  |
 
-## The route from qualitative to quantitative
+“Mutually exclusive” means nonoverlapping alternatives, not simply items of the same
+category. “Collectively exhaustive” is a coverage aspiration within a defined space.
+MECE language does not require every branded product, a mandatory hybrid, or a predetermined
+vendor. A hybrid can be a distinct complete alternative even though it shares components
+with others. Check current product capability only where it could affect this decision.
 
-The authors' preferred route is experimentation, not a more elaborate matrix:
+## Build criteria before rating
 
-> "Testing with objective outcomes allows our trade-off analyses to go from qualitative to
-> quantitative—from speculation to engineering."
+Split **mandatory obligations** from **preferences**. Record a source and acceptance test
+for each obligation; unknown compliance is not a pass. Keep constraints visible even if all
+surviving options meet them. Lack of differentiation is not lack of importance.
 
-> "I've always said that testing is the engineering rigor of software development."
+For each ranking criterion, define direction, scope and evidence. For example:
 
-So a number becomes available when you **build the thing and test it** — a spike, a load test, a
-fitness function that runs continuously. The number is then about your workload, your data and
-your deployment, and it is valid for exactly those.
+- “Release independence” can mean whether a specific change requires another team's
+  coordinated release; identify the change and compatibility assumptions.
+- “Operating cost” needs a workload, time horizon and included resources; migration,
+  parallel operation, recovery, support and exit costs may matter as much as steady state.
+- “Latency” needs the operation, start/end events, percentile, load and treatment of failures.
 
-## Choosing between the modes
+Do not count the same benefit repeatedly under synonyms such as agility, deployability
+and time-to-market without explaining their distinct value. Correlated observations are
+not themselves proof of duplicate value or causality. Preserve the mechanism explaining
+why a design improves one outcome while worsening another.
 
-```text
-The dimension that separates the options is a quantity
-        AND you can build a version small enough to measure it
-        AND being wrong costs more than the spike
-                → measure it. Anything else is guessing with a table.
+A qualitative cell should carry an observation or reason, not just “High.” If using words,
+anchor them: for the stated change, “independent” means no coordinated consumer release,
+“coordinated” means at least one is required, and “unknown” means evidence is missing.
+Prefer uncertainty over rating an unknown candidate as average or bad.
 
-The dimension that separates the options is a quantity
-        BUT measuring it requires building both architectures
-                → decide whether the value of information justifies representative
-                  prototypes. If not, model domain scenarios and state that the
-                  answer remains ordinal. If yes, control workload, maturity and
-                  environment and report uncertainty and validity limits.
+Inspect dominance among feasible options: if one is no worse on all material criteria and
+better on at least one, do not invent a downside to force a trade-off. Check uncertain
+values and omitted costs before calling it dominant. If neither dominates, expose the
+preference question; several independent questions may remain, not one artificial binary.
 
-The options differ on several dimensions at once, none dominant
-                → qualitative. A number on one dimension would decide the
-                  question by accident of what was measurable.
+## When weighted scoring is defensible
 
-Someone asks for a benchmark and cannot say what result would change
-their mind
-                → the benchmark is theatre. Get the decision rule first.
+Do not convert Low/Medium/High to 1/2/3 and assume equal value intervals. A weighted model
+can be useful when the decision-maker agrees on value scales, weights and allowed
+compensation; it expresses preferences rather than objective architectural truth.
 
-The numbers exist but come from the vendor's configuration
-                → they are the advocate's dimensions. See bias-and-evidence.md.
-```
+For an additive model, establish meaningful within-criterion value differences and
+justify combining them. Weights should reflect the value of a defined swing over each
+criterion's range, not an unqualified claim that “security is twice as important.”
+Avoid counting one benefit twice. Test preference independence; correlated performance
+alone neither proves nor disproves it. If preferences depend strongly on combinations,
+use explicit scenarios or a more suitable model.
 
-## When a number is dishonest
+Keep hard constraints outside compensation. Show sensitivity to plausible weights, input
+ranges and uncertain estimates; disclose rank reversals and stakeholder disagreement.
+A narrow total-score lead with unstable ranking is not a robust winner.
+See the [UK multi-criteria analysis manual, sections 5.4 and 6.2](https://assets.publishing.service.gov.uk/media/5a790545e5274a2acd18b975/1132618.pdf).
+This is a conditional alternative to ordinal comparison, not a requirement to score every ADR.
 
-- **It measures the prototype.** A spike has none of the production data volume, none of the
-  concurrent load, none of the operational surface. Say which of the three it lacks.
-- **It over-fits one workload.** A number valid for the modelled workload is quoted for years
-  after that workload changed. Date the number in the record.
-- **It was chosen because it was measurable.** The dimension that decides the answer and the
-  dimension that is easy to instrument are frequently not the same one.
-- **It ends an argument it did not answer.** The most common failure: the benchmark is real, the
-  question it settles is not the question that was being argued.
+## Decide whether more evidence is worth obtaining
 
-## Modelling relevant domain cases
+Name the uncertain input and the range of plausible answers. Ask which answers would
+change feasibility, selection or a material risk response. Compare the expected usefulness
+of resolving it with collection effort, delay and lost options. A narrow feasibility
+experiment may suffice; building two complete production systems is not the default.
 
-The technique that converts a generic comparison into a decision.
+If no plausible result changes the decision, skip the experiment as selection evidence
+unless it answers a separate operational validation need. If material uncertainty cannot
+be reduced in time, retain conditional branches or choose an evidenced reversible action;
+do not relabel a guess as quantitative analysis.
+[NASA's decision-analysis guidance](https://www.nasa.gov/reference/6-8-decision-analysis/)
+ties effort to uncertainty, decision sensitivity and information cost, and allows closely
+ranked alternatives to be reported to the decision-maker.
 
-> "Architects shouldn't make decisions in a vacuum, without relevant drivers that add value to the
-> specific solution. Adding those domain drivers back to the decision process can help the
-> architect filter the available options and focus on the really important trade-offs."
+Numbers need not come only from newly built prototypes. Existing telemetry, documented
+pricing with a workload model, capacity bounds and calibrated simulations can help.
+Label model inputs and validity limits; a precise calculation from uncertain assumptions
+is still uncertain. Detailed workload/benchmark engineering is outside this skill.
 
-- A **scenario** is a change applied to both candidate topologies to see which dimensions move —
-  "update credit card processing", "add a new payment type", "use several payment types in one
-  payment". It is not a user story and not a use case.
-- Seek disconfirming and boundary scenarios, including one that could invert the apparent winner.
-  Stop when additional material scenarios are unlikely to change the decision enough to justify
-  their analysis cost; failure to find an inversion is not evidence that none exists.
-- Scenarios are also the cheap substitute for building: _"scenario analysis is one of an
-  architect's most powerful tools to allow iterative design without building whole systems."_
+## Minimum experiment contract
 
-The full run of the payment example is in `worked-analysis.md`.
+Before running a comparison, specify:
 
-## The out-of-context trap
+1. **Decision rule:** hypothesis, metric and threshold/range that changes the recommendation.
+   Distinguish success acknowledgement, completed work and failure rate.
+2. **Population:** representative workload and payload mix, concurrency/arrival process,
+   data size, warm/cold state, dependencies and failure/recovery scenarios.
+3. **Comparable treatment:** equivalent required semantics, resource/cost basis and
+   implementation maturity. If one prototype lacks durability or error handling, the speed
+   difference does not establish a production advantage.
+4. **Execution and uncertainty:** versions/configuration, measurement window, repeated
+   observations where necessary, variation and known confounders. Do not claim confidence
+   intervals or statistical significance without an appropriate method.
+5. **Interpretation:** raw evidence/artifacts, results against the decision rule, what remains
+   unmeasured and what can be generalized. A broken harness or inadequate measurement can
+   leave the question inconclusive. A valid observation that a candidate violates the
+   requirement is adverse evidence for that configuration and scenario; do not discard it
+   merely because the candidate failed. Establish whether the candidate or the experiment
+   failed before deciding what the result supports.
 
-> "When assessing trade-offs, architects must make sure to keep the decision in context;
-> otherwise, external factors will unduly affect their analysis. Often, a solution has many
-> beneficial aspects, but lacks critical capabilities that prevent success. Architects need to make
-> sure they balance the correct set of trade-offs, not all available ones."
+Equal hardware can answer a latency question at fixed resources; equal service objectives
+can answer a cost question. State which comparison is intended. For asynchronous designs,
+include queue delay, completion rate and backlog/recovery cost as well as submission time.
+Use bounded representative environments; record unavailable tooling or data instead of
+inventing an executed result.
 
-The mechanism is a matrix that is right in general and wrong here — the shared-service example
-loses five of its eight dimensions once the real context is stated, and the apparent winner no
-longer holds. Mark
-Richards teaches the summed version of it as a named anti-pattern, the **Out-of-Context Scorecard
-AntiPattern** (Developer to Architect, lesson 146, 10 Oct 2022).
+A prototype is not dishonest merely because it is incomplete. It is useful when the
+mechanism tested is valid for the question and omitted costs/behavior remain explicit.
+Vendor measurements are evidence to inspect, not automatically invalid or transferable:
+compare their configurations, semantics and workload with yours.
 
-The counter-intuitive payoff, verbatim: _"finding the correct narrow context for decisions allows
-architects to think about less, in many cases simplifying design."_
+## Scenarios and stopping
 
-## The static coupling checklist
+Include important normal operations, change cases, failure/recovery and growth boundaries.
+A user story or incident can supply a scenario; make stimulus, context, expected response
+and acceptance measure explicit. Apply equivalent scenarios to each candidate and trace
+state transitions and dependencies rather than assigning generic topology ratings.
 
-For one service or quantum, enumerate:
+SEI's [ATAM report](https://www.sei.cmu.edu/documents/629/2000_005_001_13706.pdf) uses
+quality-attribute scenarios to expose architectural risks, sensitivity points and tradeoff
+points. A design parameter affecting one response is a sensitivity point; one affecting
+multiple qualities can expose a tradeoff. This skill uses those concepts for focused
+comparison; it does not claim that completing a small matrix constitutes a full ATAM.
 
-1. Operating system and container dependencies.
-2. Dependencies delivered through transitive dependency management — frameworks, libraries.
-3. Persistence dependencies — databases, search engines, cloud environments.
-4. Architecture integration points required to bootstrap.
-5. Messaging infrastructure required to communicate with other quanta.
-
-_"No generic tool exists to build this because each architecture is unique."_ Dynamic coupling is
-the separate question of how they call one another at runtime: communication (sync/async),
-consistency (atomic/eventual), coordination (orchestrated/choreographed).
-
-## MECE, as two independent tests and a currency check
-
-Borrowed by the authors from _"the technology strategy world"_; the McKinsey/Minto attribution is
-common but is not what the book credits.
-
-| Test                        | Question                                                | Typical failure                               |
-| --------------------------- | ------------------------------------------------------- | --------------------------------------------- |
-| **Mutually exclusive**      | Are these the same category of thing?                   | comparing a message queue to an entire ESB    |
-| **Collectively exhaustive** | Have we covered the space with no holes?                | evaluating queues without Kafka on the list   |
-| **Currency**                | Has a new capability arrived since we drew up the list? | a two-year-old option set defended as settled |
-
-Goal: _"to cover a category space completely, with no holes or overlaps."_ The slide version is three
-words: **compare like things.** Most real matrices fail exclusivity, not exhaustiveness.
-
-## Terminology, used as the authors use it
-
-| Term                           | Loose usage            | What it actually means here                                                                                                                                         |
-| ------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Trade-off**                  | "downside", "cost"     | a pair — _"an advantage and disadvantage"_. A list of only costs is not a trade-off analysis                                                                        |
-| **Coupling**                   | vague badness          | _"if someone changes X, will it possibly force Y to change?"_ — nothing more, and not inherently bad                                                                |
-| **Qualitative**                | "no rigour"            | measuring quality rather than quantity, evidenced rather than felt                                                                                                  |
-| **Best practice**              | "recommended default"  | the objection is epistemic — _"I can just turn my brain off … it brooks no compromise"_ (Ford). A default with stated exit conditions is not what is being attacked |
-| **"Least worst"**              | pessimism              | an impossibility claim: "best" would require maximising factors that move against each other                                                                        |
-| **Prioritise characteristics** | rank-order the list    | rejected as _"a fool's errand"_; the sanctioned move is an unordered top three                                                                                      |
-| **Trade-off table**            | scorecard to be summed | read for correlations between dimensions, never totalled                                                                                                            |
-| **Architecture** (Fowler)      | the diagram            | _"things that people perceive as hard to change"_ — and that perception is attackable                                                                               |
-
-## Whose vocabulary is whose
-
-If you present a dimension checklist, mark its provenance. Verified by full-text search of both
-books:
-
-| Term                           | Ford/Richards vocabulary?                                                                                                                    |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| coupling, performance          | yes, pervasive                                                                                                                               |
-| deployability, testability     | yes                                                                                                                                          |
-| cost                           | weak — appears as a driver in examples, not a named characteristic                                                                           |
-| operational burden             | no — one hit in _Hard Parts_, none in _Fundamentals_ 1st ed.                                                                                 |
-| cognitive load                 | no — zero hits in both; Team Topologies territory                                                                                            |
-| reversibility, irreversibility | no — zero hits in both. It is Fowler's, "Who Needs an Architect?", _IEEE Software_ July/Aug 2003, crediting Enrico Zaninotto for the framing |
-
-Their own position makes this matter: the book's four dimensions came from surveying hundreds of
-architectures, not from a canon, and the instruction is to build your own list from your own
-entanglements. Borrowed terms are fine; borrowed terms passed off as the authors' are not.
+Seek plausible disconfirmation, not a guaranteed inversion. Stop when material scenarios
+are covered and additional investigation is unlikely to alter the decision enough to
+justify its cost. If the choice remains sensitive, say to what. Fixing one architectural
+dimension can constrain later choices, so carry those consequences forward and revisit
+the earlier choice if the resulting combination is infeasible.

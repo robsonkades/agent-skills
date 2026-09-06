@@ -6,15 +6,17 @@
 
 | Measure                                                | Why it is on the list                                       |
 | ------------------------------------------------------ | ----------------------------------------------------------- |
-| p50 / p95 / p99 at the target rate                     | the only comparison that survives the migration             |
+| p50 / p95 / p99 at the target rate                     | compare user latency under controlled demand                |
 | In-flight concurrency (per endpoint)                   | tells you what the new limits must allow                    |
 | Thread count, by pool                                  | the implicit limits, enumerated                             |
 | Connection-pool utilisation and wait time              | whether the database is already the bottleneck              |
 | Downstream error and latency rates                     | so their regression is attributable                         |
 | Retained heap after comparable recovery, and GC phases | suspended stacks/state are heap; this is the before picture |
 
-Run it at the real arrival rate. A baseline collected at saturation measures the queue, not
-the service.
+For open traffic, include target arrival rate and useful outcomes; saturation sweeps additionally
+expose capacity/overload. Queueing is part of response time, so identify the measured boundary
+rather than treating a saturation measurement as invalid. For closed traffic, preserve user
+population and think time and report achieved throughput.
 
 ## Stage 1 — Inventory the implicit limits
 
@@ -23,14 +25,20 @@ One row per executor, per HTTP client, per anything with a size:
 ```text
 | Pool / setting                  | Size | What it was really limiting        | Replacement          |
 |---------------------------------|------|------------------------------------|----------------------|
-| server.tomcat.threads.max       | 200  | total in-flight requests           | edge shedding at 250 |
+| server.tomcat.threads.max       | 200  | synchronous worker execution       | measured ingress cap |
 | paymentClientPool               | 24   | concurrency at the payment API     | Semaphore(24)        |
 | reportExecutor (single thread)  | 1    | ORDERING of report generation      | keep as is           |
-| hikari maximumPoolSize          | 20   | database concurrency               | unchanged            |
+| hikari maximumPoolSize          | 20   | borrowed connections               | unchanged            |
 | batchExecutor                   | 8    | memory: 8 × 200 MB working set     | Semaphore(8)         |
 ```
 
 The fourth column is the deliverable. Empty cells are the migration's risk register.
+These sizes are illustrative. Tomcat workers do not count every open connection, queued request
+or asynchronous request lifetime. A connection pool bounds borrowed connections, not necessarily
+database queries: multiplexing, parallel queries and multiple operations per borrow change the mapping.
+For each semaphore, also bound waiters, define admission deadline/rejection and acquire before
+creating the large working set. Release only after the protected operation actually finishes;
+a cancelled Future or caller timeout does not prove the resource is free.
 
 ## Stage 2 — Audit
 
@@ -54,12 +62,17 @@ rg -n 'getActiveCount|getPoolSize|getQueue\(\)|tomcat.threads'
 Then, at runtime, on the current version:
 
 ```bash
-# Pinning, at a threshold low enough to see the frequent short case.
-# On JDK 21-23 synchronized will appear here; on 24+ it will not.
+# Print a completed recording; this command does not enable events or lower thresholds.
+# JDK 21-23 can pin while holding a monitor; 24+ removes that cause, not native-frame pinning.
 jfr print --events jdk.VirtualThreadPinned recording.jfr
 ```
 
-**Exit criteria:** every hit classified as _keep_, _replace with X_, or _irrelevant_.
+Configure and verify event enablement/thresholds during capture. If the current service only uses
+platform threads, no virtual-thread pin events is expected; test a bounded VT canary before
+claiming compatibility. Short filtered or unfinished events may be absent.
+
+**Exit criteria:** every hit classified as _keep_, _replace with X_, or _irrelevant_, with
+runtime checks for consequential hypotheses. Grep hits are candidates, not a complete inventory.
 
 ## Stage 3 — Declare the limits, on platform threads
 
@@ -68,7 +81,7 @@ virtual threads, while the pools are still there. This isolates limit-policy ris
 risk. Expect possible queue/wait changes if two gates temporarily coexist; equivalence is a hypothesis
 to validate, not proof from unchanged throughput.
 
-**Exit criteria:** limits deployed; p99 and throughput indistinguishable from the baseline;
+**Exit criteria:** limits deployed; predeclared correctness/SLO and overload criteria met;
 each limit exporting available permits, wait time and rejections.
 
 ## Stage 4 — Flip one workload
@@ -78,9 +91,13 @@ downstream with a known bound, low blast radius, and easy to load-test. A read-h
 endpoint is the classic first move; a payment path is not.
 
 ```properties
-# One flag, one workload, no rebuild to reverse it
+# Illustrative application-owned property; requires implemented routing/lifecycle support
 app.virtual-threads.reports=true
 ```
+
+This is not a standard Boot property and does nothing by itself. A config flag is not
+automatically reloadable. Rehearse whether switching needs a restart and how old tasks drain;
+do not run two independent owners concurrently for work whose order must be preserved.
 
 Canary long enough to cover the workload's relevant peak, batch/cron and dependency variability;
 duration follows evidence, not a universal business-day rule. Compare against a concurrent control
@@ -103,9 +120,9 @@ in the exact moment they should not be.
 The instinct is to raise it because concurrency rose. Resist it and do the arithmetic:
 
 ```text
-L = λ × W        λ = 400 queries/s, W = 8 ms average hold time  →  average L ≈ 3.2
-Database ceiling: what the server can actually serve concurrently (its own configuration,
-                  its CPU count, its own connection limit)  →  say 40 across all clients
+L = λ × W        λ = 400 connection borrows/s, W = 8 ms mean borrow-to-return time → L ≈ 3.2
+Database ceiling: measured sustainable workload envelope, not max_connections alone
+                  → illustrative budget of 40 borrowed connections across all clients
 Our provisional share must include all clients, rollout overlap and headroom.
 ```
 
@@ -113,10 +130,10 @@ Our provisional share must include all clients, rollout overlap and headroom.
 and full authority over the database budget. Sweep candidate sizes under representative variance and
 choose the smallest that meets SLO/throughput without exceeding the database envelope.
 
-Raising the pool past the database's capacity does not add throughput; it moves the queue
-from your process (where it is visible, bounded and cheap to reject at) into the database
-(where it is none of those). Watch `W` after the migration: hold time often _rises_ because
-more requests are in flight, and that is the number to fix, not the pool size.
+Keep lambda and W on the same stable borrow population; query rate is equivalent only if there
+is exactly one query per borrow. Measure connection waiters and database queue/lock/CPU demand:
+neither side is automatically bounded or observable. Increasing concurrency beyond sustainable
+capacity may worsen queueing; if hold time rises, diagnose it before changing pool size.
 
 ## Stage 6 — Verify observability, then widen
 
@@ -136,8 +153,8 @@ for the next workload.
 
 Not "every thread is virtual". Done is: each workload runs on the model that suits it, every scarce
 resource has a declared admission policy/metric, traditional dumps are retained for platform-lock
-questions while all-thread dumps cover virtual lifetimes, removed pin diagnostics are gone, and the
-baseline/canary/rollback record is durable.
+questions while modern dumps cover tracked virtual lifetimes with runtime visibility limits,
+removed pin diagnostics are gone, and the baseline/canary/rollback record is durable.
 
 ## Authoritative references
 

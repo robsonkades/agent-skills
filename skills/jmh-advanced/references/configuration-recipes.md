@@ -2,6 +2,11 @@
 
 The values below are experiment shapes, not mandatory counts. Derive durations and replications
 from pilot behavior, between-fork variance, minimum practical effect, and available budget.
+Java examples use Java 17 and JMH 1.37 annotations with its annotation processor enabled.
+Put public top-level classes in separate files under a named package; imports are omitted
+(`org.openjdk.jmh.annotations.*`, `org.openjdk.jmh.infra.ThreadParams`, and relevant `java.util`
+and `java.util.concurrent` types). A plain javac compile without generated JMH harness code
+does not establish that a benchmark is runnable.
 
 ## Shared data structure
 
@@ -29,9 +34,12 @@ public class SharedMapBench {
 public class ThreadState {
     private SplittableRandom random;
 
+    @Param({"12345", "67890"})
+    public long cohortSeed;
+
     @Setup(Level.Trial)
-    public void setup() {
-        random = new SplittableRandom(/* predeclared cohort seed */);
+    public void setup(ThreadParams worker) {
+        random = new SplittableRandom(cohortSeed + worker.getThreadIndex());
     }
 
     int nextKey(int bound) {
@@ -44,6 +52,12 @@ This shape still needs hit/miss distribution, read/write ratio, thread sweep, CP
 operation correctness, seed cohorts, and post-run invariants. Generating a random key inside the
 timed operation includes PRNG cost; precompute keys if production does not pay it, then validate
 cache/reuse effects.
+
+This seed mapping makes each worker's input sequence reproducible for the same worker index,
+cohort and call count; it does not replay interleavings or imply statistically independent
+streams. Record the thread topology with the seed. Reusing an identical seed on every worker
+would correlate their key sequences. The shown map is read-only after setup and half populated;
+it does not measure concurrent mutation. Integer boxing/hash lookup are inside the timed path.
 
 ## Asymmetric producer/consumer group
 
@@ -77,6 +91,12 @@ Returned success/failure contributes observability, but aggregate throughput sti
 many offers failed or polls returned null. Add `@AuxCounters` carefully or separate result labels.
 Measure occupancy/drift and decide whether nonblocking `offer/poll` represents production.
 
+For this group, `-t 4` means one producer and three consumers sharing one queue; `-t 8`
+forms two independent queues/groups. Use complete group-size multiples and inspect the emitted
+thread/group summary. Increasing group count is not a same-queue contention sweep. Returned
+`1` values model occupancy only; they cannot detect item loss/duplication/order bugs. Use
+sequence identities and a separate correctness oracle when those are relevant.
+
 ## Auxiliary counter guardrails
 
 Use counters for realized workload, not decorative diagnostics:
@@ -89,10 +109,30 @@ queue full/empty outcomes
 invariant violations
 ```
 
-Counter update must have the right ownership. A shared atomic counter can create the contention
-being measured; per-thread counters may be aggregated later. Validate arithmetic such as
-`success + failure = attempts` and state whether the benchmark score denominator is attempts or
-successes.
+In JMH 1.37, `@AuxCounters` is allowed only on `Scope.Thread` state. For example, add this
+state as a parameter to a benchmark method; increment `attempts` and exactly one of
+`successes`/`failures` for each completed attempt:
+
+```java
+@AuxCounters(AuxCounters.Type.EVENTS)
+@State(Scope.Thread)
+public class Outcomes {
+    public long attempts;
+    public long successes;
+    public long failures;
+}
+```
+
+JMH resets public counter fields before each iteration and reads them afterward. Numeric
+getter methods are also metrics but their backing state needs explicit lifecycle management;
+keep other helper fields/methods non-public to avoid accidental metrics/name collisions.
+`EVENTS` counters are event counts, not automatically rates or fractions. `OPERATIONS` uses
+time normalization and can produce a secondary operation rate/time; inspect units and mode
+before computing ratios. Throughput and AverageTime support these counters; verify other
+modes in the pinned harness. Aggregate matching populations before testing
+`success + failure = attempts`; do not mix warm-up with measurement or group roles with
+different denominators. A shared atomic counter outside AuxCounters may create contention
+being measured. Calibrate counter overhead against an uninstrumented run.
 
 ## Parameter matrix budget
 
@@ -179,4 +219,5 @@ short operation changes dramatically
 - [JMH samples](https://github.com/openjdk/jmh/tree/master/jmh-samples/src/main/java/org/openjdk/jmh/samples)
 - [JMH asymmetric sample](https://github.com/openjdk/jmh/blob/master/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_15_Asymmetric.java)
 - [JMH `AuxCounters` API](https://javadoc.io/doc/org.openjdk.jmh/jmh-core/latest/org/openjdk/jmh/annotations/AuxCounters.html)
+- [JMH 1.37 AuxCounters source](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/annotations/AuxCounters.java) — scope, lifecycle and normalization contracts.
 - [JMH annotations API](https://javadoc.io/doc/org.openjdk.jmh/jmh-core/latest/org/openjdk/jmh/annotations/package-summary.html)

@@ -1,16 +1,16 @@
 schemaVersion: 1
 
 name: gof-facade
-version: 1.2.0
+version: 1.2.1
 description: >-
   Facade in modern Java: one coherent entry point over a subsystem of collaborators, so callers
   depend on an intention rather than on a sequence. Covers the difference between a facade
   (simplifies, does not forbid) and a boundary (forbids), the god-facade drift where one class
-  accumulates a method per use case until it is the application, why an application service is
-  this pattern under another name, why an API gateway is not, and the transaction and fan-out
-  decisions a facade method silently owns. Use when callers repeat the same five-call sequence,
-  when a legacy subsystem needs fencing, when a service class has grown past a dozen dependencies,
-  or when a facade method fans out to several remote services. Does not cover changing one type's
+  accumulates unrelated use cases, how application services and gateways can play this role
+  while retaining their own boundary responsibilities, and the transaction and fan-out
+  decisions a facade method silently owns. Use when callers repeat the same orchestration sequence,
+  when a legacy subsystem needs fencing, when unrelated responsibilities accumulate in a service,
+  or when a facade method fans out to remote services. Does not cover changing one type's
   interface (gof-adapter), adding behaviour to one object (gof-decorator), hub-based coordination
   between peers (gof-mediator), the coarse-grained remote boundary and its DTOs
   (remote-facade-and-dto), or transaction-boundary mechanics (enterprise-transactions).

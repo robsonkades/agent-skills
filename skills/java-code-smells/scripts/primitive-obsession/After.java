@@ -53,6 +53,7 @@ public class After {
         try {
             new Money(new BigDecimal("50.00"), gbp)
                     .add(new Money(new BigDecimal("50.00"), Currency.getInstance("EUR")));
+            throw new AssertionError("currency mismatch was accepted");
         } catch (IllegalArgumentException e) {
             System.out.println("rejected: " + e.getMessage());
         }

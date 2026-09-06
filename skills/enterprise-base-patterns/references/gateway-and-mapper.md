@@ -13,7 +13,7 @@ public interface CreditBureau {
 public sealed interface CreditAssessment {
     record Approved(Money limit, Instant validUntil) implements CreditAssessment { }
     record Declined(DeclineReason reason)            implements CreditAssessment { }
-    record Unavailable(Duration retryAfter)          implements CreditAssessment { }
+    record Unavailable(Optional<Duration> retryAfter) implements CreditAssessment { }
 }
 ```
 
@@ -24,6 +24,8 @@ class HttpCreditBureau implements CreditBureau {
 
     private final RestClient client;
 
+    HttpCreditBureau(RestClient client) { this.client = Objects.requireNonNull(client); }
+
     @Override
     public CreditAssessment assess(TaxId taxId, Money requestedLimit) {
         try {
@@ -33,6 +35,10 @@ class HttpCreditBureau implements CreditBureau {
                 .retrieve()
                 .body(BureauResponse.class);
 
+            if (response == null || response.decision() == null) {
+                throw new UnexpectedBureauResponse("missing decision");
+            }
+
             return switch (response.decision()) {                  // their vocabulary…
                 case "APPROVE" -> new Approved(                     // …becomes yours
                     Money.of(response.limit(), "BRL"), response.validUntil());
@@ -40,11 +46,20 @@ class HttpCreditBureau implements CreditBureau {
                 default -> throw new UnexpectedBureauResponse(response.decision());
             };
         } catch (HttpServerErrorException | ResourceAccessException e) {
-            return new Unavailable(Duration.ofMinutes(5));          // their failure → your outcome
+            return new Unavailable(Optional.empty()); // retry delay not known
+        } catch (RestClientException e) {
+            throw new BureauIntegrationFailure("assessment failed", e);
         }
     }
 }
 ```
+
+The partial adapter assumes static imports of CreditAssessment's nested outcomes, configured
+RestClient base URL/timeouts, domain-owned exceptions and vendor DTO/mapping helpers. It assumes
+a BRL-only contract; validate requested currency and every required response field in those
+helpers. Unknown retry delay is not permission to retry. Classify 429/Retry-After and permanent
+4xx/authentication failures from the actual vendor contract rather than calling every error a
+business decline. Keep exception causes for restricted diagnostics, not client payloads.
 
 Three things this does that a thin wrapper does not:
 
@@ -53,13 +68,16 @@ Three things this does that a thin wrapper does not:
 2. **Translates the failures.** An HTTP 503 becomes `Unavailable`, a domain-meaningful
    outcome the caller can handle without importing an HTTP library
    (`layering-and-boundaries`).
-3. **Contains the vendor.** Replacing the bureau touches one class.
+3. **Contains the vendor.** Replacement is local if the new provider satisfies the port's
+   semantics; otherwise the contract and its callers also need review.
 
 **Where resilience belongs:** timeouts and connection pooling on the client; retry and
 circuit breaking around the gateway call, not inside the domain
 (`timeouts-and-deadlines`, `retries-and-backoff`, `concurrency-limiting-and-bulkheads`).
 Retrying inside a transaction is the failure to avoid — the transaction holds a connection
 for the whole retry budget (`enterprise-transactions`).
+Before retrying a POST, establish idempotency/deduplication or reconciliation for an ambiguous
+outcome. A transport failure does not prove that the provider did no work.
 
 **What a bad gateway looks like:** it returns `BureauResponse`, throws
 `HttpClientErrorException`, and takes the vendor's request type as a parameter. The
@@ -97,18 +115,24 @@ final class StubCreditBureau implements CreditBureau {
     private boolean unavailable = false;
 
     @Override public CreditAssessment assess(TaxId taxId, Money requested) {
-        if (unavailable) return new Unavailable(Duration.ofMinutes(5));
+        if (unavailable) return new Unavailable(Optional.empty());
         return canned.getOrDefault(taxId, new Declined(DeclineReason.NO_HISTORY));
     }
 
     void willBeUnavailable() { this.unavailable = true; }
-    void approves(TaxId taxId, Money limit) { canned.put(taxId, new Approved(limit, ...)); }
+    void approves(TaxId taxId, Money limit, Instant validUntil) {
+        canned.put(taxId, new Approved(limit, validUntil));
+    }
 }
 ```
 
 A stub that only succeeds certifies the happy path and nothing else. The failure paths — the
 timeout, the 500, the malformed response, the rate limit — are exactly the ones production
 exercises and tests usually do not.
+
+This mutable stub is test-instance scoped and not thread-safe. It tests caller reactions to
+port outcomes; it cannot test HTTP decoding or error translation. Exercise the adapter separately
+with controlled HTTP responses (empty/malformed payload, 429, 4xx, 5xx and transport failure).
 
 **Pair it with a contract test** against the real service, run on a schedule rather than on
 every build, asserting that the vendor still behaves as the stub claims. A stub that has
@@ -179,5 +203,10 @@ differently in the next mapper. Compute it in the domain and map the result.
 ## Where mappers accumulate
 
 A codebase with entity → domain → DTO → response has three mappers and two of them are
-frequently identity functions. Collapse structurally identical pairs; keep the mapping at
-the boundary where the shapes genuinely differ (`remote-facade-and-dto`).
+frequently identity functions. Compare ownership, compatibility and trust boundaries before
+collapsing identical shapes: independently evolving contracts can justify an identity mapping.
+Remove a layer only when it has no such responsibility (`remote-facade-and-dto`).
+
+## Sources
+
+- [Spring REST clients](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html): RestClient response conversion and default error handling; consult the target release.

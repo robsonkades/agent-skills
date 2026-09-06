@@ -2,17 +2,14 @@
 
 ## Result shape decides more than the mechanism
 
-For a list screen of 25 orders showing 6 columns:
-
-| Shape                                 | Queries | Objects hydrated         | Notes                                                 |
-| ------------------------------------- | ------- | ------------------------ | ----------------------------------------------------- |
-| Entities, lazy associations traversed | 26+     | 25 aggregates            | N+1; the default outcome of "just use the repository" |
-| Entities with a fetch join            | 1       | 25 aggregates + children | Row multiplication; still hydrates everything         |
-| Interface or record projection        | 1       | 25 flat records          | What the screen actually needs                        |
+For a list screen of 25 orders, lazy entity traversal can cause N+1 selects; fetch joins
+may reduce round trips but multiply rows. A flat scalar DTO can avoid managed-entity
+hydration, while interface/nested/open projections can have different query and loading
+behavior. Measure the selected projection rather than equating "projection" with one query.
 
 ```java
-// A record projection: one query, exactly the columns, no persistence context growth.
-public record OrderSummary(Long id, String status, Instant placedAt,
+// Partial JPQL scalar DTO projection; Page may also execute a count query.
+public record OrderSummary(Long id, OrderStatus status, Instant placedAt,
                            BigDecimal total, String customerName) { }
 
 @Query("""
@@ -24,13 +21,18 @@ public record OrderSummary(Long id, String status, Instant placedAt,
 Page<OrderSummary> summaries(@Param("status") OrderStatus status, Pageable page);
 ```
 
-Projections also keep the persistence context small, which keeps flush cheap
-(`orm-behavioral-patterns`), and they cannot trigger a lazy load during serialisation,
-which removes an entire class of production failure.
+Here `o.status` is an `OrderStatus`, so the constructor component must match; a raw SQL
+string result needs an explicit conversion or a separate DTO contract. This snippet omits
+application authorization for focus; real data and count queries must apply the trusted
+scope described in the composition reference.
+
+A DTO made only of scalar/immutable values cannot lazy-load an entity during serialization.
+Nested projections or DTOs containing entity references do not provide that guarantee.
+Avoiding entity hydration can reduce context overhead; it does not establish total query cost.
 
 **When entities are still right:** the write path, where the aggregate's behaviour and its
-invariants are needed. That is the distinction — entities for changing things, projections
-for showing things (`repository-pattern`).
+invariants are needed. Entities can also be appropriate for bounded read use cases that need
+their behavior; projection versus entity is a workload and lifecycle decision (`repository-pattern`).
 
 ## Counting and existence
 
@@ -46,20 +48,21 @@ long overdue = orders.countByStatus(OVERDUE);
 boolean any = orders.existsByCustomerId(id);
 ```
 
-For paginated screens, note that `Page` issues a second count query on every request. Where
-the total is not displayed, `Slice` avoids it entirely (it fetches `size + 1` rows to know
-whether a next page exists) — a free saving on a hot list endpoint.
+`Page` generally needs a count, but Spring Data can skip it when the total is inferable.
+`Slice` commonly requests `size + 1` to detect continuation without total counting. Verify
+the executor and result shape; content/count must preserve identical filters and scope.
+Even matching predicates may see different database states without a suitable snapshot.
 
 ## Pagination at depth
 
-`OFFSET n` makes the database read and discard `n` rows. At page 1 it is free; at offset
-500 000 it reads half a million rows per request.
+Deep OFFSET often requires producing and skipping many qualifying rows; first-page work
+is not free either. Actual work depends on the plan, filters, indexes and visibility.
 
 ```sql
 -- Offset pagination: cost grows with the page number.
-SELECT ... FROM customer_order ORDER BY placed_at DESC OFFSET 500000 ROWS FETCH NEXT 25 ROWS ONLY;
+SELECT ... FROM customer_order ORDER BY placed_at DESC, id DESC OFFSET 500000 ROWS FETCH NEXT 25 ROWS ONLY;
 
--- Keyset pagination: constant cost, given an index on (placed_at, id).
+-- PostgreSQL-style row comparison; efficient seek depends on the full plan/filter/index.
 SELECT ... FROM customer_order
  WHERE (placed_at, id) < (:lastPlacedAt, :lastId)
  ORDER BY placed_at DESC, id DESC
@@ -67,9 +70,11 @@ SELECT ... FROM customer_order
 ```
 
 Keyset pagination requires a stable, unique sort key — hence the `id` tiebreaker — and it
-gives up random page access. For infinite scroll, exports and APIs it is strictly better;
-for a page-number UI over a small table, offset is fine. Decide by the table's size and the
-depth users actually reach.
+gives up direct arbitrary-page jumps. This example assumes non-null keys and matching
+comparison/order directions. Mutable sort keys or concurrent inserts can still change the
+traversal: define snapshot or live-view semantics and keep filter/scope fixed in the cursor.
+Do not promise constant cost from one index declaration; verify rows examined and plans.
+Choose from required navigation, consistency and actual depth.
 
 ## What composition does to plans
 
@@ -80,7 +85,7 @@ consequences worth knowing:
   combinations where possible.
 - **Parameter sniffing.** One plan cached for a selective parameter can be reused for an
   unselective one, and vice versa; a query that is fast for one customer and slow for
-  another is the signature.
+  another is a clue, not a diagnosis; cardinality, data skew or different work may explain it.
 - **Index coverage varies by combination.** An index on `(status, placed_at)` serves the
   status+date filter and not the customer+total filter. Enumerate the combinations users
   actually use and index for those, rather than adding an index per column.
@@ -90,58 +95,51 @@ composed query serving the rest.
 
 ## Fetching and the aggregate
 
-The most expensive query in a well-written domain model is often the one that did not need
-the model at all:
-
-```text
-Report over 500 orders through the aggregate:  500 × 4 queries = 2 000
-Same report as a projection:                   1
-```
-
-There is no fetch strategy that fixes this. The fix is not to use the write model for the
-read (`architecture-and-performance`).
+A report that lazily traverses several relationships may execute hundreds of statements.
+A projection, batching or a suitable fetch plan can change that count; there is no universal
+"500 aggregates = 2,000 queries" law. Compare returned bytes, row multiplication, hydration,
+latency and correctness rather than forcing every read around the domain model
+(`architecture-and-performance`).
 
 ## Streaming large results
 
-```java
-@Query("select o from Order o where o.placedAt < :before")
-Stream<Order> streamOlderThan(@Param("before") Instant before);
+For a read-only export, prefer scalar projection streaming or bounded keyset chunks where
+they fit the database/driver. A Java `Stream` return type or positive fetch size alone does
+not prove server-side streaming or bounded driver buffering. Check transaction/autocommit,
+cursor/fetch behavior, buffering and cancellation on the actual stack.
 
-@Transactional(readOnly = true)
-public void archive(Instant before) {
-    try (Stream<Order> stream = orders.streamOlderThan(before)) {
-        var counter = new AtomicInteger();
-        stream.forEach(order -> {
-            archive(order);
-            if (counter.incrementAndGet() % 500 == 0) { em.flush(); em.clear(); }
-        });
-    }
-}
-```
+Close the stream with try-with-resources and complete consumption inside the intended
+transaction/session. Entity streams can retain managed instances; bounded processing or
+careful context clearing may be needed. Do not flush pending changes in a transaction marked
+read-only and assume they persist: provider flush-mode/read-only optimizations can prevent
+dirty tracking, and database read-only transactions can reject writes.
 
-Three requirements, all easy to miss: the stream must be closed (it holds a cursor and a
-connection); it must run inside a transaction; and the persistence context must be cleared
-periodically or the identity map holds every row streamed, defeating the point. For pure
-export, a projection stream or plain JDBC with a fetch size is simpler and lighter.
+For archiving that writes, design explicit write transactions or bounded chunks instead.
+Do not mutate the cursor's filtering/sort columns without a traversal plan; define retries,
+progress checkpoints and external-effect idempotency. Test failure cleanup and connection
+release, not just the happy-path row count.
 
 ## The query budget test
 
-```java
-@Test
-void search_screen_is_one_query() {
-    var before = statementCount();
-    searchQuery.run(new OrderSearch(Optional.of(OPEN), empty(), empty(), empty(), empty()),
-                    PageRequest.of(0, 25));
-    assertThat(statementCount() - before).isEqualTo(1);
-}
+Use integration cases with controlled fixtures, cleared context/cache policy and a scoped
+statement counter; background queries must not pollute it. These are recipes, not executed
+tests:
 
-@Test
-void composed_specification_does_not_duplicate_rows() {
-    var spec = OrderSpecs.overdue(clock).and(OrderSpecs.premiumCustomer());
-    assertThat(orders.count(spec)).isEqualTo(expectedDistinctOrders);   // catches double joins
-}
-```
+- Seed one order with two matching child rows and another with separately matching children.
+  Assert the requested same-child versus any-child semantics, unique root results and total
+  count. Two to-one joins need not change counts, so inspect emitted SQL as well.
+- Test absent filters, empty sort, both directions, equal sort values, both date boundaries
+  (including a zone transition), mixed currencies and empty authorization scope.
+- Seed another tenant and an unauthorized customer that match a user OR clause. Assert no
+  data, count, existence or export path leaks them; user NOT must not negate mandatory scope.
+- For paging, assert deterministic order and page traversal on a fixed fixture. Distinguish
+  a List content-query budget from Page content-plus-count and Slice continuation behavior.
+- For streaming/chunks, abort during processing and verify resources are released and restart
+  behavior meets the operation's contract.
 
-The second test is the one that catches the specific defect composition introduces. A
-duplicated join is functionally invisible when the caller only reads the first page, and it
-corrupts every count and every aggregation (`architecture-testing`).
+Keep query-count expectations tied to the chosen API, cache state and provider. Counts alone
+do not expose an incorrect predicate or guarantee an efficient query plan.
+
+Sources: [Spring Data projections](https://docs.spring.io/spring-data/jpa/reference/repositories/projections.html),
+[Spring Data query methods](https://docs.spring.io/spring-data/commons/reference/repositories/query-methods-details.html)
+and [PostgreSQL 17 LIMIT/OFFSET](https://www.postgresql.org/docs/17/queries-limit.html).

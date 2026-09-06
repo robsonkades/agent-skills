@@ -17,61 +17,75 @@ description: >
 
 ## Purpose
 
-Review is expensive, serial, and the only quality mechanism that can catch "this is correct but
-it is the wrong thing to build". Spending it on missing final keywords and import order wastes
-the one check that a machine cannot perform, and it trains authors to skim reviews rather than
-read them.
+Review connects a change to its requirements, callers and operational consequences. Automated
+checks help, but passing them does not establish that the right behavior was built. Repeated
+formatting comments consume attention that could expose a reachable correctness defect.
 
 Two failure modes: the review that blocks for a week over preferences, and the approval that
 was a formality. Both come from not deciding, up front, what this particular review is for.
 
 ## Workflow
 
-1. **Read the description first.** What is it meant to do, and why now? A change you cannot
-   summarise in a sentence cannot be reviewed — ask before reading further, because every
-   comment you write against a purpose you guessed at will be noise.
+1. **Establish scope and purpose.** Read the request, description and repository guidance;
+   identify the base/head commits or staged/unstaged files being reviewed. Inspect callers,
+   tests and relevant contracts before assuming intended behavior. If the requirement remains
+   ambiguous, ask a focused question while continuing checks independent of that answer.
 2. **Set the depth from the risk**, not the diff size: what breaks if this is wrong, how
    quickly would it be noticed, and can it be rolled back? A 400-line refactoring under test
    is a lighter review than a 4-line change to a payment path.
 3. **Look in payoff order** (`references/what-to-look-for.md`): does it do the right thing;
    does it fail well; concurrency and data; compatibility and migration; security; can it be
-   operated; are the tests capable of failing. Readability last — it is real, it is just never
-   the thing that costs the most.
-4. **Run it when the risk warrants.** Check out the branch, run the tests, read the failing
-   case. Reviews that never leave the diff view miss everything that is not in the diff — the
-   test that was deleted, the caller that was not updated.
+   operated; are the tests capable of failing. Reorder by concrete risk: authentication changes
+   deserve security review first, and unreadable control flow may prevent a correctness judgment.
+4. **Verify consequential claims.** Inspect the target compiler release/toolchain, resolved
+   libraries, CI/runtime and deployment contract before asserting an API or compatibility defect.
+   This review process has no Java baseline; never upgrade a project to make a suggested fix work.
+   Run targeted checks in an isolated checkout when needed, preserving unrelated work. Inspect
+   test counts, skips and failures. Static reasoning can establish a defect, but state the
+   reachable trigger and code path; missing infrastructure is a validation limit, not a pass.
 5. **Write each finding so it can be acted on**: what, where, why it matters, and what you
    would do — with its severity stated (`references/giving-and-receiving.md`).
-6. **Decide explicitly**: approve, approve with non-blocking comments, or block with a named
-   reason. "Some thoughts" with no verdict leaves the author guessing and the change stalled.
+6. **Return the requested review format** with severity-ordered findings and exact locations,
+   then coverage and validation limits. When a verdict is requested, state approve, non-blocking
+   comments, request changes or incomplete with a concrete reason. No findings means no supported
+   issues in the reviewed scope, not proof that shipping is safe. Publishing a review or changing
+   approval state requires the user's authorization; a local review result is not that action.
 
 ## Rules
 
-- Never spend a review comment on something a tool can enforce. Formatting, import order,
-  unused variables, obvious null checks: fix the pipeline once (quality-gates) instead of
-  paying for it in every review, forever.
+- Avoid repeating mechanical feedback already enforced by configured checks. A reachable null
+  dereference or other defect remains reportable even if a tool could detect it. Verify what CI
+  actually runs; suggest a pipeline improvement through `quality-gates` without expanding the
+  requested review into unrelated implementation work.
 - State severity on every finding. Without it, the author must guess whether a remark is a
   blocker, and will guess wrong in both directions.
 - Block only for: a defect, a security or data-loss risk, a breaking change to a published
-  contract, a missing test for risky behaviour, or a decision that is expensive to reverse
-  later. Everything else is a comment the author may decline.
+  contract without an accepted migration, a missing test that leaves a concrete risky behavior
+  unprotected, or an expensive decision with a demonstrated requirement/operational conflict.
+  Enforce explicit repository requirements; personal preferences alone are non-blocking.
 - Review the change, not the codebase. Pre-existing problems in touched files are a separate
   ticket unless the change makes them materially worse — a review that demands unrelated
   cleanup is how a two-hour change becomes a fortnight.
-- Ask when you do not understand, before asserting. "What happens if this list is empty?"
-  finds more defects than "this will NPE", and costs nothing when you are wrong.
-- Large changes get worse reviews, not longer ones — attention falls off sharply after a few
-  hundred lines. If a change cannot be split, say so and review it in passes with a stated
-  focus per pass rather than pretending one pass covered it.
-- Approving means you believe it is safe to ship. If you only read part of it, say which part.
+- Resolve uncertainty from code and contracts first. State an unverified premise as a question,
+  and distinguish confidence in the claim from the impact if it occurs. Do not disguise a
+  verified defect as a vague question or invent a runtime result to make it sound stronger.
+- For a large change, partition by behavior/risk and track coverage across passes. Review
+  independent paths after finding a blocker; defer only details that the needed redesign invalidates.
+- Scope any approval to the files, behaviors and revision actually reviewed. If the head changes,
+  inspect the delta and affected assumptions before carrying conclusions forward.
 - Author self-review first, on the diff, before requesting review. It catches the debug
   statement, the commented-out block and the accidental file, and it costs the reviewer
   nothing.
 - Reviews are not a substitute for a conversation about design. If the fundamental approach is
-  wrong, stop reviewing lines and raise that alone — a hundred line-comments on an approach you
-  will reject is wasted work for both people.
+  incompatible with the requirements, explain that conflict and defer polishing the affected
+  implementation. Continue independent checks and mark the deferred coverage explicitly.
 
 ## References
+
+Primary guidance: [Google's review standard](https://google.github.io/eng-practices/review/reviewer/standard.html)
+and [review contents](https://google.github.io/eng-practices/review/reviewer/looking-for.html).
+Apply the repository's policies and requested scope rather than importing another organization's
+approval rules wholesale.
 
 - **What to look for, in payoff order** — `references/what-to-look-for.md`. The ordered pass
   list, with the questions that find defects at each level, the Java-specific hazards worth a

@@ -70,7 +70,8 @@ The set of operations is open and must be dispatched uniformly
 
 ## When it is not
 
-- **The call happens now, synchronously, once.** Call the method.
+- **The call happens now, synchronously, once with no invoker/receiver or action-binding need.**
+  Call the method; synchronous UI actions can still justify Command.
 - **A class per method with no queue, no undo, no log.** Reification with no consumer of the
   reification.
 - **`Runnable`, `Callable` or a method reference is enough.** They are commands. A class adds
@@ -81,6 +82,10 @@ The set of operations is open and must be dispatched uniformly
 - **The thing being modelled already happened.** That is an event.
 
 ## Modern Java expression
+
+Records/sealed types in the examples use Java 17; exhaustive type-pattern switches require
+Java 21 without preview. Inspect the project's release and existing libraries before selecting
+syntax; do not upgrade the project merely to implement the pattern.
 
 ```text
 Behaviour only, executed soon        Runnable / Callable, or a method
@@ -109,15 +114,17 @@ has a handler, which the classical `Map<String, Handler>` cannot (`java-composit
 ## Decision rules
 
 ```text
-IF nothing queues, stores, logs, retries or undoes the command
+IF nothing needs invocation identity, action binding, invoker/receiver separation,
+uniform handling, queues, logs, retries or undo
 THEN delete the class and call the method.
 
 IF a command is named in the past tense
-THEN it is an event. Rename it, or reconsider who owns the outcome.
+THEN inspect its meaning: is it an instruction or an already-established fact?
+     Naming is a clue, not proof. Correct the name without changing semantics silently.
 
 IF a command is delivered to more than one handler
-THEN nobody owns the result. Either it is an event, or the dispatch
-     is wrong.
+THEN identify one logical outcome owner; competing instances and coordinated subcommands
+     are distinct from independent handlers performing the same effect.
 
 IF a command is persisted or sent over a boundary
 THEN its shape is a versioned contract: a stable name, tolerant
@@ -167,7 +174,7 @@ THEN that is a deserialisation vulnerability. Dispatch from a closed
 
 ## Review checklist
 
-- [ ] Something actually queues, stores, retries, audits or undoes the command
+- [ ] Reifying the invocation serves a named identity, action-binding, dispatch or lifecycle need
 - [ ] Commands are named imperatively; events in the past tense
 - [ ] Each command has one outcome owner; horizontally competing handler instances are distinguished
       from multiple independent semantic handlers

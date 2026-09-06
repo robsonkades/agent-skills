@@ -2,6 +2,10 @@
 
 ## Span lifecycle
 
+Partial OpenTelemetry Java API snippets: imports, tracer acquisition and application methods
+are omitted. Compile against the project's resolved API/Context and JDK versions. These
+examples assume synchronous `validate`/`reprice`; a returned future is not operation completion.
+
 ```java
 Span span = tracer.spanBuilder("order.validate").startSpan();
 try (Scope ignored = span.makeCurrent()) {
@@ -30,6 +34,10 @@ executor.execute(
         Span child = tracer.spanBuilder("reprice").startSpan();
         try (Scope ignored = child.makeCurrent()) {
             reprice();
+        } catch (RuntimeException | Error failure) {
+            child.recordException(failure);
+            child.setStatus(StatusCode.ERROR);
+            throw failure;
         } finally {
             child.end();
         }
@@ -37,6 +45,9 @@ executor.execute(
 ```
 
 Context capture belongs at submission because execution-time Context may be unrelated.
+For completion callbacks, capture at registration in the originating operation, not in
+an unrelated thread that later completes the future. Keep Context as data across threads;
+open and close each Scope on its own executing thread.
 OpenTelemetry Java also exposes wrappers for Runnable, Callable, Executor and functions.
 Test cancellation, rejection, delayed execution and executor reuse. A scope leak can attach
 later unrelated tasks to the wrong trace.
@@ -77,6 +88,10 @@ Create instruments once per logical instrumentation scope when practical. Attrib
 must be bounded according to metrics-and-cardinality. Exemplars link selected metric
 observations to trace context without making trace IDs metric labels; support/reservoir
 behavior depends on SDK/exporter/backend.
+Tail sampling or export loss can leave an exemplar pointing to a trace the backend never
+retained. Test end-to-end lookup; exemplars do not guarantee tail retention or replace the
+metric population. Filter/aggregate bounded attributes at the SDK source as appropriate;
+dropping labels only after export cannot bound the application's aggregation state.
 
 ## Correlation with runtime events
 

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: code-cache-segments
-version: 2.1.0
+version: 2.1.1
 description: >-
   The JDK 17-25 segmented code cache, GC-driven unloading, fragmentation, segment sizing,
   and jcmd Compiler.codecache/CodeHeap_Analytics. Use when aggregate usage looks healthy but
@@ -57,5 +57,5 @@ agentOverrides:
   codex:
     interface:
       display_name: Code Cache Segments
-      short_description: Three independent CodeHeaps and their sizing
+      short_description: Runtime CodeHeap layout, pressure and sizing
       default_prompt: Use Code Cache Segments to find which CodeHeap is actually under pressure.

@@ -32,7 +32,7 @@ implement `Serializable`—one reason it is often a poor persistence/DTO field t
 | `orElseThrow(exSupplier)`              | value or the supplied exception — the boundary between "absence is normal" and "absence is failure here"                                         |
 | `get()`                                | identical to `orElseThrow()`; the name reads as safe and is not — prefer `orElseThrow`                                                           |
 | `ifPresent(action)`                    | action on the value, nothing when empty                                                                                                          |
-| `ifPresentOrElse(action, emptyAction)` | both branches, side-effect form (since 9) — beyond one statement per branch, an if reads better                                                  |
+| `ifPresentOrElse(action, emptyAction)` | exactly one selected branch, side-effect form (since 9) — beyond one statement per branch, an if reads better                                    |
 
 The eager/lazy distinction made concrete:
 
@@ -44,6 +44,13 @@ config.timeout().orElseGet(this::loadDefault);   // runs only when timeout is ab
 With a constant (`orElse(ZERO)`, `orElse("")`) the difference is a dead cheap expression
 — `orElse` is correct and simpler there. The rule is about cost and side effects, not a
 blanket preference for `orElseGet`.
+
+Laziness applies to invoking the supplier, not creating it: `orElseGet(makeSupplier())` and
+`orElseGet(loadService()::fallback)` evaluate those factory/receiver expressions eagerly.
+Use `orElseGet(() -> loadService().fallback())` when that work itself must wait for absence.
+`or` requires a non-null Optional from its supplier, whereas `orElseGet` may return null.
+Check null callback arguments against the method contract; conditional invocation is not a
+blanket promise that passing a null callback is permitted.
 
 ## Common smells and exceptions
 
@@ -64,6 +71,12 @@ blanket preference for `orElseGet`.
 
 ## When a chain loses to an if
 
+The patterns above are review leads, not unconditional rewrites. In particular, a ternary
+evaluates only its selected branch: replace a computed/side-effecting fallback with
+`orElseGet(() -> x)`, not eager `orElse(x)`. Preserve the contract when both values can be null;
+`Objects.requireNonNullElse` would change it. `Optional.of` is appropriate when null is a defect,
+and an explicit guarded `get` can be the clearest way to express several related operations.
+
 `map`/`flatMap`/`filter` pay off while every step is a pure transformation. Signs the
 chain has gone past its domain and an explicit conditional reads better:
 
@@ -75,3 +88,7 @@ chain has gone past its domain and an explicit conditional reads better:
   buried after four transformations) — the reader loses the action in the plumbing;
 - you need the empty case to distinguish _why_ it is empty — Optional erases the reason;
   a sealed result type carries it.
+
+## Source
+
+- [Java 21 Optional API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html) — callback/null contracts and method introduction versions.

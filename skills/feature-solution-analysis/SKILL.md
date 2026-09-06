@@ -2,8 +2,8 @@
 name: feature-solution-analysis
 description: >
   Producing the option set for a feature-level choice and the block that recommends one: always
-  including the simplest thing that satisfies the constraints, keeping the options the same
-  category of thing, evaluating only the axes this feature is actually sensitive to, and saying
+  considering the simplest feasible approach, comparing complete options for the same boundary,
+  evaluating the axes this feature is actually sensitive to, and saying
   what would have to be true for a rejected option to win. Use when a feature has a real choice
   in it — a mechanism, a storage strategy, a place to put the work — when one approach has
   already been assumed and nobody wrote down what else was possible, when a design is justified
@@ -28,10 +28,10 @@ regret.
 
 ## When there is nothing to analyse
 
-Say so and move on. A choice exists only when two options both satisfy the constraints. If the
-constraints, the context report and the user's answers leave one survivor, name the survivor,
-name what eliminated the others in one line each, and skip the rest of this skill. Manufacturing
-a comparison to fill a template is worse than not doing one.
+If evidence establishes only one feasible option, name it and why alternatives were eliminated;
+skip a manufactured comparison. If none is feasible, expose the conflicting constraints and seek
+a revised option or authorized constraint change. Unknown feasibility is not a pass or a failure:
+identify the smallest check that could settle it and keep dependent selection conditional.
 
 ## Workflow
 
@@ -39,15 +39,19 @@ a comparison to fill a template is worse than not doing one.
    finished?" admits options; "should we use a webhook?" does not.
 2. **Generate options including the floor.** The floor is the simplest thing that satisfies the
    stated requirements — often "extend what already exists", sometimes "do nothing here". It is
-   always in the set, and it wins ties.
-3. **Keep the options comparable.** Same category of thing, same level of commitment. A library,
-   a pattern and a managed service are not three options; they are three questions.
+   included when feasible; if it is only a candidate, label its unresolved constraints.
+3. **Keep the options comparable.** Describe complete alternatives for the same behavior, boundary
+   and operating conditions. A library, pattern and service label alone are not comparable,
+   but complete solutions using different technologies can be; split choices that can coexist.
 4. **Eliminate on constraints first.** An option ruled out by a mandatory technology, a
    prohibition or a compatibility obligation is eliminated before any evaluation — record it as
-   eliminated, with the constraint, not as rejected on merit.
+   eliminated, with the constraint and source, not as rejected on merit. Record pass/fail/unknown;
+   inspect target compiler/runtime, resolved dependencies and contract versions where relevant.
+   Analysis does not authorize upgrades or new dependencies to make an option feasible.
 5. **Evaluate only the axes this feature is sensitive to** (`references/evaluation-axes.md`).
    Scoring every axis for every option produces a table that reads the same at every company.
-6. **Recommend one**, with the reason stated as the thing that separated it from the runner-up.
+6. **Recommend one when supported**, with the decisive trade-off and evidence. Otherwise return
+   a conditional recommendation or unresolved choice with its next check; do not manufacture a winner.
 7. **For each rejected option, say what would have to change** for it to win. That sentence is
    what makes the decision re-openable rather than final.
 8. **Separate uncertainty from preference.** If evidence cannot distinguish viable options and a
@@ -61,22 +65,25 @@ IF two options differ only in naming or internal structure
 THEN it is not a feature-level choice. Decide it while implementing.
 
 IF the recommendation is more complex than the floor
-THEN name the specific requirement or constraint that the floor fails. If you
-     cannot, the floor wins.
+THEN name the evidenced benefit on an accepted driver that justifies the added cost.
+     Two options may both meet mandatory constraints yet differ materially in operating cost
+     or risk. Without a justified benefit, prefer the floor among established feasible options.
 
 IF an option requires a technology the project does not run
-THEN its cost includes operating it, not just using it — and it is a decision
-     the agent does not take alone.
+THEN include adoption and operating cost; reuse existing authorization/delegation or name the
+     specific missing authority before commitment. Continue independent analysis meanwhile.
 
 IF an option is favoured because it is more extensible
 THEN name the extension that is actually expected, with who expects it. Otherwise
      the extensibility is speculative and does not count.
 
 IF the deciding argument is what another system or another company did
-THEN it is not an argument. Their constraints are not in this feature's context report.
+THEN test whether their workload, versions and constraints transfer. Treat the case as a hypothesis
+     source, not proof for this feature without applicable evidence.
 
-IF two options survive with no separating axis
-THEN choose the more reversible one and say that reversibility was the tiebreak.
+IF established feasible options are otherwise equivalent on the relevant evidence
+THEN compare evidenced reversal cost, then simplicity if reversal cost is comparable.
+     Missing evidence is not equivalence; use a conditional choice or next check when material.
 
 IF the choice materially affects behaviour, data, operations or cost
 THEN name the role accountable for that consequence; the current participant is not automatically it.
@@ -84,10 +91,11 @@ THEN name the role accountable for that consequence; the current participant is 
 
 ## Constraints
 
-- **No scoring totals.** Weighted scorecards launder a judgement into arithmetic; the weights
-  are the judgement and they are chosen after the fact. Say what separated the options.
-- **No option with no disadvantage.** If the recommendation has no cost, the analysis is
-  incomplete, not the option perfect.
+- **No unsupported scoring totals.** Do not add ordinal labels as measurements. If a numerical
+  model materially helps, use explicit units/assumptions, weights established before results,
+  and sensitivity analysis; no total compensates for a failed mandatory constraint.
+- **Expose material costs and limits.** Check the recommendation's adoption, operating and reversal
+  costs; do not invent a disadvantage or a winning scenario for a dominated option to fill a template.
 - **Do not evaluate against a requirement nobody stated.** Every axis used must trace to a
   requirement, a constraint or a named risk.
 - **Do not present options you would refuse to implement.** A straw option makes the set look
@@ -108,14 +116,15 @@ Option B  <name>
 Eliminated
   <option>  <- <constraint that ruled it out>
 
-Recommendation   <option>
+Recommendation   <option with conditions | unresolved and next action>
 Because          <the one thing that separated it from the runner-up>
 Consequences     <what the project accepts by taking it, including the unpleasant part>
 Reversibility    <what undoing it would cost, and where it is contained>
 Would change if  <per rejected option: the observation that would make it win>
-Decision needed  <agent may take it | accountable role must confirm, and why>
-Experiment       <EXP-* when evidence is required, otherwise none with reason>
+Decision needed  <existing authority/source | missing accountable decision and affected work>
+Evidence         <observed checks and limits; distinguish estimates and planned validation>
+Experiment       <EXP-* when a bounded experiment is warranted; otherwise next check or none>
 ```
 
-Hand the block to the decision phase. This skill produces the analysis; it does not record the
-outcome.
+Hand the block to the decision phase; a small choice can use a concise paragraph with the same
+material evidence and limits. This skill produces the analysis; it does not record acceptance.

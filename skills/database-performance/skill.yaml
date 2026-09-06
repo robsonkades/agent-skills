@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: database-performance
-version: 1.0.0
+version: 1.0.1
 description: >-
   Evidence-first triage and routing for database performance questions across SQL Server,
   MySQL/InnoDB, PostgreSQL, JDBC pools, ORM behavior, index portfolios, and bulk loading. Use

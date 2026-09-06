@@ -24,8 +24,10 @@ reopened when evidence makes a downstream artefact stale.
 
 ## Workflow
 
-1. **Run definition intake before depth.** Accept an approved Product Definition plus required
-   Engineering Analysis, or an engineering-owned Tech Feature. If the input is still an idea, route
+1. **Run definition intake before depth.** Identify the accepted Product intent and available
+   Engineering Analysis, or an engineering-owned Tech Feature; concise session input can establish
+   a Light baseline. Missing analysis is work to route, not a reason analysis cannot start.
+   If the input is still an idea, route
    co-authoring to collaborative-feature-definition; do not make lifecycle analysis impersonate
    Product. Validate revision, stage, accountable owners, accepted gaps, and authority using
    [the artefact contract](references/artefact-contract.md).
@@ -35,8 +37,9 @@ reopened when evidence makes a downstream artefact stale.
 3. **Follow the forward spine with explicit returns.** A phase may be skipped by the depth rule; it
    may never be faked. When evidence changes an accepted baseline, apply the artefact contract's
    invalidation rules and return to the owner of the affected stage.
-4. **Hold the gates.** No implementation begins while a BLOCKING question is open, and no resource
-   becomes DONE without a validation line.
+4. **Hold the gates.** A BLOCKING question prevents dependent implementation. Continue independent
+   analysis or resources only when their own readiness is satisfied and they do not prejudge the
+   unresolved choice. No resource becomes DONE without observed validation evidence.
 5. **Write decisions when made**, not at the end. A decision recalled at review time is a
    justification, and those differ from reasoning exactly where it matters.
 6. **Report state, not intention:** reviewed revisions, current phase, decisions, stale artefacts,
@@ -110,7 +113,8 @@ IF the repository can answer a question
 THEN establish and cite the fact before asking the user.
 
 IF a question changes behavior, contract, data semantics, security, or failure handling
-THEN identify the accountable role; the conversation participant is not automatically the authority.
+THEN use evidenced authority/delegation from the session and project; identify a missing accountable
+     role only where the consequence requires one. Do not demand approval already supplied.
 
 IF feasibility is unknown and pass/fail changes a decision
 THEN run feature-feasibility-experiment before selecting or recording the option.
@@ -125,7 +129,9 @@ IF a Product Definition changes after Engineering Analysis starts
 THEN create a new revision, invalidate traced downstream artefacts, and reapprove only what changed.
 
 IF implementation contradicts a recorded decision
-THEN amend the plan and supersede the decision before continuing.
+THEN determine whether the implementation is wrong or the decision has been invalidated.
+     Restore intended behavior, or revise the affected decision/plan with appropriate authority;
+     do not automatically rewrite the decision to justify a deviation.
 
 IF work will cross a session or owner
 THEN persistence is Dossier and the resumption artefact is current before handoff.

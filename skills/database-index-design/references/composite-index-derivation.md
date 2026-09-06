@@ -21,14 +21,23 @@ They may still be checked inside the index or cover the query, but they do not p
 navigation. If a date range precedes `tenant_id`, the engine can scan every tenant in the date
 interval and apply tenant as a residual predicate.
 
+That is the baseline scan shape, not a rule that later columns are useless. PostgreSQL 18
+B-tree skip scans may reposition repeatedly using later constraints, even after a range;
+profitability depends on prefix cardinality and cost. An `Index Cond` can also check entries
+without proportionally shortening the traversed range. Use actual buffers/rows and searches
+where exposed; do not classify navigation solely from a plan label.
+
 Estimate the amplification from a missed predicate as roughly:
 
 ```text
-entries scanned / entries required ≈ 1 / frequency(missed predicate value)
+entries scanned / entries required ≈ 1 / P(missed predicate | scanned interval)
 ```
 
-Use the tail parameter distribution, not an average. The same wrong order can be a 9× issue for a
-large tenant and a 10,000× issue for a rare tenant.
+This estimate assumes the chosen interval is scanned in full and the missed predicate is the
+remaining filter; LIMIT early exit, correlations and skip scans change it. A global frequency
+is only a substitute when independence is supported. For example, 1% globally but 50% inside
+the date interval predicts about 2× amplification for that interval, not 100×. Use measured
+tail parameters and avoid division by zero when no rows qualify.
 
 ## Equality-column order
 
@@ -60,3 +69,7 @@ Coverage is valuable when it avoids many random lookups, not merely because a co
 Estimate leaf bytes times row count and write frequency against lookups avoided times query
 frequency. Keep explicit projections: `SELECT *` makes coverage fragile and silently loses it after
 a schema addition.
+
+## Source
+
+- [PostgreSQL 18 multicolumn B-tree navigation and skip scan](https://www.postgresql.org/docs/18/indexes-multicolumn.html)

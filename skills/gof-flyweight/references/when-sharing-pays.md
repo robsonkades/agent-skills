@@ -15,12 +15,14 @@ String "EUR"                      String object 24 B + byte[] 16+3→24 B ≈ 48
 HashMap node/table/key            implementation- and load-factor-dependent
 ```
 
+The String estimate assumes compact Latin-1 storage as in OpenJDK 17, not a portable layout:
+[OpenJDK 17 String source](https://github.com/openjdk/jdk17u/blob/master/src/java.base/share/classes/java/lang/String.java).
+
 Two consequences that decide most cases:
 
-- **Sharing an object smaller than a map entry loses.** Interning `Integer`s outside the JDK's
-  cache range, or objects of one or two fields, costs more in cache overhead than it saves —
-  unless the same instance is referenced thousands of times, so the entry is amortised.
-- **The saving is per _reference_, not per value.** 40 million records each holding a distinct
+- **Map entries must be amortised.** Small objects need enough avoided duplicate allocations to
+  cover table/key costs; there is no fixed object size or repetition threshold.
+- **The saving is per avoided duplicate object.** 40 million records each holding a distinct
   `String` costs 40 M × 48 B ≈ 1.9 GB. If there are 300 distinct values, canonicalising leaves
   40 M references (already paid for, inside the record) plus 300 × 48 B — a saving of essentially
   the whole 1.9 GB. That ratio, occurrences ÷ distinct values, is the number that decides.
@@ -31,14 +33,14 @@ low ratios; tiny values can lose even at much higher ratios.
 
 ## The JDK's own flyweights, and their limits
 
-| Mechanism                               | Shared set                      | Limit to know                                                           |
-| --------------------------------------- | ------------------------------- | ----------------------------------------------------------------------- |
-| `Integer.valueOf`                       | −128..127 (upper bound tunable) | `==` works inside the range and fails outside it                        |
-| `Boolean.valueOf`                       | `TRUE`, `FALSE`                 | `new Boolean(...)` defeats it and is deprecated for that reason         |
-| String literals                         | JVM string table                | Equal literals are interned; identity is still the wrong value contract |
-| `String.intern()`                       | JVM-managed string table        | Retention, lookup and sizing behavior vary by JDK/collector             |
-| Enum constants                          | One per constant                | The closed-set case, and the best one                                   |
-| `List.of()` / `Collections.emptyList()` | One shared empty instance       | Only for empty                                                          |
+| Mechanism                               | Shared set                 | Limit to know                                                           |
+| --------------------------------------- | -------------------------- | ----------------------------------------------------------------------- |
+| `Integer.valueOf`                       | At least −128..127         | More caching is permitted; never assume 128 misses                      |
+| `Boolean.valueOf`                       | `TRUE`, `FALSE`            | `new Boolean(...)` defeats it and is deprecated for that reason         |
+| String literals                         | JVM string table           | Equal literals are interned; identity is still the wrong value contract |
+| `String.intern()`                       | JVM-managed string table   | Retention, lookup and sizing behavior vary by JDK/collector             |
+| Enum constants                          | One per constant           | The closed-set case, and the best one                                   |
+| `List.of()` / `Collections.emptyList()` | Empty values may be reused | No identity assumption; List.of instances are value-based               |
 
 `String.intern()` deserves specific caution: modern HotSpot keeps interned strings in the Java
 heap, while the table and its tuning/rehash behavior are JVM-version details. Interning millions
@@ -62,21 +64,22 @@ private final Map<String, String> canonical = new HashMap<>();   // single-threa
 String canon(String raw) { return canonical.computeIfAbsent(raw, Function.identity()); }
 ```
 
-This gets the whole saving with a map that is confined to one thread and can be dropped when the
-load finishes — no long-lived global pool, no contention, no leak.
+This shares duplicates encountered by that parser. Drop the map when the load finishes, but cap
+admission or validate a closed domain: high cardinality can exhaust memory within a single load.
 
-**Do not store the object at all.** Millions of records holding a `Currency` can hold a `byte`
-index into a small table. This is the largest saving available and it is not a flyweight; it is a
-representation change.
+**Use a compact representation.** A dictionary index can replace each reference. An unsigned byte
+encoding supports at most 256 values; 300 values require a wider index such as short. Include
+reserved codes and validation. This changes representation, not just object sharing.
 
 ```text
 40 M records × 4 B reference   = 160 MB
-40 M records × 1 B index       =  40 MB   (+ a 300-entry table)
+40 M entries × 2 B short index =  80 MB   (+ a 300-entry table)
 ```
 
 **Columnar layout.** Where the population is processed in bulk rather than individually, parallel
-primitive arrays remove per-object headers entirely: 40 M objects of three fields cost ~1.9 GB in
-headers and padding alone; three primitive arrays cost the data.
+primitive arrays remove per-record headers. Under the illustrative 12-byte header, 40 M objects
+have 480 MB of header bytes before padding; total size depends on fields and layout. Arrays still
+have headers and alignment. Narrowing one field may not change aligned object size at all.
 
 **An enum.** When the distinct set is closed and known at compile time, an enum gives sharing,
 identity comparison that is actually safe, exhaustive `switch`, and no cache.
@@ -116,16 +119,19 @@ expensive mapping function stalls peers, while recursive updates can throw or vi
 Keep it short, side-effect-free and non-recursive, then profile the expected key distribution.
 
 **Mutation of a shared instance.** The failure that is a security incident rather than a bug: a
-flyweight carrying tenant-scoped data, mutated by one request, read by another. The only reliable
-defence is that the shared type is deeply immutable and enforced as such.
+flyweight carrying tenant-scoped data, mutated by one request, read by another. Require deep
+immutability for this design and include all tenant-dependent meaning in the key; immutability
+alone does not make cross-tenant reuse valid.
 
 **Accidental identity dependence.** Code that starts comparing with `==` because "they are
-shared" works until a value falls outside the cached set or an entry is evicted. The `Integer`
-127/128 boundary is the canonical demonstration and the reason to test with values on both sides
-of any cache limit.
+shared" can fail after eviction or across pools. Use separately created equal strings for a
+deterministic test; Integer 128 may also be cached.
 
 **Pooling short-lived objects.** The inverse pattern, and still common. Object pooling promotes
 objects that would have died in the nursery into long-lived state, adds a synchronisation point,
 and reintroduces the lifecycle bugs (use-after-return, dirty state) that garbage collection
-removed. Pool only what is genuinely expensive to create and expensive to hold — connections,
-threads, direct buffers — never plain domain objects (`gc-fundamentals`).
+removed. Consider reuse for expensive resources with explicit ownership and capacity. Plain-object
+reuse needs measured benefit and a lifecycle correctness argument; flyweight does not imply it.
+
+Sources: [Integer.valueOf contract](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html#valueOf(int)>)
+and [List factory contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html).

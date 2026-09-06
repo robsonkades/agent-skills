@@ -25,10 +25,10 @@ what to render — is a function of data. An effect — writing to a socket, a d
 screen — is not. Mixing them produces code where the only way to check a business rule is to
 stand up the world.
 
-The pattern has two names for one idea. **Humble Object**: extract the logic from the
-hard-to-test component until what remains is so trivial it needs no test. **Functional core,
-imperative shell**: the core computes, the shell performs, and the boundary between them is
-where the types stop being pure data.
+The techniques overlap. **Humble Object** extracts logic from a hard-to-test component so
+its remaining boundary responsibilities can be tested narrowly; the extracted logic need
+not be pure. **Functional core, imperative shell** additionally makes decisions functions
+of explicit data while the shell owns effects and their consistency.
 
 The two failures this exists to prevent: logic trapped inside a framework component, so a
 rule change is verified by a slow test that spins up HTTP and a database; and the opposite
@@ -36,6 +36,13 @@ excess, where every effect is wrapped in ceremony and the reader loses the actua
 pipeline of indirection.
 
 ## Workflow
+
+Inspect the project's Java release/toolchain and framework/transaction configuration before
+refactoring. The sealed outcomes and pattern switches below use Java 21 without preview;
+retain existing alternatives on older targets rather than upgrading the project. Preserve
+observable behavior, authorization, transaction boundaries and failure ordering. Report the
+decision extracted, the effect contract retained and actual core/boundary checks; test speed
+or reliability improvements remain unmeasured unless compared.
 
 1. **Find the decision.** In the component, identify the branch that would be worth a test if
    it were reachable — the conditional, the calculation, the selection.
@@ -72,8 +79,8 @@ pipeline of indirection.
               │ perform the effect it describes                      │
               └──────────────────────────────────────────────────────┘
 
-  Tests of the core: no fixtures, no mocks, microseconds, exhaustive.
-  Tests of the shell: few, integration, "does the wiring hold".
+  Tests of the core: explicit input fixtures, outcomes and boundary cases.
+  Tests of the shell: effects, wiring, failure order and consistency.
 ```
 
 What makes the core pure is not the absence of the word `void` — it is that **calling it twice
@@ -95,8 +102,8 @@ The logic needs data from a repository or a remote call
           that reintroduces the collaborator you were removing.
 
 The decision needs the current time, a random value or a generated id
-        → parameter, not a call. Inject Clock or pass the Instant. This
-          converts an untestable outcome into an ordinary assertion.
+        → pass the sampled value for a pure core. Injecting Clock into
+          a service gives controllable time, not production purity.
 
 The core must cause something to happen
         → return a description of it. The shell interprets. This is what
@@ -135,8 +142,8 @@ core pure
   failure diagnosis. `Clock` is in the JDK for the time calls; the id and the
   random source are supplied the same way, by the shell.
 - **Purity is about observable effect, not about avoiding assignment.** A core that builds a
-  local `ArrayList` and returns an unmodifiable view is pure; nobody outside sees the
-  mutation. Treating local mutation as forbidden makes code slower and worse
+  local `ArrayList` and returns a stable result can be pure when no mutable aliases or
+  mutable elements escape or change concurrently. Local mutation can simplify sequential code
   (`java-immutability`).
 - The core is where records and sealed types pay for themselves: inputs as records, outcomes
   as a sealed hierarchy, the shell's handling as an exhaustive `switch` the compiler checks

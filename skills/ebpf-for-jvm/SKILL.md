@@ -119,7 +119,10 @@ Track:
 - program runtime/event rate and probe recursion/skips;
 - collection start/end/clock metadata.
 
-The histogram is only valid for successfully paired events. Report the coverage fraction.
+The histogram describes successfully paired events. Define the coverage denominator and
+report starts still active at collection end separately: long operations are more likely to
+be censored, so high pairing coverage alone does not prove an unbiased latency tail. Mark
+loss/eviction metrics unavailable when the collector cannot expose them; do not report zero.
 
 ## Key domains
 
@@ -179,10 +182,12 @@ reproduction or canary and prefer sampling/JFR events where they answer the ques
 ## JVM stacks and JIT symbols
 
 Kernel/user stack capture and Java symbolization are separate problems. Compiled Java code is
-generated, recompiled, moved/invalidated, and address-reused over time. A point-in-time
+generated, recompiled, invalidated, and address-reused over time (movement is runtime-specific). A point-in-time
 `/tmp/perf-<pid>.map` can name current ranges but lacks the full time-ordered load/unload
 semantics needed for long recordings. `perf jitdump`/JIT interfaces, supported agent output,
-or an in-process profiler may preserve more lifecycle information.
+or an in-process profiler may preserve more lifecycle information. Verify the producer and
+consumer together: jitdump has no per-method unload record, and a symbol file cannot repair
+frames that the unwinder never captured.
 
 For perf frame-pointer unwinding, both JVM-generated and native frames must obey the chosen
 unwind contract. `-XX:+PreserveFramePointer` affects generated code and has platform/JDK
@@ -264,8 +269,8 @@ candidate remedy.
 
 ## References
 
-- [Probe and program patterns](references/bpftrace-recipes.md)
-- [Interpretation and correlation](references/signal-interpretation.md)
+- [Probe and program patterns](references/bpftrace-recipes.md) — read when selecting or reviewing a collector/script.
+- [Interpretation and correlation](references/signal-interpretation.md) — read when interpreting results or preparing the evidence report.
 - [bpftrace documentation](https://bpftrace.org/docs/) — use the documentation matching the installed release.
 - [Linux BPF documentation](https://docs.kernel.org/bpf/)
 - [Linux tracing documentation](https://docs.kernel.org/trace/)

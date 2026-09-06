@@ -15,10 +15,10 @@ before converting a mutable class, and before rejecting immutability "for perfor
   remove it" and claiming "this allocation is killing us" carry the same burden: an
   allocation profile or a JMH benchmark, before and after. Neither claim is admissible
   without one.
-- **Copy on construction.** `List.copyOf` on a genuinely mutable input is O(n). On an
-  already-unmodifiable input it generally skips the copy. A pipeline that builds immutable lists
-  from immutable lists pays almost nothing; one that wraps a fresh `ArrayList` per call
-  pays n every time — the profile tells you which one you have.
+- **Copy on construction.** Materializing a mutable list normally visits/copies its elements.
+  `List.copyOf` may reuse recognized immutable inputs; an arbitrary unmodifiable wrapper does
+  not guarantee reuse. Measure actual input implementations, sizes and allocation counts;
+  neither unmodifiable types nor chained `copyOf` calls establish negligible pipeline cost.
 - **Large object graphs.** Changing one leaf of a deep immutable graph re-allocates the
   spine — every node from the leaf to the root. The JDK has no persistent (structurally
   sharing) collections to make this cheap, and hand-rolling them is a project, not a
@@ -46,7 +46,7 @@ before converting a mutable class, and before rejecting immutability "for perfor
   binding, where the framework supports it, restores immutability; use it when offered.)
 - **Measured hot paths.** When an allocation profile attributes real cost to value
   churn on a hot path, scoped mutability — a reused buffer, a mutable accumulator
-  confined to the loop — is the correct engineering answer. Confinement, not finality, is
+  confined to the loop — is a candidate to compare against the measured baseline. Confinement, not finality, is
   what makes it safe. Keep the immutable type at the API boundary.
 - **Genuinely huge state** — buffers, matrices, byte payloads — where copy-on-write per
   touch is the algorithmic cost, not an implementation detail.

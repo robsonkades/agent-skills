@@ -1,7 +1,7 @@
 # Cutting the amplification points before the incident
 
-Each amplification point is a place where a slowdown is turned into more load or more held
-resources. Cutting one breaks the loop; cutting all four makes the cascade a local failure.
+Each amplification point can turn slowdown into more work or held resources. Cutting a measured
+edge can break one loop; simultaneous loops and shared infrastructure still need failure tests.
 
 ## The four points and their controls
 
@@ -15,32 +15,50 @@ resources. Cutting one breaks the loop; cutting all four makes the cascade a loc
 Two controls are worth stating as arithmetic a reviewer can check:
 
 ```text
-Σ (per-hop timeout) + Σ backoff   ≤   the caller's budget          # no unreachable attempts
-concurrency limit × replica count ≤   the dependency's published capacity
+Sequential local time + Σ attempt durations + Σ backoff + cleanup reserve
+    ≤ remaining end-to-end budget
+Σ (active replica limit × per-permit downstream fan-out) + other callers
+    ≤ dependency's safe concurrent-work budget
 ```
 
-Both are properties of configuration and can be asserted in a test with no network — see
-`distributed-systems-testing`.
+Sum sequential durations, not nested enclosing timeouts: a 200 ms child call inside a 300 ms
+parent budget consumes part of that 300 ms, not 500 ms. Parallel branches consume their longest
+required duration but all their resource demand. Include pool acquisition and retry backoff.
+For concurrency, use maximum active replicas including rollout surge and failure traffic; compare
+in-flight operations with in-flight capacity, never directly with requests/second. Route per-shard
+skew and other tenants explicitly. Static checks find inconsistent budgets; cancellation, real
+capacity and isolation still require runtime evidence (`distributed-systems-testing`).
 
 ## Bounding the queue is not optional
 
 An executor with an unbounded queue provides no early overload signal; latency and retained
 memory can grow until external failure, shutdown or `OutOfMemoryError`:
 
+Partial Java 11+ snippet using `java.util.concurrent` imports; Java 17 API contracts were checked.
+Inspect the target toolchain and executor ownership before adapting it; no dependency upgrade is
+required. Sizes below illustrate a bound, not measured production capacity.
+
 ```java
-// The default shape to find and delete: unbounded queue, no rejection policy.
+// Unbounded queue; default AbortPolicy still rejects after shutdown, not on queue overload.
 new ThreadPoolExecutor(8, 8, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
 
 // Bounded, with an explicit, countable rejection.
 var executor = new ThreadPoolExecutor(
         8, 8, 0L, TimeUnit.MILLISECONDS,
         new ArrayBlockingQueue<>(200),
-        new ThreadPoolExecutor.AbortPolicy());   // caller must map this to 503 + Retry-After
+        new ThreadPoolExecutor.AbortPolicy());   // catch RejectedExecutionException at submission
 ```
+
+The owner must shut down and await termination with a bounded policy; do not create a pool per
+request. Map rejection to the application contract (for HTTP, commonly 503), and advertise a
+retry delay only when justified and compatible with retry budgets. Preserve or explicitly reject
+accepted durable work; rejection must not become a silent successful submission.
 
 `CallerRunsPolicy` is not a rejection: it applies backpressure by executing the task on the
 submitting thread, which on a request thread means the request thread becomes the worker. It
-is correct for an internal producer you want to slow down, and wrong on a request path.
+can throttle an internal producer, but defeats isolation when the submitter must remain responsive
+(especially an event loop). It silently discards the task after shutdown, so it is unsuitable when
+submission requires explicit acceptance/rejection or durable delivery without additional handling.
 
 The same rule applies to queues you did not write: an HTTP client's pending-acquire queue, a
 message consumer's prefetch buffer, an in-memory batch accumulator. Each needs a bound and a
@@ -81,18 +99,18 @@ that trade must be made deliberately and recorded, not inherited from a `catch` 
 
 ## Design-review checklist
 
-- [ ] Every remote call has a timeout, and the sum down the path fits the caller's budget.
+- [ ] Sequential work and retries fit the remaining deadline; nested budgets are not double-counted.
 - [ ] Retry ownership is explicit; layered retries have non-overlapping purposes and one bounded
       end-to-end attempt budget rather than an accidental multiplier.
 - [ ] The retry policy has a budget, not just an attempt count.
 - [ ] Every queue and executor is bounded, with a rejection mapped to a real response.
 - [ ] There is one concurrency limit per dependency, not one shared across all of them.
-- [ ] `limit × replicas` was compared against what the dependency published.
+- [ ] Aggregate in-flight demand including fan-out, rollout surge and other callers fits measured capacity.
 - [ ] Every dependency is labelled critical or non-critical, and each non-critical one has a
       degraded behaviour with a test and a counter.
-- [ ] Readiness does not depend on a downstream call; liveness does not depend on anything
-      remote (`kubernetes-service-lifecycle`).
-- [ ] Shed rate, goodput and queue time are on the dashboard, and shed rate is not alerted as
-      an error rate (`slo-and-alerting`).
+- [ ] Readiness includes downstream health only when no admitted traffic can be served correctly
+      without it; liveness avoids remote dependencies (`kubernetes-service-lifecycle`).
+- [ ] Shed rate, successful goodput and queue age are visible. Count shed eligible requests according
+      to the service SLI; do not hide lost availability because rejection is intentional (`slo-and-alerting`).
 - [ ] The runbook names which lever to pull first and who may pull it, so the decision is not
       made at 03:00 for the first time.

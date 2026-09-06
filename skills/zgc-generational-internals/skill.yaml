@@ -1,10 +1,10 @@
 schemaVersion: 1
 
 name: zgc-generational-internals
-version: 1.3.0
+version: 1.3.1
 description: >-
   Generational ZGC internals: coloured pointers without multi-mapping, the load and store
-  barriers, the young and old cycles and their three STW phases, the remembered-set bitmap
+  barriers, the young and old cycles and their STW phases, the remembered-set bitmap
   and its double buffering, relocation and page management, allocation stalls, and the
   generational log and JFR event names. Use when a deploy script still carries
   -XX:+ZGenerational, when jdk.ZAllocationStall events appear or allocation stalls cluster

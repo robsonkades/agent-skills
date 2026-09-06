@@ -4,18 +4,20 @@
 
 For each piece, three numbers:
 
-- **O** — optimistic endpoint. State whether this means a quantile such as P10 or a bounded
-  best case; traditional PERT usage is inconsistent.
-- **M** — most likely: the value you would have given as a single number.
-- **P** — pessimistic endpoint. State whether this means a quantile such as P90 or a bounded
-  worst case; traditional PERT usage is inconsistent. It is not the
-  simultaneous union of every named failure; that produces an endpoint with no calibrated meaning.
+- **O** — optimistic bound under the declared scope and risk model.
+- **M** — mode (most likely value), not automatically the mean or P50.
+- **P** — pessimistic bound under that same model; not an arbitrary collection of every
+  imaginable failure. Check `0 <= O <= M <= P` and state units.
+
+If eliciting P10/P50/P90 instead, fit or select a distribution consistent with those
+quantiles and acknowledge unconstrained tails. Do not insert quantiles into the bound-based
+formula below and retain its probabilistic interpretation.
 
 The traditional PERT approximation uses:
 
 ```
 E  = (O + 4M + P) / 6          expected value
-SD = (P − O) / 6               standard deviation
+SD ≈ (P − O) / 6               classical heuristic standard deviation
 ```
 
 Worked, with O = 2, M = 3, P = 10 days:
@@ -27,23 +29,28 @@ SD = (10 − 2) / 6      = 1.33 days
 
 **The formula's expected value is 4 days, while its modal input is 3.** That distinction is useful,
 but the beta-distribution shape and endpoint interpretation are modelling assumptions, not measured
-facts. Calibrate them against completed work before using the result as a probability claim.
+facts. The range/6 variance shortcut is not the exact variance of every beta-PERT
+parameterization. State which distribution or heuristic you use; calibrate before making
+a probability claim. All numbers below are illustrative, not observed delivery data.
 
 ## Combining pieces
 
-Expected values add. For **independent** pieces, variances add, so the combined SD grows with the
-square root of the number of pieces. With correlation, covariance terms are required:
+Expected values add for a sum of durations or effort. Project elapsed time also needs
+precedence, resource capacity, working calendars and integration waits: parallel branches
+waiting for all completions use a maximum, not a sum. The following is a fixed sequential
+sum, not a general project schedule. For uncorrelated pieces, variances add:
 
 ```
 E_total  = Σ Eᵢ
 SD_total = √( Σ SDᵢ² )
+Var_total = Σ SDᵢ² + 2 Σᵢ<ⱼ Cov(Tᵢ, Tⱼ)    general finite-variance sum
 ```
 
-Five tasks each with E = 4.00 and SD = 1.33:
+Five tasks each with E = 4.00 and SD = 4/3, independent and sequential:
 
 ```
 E_total  = 20.0 days
-SD_total = √5 × 1.33 = 2.98 days
+SD_total = √5 × (4/3) = 2.98 days
 
 Normal approximation, P50: 20.0 days
 Normal approximation, P80: 22.5 days
@@ -53,29 +60,37 @@ Normal approximation, P95: 24.9 days
 
 Compare the two shortcuts people actually use:
 
-| Approach                  | Result    | What it means                                                 |
-| ------------------------- | --------- | ------------------------------------------------------------- |
-| Sum of most-likely values | 15 days   | Usually optimistic for right-skewed work; probability unknown |
-| PERT expected value       | 20 days   | Mean of this model, not necessarily its median                |
-| PERT at 80%               | 22.5 days | A number you can plan against                                 |
-| Sum of pessimistic values | 50 days   | Assumes every task's worst case, simultaneously               |
+| Approach                  | Result    | What it means                                                   |
+| ------------------------- | --------- | --------------------------------------------------------------- |
+| Sum of most-likely values | 15 days   | Usually optimistic for right-skewed work; probability unknown   |
+| PERT expected value       | 20 days   | Mean of this model, not necessarily its median                  |
+| Normal approximation P80  | 22.5 days | Conditional model deadline, not empirically calibrated coverage |
+| Sum of pessimistic values | 50 days   | Assumes every task's worst case, simultaneously                 |
 
 Both shortcuts discard probability information in opposite directions. Their calibration must be
 checked against actual outcomes rather than asserted from the arithmetic alone.
 
-Note the good news buried in the square root: aggregating **reduces** relative uncertainty.
-±33% on one task becomes ±15% across five, provided the risks are genuinely independent.
+Five skewed tasks need not have an approximately normal sum; the percentile rows are
+conditional arithmetic, not validation of normality. P80 means predicted completion by
+22.5 days under this approximation, not 80% coverage of an unspecified interval.
+
+In this independent equal-task example, aggregation reduces relative uncertainty.
+SD/mean of 33% on one task becomes 15% across five under these assumptions; these are
+coefficients of variation, not confidence-interval bounds. With perfect positive correlation,
+the five-task SD is `5 × (4/3) = 6.67`, so relative uncertainty does not shrink.
 
 ## Where the independence assumption breaks
 
-The square root only holds for independent pieces. Correlated risk defeats it, and correlation
+The sum-of-variances shortcut needs zero covariances. Shared risk can defeat it, and correlation
 is the norm in the cases that hurt:
 
 - One unfamiliar technology underlies six tasks — if it is harder than expected, all six slip.
 - One person is the only one who can do four of the pieces.
 - All the estimates were made by the same person on the same optimistic afternoon.
 
-When you spot a shared risk, do not model it as a task. Name it as a risk with its own impact:
+Represent a shared risk once, with its probability/scenario and effect on affected tasks;
+explicit mitigation work can be a task. Avoid counting the same delay in several independent
+inputs and then again as contingency. For example:
 "if the provider's API needs OAuth rather than an API key, add 3–5 days across the whole plan."
 That is more useful than smearing the same contingency into every line.
 
@@ -86,57 +101,63 @@ not the arithmetic — is where accuracy comes from.
 
 Two effects, both valuable:
 
-1. **Errors partially cancel.** Some pieces are over-estimated, some under.
+1. **Errors may partially cancel.** Shared bias or omitted scope will not cancel.
 2. **Forgotten work becomes visible.** This is usually the larger effect. "Add an export
    endpoint" is one line until decomposition surfaces the authorisation check, the audit
    record, the rate limit, the timezone rendering and the integration test.
 
-Stop decomposing when a piece is under about a day. Below that the estimation overhead exceeds
-the accuracy gained, and the pieces stop being independently comparable to anything.
+Stop when further detail would not change a decision or expose a material dependency/risk.
+Do not split work solely to manufacture independent inputs or narrower intervals.
 
 ## Reference-class forecasting: use your own history
 
-The strongest available method, and the least used: instead of asking "how long will this
-take?", ask "how long did the last three comparable things take?"
+Use comparable historical work to challenge inside-view estimates: how long did similar
+changes take under similar delivery conditions?
 
 It works because it captures everything your introspection omits — review latency, the
 interruptions, the environment being down for a day, the rework after the first demo. Those
-costs are stable per team and invisible per task.
+costs may change with staffing, queues, scope and delivery process; inspect comparability.
 
 Practical version, needing no process change:
 
-1. Find three past changes of similar shape. Not similar _size as estimated_ — similar shape.
+1. Collect comparable changes and report sample size, selection criteria and time window.
 2. Take their actual elapsed time, from start to merged-and-deployed.
-3. Use that spread as the starting range, and adjust only for named, specific differences.
+3. Use the observed spread as evidence, not automatically an 80% or 90% prediction interval.
+   Three observations give little information about tails. Record named differences and
+   unfinished work excluded from the sample; completed-only selection can bias forecasts.
+4. Preserve the forecast made at each decision point. Check later deadline hit rates or
+   interval coverage across comparable outcomes, as well as interval width; distinguish
+   scope changes from estimation errors. Avoid tuning and evaluating on the same examples.
 
 When someone says "but this one is simpler", ask what specifically is simpler and by how much.
 The answer is often "we understand it better now", which is what the previous team also said.
 
 ## The cone of uncertainty
 
-Estimate accuracy is bounded by what is knowable at the time. Very early — before the
-requirement is pinned down — being out by a factor of two in either direction is normal, and no
-amount of care in the arithmetic fixes it, because the variance is in the scope, not in the
-estimation.
+Early scope uncertainty cannot be repaired by arithmetic alone. The cone is a qualitative
+reminder, not evidence that every project fits a factor-of-two range or narrows automatically.
 
 Consequences worth stating out loud:
 
-- An early estimate should be given as a factor-of-two range, or as "we can tell you within a
-  week after a two-day spike". Both are honest; a single number is not.
-- Re-estimating is not a failure. It is the mechanism by which the cone narrows, and a plan
-  that never re-estimates is one that has stopped taking in information.
-- If precision is demanded before scope exists, the productive answer names the trade:
-  "I can give you ±50% today, or ±20% after two days of investigation."
+- Give a conditional scenario range when evidence permits; otherwise identify the scope
+  decision or investigation needed before forecasting.
+- Re-estimating incorporates new evidence; it may narrow, widen or move the range.
+  Preserve earlier estimates to evaluate calibration rather than erasing misses.
+- If precision is demanded before scope exists, timebox investigation and name the questions
+  it will address. Do not promise that two days of investigation buys a particular accuracy.
 
 ## Monte Carlo, when it is worth it
 
 For a plan with many tasks and real dependencies, sample each task's distribution a few
-thousand times and read the completion percentiles off the result. It handles dependency chains
-and asymmetric distributions that PERT's closed form does not.
+thousand times and recalculate the resource-constrained dependency network each time. Encode
+shared risks/correlation, calendars and availability; sampling individual durations alone
+does not model them. Record input provenance, distribution choices, seed and sample count;
+check percentile stability across runs and sensitivity to uncertain assumptions.
 
-Worth it for a quarter-scale plan; overkill for a two-week feature, where PERT's arithmetic
-gets you to the same decision. If you are running Monte Carlo on inputs that are themselves
-guesses, the precision is theatre — spend the effort on decomposition and history instead.
+Use simulation when dependency structure or tail risk could change the decision, regardless
+of plan length. More samples reduce simulation noise, not input/model error. With weak
+inputs, report scenario sensitivity and improve the evidence rather than presenting precise
+percentiles as calibrated facts.
 
 ## Common distortions
 
@@ -148,3 +169,8 @@ guesses, the precision is theatre — spend the effort on decomposition and hist
 | One person estimating alone                  | Two independent estimates; discuss only where they differ |
 | Silent padding                               | Explicit buffer at plan level, visibly owned              |
 | Treating a stale estimate as still valid     | Re-estimate on new evidence and say it changed            |
+
+## Sources
+
+- [GAO Schedule Assessment Guide, Best Practices 3 and 8](https://www.gao.gov/assets/gao-16-89g.pdf): resource-aware schedules, dependencies, correlation and schedule risk analysis. Its project examples are not software-team calibration data.
+- [NIST prediction uncertainty](https://www.itl.nist.gov/div898/handbook/pmd/section5/pmd512.htm): prediction for a future observation differs from uncertainty in an estimated mean. The worked PERT arithmetic above remains a stated heuristic.

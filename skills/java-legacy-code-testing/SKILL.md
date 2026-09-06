@@ -53,6 +53,11 @@ the debt is worth repaying at all (`technical-debt-decisions`).
 
 ## Workflow
 
+Examples compile for Java 21 without preview; applying the skill does not require upgrading a
+legacy project. Inspect its release/toolchain, test framework, mock maker, runtime and build
+constraints first. Reuse compatible tooling and report missing evidence rather than importing
+the version table into the build. Prefer an already reachable boundary before editing a seam.
+
 Feathers's Legacy Code Change Algorithm (ch. 2, p. 18), unchanged since 2004 because nothing has
 superseded it:
 
@@ -125,9 +130,11 @@ that Feathers's hand-rolled time abstraction is dead.
 This is where the repo's own rule needs qualifying rather than repeating. `java-refactoring`'s
 "no net, no refactoring" is correct for **category 2** below and is a deadlock for **category 1**.
 
-1. **Behaviour-preserving by construction**, applied only to create a seam: Parameterize
+1. **Small changes with a reviewable preservation argument**, applied only to create a seam: Parameterize
    Constructor with a delegating old constructor, Extract Interface, Extract Method, Rename —
-   performed by the IDE, signature preserved, revertible in one commit.
+   preferably tool-assisted, existing caller contracts preserved, revertible as one small diff.
+   Compilation and unchanged signatures are evidence, not proof of unchanged behavior: compare
+   construction order, exception timing, virtual dispatch, reflection/DI and resource ownership.
 2. **Everything else** — reordering statements, merging branches, changing an extraction point,
    altering a condition. These need the pinned suite first, no exceptions.
 
@@ -141,8 +148,8 @@ For category 1, Feathers's four disciplines (ch. 23) substitute for the test you
   step becomes a category-2 change with no net.
 - **Hyperaware Editing.** Know why every keystroke is safe. If you cannot say why, stop.
 
-State which category a step is in, in the commit message. A reviewer cannot otherwise tell a
-compiler-guaranteed move from a rewrite.
+State the category and preservation argument in the change summary (and commit message if a
+commit is requested). If it cannot be justified, first find a coarser test point or narrow the seam.
 
 ## Before and after
 
@@ -169,9 +176,11 @@ The after state applies **Extract Interface** under a _new_ name — `interface 
 `RateGateway implements Rates` keeping the name it already had — and **Parameterize Constructor**,
 retaining a delegating `RenewalCheck()` that passes `new RateGateway()` and
 `Clock.systemDefaultZone()`. Both halves are Preserve Signatures: no caller of `RateGateway` and no
-caller of `RenewalCheck` compiles differently, and that is what licenses the step with no test in
-place. (`systemDefaultZone`, not `systemUTC`: anything else changes behaviour, which this step is
-not allowed to do.) Delete the old constructor in a later commit, once callers have moved.
+caller of `RenewalCheck` needs to move. Still compare initialization and dispatch behavior.
+`systemDefaultZone`, not `systemUTC`, preserves the chosen local zone if the process default
+zone stays stable. The clock captures that zone at construction while `LocalDate.now()` reads
+the default on each call: if the application changes it dynamically, preserve that behavior
+explicitly. Remove the old constructor only after public, reflective and DI callers are migrated.
 
 Naming the interface `RateGateway` and renaming the class would have been **Extract Implementer**
 (p. 356) instead — a different technique with a different cost, because every `new RateGateway()`
@@ -186,7 +195,8 @@ test pass, and leaves the design exactly as broken.
 You must add behaviour to a 600-line method by Thursday. Reading it is a week you do not have.
 
 - **Sprout Method / Sprout Class** — write the new behaviour as a new, fully tested unit and call
-  it from one line inside the untested body. You never read the rest.
+  it from one line inside the untested body. Read the surrounding control flow and effects to
+  prove placement, frequency, ordering and error propagation; testing the sprout alone cannot.
 - **Wrap Method / Wrap Class** — rename the original, give the new method the old name, and have
   it call both. Use when the new behaviour must happen _around_ the old rather than inside it.
 
@@ -201,7 +211,8 @@ shapes. They answer "I have two days"; they do not answer "how do we fix this".
   interface accretes the whole class surface and documents nothing, and the mocks now let every
   test lie about a collaborator that was never the risk. Feathers's own version is narrower:
   extract **the subset the client actually uses**. An interface with one permanent implementation
-  is indirection, not abstraction (`java-dependency-inversion`).
+  can still protect an owned boundary; require an actual substitution or contract benefit
+  rather than counting implementations (`java-dependency-inversion`).
 - **A `Clock` everywhere.** Every constructor gains a `Clock` because "inject the clock" became a
   rule; classes that never read the time carry a field they ignore and every test constructs a
   clock it does not use. Inject it where `now()` is called. Nowhere else.
@@ -219,8 +230,9 @@ shapes. They answer "I have two days"; they do not answer "how do we fix this".
 
 - Break dependencies only as far as step 4 needs. The refactoring you want to do is a separate
   commit, after the tests exist.
-- Never change a signature during a dependency-breaking step. Add, delegate, and delete the old
-  path in a later commit.
+- Preserve existing caller signatures where possible through overloads/delegation. Techniques
+  that deliberately change a signature or class identity need a caller/compatibility inventory
+  and the narrowest reachable checks; the compiler cannot find reflective or external callers.
 - A seam without an enabling point is not a seam. Before declaring one done, name the line that
   chooses the behaviour.
 - Do not add `setXxxForTest`, a public mutable static, or a `protected` factory method without a
@@ -238,14 +250,15 @@ shapes. They answer "I have two days"; they do not answer "how do we fix this".
 
 ## Verification
 
-- **The class is constructible in a test with no container, no database and no agent.** That is
-  the whole objective of steps 1–3; everything else is commentary.
+- **The chosen test point is reachable without the real side effect that blocked it.** Often
+  this means constructing the class without a database; a static or coarser seam can also meet
+  the objective. Show the first meaningful assertion, not just successful construction.
 - **The enabling point is a line you can point at.** If nobody can name it, the seam is decorative.
 - **The test fails when the behaviour changes.** The mutation check is
   `java-refactoring/references/safety-workflow.md`'s; run it here too, because a suite that stays
   green through a deliberate mutation means step 4 did not happen.
-- **The step is revertible in one commit** and touched no signature. Check `git diff` for changed
-  public signatures before pushing a category-1 step.
+- **The step is one reviewable, reversible diff.** Inspect signatures plus construction order,
+  exceptions, dispatch and resource ownership; do not infer preservation from compilation alone.
 - **`grep -c 'mockStatic('` is not rising** across the module, and no identifier matching
   `*ForTest*` is reachable from production code.
 - **Time is injected, not frozen by luck.** `grep` for `LocalDate.now()`, `Instant.now()` and

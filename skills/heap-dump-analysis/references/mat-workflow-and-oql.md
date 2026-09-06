@@ -12,7 +12,7 @@
      List Objects        -> individual instances
      Path to GC Roots    -> why was this not collected? EXCLUDE weak and soft references
      Show Retained Set   -> what would be freed if this object died
-6. Histogram         -> per-class counts, with shallow and retained aggregated
+6. Histogram         -> per-class counts/shallow totals; calculate retained set when needed
 7. OQL               -> domain-specific ad-hoc queries
 ```
 
@@ -34,8 +34,9 @@ This is why a histogram sorted by shallow size puts `char[]` at the top while th
 responsibility is in the retainer.
 
 Dominance is strict: Y dominates X only if **every** path from any GC root to X passes
-through Y. A shared configuration object read by two subsystems is dominated by neither
-and rises to the synthetic super-root, however large it is.
+through Y. If two subsystems share an object, neither subsystem need dominate it, but
+their common application owner can. Only when no real object dominates it does its
+immediate dominator become the synthetic super-root.
 
 Direct dominator-tree children represent disjoint dominated branches in the underlying
 graph, but MAT grouping/report views may aggregate or repeat data differently. Before
@@ -46,36 +47,37 @@ sets or query projections.
 
 MAT's OQL is SQL-_like_, not SQL. It has **no aggregation functions** — no `SUM`, `AVG`
 or `COUNT` over an expression in the `SELECT` clause. For totals, use the Histogram
-(which already sums shallow and retained per class) or "Group Result by class" over an
-OQL result.
+(which sums counts/shallow sizes) or "Group Result by class" over an OQL result.
+Calculate the retained size of the selected set separately: it is not generally the sum
+of instance retained sizes. Distinguish MAT's minimum approximation from exact retained
+size; overlapping retained sets must not be added as independent memory budgets.
 
 ```sql
 -- HashMaps with more than 10,000 entries
 SELECT h, h.size FROM java.util.HashMap h WHERE h.size > 10000
 
 -- Strings containing a marker
-SELECT s FROM java.lang.String s WHERE s.toString().contains("sessionId=")
+SELECT s FROM java.lang.String s WHERE toString(s).contains("sessionId=")
 
 -- Instances whose field is null
 SELECT b FROM com.example.UserSession b WHERE b.userId = null
 
 -- Large char arrays. No SUM: list the candidates, then group the result for a total.
-SELECT c FROM char[] c WHERE sizeof(c) > 1024
+SELECT c FROM char[] c WHERE c.@usedHeapSize > 1024
 
--- ClassLoader with the most loaded classes.
--- The real field is `classes` (java.util.Vector<Class<?>>); `@` is reserved for
--- MAT-computed attributes such as @retainedHeapSize and @objectId, not object fields.
-SELECT cl, cl.classes.size()
-FROM java.lang.ClassLoader cl
-ORDER BY cl.classes.size() DESC
+-- Classes defined per loader, including subclasses. Sort the result column in MAT.
+-- @definedClasses accesses MAT's model, not a JDK-private collection field.
+SELECT cl, cl.@definedClasses.size() AS "Defined Classes"
+FROM INSTANCEOF java.lang.ClassLoader cl
 
 -- Virtual thread footprint
 SELECT * FROM java.lang.VirtualThread
 ```
 
 The normative syntax reference is the Eclipse MAT documentation. Check every function
-before using it — plausible functions that "ought to exist" are the dominant failure mode
-when writing OQL from memory.
+before using it. MAT has no SQL `ORDER BY` or built-in `sizeof`; sort the result in the UI
+and use `@usedHeapSize`. Run each query separately; `com.example.UserSession` is an
+application placeholder. Validate queries on the installed MAT/parser and target dump.
 
 ## Recurring leak shapes
 
@@ -94,7 +96,7 @@ reachability.
 
 ### A `ThreadLocal` value that is never replaced
 
-A static `ThreadLocal` has exactly **one** entry per thread: the `Entry` key is the
+A single `ThreadLocal` has at most **one** entry per thread: the `Entry` key is the
 `ThreadLocal` instance itself, so entries cannot accumulate within one thread's
 `ThreadLocalMap`. That mental model sends the investigation the wrong way.
 
@@ -112,13 +114,15 @@ System-wide (Histogram grouped by LoggingContext):
 The value object was reused rather than replaced, and its internal list grew forever on a
 pool thread that is never discarded. Fix with a scope that restores/removes state in
 `finally`; a fresh value installed with `set()` but never removed still retains the latest
-request on every carrier/pool thread and breaks nested restoration. Prefer explicit
+request on each owning thread and breaks nested restoration. Virtual-thread locals belong
+to the virtual thread, not its carrier. Prefer explicit
 parameter passing or `ScopedValue` where its Java-version/lifetime contract fits.
 
 ### Classloader retention across reloads
 
-A `ClassLoader` is collectable only when no instance of any class it loaded, no thread
-holding it as `contextClassLoader`, and no external reference to it survives. With plugin
+A `ClassLoader` can remain live through a reachable instance/class it defined, a live thread's
+`contextClassLoader`, or another external root path. Cycles wholly inside an unreachable
+loader graph do not by themselves prevent collection. With plugin
 hot-reload, each reload creates a new `URLClassLoader`; the histogram then shows many
 instances of "the same" class (`com.example.Plugin$1` × 5000), each from a different
 loader. Path to GC Roots from one of the extra instances names the forgotten reference —
@@ -140,13 +144,24 @@ consequences:
   A handler holding a large array or buffer across a blocking point pays for it in the
   heap, per in-flight request.
 
-This has no pre-Loom equivalent: a blocked platform thread's stack lives outside the Java
-heap and is invisible to MAT. A dominator tree topped by `Continuation`/`StackChunk`
-points at handlers holding large state across suspension points, not necessarily at a
-forgotten reference.
+The native bytes of a platform thread's stack are outside the heap, but HPROF can record
+its Java frame locals as GC roots, visible in MAT's Thread Overview. HotSpot 25 also emits
+stack/root records for virtual threads. Do not assume the parser represents every local
+as an ordinary edge from `StackChunk`; inspect thread roots and the actual ownership path.
+Large suspended state can be legitimate in-flight work or an unbounded-lifetime/concurrency
+defect; chunk presence alone does not distinguish them.
 
 ### Off-heap is not here
 
-`DirectByteBuffer`s, FFM `MemorySegment`/`Arena` mappings and JNI allocations appear only
-as their small Java handle. Growth visible in process RSS but not in `-Xmx` is a Native
-Memory Tracking question; a `.hprof` cannot answer it.
+Native payload bytes are absent, but Java handles/capacities/cleanup owners may explain
+their lifetime. Compare RSS with measured heap occupancy/commitment, not the fixed `-Xmx`
+ceiling. Add NMT when already enabled, OS mapping/residency and native allocator evidence;
+third-party allocations and some JDK-library memory are outside NMT's coverage.
+
+## Primary references
+
+- [MAT OQL syntax](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/reference/oqlsyntax.html)
+- [MAT properties and functions](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/reference/propertyaccessors.html)
+- [Retained sets and minimum versus exact size](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/concepts/shallowretainedheap.html)
+- [MAT thread stacks and locals](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/tasks/analyzingthreads.html)
+- [NMT coverage, JDK 25](https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html)

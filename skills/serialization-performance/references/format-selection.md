@@ -42,16 +42,21 @@ For every candidate test:
 
 Compatibility claims belong to the deployed reader/writer matrix, not only the format spec.
 
-## Tagged formats
+## Tagged and schema-ordered formats
 
 Tagged encodings can skip unknown fields and evolve by stable identifiers under format-specific
 rules. Costs depend on tag/value encoding, schema resolution, generated versus reflective paths,
 object materialization, string/bytes handling and implementation optimizations.
 
-Protocol Buffers field tags combine field number and wire type; field ordering on the wire is not a
-safe application contract unless a deterministic mode/canonical scheme explicitly guarantees the
-needed property. Avro resolution depends on writer and reader schemas. Registry operations and
-caching must be part of availability/latency design.
+Protocol Buffers field tags combine field number and wire type. Deterministic serialization is
+not canonical across builds/versions/languages; do not use it alone to justify stable signatures
+or persistent deduplication hashes. Define the exact canonicalization contract where needed.
+
+Avro binary records are different: field values follow writer-schema order, without per-field
+tags. Readers need the writer schema and resolve it against the reader schema; skipping unknown
+fields relies on that schema, not a Protobuf-style tag. Defaults fill fields absent from the
+writer schema during resolution; they do not omit default-valued fields from binary encoding.
+Writer-schema retrieval, embedded schemas or registry/cache availability belong in the cost model.
 
 ## Indexed/in-place formats
 
@@ -75,6 +80,14 @@ JSON offers ecosystem reach, inspection and flexible producers. Measure name/num
 binding/reflection/codegen, UTF-8/transcoding, unknown fields, duplicate keys, numeric precision,
 canonicalization, compression and allocation for the chosen library/configuration. Streaming/token
 APIs and tree/data-binding APIs have different costs and semantics.
+
+For Jackson, record the major/minor version, modules, target types, parser constraints and actual
+framework overrides. Configure a Jackson 2 mapper before its first read/write; do not benchmark a fresh
+mapper per message against a warmed shared production mapper unless lifecycle is the intended
+factor. Do not transfer defaults across major versions: Jackson 3.0 changed
+`FAIL_ON_UNKNOWN_PROPERTIES` to false and `FAIL_ON_NULL_FOR_PRIMITIVES` and
+`FAIL_ON_TRAILING_TOKENS` to true. Test the effective configuration rather than silently changing
+acceptance behavior to win a benchmark. JDK/module compatibility must come from the resolved release.
 
 Binary replacements can reduce bytes/CPU while adding schema/tooling/compatibility dependencies.
 Choose them only when measured total benefit exceeds migration and operational cost.
@@ -134,6 +147,10 @@ decision, review date and triggers to revisit:
 
 - [Protocol Buffers language guide](https://protobuf.dev/programming-guides/proto3/)
 - [Protocol Buffers encoding](https://protobuf.dev/programming-guides/encoding/)
+- [Protocol Buffers serialization is not canonical](https://protobuf.dev/programming-guides/serialization-not-canonical/)
+- [Avro 1.12.0 binary encoding and resolution](https://avro.apache.org/docs/1.12.0/specification/)
+- [Jackson 3.0 configuration changes](https://github.com/FasterXML/jackson/wiki/Jackson-Release-3.0)
+- [Jackson 2 ObjectMapper lifecycle](https://github.com/FasterXML/jackson-databind/blob/jackson-databind-2.18.0/src/main/java/com/fasterxml/jackson/databind/ObjectMapper.java)
 - [Apache Avro specification](https://avro.apache.org/docs/current/specification/)
 - [FlatBuffers documentation](https://flatbuffers.dev/)
 - [Cap'n Proto encoding](https://capnproto.org/encoding.html)

@@ -7,29 +7,24 @@
 | Recurring `Concurrent Mark Restart for Mark Stack Overflow`  | Discovered-object frontier exceeds the expandable mark stack; broad/live graph, insufficient marking progress or native limit | `-Xlog:gc+marking=debug`; effective `MarkStackSizeMax`; live-set/graph and concurrent CPU evidence                    |
 | `Pause Full` shortly after incomplete marking cycles         | Insufficient end-to-end reclamation headroom; late trigger is one candidate                                                   | Effective IHOP, old-allocation rate, marking + mixed-phase duration, evacuation/fallback chronology                   |
 | `Concurrent Mark From Roots` growing longer cycle over cycle | Old generation growing faster than concurrent scan capacity                                                                   | `ConcGCThreads` too low for the heap, or CPU contended with the application — check container CPU limits and affinity |
-| Frequent `Humongous allocation`, no associated `Pause Full`  | Eager reclaim is working; the objects die before accumulating a remembered set                                                | `-Xlog:gc+humongous`: count humongous regions allocated against regions freed per young GC                            |
-| Frequent `Humongous allocation` **with** `Pause Full`        | Humongous objects surviving long enough to become ineligible for eager reclaim                                                | Larger `G1HeapRegionSize`, or redesign the allocation so the payload falls below the threshold                        |
+| Frequent humongous allocation, no associated `Pause Full`    | Reclamation may keep up, or free capacity may temporarily hide accumulation                                                   | `-Xlog:gc+humongous=debug`; compare allocated, reclaimed and retained regions over time                               |
+| Frequent humongous allocation **with** `Pause Full`          | Retention, ineligibility, allocation bursts or contiguous-region shortage                                                     | Full-GC cause, candidate fields, free-region and retained-region trends before choosing region size or redesign       |
 
 ## The SATB invariant, and why the old value
 
-The tricolour invariant a concurrent collector must preserve: no **black** object (visited,
-fields already scanned) may point directly at a **white** one (never visited), or the white
-object is lost while still live.
-
-The application breaks it by writing `black.field = white` after black was already scanned.
-SATB does not re-scan black and does not enqueue the new value. It enqueues the **old** value
-that was in the field before the overwrite:
+SATB preserves snapshot reachability by recording overwritten references that the marker might
+otherwise miss. It need not enforce the strong tricolour rule of forbidding every black-to-white
+edge. The deletion barrier records the **old** value, not the newly installed reference:
 
 ```
-Before:      black.field = A          (A was reachable at snapshot time, by definition)
-Application: black.field = B          (pre-write barrier fires)
+Before:      obj.field = A            (potentially needed to preserve snapshot reachability)
+Application: obj.field = B            (pre-write barrier fires)
 SATB:        enqueue A — not B
 ```
 
-The liveness relation SATB guarantees is "live in the initial snapshot". A was already
-reachable when the cycle started. B is a new reference created after the snapshot; whatever
-code produced it already holds the object reachable through a root or another live object, so
-proving B's liveness is not this barrier's job.
+An old field value is not necessarily snapshot-live: it may reference an object allocated later.
+Root processing, tracing, allocation liveness and SATB processing together preserve live objects;
+do not infer an object's allocation time from when this particular reference was assigned.
 
 The asymmetry is the point: SATB lets dead objects look live (floating garbage, reclaimed next
 cycle) and never lets a live object look dead (a dangling pointer — heap corruption). Any
@@ -37,25 +32,23 @@ change that trades in the other direction is not an optimisation.
 
 ## The full barrier condition
 
-Three checks, not one, on every reference store while marking is active:
+Simplified ordinary-field pre-barrier path, based on JDK 25 x86 HotSpot (not executable code):
 
 ```
 obj.field = newValue
   |
-  +-- marking in progress?           no  -> plain store, zero overhead outside a cycle
+  +-- thread-local SATB active?      no  -> skip SATB enqueue
   |                                  yes v
-  +-- is obj's address below its region's TAMS?
-  |        no (obj allocated during the cycle) -> plain store; obj is implicitly live
-  |        yes v
   +-- old_value != null?
            no  -> plain store; nothing to preserve
            yes -> enqueue old_value into the thread's local SATB buffer, then store
 ```
 
-Each check on its own is cheap — a global flag read, a pointer comparison, a null check — but
-they run on **every** reference store while marking is active, not only on the ones that
-matter to the result. That is why SATB barrier cost scales with how long marking is active,
-not with how much garbage is produced.
+The holder's address is not tested against TAMS in this path. Queue filtering tests the recorded
+referent against its TAMS and marking state. Inactive SATB still has a check unless optimized
+away, and G1's separate post-write barrier may remain. Compiler elimination, initialization,
+bulk stores and architecture change the emitted code. Measure eligible store rate, active time,
+buffer processing and CPU; do not claim zero cost outside marking.
 
 ## TAMS
 
@@ -72,12 +65,9 @@ During the cycle:
 ```
 
 This is what lets G1 keep promoting into old **during** a cycle without each promotion forcing
-re-marking. It is also why a single mark bitmap suffices since JDK 20: the "is this result from
-the previous cycle or the current one" question that the old prev/next bitmap pair answered
-physically is answered logically by TAMS, region by region.
-
-The pre-JDK-20 pair existed to give mixed GC a stable data source — the immutable "prev" —
-while a new cycle wrote into "next". TAMS provides that stability without a second buffer.
+re-marking. TAMS is an allocation boundary, not a replacement version tag for two concurrent
+bitmap generations. JDK 20's single-bitmap change also coordinates rebuild/scrubbing and bitmap
+reuse; do not attribute its correctness to TAMS alone.
 
 ## Mark stack overflow
 
@@ -126,6 +116,7 @@ reconciliation/restart mechanism changes between releases.
 | 2 MB               | 1 MB   | Not humongous                        | Not humongous | Not humongous (equals the threshold) |
 | 4 MB               | 2 MB   | Not humongous                        | Not humongous | Not humongous                        |
 
+The sizes above are aligned total object sizes, including headers, not array payload lengths.
 The trap is sizing a payload _at_ the threshold. With a 2 MB region, a serialiser whose worst
 case grazes 1 MB puts part of the traffic over the line and part under it under identical
 nominal load, producing behaviour that changes without the workload changing. Size for clear
@@ -134,32 +125,35 @@ margin below the threshold instead.
 ## Eager reclaim, and what it cannot prove
 
 ```
-During a young or mixed GC, G1 checks the candidate humongous region's remembered set.
-If no other region points at it, G1 can conclude within that same STW pause that the
-object is dead and free the region immediately — without waiting for a complete
-marking cycle.
+During a young or mixed GC, select eligible humongous candidates, scan the relevant
+roots and incoming references, and retain candidates discovered live. Reclaim only
+eligible candidates that remain unreferenced after that processing.
 ```
 
-It is cheap enough to fit in an ordinary pause because the remembered set already exists and
-is already maintained incrementally by the concurrent refinement threads, cycle or no cycle.
-Asking "is this region's RSet empty?" costs O(RSet entries), not a root-to-leaf graph walk.
+An empty remembered set alone does not establish death. JDK 25 candidate selection includes
+complete remembered-set information, pinning and primitive-array restrictions; small nonempty
+remembered sets can still be eligible. Inspect candidate and reclaimed counts separately.
 
-That is also its limit: an empty RSet proves only that no **other region** points at the
-object, not that it is unreachable from roots by a path that does not cross a region boundary
-— a local variable in a thread stack, for example. Hence eager reclaim runs during an STW
-pause, when roots are being scanned anyway, and not as a standalone asynchronous operation.
+Even complete incoming heap-reference information does not replace root scanning: a thread's
+local variable can retain the object. Pending card information and collection-set scanning also
+matter. Eager reclaim therefore participates in the STW collection protocol, not a standalone
+test of whether a region's remembered-set count is zero.
 
-The problematic pattern is therefore not humongous allocation as such; it is the humongous
-object that survives long enough to accumulate cross-region references. Those are not eligible
-for the fast path and genuinely wait for a complete cycle.
+Cross-region references alone do not imply permanent ineligibility. A region ineligible during
+one pause may become eligible later. Pressure requires evidence of retained regions, allocation
+rate or contiguous-space shortage, not simply frequent allocation or one candidate flag.
 
-## Remembered set pressure reaches marking, not just mixed GC
+## Separate marking from remembered-set work
 
-A highly connected object graph with heavy cross-region fan-in drives the RSet into its coarse
-representation. Coarse entries force any phase that traverses the RSet to scan whole source
-regions rather than specific cards — which inflates `Concurrent Mark From Roots` exactly as it
-inflates the mixed GC's heap-root merge, because both walk the same structure. A marking cycle
-running several times longer than the predictor expects, in a service with a dense object
-graph, is the shape to look for. Raising `G1HeapRegionSize` reduces the region count and the
-fan-in per region; reducing cross-region references in the application design attacks the
-cause.
+Concurrent marking traces object fields and SATB roots. Remembered-set rebuilding and evacuation
+root scanning are separate work. Dense connectivity can increase several costs, but correlation
+does not establish that marking traverses coarse RSets. Compare phase durations and CPU stacks;
+route confirmed RSet scanning/refinement pressure to `g1-internals`. Region-size changes alter
+several competing costs and need workload validation, not a monotonic fan-in assumption.
+
+## Source checks
+
+- [JDK 25 x86 pre-barrier](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/gc/g1/g1BarrierSetAssembler_x86.cpp)
+- [SATB filtering](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1SATBMarkQueueSet.cpp)
+- [Object scanning and TAMS](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1ConcurrentMark.inline.hpp)
+- [Humongous candidate preparation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1YoungCollector.cpp)

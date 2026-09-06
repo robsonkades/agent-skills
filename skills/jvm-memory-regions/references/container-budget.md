@@ -15,17 +15,27 @@ leave headroom.
 
 ## The arithmetic, worked
 
-Start from the limit, subtract what was measured, and only then choose a heap:
+Start from one explicitly identified cgroup limit and a conservative simultaneous charge
+budget. Units below are MiB (2^20 bytes), matching JVM `m`; Kubernetes `Mi` is distinct from
+`M`. These are illustrative assumptions, not a measured universal non-heap allowance:
 
 ```
-Limit                                   2048 MB   (resources.limits.memory)
-NMT committed non-heap under load        520 MB   (Class 120 + Thread 96 + Code 64 + GC 180 + other 60 — illustrative measured peak)
-Process-resident outside NMT             ~100 MB   (RSS/PSS versus resident tracked domains; JNI/allocator/mappings)
-Cgroup file/tmpfs/other overlap           ~50 MB   (`memory.stat`; not necessarily in process RSS)
-Margin for correlated/transient peaks    ~100 MB   (derived from peak overlap and uncertainty, not a generic constant)
-                                        --------
-Candidate max heap                       ≈ 1280 MB → -Xmx1280m, or -XX:MaxRAMPercentage=62.5
+Limit                                    2048 MiB
+Tracked non-heap capacity allowance        520 MiB (validated against residency/peaks)
+Additional native resident allowance       100 MiB (maps/allocator evidence, no double count)
+Other cgroup charges                        50 MiB (file/tmpfs/kernel/other processes)
+Uncertainty/recovery headroom               100 MiB
+                                         --------
+Remaining candidate heap ceiling           1278 MiB
+Rounded-down trial choice                  1248 MiB → -Xmx1248m
+Equivalent percentage if detected limit is 2048 MiB: 60.9375%
 ```
+
+NMT committed can inform a conservative capacity envelope, but is not resident usage; do
+not obtain the extra 100 MiB by subtracting NMT committed from RSS. The tracked allowance must
+include all relevant categories and be remeasured at the candidate heap/thread settings.
+Identify container versus pod/ancestor scope: a sidecar in a sibling cgroup is not normally
+charged to the application container's leaf limit, but can contribute at a shared ancestor.
 
 Choose `-Xms` separately from startup, residency/uncommit and SLO evidence; equality with
 `-Xmx` is not implied by this capacity arithmetic. The percentage is derived from the
@@ -52,21 +62,25 @@ add the second card table (JEP 522, 0.2% of heap each).
 # NMT must be enabled at start — it cannot be turned on for a running process
 java -XX:NativeMemoryTracking=summary -jar app.jar
 
-APP_PID=$(pgrep -n -f '[/]app/MyApp.jar')
-test -n "$APP_PID" && jcmd "$APP_PID" VM.native_memory summary
+# Substitute a PID verified against process start time, command and namespace.
+jcmd <pid> VM.native_memory summary
 ```
 
 ```
 Total: reserved=4096MB, committed=968MB
 
 -  Java Heap (reserved=2048MB, committed=512MB)   ← governed by -Xms/-Xmx
--      Class (reserved=1056MB, committed=76MB)    ← Metaspace + class space
+-  Metaspace (reserved=128MB, committed=64MB)    ← non-class metadata (illustrative)
+-      Class (reserved=1056MB, committed=76MB)   ← class-space/category accounting; inspect nested lines
 -     Thread (reserved=135MB, committed=14MB)     ← illustrative stacks; 131 threads
 -       Code (reserved=247MB, committed=48MB)     ← code cache
 -         GC (reserved=72MB,  committed=72MB)     ← card table, remembered sets
 -   Compiler (reserved=6MB,   committed=6MB)      ← JIT workspace
 -     Symbol (reserved=22MB,  committed=22MB)     ← symbol and string tables
 ```
+
+This is an abbreviated schematic, not a complete summable NMT report; categories and nested
+metadata breakdowns vary by build. Do not add a nested subtotal again to top-level totals.
 
 Two readings this makes immediate and no heap dashboard offers: NMT `reserved` is virtual
 address accounting, while `committed` is memory the JVM has made accessible—not proof that
@@ -93,16 +107,17 @@ do not make NMT committed, RSS and cgroup usage interchangeable.
 
 ## When RSS is bigger than NMT
 
-NMT accounts for what the JVM allocates. Everything else in RSS is invisible to it, and
-the gap is where a "heap is flat, pod is OOMKilled" investigation usually ends.
+NMT covers instrumented HotSpot allocation paths, not every native allocation made by the
+JDK libraries, JNI code, allocator or mapped files. NMT committed and RSS are different
+accounting sets; their difference is a clue, not an estimate of missing native bytes.
 
 | Symptom                                                        | Possible cause                                                                                                          | How to distinguish                                                                                            | What to measure                                                         | Likely remediation                                                                                                                                |
 | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Resident/cgroup peaks track heap commitment and heap dominates | Heap policy may consume the budget, but NMT committed is not itself RSS                                                 | Correlate heap committed/used, RSS/PSS and `memory.stat` at the same timestamps                               | The arithmetic above with peak overlap                                  | Smaller/flexible heap, reduced state or larger limit according to SLO                                                                             |
-| NMT `Class` or `Code` rising, RSS follows                      | Metaspace or code cache growth                                                                                          | `summary.diff` names the region                                                                               | `VM.metaspace`, `Compiler.codecache`                                    | metaspace-internals; code-cache-segments                                                                                                          |
+| NMT `Metaspace`/`Class`/`Code` rising, RSS follows             | Metaspace or code cache growth                                                                                          | `summary.diff` names the region                                                                               | `VM.metaspace`, `Compiler.codecache`                                    | metaspace-internals; code-cache-segments                                                                                                          |
 | NMT `Thread` high                                              | Platform-thread count and stack reserve/commit                                                                          | `threads #N`, stack reserved/committed and actual RSS/PSS                                                     | Thread lifecycle, `-Xss`, native/Java call depth                        | Bound platform threads; reduce `-Xss` only after stack-safety testing; virtual threads shift—not erase—memory                                     |
 | NMT `Other`/`Internal` rising                                  | Direct/Unsafe or JVM-internal tracked paths are hypotheses; category is build/path-specific                             | `summary.diff`, NMT detail sites and direct-pool trend; do not equate the category with one API               | BufferPoolMXBean covers direct-buffer accounting, not arbitrary FFM/JNI | off-heap-memory                                                                                                                                   |
-| RSS − NMT total grows, NMT flat                                | Native code outside the JVM's allocator: JNI libraries, compression and crypto natives, a database driver's native part | `jcmd <pid> System.map` (Linux, Windows, macOS on 25) or `pmap -x`: anonymous mappings not owned by a JVM tag | `System.dump_map` before and after; `/proc/<pid>/smaps` RSS per mapping | Find the library (`VM.dynlibs`, `jdk.NativeLibrary`); fix or bound its allocation; jni-and-ffm                                                    |
+| RSS grows while NMT stays flat                                 | Native code outside the JVM's allocator: JNI libraries, compression and crypto natives, a database driver's native part | `jcmd <pid> System.map` (Linux, Windows, macOS on 25) or `pmap -x`: anonymous mappings not owned by a JVM tag | `System.dump_map` before and after; `/proc/<pid>/smaps` RSS per mapping | Find the library (`VM.dynlibs`, `jdk.NativeLibrary`); fix or bound its allocation; jni-and-ffm                                                    |
 | RSS − tracked resident memory grows on glibc, many threads     | malloc arenas/fragmentation are one hypothesis                                                                          | Mapping/smaps plus allocator statistics; controlled trim response is evidence, not proof                      | Compare RSS/PSS, faults, CPU and latency at equal load                  | Experiment with arena/trim policy and measure contention/CPU; allocator behavior belongs to `linux-for-jvm`                                       |
 | RSS flat, cgroup usage climbing                                | File/page cache, tmpfs, shared or kernel charges assigned to the cgroup                                                 | `memory.stat` categories and PSI/events versus process mappings                                               | `memory.current`, `memory.stat`, RSS/PSS and I/O/writeback              | Bound/rotate output and provide headroom; a persistent volume preserves files but does not inherently avoid page-cache charging (`linux-for-jvm`) |
 | Mapped files large                                             | `FileChannel.map`, CDS/AOT archives, memory-mapped caches                                                               | `System.map`/`smaps` distinguishes virtual size, RSS/PSS, clean and dirty pages                               | Resident/dirty bytes and writeback pressure—not mapping length alone    | Bound active mappings; clean pages are readily reclaimable, dirty pages require writeback and can still be reclaimed later                        |
@@ -118,8 +133,9 @@ the gap is where a "heap is flat, pod is OOMKilled" investigation usually ends.
 | cgroup charged          | `memory.current` / `memory.stat`                       | anon, file and other charges against the cgroup limit; not simply process RSS |
 
 ```bash
-ps -o pid,rss,vsz,comm -p $(pgrep -f MyApp)
-# RSS 512MB   VSZ 4GB — VSZ includes all reserved; the cgroup does not limit it
+ps -o pid,rss,vsz,comm -p <verified-pid>
+# On common Linux ps implementations RSS/VSZ are KiB; check the tool's units.
+# VSZ includes reservations; memory cgroup limits constrain charges, not VSZ.
 ```
 
 ## Pre-deploy checklist
@@ -133,7 +149,7 @@ ps -o pid,rss,vsz,comm -p $(pgrep -f MyApp)
 - [ ] Fixed versus variable `-Xms` chosen from measured startup, residency, uncommit and SLO behavior
 - [ ] `MaxMetaspaceSize` either justified as a fail-fast budget or deliberately omitted, with loader/class-space alerts
 - [ ] Effective segmented code-cache sizes and peak/compiler events reviewed on the target build
-- [ ] Platform-thread stack reservation and observed committed/resident peak budgeted; `-Xss × count` is a conservative virtual bound
+- [ ] Platform-thread stack reservation and observed committed/resident peak budgeted; `-Xss × count` is an approximation, not a bound on all native stacks
 - [ ] Direct-buffer limit/pools measured; recognize that FFM arenas, JNI and some Netty/no-cleaner paths are not bounded by `MaxDirectMemorySize`
 - [ ] Container run with an explicit memory limit, so JVM ergonomics sees the right value
 

@@ -11,7 +11,9 @@ advances freeze protection, but it cannot remove versions still visible to the o
 - VACUUM verbose output such as dead-but-not-yet-removable;
 - table-level vacuum/analyze timestamps, counts, dead tuples, XID age, and worker progress.
 
-A successful command with no removals is evidence of a horizon blocker, not healthy cleanup.
+A successful command with no removals alone proves neither a horizon blocker nor healthy cleanup:
+there may be no removable tuples, prior pruning or skipped pages. Correlate dead-but-not-removable
+evidence with actual horizons. Dead-tuple statistics are estimates, not exact bloat bytes.
 
 ## Autovacuum and freeze
 
@@ -25,10 +27,12 @@ can stop writes. Monitor oldest unfrozen XID with a large safety margin.
 
 ## HOT and fillfactor
 
-HOT requires that index-dependent columns remain unchanged and that the same heap page has room for
-the new tuple. Estimate reserved bytes from page/tuple size; a percentage that cannot fit one version
+HOT requires columns referenced by non-summarizing indexes to remain unchanged and space on the same
+heap page. BRIN's summarizing indexes are an exception; summaries can still require updates.
+Estimate reserved bytes from page/tuple size; a percentage that cannot fit one version
 buys nothing. Validate the change using interval deltas of HOT updates versus all updates, plus table
-size and read amplification. Lower fillfactor permanently increases pages read.
+size and read amplification. Lower fillfactor can reduce initial density and increase scan cost,
+but later updates can use the space; changing it does not immediately repack existing pages.
 
 ## Index visibility and specialized structures
 
@@ -39,8 +43,13 @@ Partial indexes require the planner to prove predicate implication. Parameterize
 one while a later generic plan cannot, so test after real prepared-statement warm-up.
 
 BRIN summarizes physical ranges. Choose it for huge physically correlated data and broad scans, then
-monitor correlation drift. It cannot serve highly selective point lookup like a B-tree.
+monitor correlation drift and lossy rechecks. It can support eligible equality/point predicates,
+but searches page ranges rather than exact row locations; compare recheck work with B-tree access.
 
 `VACUUM FULL` rewrites under an exclusive lock; `REINDEX` does not remove heap bloat. For online bloat
 repair, select and validate an appropriate rewrite tool/strategy and set desired fillfactor before the
 rewrite.
+
+Sources: [HOT, PostgreSQL 18](https://www.postgresql.org/docs/18/storage-hot.html),
+[routine vacuuming](https://www.postgresql.org/docs/18/routine-vacuuming.html), and
+[BRIN](https://www.postgresql.org/docs/18/brin.html). Verify settings against the deployed 17/18 version.

@@ -45,9 +45,11 @@ If tested point \(\lambda_k\) passes and the next point \(\lambda_{k+1}\) fails,
 K_{s,c} \in [\lambda_k,\lambda_{k+1})
 \]
 
-provided load increased monotonically and the failure is reproducible. Otherwise report
-the observed points without inventing an interval. Repeat near the boundary and attach a
-confidence interval or run-level distribution to the pass rate.
+provided feasibility is locally monotone in load for the same scenario/configuration and
+the failure is reproducible. Increasing the test load monotonically alone does not prove
+this: cache transitions, batching and controller state can create multiple regimes.
+Otherwise report the observed points without inventing an interval. Repeat near the
+boundary and attach a confidence interval or run-level distribution to the pass rate.
 
 The configuration is feasible for target demand path \(D_s(t)\) only when its measured
 envelope and transition behavior cover that path. A steady-state QPS comparison cannot
@@ -84,17 +86,36 @@ topology example, not a universal rule.
 
 ## 5. Reaction-time and backlog bounds
 
-For a simplified fluid queue with admitted arrival \(\lambda(t)\) and useful service
-capacity \(\mu(t)\):
+For a simplified fluid queue with admitted arrival \(\lambda(t)\) and potential service
+capacity \(\mu(t)\), both in the same work units per second, define net input and reflect
+it at zero:
 
 \[
-B(t)=\max\left(0, B(0)+\int_0^t[\lambda(u)-\mu(u)]du\right)
+Z(t)=B(0)+\int_0^t[\lambda(u)-\mu(u)]du
+\qquad
+B(t)=Z(t)-\min\left(0,\inf_{0\le s\le t}Z(s)\right)
 \]
+
+Unused service while the queue is empty cannot be saved for a later burst. For piecewise
+constant rates, the equivalent boundary update is
+\(B_{i+1}=\max(0,B_i+(\lambda_i-\mu_i)\Delta t_i)\); split intervals whenever rates change.
+Neither formula models actual departures as potential service, or equates failed attempts
+with successful completions. Account separately for retry work and abandonment.
+
+Sanity case: start empty, serve at 100 units/s, receive no work for 10 seconds, then receive
+150 units/s for 2 seconds. Backlog must be 100 units at 12 seconds. Clamping only the final
+cumulative integral incorrectly returns zero because it banks the first 1,000 unused
+service units. With arrivals then stopped, the backlog drains in 1 second. A calculation
+that returns zero during the burst or a negative backlog fails this case.
 
 This provides a backlog estimate while an autoscaler reacts. Test whether observed queue
 age stays inside the deadline budget. The model assumes a common fluid queue and
 work-conserving service; partitioning, priorities, abandonment and variable cost require
 simulation or measurement. Do not conclude p99 from \(B/\lambda\).
+
+The reflection construction follows the single-server workload model in
+[Fendick and Whitt, equation 3.13](https://www.columbia.edu/~ww2040/FendickWhitt20210916.pdf).
+This model supports backlog arithmetic under its assumptions, not a measured latency claim.
 
 ## 6. Resource-demand checks
 

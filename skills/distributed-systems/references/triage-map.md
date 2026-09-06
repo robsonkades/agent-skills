@@ -9,16 +9,17 @@ gave two candidates.
 **Separating question:** did the _same_ logical operation happen twice, or did two different
 operations both happen?
 
-| Evidence                                                      | Route to                                                   |
-| ------------------------------------------------------------- | ---------------------------------------------------------- |
-| Same request id or message id, two side effects               | `idempotency` — the handler is not repeat-safe             |
-| Two different ids, same business intent (user double-clicked) | `idempotency` — the key is wrong, not the mechanism        |
-| Duplicates cluster at a deploy or a consumer restart          | `kafka-consumers-in-java` (rebalance, uncommitted offsets) |
-| Duplicates cluster at a timeout in the caller's log           | `retries-and-backoff` — the ambiguous class retried        |
-| Duplicates on a queue after slow processing                   | `task-queues-and-competing-consumers` — lease expiry       |
+| Evidence                                             | Route to                                                                  |
+| ---------------------------------------------------- | ------------------------------------------------------------------------- |
+| Same request id or message id, two side effects      | `idempotency` — the handler is not repeat-safe                            |
+| Two different ids, apparently same business intent   | `idempotency` — establish whether the contract treats these as one intent |
+| Duplicates cluster at a deploy or a consumer restart | `delivery-semantics`; Kafka confirmed → `kafka-consumers-in-java`         |
+| Duplicates cluster at a timeout in the caller's log  | `retries-and-backoff` — the ambiguous class retried                       |
+| Duplicates on a queue after slow processing          | `task-queues-and-competing-consumers` — lease expiry                      |
 
-Cheapest evidence: one duplicated record's ids and timestamps against the caller's log for the
-same second. It usually settles the fork in a minute.
+Start with a duplicate's business identity, durable effects, attempt IDs and ack/progress
+history across the full retry/lease window. Timestamps alone do not establish one intent or
+causal ordering across hosts; log duplication can also mimic duplicate business effects.
 
 ## The data is wrong or stale
 
@@ -41,7 +42,8 @@ same second. It usually settles the fork in a minute.
   `timeouts-and-deadlines` for unbounded remote waits.
 - High CPU in one process → first route to `java-performance`; then determine whether skew,
   retries or serialization from distributed traffic created the load.
-- Slow only for some keys or tenants → `hot-partitions-and-rebalancing`.
+- Slow only for some keys or tenants → compare work/input size, query plans and placement;
+  demonstrated partition skew routes to `hot-partitions-and-rebalancing`.
 - Slow only on fan-out requests, fine on simple ones → `scatter-gather` (max-of-N).
 - Slow and spreading across services, error rate rising with it → `cascading-failures`. Time-critical.
 
@@ -49,7 +51,8 @@ same second. It usually settles the fork in a minute.
 
 **Separating question:** did it run too many times, not at all, or too late?
 
-- Ran once per replica → `leader-election`.
+- Ran once per replica → verify whether work was intended once fleet-wide or once per replica;
+  required role ownership routes to `leader-election`, repeated effects to `idempotency`.
 - Did not run and nothing alerted → the absence-of-errors pattern:
   `distributed-failure-catalogue`, then `slo-and-alerting` for the freshness signal it needed.
 - Ran on stale input, or did work nobody wanted any more → stale work:
@@ -63,8 +66,10 @@ same second. It usually settles the fork in a minute.
 
 - Down (fast, definite errors) → `retries-and-backoff` for the policy, `circuit-breakers` if the
   failures are sustained and correlated.
-- Slow (timeouts, threads held) → `timeouts-and-deadlines` first, because a missing bound is the
-  amplifier; then `circuit-breakers`.
+- Slow (timeouts, threads held) → inspect elapsed budgets and actual work lifetime;
+  `timeouts-and-deadlines` owns ineffective bounds/cancellation, while
+  `concurrency-limiting-and-bulkheads` owns local capacity isolation. A slow response does not
+  prove the timeout was missing; breaker choice depends on failure samples and fallback.
 - Rejecting with 429 → inspect the named quota/scope and `Retry-After`; it may be valid
   admission control, quota misconfiguration or unexpected workload. Route to
   `retries-and-backoff` and `rate-limiting-and-load-shedding`.
@@ -80,14 +85,16 @@ or consensus order, and it trades availability/throughput. Establish the promise
 `message-ordering-and-partitioning`. If it was per-key and the key was right, inspect parallel
 handlers, retries/redrive, producer epochs and gaps before calling the broker unordered.
 
-## Two candidates that are usually the same answer
+## Distinguishing mechanisms that can coexist
 
-- "Rate limit or load shed?" — both, and they are different mechanisms.
+- "Rate limit or load shed?" — identify quota/fairness policy versus overload protection;
+  one or both may be needed, and they are different mechanisms.
   `rate-limiting-and-load-shedding` separates them.
 - "Circuit breaker or bulkhead?" — a breaker stops calling a failing dependency; a bulkhead stops
-  one dependency consuming all your capacity. `circuit-breakers` and the concurrency-limiting
-  skill respectively. Under a slow dependency, a bulkhead often protects caller capacity while
+  one dependency consuming all your capacity. Route to `circuit-breakers` and
+  `concurrency-limiting-and-bulkheads` respectively. Under a slow dependency, a bulkhead often protects caller capacity while
   a breaker may reduce futile calls; select from measured saturation and fallback semantics.
-- "Saga or outbox?" — an outbox makes one write-plus-publish atomic; a saga sequences several
-  local transactions with compensations. `distributed-transactions-and-sagas` decides, and
+- "Saga or outbox?" — an outbox atomically records a database change and publication intent;
+  relay publication can repeat. A saga tracks local transactions, compensation and forward
+  recovery; it may use an outbox and can expose intermediate state. `distributed-transactions-and-sagas` decides, and
   `delivery-semantics` owns the outbox itself.

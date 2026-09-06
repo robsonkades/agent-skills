@@ -1,16 +1,14 @@
 schemaVersion: 1
 
 name: async-profiler-advanced
-version: 1.3.0
+version: 1.3.1
 description: >-
-  Operating async-profiler as an evidence instrument: choosing CPU, ctimer, itimer,
-  wall-clock, allocation, lock, native-memory, trace, and PMU events; proving attach and
-  perf-event access; bounding sampling and instrumentation bias; preserving virtual-thread,
-  native, kernel, and time context; and validating conversions and differentials. Use when
-  profiles are empty, idle-heavy, truncated, permission-blocked, containerized, multi-event,
-  or sensitive to async-profiler/JDK version. Does not own initial profiler selection
+  Configure and validate async-profiler when recordings are empty, idle-heavy,
+  truncated, permission-blocked, containerized, multi-event, or version-sensitive.
+  Choose event weights and engines, bound collection overhead, diagnose missing stacks,
+  and verify conversions and differentials. Does not own initial profiler selection
   (jfr-and-async-profiler), visual interpretation (flame-graph-analysis), or JDK Flight
-  Recorder configuration (jfr-advanced).
+  Recorder configuration.
 
 license: Apache-2.0
 

@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: scoped-values
-version: 1.3.0
+version: 1.3.1
 description: >-
   ScopedValue as one-way, immutable, lexically bounded context: where/run/call, rebinding in
   a nested scope, inheritance by StructuredTaskScope subtasks and by nothing else, and the
-  cases where ThreadLocal is still the right answer. Final in JDK 25 (JEP 506) after five
+  cases where ThreadLocal is still the right answer. Final in JDK 25 (JEP 506) after four
   preview rounds, with callWhere and runWhere removed along the way. Use when a ThreadLocal
   carries per-request context under virtual threads, when context is empty inside a forked
   subtask or a pool thread, when a ThreadLocal is never removed and leaks across pooled

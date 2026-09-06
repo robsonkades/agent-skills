@@ -1,6 +1,7 @@
 # Mockito hazards
 
-Behaviour below was verified on Mockito 5.23 with `mockito-junit-jupiter`, JDK 25.
+API context: Mockito 5.23 with `mockito-junit-jupiter`, JDK 25. Snippets omit imports and domain
+types; expected failures below must be reproduced in the project's actual test setup.
 
 ## Strict stubs, and what the failure means
 
@@ -20,7 +21,7 @@ class StrictStubsTest {
 }
 ```
 
-Verified result: the test fails with
+Expected result with the extension and default strictness: the test fails with
 
 ```
 org.mockito.exceptions.misusing.UnnecessaryStubbingException:
@@ -59,13 +60,18 @@ one of them — split it instead.
 ## Static and constructor mocking
 
 Since Mockito 5 the inline mock maker is the default, so `mockStatic`, `mockConstruction`, and
-mocking `final` classes and methods all work without extra configuration. The technical barrier
-is gone; the design argument is not.
+mocking `final` classes and methods are supported. Inline mocking requires instrumentation;
+check the runtime/mock-maker and Mockito's explicit Java-agent setup for modern JDKs rather
+than assuming dynamic attachment works. Do not relax JVM policy to make a test pass.
 
 A static call is a dependency that does not appear in the constructor, cannot be substituted by
 a caller, and is invisible in the type's signature. `mockStatic` makes it testable without
 making it visible — and it must be closed (`try (var mocked = mockStatic(X.class))`), or it
 leaks into the next test in the same thread and produces failures far from the cause.
+
+Static and construction mocks are thread-scoped; they do not automatically affect work on an
+executor thread. Close both scopes deterministically and test asynchronous behavior through
+an injectable seam rather than assuming the scoped mock propagates.
 
 Prefer, in order: inject the dependency; wrap the static call in a small instance-side port;
 mock statically only for third-party code you cannot wrap and cannot avoid.
@@ -78,7 +84,7 @@ is one constructor parameter and it fixes production reasoning as well as the te
 
 | Pattern                                  | Problem                                                                   |
 | ---------------------------------------- | ------------------------------------------------------------------------- |
-| `verify(repo).findById(id)`              | Asserts a query. The returned value already proves it happened.           |
+| `verify(repo).findById(id)`              | Usually duplicates result evidence; check for a call-count contract.      |
 | `verifyNoMoreInteractions(everything)`   | Fails when an unrelated, harmless call is added. Pins the implementation. |
 | `verify(x, times(1))` everywhere         | `times(1)` is the default; stating it adds noise, not strength.           |
 | `verify(x).method(any(), any(), any())`  | Asserts "something was called". Use real values, or drop the verify.      |
@@ -115,6 +121,15 @@ external broker — and assert on the captured payload's fields, not on the whol
 - Every distinct combination of mocked beans and properties creates a **new cached application
   context**. Ten test classes each mocking a different bean means ten context startups; this is
   usually the largest single cost in a slow Spring test suite.
+- Cache reuse depends on the complete context key. Qualifiers, including fallback field names,
+  can distinguish bean overrides; use consistent names when targeting the same bean and measure
+  actual cache misses. Check replacement versus creation and singleton/spy constraints when
+  migrating annotations; an import-only rewrite can change the test's meaning.
 - A mocked bean is still a mocked boundary and still owes the verification described in
   java-testing-strategy. `@MockitoBean` on the repository does not remove the need for one test
   proving the query works.
+
+## Primary references
+
+- [Mockito 5.21 API and agent setup](https://www.javadoc.io/static/org.mockito/mockito-core/5.21.0/org.mockito/org/mockito/Mockito.html) — verify the corresponding section for the installed version.
+- [Spring bean overrides and context reuse](https://docs.spring.io/spring-framework/reference/testing/annotations/integration-spring/annotation-mockitobean.html)

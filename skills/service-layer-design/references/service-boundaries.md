@@ -8,15 +8,13 @@ public class PlaceOrder {
 
     private final Orders orders;                 // repository, domain-owned interface
     private final Customers customers;
-    private final InventoryPort inventory;       // port; adapter calls another system
     private final ApplicationEventPublisher events;
     private final Clock clock;
 
-    PlaceOrder(Orders orders, Customers customers, InventoryPort inventory,
+    PlaceOrder(Orders orders, Customers customers,
                ApplicationEventPublisher events, Clock clock) {
         this.orders = orders;
         this.customers = customers;
-        this.inventory = inventory;
         this.events = events;
         this.clock = clock;
     }
@@ -24,6 +22,8 @@ public class PlaceOrder {
     @PreAuthorize("hasAuthority('ORDER_PLACE')")
     @Transactional
     public OrderId place(PlaceOrderCommand command) {
+        // Partial sketch: require authorized actor/tenant access to this customer.
+        // Resolve authoritative prices or validate an authorized quote; do not trust client prices.
         Customer customer = customers.byId(command.customerId())
             .orElseThrow(() -> new UnknownCustomer(command.customerId()));
 
@@ -45,15 +45,22 @@ demarcation, authorisation, loading, delegating, saving or publishing. No line d
 business question: `Order.confirm` decides whether the credit limit permits the order, and
 if it does not, no caller can proceed by accident.
 
-Two details that are easy to get wrong and are load-bearing here:
+The sketch requires configured transaction management and method security, proxy-mediated
+invocation and domain validation. A coarse ORDER_PLACE authority alone does not authorize
+arbitrary customer IDs. Validate quantities, bounded line counts and pricing provenance.
+`Order.confirm` enforces local rules, not a concurrent cross-order credit reservation;
+that needs an explicit version/locking/reservation protocol.
+
+Two details matter here:
 
 - **`Clock` is injected**, so the use case is testable and `Instant.now()` never appears
   inside domain logic.
-- **The event is published inside the transaction** but must be consumed after commit.
-  Publishing to an external broker from inside the transaction is the dual-write bug: the
-  transaction can still roll back after the message is gone. Either the listener runs after
-  commit, or the message goes through an outbox written in the same transaction
-  (`distribution-boundaries`).
+- **ApplicationEventPublisher alone does not promise after-commit or durable delivery.**
+  A transactional listener may deliberately run before commit for local transactional work;
+  external effects usually need after-commit ordering. An AFTER_COMMIT listener still has a
+  crash window and cannot roll back the committed order if it fails. For durable delivery,
+  write an outbox entry in the order transaction, then relay with retry/deduplication.
+  Check listener phase, fallback and executor configuration (`distribution-boundaries`).
 
 ## What the service must not become
 
@@ -81,10 +88,13 @@ public OrderId place(PlaceOrderCommand command) {
 ```
 
 The mechanical tell: the service reads entity state, branches on it, and writes entity
-state back. That triple is business logic in the wrong layer, regardless of how the classes
-are named (`domain-logic-organization`).
+state back. In a domain-model design, check whether this bypasses invariant ownership;
+a deliberate Transaction Script can legitimately own that logic (`domain-logic-organization`).
 
 ## Application service versus domain service
+
+The table describes the domain-model separation used by these examples. A domain service
+may use domain-owned ports; a pure calculation needs fewer collaborators than an IO-backed policy.
 
 |               | Application service                          | Domain service                                                     |
 | ------------- | -------------------------------------------- | ------------------------------------------------------------------ |
@@ -92,7 +102,7 @@ are named (`domain-logic-organization`).
 | Knows about   | repositories, ports, transactions, the actor | domain types only                                                  |
 | Transaction   | demarcates it                                | never                                                              |
 | Framework     | may use it (`@Transactional`, security)      | none                                                               |
-| Testing       | with fakes for ports                         | pure unit test, no doubles needed                                  |
+| Testing       | fakes plus integration checks for boundaries | unit tests; doubles if domain ports participate                    |
 | Typical count | one per use case; many                       | few; some systems have none                                        |
 
 A domain service is justified when a rule genuinely belongs to no single object:
@@ -112,7 +122,13 @@ public final class TransferPolicy {
 }
 ```
 
-Note what it does not do: no repository, no transaction, no clock lookup, no persistence.
+This policy shape is a domain-model choice, not the only definition of a domain service.
+Validate amount/currency and destination eligibility before mutation. If deposit fails after
+withdraw, the Java source object is already changed: database rollback does not undo its
+fields. Execute under the intended transaction/concurrency contract and discard failed unit-
+of-work objects; do not reuse or publish them. Same-account transfers need explicit semantics.
+
+This example performs no repository or transaction operations.
 The application service loads both accounts, calls this, and saves — and that separation is
 what makes the policy testable without a database.
 
@@ -137,14 +153,13 @@ public void settle(InvoiceId invoiceId, PaymentId paymentId) {
 }
 ```
 
-This is correct when both aggregates are in the same database and the consistency must be
-immediate. It costs a lock on both for the transaction's duration and a real chance of
-`OptimisticLockException` under contention (`offline-concurrency-control`). Where the
-consistency requirement is actually "eventually, and reliably", one aggregate plus an event
-is the cheaper and more available design.
+This can be correct when both participate in the same actual transaction and immediate
+consistency is required. Lock timing depends on SQL, isolation and lock mode; optimistic
+conflict detection requires versioning or another protocol. Eventual coordination can reduce
+coupling but adds delivery, retry and reconciliation costs; it is not universally cheaper.
 
 Fixed lock ordering matters here: two use cases that lock the same pair of aggregates in
-opposite orders deadlock under load, and the failure is load-dependent, so it reaches
+opposite orders can deadlock under load, and the failure is load-dependent, so it reaches
 production.
 
 ## Translation at the boundary
@@ -159,6 +174,9 @@ try {
 }
 ```
 
+A timeout during reserve may mean the remote reservation succeeded; preserve UNKNOWN outcome
+and use operation identity/reconciliation instead of declaring definite non-fulfillment.
+
 The adapter translates `RestClientException`/`SQLException` into a port-level failure; the
 service translates that into something the use case's caller can act on. What must not
 happen is a `DataAccessException` or an HTTP status reaching the domain, or a
@@ -166,8 +184,14 @@ happen is a `DataAccessException` or an HTTP status reaching the domain, or a
 
 ## Read paths
 
-Application services are a write-side construct. A list screen or a report does not need
-one: it needs a query, and routing it through a use case object adds a transaction it does
-not want and a mapping it does not need. Use a query object or a projection directly
-(`query-objects-and-specifications`), and reserve the service layer for operations that
-change something.
+Read use cases can need authorization, snapshot consistency, orchestration or stable APIs.
+Keep a service when it owns those duties; direct query objects/projections can simplify
+reads when equivalent enforcement remains. A service does not inherently create a transaction.
+Materialize required data within its valid persistence context and bound streams/cursors;
+do not return lazy resources whose owning context has already closed.
+
+## Primary references
+
+- [Fowler: Service Layer](https://martinfowler.com/eaaCatalog/serviceLayer.html) — application boundary and coordinated operations.
+- [Spring transaction-bound events](https://docs.spring.io/spring-framework/reference/data-access/transaction/event.html) — listener phases and transaction-context requirements.
+- [Spring transactional annotations](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html) — proxy interception and configuration.

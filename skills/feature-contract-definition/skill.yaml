@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-contract-definition
-version: 1.0.0
+version: 1.0.1
 description: >-
   Defining a versioned API, event, data, integration, security, or operational contract for a
   feature after its behavior is agreed and before implementation is planned. Use when callers,

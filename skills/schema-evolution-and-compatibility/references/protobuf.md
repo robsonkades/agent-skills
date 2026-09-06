@@ -1,17 +1,16 @@
 # Protobuf
 
 Coordinates. Runtime `com.google.protobuf:protobuf-java:4.32.0` — **every _verified_ transcript below
-was run on 4.32.0** and on no other version. `4.36.0` is the newest on Central and resolves, but no
-behaviour here was re-measured on it. Code generation `io.github.ascopes:protobuf-maven-plugin:3.1.0`
+was run on 4.32.0** and on no other version. No claim is made about the newest runtime or an
+unmeasured release. Code generation example `io.github.ascopes:protobuf-maven-plugin:3.1.0`
 (the ubiquitous `org.xolstice.maven.plugins:protobuf-maven-plugin:0.6.1` was last released in 2018
 and needs a `protoc` artefact or binary). Everything below uses `DynamicMessage` over
 programmatically built descriptors, so the results are the runtime's rather than a generated class's.
 
-**Check before pairing versions with a Confluent serialiser.** Current Confluent documentation states
-that `kafka-protobuf-serializer` works with Protobuf v3 and that "Google Protobuf v.4 is currently
-not supported", while protobuf-java has been on 4.x since 2024. That combination was **not tested**
-here — it is either stale documentation or a real constraint, and it decides whether any 4.x pin
-works in a Confluent stack at all.
+**Check before pairing versions with a Confluent serializer.** Inspect its resolved runtime,
+supported code-generator/runtime pairing and deployed release documentation. The standalone 4.32.0
+probes do not establish that an arbitrary Confluent serializer release supports that runtime;
+the serializer integration was not tested here.
 
 ## The field number is the identity
 
@@ -22,12 +21,13 @@ removal safe:
 ```proto
 message User {
   reserved 2, 15, 9 to 11;      // "Reserved ranges are inclusive."
-  reserved "email", "nickname"; // "(affects TextProto/JSON parsing)"
+  reserved "email", "nickname"; // compiler prevents reuse; does not alter ProtoJSON parsing
 }
 ```
 
 Reserve the **number** to stop the wire-level catastrophe and the **name** to stop the JSON-level
-one. Both, every time, in the commit that deletes the field.
+one by preventing future reuse. Reservation does not make an old JSON key acceptable to a new
+parser; ProtoJSON unknown-field policy still matters. Reserve both in the deletion commit.
 
 ## Safe, unsafe and lossy, verbatim from the language guide
 
@@ -116,9 +116,9 @@ int32  -> double   bytes=08 ac 02        -> value=0.0      unknown=[1]
 - **Same wire type, different interpretation** — the middle block. The reader gets a **plausible
   wrong value**: zigzag decoding turns `int32(300)` into `sint32` 150, and the same bytes read as
   `float` become 4.2E-43. `unknownFields` is **empty**, so the unknown-field metric is blind to it.
-  `int32`↔`uint32`↔`bool` and `string`↔`bytes` are the sanctioned members of this set and are not
-  bugs; `int32`↔`sint32` and `fixed32`↔`float` are the same mechanism used by accident. The only
-  defence for either is a golden-bytes assertion on the decoded **value**.
+  `int32`↔`uint32`↔`bool` and valid UTF-8 `string`↔`bytes` are documented wire-compatible changes,
+  but may still lose required range/sign/meaning. `int32`↔`sint32` and `fixed32`↔`float` are not
+  sanctioned conversions. Use compatibility rules plus boundary-value/golden-byte assertions.
 - **Different wire type** — the last block. The typed accessor returns the zero value and the bytes
   land in `unknownFields`, so a consumer that changed `int32 amount = 3` to `string amount = 3` reads
   every message as `""`, logs nothing, and _is_ visible to the metric.
@@ -209,3 +209,5 @@ Forever** — Required fields should be treated as permanent, immutable elements
 definition." The guide also notes that an unrecognised enum value is treated as _missing_, which then
 fails the required check. The only exit is a new field number declared `optional`, dual-write,
 migrate, and eventually a new message type; enforce the requirement in the application layer instead.
+
+Source: [Protobuf proto3 evolution and reservations](https://protobuf.dev/programming-guides/proto3/).

@@ -2,7 +2,8 @@
 
 Two worked examples, both targeting **Java 21**.
 
-Example A compiles _and runs_ against four coordinates —
+Example A contains **partial snippets**, not standalone compilation units: supply `User`,
+`UserRepository` and a caller for top-level statements. Its dependency set is four coordinates —
 `org.springframework.security:spring-security-crypto:7.1.1`,
 `org.bouncycastle:bcprov-jdk18on:1.85.2`, plus `org.springframework:spring-core` and
 `commons-logging:commons-logging`. The last two are not optional and the crypto POM declares
@@ -129,7 +130,7 @@ final class PasswordVerifier {
         // fill both in, and re-measure when the hardware changes.
         this.encoder = new Argon2PasswordEncoder(16, 32, 1, 19456, 2);
         this.repository = repository;
-        // Same parameters, so the not-found path costs the same as the found path.
+        // Current parameters; legacy hashes can still have different verification costs.
         this.dummyHash = this.encoder.encode(UUID.randomUUID().toString());
     }
 
@@ -137,7 +138,7 @@ final class PasswordVerifier {
         Optional<User> user = repository.findById(userId);
         String stored = user.map(User::passwordHash).orElse(dummyHash);
 
-        boolean ok = encoder.matches(password, stored);   // constant work either way
+        boolean ok = encoder.matches(password, stored);   // one KDF on either path
         if (!ok || user.isEmpty()) {
             return false;
         }

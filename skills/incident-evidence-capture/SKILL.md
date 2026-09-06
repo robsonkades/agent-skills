@@ -24,6 +24,12 @@ not authorize draining, freezing, dumping, signaling, killing, relabeling, or ex
 outage. Those actions require the incident commander's declared recovery policy and the
 platform's safety controls.
 
+Reuse authority already granted in the incident policy, runbook or current session for the
+specified target, actions and budget; do not ask again for the same authorization. Request
+only missing authority or a material expansion of scope. Read-only planning and copying
+already accessible evidence can proceed within that authority while a disruptive action
+remains unresolved. Recovery still follows the authorized deadline.
+
 ## First-minute contract
 
 State and record:
@@ -59,6 +65,11 @@ thread dump; a fast-growing heap may justify an early histogram or dump; a JVM t
 attach may require OS/core evidence immediately. See [Adaptive capture protocol](references/capture-order.md).
 
 ## Default workflow
+
+The concrete JVM references here use JDK 25. Inspect the deployed JVM vendor/build, OS,
+container runtime and Kubernetes version; discover commands on that target. Do not upgrade
+or restart merely to make a capture command available. Runbook design without a live target
+should produce bounded instructions and pending drills, not execute incident actions.
 
 1. **Freeze the timeline, not necessarily the process.** Mark incident start, deploy/config/
    autoscaling events, affected instances, UTC/monotonic offsets, workload and SLO state.
@@ -134,6 +145,12 @@ A live-object heap dump commonly requests a collection and heap traversal; `-all
 and parallel options change semantics, CPU, bytes, and pause and are JDK-version-specific.
 Compression can reduce bytes while increasing CPU/elapsed time. Benchmark a comparable safe
 environment; never promise “seconds” or “write time dominates.”
+
+Record capture elapsed time separately from application stop time. In OpenJDK 25,
+`VM_HeapDumper` walks the heap at a safepoint, then `DumpMerger` merges output outside that
+safepoint. Total command duration or the enclosing JFR heap-dump event is not the pause
+duration. Correlate safepoint/GC evidence and observed request impact; post-pause I/O can
+still degrade service. Recheck other builds and dump mechanisms.
 
 Before a heap dump verify available disk against worst-case output plus safety margin, volume/
 node I/O blast radius, liveness/watchdog/termination deadlines, uploader bandwidth, encryption,
@@ -233,7 +250,8 @@ exercise them before the incident.
 - [ ] Recovery and evidence budgets, authority, abort thresholds, and target cohorts are explicit.
 - [ ] Existing backend/local evidence and exact query windows are preserved first.
 - [ ] Storage survives intended failure and has capacity, integrity, encryption, and retention.
-- [ ] Commands are target-version-discovered, bounded by timeout, and symptom-driven.
+- [ ] Commands are target-version-discovered and symptom-driven; client timeouts and target-side
+      completion/cancellation are recorded separately, since a timeout may not stop the VM operation.
 - [ ] Disruptive/draining/heap/core actions have approval, capacity proof, and rollback.
 - [ ] Every artifact has provenance, clocks, completion status, checksum, and privacy class.
 - [ ] Service recovery occurs by the declared deadline; uncaptured evidence is documented.
@@ -241,8 +259,8 @@ exercise them before the incident.
 
 ## References
 
-- [Adaptive capture protocol](references/capture-order.md)
-- [Survival, durability, and pre-incident design](references/what-a-restart-destroys.md)
+- [Adaptive capture protocol](references/capture-order.md) — read when choosing and executing symptom-driven captures within a recovery budget.
+- [Survival, durability, and pre-incident design](references/what-a-restart-destroys.md) — read before relying on artifact survival through restart/replacement, or designing manifests and drills.
 - [JDK 25 `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html) — use the target JDK's command help/documentation.
 - [JDK 25 `jfr`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)
 - [Kubernetes debugging running pods](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/)

@@ -19,10 +19,10 @@ description: >
 
 ## Purpose
 
-Decide how a response is produced and keep decisions out of the producer. The three
-classical view patterns still describe every option in a modern stack — a Thymeleaf page, a
-Jackson-serialised DTO, and a global response envelope are Template View, Transform View and
-Two Step View respectively — and naming them makes the recurring failures easy to see.
+Decide how a response is produced and keep domain policy out of the producer. Template
+View, Transform View and Two Step View describe useful structures; applying the classical
+HTML patterns to JSON is an analogy, not an exhaustive taxonomy. A shared helper or advice
+is only a two-stage design when it separates a logical representation from final rendering.
 
 The failure this prevents is domain policy migrating into a representation layer. Templates can be
 tested and some engines compile them, but feedback is generally weaker than for typed domain code;
@@ -33,7 +33,7 @@ presentation conditions remain legitimate.
 ```text
 Template View     a template with placeholders; the output's structure is
                   visible in the template. Natural for HTML. Tempts logic
-                  into itself, which is its only real weakness.
+                  into itself; escaping and data-access boundaries also matter.
 
 Transform View    code walks the model and produces output element by
                   element. Natural for JSON and for multi-format output;
@@ -50,9 +50,9 @@ Two Step View     build a logical representation first, then render it to
 
 1. **Decide what the response is for.** A page for a human, a payload for a program, or a
    fragment for a client-side framework. The pattern follows from that, not from the stack.
-2. **Build the presentation model in the application layer**, already decided and already
-   formatted where formatting is a domain matter (money, dates in a business calendar).
-   The view should have nothing left to decide.
+2. **Build the presentation model at the application/presentation boundary.** Resolve
+   business meaning (currency, rounding, business date) before rendering; preserve typed
+   values for machine consumers and let the renderer choose locale-specific display.
 3. **Choose the pattern** by the decision rules below.
 4. **Check the template or serializer for domain decisions.** Presentation branching, iteration and
    formatting are expected; invariant enforcement, pricing/authorization policy and data access are
@@ -60,15 +60,24 @@ Two Step View     build a logical representation first, then render it to
 5. **Apply the shared parts once.** An envelope, a layout, an error shape, a link format —
    these are Two Step View's justification, and duplicating them per response is the
    commonest inconsistency in an API.
-6. **Verify nothing lazy or managed reaches the renderer.** Serialising an entity is where
-   the schema becomes the contract and where rendering starts issuing queries.
+6. **Verify the renderer's data and resource boundary.** Prefer detached, materialized
+   response data; if deliberate internal entity exposure is retained, test field visibility
+   and fetch behavior. For large exports, use the bounded streaming path in the reference.
+
+Inspect the project's Java release, Spring/serializer/template versions and existing wire
+contract before adapting examples. Records require Java 16+; the Spring `ProblemDetail`
+example requires Spring Framework 6+ and Java 17+. Snippets omit project types, imports and
+configuration; they are partial examples, not standalone applications. Preserve older
+baselines and established contracts rather than upgrading to copy an example. Report the
+chosen boundary, concrete defect/change and focused validation; missing configuration is
+unknown, not proof of unsafe rendering or absent framework support.
 
 ## Decision rules
 
 ```text
 Server-rendered HTML page
         → Template View, with a layout as the shared second step. Keep
-          the template free of decisions.
+          domain policy outside the template; presentation branching is valid.
 
 JSON or XML for a program
         → Transform View: a DTO plus a serialiser, or explicit
@@ -76,25 +85,26 @@ JSON or XML for a program
 
 The same data must be served as JSON, CSV and a PDF
         → Transform View over one presentation model, one transform per
-          format. Duplicating the model per format is what goes wrong.
+          format when semantics match. Use distinct shapes for different
+          consumer, authorization or format requirements; share business policy.
 
 A consistent envelope, layout, link format or localisation across
 every response
         → Two Step View: build the logical representation, render it in
-          one shared place. This is what a controller advice or a layout
-          template is.
+          one shared place when a logical intermediate adds value. A helper
+          or layout composition alone may be sufficient.
 
 Hypermedia fragments driven from the server (htmx-style)
         → Template View per fragment, with the same discipline as a
-          page. The fragment is a view, not an API.
+          page. Its HTML, selectors and behavior still form a client contract.
 
 The client renders everything (SPA, mobile)
-        → there is no view layer on the server. What you have is a
-          Remote Facade returning DTOs, and view patterns do not apply.
+        → no server-rendered UI, but the server still shapes and serializes
+          representations. Transform-style guidance remains applicable.
 
 Output must vary by tenant, brand or locale
-        → Two Step View. The logical representation is shared; the
-          second step is selected per tenant.
+        → consider Two Step View for visual variation. Tenant-specific
+          authorization and business data must be resolved upstream.
 ```
 
 ## Rules
@@ -115,16 +125,16 @@ Output must vary by tenant, brand or locale
 - Formatting that carries business meaning — money with its currency and rounding, a
   business date in the right zone, a masked account number — belongs in the presentation
   model, decided once. Formatting done per template diverges across screens.
-- Two Step View is the pattern most often needed and least often named. When a change of
-  envelope, layout or link format requires editing many files, the second step is missing.
+- Repeated envelope, layout or link changes suggest shared rendering may help; inspect
+  existing composition before introducing an intermediate model.
 - Its cost is indirection: the final output is not visible in any one file. Justify it with
   a real consistency requirement — several screens or endpoints, or several output formats
   — not with symmetry.
 - **A view is not a place for authorisation.** Hiding a button in a template does not
   protect the endpoint. The check belongs in the use case; the template only reflects it
   (`service-layer-design`).
-- Payload size is a response-time decision. An endpoint returning several megabytes of JSON
-  is slow for reasons no index will fix; shape the representation to the consumer
+- Payload size affects serialization, transfer and client processing; measure these alongside
+  query time before attributing latency. Shape the representation to the consumer
   (`architecture-and-performance`).
 - Server-rendered fragments and a JSON API are different consumers with different contracts.
   Serving both from one handler by content negotiation is workable and tends to make the

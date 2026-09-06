@@ -2,14 +2,14 @@
 
 ## Situation to solution
 
-| Situation                                                   | Candidate                     | Validate before adopting                                                       |
-| ----------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------ |
-| File-to-socket or file-to-file transfer                     | `transferTo` / `transferFrom` | channel pair, partial progress, fallback path and CPU per byte                 |
-| Repeated/random access to a large file                      | `MappedByteBuffer`            | page-fault pattern, address-space/native-memory budget and unmapping lifecycle |
-| Many asynchronous operations with transition/queue overhead | Netty io_uring                | kernel/native compatibility, batching evidence, tail latency and fallback      |
-| Third-party native artifact is prohibited                   | FFM binding                   | whether binding `liburing` is acceptable; ABI, ownership and support burden    |
-| Tested native wrapper already exists                        | JNI wrapper                   | packaging, ABI matrix, native-memory safety and operational ownership          |
-| Bottleneck is unknown                                       | No mechanism yet              | profile and trace the representative workload first                            |
+| Situation                                                    | Candidate                     | Validate before adopting                                                       |
+| ------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------------------------ |
+| File-to-socket or file-to-file transfer                      | `transferTo` / `transferFrom` | channel pair, partial progress, fallback path and CPU per byte                 |
+| Repeated/random access to a large file                       | `MappedByteBuffer`            | page-fault pattern, address-space/native-memory budget and unmapping lifecycle |
+| Many asynchronous operations with transition/queue overhead  | Netty io_uring                | kernel/native compatibility, batching evidence, tail latency and fallback      |
+| Application owns the native integration and FFM is permitted | FFM binding                   | JDK/API baseline, native-library permission, ABI, ownership and support burden |
+| Tested native wrapper already exists                         | JNI wrapper                   | packaging, ABI matrix, native-memory safety and operational ownership          |
+| Bottleneck is unknown                                        | No mechanism yet              | profile and trace the representative workload first                            |
 
 Connection count alone is not a decision threshold. epoll can perform well at high connection
 counts when few descriptors are active, while io_uring can help at lower counts when operation
@@ -26,6 +26,11 @@ mix, batching and storage/network behavior fit it.
 These are common routes, not an exhaustive law: another library or sidecar can own the native
 interface. An FFM binding to `liburing` avoids reproducing all of liburing, whereas direct
 syscall bindings inherit more kernel-ABI coupling. Record which ABI is being supported.
+FFM is final in JDK 22; older releases have different preview/incubator contracts. Inspect
+the project's release settings and required native-access flags rather than silently upgrading
+Java. FFM does not remove native code, Linux policy or seccomp restrictions, and many liburing
+helpers are C inline functions rather than exported symbols; verify exports or supply an owned
+shim instead of assuming every header function is directly callable.
 
 ## JDK transfer APIs versus io_uring
 
@@ -40,6 +45,12 @@ syscall bindings inherit more kernel-ABI coupling. Record which ABI is being sup
 The `FileChannel` contract permits an implementation-specific optimized path; it does not
 promise `sendfile(2)` or `splice(2)`. Correct code handles partial progress and validates the
 actual implementation on its deployment JDK and operating system.
+Track the returned byte count and advance the offset only by that amount. A zero return is
+not necessarily EOF: do not spin indefinitely; use bounded readiness/retry or an explicit
+buffered fallback appropriate to the channel. Preserve pending bytes and propagate failures.
+Reject a raw file-transfer substitution when user-space TLS, compression or transformation is
+required; prove any supported offload path separately. Keep the source range stable for the
+transfer and any kernel-held references, rather than truncating/reusing it immediately.
 
 ## Netty API era map
 
@@ -56,6 +67,10 @@ loading. Resolve the dependency tree and BOM; do not diagnose every mismatch as 
 problem.
 
 ## Bootstrap with a coherent fallback
+
+Partial Netty 4.2 configuration: requires matching transport classes/native artifacts on the
+classpath, the usual imports and an application logger. `isAvailable()` handles native transport
+availability, not an absent Java class that fails linkage before the check.
 
 ```java
 EventLoopGroup group;
@@ -75,7 +90,7 @@ if (IoUring.isAvailable()) {
 }
 
 new ServerBootstrap()
-    .group(bossGroup, group)
+    .group(group)
     .channel(serverChannel)
     .option(ChannelOption.SO_BACKLOG, 4096)
     .childOption(ChannelOption.TCP_NODELAY, true);
@@ -83,12 +98,23 @@ new ServerBootstrap()
 
 The example deliberately pairs each event-loop implementation with its matching channel. Tune
 thread counts and backlog from saturation, accept-queue and latency evidence rather than CPU
-count alone. Ensure `bossGroup` follows the same lifecycle and shutdown policy.
+count alone. This form shares the selected group for accept and child channels. If separate
+accept/worker groups are required, both must use compatible handlers. The owning component must
+close bound/accepted channels and call `shutdownGracefully()` on every created group on startup
+failure and shutdown; await termination off the event loop. Binding and child handlers are omitted.
 
 ## Channel options are versioned API
 
-`SO_BACKLOG` is a generic `ChannelOption`, not an `IoUringChannelOption`. io_uring-specific
+`SO_BACKLOG` is declared on `ChannelOption` and inherited through `IoUringChannelOption`;
+`ChannelOption.SO_BACKLOG` makes its generic origin clear. io_uring-specific
 options, including any zero-copy threshold, vary by Netty release and operation support. Inspect
 the exact dependency version and generated API docs before configuring them; do not copy a field
 list from another Netty era. When zero-copy is enabled, test unsupported-kernel fallback,
 completion ownership and delayed buffer reuse.
+
+## Primary references
+
+- [Netty 4.2 options and inherited fields](https://netty.io/4.2/api/io/netty/channel/uring/IoUringChannelOption.html)
+- [FileChannel transfer contract, JDK 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/FileChannel.html)
+- [FFM final API, JEP 454](https://openjdk.org/jeps/454)
+- [liburing send-zero-copy completion contract](https://man7.org/linux/man-pages/man3/io_uring_prep_send_zc.3.html)

@@ -30,6 +30,11 @@ offers exhaustiveness without `accept`. It is not categorically better—Visitor
 encapsulated dispatch, work with an established API, carry traversal state/protocol, and avoid
 exposing every operation to pattern-matching sites.
 
+Examples using record patterns/pattern switch require Java 21 without preview. Inspect the target
+compiler, library API and extension model before adopting them; keep supported Visitor/method
+forms on older baselines rather than upgrading implicitly. Deliver the dispatch/traversal policy,
+compatibility trade-off, semantic checks and explicit unverified cases.
+
 ## The expression problem, stated once
 
 ```text
@@ -49,8 +54,9 @@ with stable operations wants polymorphism.
 ```
 
 The sealed-plus-`switch` form improves the second row: adding an element type is still expensive,
-but it becomes a **compile error at every site** rather than a silent gap. Classical Visitor gets
-the same property only if the visitor interface has no default `visit` method.
+but recompiling relevant exhaustive switches exposes missing coverage unless a catch-all absorbs it.
+Classical Visitor gets similar feedback when a new abstract visit method is added and implementations
+are recompiled. Neither proves semantic correctness or protects old binaries from version skew.
 
 ## When it is the answer
 
@@ -62,8 +68,8 @@ The element types are stable and you own them; the operations grow
 The model/API already exposes accept(Visitor), or operations need
 double dispatch without a closed pattern-switch boundary
         → classical Visitor remains a strong fit:
-          FileVisitor, javax.lang.model's ElementVisitor, ASM,
-          ANTLR-generated trees, JDT.
+          javax.lang.model ElementVisitor or ANTLR-generated trees.
+          FileVisitor and ASM are related visitor/callback protocols; inspect their actual API.
 
 The traversal itself must vary — pre-order, post-order, pruning,
 short-circuit
@@ -79,8 +85,9 @@ short-circuit
   design is fighting the change it gets.
 - **The operation belongs to the element.** `area()` on a shape is not a visitor's business;
   moving intrinsic behaviour out produces an anaemic model (`java-tell-dont-ask`).
-- **The hierarchy is open and you own the switch.** Then a `default` branch silently absorbs new
-  types, and the compile-time guarantee — the main reason to prefer the modern form — is gone.
+- **The hierarchy is open and you own the switch.** Exhaustiveness needs a catch-all policy.
+  Explicit rejection may be correct; do not assume that either a switch or Visitor automatically
+  handles arbitrary new plugin types.
 
 ## Modern Java expression
 
@@ -107,9 +114,9 @@ state in the visitor object          an accumulator parameter, or a
                                      Collector — no shared mutable field
 ```
 
-Record deconstruction sharpens it further — `case Section(var title, var children) -> …` binds the
-parts without accessors, which also removes the pressure Visitor puts on elements to expose their
-internals (`java-composition-over-inheritance`).
+Record deconstruction — case Section(var title, var children) — invokes the record component
+accessors. It shortens syntax but does not hide representation or bypass accessor behavior.
+Choose records only when publishing those components is an appropriate API (`java-composition-over-inheritance`).
 
 ## Decision rules
 
@@ -121,26 +128,26 @@ THEN compare exhaustive switch/fold with Visitor. The switch reduces boilerplate
 
 IF the Visitor interface has default methods, or the switch has a
 default branch
-THEN adding an element type is silent. That is a deliberate trade for
-     open hierarchies and a mistake for closed ones.
+THEN missing specialization may stop being a compile error. State whether the fallback
+     rejects, handles generically or preserves unknowns; verify semantics with tests.
 
 IF the visitor holds mutable state across visits
 THEN document order, reset and confinement. Prefer an accumulator or fresh visitor;
      a deliberately synchronized/shared visitor is possible but changes semantics.
 
 IF the structure can be deep or comes from untrusted input
-THEN a recursive fold overflows the stack. Bound the depth at the
-     boundary and traverse iteratively (gof-composite).
+THEN bound depth, node/work and payload/output size before unsafe recursion on every
+     entry path; choose iterative traversal when stack depth is not demonstrably bounded (gof-composite).
 
 IF the visitor must reach element internals
-THEN the pattern is pushing accessors onto your model. Use record
-     deconstruction, or give the element a narrow method that answers
+THEN review the representation boundary. Record patterns still expose components;
+     consider a narrow element method that answers
      what the operation actually needs.
 
 IF an element type may arrive from a newer producer
 THEN decide explicitly: reject the document, or handle an "unknown"
      variant. Silently skipping it changes results — a filter that
-     ignores an unknown node widens what it matches.
+     ignores an unknown constraint may widen matches; operator semantics determine the effect.
 
 IF the operation mutates the structure while traversing
 THEN follow the traversal/container mutation contract. In-place transforms can be
@@ -154,14 +161,13 @@ THEN traversal is a variation point of its own — separate walking from
 
 ## Cross-cutting checks
 
-- **Concurrency.** A visitor with fields accumulating results is not thread-safe and cannot be
-  reused between traversals; sharing one as a singleton bean is a common and silent error. Two safe
-  designs: a stateless fold returning a value, or a fresh visitor per traversal. If a traversal is
-  parallelised, results must combine associatively — which is a `Collector`, and reaching for one
-  is the sign the visitor should have been a fold.
+- **Concurrency.** Mutable visitors need confinement, a reset/reuse contract and reentrancy rules.
+  Fresh per-traversal instances are simple; a stateless result fold is another option. Parallel
+  reduction requires a valid identity, associative combination and the appropriate ordering and
+  isolation guarantees. Collector specifies those obligations; it does not enforce them for you.
 - **Distribution.** Where the structure crosses a boundary — an AST, a document model, a protocol
   message — the element set becomes a versioned contract. An older consumer will meet a node type
-  it does not know, and "ignore it" is rarely safe: for a filter it broadens the match, for a
+  it does not know, and ignoring it may change semantics: for a filter it may broaden matches, for a
   pricing tree it drops a charge, for a policy document it may drop a restriction. Reject, or model
   the unknown explicitly (`rpc-and-api-contracts`).
 - **Performance.** Classical Visitor has two dispatches, but neither is inherently megamorphic and
@@ -170,9 +176,9 @@ THEN traversal is a variation point of its own — separate walking from
   node unless the operation creates results/context. Benchmark actual tree shape, operation and
   compilation (`jit-inlining-and-escape-analysis`, `allocation-profiling`).
 - **Testing.** The property worth having is that every element type is handled by every operation.
-  With a sealed `switch` the compiler provides it. With classical Visitor, keep the visit methods
-  abstract — a `default` in the interface converts a compile error into a silent gap — and add a
-  test that enumerates the element types and asserts each is reachable.
+  Compiler coverage helps with type cases, not correct output or traversal reachability. Test
+  expected results, errors and order for each kind; adding a visitor method must be coordinated
+  with element dispatch. Generic fallbacks require their own semantic tests.
 
 ## Review checklist
 
@@ -180,9 +186,9 @@ THEN traversal is a variation point of its own — separate walking from
 - [ ] The element set is stable; if it grows weekly, this is the wrong direction
 - [ ] Closed hierarchies explicitly compare sealed folds with Visitor and record compatibility costs
 - [ ] Classical Visitor has an encapsulation, traversal, dependency, or established-API reason
-- [ ] No `default` visit method hides an unhandled element type
-- [ ] Visitors hold no state across traversals, or are created per traversal
-- [ ] Deep or untrusted structures are traversed iteratively with a depth bound
+- [ ] Fallback methods have explicit rejection/generic/unknown semantics with tests
+- [ ] Mutable visitors have explicit confinement, reset and reentrancy contracts
+- [ ] Deep/untrusted structures have enforced resource limits and stack-safe traversal
 - [ ] An unknown element type from a newer producer is rejected or modelled, never skipped
 - [ ] Intrinsic behaviour stayed on the elements
 
@@ -193,6 +199,6 @@ THEN traversal is a variation point of its own — separate walking from
   dispatch mechanics and its boilerplate count; stateful visitors and the fold that replaces them;
   and traversal separated from operation. Read when choosing between the two forms.
 - [Worked example](references/worked-example.md) — a document model with four operations: the
-  classical visitor it started as, the sealed fold it became, the line count and the compile-time
+  classical visitor it started as, the sealed fold alternative and the compile-time
   guarantee each gives, the unknown-node decision when documents began arriving from another
   service, and the depth bound. Read when implementing.

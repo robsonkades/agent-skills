@@ -28,24 +28,35 @@ The second failure is an error surface designed for a human reading a log. A mac
 has to decide retry or not, fall back or not, page or not. If that decision requires parsing
 English, the client is coupled to your wording and every rephrasing is a breaking change.
 
+## Compatibility and evidence
+
+Inspect supported clients, deployed Java/framework/serializer versions, generated artifacts,
+actual mapper configuration and rollout/retention policy. The record sketch requires Java
+16+; Spring `ProblemDetail` requires Spring Framework 6+ (Java 17+). Do not upgrade a target
+or regenerate every client merely to fit an example. Unknown client inventory or absent
+telemetry leaves compatibility unverified; propose how to close the gap without inventing
+proof of either compatibility or incompatibility.
+
 ## Workflow
 
 1. **Decide what the call actually is** before choosing a transport: a synchronous answer, or
-   an acceptance of work. A synchronous facade over a long-running operation turns every
-   client timeout into an orphan nobody can query, which is the worst available failure mode.
+   an acceptance of work. Long-running synchronous work needs queryable operation identity
+   or reconciliation for ambiguous timeout; asynchronous acceptance must define status,
+   retention and eventual failure too.
 2. **Design the error surface around caller decisions.** Give stable problem types/codes,
    outcome certainty (rejected versus may-have-applied), retry precondition/advice, field
    violations and a status/operation URI where applicable. Retry safety composes method
    semantics, idempotency key, current state and failure—not one universal boolean.
 3. **Classify every change** as additive, compatible-in-one-direction, or breaking, and name
    which side may deploy first. See `references/contract-evolution.md`.
-4. **Ship a breaking change as expand → migrate → contract** — three deploys. A rename is two
-   additive changes and a deletion, never one edit.
+4. **Ship a breaking change as expand → migrate → contract** — compatibility phases that may
+   require several deploys. A rename needs a verified transition, not an unqualified edit.
 5. **Prove the coexistence pairs the rollout can create.** Test old-reader/new-writer and
    new-reader/old-writer where deployment order or durable data permits each. Include retries,
    cached/stored payloads, rollback and unknown error/enum values.
 6. **Version only what cannot be made compatible**, and emit requests-per-version with a
-   client identifier, so retiring the old one is evidence rather than optimism.
+   bounded client category or protected client-level logs; combine telemetry with supported
+   client inventory and the retirement contract.
 
 ## Rules
 
@@ -66,6 +77,7 @@ English, the client is coupled to your wording and every rephrasing is a breakin
 - RFC 9457 (which obsoletes RFC 7807) defines `application/problem+json` with `type`,
   `title`, `status`, `detail` and `instance`. Put the machine-readable members — code,
   outcome/retry condition and correlation id — in extension members, never inside `detail`.
+  The standard `type` URI is already the primary problem identifier; `code` is optional.
 - In gRPC, mapping every failure to `INTERNAL` loses semantics, but no status is universally
   retryable. `UNAVAILABLE` may still be ambiguous for a mutation; `RESOURCE_EXHAUSTED` may be
   quota or capacity; `ABORTED` commonly means retry a higher transaction; `DEADLINE_EXCEEDED`
@@ -85,11 +97,12 @@ English, the client is coupled to your wording and every rephrasing is a breakin
 - Proto3 implicit-presence singular scalars conflate absent/default; `optional`, message fields
   and Editions explicit presence preserve it. Check protoc/runtime/API compatibility before
   introducing presence into generated clients.
-- Jackson's `FAIL_ON_UNKNOWN_PROPERTIES` is enabled by default; Spring Boot's auto-configured
-  `ObjectMapper` disables it, and a hand-constructed `new ObjectMapper()` does not. That one
-  line turns a purely additive producer change into a consumer outage.
-- You cannot retire a version you cannot count. No per-version request metric means the
-  deprecation never ends.
+- Jackson 2 enables `FAIL_ON_UNKNOWN_PROPERTIES` by default; Boot 3's auto-configured
+  Jackson 2 mapper disables it. Jackson 3 defaults it to false. Custom mappers, annotations
+  and readers can differ; verify the actual client. Unknown properties and unknown enum
+  values are separate policies.
+- Retirement needs evidence appropriate to the supported population, including dormant
+  clients and replay. Zero requests during a short window is not proof of no dependency.
 - Choose the transport on conditions, without treating style as destiny: **gRPC** often fits
   controlled service clients when deadline/cancellation propagation, generated schemas or
   streaming matter; browser/public use requires compatible gateway/tooling. **REST/JSON**
@@ -98,6 +111,12 @@ English, the client is coupled to your wording and every rephrasing is a breakin
   additional ecosystem cost. **Messaging** when the producer must not wait, when
   fan-out or replay is required, or when consumer availability must not bound the producer —
   at which point the delivery guarantee becomes part of the contract (delivery-semantics).
+
+- Propagated deadlines/cancellation do not prove server work or downstream effects stopped.
+  Define cooperative cleanup and preserve ambiguous outcomes after dispatch.
+- `If-Match` uses strong comparison; enforce the precondition atomically with the mutation.
+  Idempotency keys need authenticated scope, operation, request fingerprint and retention;
+  coordinate deduplication with effects and define concurrent/unknown completion behavior.
 
 ## Contract dimensions often omitted
 
@@ -109,8 +128,10 @@ English, the client is coupled to your wording and every rephrasing is a breakin
 - cache validators/conditional requests, privacy/redaction and audit requirements;
 - rate-limit, deprecation/sunset signals and capability negotiation.
 
-Generated OpenAPI/Protobuf/schema artifacts are necessary but insufficient: invariants,
-failure semantics and rollout order must be executable in contract/integration tests.
+Schema artifacts alone are insufficient: validate invariants, failure semantics and the
+actual rollout pairs. Return the changed contract, supported pairs and deployment order,
+outcome/retry policy, executed validation and remaining unknowns. Do not equate an untested
+pair with a pass.
 
 ## References
 

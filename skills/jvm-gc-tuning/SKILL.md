@@ -25,6 +25,10 @@ decision is the one that saves the most time.
 
 ## Workflow
 
+Inspect the project's runtime vendor/update, image, effective flags and resource limits.
+JDK 25 observations below are an authoring baseline, not authorization to upgrade the
+target. Integrated or targeted JEPs do not establish availability in a deployed GA build.
+
 1. **Confirm GC is on the critical path.** Align GC/safepoint intervals with affected
    requests, queue depth, CPU and throughput. Temporal overlap routes the investigation;
    matched unaffected windows and recovery behavior help establish causality.
@@ -42,8 +46,9 @@ decision is the one that saves the most time.
    from startup, residency, density and SLO evidence, with non-heap/untracked margin.
 6. **Change the collector only** when the workload's requirement genuinely does not match
    the default's design point.
-7. **Re-measure with the method that produced the baseline.** A flag change that does not
-   move the pause distribution gets reverted, not kept "just in case".
+7. **Re-measure with the method that produced the baseline.** Judge the declared objective
+   (pauses, concurrent CPU, useful throughput or footprint) and its guardrails. Revert a
+   change that misses its prediction or causes a material regression.
 
 ## Rules
 
@@ -60,8 +65,10 @@ decision is the one that saves the most time.
   expose an undersized cgroup early, but raises startup/RSS and does not prevent swap or
   later faults. Measure the selected policy; do not combine these flags by ritual.
 - On the verified JDK 25 build, one visible CPU selected Serial
-  (`-XX:ActiveProcessorCount=1`). JDK 27 EA documentation says G1 is the default, while JEP
-  523 remains Candidate as of 2026-09-03. Verify the exact vendor/build with startup logs or
+  (`-XX:ActiveProcessorCount=1`). As checked on 2026-09-05, JEP 523 is Closed/Delivered for
+  JDK 27 (updated 2026-08-19), making G1 the default in all environments in that release.
+  This integration status does not prove a deployed GA build includes it.
+  Verify the exact vendor/build with startup logs or
   `VM.flags`; explicitly name a collector when fleet-wide intent must not depend on ergonomics.
 - `MaxGCPauseMillis` is a target, not a guarantee. Lowering it often selects less young/CSet
   work and increases frequency; promotion changes only if lifetime/survivor policy makes it
@@ -72,12 +79,14 @@ decision is the one that saves the most time.
 - Unplanned Full GC should be outside an online service's steady-state SLO. An evacuation
   failure means usable to-space was unavailable, not simply “old had no room”; inspect live
   set, promotion spike, pinning, humongous topology and reserve before choosing heap growth.
-- Prefer fewer flags. Every flag is a decision the JVM's own heuristics can no longer adapt.
-- Do not carry over pre-JDK-23 collector comparisons: ZGC is generational by definition
-  (`-XX:+ZGenerational` no longer exists, JEP 490) and generational Shenandoah is product
-  (JEP 521). Its mode remains explicit/default-build-dependent; a 2026 draft JDK-8379682
-  proposes changing the default but has no JEP number or target. An inherited
-  `-XX:+ZGenerational` is an upgrade blocker rather than a no-op: Temurin 25.0.4 warns and
+- Prefer fewer tuning overrides: they may constrain adaptive policy or create maintenance
+  assumptions. Diagnostic flags and adaptive targets do not all disable heuristics.
+- Do not carry old collector comparisons across releases without checking mode: ZGC became
+  generational by default in JDK 23 and exclusively generational in JDK 24 (JEP 490).
+  Generational Shenandoah is product in JDK 25 (JEP 521). JEP 535 (JDK-8379682) is
+  Targeted for JDK 28 as checked on 2026-09-05; its proposed generational default does not
+  describe earlier or arbitrary vendor builds. An inherited
+  `-XX:+ZGenerational` can become an upgrade blocker: Temurin 25.0.4 warns and
   starts, Temurin 26.0.2 **refuses to start** (both executed).
 
 ## References

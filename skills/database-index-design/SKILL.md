@@ -30,12 +30,19 @@ DDL availability, lock, log/WAL, disk, rollback, and maintenance constraints:
 
 If the workload or engine is unknown, do not emit DDL. State what must be measured first.
 
+This skill has no Java language minimum: its compatibility boundary is the database and
+migration tooling. In Java projects inspect resolved JDBC/ORM versions, generated SQL and
+parameter types, plus migration transaction settings. The references use PostgreSQL 18 and
+MySQL 8.4 for version-sensitive examples; SQL Server features require the actual version and
+edition. Do not upgrade the application or database to match a proposed index feature.
+
 ## Workflow
 
-1. Normalize each target query into equality predicates, at most one useful range boundary,
+1. Normalize each target query into equality predicates, all range predicates,
    ordering, joins, projection-only columns, and non-sargable expressions.
 2. Derive candidate keys from contiguous navigation: equality prefix, then the chosen range or
-   ordering. Rewrite non-sargable predicates before buying an index for them.
+   ordering. For non-sargable predicates compare a semantics-preserving rewrite with an
+   expression/computed-column index; preserve collation, null, time-zone and parameter semantics.
 3. Evaluate the candidates against the workload, not one query. Prefer extending or consolidating
    an existing prefix when that preserves important orderings and does not create harmful width.
 4. Decide which columns belong in the key and which only cover the result. Account for the engine's
@@ -50,8 +57,9 @@ If the workload or engine is unknown, do not emit DDL. State what must be measur
 
 ## Core rules
 
-- A B-tree descends to one position and scans in order. Composite design follows from that physical
-  operation: contiguous equalities plus one range/order dimension; later columns filter or cover.
+- Start B-tree design from a contiguous equality prefix and first non-equality range. This is
+  a useful single-interval model, not a universal limit: multiple searches, skip scans and
+  index combinations can exploit other predicates. Confirm actual engine/version behavior.
 - “Most selective first” is not a general rule for equality columns. Their order is chosen from
   workload prefix reuse, ordering, statistics/compression, skip-scan behavior, and engine evidence.
 - A seek operator is not proof of a good index. Inspect positioned predicates versus residual work:
@@ -61,7 +69,9 @@ If the workload or engine is unknown, do not emit DDL. State what must be measur
 - Covering moves lookup cost into every write and leaf entry. `INCLUDE` keeps a column out of key
   ordering; it does not make the bytes or maintenance free. MySQL has no `INCLUDE` equivalent.
 - Every index proposal includes the cost of writes and storage. On PostgreSQL, indexing an updated
-  column can also prevent HOT updates and make all indexes participate in that update.
+  column can also prevent HOT updates and make non-summarizing indexes participate in that update.
+  PostgreSQL 18 exempts summarizing indexes such as BRIN from that eligibility restriction;
+  HOT also requires room on the original heap page.
 - An unused-index counter is insufficient for removal. Check collection resets, complete business
   cycles, constraints/FK support, statistics effects, and usage on primary and replicas.
 - An index can bound locks as well as reads. In InnoDB, a locking scan without a usable index can

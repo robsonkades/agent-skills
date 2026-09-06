@@ -60,7 +60,8 @@ Depth drivers: <evidence supporting the selected depth>
 
 ## Traceability
 
-<Map objectives/risks to engineering decisions and TC/SAC criteria, then criteria to EV evidence.>
+<Map objectives/risks to engineering decisions and TC/BAC criteria; name planned verification and
+link EV evidence only when actually obtained.>
 
 ## Decision authority
 
@@ -76,7 +77,8 @@ Depth drivers: <evidence supporting the selected depth>
 
 ## Accepted gaps
 
-<None, or GAP items with reason, consequence, authorized owner, expiry and reopening trigger.>
+<None, or GAP items with reason, consequence, authorized owner, expiry, reopening trigger and blocked
+phases/resources (or none with reason).>
 
 ## Decomposition
 
@@ -113,12 +115,16 @@ keep product acceptance under product ownership.
 TC-01   Under <representative condition>, <metric/invariant/compatibility property> holds.
         Verify: <test, benchmark, fault exercise, static gate, migration rehearsal, or observation>
 
-SAC-01  <User/business/service capability enabled or protected by the technical change>.
+BAC-01  <User/business capability enabled or protected by the technical change>.
         Verify: <integration test, SLO comparison, operational exercise, or stakeholder review>
 ```
 
 Include numeric performance/reliability targets only when authoritative or explicitly proposed for
 confirmation. “No regression” needs a baseline, metric, population and permitted tolerance.
+
+Use `TC-*` for an internal service-quality property and `BAC-*` for a business outcome; do
+not introduce `SAC-*` into a new brief. Preserve legacy SAC identifiers with aliases to the
+shared lifecycle namespace rather than silently renumbering accepted records.
 
 ## Decomposition examples
 

@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: clean-delivery-workflow
-version: 1.1.0
+version: 1.1.1
 description: >-
   The order of work for a change, and how much of that order a given change actually warrants:
   understanding before editing, clarifying what is ambiguous, deciding the test approach,
-  implementing in reversible steps, keeping refactoring in separate commits from behaviour,
+  implementing in reversible steps, separating refactoring from behaviour where independently valid,
   running the gates the risk deserves, and verifying before declaring done. Also the entry point
   that routes a situation to the skill that owns it. Use when starting a change and the order is
   not obvious, when a change has sprawled and needs re-sequencing, when refactoring and

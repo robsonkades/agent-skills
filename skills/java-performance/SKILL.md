@@ -38,8 +38,21 @@ resource demand/limits/queues and downstream health:
 recovery deadline and evidence-preservation budget:
 ```
 
+Start with available facts and mark unknowns; do not require every field before useful triage.
+For missing evidence, state which hypothesis remains unresolved and the smallest artifact or
+focused question that would distinguish it. A screenshot or unavailable process can support
+a collection plan, not a confirmed mechanism or an invented baseline.
+
+Record the target JDK vendor/build, JVM implementation, collector, OS/container, agents and
+profiler versions separately from compiler `--release`. The linked tool documentation uses
+JDK 25/HotSpot; it is not a requirement to upgrade. Check the target's command help, event
+metadata and effective settings before transferring commands, flags or event assumptions.
+Preview/incubator APIs, attach access and platform-specific profilers need explicit target support.
+
 If the process is degrading and remediation is imminent, invoke `incident-evidence-capture`
-before an ordinary investigation. If the measurement cannot be trusted, route first to
+before an ordinary investigation. Bounded capture must fit the recovery deadline: do not delay
+already authorized mitigation to complete this checklist or restart merely to enable a tool.
+If the measurement cannot be trusted, route first to
 `latency-statistics`, `coordinated-omission`, `load-testing`, or
 `performance-methodology`.
 
@@ -75,6 +88,9 @@ Useful parallel views, when already available or safely collectable:
 - one affected instance versus a genuinely comparable control.
 
 Every collection has a time, overhead, privilege, survivability, and perturbation budget.
+Read-only diagnostics can still pause or trigger GC: inspect the target command's documented
+impact, not merely whether it changes application data. Keep files on bounded storage that
+survives the planned recovery action; use the evidence-capture owner for command selection.
 
 ## Routing map
 
@@ -193,10 +209,17 @@ Do not hand off only “high CPU” or a screenshot.
 - [ ] No optimization or flag is proposed before material mechanism evidence.
 - [ ] Handoff includes validation/rollback criteria and evidence limitations.
 
+For this router, completion means a justified owner and bounded next discriminator, not a
+resolved performance incident. Unknowns may remain if their impact and next check are explicit.
+Do not keep loading the specialist catalog once one owner can advance the established question.
+
 ## References
 
-- [Triage map](references/triage-map.md)
-- [Specialist map](references/depth-ladder.md)
-- [Worked example: tail regression after deploy](references/latency-regression.md)
+- [Triage map](references/triage-map.md) — read for competing explanations of an ambiguous symptom.
+- [Specialist map](references/depth-ladder.md) — read when the owning question spans domains.
+- [Worked example: tail regression after deploy](references/latency-regression.md) — read when
+  separating logging, allocation, GC and rollout hypotheses after a deployment.
+- [JDK 25 diagnostic command impact](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+  — consult when budgeting collection, then check help on the target JVM.
 - [JDK 25 troubleshooting guide](https://docs.oracle.com/en/java/javase/25/troubleshoot/)
 - [JDK Mission Control documentation](https://docs.oracle.com/en/java/java-components/jdk-mission-control/)

@@ -2,6 +2,8 @@
 
 ## Algorithms, by the property each equalises
 
+Round-robin rows below describe request-level routing; at L4 their unit is a transport flow.
+
 | Algorithm                      | Equalises                                  | Right when                                                      | Fails when                                                                                                    |
 | ------------------------------ | ------------------------------------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | Round-robin                    | Request **count** per backend              | Request cost is uniform and backends are homogeneous            | Cost varies: counts are even, latency is not. A slow backend receives its full share until ejected            |
@@ -13,12 +15,12 @@
 | Consistent hashing on a key    | Key → backend **placement**                | The backend caches or owns per-key state                        | A backend is added or removed: some fraction of keys move. This is `sharding-and-partitioning`, not balancing |
 | Session affinity (cookie / IP) | Client → backend stickiness                | State is per-connection and derivable                           | The backend dies, drains, or the affinity table rebuilds — see `stateless-service-design`                     |
 
-### Why two random choices beats global least-loaded
+### When random candidates reduce herding
 
-A single balancer with a perfect view would always pick the least-loaded backend. Distributed
-balancers do not have a perfect view: each holds a slightly old picture, and — critically —
-they all hold _the same_ old picture. Every balancer therefore identifies the same replica as
-idlest and sends its next request there, so the fleet herds onto whichever replica most
+A least-loaded policy with a fresh view can select the smallest measured load. Distributed
+balancers may instead share a stale picture. If they choose deterministically from it,
+multiple balancers identify the same replica as
+idlest and send their next requests there, so the fleet can herd onto whichever replica most
 recently looked free. The replica becomes the hottest, the next update herds everyone onto a
 different one, and load oscillates.
 
@@ -35,18 +37,18 @@ Two different mechanisms; keep them distinct.
   per backend per interval and detects an unresponsive backend even with no traffic.
 - **Passive health check / outlier ejection** — the balancer observes real responses and
   temporarily removes a backend that produces consecutive errors or gateway failures. It costs
-  nothing extra and detects only what traffic reveals.
+  no additional probe traffic, but needs counters/processing and detects only what traffic reveals.
 
 Settings that decide the behaviour, by role:
 
-| Setting                     | Role                                                                | Getting it wrong                                                                                 |
-| --------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Interval                    | How often the backend is probed                                     | Too short: probe load is real background traffic on every backend, forever                       |
-| Unhealthy threshold         | Consecutive failures before removal                                 | 1 means a single blip removes a healthy backend                                                  |
-| Healthy threshold           | Consecutive successes before return                                 | 1 means a flapping backend re-enters and fails again, repeatedly                                 |
-| Timeout                     | How long a probe may take                                           | Below the check's own p99 the probe fails exactly under the load it exists to survive            |
-| Ejection duration / base    | How long an ejected backend stays out, usually growing per ejection | Too long: capacity you still need is idle; too short: flapping                                   |
-| **Max ejection percentage** | Cap on how much of the upstream may be ejected at once              | Unset or 100%: a shared-dependency blip ejects the entire fleet and the balancer has no backends |
+| Setting                     | Role                                                                   | Getting it wrong                                                                                          |
+| --------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Interval                    | How often the backend is probed                                        | Too short: probe load is real background traffic on every backend, forever                                |
+| Unhealthy threshold         | Consecutive failures before removal                                    | 1 means a single blip removes a healthy backend                                                           |
+| Healthy threshold           | Consecutive successes before return                                    | 1 means a flapping backend re-enters and fails again, repeatedly                                          |
+| Timeout                     | How long a probe may take                                              | Below the check's own p99 the probe fails exactly under the load it exists to survive                     |
+| Ejection duration / base    | How long an ejected backend stays out, usually growing per ejection    | Too long: capacity you still need is idle; too short: flapping                                            |
+| **Max ejection percentage** | Cap on passive outlier ejection, with implementation-specific defaults | Too permissive can remove excess capacity; other health/membership mechanisms are not bounded by this cap |
 
 **The fleet-ejection hazard.** Policies often behave as though failures are independent. When every
 replica depends on the same database, the same cache or the same downstream, a blip fails all
@@ -54,7 +56,10 @@ of them simultaneously and the balancer ejects all of them — turning a partial
 into a total outage exactly like a liveness probe that checks a dependency
 (`kubernetes-service-lifecycle`). Select controls by failure semantics:
 
-1. Cap the ejection percentage, so a floor of backends always remains in rotation.
+1. Cap passive ejection, then test the complete eligible set: active health, readiness,
+   locality and membership removal can still leave zero usable backends. The cap is not a
+   healthy-capacity guarantee; inspect rounding/minimum-ejection behavior for small pools
+   and the deployed implementation's default when the setting is absent.
 2. Reserve overload headroom and couple ejection to admission control; otherwise ejecting one
    endpoint overloads the next.
 3. Use **fail-open** panic behaviour only when degraded attempts are safer than rejection. For
@@ -67,7 +72,8 @@ would remove every caller simultaneously.
 
 ## The drain sequence
 
-Ordered. Reversing any pair produces resets that look like application errors.
+Coordinate these phases against the real control/data planes. Some overlap; choose ordering
+from dependencies (stop producers before draining their executor), not a universal list.
 
 1. The pod is marked not-ready or deregistered; the balancer's data plane begins converging.
 2. **Allow for measured propagation.** New flows/requests may still arrive because
@@ -78,21 +84,22 @@ Ordered. Reversing any pair produces resets that look like application errors.
 4. Non-HTTP work drains: consumers, schedulers, executors.
 5. The process exits, inside `terminationGracePeriodSeconds`.
 
-A deregistration delay shorter than the balancer's propagation time is the direct cause of
-"502s only during deploys". For HTTP/2 and gRPC, add one step: the server should send GOAWAY
-so clients migrate their streams rather than losing them on close.
+Propagation exceeding the drain allowance is one hypothesis for deploy-time 502s; correlate
+arrivals, resets and shutdown timestamps. HTTP/2 GOAWAY directs new streams away while
+eligible existing streams may finish. It does not migrate an existing stream; bounded
+termination may require application-level resume or an explicit interrupted outcome.
 
 ## Choosing among the three placements
 
-| Question                                  | L4                             | L7 proxy                                                | Client-side                              |
-| ----------------------------------------- | ------------------------------ | ------------------------------------------------------- | ---------------------------------------- |
-| Balances per request/stream               | No — per flow                  | Usually, at configured L7 unit                          | Depends on resolver/policy               |
-| Handles HTTP/2/gRPC multiplexing          | One backend per TCP connection | Can route new streams; one streaming RPC remains pinned | Can spread calls/channels                |
-| Can retry, route by header, split traffic | No                             | Yes                                                     | Yes, if every client implements it       |
-| Additional application-proxy hop          | No                             | Maybe — depends on topology                             | No centralized hop                       |
-| Policy change without redeploying callers | n/a                            | Yes                                                     | **No** — policy ships inside each client |
-| Works for third-party or polyglot callers | Yes                            | Yes                                                     | No                                       |
-| Per-request observability at the balancer | No                             | Yes                                                     | Only in the client's own metrics         |
+| Question                                  | L4                             | L7 proxy                                                | Client-side                                                     |
+| ----------------------------------------- | ------------------------------ | ------------------------------------------------------- | --------------------------------------------------------------- |
+| Balances per request/stream               | No — per flow                  | Usually, at configured L7 unit                          | Depends on resolver/policy                                      |
+| Handles HTTP/2/gRPC multiplexing          | One backend per TCP connection | Can route new streams; one streaming RPC remains pinned | Can spread calls/channels                                       |
+| Can retry, route by header, split traffic | No                             | Yes                                                     | Yes, if every client implements it                              |
+| Additional application-proxy hop          | No                             | Maybe — depends on topology                             | No centralized hop                                              |
+| Policy change without redeploying callers | implementation-dependent       | Usually via control/configuration plane                 | Possible with supported resolver/service config/control plane   |
+| Works for third-party or polyglot callers | Yes                            | Yes                                                     | Requires every participating client to support discovery/policy |
+| Per-request observability at the balancer | No                             | Yes                                                     | Only in the client's own metrics                                |
 
 An in-pod proxy (the ambassador form) is client-side balancing with the policy moved out of
 the application process — `ambassador-pattern` owns that shape.
@@ -102,9 +109,10 @@ the application process — `ambassador-pattern` owns that shape.
 - **Skew test.** Under steady realistic load, report capacity-normalized work distribution,
   max/median and top-endpoint share. Avoid `max/min` when idle/zero endpoints make it infinite.
 - **Scale-up test.** Add a replica under load and watch how long it takes to reach its share.
-  With multiplexed connections and no recycling, the answer is "never" — and that is the
-  finding.
-- **Rollout test.** An open-loop client through a full deploy, counting non-2xx and resets. A
+  Existing flows do not move; new connections may use the replica. If the workload creates
+  no new eligible flows, the added capacity may receive no work during the test window.
+- **Rollout test.** An open-loop client through a full deploy, counting HTTP errors, gRPC
+  terminal statuses, timeouts and resets. A
   closed-loop client throttles itself against the disruption and under-reports it, which is
   `coordinated-omission`.
 - **Ejection drill.** Fault-inject errors into one backend and confirm it is ejected; then

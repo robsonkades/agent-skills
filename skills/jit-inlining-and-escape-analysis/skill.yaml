@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jit-inlining-and-escape-analysis
-version: 2.1.0
+version: 2.1.1
 description: >-
   Inlining and escape analysis in C2: inlining as the multiplier, scalar replacement versus
   "stack allocation", flow-insensitivity, turning a PrintInlining verdict into a code

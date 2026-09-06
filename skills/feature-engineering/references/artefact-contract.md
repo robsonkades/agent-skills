@@ -16,9 +16,12 @@ Persistence          Inline | Dossier, with reason
 Accepted gaps        <GAP-* or none>
 ```
 
-A Product Feature is eligible for lifecycle validation only when its Product Definition is accepted
-and its Engineering Analysis is complete or an accountable engineering owner records why it is not
-required. A Tech Feature is engineering-owned from definition onward.
+Intake establishes accepted intent and the available evidence. Missing required Engineering Analysis
+is routed through the lifecycle before implementation readiness, not required before analysis can
+begin. At implementation readiness, required analysis is complete or its accountable owner has
+established why it is inapplicable. A Tech Feature is engineering-owned from definition onward.
+For Light work, a cited request/session statement can serve as the concise accepted baseline;
+do not fabricate separate documents or approvals. Preserve target technology/version constraints.
 
 ## Identifier namespace
 
@@ -58,9 +61,10 @@ OBJ/BR -> BAC -> SC -> IMP -> ED/EXP/CT -> TC -> RES -> EV
                               \-> RISK/GAP
 ```
 
-Every downstream item names its upstream justification. Every objective, rule, and criterion names the
-items that satisfy or verify it. A downstream item with no reason is scope creep; an upstream item with
-no criterion/evidence is not ready.
+Every downstream item names its upstream justification. Use only applicable artefact types; a Tech
+Feature can trace an engineering objective through TC/RES/EV without inventing product BACs. Before
+implementation, criteria name planned validation; completion requires observed evidence. Missing
+execution evidence before implementation is expected, not an automatic readiness failure.
 
 ## Authority
 
@@ -77,8 +81,10 @@ Status      proposed | accepted | rejected | superseded | blocked
 Source      <message, policy, path, record, or experiment>
 ```
 
-Participation is not authority. Silence is not approval. The agent owns only local, reversible choices
-inside explicitly delegated constraints.
+Participation and silence alone do not establish authority. Existing user instructions and evidenced
+delegation remain valid across phases; do not ask again because an artefact was reformatted or routed.
+The agent resolves routine choices within that authorized scope. Ask only when a material decision
+needs authority or information not already supplied, and continue independent authorized work.
 
 ## Accepted gaps
 
@@ -126,4 +132,5 @@ Every independent readiness pass returns one status, reasons, affected IDs, and 
 - DECOMPOSE BEFORE PROCEEDING — the feature is not independently deliverable/testable at this size.
 
 Only the first two advance. A return status reopens a focused phase and produces a new snapshot when
-resolved.
+resolved. State the scope of each gate: a blocked resource does not block an unrelated ready resource,
+and a partial pass is not a pass for the entire feature.

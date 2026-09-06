@@ -11,7 +11,8 @@ public enum Clocks {
 }
 ```
 
-Guarantees: thread-safe lazy initialisation from class-initialisation semantics; immune to
+Guarantees: initialization on active use of the enum class, not independently on first use of
+each constant; safe publication from class initialization. Resistant to standard
 reflective instantiation (`Constructor.newInstance` on an enum throws); serialisation preserves
 identity without `readResolve`. Costs: cannot extend a class; the type is an enum, which is
 misleading if it models no enumeration; still global state.
@@ -27,12 +28,14 @@ public final class Registry {
 
 Guarantees: initialised on first call to `getInstance()`, not on class load; correctness comes
 from the JVM's class-initialisation lock, so no synchronisation appears in the fast path.
-Costs: reflection and serialisation can still create second instances unless defended.
+Costs: accessible reflection can create another instance; serialization matters only if the
+type participates in Serializable. The shown class does not.
 
 ```java
 // 3. Double-checked locking — correct only exactly like this
 public final class Registry {
     private static volatile Registry instance;     // volatile is not optional
+    private Registry() {}
     public static Registry getInstance() {
         Registry local = instance;                 // one volatile read
         if (local == null) {
@@ -46,14 +49,15 @@ public final class Registry {
 }
 ```
 
-Without `volatile` this is broken on every JVM: another thread can observe a non-null reference
-to an object whose constructor has not finished. It exists for cases the holder idiom cannot
-serve — an instance whose creation depends on a runtime argument — and should otherwise be
-avoided.
+Without volatile (or another proven publication protocol), this DCL idiom lacks a safe-publication
+guarantee; a particular run need not manifest the failure. Runtime-dependent initialization still
+needs an explicit first-writer/configuration-conflict policy. DCL retries after a constructor
+failure unless designed otherwise; a failed holder initialization is not automatically retried.
 
 ```java
 // 4. Eager static final — simplest, when creation is cheap and always needed
 public final class Registry {
+    private Registry() {}
     public static final Registry INSTANCE = new Registry();
 }
 ```
@@ -63,33 +67,37 @@ is the trigger for the deadlock below.
 
 ## The class-initialisation deadlock
 
-Class initialisation takes a per-class lock. Two classes whose static initialisers reference
-each other, initialised concurrently by two threads, deadlock — and the thread dump shows both
-threads in `<clinit>` with no application lock in sight.
+Class initialization coordinates per Class object. Two initializing threads can deadlock when
+each waits for the other's class. Mere cross-class references do not guarantee this interleaving;
+same-thread recursive initialization can instead expose default field values.
 
 ```java
-class A { static final A INSTANCE = new A(); static { B.touch(); } }
-class B { static final B INSTANCE = new B(); static { A.touch(); } }
+class A { static final A INSTANCE = new A(); static { B.touch(); } static void touch() {} }
+class B { static final B INSTANCE = new B(); static { A.touch(); } static void touch() {} }
 ```
 
 Rules that prevent it:
 
-- A static initialiser must not touch another class's static state, start threads, or block.
-- A static initialiser must never do I/O — reading a file or opening a connection during class
-  init makes the failure mode a `ExceptionInInitializerError` that is thrown once and then
-  becomes `NoClassDefFoundError` for every subsequent access, which is one of the most confusing
-  errors in Java.
-- Prefer the holder idiom, which narrows the window to a class nothing else references.
+- Avoid cyclic dependencies and waiting for threads that themselves need class initialization.
+- Keep fallible I/O outside static initialization so the owner can control retry, failure and
+  cleanup. A class whose initialization fails remains erroneous for that defining loader.
+- A holder defers initialization but does not remove dependencies introduced by its constructor.
+  After initialization fails, later active uses of that same class fail with NoClassDefFoundError;
+  the first failure is wrapped in ExceptionInInitializerError only when it is not already an Error.
+  See [JLS 17 initialization](https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html#jls-12.4.2).
 
 ## Attacks on the invariant
 
-- **Reflection.** `Constructor.setAccessible(true)` defeats a private constructor. Defend by
-  throwing from the constructor when the instance already exists, or use an enum.
+- **Reflection.** Access override depends on module openness/permissions. A private constructor
+  protects normal callers, not privileged reflection. An instance-exists flag is not a complete
+  defense (early/reflected creation and races); standard reflective enum construction is rejected.
 - **Serialisation.** Deserialising a `Serializable` singleton creates a second instance unless
-  it declares `readResolve()` returning the canonical one — and every field must be `transient`
-  or the copy's state is restored into a discarded object. Enums are immune.
-- **Class loaders.** Nothing defends against this; two loaders means two instances, and no
-  language mechanism can tell them apart.
+  it resolves to a canonical instance. readResolve runs after deserialization, so review object
+  graph exposure and hooks; transient fields are a state policy, not a universal identity rule.
+  Prefer an explicit serial proxy/format or avoid serialization. Enum serialization uses the name
+  to resolve the constant in the receiving class-loader universe.
+- **Class loaders.** Two defining loaders can define distinct types/instances; loaders delegating
+  to the same parent definition share that class. Class/loader identity can distinguish them.
 
 If any of the three matter to correctness, the requirement is stronger than a Java singleton can
 express, and belongs on the ladder in
@@ -108,10 +116,12 @@ sequence below keeps every step small and independently mergeable.
 3. **Convert callers leaf-first.** A caller that already receives its collaborators takes one
    more parameter; the singleton is passed at the call site. Each converted caller becomes
    testable immediately, which is the incentive that keeps the migration moving.
-4. **Move creation to the composition root.** Once the majority of callers accept the
-   dependency, construct it once in the container/`main` and inject it.
-5. **Delete `getInstance()` last**, when the compiler proves no caller remains. Keeping it "for
-   compatibility" preserves exactly what you set out to remove, and new code will use it.
+4. **Move ownership to the composition root without creating two live owners.** Initially inject
+   the existing canonical instance; coordinate cutover of both legacy and injected call paths,
+   including shutdown, before constructing a replacement. Do not close a shared instance twice.
+5. **Remove getInstance last when compatibility permits.** Local compilation proves only local
+   source coverage; inspect plugins, reflection and published binaries. Deprecate/bridge an external
+   API until its supported migration window ends.
 
 Two things to watch during the migration:
 

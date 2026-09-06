@@ -18,57 +18,54 @@ public class TenantFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res,
                                     FilterChain chain) throws ServletException, IOException {
-        Tenant tenant = Tenant.of(req.getHeader("X-Tenant"));
-
-        ScopedValue.where(RequestContext.TENANT, tenant)
-                   .run(() -> {
-                       try {
-                           chain.doFilter(req, res);      // everything downstream is inside
-                       } catch (IOException | ServletException e) {
-                           throw new UncheckedFilterException(e);   // Runnable cannot declare
-                       }
-                   });
+        // Partial Java 25 sketch: authenticate and authorize tenant selection.
+        Tenant tenant = authorizedTenant(req);
+        try {
+            RequestContext.with(tenant, () -> { chain.doFilter(req, res); return null; });
+        } catch (IOException | ServletException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ServletException(e);
+        }
     }
 }
 ```
 
-The checked-exception dance is the one genuine friction point of `run`. `Carrier.call` takes
-a `ScopedValue.CallableOp<R, X>` that _can_ declare a thrown type, so prefer `call` wherever
-the operation returns a value or throws something checked:
-
-```java
-ScopedValue.where(RequestContext.TENANT, tenant)
-           .call(() -> { chain.doFilter(req, res); return null; });   // X inferred
-```
+Uses the restricted helper from the migration reference in the same trusted package.
+CallableOp has one exception type parameter: unrelated IOException and ServletException
+can infer Exception, so preserve both declared exceptions explicitly at this boundary.
+The filter binding covers synchronous doFilter, not async servlet or reactive request
+lifetime. Use supported dispatch/task hooks at each actual execution boundary.
 
 ## Keeping MDC alive
 
-Logging back-ends read `MDC`, which is a `ThreadLocal`. A `ScopedValue` does not populate
-it. Set both at the boundary, and clear the MDC where it is set:
+MDC behavior depends on its logging adapter; ScopedValue does not populate it automatically.
+Restore the previous key value at boundaries you own. This partial snippet uses non-throwing work:
 
 ```java
 ScopedValue.where(TENANT, tenant).run(() -> {
+    String previous = MDC.get("tenant");
     MDC.put("tenant", tenant.id());
     try {
-        chain.doFilter(req, res);
+        work();
     } finally {
-        MDC.remove("tenant");          // still required: MDC is thread-scoped, not block-scoped
+        if (previous == null) MDC.remove("tenant"); else MDC.put("tenant", previous);
     }
 });
 ```
 
-Under virtual threads with thread-per-request, MDC leakage between requests stops being
-possible (the thread ends with the request), but the `remove` is still correct and costs
-nothing — and it is what keeps the code right when a platform-thread pool is reintroduced
-anywhere.
-
-Inside a `StructuredTaskScope`, the `ScopedValue` is inherited and the MDC is **not**. A
-subtask that logs will log without the tenant field unless the subtask sets it:
+A fresh thread per request avoids reuse across requests, but nesting and framework context
+still require restoration. StructuredTaskScope does not itself guarantee MDC propagation;
+adapter inheritance, instrumentation or wrappers may already carry it. When a bridge is needed:
 
 ```java
 scope.fork(() -> {
-    MDC.put("tenant", TENANT.get().id());     // from the inherited binding
-    try { return enrich(id); } finally { MDC.clear(); }
+    String previous = MDC.get("tenant");
+    MDC.put("tenant", TENANT.get().id());
+    try { return enrich(id); }
+    finally { if (previous == null) MDC.remove("tenant"); else MDC.put("tenant", previous); }
 });
 ```
 
@@ -84,15 +81,17 @@ places you do not control, including expression-based access control. Two rules:
   threads under virtual threads. It copies per child thread and reintroduces exactly the
   footprint problem, while still not covering executor submissions.
 - In a `StructuredTaskScope`, set it inside the subtask from the inherited scoped value, or
-  use `DelegatingSecurityContextExecutor` when submitting to an executor.
+  use `DelegatingSecurityContextExecutor` when submitting to an executor. Restore prior
+  context in finally for manual bridges; use a fresh context and do not share mutable
+  security state unsafely between tasks.
 
 The same reasoning applies to any framework context whose read path you do not own: the
-`ScopedValue` is the source of truth, the `ThreadLocal` is a projection of it established at
-each thread boundary.
+authoritative context may be the framework's, with ScopedValue as an application projection.
+Do not treat a tenant header or a bound object as proof of authorization.
 
 ## OpenTelemetry
 
-The OTel `Context` is also `ThreadLocal`-based, and it already ships thread-boundary
+The default OTel ContextStorage is thread-local, and it already ships thread-boundary
 helpers. Use them rather than hand-rolling:
 
 ```java
@@ -102,14 +101,15 @@ Context captured = Context.current();
 executor.submit(() -> { try (Scope s = captured.makeCurrent()) { work(); } });
 ```
 
-Inside a structured scope the parent span is _not_ inherited by the subtask automatically;
-wrap the fork body the same way. A subtask that starts a span without making the parent
+StructuredTaskScope does not itself propagate OTel storage. Instrumentation/wrappers may
+already do so; when absent, wrap the fork body explicitly. A subtask that starts a span without making the parent
 current produces an orphan trace — which looks in the UI exactly like a service that did not
 call anything.
 
 ## `@Async`, `@Scheduled` and plain executors
 
-None of these inherit a `ScopedValue`. Choose one of:
+These APIs do not automatically propagate bindings across threads; inline work may see the
+executing thread's scope. Choose deliberately:
 
 1. **Capture explicitly at the submission site** (shown in
    `references/threadlocal-migration.md`). Most honest, most verbose.
@@ -119,7 +119,7 @@ None of these inherit a `ScopedValue`. Choose one of:
 ExecutorService contextual(ExecutorService delegate) {
     return new DelegatingExecutorService(delegate) {
         @Override public <T> Future<T> submit(Callable<T> task) {
-            Tenant t = TENANT.orElse(null);
+            Tenant t = TENANT.get(); // this wrapper deliberately requires a binding
             Context otel = Context.current();
             return delegate.submit(() -> ScopedValue.where(TENANT, t).call(() -> {
                 try (Scope s = otel.makeCurrent()) { return task.call(); }
@@ -132,12 +132,13 @@ ExecutorService contextual(ExecutorService delegate) {
 
 3. **Do not cross the boundary at all.** If the work belongs to the request, a
    `StructuredTaskScope` inside the request keeps the context, the lifetime and the
-   cancellation together — and is usually the reason the `@Async` existed.
+   cancellation together. Preserve intentionally independent background work and existing
+   execution models; final ScopedValue does not make StructuredTaskScope non-preview.
 
-Option 2 has a trap worth stating: `TENANT.orElse(null)` binds `null` when nothing was
-bound, and Java 25 explicitly permits a null binding, so `get()` then returns null instead
-of throwing. Either forbid the unbound case at the wrapper, or branch on `isBound()` and
-run the task without creating that binding.
+Option 2 is partial: DelegatingExecutorService is application code, not a JDK class. Audit
+all execution methods, lifecycle ownership and capture points. The sketch rejects an unbound
+submitter; if absence is legitimate, branch on isBound and run without rebinding. Do not
+convert absence into a legal null binding through orElse(null).
 
 ## What still needs an explicit capture
 
@@ -150,9 +151,9 @@ run the task without creating that binding.
 
 ## Review checklist
 
-- [ ] Exactly one binding site per entry point, at the outermost boundary
+- [ ] Bindings match actual execution boundaries, including asynchronous dispatch
 - [ ] `call` used where the operation throws checked exceptions or returns a value
-- [ ] MDC set and removed at each thread boundary, including inside every fork
+- [ ] MDC projections restore previous values and preserve unrelated keys
 - [ ] Security context set inside subtasks rather than switched to inheritable mode
 - [ ] Executor-crossing work either wraps context explicitly or is moved into a scope
 - [ ] No `where(KEY, null)` reachable from an unbound path

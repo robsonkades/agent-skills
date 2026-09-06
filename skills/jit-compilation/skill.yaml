@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jit-compilation
-version: 1.3.0
+version: 1.3.1
 description: >-
   HotSpot JIT compilation and warm-up: tiered policy, C1/C2 queues and profiling, OSR,
   deoptimization, code-cache pressure, compiler resources in containers, and warm-up as a
@@ -47,6 +47,7 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - graalvm-jit
   - c2-sea-of-nodes
   - code-cache-segments
   - compilation-and-inlining-logs

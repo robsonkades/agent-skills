@@ -28,12 +28,24 @@ stream, multiplexed versus dedicated connections, and JDK versions can differ.
 When a callback/handle API completes a Future:
 
 ```text
-PENDING -> SUCCEEDED | FAILED | CANCELLING -> CANCELLED(underlying terminal/released)
+public result: PENDING -> SUCCEEDED | FAILED | CANCELLED
+underlying work: ACTIVE -> CANCEL_REQUESTED -> TERMINATED -> RELEASED
+                         (normal completion can also reach TERMINATED)
 ```
 
-Retain the underlying request handle. Invoke cancel once, complete the public stage only once, and
-resolve late completion versus cancellation. A cancelled public future does not prove underlying
-resource release.
+These are related state machines, not simultaneous transitions. Complete the public stage once
+under the chosen race policy; record physical termination and release independently. An abort
+can fail or never be acknowledged, so retain an unresolved/residual-work state and escalate
+after the grace bound rather than declaring successful release.
+
+Retain the underlying request handle. Cancellation can win before handle publication: record
+the pending request atomically, then have handle registration deliver cancellation if it already
+won. Serialize registration and cancellation so neither misses the other, and invoke the
+external cancel operation outside internal locks because it may synchronously call back.
+Test synchronous completion during registration and late success after public cancellation;
+release an otherwise unclaimed returned resource even when its result cannot be delivered.
+Invoke an underlying handle's cancel according to its idempotency/retry contract rather than
+equating one successful public transition with one guaranteed downstream acknowledgement.
 
 ## Close as cancellation
 

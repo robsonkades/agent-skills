@@ -26,6 +26,12 @@ log line, a path).
 
 ## Workflow
 
+Inspect compiler release/toolchains, runtime JDK, locale/provider and boundary encoding before
+changing behavior. No single authoring baseline is declared; references use Java SE 25.
+Text blocks and `formatted` need Java 15+, records Java 16+, and default charset behavior
+changes in Java 18. Unicode segmentation depends on the runtime version. Use supported
+alternatives without upgrades or preview; missing protocol/column constraints remain unverified.
+
 1. **Ask whether it should be a `String` at all.** An id, a status, a currency code, a
    compound key or a phone number wants a type with validation; a `String` there means every
    consumer re-validates or none does.
@@ -36,7 +42,8 @@ log line, a path).
    reads.
 4. **Choose the composition mechanism by shape**: a single expression → `+`; a loop →
    `StringBuilder`; a collection → `String.join`/`Collectors.joining`; multi-line literal →
-   a text block; user-facing formatting → `formatted`/`MessageFormat` with a locale.
+   a text block; user-facing formatting → `String.format(locale, …)` or `MessageFormat`
+   with the user's locale. `formatted` has no locale overload and uses the process default.
 5. **Reuse stable, repeated `Pattern`s**, and check what happens when input is hostile—length
    bound, nesting, backtracking. Dynamic or one-shot expressions do not belong in global state.
 6. **Check every place text is embedded into another language** and replace concatenation with
@@ -54,7 +61,7 @@ log line, a path).
 - `length()` counts UTF-16 **code units**, not characters. Characters outside the Basic
   Multilingual Plane — emoji, many CJK extensions, some scripts — take two units, so
   `substring(0, 100)` can split a surrogate pair and produce invalid text. Use
-  `codePointCount`/`offsetByCodePoints` when the unit is a character, and `BreakIterator` when
+  `codePointCount`/`offsetByCodePoints` when the unit is a code point, and `BreakIterator` when
   the unit is what a user perceives as a character (an emoji with a skin-tone modifier is
   several code points and one grapheme).
 - Pass the contract's charset. `String.getBytes()`, `new String(byte[])`, `FileReader`,
@@ -87,7 +94,8 @@ log line, a path).
 - A regex applied to untrusted input is an availability risk. Nested quantifiers over
   alternation (`(a+)+`, `(\w+\s?)*`) can backtrack exponentially, and Java's engine has no
   timeout: one request pins a CPU core until it finishes. Bound the input length, avoid nested
-  quantifiers, prefer possessive quantifiers or atomic groups, and prefer a real parser for
+  quantifiers, consider possessive quantifiers or atomic groups only after checking accepted
+  inputs and captures remain correct, and prefer a real parser for
   structured input. Where a regex must run on user input, run it with a bounded input size and
   treat a hang as a possible ReDoS, not a slow query.
 - Never build SQL, shell commands, HTML or LDAP filters by concatenating
@@ -117,6 +125,11 @@ log line, a path).
   characters can pass while the insert fails. Validate against the real constraint.
 
 ## References
+
+Deliver the boundary contract (encoding, malformed-input policy, locale and length unit),
+the smallest justified change, and checks run on the target. Include malformed bytes,
+supplementary/combining text, locale differences and rejected inputs when relevant. Separate
+semantic correctness from measured regex/performance claims; report unavailable evidence.
 
 - [Encoding, locale and Unicode](references/encoding-locale-and-unicode.md) — read when text
   crosses a file, socket, database or process boundary, when it is truncated or compared

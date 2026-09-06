@@ -31,6 +31,13 @@ they make it possible to represent and distinguish mechanisms.
 
 ## Advanced experiment contract
 
+Inspect the project's compiler release, benchmark build/annotation processor, pinned JMH
+version and actual fork executable/arguments before changing the experiment. The Java
+snippets below were compiled with `--release 17` and JMH 1.37, with a JDK 25 smoke run;
+this is not permission to upgrade
+the target toolchain. Preserve existing project compatibility. When measurement or profiler
+evidence is unavailable, return the experiment and missing checks, not a claimed winner.
+
 ```text
 hypothesis and competing mechanisms:
 state ownership and sharing graph:
@@ -56,6 +63,10 @@ Thread count is a workload factor. Sweep across meaningful concurrency and topol
 than publishing only the best saturation point. Record logical CPUs, SMT siblings, sockets/NUMA,
 cpuset/quota, and whether worker placement changes between forks.
 
+Scope controls state-instance ownership, not the complete object graph. `Scope.Thread` states
+can still share static fields or referenced objects; trace those aliases before concluding
+that a benchmark has no contention.
+
 ## Asymmetric groups
 
 `@Group` and `@GroupThreads` model roles that share a `Scope.Group` instance. Define:
@@ -67,8 +78,10 @@ cpuset/quota, and whether worker placement changes between forks.
 - shutdown/progress behavior when one role stops or throws.
 
 A `1 producer : 3 consumers` closed loop is not automatically a production 1:3 arrival ratio.
-Backpressure and actor speed determine realized operations. Use `@AuxCounters` or returned results
-to observe the realized mix.
+Backpressure and actor speed determine realized operations. Returned results prevent some
+dead-code elimination but are not automatically counted as successes/misses. Add explicit
+outcome counters to observe the realized mix. With a four-thread group, eight total workers
+normally form two independent groups; `Scope.Group` does not become one eight-worker object.
 
 ## Parameters and experimental matrices
 
@@ -151,7 +164,9 @@ Use secondary results only after defining their collection boundary and denomina
   operations-per-invocation;
 - hardware counters may multiplex, lack PMU support, include/exclude kernel/harness activity, and
   suffer skid;
-- `@AuxCounters` are application observations whose update cost and sharing can perturb the path;
+- JMH 1.37 `@AuxCounters` require `Scope.Thread`; public numeric fields/methods become metrics.
+  `OPERATIONS` normalizes to benchmark time, while `EVENTS` counts events without that time
+  normalization. Neither automatically means a success fraction. Updates can perturb the path;
 - total throughput can improve while successes per operation fall.
 
 Report coverage/multiplex ratio, raw and normalized units, unsupported counters, and whether the
@@ -237,8 +252,8 @@ confounded state improve precision around the wrong mixture.
 
 ## References
 
-- [Configuration recipes and variance diagnosis](references/configuration-recipes.md)
-- [Profilers and annotated assembly](references/profilers-and-hsdis.md)
+- [Configuration recipes and variance diagnosis](references/configuration-recipes.md) — read when implementing state, group, counter, seed or reset protocols.
+- [Profilers and annotated assembly](references/profilers-and-hsdis.md) — read when selecting a profiler or investigating coverage, counter or assembly failures.
 - [OpenJDK JMH project](https://github.com/openjdk/jmh)
 - [JMH profiler sample](https://github.com/openjdk/jmh/blob/master/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_35_Profilers.java)
 - [JMH asymmetric benchmark sample](https://github.com/openjdk/jmh/blob/master/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_15_Asymmetric.java)

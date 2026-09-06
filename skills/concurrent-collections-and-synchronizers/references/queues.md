@@ -37,18 +37,18 @@ private static final Task POISON = new Task("poison");
 void consumeUntilPoison(BlockingQueue<Task> q) throws InterruptedException {
     for (;;) {
         Task t = q.take();
-        if (t == POISON) { q.put(POISON); return; }   // put it back for the next consumer
+        if (t == POISON) return;   // coordinator sends one per live consumer
         handle(t);
     }
 }
 ```
 
-A single poison consumed by one worker leaves the rest blocked forever, so either enqueue one per
-consumer or put it back as above. The put-back variant has two costs worth naming: the poison is
-still in the queue when the last consumer leaves — fine for a queue that dies with the process, a
-leak if a supervisor drains or reuses it — and `put` is the _blocking_ form, so on a bounded queue
-whose producer is still filling, the shutting-down consumer blocks on the shutdown path. Use
-`offer(POISON)` and log a failure, or prefer one poison per consumer.
+This is a partial FIFO shutdown protocol: stop and join producers before enqueueing one
+poison per live consumer after accepted work. Bound marker insertion and join time; if insertion
+fails or a worker dies, the coordinator must cancel/interrupt remaining workers according to
+the shutdown policy. Logging a failed marker offer is insufficient. Re-inserting a marker
+can block a departing worker or strand the others if it is dropped. Priority/delay queues
+need a different termination protocol because a marker may overtake or wait behind work.
 
 ## Choosing an implementation
 
@@ -196,16 +196,24 @@ record Retry(String payload, long dueNanos) implements Delayed {
         return unit.convert(dueNanos - System.nanoTime(), TimeUnit.NANOSECONDS);
     }
     @Override public int compareTo(Delayed other) {
-        return Long.compare(getDelay(TimeUnit.NANOSECONDS), other.getDelay(TimeUnit.NANOSECONDS));
+        if (other == this) return 0;
+        Retry retry = (Retry) other; // homogeneous DelayQueue<Retry>
+        return Long.compare(dueNanos - retry.dueNanos, 0L);
     }
     static Retry in(Duration d, String payload) {
+        if (d.isNegative()) throw new IllegalArgumentException("negative delay");
         return new Retry(payload, System.nanoTime() + d.toNanos());
     }
 }
 ```
 
-`dueNanos` is final on purpose: a `getDelay()` that can move _backwards_ corrupts the heap
-ordering. The other two failure modes are alerting on `size()` as "work due now" (it counts the
+The queue must contain only `Retry` elements using the same monotonic clock. Pending deadlines,
+including overdue items, must span less than 2^63 nanoseconds; subtraction then handles
+`nanoTime` wraparound. `Duration.toNanos()` rejects values outside the long range. Compare
+stored deadlines rather than sampling the clock separately for each operand: separate samples
+can make even self/equal-deadline comparison nonzero. Keep deadlines immutable while enqueued;
+change a deadline only by removing and reinserting the item. Remaining delay naturally decreases.
+The other two failure modes are alerting on `size()` as "work due now" (it counts the
 future too) and using an unbounded `DelayQueue` as a retry buffer during a downstream outage.
 
 ## ConcurrentLinkedQueue

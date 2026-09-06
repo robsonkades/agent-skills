@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-concurrency
-version: 1.2.0
+version: 1.2.1
 description: >-
   Entry point for designing or triaging concurrency inside one JVM. Classifies work by
   lifecycle, blocking and CPU demand, state ownership, arrival shape, ordering, cancellation,

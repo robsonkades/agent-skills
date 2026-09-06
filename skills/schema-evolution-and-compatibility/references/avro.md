@@ -1,7 +1,8 @@
 # Avro
 
 Coordinates. Runtime `org.apache.avro:avro:1.12.2` (the 1.11 line is `1.11.5`); code generation
-`org.apache.avro:avro-maven-plugin:1.12.2`. **Pin 1.12.2** — the resolution matrix below was run on
+`org.apache.avro:avro-maven-plugin:1.12.2`. Inspect target runtime/codegen first; these are recorded
+validation coordinates, not an instruction to upgrade. The resolution matrix below was run on
 **1.12.0**, and the union-default table was re-run across **1.11.4, 1.11.5, 1.12.0, 1.12.1 and
 1.12.2**, which is what settled the `defaultVal()` question.
 
@@ -101,10 +102,9 @@ converter, code generator, Connect transform or custom linter that reads
 1.12.2  ["null","string"] declared default "x"  -> defaultVal() = x,    read gives {"id": 1, "v": "x"}
 ```
 
-Pin 1.12.2 and the divergence is gone; no upstream issue was found for it either way. The spec-change
-story is untouched — 1.12.2 still accepts what 1.11.5 rejects — so `["null", "T"]` with
-`"default": null` remains the only shape that is correct under both spec versions and every language
-implementation.
+The recorded 1.12.2 probe resolves that divergence; it does not validate every vendor/language build.
+Use a first-branch-matching default when crossing these versions: `["null", "T"]` with
+`"default": null` for a nullable field, or another branch order with a matching meaningful default.
 
 ## A default is a read-time reinterpretation of all prior data
 
@@ -157,9 +157,11 @@ build — not what is in the registry and not what is in git. From
 
 So the choice is: `specific.avro.reader=true` with generated `SpecificRecord`s and full resolution,
 or an explicit reader schema, or a `GenericRecord` consumer that follows the writer exactly. The
-third is a legitimate design for a generic sink or router — which is why it is the default — and a
-bug everywhere else.
+third is legitimate whenever application code deliberately handles each writer schema, including
+business consumers with explicit version dispatch. Do not assume it resolves against a newer schema.
 
 **Unverified**: whether `SpecificDatumReader` honours the enum `default` symbol. Enum-default
 resolution was verified through `GenericDatumReader` only; AVRO-3313 reports it not working in some
 configuration and that was not reproduced. Test the `SpecificRecord` path before relying on it.
+
+Source: [Avro 1.12.0 schema resolution](https://avro.apache.org/docs/1.12.0/specification/).

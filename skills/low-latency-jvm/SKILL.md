@@ -22,8 +22,13 @@ NUMA, allocation or networking.
 
 Define the event population, clock and boundaries, offered-load model, warm-up/state, p50/p99/p99.9/
 p99.99 or maximum observation, acceptable spread, loss/rejection, throughput, run duration and
-environment. “Deterministic” means a bounded distribution under stated conditions, never zero
-variance or one attractive percentile.
+environment. Distinguish an empirical tail objective from a hard deadline guarantee: a finite
+run bounds its observations, not every future execution. General-purpose JVM/OS measurements
+alone do not prove hard real-time behavior, even with no observed GC pauses.
+
+Inspect the project's JDK/collector, build and dependency versions, runtime image, kernel and
+resource limits before selecting controls. This skill contains design guidance, not executable
+Java or a required Java baseline. Do not upgrade or enable experimental flags merely to apply it.
 
 ## Workflow
 
@@ -40,9 +45,13 @@ variance or one attractive percentile.
 ## Decision rules
 
 - Prefer GC-friendly design and a measured low-pause collector before GC-free execution. Epsilon is
-  viable only with a provable allocation/lifetime budget and an external restart before exhaustion.
+  viable only with a bounded allocation/lifetime budget and completion or controlled replacement
+  before exhaustion. Include startup, libraries, background work, bursts and shutdown allocations;
+  a steady-state mean rate is not an upper bound. No GC does not mean no safepoints or OS stalls.
 - An object pool needs a checked conservation invariant, bounded capacity and safe reset/ownership.
-  Pooling that still allocates on acquisition is ceremony.
+  Measure total allocation, retained footprint, contention and latency against ordinary allocation.
+  Small wrapper allocation may still accompany useful reuse of expensive resources; reject a pool
+  when its measured benefit does not justify retention, synchronization or ownership risks.
 - Pre-touch changes page commitment/startup; it does not enable huge pages or prove NUMA locality.
 - Pin CPU, memory and interrupts as one placement design. CPU affinity without memory/IRQ placement
   can move rather than remove jitter.
@@ -51,6 +60,12 @@ variance or one attractive percentile.
 - Kernel bypass is justified only after kernel/network time is a material part of the measured
   budget. It does not repair GC, NUMA, queues or application allocation.
 - Never copy a JVM flag block. Confirm support, effective value and mechanism on the exact build.
+
+## Output
+
+Return the measured jitter source or explicit hypothesis, one justified control and its cost,
+the acceptance population/window, and observed versus pending validation. State the remaining
+failure modes and whether the result is statistical evidence or a separately justified guarantee.
 
 ## References
 

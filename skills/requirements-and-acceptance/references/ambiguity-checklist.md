@@ -22,7 +22,8 @@ omits and code cannot omit — the compiler will make you choose, so choose deli
 
 - Which clock: the user's, the server's, UTC?
 - What happens across a day boundary, a month end, a daylight-saving transition?
-- Is "7 days" calendar days or 168 hours? They differ twice a year.
+- Is "7 days" calendar days or 168 hours? They can differ across offset changes in
+  the chosen timezone; not every zone observes daylight saving.
 - How long is this valid for — a TTL, an expiry, a retention period?
 
 ## Concurrency
@@ -63,43 +64,52 @@ omits and code cannot omit — the compiler will make you choose, so choose deli
 
 Eight questions where the answers change the work:
 
-1. **Which orders** — all of them, or a date range? The answer decides whether this is a query
-   or a batch job. _(scope, quantity)_
-2. **How many can a user have?** 200 rows is a synchronous response; 2 million is an
-   asynchronous job with a download link, which is a different feature entirely. _(quantity)_
+1. **Which orders** — all of them, or a date range? This defines selection and helps estimate
+   work; the range alone does not decide the architecture. _(scope, quantity)_
+2. **How many can a user have?** Compare synchronous streaming and an asynchronous
+   download job using row size, generation time, memory, timeouts and user workflow; row count
+   alone does not select one. _(quantity)_
 3. **"Fast" means what** — the response starts within 2 s, or the file is complete within 2 s?
-   For a large export these are opposite designs (stream versus generate-then-serve). _(quantity)_
+   Distinguish time to first byte from completion; either streaming or pre-generation needs
+   evidence that it satisfies the selected target. _(quantity)_
 4. **Which columns**, and what happens when an order has no delivery date — empty cell, the
    literal `null`, or omitted? _(boundary)_
-5. **Which timezone** are the dates rendered in, and which format? A CSV opened in a European
-   spreadsheet parses `03/04` as 3 April; an American one as 4 March. _(time)_
-6. **Decimal and delimiter conventions** — `1,234.56` with commas separating fields breaks the
-   file. Is the audience one locale or several? _(boundary)_
+5. **Which timezone** are the dates rendered in, and which format? Consumer locale/import
+   settings may interpret `03/04` as 3 April or 4 March. _(time)_
+6. **Decimal and delimiter conventions** — `1,234.56` needs quoting in comma-delimited CSV;
+   correctly quoted commas do not break the format. Is the audience one locale or several,
+   and how are quotes/newlines handled? _(boundary)_
 7. **May a user export another user's orders?** Presumably not — but is there an admin who
    can, and is the export audited? _(authority)_
 8. **What happens if the export fails halfway** — partial file, error, retry? _(failure)_
 
-Assumptions to record rather than ask, because both readings produce the same code:
+Inspect existing exports and supported consumers before choosing these defaults:
 
-- UTF-8 with a BOM, so spreadsheets open it correctly.
-- The header row uses the same labels as the orders screen.
-- Ordering is newest first, matching the existing list.
+- Encoding and BOM policy: a BOM helps some spreadsheet workflows but is not universal.
+- Stable header names: screen labels may be localized or change independently.
+- Ordering: reuse an existing order only if appropriate, with a deterministic tie-breaker.
 
-That is the shape of the output: questions where the answer changes the build, assumptions
-where it does not, and nothing left implicit.
+These choices change bytes or code. They may still be reasonable reversible assumptions
+when evidence and delegated scope support them; document the basis, and ask if consumer
+compatibility materially depends on an unresolved answer. The eight questions are an
+inspection guide, not eight questions automatically sent to the user.
+
+[CSV format reference: RFC 4180](https://www.rfc-editor.org/rfc/rfc4180.html#section-2)
+documents quoting and headers; consumer encoding and spreadsheet behavior require their own
+compatibility checks.
 
 ## When to ask and when to proceed
 
-| Situation                                                        | Action                                        |
-| ---------------------------------------------------------------- | --------------------------------------------- |
-| Two readings produce different data models, APIs or costs        | Ask. Block if you cannot proceed on either.   |
-| Two readings produce the same code                               | Assume, record, continue.                     |
-| The answer is discoverable in the codebase or from existing data | Find it. Do not spend someone's attention.    |
-| Answering requires authority you do not have (legal, product)    | Ask, and name the decision as theirs.         |
-| The requirement contradicts another requirement                  | Surface both, propose options, do not choose. |
+| Situation                                                        | Action                                                                                      |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Two readings produce different data models, APIs or costs        | Inspect prior decisions; ask if material uncertainty remains, blocking only dependent work. |
+| Two readings produce the same code                               | Proceed if contract consequences are also equivalent; record material assumptions.          |
+| The answer is discoverable in the codebase or from existing data | Find it. Do not spend someone's attention.                                                  |
+| Answering requires authority you do not have (legal, product)    | Ask, and name the decision as theirs.                                                       |
+| The requirement contradicts another requirement                  | Check scope and authorized decisions; surface unresolved conflict with options.             |
 
-Batch questions. Five questions in one message get answered together; five messages over a day
-each cost a context switch and get worse answers.
+Group the few unresolved questions that actually block a decision. Do not send the entire
+checklist when repository evidence or earlier instructions already answer it.
 
 Do not stop all work while waiting. Build everything that does not depend on the answer, and
 isolate what does behind the smallest decision point you can — that way one answer changes one

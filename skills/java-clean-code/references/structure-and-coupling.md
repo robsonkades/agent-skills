@@ -42,13 +42,15 @@ callers never legitimately separate them.
 **False positives:**
 
 - Lifecycles owned by a container or protocol: a framework-managed bean's
-  post-construct step, JDBC's `prepare`/`execute`, an `Iterator`'s
-  `hasNext`/`next`. The order _is_ the published contract and callers know it; wrapping
-  these in phase types is ceremony.
+  post-construct step or JDBC's `prepare`/`execute`. Inspect the actual contract before
+  adding phase types: `Iterator.next()` does not require a preceding `hasNext()`;
+  optional `remove()` instead requires a preceding `next()` and is limited to once
+  per returned element.
 - Test fixtures: `@BeforeEach` then the test method is temporal coupling by design,
   managed by the runner.
-- Builders. A builder is temporal coupling made safe: order-free accumulation with one
-  terminal `build()`. Do not "fix" a builder into a 9-argument constructor.
+- Builders. Accumulation followed by `build()` can be a deliberate lifecycle when build
+  validates required state. Inspect order dependence and reuse rules; the pattern alone
+  does not enforce safety. Do not replace a useful builder with a 9-argument constructor.
 
 **When not to apply.** When the ordered API is public and published, re-shaping it is API
 evolution with compatibility costs (java-api-design), not an internal cleanup. Inside the
@@ -65,7 +67,9 @@ witnessing a hidden dependency.
 **Fix.** Take the dependency as a parameter at the boundary — `Clock` (then
 `LocalDate.now(clock)`), `Locale`, `RandomGenerator`, a config value rather than the
 config source. Only the composition root and the outermost adapter layer touch the
-ambient versions.
+ambient versions. Preserve the time zone and number/timing of samples: replacing repeated
+time reads with one boundary snapshot changes semantics if the operation intentionally
+observes elapsed time or a date rollover. Retain a clock for that contract.
 
 **False positives:**
 
@@ -118,3 +122,5 @@ for explicit time sources and [`RandomGenerator`](https://docs.oracle.com/en/jav
 for the deliberately broad generator abstraction. The refactoring vocabulary follows Martin
 Fowler's [official catalog](https://refactoring.com/catalog/), but the decision criteria above
 are stricter than applying a named refactoring mechanically.
+For lifecycle claims, consult [`Iterator`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Iterator.html),
+especially the separate contracts of `next()` and `remove()`.

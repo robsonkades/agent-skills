@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: feature-architecture-analysis
-version: 1.1.0
+version: 1.1.1
 description: >-
   Enumerating what a feature actually touches, with paths: which modules, layers, contracts,
   schemas, message topics, configuration and cross-cutting concerns change, which of those changes
-  are visible outside the component, and where the change crosses a boundary that raises who must
-  approve it. Use before writing an implementation plan, when a feature is assumed to be local and
+  are visible outside the component, and where the change crosses a boundary that requires checking
+  compatibility and ownership. Use before writing an implementation plan, when a feature is assumed to be local and
   might not be, when a change is about to alter a published contract or a stored schema, when the
   file list in a plan was written from memory, or when nobody can say what breaks if this feature
   is wrong. Does not choose which layer a responsibility belongs to (layering-and-boundaries),

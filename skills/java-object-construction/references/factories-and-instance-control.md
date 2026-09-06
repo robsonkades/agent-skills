@@ -43,7 +43,8 @@ A factory that does not always allocate is _instance-controlled_. This buys thre
 - **Memory sharing** for values that repeat heavily — currency codes, tenant identifiers,
   header names.
 - **The option to return a different class.** `EnumSet.noneOf` returns `RegularEnumSet` or
-  `JumboEnumSet` depending on the universe size, and no caller can tell.
+  `JumboEnumSet` depending on the universe size; callers need not depend on those concrete
+  classes, though reflection, serialization and performance can still expose differences.
 
 And it costs three things:
 
@@ -55,6 +56,10 @@ And it costs three things:
   value — is an unbounded map that grows with traffic. If interning is genuinely wanted, use
   a bounded cache with an eviction policy, not a `ConcurrentHashMap` that only ever grows;
   java-reference-types-and-leaks has the failure shapes.
+- **Eviction weakens canonical identity.** A bounded cache can return a new equal object after
+  eviction while a caller still holds the old one. If lifetime-wide `==` canonicalization is
+  promised, ordinary eviction violates it; constrain the value domain or choose a reviewed
+  lifetime strategy instead. Prefer value equality when identity is not essential.
 - **Cached value instances should be deeply immutable and safely published.** A deliberately
   shared mutable service instead needs an explicit thread-safety/lifecycle contract; finalizing
   only the reference does not protect its internals. See java-immutability and
@@ -100,8 +105,11 @@ public static Auditor started(Registry registry) {
 ```
 
 If construction acquires multiple resources, failure halfway through must close everything
-already acquired in reverse order. Prefer `try`-with-resources inside the factory and transfer
-ownership only after all invariants hold; java-resource-management owns that protocol.
+already acquired in reverse order, preserving the primary failure. Plain try-with-resources
+closes its resources even on a successful return: returning an object that holds them does not
+transfer ownership out of the block. Use it for temporary resources, or a reviewed explicit
+ownership-transfer/rollback mechanism for retained ones. Test both partial-acquisition failure
+and usability after successful return; `java-resource-management` owns that protocol.
 
 ## Evolution
 
@@ -115,13 +123,15 @@ ownership only after all invariants hold; java-resource-management owns that pro
   list. Adding a component changes that signature — for a record used as a DTO across a
   build boundary this is a breaking change, and for one deserialised by a framework it also
   changes the wire contract. rpc-and-api-contracts owns the cross-service half of that.
-- A factory whose declared return type is an interface can change implementation class
-  freely. A factory declared to return the concrete class has given that freedom away, and
+- A factory returning an interface can change implementation only while preserving its
+  documented behavior, identity, mutability, ordering, serialization and thread-safety contract.
+  A factory declared to return the concrete class has given some of that freedom away, and
   narrowing the return type later is a binary-incompatible change even though the source
   still compiles.
 
 ## Authoritative references
 
+- [JLS 21 §14.20.3: try-with-resources](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.3) — cleanup also occurs on return.
 - [JLS §8.10.4: Record Members](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.10.4)
 - [Value-based classes, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/doc-files/ValueBased.html)
 - [List.copyOf contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>)

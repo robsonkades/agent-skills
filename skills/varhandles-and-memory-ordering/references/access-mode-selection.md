@@ -29,7 +29,7 @@ add acquire to every data field after acquiring one publication anchor.
 | conditional update | `compareAndSet`, `weakCompareAndSet*`, `compareAndExchange*` | boolean versus witness; spurious weak failure           |
 | exchange           | `getAndSet*`                                                 | previous value with asymmetric acquire/release variants |
 | numeric            | `getAndAdd*`                                                 | supported numeric types/modes only                      |
-| bitwise            | `getAndBitwiseAnd/Or/Xor*`                                   | supported integral types/modes only                     |
+| bitwise            | `getAndBitwiseAnd/Or/Xor*`                                   | supported boolean/integral types and modes              |
 | fences             | acquire/release/full/load-load/store-store                   | ordering constraint without variable access             |
 
 Read exact method documentation. Acquire/release update variants are asymmetric: the read and write
@@ -46,9 +46,15 @@ array element: (T[], int) -> T
 memory layout: (MemorySegment, long, ...open path coordinates) -> carrier
 ```
 
-Call-site types are checked dynamically because access methods are signature-polymorphic. Generic
-wrappers that erase or cast incorrectly can fail at runtime. Validate alignment, byte order, segment
+Call-site types are checked dynamically because access methods are signature-polymorphic. Default
+invoke behavior can adapt types as MethodHandle.asType permits; exact behavior cannot. For example,
+an int-field handle can return a boxed Object with default behavior, but that return descriptor
+fails under withInvokeExactBehavior. Generic wrappers must deliberately select their contract.
+Validate alignment, byte order, segment
 lifetime/thread access and supported modes for foreign-memory handles under their owning APIs.
+These layout coordinates use Java 25's final FFM API, not earlier incubator signatures. A successful
+CAS does not extend an arena lifetime or prove exclusive ownership; closure/reclamation and ABA
+remain separate protocol obligations.
 
 ## Mixed access ledger
 

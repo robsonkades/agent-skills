@@ -3,7 +3,7 @@ name: framework-coupling-and-independence
 description: >
   Deciding how much of a system may depend on its framework, and pricing that dependency
   honestly: which couplings are cheap and correct, which are expensive and reversible, which
-  are irreversible, and what "framework-independent" actually costs in mapping code. Use when
+  require staged redesign, and what "framework-independent" actually costs in mapping code. Use when
   a framework or major version upgrade is being planned or has stalled, when a domain class
   carries persistence or serialisation annotations, when someone proposes a framework-free
   domain and the price is not stated, when a base class from the framework appears in business
@@ -26,7 +26,8 @@ programming models, rename packages, deprecate abstractions and end support on t
 
 That asymmetry is an argument for placing the coupling deliberately — **not** an argument for
 avoiding frameworks or for wrapping every one of them. A codebase with an abstraction layer
-over Spring has taken on the maintenance of a worse Spring, and still cannot change framework.
+over Spring may duplicate its API without hiding the lifecycle or behavioral contracts that
+make replacement expensive. A small application-owned port can still isolate a useful boundary.
 
 The two failures this exists to prevent: the framework's programming model soaked into the
 business rules, so an upgrade is a rewrite and a rule cannot be read without knowing the
@@ -35,25 +36,29 @@ price of a mapping layer everybody pays for on every change.
 
 ## Workflow
 
-1. **Locate the coupling.** Which packages import the framework? A dependency graph answers
-   this in minutes and usually surprises the team.
+1. **Establish the target and locate coupling.** Inspect Java/toolchain, resolved framework and
+   provider versions, runtime/configuration and tests. Import graphs find static dependencies;
+   also inspect reflective wiring, callbacks, generated code and behavioral contracts. Do not
+   treat absent imports as proof of independence or assume permission to upgrade dependencies.
 2. **Classify each coupling by exit cost** — not by whether it is "clean". The question is
    what a migration would cost, and whether that cost is proportional to the code's size or
    to the framework's reach into it.
-3. **Decide what the framework may own outright.** Almost always: transport, wiring,
-   configuration, transactions, serialisation, security plumbing, scheduling. Coupling here is
-   correct and cheap.
+3. **Decide what the framework may implement.** Usually transport, wiring, transactions,
+   serialisation, security plumbing and scheduling. Application requirements still define
+   atomicity, authorization, delivery and lifecycle semantics; infrastructure placement alone
+   does not make those couplings cheap.
 4. **Decide what it may not own.** The rules that would still be true if the system were a
-   batch job. Coupling here is what turns an upgrade into a rewrite.
-5. **Price the isolation before buying it.** Every boundary that keeps the framework out costs
-   mapping code and a second model, on every change, forever. Compare that against the
-   probability and cost of the migration it insures against.
-6. **Enforce whatever you decided.** An ArchUnit rule takes an hour and holds; a convention in
-   a wiki does not (`architecture-testing`).
+   batch job. Identify which framework requirements actually constrain those rules.
+5. **Price the isolation before buying it.** Every boundary carries maintenance. Some need
+   mapping and a second model; others only a narrow port. Compare concrete migration, testing
+   and contract benefits against that recurring cost.
+6. **Verify the decision.** Use ArchUnit for enforceable static boundaries and focused runtime
+   tests for proxy, transaction, serialization or lifecycle semantics (`architecture-testing`).
+   State missing evidence and a discriminating check instead of guessing exit cost.
 
 ## The coupling ladder
 
-Not all framework dependencies are equal. Ordered by what a migration would cost:
+Use this ladder as an initial hypothesis, then adjust for the actual semantics and surface:
 
 ```text
 CHEAP — usually mechanical, with cost proportional to occurrences
@@ -63,8 +68,8 @@ CHEAP — usually mechanical, with cost proportional to occurrences
 
 MODERATE — replaceable per call site, tediously
   @Transactional, @Scheduled, @Cacheable, @RestController mappings.
-  Declarative behaviour attached to your methods. Mechanical to move,
-  but there are many, and semantics differ between frameworks
+  Declarative behaviour attached to your methods. Syntax may be easy to move,
+  but behavior can require redesign, and semantics differ between frameworks
   (enterprise-transactions).
 
 EXPENSIVE — the model leaks into your types
@@ -79,38 +84,38 @@ SYSTEMIC — the framework shaped architecture and cross-layer contracts
   (reactive-and-virtual-thread-selection).
 ```
 
-**The ladder, not the presence of an import, is the thing to manage.** A codebase with
-thousands of cheap couplings and none of the expensive ones is in excellent shape. One with a
-"pure" domain and a reactive programming model spread through every signature is not.
+**Manage semantic reach and verified exit cost, not import count.** Reactive signatures can be
+an intentional contract; annotations can hide pervasive behavior. Neither proves design quality.
 
 ## Decision rules
 
 ```text
 The coupling is wiring, transport, config or scheduling
-        → let the framework own it outright. Wrapping it is pure cost;
-          this is what the framework is for.
+        → prefer its implementation; add a boundary only for a concrete application
+          contract, failure policy or testing need, not a duplicate framework API.
 
 The coupling is a declarative behaviour on your own class (@Transactional,
 @Cacheable)
-        → accept it, at the application-service layer. Do not build an
-          abstraction over it; do understand its proxy semantics, because
+        → usually place use-case behavior at the application-service layer.
+          Verify the actual interception and boundary semantics, because
           self-invocation bypasses advice in default proxy mode; AspectJ
           weaving and explicit proxy calls differ (service-layer-design).
 
 A framework annotation would go on a type that encodes business rules
         → decide explicitly, and record why. This is the boundary where
-          "convenient now" becomes "rewrite later", and where the cost of
-          isolation is also real (orm-structural-mapping).
+          metadata, hydration and callbacks can constrain the model; price the
+          actual constraints and isolation cost (orm-structural-mapping).
 
 A framework BASE CLASS would be extended by business code
-        → refuse. Inheritance spends the one extends slot, imports the
-          lifecycle, and cannot be undone incrementally
+        → prefer composition when the inherited lifecycle is unnecessary.
+          Inspect protected contracts and callers; migrate subclasses behind
+          a seam where possible rather than assuming an all-at-once rewrite
           (java-composition-over-inheritance).
 
 The framework's model would change your method signatures across layers
 (reactive types, framework-specific futures)
-        → this is the irreversible rung. It is a legitimate choice, made
-          once, with a stated driver — never something to drift into.
+        → record a systemic commitment and its driver. Price staged seams and
+          cancellation, context and blocking semantics; do not assume it is irreversible.
 
 Someone proposes wrapping the framework "to stay independent"
         → require the migration scenario it insures against, its
@@ -123,12 +128,11 @@ The dependency is on a small library rather than a framework
           Do not wrap stable value APIs mechanically.
 
 The framework's abstraction already IS the port you were going to write
-        → use it. Spring's Cache, Resource and transaction abstractions are
-          neutral as WIRING (patterns-and-modern-frameworks) — but neutral
-          wiring is not neutral semantics. @Cacheable over a shared Redis
-          gives no cross-node get-or-compute (sync = true is per-JVM), no
-          TTL jitter and no negative caching, so it stampedes on eviction
-          (caching-strategies).
+        → use it when its contract fits the permitted boundary. Spring types remain
+          Spring dependencies. Cache synchronization scope, TTL and negative caching
+          depend on provider/version/configuration; sync=true delegates coordination
+          and is neither universally per-JVM nor proof of cross-node singleflight.
+          Validate the required semantics (caching-strategies).
 ```
 
 ## Rules
@@ -142,12 +146,13 @@ The framework's abstraction already IS the port you were going to write
   spreading it into code that gains nothing from it.
 - **"Framework-independent" is not free, and the price is paid on every change.** A separate
   domain model means a mapper, a second set of types, and two places to add a field. It is
-  worth it when the domain is complex and long-lived; it is waste on a CRUD service, where
-  the entity is the model (`domain-logic-organization`).
+  often worth it for complex long-lived rules or independently owned schemas/contracts.
+  A simple CRUD service often needs no separate persistence model, but complexity alone does
+  not decide the boundary (`domain-logic-organization`).
 - The honest test for a domain type is not "does it import Spring" but **"could its rules be
-  read, and its tests run, with the container off the classpath?"** Annotations that only
-  carry metadata frequently pass this test; a lifecycle callback containing a business rule
-  does not.
+  read, and directly tested without starting a container?"** Annotation/API classes may still
+  be needed to compile or reflect over the type. Plain tests do not verify framework-invoked
+  callbacks, advice or hydration; test those contracts separately.
 - A framework upgrade becomes coordinated when a shared parent/platform pins one version and policy
   requires all consumers to move together. Independently versioned services can roll through a
   compatibility window; inventory and support deadlines determine the real coupling
@@ -159,15 +164,22 @@ The framework's abstraction already IS the port you were going to write
   frameworks — almost nobody does — it is falling behind within one, until the jump crosses
   several breaking changes at once and lands outside the support window. Balance smaller deltas
   against change frequency, validation cost and support policy; “latest” is not itself a control.
-- Keep the framework out of the build's fast tests. If the domain's tests need a container to
-  start, the coupling has already crossed the line the ladder describes, whatever the package
-  structure says.
-- **Do not abstract what you cannot replace.** An interface over a framework whose model has
-  already shaped your signatures provides no exit; it only adds a hop. Delete it or accept the
-  coupling honestly.
+- Keep ordinary rule tests independent of container startup when practical; retain focused
+  integration tests for framework behavior. A container-based test alone does not establish
+  that the tested rule requires the container.
+- **Do not claim portability an interface does not provide.** A port can still encapsulate
+  failure policy, application vocabulary or a testing seam with one implementation. Remove
+  forwarding-only indirection only after checking callers and lifecycle/behavioral contracts.
 - Vendor lock-in and framework lock-in are different risks with different remedies. A cloud
-  SDK behind an adapter is cheap insurance with a small surface; a framework behind an adapter
-  is a second framework.
+  SDK adapter may bound external contracts; a wrapper duplicating an entire framework usually
+  adds substantial maintenance. Evaluate the actual surface in either case.
+
+## Output
+
+Give a scoped coupling inventory with code/configuration evidence, accepted placement, the
+specific change or migration scenario and its uncertain costs. Recommend retain, isolate or
+stage migration with a representative validation and remaining gaps. A small decision needs
+only a short rationale; no numeric exit-cost estimate without supporting evidence.
 
 ## References
 

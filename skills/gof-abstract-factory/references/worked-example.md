@@ -4,7 +4,9 @@ The invariant: a report's renderer, paginator and stylesheet come from the same 
 Mixing them produces output that is silently wrong — the PDF paginator emits page-break markers
 that the HTML renderer writes out as visible text.
 
-The format arrives on the request, so the container cannot decide it.
+The format arrives on the request; the container can wire a registry while the service selects
+from it per call. These are partial Java 17 sketches with domain types/imports omitted and Spring
+annotations requiring the project's existing Spring dependencies; they are not standalone files.
 
 ## Before — mixing is possible
 
@@ -51,6 +53,12 @@ implementations.
 ```java
 public record ReportFamily(Renderer renderer, Paginator paginator, StyleSheet styleSheet) {
 
+    public ReportFamily {
+        java.util.Objects.requireNonNull(renderer, "renderer");
+        java.util.Objects.requireNonNull(paginator, "paginator");
+        java.util.Objects.requireNonNull(styleSheet, "styleSheet");
+    }
+
     public static ReportFamily pdf(StyleRepository styles) {
         return new ReportFamily(new PdfRenderer(), new PdfPaginator(), styles.pdf());
     }
@@ -70,10 +78,11 @@ class ReportFamilies {
 }
 ```
 
-The family is now one immutable object. Its constructor cannot expose a partially populated
-record, and final-field initialization safety protects the components after construction. The
-containing map still must be safely published (for example by container initialization) and the
-components themselves must obey their own thread-safety contracts.
+The record has final component references and rejects nulls. Its public constructor still accepts
+a PDF renderer with an HTML paginator: these factories rely on trusted assembly and contract tests,
+not a type-level compatibility guarantee. If hostile or accidental mixed assembly must be rejected,
+use validated product family identities or encapsulate construction and usage behind a stronger API.
+Safely publish the map and honor each component's own thread-safety and lifecycle contract.
 
 The service holds no format knowledge:
 
@@ -81,6 +90,10 @@ The service holds no format knowledge:
 @Service
 public class ReportService {
     private final Map<Format, ReportFamily> families;
+
+    public ReportService(Map<Format, ReportFamily> families) {
+        this.families = Map.copyOf(families);
+    }
 
     public byte[] export(Report report, Format format) {
         var family = families.get(format);
@@ -112,19 +125,19 @@ record FamilyKey(TenantId tenant, Format format) {}
 Two things to watch:
 
 - **Unbounded key space.** A map keyed by tenant grows with tenants; if families are expensive,
-  bound the cache and give it an eviction policy — at which point you are also doing Flyweight
-  and should say so (`gof-flyweight`).
+  bound the cache and define eviction, tenant authorization, configuration invalidation and who
+  closes resources. Caching alone does not make this Flyweight.
 - **Per-tenant stylesheets are data.** If the only per-tenant difference is a stylesheet, the
   family does not vary by tenant — the stylesheet is a parameter. Do not multiply families for
   values.
 
 ## What each version costs
 
-| Version                    | Types | Mixing possible | New format touches | Family is a value |
-| -------------------------- | ----- | --------------- | ------------------ | ----------------- |
-| Before                     | 1     | Yes             | Service + wiring   | —                 |
-| Classical Abstract Factory | 9     | No              | 1 new class + map  | No                |
-| Family as a record         | 4     | No              | 1 static factory   | Yes               |
+| Version                    | Compatibility boundary                   | New format touches                          |
+| -------------------------- | ---------------------------------------- | ------------------------------------------- |
+| Before                     | Independently wired products             | Service, products and wiring                |
+| Classical Abstract Factory | Provider implementation and caller usage | Provider, products and registry             |
+| Family as a record         | Trusted assembly and contract tests      | Assembly method, products, key and registry |
 
 The record version is preferred while you own every family. Switch to the interface when a
 third party must supply one, or when a family needs behaviour beyond construction — a
@@ -143,7 +156,12 @@ static ReportFamily capturing(List<Page> sink) {
 }
 ```
 
-One value, no mocking framework, and the test exercises the real composition rather than three
-independently stubbed collaborators. If a test needs to substitute exactly one product, that is
-a signal the products are not really a family — see the family-invariant test in
-[decision-and-alternatives.md](decision-and-alternatives.md).
+This test family checks orchestration, not the real PDF/HTML compatibility contract. Use a fresh
+sink per test; the captured mutable list is not safe for concurrent exports. A contract-preserving
+single-product test double does not disprove the family invariant. Test each real family end to
+end, null rejection, unknown keys and deliberately mixed products at the chosen enforcement
+boundary. This public record does not reject mismatched non-null products; do not claim otherwise.
+
+See [Java record constructors](https://docs.oracle.com/en/java/javase/17/language/records.html)
+for validation and shallow final fields, and [Spring profiles](https://docs.spring.io/spring-framework/reference/core/beans/environment.html)
+for conditional registration rather than automatic family compatibility.

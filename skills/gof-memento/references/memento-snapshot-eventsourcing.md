@@ -4,22 +4,22 @@
 
 | Dimension              | Memento                     | Snapshot                              | Event sourcing                           |
 | ---------------------- | --------------------------- | ------------------------------------- | ---------------------------------------- |
-| Lives                  | In memory, in one process   | In storage, across versions           | In storage, as an append-only log        |
+| Lives                  | Transient or durable        | In storage, across versions           | In storage, as an append-only log        |
 | Readable by others     | No — opaque by design       | Yes — it is a contract                | Yes — events are the contract            |
-| Schema and versioning  | None needed                 | Required                              | Required, for every event type, forever  |
+| Schema and versioning  | Needed when persisted       | Required                              | Required, for every event type, forever  |
 | Answers "what was it?" | Yes                         | Yes                                   | Yes, by replay                           |
-| Answers "why?"         | No                          | No                                    | **Yes**                                  |
+| Answers "why?"         | No                          | No                                    | Only recorded reasons                    |
 | Cost                   | Memory                      | Storage plus a serialisation contract | Replay, projections, schema evolution    |
-| Undo                   | Natural                     | Coarse                                | Natural (compensating events)            |
+| Undo                   | Natural                     | Coarse                                | New compensating facts; not erasure      |
 | Typical use            | Editor undo, what-if branch | Job checkpoint, aggregate snapshot    | Audit-critical domains, temporal queries |
 
 Decision sequence that works:
 
-1. **Does anything outside this process need the capture?** No → memento. Stop.
-2. **Does "why it changed" have business value — audit, correction, analytics, temporal
-   queries?** No → snapshot. Stop.
-3. Yes → event sourcing, and snapshots become an optimisation over replay
-   (`event-sourcing`).
+1. **Must the caretaker be unable to inspect the state?** Use an opaque memento boundary.
+2. **Must it survive storage or cross versions?** Add snapshot schema/recovery policy; a durable
+   memento can also be a snapshot.
+3. **Must authoritative events reconstruct state?** Consider event sourcing. If only audit
+   reasons matter, compare a separate audit trail; events explain only what was recorded.
 
 Do not arrive at event sourcing by accumulating snapshots. A snapshot history tells you the state
 at times T1…Tn and can never tell you what happened between them; that information is destroyed at
@@ -34,7 +34,9 @@ workable expressions.
 // 1. Sealed public interface, private record implementation. Best default.
 public final class Editor {
     public sealed interface Snapshot permits State { }
-    private record State(String text, int caret) implements Snapshot { }
+    private record State(String text, int caret) implements Snapshot {
+        @Override public String toString() { return "Editor snapshot"; }
+    }
 
     public Snapshot capture() { return new State(text, caret); }
     public void restore(Snapshot s) { var st = (State) s; text = st.text(); caret = st.caret(); }
@@ -47,9 +49,10 @@ public interface Snapshot { }
 final class EditorState { }
 ```
 
-Option 1 is the strongest and the cheapest to write. The cast in `restore` is safe because
-`sealed` guarantees no other implementation exists — and it is worth guarding anyway when the
-originator may hold snapshots from another instance:
+Sealing controls implementation types, not originating instances. The short sketch above permits
+cross-instance restoration and does not reject null explicitly; use the owner-token variant in
+the entrypoint when captures belong to one originator. The following type guard alone only rejects
+null or a different implementation, not another Editor's State:
 
 ```java
 public void restore(Snapshot s) {
@@ -58,7 +61,12 @@ public void restore(Snapshot s) {
 }
 ```
 
-What breaks encapsulation, and is the common shortcut:
+Records generate toString(), equals() and hashCode() over components; private nesting does not
+hide those Object methods. Override rendering to avoid accidental disclosure, or use a private
+class with identity equality when comparisons must not reveal state. Neither is a sandbox against
+reflection. See [Java 17 records](https://docs.oracle.com/en/java/javase/17/language/records.html).
+
+What exposes a public state contract:
 
 ```java
 public Map<String, Object> getState();      // anyone can read and edit it
@@ -89,9 +97,10 @@ Bounded depth                cap the stack; the oldest entries are
                              discarded. Almost always also needed.
 ```
 
-The persistent-structure option is the one to reach for first in modern Java: making the state an
-immutable record whose collections are shared where unchanged gives correct concurrency, free
-capture, and a memory profile proportional to real change.
+Immutable state can make capture a reference read, provided collections and their elements are
+immutable. Records do not enforce deep immutability or persistent collection algorithms; copying
+a modified list still costs its length. Compare this with full copies/diffs using actual edit
+patterns and retained bytes. Bound history whichever representation is chosen.
 
 Retention is the failure that shows up in production rather than review: an undo stack of ten
 captures of a large document graph pins ten graphs. Where the object references loaded entities or
@@ -118,9 +127,11 @@ public Snapshot capture() { return state; }                  // one read, atomic
 public void restore(Snapshot s) { state = (State) s; }       // one write, atomic
 ```
 
-(b) is strictly better where it fits: capture and restore become single reference operations,
-there is no copying, and concurrent readers never see a partial state. It requires every mutation
-to build a new `State`, which is the same discipline that makes the memory strategy above work.
+(b) publishes each immutable value atomically. Readers must load the reference once; multiple
+reads can observe different versions. Concurrent read-modify-write edits still need writer
+serialization or CAS, and restore needs an explicit stale-edit policy. A lock may be simpler for
+coupled state. CAS update functions must be side-effect-free because retries can repeat them;
+see [AtomicReference 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html).
 
 ## Versioning, once it is durable
 
@@ -129,7 +140,7 @@ read it.
 
 ```java
 public record CheckpointV2(
-        int version,                 // explicit, first field, never inferred
+        int version,                 // one possible schema identity convention
         long processedCount,
         Cursor position,
         Optional<Instant> pausedAt   // added in v2; absent in v1 data
@@ -138,15 +149,15 @@ public record CheckpointV2(
 
 Rules:
 
-- **Version explicitly.** Inferring the version from present fields breaks the first time two
-  changes overlap.
+- **Identify the schema explicitly.** A field, envelope or schema identifier can do this;
+  positional order of a JSON version field is not significant.
 - **Additive changes are optional with documented defaults**; anything else is a new version with
   an explicit upgrade path.
-- **Decide what an older reader does with a newer capture.** Usually: refuse, loudly. Silently
-  ignoring unknown fields is right for events and wrong for a checkpoint, because the ignored field
-  may be the one that says where to resume.
-- **Never use Java serialisation for it.** It couples the format to class shapes, breaks on
-  refactoring, and is a deserialisation attack surface (`gof-prototype`).
+- **Decide what an older reader does with a newer capture.** Reject unsupported semantics;
+  ignoring unknown fields is safe only under a proven compatibility policy, for events too.
+- **Prefer an explicit durable schema over native Java serialization.** Existing serialized
+  formats require compatibility review and hardened deserialization; do not replace a deployed
+  format without a migration (`java-serialization-hardening`).
 
 ## Restore is not compensation
 
@@ -155,5 +166,6 @@ design that offers "undo" over operations with external effects needs compensati
 their own outcomes and failure modes, and those cannot be hidden behind a `restore` call
 (`distributed-transactions-and-sagas`, `idempotency`).
 
-State the boundary in the API: `restore` reverts in-memory state up to the last externally visible
-effect; anything past that is a business operation.
+State the boundary in the API: restore changes only the state it owns. Reject or reconcile a
+capture that conflicts with already committed external facts; compensation is a separate business
+operation with its own authorization and failure handling.

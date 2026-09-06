@@ -1,5 +1,9 @@
 # Decimals, money and rounding
 
+Java blocks are partial snippets using Java 17-compatible syntax. Supply `java.math`,
+`java.util` and `java.util.stream.IntStream` imports and an enclosing class for the allocation
+method; expression-only blocks are REPL illustrations. `Money` can compile as `Money.java`.
+
 ## Why `double` is disqualified, concretely
 
 ```java
@@ -11,8 +15,9 @@ System.out.println(4.35 * 100);             // 434.99999999999994  -> (long) giv
 `double` stores a binary fraction; decimal fractions like 0.1 are periodic in binary and are
 rounded to 53 significant bits. Each operation rounds again. The consequences in a financial
 system are not "tiny errors": they are a reconciliation that does not balance, a total that
-differs from the sum of the lines shown to the customer, and a rounding direction that is
-statistically biased.
+differs from the sum of the lines shown to the customer, or a changed rounding decision.
+Bias depends on the operation and input distribution; binary representation alone does not
+prove a statistical bias.
 
 `float` has only 24 bits of significand precision. It can still be appropriate for explicitly
 error-tolerant, memory/vector-bandwidth-sensitive domains (for example some media or ML data),
@@ -25,12 +30,12 @@ but not for exact financial conservation.
 | `BigDecimal` + `Currency`       | general money, tax, rates, anything with variable scale | scale/rounding on every division; equals vs compareTo; allocation on very hot paths             |
 | integral minor units + currency | high-volume ledgers with a fixed domain scale           | non-2-decimal/custom units; overflow; scaling at every boundary; migrations when policy changes |
 
-Both must carry the currency. A bare `BigDecimal` amount with the currency "known from
-context" is the same class of defect as a bare `String` id — see java-object-contracts and the
-value-object discussion in java-immutability.
+Carry currency with the value or enforce it through an explicit enclosing contract. A bare
+amount passed between currencies without such a contract risks unit confusion. This example
+assumes a ledger fixed at two decimal places, not a universal currency rule.
 
 ```java
-public record Money(BigDecimal amount, Currency currency) implements Comparable<Money> {
+public record Money(BigDecimal amount, Currency currency) {
     private static final int LEDGER_SCALE = 2; // example policy, not derived blindly from Currency
 
     public Money {
@@ -48,9 +53,24 @@ public record Money(BigDecimal amount, Currency currency) implements Comparable<
         return new Money(amount.multiply(rate).setScale(LEDGER_SCALE, mode), currency);
     }
 
-    @Override public int compareTo(Money other) { requireSameCurrency(other); return amount.compareTo(other.amount); }
+    public int compareAmountTo(Money other) {
+        requireSameCurrency(other);
+        return amount.compareTo(other.amount);
+    }
+
+    private void requireSameCurrency(Money other) {
+        Objects.requireNonNull(other, "other");
+        if (!currency.equals(other.currency)) {
+            throw new IllegalArgumentException("currency mismatch");
+        }
+    }
 }
 ```
+
+`compareAmountTo` deliberately compares only same-currency values. It is not a natural total
+order over all money, so the type does not implement `Comparable`. For display sorting across
+currencies, define an explicit comparator (for example currency code then amount), without
+implying an economic exchange-rate comparison.
 
 Points that generalise:
 
@@ -103,7 +123,10 @@ static List<BigInteger> allocateMinorUnits(BigInteger totalUnits, int parts) {
 
 Any split — instalments, tax across lines, a discount over a basket — needs an allocation
 routine with a stated remainder rule, and a test asserting that the parts sum exactly to the
-whole. This is the single most common source of "off by one cent" tickets.
+whole. This routine assigns extra units, with the total's sign, to the first `extras` positions;
+recipient order must therefore be stable. Bound `parts` and input precision at untrusted
+boundaries to avoid materializing an attacker-sized result. A conservation check should include
+zero, negative totals, fewer units than recipients and an invalid nonpositive part count.
 
 ## Comparison and collections
 
@@ -131,8 +154,10 @@ scale and verify the driver/database rounding-or-rejection mode—a mismatch nee
 Sum in the database when summing many
 rows, and be aware that a `SUM` of a `DECIMAL` may promote precision.
 
-**JSON and APIs.** A JSON number is parsed as a double by JavaScript and by many parsers, so
-`19.99` may arrive as `19.989999999999998`, and a 19-digit id loses its low bits. Serialise
+**JSON and APIs.** JavaScript's ordinary `JSON.parse` produces Number values: the stored binary
+value of `19.99` is approximate even if its ordinary rendering still prints `19.99`.
+Integers outside the safe range cannot all be distinguished (for example `9007199254740993`
+becomes `9007199254740992`). Serialise
 monetary amounts as strings (`"19.99"`) or as an object `{"amount": "19.99", "currency": "BRL"}`,
 and configure the mapper accordingly (Jackson:
 bind directly to `BigDecimal`; `USE_BIG_DECIMAL_FOR_FLOATS` affects untyped `Object`/`Number`/map
@@ -152,13 +177,15 @@ batch. distributed-aggregation-and-barriers covers the general problem.
 operations produce new values, though constants/reuse and JIT optimization affect actual
 allocation. For ordinary request-scoped business logic this is often negligible, but only a
 profile establishes that. It becomes relevant in tight loops over large datasets
-(risk engines, batch revaluation), and the answer there is `long` minor units with explicit
-scaling, not `double`. Measure before switching: allocation-profiling shows whether
+(risk engines, batch revaluation). `long` minor units are a candidate only when scale and
+intermediate/result range fit; rates and products can overflow even when final amounts fit.
+Keep exact decimal or arbitrary-precision arithmetic where necessary. Measure before switching: allocation-profiling shows whether
 `BigDecimal` is actually on the hot path, and jmh-microbenchmarks is how to compare the two
 representations honestly.
 
 ## Authoritative references
 
+- [Comparable total-order contract, Java 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Comparable.html)
 - [BigDecimal API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html)
 - [RoundingMode API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/RoundingMode.html)
 - [Currency API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Currency.html)

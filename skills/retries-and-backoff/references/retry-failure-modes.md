@@ -34,8 +34,8 @@ with a default retry policy, an SDK with retries enabled by default, or a databa
 reconnecting. Two of the three layers are typically invisible in the repository.
 
 **Observation.** Count requests at each hop for a single logical call in a trace, not in
-review. `downstream_requests / logical_calls` above the layer's own `maxAttempts` proves a
-second retrying layer exists.
+review. A ratio above the layer's `maxAttempts` warrants checking other retry layers, fan-out,
+hedges, redirects and mismatched measurement windows/populations; it does not identify the cause alone.
 
 **Fix.** Give one layer ownership of the operation-level retry policy/budget and explicitly
 configure transport, proxy, SDK and application attempt counts. A lower transport layer may
@@ -57,11 +57,11 @@ catch (HttpTimeoutException e) {
 ```
 
 **Observation.** Duplicate business records whose creation timestamps differ by roughly the
-client timeout plus one backoff. That interval is the fingerprint — it distinguishes a retry
-duplicate from a consumer-rebalance duplicate, which delivery-semantics owns.
+client timeout plus one backoff. Timing is a clue, not a unique fingerprint; correlate intent
+IDs, attempts and commit/delivery records to distinguish other duplication paths.
 
 **Fix.** An idempotency key carried across attempts so the server can collapse them
-(idempotency), or classify the timeout as ambiguous and refuse to retry it.
+(idempotency), or preserve a pending/unknown outcome and reconcile before retrying.
 
 ## 4. Retry with no budget during a partial outage
 
@@ -96,23 +96,25 @@ connection-pool-sizing; the queueing arithmetic is littles-law-and-queueing.
 
 ## What to plot
 
-| Series                                             | Healthy shape | Incident shape                                                        |
-| -------------------------------------------------- | ------------- | --------------------------------------------------------------------- |
-| attempts ÷ logical calls                           | ~1.0, flat    | climbs to `maxAttempts` and plateaus there                            |
-| downstream attempts ÷ logical operations           | ~1.0          | rises while success falls; direct amplification evidence              |
-| retry budget rejections per second                 | 0             | > 0, which is the budget working; alert on it as a dependency signal  |
-| p99 of the logical call vs p99 of a single attempt | roughly equal | logical ≈ attempts × attempt + Σ backoff; the retry is inside the SLA |
-| duplicate business records per hour                | 0             | > 0 after any ambiguous-class retry that lacked an idempotency key    |
+| Series                                             | Healthy shape               | Incident shape                                                       |
+| -------------------------------------------------- | --------------------------- | -------------------------------------------------------------------- |
+| attempts ÷ logical calls                           | ~1.0, flat                  | climbs to `maxAttempts` and plateaus there                           |
+| downstream attempts ÷ logical operations           | ~1.0                        | rises while success falls; direct amplification evidence             |
+| retry budget rejections per second                 | 0                           | > 0, which is the budget working; alert on it as a dependency signal |
+| p99 of the logical call vs p99 of a single attempt | often close without retries | measure separately; percentiles cannot be multiplied or added        |
+| duplicate business records per hour                | 0                           | > 0 after any ambiguous-class retry that lacked an idempotency key   |
 
-Instrument attempts as a **ratio to logical calls**, never as a raw counter. A counter of
-retries rises with traffic and with failures identically, so it cannot distinguish growth
-from an incident; the ratio can.
+Record raw counters and derive **attempts per logical call** over matching scopes/windows.
+Keep absolute offered rate, outstanding attempts and unknown outcomes too; ratios alone can
+hide low volume or traffic collapse. Latency sums apply to a particular sequential call's
+attempts/delays, not to separate p99 values.
 
 ## Proving the policy before production
 
-- **Configuration test, no network.** Conservatively assert `Σ(attempt timeouts) + Σ(backoff)
-  - cleanup/response reserve ≤ caller budget`, including proxy/SDK/transport layers. Assert
-    one policy owns the budget and hidden retry defaults are explicit.
+- **Configuration test, no network.** Conservatively assert
+  `Σ(attempt timeouts) + Σ(backoff) + cleanup/response reserve ≤ caller budget`,
+  including proxy/SDK/transport layers. Assert one policy owns the budget and hidden retry
+  defaults are explicit.
 - **Fault injection.** A proxy in front of the dependency (Testcontainers with a latency or
   connection-cut toxic) driven to a fixed failure rate. Assert the dependency's observed
   request count stays within the budget multiplier — that is the amplification bound made
@@ -122,6 +124,8 @@ from an incident; the ratio can.
   catches a missing idempotency key, and it fails loudly on the shape that costs money.
 - **Server guidance and cancellation.** Exercise valid/invalid `Retry-After`, a delay beyond
   remaining deadline, interruption during sleep, response streaming and breaker-open results.
+  Confirm expired/pre-interrupted entry starts zero attempts and physical work is still counted
+  after caller timeout until it actually finishes. Validate unknown outcomes survive budget exhaustion.
 - **Statistical jitter.** With a deterministic random source in unit tests verify range and
   saturation/overflow; at fleet scale inspect retry-arrival histograms for synchronization.
 

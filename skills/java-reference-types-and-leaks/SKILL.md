@@ -3,7 +3,7 @@ name: java-reference-types-and-leaks
 description: >
   Reachability-driven memory in Java: the strong/soft/weak/phantom levels and exactly when
   each is cleared, WeakHashMap and its value-holds-key trap, Cleaner as a leak-reporting
-  safety net rather than a release mechanism, why finalizers are gone, and the leak
+  safety net rather than a release mechanism, finalization deprecation, and the leak
   catalogue — obsolete references in self-managed structures, listener registries,
   ThreadLocal on pooled threads, class-loader retention, non-static nested classes holding
   their enclosing instance, and caches that only grow. Use when heap grows with traffic and
@@ -26,6 +26,13 @@ reachable — which no GC tuning can fix — and reference types used as a desig
 does neither predictably.
 
 ## Workflow
+
+Inspect the exact JDK/vendor/build, collector, JVM flags, recording settings and workload
+before version-sensitive claims. No single authoring baseline is declared; references discuss
+JDK 25, Cleaner needs Java 9+, and `--finalization=disabled` Java 18+. Virtual threads and
+ScopedValue require their own target-release checks; do not upgrade or enable preview.
+If retaining paths or comparable reclamation points are missing, report a hypothesis and
+the evidence needed rather than declaring a leak or verified fix.
 
 1. **Confirm a retention hypothesis, not merely occupancy.** Compare equivalent
    post-reclamation points under normalized load/cache/topology. A rising floor means more
@@ -55,7 +62,8 @@ does neither predictably.
   refers to it. Nulling ordinary local variables to "help GC" is noise: the scope ends and
   liveness analysis already handled it.
 - Default to a bounded cache with an eviction policy, not to reference types. Size or time
-  bounds are the thing that makes memory predictable; `SoftReference` delegates the decision
+  bounds help make retention predictable; expiry alone cannot bound memory under unlimited
+  arrivals/value sizes. Set entry/weight limits and account for payload size. `SoftReference` delegates the decision
   to the collector, which clears under pressure — after already having done the collection
   work, and typically all at once, so the cache's hit rate falls off a cliff exactly when the
   system is busiest.
@@ -66,8 +74,8 @@ does neither predictably.
   its own key, directly or transitively, because that makes the key strongly reachable.
 - Never use `finalize()`. It is deprecated for removal (JEP 421), can already be turned off
   at runtime with `--finalization=disabled`, runs on an unspecified thread with no ordering
-  or timeliness guarantee, resurrects objects, and delays reclamation by at least one extra
-  collection cycle.
+  or timeliness guarantee, can resurrect objects and delay reclamation. Do not infer a portable
+  fixed number of collection cycles from this mechanism.
 - `Cleaner` is a _safety net that reports a bug_, not a release mechanism. Register one only
   for native or OS resources whose leak is otherwise invisible, have the action log loudly,
   and keep `close()` as the real path. The cleaning action must not capture the registered
@@ -81,16 +89,17 @@ does neither predictably.
 - On virtual threads the retention profile inverts: each virtual thread has its own map that
   dies with it, so the pooled-thread leak disappears, but a per-thread value now exists once
   per _task_, and there may be millions of tasks. Request context there wants `ScopedValue`,
-  which is immutable, lexically bounded and inherited by structured forks — see
+  whose binding is immutable and scope-bounded (the bound object need not be immutable), with
+  inheritance under supported structured forks — see
   scoped-values.
 - A non-static nested class, and an anonymous class or lambda that touches an instance
   member, can hold a reference to the enclosing instance. When such an object outlives its
   creator — stored in a registry, a cache, a scheduled task, or a long-lived callback — the
   whole enclosing object graph goes with it. Make the nested class `static` and pass what it
   needs explicitly.
-- Metaspace that grows across redeploys, and old application classes surviving a redeploy,
-  is a class-loader leak: something in a longer-lived loader still references an application
-  class. The usual holders are static registries, `ThreadLocal` values on container threads,
+- Metaspace growth and old application classes after redeploy suggest loader retention;
+  confirm an unwanted root path and class-unloading/GC opportunity before declaring a leak.
+  The usual holders are static registries, `ThreadLocal` values on container threads,
   JDBC drivers, shutdown hooks and unremoved listeners.
 - Restarts can mask per-replica retention until traffic concentrates or deploy cadence
   changes. “It recovers after restart” is evidence of process-lifetime state, not proof of a

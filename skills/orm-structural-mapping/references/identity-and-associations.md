@@ -11,6 +11,14 @@
 | Assigned UUID (v7 / ULID)       | yes                          | yes                           | Time-ordered: keeps index locality, identity before insert         |
 | Natural key                     | yes                          | yes                           | Only if genuinely immutable; migrations when it is not are painful |
 
+The batching column indicates compatibility with batching, not that batching is enabled.
+Inspect provider settings, driver and statements. A sequence-generated id normally becomes
+available during persist, before the INSERT; it is not automatically available in the constructor.
+Align sequence increment and provider optimizer/allocation configuration in the migration.
+Time-ordered identifiers can improve locality but do not guarantee global event order or
+remove index hot spots. `UuidCreator` below is an external library, not a JDK API; verify an
+existing dependency rather than adding one implicitly.
+
 Two consequences that decide most cases:
 
 **Batching.** Historically Hibernate executes `IDENTITY` inserts immediately to obtain each key,
@@ -26,8 +34,8 @@ sequence can amortize key allocation; tune `allocationSize` from concurrency and
 private Long id;
 ```
 
-**Equality before persistence.** With a generated key, `id` is null until insert, so an
-`equals`/`hashCode` based on it changes after persist — putting the entity in a `HashSet`
+**Equality before persistence.** With a generated key, `id` is initially null and is assigned
+at a strategy-dependent point during persistence. An id-based hash therefore changes — putting the entity in a `HashSet`
 before saving and looking it up afterwards fails. Either use an assigned identifier
 generated in the constructor:
 
@@ -36,12 +44,17 @@ generated in the constructor:
 ```
 
 or write `equals`/`hashCode` that are stable regardless (a business key, or a `hashCode`
-returning a constant for the class with `equals` comparing the id, which is correct but
-degrades hash performance in large sets).
+returning a stable value with `equals` comparing non-null ids). Distinct transient entities
+with null ids must not compare equal; handle proxy/entity type compatibility consistently.
+A constant hash can degrade large sets. Assigned ids also require correct repository
+new-entity detection: a non-null id does not universally mean the row already exists.
 
 **Composite keys** are worth avoiding where a surrogate is possible: they complicate every
 association, every repository method and every join. Where the domain genuinely has one,
-`@EmbeddedId` with a record is the cleanest form.
+choose `@EmbeddedId` or `@IdClass` with compatible field types and stable equality.
+Jakarta Persistence 3.2 permits record key classes; do not infer that an older provider's
+record embeddable support also supports record identifiers. Use the project's supported
+key-class form and test derived identity (`@MapsId`) explicitly.
 
 ## Foreign Key Mapping: the owning side
 
@@ -56,7 +69,7 @@ public class OrderLine {
 @Entity
 public class Order {
     @OneToMany(mappedBy = "order", cascade = ALL, orphanRemoval = true)
-    private final List<OrderLine> lines = new ArrayList<>();   // ← inverse: a view
+    private List<OrderLine> lines = new ArrayList<>();   // ← inverse: a view
 }
 ```
 
@@ -79,8 +92,15 @@ public void addLine(ProductId product, int quantity, Money unitPrice) {
 }
 
 public void removeLine(OrderLine line) {
-    lines.remove(line);
-    line.detachFromOrder();     // with orphanRemoval, the delete follows
+    // Accept the actual managed member, not a detached equal-by-id copy.
+    for (var iterator = lines.iterator(); iterator.hasNext();) {
+        var member = iterator.next();
+        if (member == line) {
+            iterator.remove();
+            member.detachFromOrder();
+            return;
+        }
+    }
 }
 ```
 
@@ -88,9 +108,11 @@ No public setter for the collection, no public setter for `order` on the line. T
 same discipline that keeps the aggregate's invariants enforceable
 (`domain-logic-organization`).
 
-**`@OneToOne` deserves a separate warning:** a lazy one-to-one on the _inverse_ side cannot
-be proxied — the ORM must query to know whether the row exists, so it is eager whatever the
-mapping says. Map one-to-one associations from the owning side, or use a shared primary key.
+**Inverse `@OneToOne`:** optional-child existence may require a secondary query with
+ordinary proxies. Hibernate 6.6 documents lazy state initialization enhancement as a way
+to defer this load. Inspect enhancement, provider and optionality, then test with and without
+a child. Owning-side or unidirectional shared-key mappings can avoid inverse traversal;
+a shared key alone does not guarantee every inverse mapping becomes lazy.
 
 ## Association Table Mapping, and when it stops being one
 
@@ -119,13 +141,13 @@ public class PostTag {
 ```
 
 This conversion touches every query and every piece of code that treated the collection as a
-set of tags. Because most link tables acquire an attribute eventually, **start with the
-entity form whenever there is any hint of one** — the extra class is far cheaper than the
-migration.
+set of tags. Choose the entity form for actual lifecycle, querying or attribute requirements; do not
+predict that every link will eventually need it.
 
-Two further `@ManyToMany` cautions: use a `Set` rather than a `List` (a `List` causes
-delete-all-then-reinsert of the join rows on any change), and never cascade `REMOVE` across
-it — deleting a post would delete the tags.
+For unique unordered links, a `Set` with stable equality can support targeted link deletes;
+bag/list behavior depends on mapping and provider. Do not discard required ordering to
+reduce statements. Do not cascade `REMOVE` to shared tags: deleting a post must not delete
+entities still referenced elsewhere. Enforce unique link pairs in the database.
 
 ## Collections and the delete-then-insert trap
 
@@ -134,31 +156,34 @@ it — deleting a post would delete the tags.
 private List<OrderLine> lines = new ArrayList<>();
 ```
 
-With a `List` and no `@OrderColumn`, changing one element can produce
-`DELETE FROM order_line WHERE order_id = ?` followed by an insert of every line. Causes and
-fixes:
+This inverse entity collection does not imply delete-all/reinsert just because it is a
+`List`. Hibernate can delete a removed child's row by its identifier. By contrast,
+unidirectional link-table bags or some value collections may recreate association rows.
+Distinguish child rows, join rows and order-column updates in the statement log.
 
-| Cause                                                      | Fix                                                            |
-| ---------------------------------------------------------- | -------------------------------------------------------------- |
-| `List` where order does not matter                         | Use a `Set` with a stable `equals`                             |
-| `Set` whose elements use the default identity `equals`     | Give the child a business key or an assigned UUID              |
-| Replacing the collection instance (`this.lines = newList`) | Mutate in place: `lines.clear(); lines.addAll(...)`            |
-| `@ElementCollection` of a mutable type                     | Expected behaviour: element collections are replaced wholesale |
+- Retain managed collection wrappers and apply an identity-based diff: change existing
+  children, add new ones and remove only absent ones through association helpers.
+- Blind `clear(); addAll(...)` can create orphan deletes or needless churn. Replacing the
+  wrapper can also break orphan tracking; neither is a universal repair.
+- A `Set` requires equality stable while elements are stored. Java reference equality is
+  not intrinsically a delete-all trigger, but may fail to recognize the same database entity
+  represented by a different instance.
+- `@OrderColumn` provides persisted positions and can cause many index updates on removal.
+  `@ElementCollection` update strategy depends on collection semantics and row identification;
+  it is not invariably wholesale replacement.
 
-Read the statement log after any collection mapping change; this defect is invisible
-otherwise (`orm-behavioral-patterns`).
+Test one scalar child edit, one removal, one addition, a reorder if meaningful, and a
+detached/merged round trip. Inspect SQL and verify surviving identities and orphan cleanup
+after flush, clear and reload (`orm-behavioral-patterns`).
 
 ## Query cost by association shape
 
-| Shape                               | Cost of loading the parent and the association                             |
-| ----------------------------------- | -------------------------------------------------------------------------- |
-| `@ManyToOne` lazy, not accessed     | 1 query                                                                    |
-| `@ManyToOne` lazy, accessed per row | 1 + N (fix with `@BatchSize` on the target class)                          |
-| `@ManyToOne` eager                  | provider may join or issue secondary selects; always requested by contract |
-| `@OneToMany` lazy, accessed per row | 1 + N (fix with `@BatchSize` on the collection)                            |
-| `@OneToMany` with fetch join        | 1 query, rows multiplied by collection size                                |
-| Two `@OneToMany` fetch joined       | cartesian product — usually a mistake                                      |
-| `@ManyToMany` fetch joined          | as above, plus the join table                                              |
+A lazy to-one or collection traversed for each result can cause N+1 selects, depending on
+cache state, distinct targets and fetch configuration. EAGER requires loading but does not
+promise a join. Batch fetching can reduce secondary round trips; it does not guarantee one
+query. A collection fetch join multiplies rows, and joining two collections can multiply
+their cardinalities or be rejected for multiple bags. Route detailed tuning to
+`orm-fetch-and-batching-performance`.
 
 No general fetch strategy wins. Batch fetching amortizes lazy traversal; fetch joins reduce round
 trips but multiply rows and complicate pagination; projections avoid entity graphs for reads.
@@ -175,6 +200,16 @@ ALTER TABLE order_line ADD CONSTRAINT uq_order_product UNIQUE (order_id, product
 ALTER TABLE order_line ADD CONSTRAINT ck_quantity_positive CHECK (quantity > 0);
 ```
 
+This DDL uses PostgreSQL syntax; inspect and migrate the actual database schema instead of
+assuming annotation changes update deployed constraints. Include a foreign key for `order_id`;
+`NOT NULL` alone does not establish referential integrity. A CHECK permits SQL UNKNOWN,
+so mandatory `quantity` also needs `NOT NULL`.
+
 Application-level checks are bypassed by imports, bulk statements, other services and
 manual fixes. The database's are not, and the constraint's name is the contract your error
 handling matches on.
+
+These are partial JPA examples, with imports, ids and constructors omitted where unrelated.
+Verify Java, Jakarta/Javax namespace and provider versions before reuse. Sources:
+[Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+and [Hibernate 6.6 associations and identifiers](https://docs.hibernate.org/orm/6.6/userguide/html_single/).

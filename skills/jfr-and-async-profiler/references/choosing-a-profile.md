@@ -25,7 +25,9 @@ appropriate.
 
 ### Wall/off-CPU sampling
 
-Use to locate where eligible threads reside during elapsed time. It mixes healthy idleness and
+Wall sampling locates where eligible threads reside during elapsed time, including CPU work.
+Dedicated off-CPU profiling instead targets descheduled intervals; confirm the tool's mechanism
+before treating either as a blocked-time measurement. Wall mixes healthy idleness and
 harmful waiting unless split by role/state/work. With many threads, event volume and overhead can
 be large. It cannot by itself identify the resource owner or request critical path.
 
@@ -71,6 +73,10 @@ When zero appears:
 
 `jfr summary` validates actual file event counts; metadata validates schemas. Neither alone
 proves the application had an opportunity to emit an event.
+
+Concurrent JFR recordings can combine event settings and share recorded data. A recording's
+disabled event or higher threshold is not a strict filter on its output file. Inspect other
+recordings, active settings where available and actual events before diagnosing a mismatch.
 
 ## Adequacy model
 

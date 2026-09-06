@@ -1,18 +1,24 @@
 # Modern Java Expression of the Patterns
 
+Examples are partial snippets with application types/imports omitted. Records require Java
+16+, sealed classes Java 17+, and the record-pattern switch shown here Java 21+ without
+preview. Virtual threads are final in Java 21. `JdbcClient` requires Spring Framework 6.1+;
+record embeddables require provider support (Hibernate 6.2+, standardized by Persistence
+3.2). Inspect the project's toolchain and resolved dependencies; do not upgrade implicitly.
+
 ## Records: where they fit and where they do not
 
-| Use                                 | Record? | Why                                                                          |
-| ----------------------------------- | ------- | ---------------------------------------------------------------------------- |
-| Value Object (Money, TaxId)         | **Yes** | Equality by value, immutability, validation in the compact constructor       |
-| Embedded Value (`@Embeddable`)      | **Yes** | Supported from Hibernate 6.2                                                 |
-| DTO / request / response            | **Yes** | Immutable carrier; component names are the wire contract                     |
-| Command                             | **Yes** | Immutable input to a use case                                                |
-| Domain event                        | **Yes** | A fact does not change                                                       |
-| Projection / row                    | **Yes** | Constructor expressions and interface-free projections                       |
-| Aggregate root                      | **No**  | Identity plus mutable state; JPA needs a no-arg constructor and field access |
-| JPA `@Entity`                       | **No**  | Same                                                                         |
-| Anything with an identity lifecycle | **No**  | Equality by value is wrong for entities                                      |
+| Use                            | Record?     | Why                                                                          |
+| ------------------------------ | ----------- | ---------------------------------------------------------------------------- |
+| Value Object (Money, TaxId)    | **Yes**     | Equality by value, immutability, validation in the compact constructor       |
+| Embedded Value (`@Embeddable`) | **Yes**     | Supported from Hibernate 6.2                                                 |
+| DTO / request / response       | **Yes**     | Shallow carrier; verify serializer names, annotations and wire compatibility |
+| Command                        | **Yes**     | Immutable input to a use case                                                |
+| Domain event                   | **Yes**     | A fact does not change                                                       |
+| Projection / row               | **Yes**     | Constructor expressions and interface-free projections                       |
+| Aggregate root                 | **Depends** | An immutable state model can use records; mutable JPA entities cannot        |
+| JPA `@Entity`                  | **No**      | Records do not satisfy entity class requirements                             |
+| Identity-bearing state         | **Depends** | Distinguish identity from record state equality and replacement semantics    |
 
 ```java
 public record Money(BigDecimal amount, Currency currency) {
@@ -20,9 +26,9 @@ public record Money(BigDecimal amount, Currency currency) {
     public Money {
         Objects.requireNonNull(amount);
         Objects.requireNonNull(currency);
-        if (amount.scale() > currency.getDefaultFractionDigits()) {
-            throw new IllegalArgumentException("scale exceeds " + currency);
-        }
+        int digits = currency.getDefaultFractionDigits();
+        if (digits < 0) throw new IllegalArgumentException("fraction digits undefined");
+        amount = amount.setScale(digits, RoundingMode.UNNECESSARY);
     }
 
     public Money plus(Money other) {
@@ -32,18 +38,29 @@ public record Money(BigDecimal amount, Currency currency) {
 
     public boolean isLessThan(Money other) {
         requireSameCurrency(other);
-        return amount.compareTo(other.amount) < 0;      // never equals() on BigDecimal
+        return amount.compareTo(other.amount) < 0;
+    }
+
+    private void requireSameCurrency(Money other) {
+        Objects.requireNonNull(other);
+        if (!currency.equals(other.currency)) throw new IllegalArgumentException("currency mismatch");
     }
 }
 ```
+
+This example uses the currency's default fractional digits as an explicit domain policy;
+some pricing or settlement domains need another scale. Canonical scale makes record equality
+consistent for amounts such as 1.0 and 1.00; excess nonzero precision is rejected, not rounded.
 
 Two details that make this a value object rather than a wrapper: validation in the compact
 constructor, so an invalid instance cannot exist; and behaviour on the type, so callers stop
 writing currency checks.
 
 **The trap:** a record component of a mutable type (`List`, `Map`, array, `Date`) is not
-immutable. Copy in the constructor and return a copy from the accessor, or use
-`List.copyOf`.
+deeply immutable. Copy mutable containers on input/output, or use `List.copyOf` for an
+unmodifiable list; that copy is shallow and rejects null elements. Mutable elements need
+immutable representations or deeper defensive copies. Array components also retain
+reference-based default record equality unless deliberately overridden.
 
 ## Sealed types and exhaustive switch
 
@@ -56,12 +73,12 @@ public sealed interface SettlementResult {
     record Pending(Instant retryAfter)                 implements SettlementResult { }
 }
 
-// Exhaustive: adding a variant is a compile error at every switch. That is the feature.
+// On recompilation, a newly uncovered variant makes this no-default switch incomplete.
 String describe(SettlementResult result) {
     return switch (result) {
-        case Settled(var payment, var at) -> "settled by " + payment + " at " + at;
-        case Rejected(var reason)         -> "rejected: " + reason;
-        case Pending(var retryAfter)      -> "pending until " + retryAfter;
+        case SettlementResult.Settled(var payment, var at) -> "settled by " + payment + " at " + at;
+        case SettlementResult.Rejected(var reason)         -> "rejected: " + reason;
+        case SettlementResult.Pending(var retryAfter)      -> "pending until " + retryAfter;
     };
 }
 ```
@@ -71,7 +88,7 @@ String describe(SettlementResult result) {
 - **Special Case** where callers must distinguish — a sealed variant plus exhaustive switch
   is better than an `instanceof` check against a null object.
 - **Result/outcome types** instead of exceptions for expected business outcomes: the outcome
-  is in the signature and cannot be forgotten.
+  is in the signature; callers can still ignore returned values, so API usage needs review.
 - **State machines** in the domain, with transitions as methods returning the next state.
 
 **Where it does not replace a pattern:** Plugin. A sealed hierarchy is closed by definition;
@@ -79,27 +96,31 @@ a plugin point must be open to implementations the compiler has not seen. Do not
 something you intend to extend at configuration time
 (`enterprise-base-patterns`).
 
-Do not add a `default` branch to a switch over a sealed type. It silently absorbs future
-variants, which is exactly the compile error you sealed the type to obtain.
+Omit `default` when requiring each variant to be handled after recompilation. A deliberate
+fallback can be appropriate for compatibility, but loses that diagnostic. Separately compiled
+clients are not retroactively checked and may throw `MatchException` on a new unmatched
+variant. A null selector needs `case null` or an explicit non-null precondition.
 
 ## Immutability against JPA's requirements
 
-JPA requires a no-arg constructor and access to fields. Neither requires setters, and this
-is the most consequential misconception in enterprise Java:
+JPA entity classes require an accessible no-arg constructor and a supported field or
+property access strategy. Field access does not require public setters; property access
+has accessor requirements. Persistent fields must not be final for portable entities:
 
 ```java
 @Entity
 public class Order {
 
-    @Id private OrderId id;
+    @Id private Long id; // typed domain identifiers need a supported identifier mapping
+    private Long customerId;
     @Enumerated(STRING) private OrderStatus status;
     @OneToMany(mappedBy = "order", cascade = ALL, orphanRemoval = true)
-    private final List<OrderLine> lines = new ArrayList<>();
+    private List<OrderLine> lines = new ArrayList<>();
     @Version private long version;
 
     protected Order() { }                     // for the ORM only; not public
 
-    public Order(OrderId id, CustomerId customerId) {   // enforces the invariants
+    public Order(Long id, Long customerId) {   // enforces the invariants
         this.id = Objects.requireNonNull(id);
         this.customerId = Objects.requireNonNull(customerId);
         this.status = OrderStatus.DRAFT;
@@ -107,17 +128,18 @@ public class Order {
 
     public void confirm(Money creditLimit) {  // a transition, not a setter
         requireDraft();
-        if (total().isGreaterThan(creditLimit)) throw new CreditLimitExceeded(id, creditLimit);
+        if (creditLimit.isLessThan(total())) throw new CreditLimitExceeded(id, creditLimit);
         status = OrderStatus.CONFIRMED;
     }
 
-    public List<OrderLine> lines() { return List.copyOf(lines); }   // no mutable escape
+    public List<OrderLine> lines() { return List.copyOf(lines); } // protects list structure only
 }
 ```
 
-No public setters, no mutable collection escaping, a protected constructor for the ORM, and
-state changes expressed as domain transitions. This is a rich domain model that is also a
-JPA entity, and it removes the usual justification for a separate domain model
+A protected constructor and domain transitions allow a rich JPA entity. The returned list
+still exposes child references: restrict child mutators or return immutable projections if
+callers must not mutate them. This addresses the setter objection; a separate domain model
+can still be justified by lifecycle, boundary or persistence independence requirements
 (`data-source-patterns`).
 
 ## Optional at boundaries, not in fields
@@ -129,27 +151,32 @@ public interface Orders {
 
 @Entity
 public class Order {
-    private Instant cancelledAt;             // NOT Optional<Instant> — not serialisable,
-                                              // and not a field type
+    private Instant cancelledAt; // Optional<Instant> is not a standard JPA basic mapping
     public Optional<Instant> cancelledAt() { return Optional.ofNullable(cancelledAt); }
 }
 ```
 
-Return type: yes. Field or parameter: no. Inside a model where absence has uniform
-behaviour, a Special Case variant beats both (`enterprise-base-patterns`).
+Use Optional primarily for return values signaling absence; fields and parameters are API
+design choices, not forbidden Java syntax. Avoid assuming portable JPA persistence or
+serialization support for Optional. A Special Case is useful only when absence has genuine
+uniform domain behavior (`enterprise-base-patterns`).
 
 ## Virtual threads and the patterns
 
 Virtual threads change the **sizing arithmetic**, not the patterns:
 
-- **Thread-per-request is the sensible default again**, which removes the main non-domain
-  reason to write reactive pipelines
+- **Blocking thread-per-task becomes a viable option for I/O-heavy work.** Streaming,
+  backpressure, framework integration and existing code can still justify reactive pipelines
   (`reactive-and-virtual-thread-selection`).
-- **Connection pools do not scale with threads.** Ten thousand virtual threads against a
-  pool of 20 means 9 980 waiting; the pool is still the bound, and transaction duration
+- **Connection pools do not scale with threads.** If ten thousand tasks simultaneously
+  request one connection each from a saturated pool of 20, up to 9 980 must wait or be rejected.
+  The pool is still the bound, and connection hold duration
   still sizes it (`connection-pool-sizing`).
-- **Transactions and the persistence context remain thread-bound.** Handing an entity to
-  another thread hands over a proxy with no usable session, virtual or not.
+- **Imperative Spring transactions normally use thread-bound resources.** Starting another
+  thread does not propagate that transaction; an EntityManager must not be used concurrently.
+  A proxy might still reference an open context, which makes cross-thread access unsafe rather
+  than automatically detached. Pass immutable data/ids and open the intended transaction in
+  the worker. Reactive transaction context follows different rules.
 - **`synchronized` pinning is resolved from JDK 24** (JEP 491), so advice to replace
   `synchronized` with `ReentrantLock` for pinning reasons is obsolete on current runtimes
   (`virtual-threads-internals`; verify the target JDK).
@@ -179,10 +206,16 @@ criteria query that expresses the same thing worse
 
 ## What not to modernise
 
-- **Do not make an aggregate a record** to be "modern". Identity and mutation are the point.
+- **Do not convert an aggregate to a record merely for syntax.** Preserve identity, mutation
+  or immutable replacement semantics, and the persistence contract.
 - **Do not seal a hierarchy that is a plugin point.**
-- **Do not replace a Domain Model with functions** because functions are fashionable; the
-  invariant needs an owner, and a function has no state to own.
+- **Do not replace a Domain Model with functions merely for fashion.** Pure functions over
+  immutable state can enforce invariants; define the authoritative state and commit boundary.
 - **Do not convert a working Transaction Script into a Domain Model** because records and
   sealed types exist. The decision criterion is rule interaction, not language features
   (`domain-logic-organization`).
+
+See [Java 21 pattern switch](https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html)
+for exhaustiveness and null behavior, and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+for entity/access requirements. Structured concurrency APIs remain version-sensitive;
+consult the project's target release before adding an API or preview flags.

@@ -21,7 +21,7 @@ Give a pipeline a vocabulary of stage shapes, and decide for each whether it may
 concurrency above 1 — the single question where correctness is silently traded for throughput.
 The shapes are small: **copier** (fan-out to independent consumers), **filter** (drop by
 predicate), **splitter** (one input, many outputs), **sharder** (re-partition by a new key),
-**merger/join** (combine streams, which needs state).
+**merger/join** (combine streams; a union can interleave without keyed join state).
 
 Semantic parallelism is safe when operations commute/order does not matter, or keyed state and
 effects have one current owner with recovery/fencing. Stateless code can still emit ordered or
@@ -34,6 +34,12 @@ seen — which passes every load test and dies in week three of memory, not of t
 
 ## Workflow
 
+Inspect deployed engine/API, connector and Java versions, topology configuration and state
+backend before using version-sensitive guarantees; no upgrade is implied. Missing watermark,
+checkpoint or sink evidence is unknown. Deliver a stage map with ordering/authority boundaries,
+state/backlog budgets and the tested recovery contract. Replay, resets and failure injection
+must use isolated targets or existing explicit authorization for their effects.
+
 1. **Name each stage by shape** before drawing arrows. If an operator combines shapes, model
    each semantic step even when the implementation fuses them; this exposes separate ordering,
    state and failure boundaries without forcing an unnecessary network hop.
@@ -43,10 +49,11 @@ seen — which passes every load test and dies in week three of memory, not of t
 3. **Mark every shuffle/repartition explicitly.** State old/new key, partitioner/count/epoch,
    ordering semantics, framework transaction/checkpoint boundary and recovery. Never inherit an
    exactly-once label across a sink the engine does not control.
-4. **For any stateful stage, bound the state.** A window, a retention, or a key-space bound —
-   and a metric on state size before it is a heap dump. See `references/stateful-stages.md`.
+4. **For any stateful stage, bound the state.** Specify key count, bytes/events per key,
+   multiplicity, and the clock/progress that drives cleanup. A window or TTL alone is not a
+   physical bound when progress stalls. See `references/stateful-stages.md`.
 5. **Write the late-data policy down** — drop, side stream, or correction. Not deciding is
-   deciding to drop silently.
+   accepting an unverified framework default; inspect and instrument it.
 6. **Trace flow control and backlog separately.** Operator queues/credits can backpressure
    upstream within a job; a durable log usually decouples producers, so consumer lag measures
    backlog without slowing production. Bound both internal buffers and log retention/replay.
@@ -63,11 +70,12 @@ Run a stage above concurrency 1 when:
 
 Keep a stage at one worker per partition when:
 - downstream state is order-sensitive per key: a state machine, a CDC apply, an
-  event-sourced projection. Parallelism within a partition reorders it
+  event-sourced projection. Unordered execution/emission can reorder it; ordered per-key lanes
+  or validated ordered-async operators may preserve the required contract
 
 Do not treat parallelism as a knob when:
 - the stage changes the partitioning (sharder) or combines partitions (merger, join).
-  Parallelism there is a re-keying decision, and the correct key is the question
+  Evaluate key ownership, migration and ordering; changing parallelism need not change the key
 
 Push the stage upstream instead when:
 - it is a filter with high selectivity and the source can evaluate the predicate
@@ -83,10 +91,9 @@ Split into separate pipelines instead when:
   output/effect composition tolerates completion order and duplicates; otherwise preserve a
   serial lane or version/sequence guard. Stateful keyed ownership also needs checkpoint,
   rebalance and stale-task fencing semantics.
-- **A filter is cheap per record and expensive per pipeline.** Dropping 99% after the record was
-  fetched, decompressed and deserialised means 99% of that I/O and deserialisation bought
-  nothing (`serialization-performance`). Push the predicate to the source when the source can
-  evaluate it; otherwise say you are paying for it knowingly.
+- Filter cost and removable upstream work depend on payloads, batching and predicate cost.
+  Push a pure predicate earlier only if null/type/time semantics and required audit/security
+  observations remain equivalent; a 99% record drop does not imply 99% byte or CPU savings.
 - A **splitter** raises one question and it is transactional: are the N outputs atomic? If not,
   a crash after output 1 leaves consumers of output 2 with a gap they must tolerate. What a
   transaction covers, and what it does not, is `delivery-semantics`.
@@ -99,8 +106,8 @@ Split into separate pipelines instead when:
   aggregates need less per-key bytes than raw-event joins. Bound by semantic retention and
   measure distinct keys, unmatched events, bytes and compaction/checkpoint amplification.
 - A **copier**—a second consumer group—decouples offsets/failure but adds broker read/network/
-  cache and downstream cost. Prefer it over producer fan-out when independent replay/retention
-  semantics and infrastructure capacity justify it.
+  cache and downstream cost. Kafka groups have independent offsets, but share topic retention
+  and compaction; another group does not preserve expired input or create independent retention.
 - **Say which window and implementation you mean.** Naive sliding windows replicate each record
   across `size/step` windows; pane/incremental aggregation can reduce storage/CPU depending on
   whether the function is algebraically mergeable. Continuous sessions may never finalize,
@@ -109,7 +116,7 @@ Split into separate pipelines instead when:
   across active partitions plus out-of-orderness/idleness policy—not a guarantee. It encodes how
   long to wait for stragglers; the late-data policy is a
   separate decision about the one that arrives anyway. Name both — "it probably won't happen" is
-  silent, unattributable data loss, and it happens on every replay.
+  insufficient evidence for a loss policy. Replay behavior depends on how progress is rebuilt.
 - **In a log-based boundary, lag is durable backlog, not backpressure to producers.** A slow
   consumer reads later while producers may continue. Retention can make old input unavailable;
   internal queues/state can still OOM before that. Alert on age/bytes/catch-up capacity against
@@ -119,9 +126,9 @@ Split into separate pipelines instead when:
   current processing behavior is the intended semantics. Event time improves reproducibility
   only with stable timestamp extraction, watermark/idleness rules, late policy, input snapshot
   and deterministic operators/sinks.
-- Replay of a stateful pipeline is not "start at offset 0": window state must be reset or
-  rebuilt, the output must land somewhere that tolerates a rewrite, and downstream consumers see
-  the whole history again (`idempotency`). Decide where replay output lands before you need it.
+- Replay is not merely "start at offset 0": a full recomputation needs isolated/reset state,
+  while checkpoint recovery restores state and source positions consistently. Choose versioned
+  output/cutover or a sink protocol that tolerates replay (`idempotency`) before running it.
 - Never size a state store from the average key: size it from distinct keys × per-key state ×
   window multiplicity, and export the real number as a metric. A store whose size is visible
   only in a heap dump has already taken the outage.

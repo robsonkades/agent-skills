@@ -4,11 +4,11 @@ description: >
   Facade in modern Java: one coherent entry point over a subsystem of collaborators, so callers
   depend on an intention rather than on a sequence. Covers the difference between a facade
   (simplifies, does not forbid) and a boundary (forbids), the god-facade drift where one class
-  accumulates a method per use case until it is the application, why an application service is
-  this pattern under another name, why an API gateway is not, and the transaction and fan-out
+  accumulates unrelated use cases, how application services and gateways can play this role
+  while retaining their own boundary responsibilities, and the transaction and fan-out
   decisions a facade method silently owns. Use when callers repeat the
-  same five-call sequence, when a legacy subsystem needs fencing, when a service class has grown past a dozen
-  dependencies, or when a facade method fans out to several remote services. Does not cover changing one type's interface
+  same orchestration sequence, when a legacy subsystem needs fencing, when unrelated responsibilities
+  accumulate in a service, or when a facade method fans out to remote services. Does not cover changing one type's interface
   (gof-adapter), adding behaviour to one object (gof-decorator), hub-based coordination between
   peers (gof-mediator), the coarse-grained remote boundary and its DTOs (remote-facade-and-dto),
   or transaction-boundary mechanics (enterprise-transactions).
@@ -27,6 +27,10 @@ The classical pattern **simplifies without forbidding**: the subsystem stays rea
 callers with unusual needs. When direct access is prohibited — the types are package-private, the
 module does not export them — you have a boundary, which is a stronger and often better design,
 but it is a different claim and should be stated as one.
+
+Inspect target Java, framework, transaction manager and client versions before applying examples.
+Local sketches use Java 17 syntax; the remote scope example explicitly needs Java 25 preview.
+Do not upgrade or enable preview merely to adopt Facade. Use existing supported orchestration otherwise.
 
 ## When it is the answer
 
@@ -47,8 +51,8 @@ A library exposes forty types where callers need four operations
 - **It forwards to one already-simple collaborator.** That is likely a redundant wrapper. A
   facade over one externally complex object can still present a smaller use-case API, stabilize a
   boundary, or hide lifecycle sequencing; state which simplification it owns (`gof-adapter`).
-- **It has grown a method per use case.** A facade with thirty methods and twenty dependencies is
-  the application in one class; split by use case or by subdomain.
+- **It accumulates unrelated responsibilities.** Method/dependency counts prompt inspection;
+  split when change reasons, collaborators or policy ownership diverge, not at a numeric threshold.
 - **It absorbs domain invariants owned by entities/value objects.** Sequencing and translation
   belong naturally here; application policies spanning ports may also belong in an application
   service. Move rules according to data and consistency ownership, not every `if`
@@ -102,13 +106,14 @@ THEN place it with the component that owns the required data and invariant. Doma
      invariants usually move inward; cross-port application policy can remain here.
 
 IF the facade method is the transaction boundary
-THEN that is a design decision, not an accident: it fixes what commits
-     together and how long the connection is held
+THEN verify invocation, propagation and enlisted resources to establish what commits
+     together; trace actual connection acquisition/release
      (enterprise-transactions).
 
 IF a facade method calls several remote services
-THEN its latency is the sum or the slowest of them and its failure is
-     partial. Design the fan-out explicitly (scatter-gather).
+THEN model the dependency graph, scheduling, deadline and partial effects.
+     Concurrent latency follows the critical path plus overhead, not automatically
+     the slowest isolated call (scatter-gather).
 
 IF two callers need different subsets of the sequence
 THEN do not add flags to one method. Add a second method whose name
@@ -123,16 +128,17 @@ THEN do not add flags to one method. Add a second method whose name
 - **Distribution.** A local facade over remote collaborators is where a single method call
   becomes N network calls. The consequences must be designed, not inherited: overall deadline,
   what a partial failure returns, whether the calls can run concurrently, and whether a retry of
-  the facade method re-executes work already done (`scatter-gather`, `idempotency`). This is also
-  the boundary at which coarse-grained methods stop being stylistic and start saving round trips
+  the facade method re-executes work already done (`scatter-gather`, `idempotency`). A local wrapper
+  alone does not reduce downstream round trips; batching or moving a remote boundary can
   (`remote-facade-and-dto`).
 - **Performance.** Local dispatch is rarely the important cost. Remotely, granularity is the
   design: a coarse call can replace chatty round trips but may over-fetch, lengthen critical
   sections, or create expensive fan-out. The opposite failure—a facade that loops issuing one downstream call
   each — is the same mistake with the sign reversed.
 - **Testing.** The facade is the natural place for use-case-level tests: real domain objects,
-  fakes for the ports, one test per intention. A facade that cannot be constructed in a test
-  without a dozen mocks has already told you it is doing too much (`java-testing-strategy`).
+  fakes for the ports, with success and relevant failure cases per intention. Substantial
+  unrelated setup deserves a cohesion review; count alone does not prove a defect
+  (`java-testing-strategy`).
 
 ## Review checklist
 
@@ -143,7 +149,11 @@ THEN do not add flags to one method. Add a second method whose name
 - [ ] No boolean flag parameter selects between two different intentions
 - [ ] The transaction boundary is deliberate and its span is justified
 - [ ] Remote fan-out has an overall deadline and a defined partial-failure result
-- [ ] It is not called a facade when it is a gateway, a BFF or a mediator
+- [ ] Facade simplification is distinguished from gateway/BFF deployment or mediator coordination roles
+
+Report the caller simplification, access policy, invariant/resource owners and relevant failure
+contract with evidence and checks. State unresolved transaction/client behavior rather than
+assuming that one method call creates atomicity, safety or a strict latency bound.
 
 ## References
 

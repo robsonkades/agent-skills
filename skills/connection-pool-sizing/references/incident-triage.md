@@ -8,12 +8,13 @@ than removed.
 
 ```
 hikaricp.connections.pending        > 0 sustained → threads are waiting
-hikaricp.connections.acquire p99    > 10 ms       → the wait is material
-hikaricp.connections.timeout        any increment → saturation, not slowness
+hikaricp.connections.acquire p99    compare with remaining request budget
+hikaricp.connections.timeout        correlate with active/total/max, creation and validation failures
 ```
 
-If `pending` is flat at zero, the pool is not the constraint and the rest of this document
-does not apply.
+A sampled zero pending count does not rule out bursts between scrapes. Acquisition timeouts can
+also accompany inability to create/validate connections, not just a fully occupied healthy pool.
+Check acquisition distributions, timeout deltas, effective limits and connectivity together.
 
 ## 2. Is W inflated, and for whom?
 
@@ -21,30 +22,36 @@ does not apply.
 hikaricp.connections.usage  p50 vs p99
 ```
 
-A p50 of 15 ms with a p99 of 3 s means a minority of requests hold connections far too
-long. That minority is the whole problem: by `ρ = λW/c`, a small fraction with a large `W`
-dominates utilisation.
+A p50 of 15 ms and p99 of 3 s identifies a long tail worth tracing, but does not determine its
+contribution or root cause. Use timer sum/count for mean hold time and inspect outstanding borrows
+that have not completed. Compare slow endpoints/transactions, lock waits, driver behavior and leaks.
 
 ## 3. Is there non-database work inside the transaction?
 
 ```sql
-SELECT pid, state, now() - state_change AS duration, query
+SELECT pid, state, now() - state_change AS idle_duration,
+       now() - xact_start AS transaction_age, backend_xmin, wait_event_type, wait_event, query
 FROM pg_stat_activity
 WHERE state = 'idle in transaction'
-ORDER BY duration DESC;
+ORDER BY idle_duration DESC;
 ```
 
 `idle in transaction` says exactly: a transaction is open and the backend is not currently
 executing a statement. It does not identify the application-side cause. Correlate transaction age,
 traces, and stack samples to distinguish an HTTP call, a queue publish, user think time, or business
-logic inside `@Transactional`. A 300 ms
-external call there caps throughput at `pool_size / 0.3` and holds the snapshot, delaying
-cleanup of row versions visible to that snapshot; severity depends on age, write rate, and relations touched.
+logic inside `@Transactional`. Confirm that a connection is held across the external work;
+transaction annotations alone do not prove physical checkout timing. Snapshot/cleanup impact
+depends on isolation, locks and transaction state; READ COMMITTED does not retain one query
+snapshot for the entire transaction. Check `backend_xmin` and blockers before assigning that cause.
 
-Watch for the silent variant: `this.method()` inside the same bean does not go through the
-proxy, so the transaction people believe exists does not.
+In default Spring proxy mode, `this.method()` bypasses that method's transaction advice. An outer
+transaction may still exist; inspect propagation and caller context, and distinguish AspectJ mode.
 
 ## 4. Is it N+1?
+
+PostgreSQL examples assume `pg_stat_statements` is installed/configured and the operator can read
+the required statistics. Compare deltas over the incident window, accounting for resets and workload
+mix; all-time totals do not isolate one endpoint or deploy. Query text may contain sensitive literals.
 
 ```sql
 -- by total time: the expensive queries
@@ -56,41 +63,51 @@ SELECT query, calls, mean_exec_time FROM pg_stat_statements
 ORDER BY calls DESC LIMIT 20;
 ```
 
-N+1 never appears as a slow query — each one is fast. Order by `calls`. Fix with
-`JOIN FETCH`, `@EntityGraph` or a DTO projection, and then **lock the statement count in a
-test**; without that the next refactor reintroduces it.
+High calls may be legitimate high traffic; N+1 requires per-operation correlation with result count.
+Statements may also be slow individually. Compare query-count growth for different parent counts;
+select a fetch plan or batch-fetch/projection strategy that preserves pagination and avoids row
+explosion, then test that behavior (`orm-fetch-and-batching-performance`).
 
 ## 5. Is the query itself the problem?
+
+Start with a non-executing plan. The following is a template, not runnable SQL; `ANALYZE` executes
+the statement, including functions and its real workload cost. Use a bounded, representative safe
+environment for execution and the target engine's timeout controls.
 
 ```sql
 EXPLAIN (ANALYZE, BUFFERS) SELECT ...;
 ```
 
-Look for `Seq Scan` on a large table and high `read` (as opposed to `hit`) buffer counts.
-Also consider what the query returns: `SELECT *` costs in three places — database read,
-network transfer, and deserialisation in the JVM — and with large columns (`TEXT`, `JSONB`,
-`BYTEA`) the difference is orders of magnitude. In JPA the equivalent is loading full
-entities where a projection would do, which additionally populates the persistence context
-and pays dirty checking at commit.
+Compare row estimates with actual rows, loops, filtering, lock/I/O waits and useful output. A
+sequential scan can be appropriate for a large fraction of a table; a buffer read is not necessarily
+physical storage I/O because OS caching intervenes. Wide projections can increase transfer and
+hydration cost; measure the difference rather than promising orders of magnitude. Route plan
+changes to `postgresql-performance` or `sql-query-performance`.
 
 ## 6. Fine-grained waiting
 
 ```bash
-jfr configure --input default.jfc --output fine.jfc jdk.ThreadPark#threshold=1ms
+jfr configure --input default --output fine.jfc jdk.ThreadPark#threshold=1ms
 ```
 
-Pool waiting is `LockSupport.park` → `jdk.ThreadPark`, **not** a monitor event. At the
-default 20 ms threshold, thousands of short waits per second are invisible, and "zero
-events" reads as "no contention".
+Hikari's contended borrow path can park; inspect `jdk.ThreadPark` stacks and blocker identity to
+attribute waits to the pool. Other libraries/modes can differ. Inspect the runtime's JFC thresholds;
+short waits below them are invisible. This command only creates configuration: use it for a bounded
+recording and inspect loss/overhead before interpreting zero events.
 
 ## Serialisation failures
 
-Under SERIALIZABLE, `SQLSTATE 40001` is not an application error — it is the mechanism
-working. Retry with backoff **and jitter**; without jitter, the transactions that collided
-retry in lockstep and collide again.
+PostgreSQL 40001 requires retrying the complete transaction, including decision-making reads,
+under a bounded deadline/attempt policy. It can occur at REPEATABLE READ as well as SERIALIZABLE.
+Backoff/jitter reduces synchronized retry pressure; ensure external effects are safe and report
+retry exhaustion. Do not retry only the last statement in an aborted transaction.
 
 ## What not to do first
 
 Raising `maximumPoolSize` is the last step, not the first. Before it: check
 `hikaricp.connections.usage`. If `W` is inflated by external I/O, N+1 or a slow query, the
 pool is not the problem, and enlarging it moves the queue into the database.
+
+Primary references: [PostgreSQL 17 statistics](https://www.postgresql.org/docs/17/pgstatstatements.html),
+[transaction isolation](https://www.postgresql.org/docs/17/transaction-iso.html), and
+[EXPLAIN](https://www.postgresql.org/docs/17/using-explain.html).

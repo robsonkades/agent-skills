@@ -73,14 +73,14 @@ Callers must be able to supply their own algorithm
 
 ```text
 A lambda / method reference is enough when:
-    one method, stateless, no metadata, no key, and the call site
-    supplies it directly
+    one operation; captured dependencies and lifetime have clear contracts;
+    selection/metadata can live in a registration rather than the implementation
 
 A named type earns its place when:
     the strategy has more than one operation
       (apply, plus supports(...), plus a name for logging)
-    it must be selected by a key from data
-    it must be injected, configured, or decorated
+    key/metadata and related operations belong together for cohesion
+    its injected dependencies or implementation are clearer as a class
     it must appear in stack traces, thread dumps and metrics by name
     it has its own tests and its own reason to change
 ```
@@ -90,6 +90,10 @@ hierarchy when three lambdas would do, or scattering anonymous lambdas that nobo
 the calculation misbehaves in production.
 
 ## Selection
+
+Examples are partial Java 17 snippets with application types. Sealed classes are standard in 17;
+type-pattern switch is final in 21 (earlier supported releases require preview). Inspect the target
+toolchain and framework configuration; no upgrade or new dependency is implied.
 
 ```java
 // what grows badly
@@ -108,14 +112,14 @@ ShippingCost costFor(ShippingMethod method) {
 }
 ```
 
-Spring will inject `List<ShippingCost>` or `Map<String, ShippingCost>` of every implementation,
-which is convenient and has one hazard: the set becomes whatever is on the class path, so an
+Spring can inject eligible registered beans as a list or string-keyed map; classpath presence alone
+does not register every implementation. Conditions, qualifiers and scanning affect the set, so an
 accidental extra bean silently joins it and a missing one silently does not. Build the map from an
 explicit key the strategy declares, and fail at startup if a key is duplicated or a required key is
 absent.
 
-Where the key set is closed and owned, a sealed type with an exhaustive `switch` beats a map: the
-compiler enumerates the cases (`java-composition-over-inheritance`).
+For a closed key set, compare an enum or compatible exhaustive switch with a validated registry.
+Compilation checks known variants, not null inputs, binary evolution or calculation failures.
 
 ## Decision rules
 
@@ -158,10 +162,10 @@ THEN changing it is a migration, not a configuration flip
 
 ## Cross-cutting checks
 
-- **Concurrency.** A strategy selected once and shared is used by every thread. Any field it holds
-  must be immutable, and any per-call state must be passed in. The recurring bug is a strategy
-  accumulating results in a field — correct in a single-threaded test, wrong under load, and the
-  symptom is one request's data appearing in another's (`java-memory-model`).
+- **Concurrency.** A shared strategy needs an explicit synchronization/confinement or immutable-state
+  contract for itself and captured/injected collaborators. The recurring bug is a strategy
+  accumulating results in a field — possibly missed by a one-call test, but leaking across calls,
+  with one request's data appearing in another's (`java-memory-model`).
 - **Distribution.** Several of the most consequential strategies in a distributed system are
   chosen by configuration and have system-wide effects: the partitioning strategy determines
   ordering guarantees, the serialisation strategy determines compatibility, the retry policy
@@ -172,24 +176,27 @@ THEN changing it is a migration, not a configuration flip
   shape rather than a fixed implementation count. Non-capturing lambdas may be cached; capturing
   lambdas can allocate and either form may inline. Inspect profiles/compilation on measured hot paths
   (`jit-inlining-and-escape-analysis`).
-- **Testing.** Three levels. Each strategy tested directly against its own inputs — the pattern's
-  main dividend, since each is a pure function. The selector tested separately, including the
+- **Testing.** Three levels. Test each strategy against its inputs and declared state/lifecycle;
+  strategies are not inherently pure. Test the selector separately, including the
   unknown-key case. And a shared contract test that every implementation must pass, which is what
   stops the fifth strategy from quietly violating an invariant the first four honour.
 
 ## Review checklist
 
 - [ ] Variation exists today, or a concrete port/SPI/ownership boundary justifies one implementation
-- [ ] Strategies differ in behaviour, not only in constants
+- [ ] Variants justify behavior or a named policy/ownership reason; data-only alternatives were considered
 - [ ] Strategy state has explicit immutability, confinement or synchronization semantics
-- [ ] Selection is keyed, and an unknown key fails loudly
+- [ ] Selection matches the extension model; unknown/default semantics are deliberate
 - [ ] External keys are validated/authorized against a supported registry
-- [ ] Strategies used in hot or diagnosed paths have names, not anonymous lambdas
+- [ ] Diagnostic identity is available through named methods/types or bounded registration metadata
 - [ ] Shared pre/post processing lives in the caller, not duplicated per strategy
 - [ ] A contract test runs against every implementation
 - [ ] Strategy choices with system-wide effects are treated as migrations
 
 ## References
+
+Deliver the variation and contract, chosen mechanism/selector, state ownership and failure behavior,
+plus focused checks. Keep performance benefits conditional on measurements.
 
 - [Concept, mechanism and selection](references/concept-mechanism-selection.md) — the three levels
   in detail; lambda against named type with the criteria that decide; selection mechanisms
@@ -197,5 +204,5 @@ THEN changing it is a migration, not a configuration flip
   constants-are-configuration test; and the shared contract test. Read when choosing a mechanism.
 - [Worked example](references/worked-example.md) — shipping cost calculation taken from a growing
   if-else to lambdas, then to named strategies when logging, metrics and a `supports` check were
-  needed, with the unknown-method failure, the stateless-strategy bug found under load, and the
+  needed, with unknown-method handling, an illustrative shared-state race, and the
   contract test. Read when implementing.

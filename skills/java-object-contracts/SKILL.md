@@ -25,14 +25,22 @@ because a record generated `toString` for every component.
 
 ## Workflow
 
-1. **Decide whether the type has value semantics at all.** Entities with identity, service
-   objects, and anything mutable that will be used as a key are all better served by _not_
-   overriding `equals`. Identity equality is a legitimate answer, and the default one.
+Inspect compiler release/toolchains, target JVM, collection usage, published consumers and
+ORM/provider configuration first. No single authoring baseline is declared; references use
+Java SE 25, while records and pattern `instanceof` need Java 16+, `List.copyOf` Java 10+.
+Adapt to the project without upgrades or preview. Missing lifecycle/provider evidence makes
+equality recommendations conditional; state what must be tested before changing the contract.
+
+1. **Decide the intended identity.** Service objects often need reference equality. Value
+   types need component equality; entities may need row/business identity across contexts.
+   A mutable type can still use an immutable identity key; define lifecycle and collection
+   membership before choosing, rather than excluding all mutable objects or entities.
 2. **If it has value semantics, define the value.** List the fields that constitute it.
-   Everything derived, cached, or incidental (load timestamps, cached hashes, lazy proxies)
-   is excluded — and stays excluded from `hashCode` for the same reason.
+   Exclude incidental state (load timestamps, caches, lazy proxies). Derived hash inputs
+   are valid only if equal objects are guaranteed to derive the same value.
 3. **Write `equals` and `hashCode` together, from the same field list**, or let a record
-   write both. There is no valid state where only one is overridden.
+   write both. A valid inherited hash implementation can suffice; overriding hash alone
+   while retaining reference equality is not inherently a contract violation.
 4. **Check the inheritance question explicitly.** Either the class is `final`, or `equals` is
    defined so subclasses cannot break symmetry. `references/equals-and-hashcode.md` has the
    two defensible answers and the one that is a trap.
@@ -53,8 +61,9 @@ because a record generated `toString` for every component.
   does not know it is in — `HashSet`, `HashMap`, `ConcurrentHashMap`, `distinct()` in a
   stream, set-based dirty tracking in an ORM.
 - Never include a mutable field in `equals`/`hashCode` if instances are used as keys.
-  Mutating a key after insertion moves its bucket without moving the entry: the value is
-  still in the map, reachable by nothing.
+  Changing equality/hash-relevant state after insertion can make lookup search a different
+  bucket or change equality without reindexing the stored entry. Behavior is unspecified;
+  iteration may still find it, so do not rely on either lookup failure or success.
 - Prefer a record when the type _is_ its components. The generated `equals` and `hashCode`
   cover every component; the two edge cases to know are array components (compared by
   identity — use `List` instead) and floating-point components (compared as by
@@ -66,7 +75,7 @@ because a record generated `toString` for every component.
   compare arrays with `Arrays.equals`/`Arrays.deepEquals`, never `==`. `Objects.equals`
   handles null on both sides for everything else.
 - Do not depend on any hash value crossing a process, a restart or a JVM version. `Object`'s
-  — and therefore every enum's — `hashCode` is identity-based and differs per run; `String`'s
+  — and therefore every enum's — `hashCode` is identity-based without a cross-run guarantee; `String`'s
   is specified and stable but is not a distribution function. Persisting, sharding,
   partitioning or deduplicating on `hashCode` is a defect; use an explicit digest or key. See
   consistent-hashing and idempotency.
@@ -110,6 +119,11 @@ because a record generated `toString` for every component.
   Arrays retain an idiomatic public `clone()`.
 
 ## References
+
+Deliver the identity/equality/order contract, affected collection or lifecycle evidence,
+compatibility impact and checks executed. Use pairs for symmetry/hash agreement and triples
+for transitivity/ordering, including null, special numeric values and proxy states where relevant.
+Finite tests expose defects; they do not prove the relation universally correct.
 
 - [equals and hashCode](references/equals-and-hashcode.md) — read when writing or reviewing
   either method, when a class with subclasses needs value equality, when an entity or a

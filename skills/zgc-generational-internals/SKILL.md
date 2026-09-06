@@ -2,7 +2,7 @@
 name: zgc-generational-internals
 description: >
   Generational ZGC internals: coloured pointers without multi-mapping, the load and store
-  barriers, the young and old cycles and their three STW phases, the remembered-set bitmap
+  barriers, the young and old cycles and their STW phases, the remembered-set bitmap
   and its double buffering, relocation and page management, allocation stalls, and the
   generational log and JFR event names. Use when a deploy script still carries
   -XX:+ZGenerational, when jdk.ZAllocationStall events appear or allocation stalls cluster
@@ -55,20 +55,23 @@ leaves the real problem undiagnosed while looking like a fix.
 
 ## Rules
 
-- Never prescribe `-XX:+ZGenerational`. Removed by JEP 490 (JDK 24), and **not** silently
-  ignored. On JDK 25 the JVM starts and warns; from JDK 26 it refuses to start with
-  `Unrecognized VM option 'ZGenerational'`. Both executed, Temurin 25.0.4+7 and 26.0.2+7.
-  An inherited occurrence is therefore an upgrade blocker, not dead configuration.
+- Do not add `ZGenerational` to JDK 24+: JEP 490 made it obsolete, with a warning while
+  ignoring the value. Reproduced on Temurin 25.0.3+9. Expiration subsequently makes it
+  unrecognized; test the exact upgrade build rather than treating acceptance as application.
+  Historical JDK 21/22 generational selection requires the version-specific flag.
   Timeline: JEP 439 (JDK 21, opt-in) → JEP 474 (JDK 23, default) → JEP 490 (JDK 24, only mode).
-- Never prescribe `-XX:+ZProactive` for allocation stalls. It is already `true` by default,
-  and it addresses idleness and low allocation, not sustained allocation peaks.
+- Reasserting default-enabled `ZProactive` is not an allocation-stall fix. Inspect its
+  effective value and cycle trigger before considering a change; proactive collection
+  targets idleness/low allocation rather than guaranteeing recovery from sustained peaks.
 - Heap sizing is conditional on measured live set, allocation distribution, relocation
   progress, large pages/objects, concurrent CPU and burst duration. No collector-independent
   live-set multiplier (1.5×, 2.5× or 4×) predicts safety; derive and validate headroom under
   steady, peak and throttled conditions.
-- A pause script that greps `"Pause Mark"` reports an optimistically wrong percentile —
+- A pause script that greps `"Pause Mark"` reports an incomplete population —
   `Pause Relocate Start` is a real STW pause and is commonly omitted from diagrams. Every
   such script needs a sanity assertion that aborts when the sample count is zero.
+  Omitting a phase can bias a percentile either way. Allocation stalls block allocating
+  threads, not necessarily all application threads at a global safepoint; keep them separate.
 - The load-barrier fast path tests **the pointer value** with a bitmask, before any access to
   the pointed-to object. Any explanation shaped like `if (obj.color != expected)` inverts the
   dependency order that makes the mechanism safe.
@@ -88,8 +91,8 @@ leaves the real problem undiagnosed while looking like a fix.
 - `jcmd <pid> Thread.dump` is not a subcommand. Use `Thread.print` or
   `Thread.dump_to_file -format=json` — and neither measures CPU. For per-thread CPU use
   `top -H -p <pid>` or `pidstat -t -p <pid> 1`.
-- Label every overhead and sizing number as an expected order of magnitude to be measured
-  locally, never as a measurement already taken on this build and workload.
+- Distinguish measured overhead/sizing evidence from estimates. Report an actual measurement
+  with its build, workload and method; label unmeasured predictions as conditional.
 
 ## Production acceptance
 
@@ -103,7 +106,7 @@ leaves the real problem undiagnosed while looking like a fix.
 ## References
 
 - [Cycles, logs and events](references/cycles-logs-and-events.md) — the phase sequence with
-  all three STW pauses, the per-generation log format, the JFR event table and the recording
+  STW phase families, the per-generation log format, the JFR event table and the recording
   and reading commands. Read when configuring ZGC logging, writing a pause-measurement
   script, or interpreting a generational ZGC log.
 - [Barriers and the remembered set](references/barriers-and-remembered-set.md) — the load and
@@ -113,4 +116,4 @@ leaves the real problem undiagnosed while looking like a fix.
 
 Authoritative sources: [JEP 439](https://openjdk.org/jeps/439),
 [JEP 474](https://openjdk.org/jeps/474), [JEP 490](https://openjdk.org/jeps/490), and the
-[OpenJDK ZGC sources](https://github.com/openjdk/jdk/tree/master/src/hotspot/share/gc/z).
+[OpenJDK 25 ZGC sources](https://github.com/openjdk/jdk/tree/jdk-25-ga/src/hotspot/share/gc/z).

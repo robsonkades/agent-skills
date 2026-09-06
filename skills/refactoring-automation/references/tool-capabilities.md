@@ -5,15 +5,15 @@ that model contains — and what it silently misses is bounded by the same thing
 
 ## What each tool sees
 
-| Tool                                     | Model                                                 | Sees types?                    | Sees the whole repo?  | Blind to                                                                          |
-| ---------------------------------------- | ----------------------------------------------------- | ------------------------------ | --------------------- | --------------------------------------------------------------------------------- |
-| IDE refactoring                          | Resolved AST + project index                          | Yes                            | One project/workspace | Strings, most external config, other repositories                                 |
-| OpenRewrite                              | LST — AST with type attribution, formatting, comments | Yes, if the classpath resolved | Yes, module by module | Anything outside the source set it was pointed at                                 |
-| Error Prone / Refaster                   | javac AST during compilation                          | Yes                            | Whatever compiles     | Non-compiling code, generated sources excluded from the build                     |
-| IntelliJ Structural Search/Replace       | Resolved AST, pattern-matched                         | Yes                            | One project           | Same as the IDE; also easy to write an over-broad pattern                         |
-| JavaParser / Spoon                       | AST, type attribution only if configured              | Optional                       | What you feed it      | Formatting fidelity; types when the classpath is not supplied                     |
-| Formatter (spotless, google-java-format) | Token stream                                          | No                             | Configured file set   | Meaning entirely — which is why it is safe and why it must be alone in its commit |
-| sed / regex                              | Bytes                                                 | No                             | Anything              | Scope, shadowing, imports, overloads, comments, strings, generics                 |
+| Tool                                     | Model                                                     | Sees types?                        | Sees the whole repo?  | Blind to                                                                                       |
+| ---------------------------------------- | --------------------------------------------------------- | ---------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------- |
+| IDE refactoring                          | Resolved AST + project index                              | Yes                                | One project/workspace | Strings, most external config, other repositories                                              |
+| OpenRewrite                              | LST — AST with type attribution, formatting, comments     | Yes, if the classpath resolved     | Yes, module by module | Anything outside the source set it was pointed at                                              |
+| Error Prone / Refaster                   | javac AST during compilation                              | Yes                                | Whatever compiles     | Non-compiling code, generated sources excluded from the build                                  |
+| IntelliJ Structural Search/Replace       | Resolved AST, pattern-matched                             | Yes                                | One project           | Same as the IDE; also easy to write an over-broad pattern                                      |
+| JavaParser / Spoon                       | AST, type attribution only if configured                  | Optional                           | What you feed it      | Formatting fidelity; types when the classpath is not supplied                                  |
+| Formatter (Spotless, google-java-format) | Tool/parser dependent; Spotless composes configured steps | Not generally semantic refactoring | Configured file set   | Language level, configured steps and tool defects; formatting is not automatic proof of safety |
+| sed / regex                              | Bytes                                                     | No                                 | Anything              | Scope, shadowing, imports, overloads, comments, strings, generics                              |
 
 The column that matters is the last one. A tool is chosen by what it is blind to, not by
 what it advertises.
@@ -24,9 +24,9 @@ Highest value per unit of risk for a single project, and the right default for R
 Move, Change Signature, Extract and Inline. It updates callers, overrides, Javadoc `@link`
 references and — for the major IDEs — Spring and JPA metadata it has indexed.
 
-Two limits worth internalising. First, it is a **session**, not an artefact: nobody can
-review, test or re-run what you did. For a one-off change in one repo that is fine; for
-anything repeated it is the wrong tool. Second, its guarantees end at the project
+Two limits worth internalising. First, capture the preview/diff and settings; replay/export
+support depends on the tool. Repeated work benefits from a tested transformation artifact.
+Second, its guarantees end at the indexed project
 boundary — a rename in a library module updates the consumers _in the workspace_ and no
 others.
 
@@ -34,17 +34,17 @@ others.
 
 The default for anything repeated, repo-wide, or worth reviewing as a recipe. Its model is
 a lossless LST, so it preserves formatting and comments, which is what makes its diffs
-readable. `references/openrewrite-recipes.md` covers running and authoring.
+readable when recipes preserve them. `openrewrite-recipes.md` covers running and authoring.
 
 Choose it over the IDE when the change spans modules or repositories, must be re-runnable
 in CI, or is complex enough that the _rule_ deserves a test.
 
 ## Error Prone and Refaster
 
-Different job: not a one-time migration but a **standing** rule. A Refaster template
+Refaster can perform a one-time cleanup or support a recurring check. A template
 expresses "wherever this shape appears, replace it with that shape", and Error Prone runs
-it during compilation, so the pattern cannot come back. Reach for this after a cleanup
-lands — it is the mechanism behind "make it stick". It only sees code that compiles, and
+it with explicitly configured patching/checks. Producing a patch does not fail CI by itself;
+configure a reliable blocking check if recurrence must be prohibited. It sees the compilation model, and
 it costs build time, so it earns its place for patterns with real defect history, not for
 style preferences.
 
@@ -67,10 +67,11 @@ local that shadows it; one overload from another; a type from a same-named type 
 different package; a generic type argument from a comparison operator. An agent proposing
 `sed` for a rename is proposing an unbounded change.
 
-## Where a rename never reaches
+## Where rename coverage must be checked
 
-The AST does not contain these. A refactoring tool will report success having changed none
-of them, and every one of them fails at runtime rather than at build time.
+Java string literals and annotations are present in the AST, but their external meaning may
+not be resolved. Framework-aware IDEs/recipes can update some of these; inspect actual support,
+configured source sets and results instead of assuming either full coverage or total blindness.
 
 - **String-named framework wiring** — `@Qualifier("…")`, `@Named`, bean names,
   `@Value("${property.key}")`, `@ConfigurationProperties` prefixes, SpEL expressions,
@@ -83,7 +84,7 @@ of them, and every one of them fails at runtime rather than at build time.
   consequences, anything persisted in a cache or a message queue in the old shape.
 - **Reflection and service loading** — `Class.forName`, `META-INF/services`, annotation
   processors, `@SpringBootApplication` scan bases in strings, module `provides`/`uses`.
-- **Tests and doubles** — Mockito argument matchers on string method names, JSON fixture
+- **Tests and doubles** — reflective/string-based test helpers, JSON fixture
   files, approval/golden files, WireMock stubs, contract-test pact files.
 - **Operations** — log messages an alert greps for, metric and span names, feature-flag
   keys, dashboard queries. These break silently and are discovered during an incident.
@@ -91,7 +92,10 @@ of them, and every one of them fails at runtime rather than at build time.
   manifests, Helm values.
 
 The workflow is the same for all of them: before a rename, search for the **string form**
-of the old name across the whole repository including non-Java files, and treat every hit
-as a caller the compiler will not find. After the rename, search again for the old string
-and expect zero hits; a remaining hit is either a bug or a deliberate compatibility alias
-that needs a comment saying so.
+of the old name across relevant Java/non-Java sources, then classify hits as bindings, data,
+documentation or compatibility aliases. Search after transformation and explain residuals;
+do not rewrite unrelated text just to achieve zero hits. Also inspect generated/derived names
+and external consumers: they may have no literal occurrence in this repository.
+
+Primary references: [Error Prone Refaster patch generation and application](https://errorprone.info/docs/refaster),
+[google-java-format parser and language requirements](https://github.com/google/google-java-format).

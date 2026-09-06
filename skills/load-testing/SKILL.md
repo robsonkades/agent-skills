@@ -64,6 +64,9 @@ signals stabilize—compilation, cache hit rate, connection establishment, alloc
 response distribution—not after a universal duration. Do not discard startup when startup
 is the subject.
 
+Predeclare the stability criterion and maximum warmup budget. If stability never arrives,
+report that state rather than extending warmup until a favorable interval can be selected.
+
 ### 4. Control environment and generator
 
 Pin artifact, JDK, JVM, resources, dependencies and placement. Prefer isolated generators
@@ -86,9 +89,12 @@ overhead. Predeclare:
 - timeout, graceful-stop and incomplete-work treatment;
 - workload-fidelity checks.
 
-A dropped scheduled iteration invalidates a claim about the configured offered schedule,
-but remains evidence about generator capacity. It creates a censored arrival process; it
-does not silently turn the executor into a closed loop.
+A dropped scheduled iteration limits a claim about the configured arrival schedule, but
+the run can still reveal overload behavior. Occupied VUs may reflect slow target responses,
+slow scenario code or insufficient allocation, not necessarily saturated generator hardware.
+Record start lateness as well as missing starts: zero drops alone does not prove timing fidelity.
+The missing attempts are unobserved target outcomes; do not invent their latencies or silently
+classify the executor as a closed loop.
 
 ### 6. Repeat and quantify uncertainty
 
@@ -111,6 +117,9 @@ evidence, change one causal factor, and reproduce.
 - Do not average or add percentiles across replicas, windows or path components.
 - Do not treat error responses as fast successes. Report outcome and latency jointly.
 - Separate client- and server-observed latency.
+- Name each timer's start/end and included phases. Report scheduled-to-start delay separately
+  from started-request latency; a tool's request-duration metric may omit DNS, connection or
+  TLS time. Client timeout ends the client wait, not necessarily server work.
 - Explicitly start JFR and control its overhead. Native Memory Tracking requires startup
   configuration and does not enumerate Java objects.
 
@@ -167,3 +176,4 @@ generator behavior.
 - [Gatling: workload models](https://docs.gatling.io/concepts/injection/)
 - [Apache JMeter: Open Model Thread Group](https://jmeter.apache.org/usermanual/component_reference.html#Open_Model_Thread_Group)
 - [JDK Mission Control](https://docs.oracle.com/en/java/java-components/jdk-mission-control/)
+- [k6 dropped iterations and their causes](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/dropped-iterations/)

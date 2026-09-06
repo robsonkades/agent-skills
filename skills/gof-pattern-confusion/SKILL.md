@@ -22,11 +22,16 @@ Stop a design being selected by name similarity. Most of the twenty-three patter
 one neighbour with the same structure and a different intent, and the difference is always
 behavioural — who knows whom, who decides, what the caller believes it is holding.
 
-Naming a class correctly is not pedantry. "This is a Proxy, not a Decorator" tells the next reader
-that the subject may be unreachable any other way; "this is a Mediator, not a Facade" tells them
-the collaborators call back into it and that it will accumulate their rules.
+Naming is useful when it communicates a contract: a protection proxy calls for a bypass review,
+while a mediator calls for inspection of participant coordination rules. The label alone proves
+neither exclusive reachability nor future growth.
 
 ## The two questions that separate the four wrappers
+
+Treat these as shortlist heuristics, not mutually exclusive type tests. Inspect callers,
+delegation, transitions, failure paths and ownership; one class can serve multiple roles.
+Examples are partial Java 17 sketches with domain types/imports/wiring omitted. Inspect the
+project release and actual framework APIs; classification does not authorize dependency upgrades.
 
 ```text
 Q1: Is the wrapper's interface the SAME as the wrapped object's?
@@ -56,33 +61,36 @@ Q2 (different/coarser interface): what boundary is translated?
 
 ```text
 Strategy vs State
-    Who changes it? The caller → Strategy. The object → State.
+    Interchangeable policy → Strategy. Lifecycle-dependent behavior and
+    valid transitions → State. Who assigns the field is only a clue.
 
 Strategy vs Template Method
-    Whole algorithm varies → Strategy. Named steps inside a fixed
-    sequence vary → Template Method.
+    Behavior supplied through composition → Strategy. Inherited skeleton
+    invoking overridable steps → Template Method. They can coexist.
 
 Strategy vs Command
     A way of doing something, passed in → Strategy.
-    A request to do something, stored → Command.
+    A request to do something, represented as an object → Command;
+    storing or queueing it is optional.
 
 Command vs Event
-    Imperative, one handler, may be refused → Command.
-    Past tense, any subscribers, already happened → Event.
+    Requests an action/decision → Command. Reports an established fact → Event.
+    Naming and subscriber count are clues; consumer failure does not undo a fact.
 
 Observer vs Mediator
     The subject does not care who reacts → Observer.
     The hub decides what happens next → Mediator.
 
 Facade vs Mediator
-    Direction. Do the collaborators call back in? Then Mediator.
+    Simplifies subsystem access → Facade. Governs participant interactions
+    → Mediator. Callbacks alone prove neither.
 
 Mediator vs command dispatcher
     Is there a protocol between participants? If not, it is dispatch.
 
 Chain of Responsibility vs Decorator
-    Does one handler handle and the rest stop → Chain.
-    Do all of them run, wrapping each other → Decorator/pipeline.
+    Handler continuation/selection protocol → Chain (first-match or processing chain).
+    Adds behavior through component wrapping → Decorator; may short-circuit too.
 
 Composite vs Decorator
     Both conform to a component interface. Composite models part/whole
@@ -93,13 +101,13 @@ Visitor vs Iterator
     A Visitor usually needs a traversal; an Iterator needs no operation.
 
 Bridge vs Strategy
-    Does the abstraction side have variants of its own? Bridge.
-    One class holding one varying behaviour? Strategy.
+    Independent abstraction/implementation evolution → Bridge.
+    Interchangeable behavior → Strategy. Current class count is not decisive.
 
 Factory Method vs Abstract Factory vs Builder
     One product, chosen by a subtype → Factory Method.
     A family that must match → Abstract Factory.
-    One product, many parameters → Builder.
+    Staged construction → Builder; many parameters alone are insufficient.
 
 Factory Method vs static factory method
     A subclass hook inside an inherited algorithm → the GoF pattern.
@@ -110,35 +118,38 @@ Singleton vs Flyweight
     Shared instances because memory matters → Flyweight.
 
 Memento vs snapshot vs event sourcing
-    In-process and opaque → Memento.
-    Durable, versioned, a contract → snapshot.
-    History of why, replayed → event sourcing.
+    Opaque restoration capture, transient or durable → Memento.
+    State capture; durable use adds schema/recovery contracts → snapshot.
+    Authoritative events replayed into state → event sourcing; only recorded reasons survive.
 
 Proxy vs a remote client
-    If the interface admits remoteness — deadlines, failure types,
-    bulk operations — it is a client and that is healthier than a
-    proxy pretending the call is local.
+    A remote client may be a Proxy. Either label must expose relevant
+    deadlines, partial/unknown failures and batch semantics.
 ```
 
 ## Decision rules
 
 ```text
 IF two candidates both fit
-THEN ask what the caller must NOT know. That is almost always the
-     discriminator, because intent is what differs.
+THEN identify each responsibility and its observed contract. Keep a composed
+     classification when justified; missing intent/call-site evidence is not proof.
 
 IF a wrapper's interface differs from the wrapped type's
-THEN it is not a Decorator or a Proxy, whatever it is called.
+THEN inspect which client-facing contract it preserves or translates;
+     classify adapter/facade duties separately from access or behavior duties.
 
 IF the class is invoked by its own collaborators
-THEN it is a Mediator, not a Facade, and it will grow.
+THEN inspect whether it owns their interaction protocol; a callback alone
+     does not make it a Mediator.
 
 IF a "Strategy" is reassigned by the object that holds it
-THEN it is a State, and there are transitions nobody has written down.
+THEN inspect lifecycle invariants and transitions before calling it State;
+     adaptive policy selection can still be Strategy.
 
 IF an "event" can be rejected, or has exactly one handler that owes
 an answer
-THEN it is a command; rename it before the coupling is built on it.
+THEN distinguish rejecting a requested action from failing to process an
+     established fact. Handler count and delivery acknowledgments do not decide.
 
 IF a "Factory Method" is static and lives on the product type
 THEN judge it as a named constructor, not by this pattern's criteria.
@@ -150,6 +161,9 @@ THEN write the behaviour in the class Javadoc and move on. The name
 ```
 
 ## References
+
+For a classification review, return the observed behavior/call sites, proposed role(s), practical
+contract consequence and any unresolved evidence. Do not refactor working code just to fit a name.
 
 - [The four wrappers](references/wrappers.md) — Adapter, Decorator, Proxy and Facade separated in
   full: the same code shape written four ways with what differs, the ownership and reachability

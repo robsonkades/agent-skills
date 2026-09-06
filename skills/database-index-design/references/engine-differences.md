@@ -14,6 +14,10 @@
 A wide clustered/primary key is multiplied into secondary indexes in SQL Server and InnoDB. The
 same arithmetic does not apply to PostgreSQL's heap/TID model.
 
+The InnoDB row assumes an explicit primary key. Without one, InnoDB selects a suitable
+UNIQUE NOT NULL index, or creates a hidden clustered row ID when none exists. Inspect the
+actual clustered key before estimating secondary-index width.
+
 ## Plan evidence
 
 - SQL Server: compare `SeekPredicates` with residual `Predicate`, actual rows, executions, logical
@@ -25,9 +29,14 @@ same arithmetic does not apply to PostgreSQL's heap/TID model.
 
 ## Semantics that do not port
 
-- Unique nullable columns: SQL Server ordinarily permits one `NULL`; PostgreSQL and MySQL permit
+- A single-column unique nullable key: SQL Server ordinarily permits one `NULL`; PostgreSQL and MySQL permit
   multiple `NULL`s by default. PostgreSQL 15+ can request `NULLS NOT DISTINCT`; SQL Server often
   uses a filtered unique index to express “unique when present.”
+- Composite uniqueness applies to key tuples, not a one-NULL-per-column allowance. Verify null
+  combinations and collation semantics with representative values. `INCLUDE` columns do not
+  participate in uniqueness, whereas appending a column to a UNIQUE key changes its contract:
+  `(email, status)` no longer guarantees unique `email`. MySQL covering extensions must not
+  silently weaken a constraint this way.
 - A partial/filtered index is usable only when the optimizer can prove the query predicate implies
   the index predicate at planning time. Parameterization and generic plans can defeat that proof.
 - PostgreSQL index order includes explicit `NULLS FIRST/LAST`; requested null placement can decide
@@ -43,3 +52,9 @@ Time ordering is a property of the value plus the column's comparison semantics.
 `uniqueidentifier` does not compare UUID v7 bytes in timestamp order; `BINARY(16)` preserves the
 chosen byte order. InnoDB pays PK width in every secondary index. PostgreSQL's native `uuid` lives
 outside the heap organization but still affects B-tree locality and index size.
+
+## Sources
+
+- [PostgreSQL 18 CREATE INDEX, INCLUDE and uniqueness](https://www.postgresql.org/docs/18/sql-createindex.html)
+- [PostgreSQL 18 HOT eligibility](https://www.postgresql.org/docs/18/storage-hot.html)
+- [InnoDB clustered and secondary indexes](https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html)

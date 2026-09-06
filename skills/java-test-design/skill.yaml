@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-test-design
-version: 1.0.0
+version: 1.0.1
 description: >-
   Writing a Java test that survives refactoring and says why it failed: naming the behaviour
   rather than the method, one reason to fail, test data builders over shared mutable setup,

@@ -48,6 +48,8 @@ mappings may be outside NMT. Identify the target build/path instead of encoding 
 NMT does **not** provide per-buffer identity. Detail mode can expose native call sites for
 tracked JVM allocations, but it is not a Java ownership graph and does not cover arbitrary
 third-party allocation. Use it to partition and diff, not to prove a buffer-level root cause.
+NMT committed bytes are not RSS: subtracting them from RSS does not quantify untracked JNI
+memory. Compare changes and mapping residency on a common timeline instead.
 
 ## Attributing a leak to a Java call stack
 
@@ -91,10 +93,13 @@ there is no Java object there to inspect.
 
 ## Sizing MaxDirectMemorySize
 
-Absent the flag the ceiling is implicitly `-Xmx`, which rarely reflects real direct memory use.
+On the referenced HotSpot 25 path, the default ceiling is `Runtime.maxMemory()`, usually
+derived from `-Xmx`. The limit controls direct-buffer capacity reservations, not all native
+memory, FFM arenas or mapped files. `TotalCapacity` is the relevant pool metric for that
+limit; `MemoryUsed` may differ because of alignment/accounting overhead.
 
 1. Run in staging under representative load, long enough to reach steady state.
-2. Measure `MemoryUsed` on the `direct` pool via JMX over time — not a single sample.
+2. Measure `TotalCapacity` and `MemoryUsed` on the `direct` pool via JMX over time — not a single sample.
 3. Model the legitimate peak from maximum concurrent buffers, capacities (not merely bytes
    used), pooling slack, I/O bursts and release lag; include uncertainty from unseen paths.
 4. Choose a limit that fits the complete cgroup/native budget and produces the desired
@@ -103,9 +108,15 @@ Absent the flag the ceiling is implicitly `-Xmx`, which rarely reflects real dir
    load shape does not prove all cardinalities are bounded.
 
 A pre-measurement estimate is only a hypothesis: 10,000 concurrent 64-KiB buffers imply about
-625 MiB of capacity before pool slack, duplicate/slice accounting, TLS/network buffers and
+625 MiB of capacity before pool slack, TLS/network buffers and
 bursts. Derive a candidate from the full model, then validate failure behavior and cgroup
 headroom; the arithmetic alone does not select 1 GiB.
+Slices/duplicates normally share a backing allocation, so do not multiply its reservation
+by the number of views; even a small retained slice can keep that whole allocation alive.
+
+A direct-buffer reservation OOME is thrown from Java's `Bits` path; do not assume it triggers
+HotSpot's shared VM OOM hooks such as `HeapDumpOnOutOfMemoryError` or `ExitOnOutOfMemoryError`.
+Verify failure handling on the actual runtime separately from a heap-exhaustion test.
 
 Alert on distance to the limit together with rate, workload and allocation failures; universal
 50/80% thresholds ignore burst size and release latency. Raising a limit without explaining

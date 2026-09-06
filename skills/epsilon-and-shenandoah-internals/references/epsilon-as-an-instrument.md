@@ -37,8 +37,8 @@ harness that expects to observe the error in-process, or a test that asserts on 
 `EpsilonMinHeapExpand` (128 MB, experimental) and prints `Consider setting -Xms equal to
 -Xmx to avoid resizing hiccups` at start-up when they differ, plus `Consider enabling
 -XX:+AlwaysPreTouch to avoid memory commit hiccups` in every case (verified). For a latency
-benchmark both hints are instructions: page faults on first touch are a measurable term that
-has nothing to do with the code under test.
+benchmark these controls can exclude resizing/first-touch work from the timed region, but
+pre-touch adds startup work and resident memory. Keep that cost in a cold-start experiment.
 
 **TLABs are elastic.** `EpsilonElasticTLAB` (true), `EpsilonMaxTLABSize` (4 MB),
 `EpsilonTLABElasticity` (1.10) and `EpsilonTLABDecayTime` (1000 ms) — all experimental —
@@ -49,12 +49,14 @@ grow a thread's TLAB while it allocates steadily and shrink it after a pause. Th
 ## The arithmetic
 
 ```
-T_oom = (Xmx − initial footprint) / A
+T_oom ≈ (usable heap − heap consumed at measurement start) / A
 ```
 
-`A` is the sustained allocation rate in bytes per second. The initial footprint is heap use at
-boot — loaded classes, static structures — before the first byte of business data. Read it
-from `jcmd <pid> GC.heap_info` once warm-up is over (below), not from an estimate.
+`A` is total process heap consumption per second, including TLAB waste and background work.
+Use a measured baseline after warm-up for a steady-state window; it includes all warm-up
+allocation, not just live objects. Account for alignment, TLAB tails, allocation size and
+native/container headroom. Varying rates require cumulative allocation, not a constant-rate
+prediction. Native exhaustion or an oversized allocation can fail before this estimate.
 
 Used in both directions:
 
@@ -68,15 +70,16 @@ gap is the finding.
 
 ## Four uses, and the heap each implies
 
-| Use                                                                  | Heap                                                    | Why                                                                                                          |
-| -------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Precise benchmarking                                                 | Large enough not to OOM during the measurement          | No GC means no GC variance in the numbers; allocation throughput is isolated from collection logic           |
-| Very short-lived processes (CLI, sub-second serverless, small batch) | Available memory minus JVM overhead, around 50 MB       | The process dies before it would need to reclaim anything, so any collection is pure cost                    |
-| Detecting hidden allocation pressure                                 | Deliberately modest — enough to run, not enough to hide | Excess allocation becomes a fast, observable OOM instead of a symptom a collector masks until it is too late |
-| Verifying an allocation-free path                                    | Small, but sized past warm-up — see below               | The path OOMs if it allocates at all. This is a correctness test, not a performance test                     |
+| Use                                                                  | Heap                                                           | Why                                                                                                          |
+| -------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Precise benchmarking                                                 | Large enough not to OOM during the measurement                 | No GC means no GC variance in the numbers; allocation throughput is isolated from collection logic           |
+| Very short-lived processes (CLI, sub-second serverless, small batch) | Measured cumulative allocation plus startup and safety reserve | Compare end-to-end runtime and resident memory with a collecting baseline                                    |
+| Detecting hidden allocation pressure                                 | Deliberately modest — enough to run, not enough to hide        | Excess allocation becomes a fast, observable OOM instead of a symptom a collector masks until it is too late |
+| Investigating an allocation-free claim                               | Sized past warm-up with a defined measurement window           | Bound allocation with counters/profiles; finite survival cannot prove zero allocation                        |
 
-Practical sizing tip for the benchmark case: run once under a normal collector, observe the
-real peak heap, add ~20% margin, and use that as Epsilon's `Xmx`.
+Size from cumulative bytes allocated during startup, warm-up and measurement, plus measured
+waste and reserve. A normal collector's peak occupancy plus 20% is insufficient: it can
+reclaim the same capacity repeatedly while Epsilon retains all consumed heap.
 
 ```bash
 # CLI or lambda
@@ -95,9 +98,10 @@ real peak heap, add ~20% margin, and use that as Epsilon's `Xmx`.
 A `-Xmx64m` process that OOMs proves nothing about the steady-state path, because the JVM
 allocates heavily before C2 has compiled it: class loading, the interpreter and C1 allocate
 what C2's escape analysis later removes, and the boxing or iterator that C2 scalar-replaces
-is a real object in every earlier tier.
+may still allocate before the relevant optimization applies. Do not assume identical escape
+analysis decisions across tiers or compilation states.
 
-The valid test reads the slope of `used` after warm-up. The boot footprint itself comes from
+The test reads consumption after warm-up with a stated resolution. The baseline comes from
 `jcmd <pid> GC.heap_info` (verified: `Epsilon Heap`, `Allocation space: space 65536K, 2%
 used […)`) taken once warm-up is over, and `jcmd <pid> GC.class_histogram` works under
 Epsilon and says what that footprint is made of. With `-Xlog:gc` Epsilon prints a
@@ -109,12 +113,13 @@ Epsilon and says what that footprint is made of. With `-Xlog:gc` Epsilon prints 
 [0.027s][gc] Heap: 65536K reserved, 65536K (100.00%) committed, 7253K (11.07%) used
 ```
 
-A path that is allocation-free once compiled shows `used` climbing during warm-up and then
-flat, with the same few lines repeating only for the elastic-TLAB refills of other threads. A
-path that allocates shows a constant slope; the slope is `A`, and it is the per-iteration
-cost when divided by the iteration rate. Confirm compilation happened before reading the flat
-segment (`-XX:+PrintCompilation`, or JFR `jdk.Compilation`); a flat segment under `-Xint` is
-a different claim.
+A quiet occupancy log is not a zero-allocation measurement: allocations can fit inside an
+existing TLAB or below the logging increment. Measure repeated post-warm-up windows, subtract
+or identify background activity, and corroborate with allocation counters/profiles. Report
+resolution and bytes per operation; sampling can miss rare allocations. A stable positive
+heap-consumption slope estimates total `A`, not automatically the hot path's allocation rate.
+Confirm compilation and exercised paths before interpreting a flat segment; a flat segment
+under `-Xint` is a different claim.
 
 ## Instrumentation
 
@@ -135,15 +140,14 @@ Heap dump file created [69784618 bytes in 0.063 secs]
 Terminating due to java.lang.OutOfMemoryError: Java heap space
 ```
 
-There is no `gc+heap` summary at exit beyond the last `Heap:` line; the final `used` is the
-one to subtract from the boot footprint when back-computing `A`.
+The last periodic `Heap:` line can precede exhaustion and omit sub-threshold consumption.
+Use aligned baseline/end measurements and report resolution when estimating `A`.
 
-The heap dump is the point of the exercise. Collecting one and not analysing it wastes the
-experiment: the OOM only tells you the budget was exceeded; the dump tells you by what. The
-analysis itself is `heap-dump-analysis`; Epsilon adds nothing to it except a dump that
-contains every object ever allocated in the window, garbage included — the dominator tree
-answers "what is retained", the histogram answers "what was produced", and for an
-allocation-rate question the histogram is the relevant one.
+Use a dump when class/graph evidence is needed, not as a mandatory artifact for every budget
+test. Epsilon can expose unreachable objects still represented in the heap, but a dump is
+not an exact allocation-event history and has no allocation-site stacks. Check the dump
+tool's filtering and unreachable-object treatment; use profiles/counters for rate and site
+attribution (`heap-dump-analysis`, `allocation-profiling`).
 
 ## The procedure, end to end
 
@@ -151,37 +155,42 @@ allocation-rate question the histogram is the relevant one.
    variance is GC", "our allocation rate is X".
 2. Compute the heap from `T_oom` for the experiment you are running, and write down the
    predicted time to OOM.
-3. Run with `-XX:+HeapDumpOnOutOfMemoryError`, `-Xms` = `-Xmx`, `-XX:+AlwaysPreTouch`, and
-   `-XX:-ExitOnOutOfMemoryError` if anything in-process must observe the error.
-4. Compare the observed time to OOM against the prediction. A large shortfall is unaccounted
-   allocation.
-5. Analyse the dump. Identify the dominant object type, and the code that produces it.
+3. Choose dump/pre-touch/startup controls for the hypothesis and reserve headroom. Set
+   `-XX:-ExitOnOutOfMemoryError` only if an isolated harness must observe the error.
+4. Compare exhaustion with the prediction; investigate unaccounted allocation, waste,
+   allocation size and the actual failure cause before attributing a shortfall.
+5. Analyse any dump for classes/graphs and use allocation evidence to identify producing code.
 6. Fix, then re-run the same Epsilon configuration. Surviving the window that previously
-   OOMed is the acceptance criterion, and feeding the new time back through `T_oom` gives the
-   corrected allocation rate.
+   OOMed demonstrates meeting that finite budget, not zero allocation. Report measured bytes
+   per operation or an upper bound; no observed OOM gives a bound, not a new measured `T_oom`.
 
-A worked shape of that loop: a hot path asserted to be allocation-free OOMs after ~2 hours
-under `-Xmx512m`. The dump is dominated by `String[]` — a `Map<String, Double>` of prices,
-whose keys and autoboxed values produce objects on every tick, tens of thousands per second at
-peak. Replacing it with a `HashMap<Long, long[]>` holding fixed-point integers, the same
-configuration runs 8 hours without an OOM, and `T_oom` run backwards confirms the hot-path
-allocation rate is now near zero.
+Illustrative budget: with 400 MiB usable after warm-up, surviving an eight-hour window
+without exhaustion bounds average consumption by roughly 14.2 KiB/s. That can still contain
+many allocations. A `HashMap<Long, long[]>` can allocate boxed keys, nodes, arrays and resize
+tables; changing generic types is not proof of allocation freedom. Changing numeric
+representation also requires preserving range, precision and rounding behavior.
 
-Epsilon fixed nothing there. It made the symptom impossible to ignore, converting a debate
-about where a GC pause was into a measurable fact about allocation.
+This is a budget bound. Use allocation-site evidence to decide whether an implementation
+change is warranted and verify its correctness separately.
 
 ## Boundaries
 
-- Never a long-lived production service, unless the hot path is verified allocation-free or
-  the process is recycled before `T_oom`. There is no third option; "GC-free performance" is
+- A long-lived process needs a bounded total lifetime allocation budget, including background
+  work, or recycling before conservative exhaustion. An allocation-free hot path alone is
+  insufficient. "GC-free performance" can be
   an OOM with a countdown — and, by default, an exit with status 3 that no handler sees.
 - Have an answer for what happens at `T_oom` before starting: recycle, alert, or "that is the
   expected result of the experiment".
 - Epsilon says how much is allocated, never by whom. Attributing allocation to code is a
   profiling job (`allocation-profiling`).
-- Epsilon has no barriers and no concurrent threads, so a benchmark under Epsilon measures
-  the mutator alone. Its numbers do not transfer to a collector with a load barrier
+- Epsilon performs no reclamation and has no collector barriers or concurrent GC workers;
+  JIT, runtime, background work and non-GC safepoints remain. Its numbers do not transfer to a collector with a load barrier
   (Shenandoah, ZGC) or a card-marking store barrier (G1, Parallel, generational
-  Shenandoah); the difference between the Epsilon run and the production-collector run is
-  the collector's per-access cost plus its concurrent CPU, and that difference is the
-  measurement, not a nuisance.
+  Shenandoah). The difference also includes allocation paths, layout/locality, heap occupancy,
+  JIT decisions and scheduling effects; it is a whole-configuration comparison, not an isolated
+  per-access barrier measurement.
+
+## Primary sources
+
+- [JEP 318](https://openjdk.org/jeps/318) — intended uses and finite heap constraints.
+- [Epsilon initialization, JDK 25 update sources](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/gc/epsilon/epsilonArguments.cpp) — OOM exit default and non-GC safepoint support; use the target build tag.

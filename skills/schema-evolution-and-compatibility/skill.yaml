@@ -1,18 +1,18 @@
 schemaVersion: 1
 
 name: schema-evolution-and-compatibility
-version: 1.2.1
+version: 1.2.2
 description: >-
   Whether a given schema change is safe, in which deploy order, and what breaks when it is
   not: the writer/reader pair, the compatibility levels and who upgrades first, the
   per-format rules for Avro, Protobuf and JSON Schema, registry configuration, and catching
   a break in CI. Use when AvroTypeException reports a missing required field, when "Can't
   get the number of an unknown enum value" is thrown, when UnrecognizedPropertyException
-  comes from a hand-built new ObjectMapper(), when auto.register.schemas or
+  exposes an unexpected mapper policy, when auto.register.schemas or
   specific.avro.reader is left at its default, when a proto field is deleted without
-  reserved or its number reused, when BACKWARD is set on a compacted topic, when a consumer
+  reserved or its number reused, when BACKWARD leaves retained history unchecked, when a consumer
   group reset to earliest dies on old records, when an .avsc gains a field with no default,
-  or when a JSON schema ships with additionalProperties left at true. Not wire size
+  or when a typed property is added to an open JSON schema. Not wire size
   (serialization-performance), HTTP API versioning (rpc-and-api-contracts), offsets
   (kafka-consumers-in-java), or upcasters (event-sourcing).
 

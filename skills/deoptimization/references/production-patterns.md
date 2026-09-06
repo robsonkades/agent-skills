@@ -5,8 +5,8 @@ worth pulling. Runtime facts are from Temurin 25.0.3 unless marked.
 
 ## The post-deploy timeline
 
-A fresh JVM produces every kind of event in the first minutes, and all of it is the design
-working:
+A fresh JVM commonly produces the following startup patterns. Their timing alone does not
+establish that they are harmless; check persistence and service impact:
 
 | Window          | What the logs show                                                                     | Why                                                               |
 | --------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
@@ -38,8 +38,10 @@ verified here. Treat a restart as evidence collection with a clean slate, never 
 
 ## Where runtime class loading comes from
 
-Any of these adds an implementor to a hierarchy that C2 had assumed closed, and each
-addition flushes every nmethod holding that assumption at once:
+These can introduce classes. Invalidation requires a new class to violate a dependency that
+compiled code actually registered; repeated generation does not imply repeated invalidation of
+an assumption already abandoned. MapStruct-style code is generally generated at build time,
+though its loading can still be lazy:
 
 | Source                                                                        | Evidence in `-Xlog:class+load`                      | Note                                                                                                                                                                                             |
 | ----------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -67,18 +69,21 @@ Two different mechanisms hide behind "the APM agent causes deoptimisation":
   hierarchies produces ordinary CHA invalidations at call sites unrelated to what it
   observes. The `dependee` in `-Xlog:dependencies=debug` names the agent's class.
 
-Neither produces `jdk.Deoptimization` events. The JFR-only view of an agent problem is a
-latency spike with no compiler evidence, which is why the compilation log matters.
+Neither path produces the baseline `jdk.Deoptimization` trap event. Other JFR events may
+provide context; compilation and dependency logs distinguish the actual invalidation.
 
 ## Feature flags and configuration in the hot path
 
-| Flag storage                                          | What C2 does                                                                          | Cost after the first flip                                                                                                               |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `static final boolean`                                | Constant-folds; the dead side is never compiled                                       | Cannot flip without a restart — no cost, no runtime control                                                                             |
-| `volatile` / `AtomicBoolean` / config lookup          | A real load and a branch; the untaken side is an `unstable_if` trap until first taken | One trap per bci, then both sides compiled. The cost is the lost folding, not recurring deoptimisation                                  |
-| Flag that selects a **strategy object** at a hot site | Receiver-type profile can evolve from monomorphic to polymorphic/megamorphic          | Additional types can invalidate guarded inlining; the eventual inline shape depends on profile width, frequency and compiler heuristics |
+| Flag storage                                          | What C2 does                                                                 | Cost after the first flip                                                                                                               |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `static final boolean`                                | Constant-folds; the dead side is never compiled                              | Cannot flip without a restart — no cost, no runtime control                                                                             |
+| `volatile` / `AtomicBoolean` / config lookup          | A load and branch; an unprofiled side may use an `unstable_if` trap          | Commonly converges to compiled branches with retained profiling; event counts are not bounded to one per bci                            |
+| Flag that selects a **strategy object** at a hot site | Receiver-type profile can evolve from monomorphic to polymorphic/megamorphic | Additional types can invalidate guarded inlining; the eventual inline shape depends on profile width, frequency and compiler heuristics |
 
-The first row is a build-time decision, the second is cheap, the third is the one that turns
+Only a constant-expression `static final boolean` is a Java compile-time constant; a value
+initialized from configuration is fixed at class initialization and may be folded by HotSpot.
+The mutable-flag row describes a common convergence pattern, not an exactly-one-event guarantee.
+The cost of the second row depends on the access path; the third can turn
 a "harmless" flag into a lost inline tree on the hot path. Put the strategy choice one level
 up, so that each strategy's hot loop is a separate compiled method with its own monomorphic
 sites.
@@ -96,17 +101,17 @@ sites.
 
 ## The levers and their trade-offs
 
-| Lever                                                                     | Buys                                                                                               | Costs                                                                                                |
-| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Warm-up traffic exercising every type and branch                          | No deoptimisation under production load                                                            | A bimorphic or megamorphic profile where a monomorphic one was possible — predictability over peak   |
-| Loading generated classes at start-up                                     | One CHA burst before traffic instead of many under it                                              | Start-up time; every generated class, not just the ones this deploy needs                            |
-| Narrowing the static type at a hot call site                              | No guard, no dependency, full inlining                                                             | The design loses a seam; a `final` on the implementation alone buys nothing                          |
-| Peeling a hot receiver type into its own site                             | The hot type inlines; the rest stays virtual                                                       | Code that exists for the compiler; document why                                                      |
-| `-XX:CompileCommand=dontinline,C::m` on a large trapping callee           | Smaller blast radius per deoptimisation; cheaper rematerialisation                                 | The call boundary blocks escape analysis across it                                                   |
-| `-XX:CompileCommand=exclude,C::m` on a storming method                    | Stops the storm immediately                                                                        | The method is **interpreted**, slower than the tier-1 fallback the cutoff would give                 |
-| `-XX:-UseTypeSpeculation`                                                 | Isolates `speculate_*` traps in an experiment                                                      | Process-wide loss of a C2 optimisation; not a production setting                                     |
-| Raising `PerMethodRecompilationCutoff` / `PerBytecodeRecompilationCutoff` | More attempts before the tested HotSpot build gives up; useful only in a bounded causal experiment | More compilation/deoptimisation work and delayed fallback; it does not make unstable inputs converge |
-| Restart                                                                   | A clean MDO and a clean baseline for evidence                                                      | Nothing is fixed; the storm rebuilds                                                                 |
+| Lever                                                                     | Buys                                                                                                   | Costs                                                                                                |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Warm-up traffic exercising expected types and branches                    | Can reduce known first-use transitions under production load                                           | Startup work and profile changes; no guarantee against later invalidation                            |
+| Loading generated classes at start-up                                     | One CHA burst before traffic instead of many under it                                                  | Start-up time; every generated class, not just the ones this deploy needs                            |
+| Narrowing the static type at a hot call site                              | May remove receiver-type speculation if C2 did not already infer the target; inlining still has limits | The design loses a seam; inspect generated code and preserve required polymorphism                   |
+| Peeling a hot receiver type into its own site                             | The hot type inlines; the rest stays virtual                                                           | Code that exists for the compiler; document why                                                      |
+| `-XX:CompileCommand=dontinline,C::m` on a large trapping callee           | Smaller blast radius per deoptimisation; cheaper rematerialisation                                     | The call boundary blocks escape analysis across it                                                   |
+| `-XX:CompileCommand=exclude,C::m` on a storming method                    | Stops the storm immediately                                                                            | The method is **interpreted**, slower than the tier-1 fallback the cutoff would give                 |
+| `-XX:-UseTypeSpeculation`                                                 | Isolates `speculate_*` traps in an experiment                                                          | Process-wide loss of a C2 optimisation; not a production setting                                     |
+| Raising `PerMethodRecompilationCutoff` / `PerBytecodeRecompilationCutoff` | More attempts before the tested HotSpot build gives up; useful only in a bounded causal experiment     | More compilation/deoptimisation work and delayed fallback; it does not make unstable inputs converge |
+| Restart                                                                   | A clean MDO and a clean baseline for evidence                                                          | Nothing is fixed; the storm rebuilds                                                                 |
 
 ## Authoritative sources
 

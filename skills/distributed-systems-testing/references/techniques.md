@@ -23,8 +23,8 @@ reconnects and retries under you. Testcontainers reproduces these because the co
 class OutboxRelayTest {
     @Container
     static final PostgreSQLContainer<?> DB = new PostgreSQLContainer<>("postgres:16");
-    // Assert the invariant, not the interaction: after two relays run concurrently, each
-    // outbox row was published once and the outbox is empty.
+    // After relays run and restart, every committed event is eventually published.
+    // Publish-before-mark crashes may redeliver; the consumer applies each effect once.
 }
 ```
 
@@ -48,8 +48,9 @@ What to assert, in order:
 3. The invariant: no duplicate side effect, no lost message, a legal final state.
 
 The same shape works with a stub HTTP server for status codes, and with the container's own
-lifecycle for hard failures: stopping a container is a crash, pausing it through the Docker
-API is a stall — the more interesting of the two.
+lifecycle for hard failures: Docker stop normally sends a graceful signal before a forced
+kill after its timeout. Use an explicit hard kill to test missing shutdown hooks; pause/resume
+tests a stalled holder. Rehearse cleanup for the specific platform.
 
 ## The barrier race
 
@@ -61,23 +62,36 @@ int threads = 16;
 var barrier = new CyclicBarrier(threads);
 var outcomes = new ConcurrentLinkedQueue<String>();
 
-try (var pool = Executors.newFixedThreadPool(threads)) { // ExecutorService is AutoCloseable
+var pool = Executors.newFixedThreadPool(threads);
+var futures = new ArrayList<Future<?>>();
+try {
     for (int i = 0; i < threads; i++) {
-        pool.submit(() -> {
-            barrier.await();                    // released together
+        futures.add(pool.submit(() -> {
+            barrier.await(5, TimeUnit.SECONDS); // released together
             outcomes.add(service.charge(ORDER_ID, IDEMPOTENCY_KEY));
             return null;
-        });
+        }));
     }
-} // close() waits for termination
+    for (Future<?> future : futures) future.get(5, TimeUnit.SECONDS);
+} finally {
+    for (Future<?> future : futures) future.cancel(true);
+    pool.shutdownNow();
+    assertTrue(pool.awaitTermination(5, TimeUnit.SECONDS));
+}
 
 assertEquals(1, payments.countByIdempotencyKey(IDEMPOTENCY_KEY)); // the invariant
+assertEquals(threads, outcomes.size());                          // no silent failed callers
 assertEquals(1, Set.copyOf(outcomes).size());                     // all callers saw one answer
 ```
 
 Repeat it — `@RepeatedTest`, or a loop with a fresh key — because one run samples one
 interleaving. The in-JVM patterns behind this are `concurrency-testing`; what matters here is
 that the contended resource is the real store, since that is where check-then-act usually lives.
+The fragment uses JDK concurrency imports, fixture services and JUnit assertions; its enclosing
+method propagates checked exceptions. Each wait is bounded, not one total deadline for all waits.
+Configure bounded database/client waits and a forked test watchdog for uncooperative work.
+If the contract permits an in-progress/conflict response to duplicates, assert that explicit
+contract instead of requiring every caller to receive an identical successful result.
 
 ## Property-based order shuffling
 
@@ -107,16 +121,32 @@ observing several instants, a small mutable test clock is clearer than either.
 
 ```java
 final class TestClock extends Clock {
-    private Instant now;
-    TestClock(Instant start) { this.now = start; }
-    void advance(Duration d) { now = now.plus(d); }
-    @Override public Instant instant() { return now; }
-    @Override public ZoneId getZone() { return ZoneOffset.UTC; }
-    @Override public Clock withZone(ZoneId zone) { return this; }
+    private final java.util.concurrent.atomic.AtomicReference<Instant> now;
+    private final ZoneId zone;
+    TestClock(Instant start) {
+        this(new java.util.concurrent.atomic.AtomicReference<>(java.util.Objects.requireNonNull(start)), ZoneOffset.UTC);
+    }
+    private TestClock(java.util.concurrent.atomic.AtomicReference<Instant> now, ZoneId zone) {
+        this.now = now;
+        this.zone = java.util.Objects.requireNonNull(zone);
+    }
+    void advance(Duration d) { now.updateAndGet(value -> value.plus(d)); }
+    @Override public Instant instant() { return now.get(); }
+    @Override public ZoneId getZone() { return zone; }
+    @Override public Clock withZone(ZoneId zone) { return new TestClock(now, zone); }
 }
 ```
 
-This makes TTL, lease, window and deadline behaviour testable in milliseconds. It does **not**
+This complete helper needs `java.time.*` imports; zone views share the advancing instant and
+updates are atomic. It controls consumers that actually use this Clock. It does not advance
+`System.nanoTime`, scheduled executors, sleeps or a resilience library's separate ticker.
+Those need their own time/scheduler seam. It also does **not**
 control a TTL enforced by an external store — Redis expiry, a broker's visibility timeout, a
 database's lock timeout — which stays real time; those need a very short configured value, or
 the state driven directly.
+
+## Sources
+
+- [Clock contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Clock.html) — zone views and thread safety.
+- [Docker stop](https://docs.docker.com/reference/cli/docker/container/stop/) — graceful signal and timeout before forced termination.
+- [Transactional outbox](https://microservices.io/patterns/data/transactional-outbox.html) — relay redelivery and idempotent consumers.

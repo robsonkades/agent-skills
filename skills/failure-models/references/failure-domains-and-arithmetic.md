@@ -12,6 +12,8 @@ A_total = A1 × A2 × … × An
 
 Ten dependencies at 99.9% each: `0.999^10 = 0.9900` — 99.0%, about **87 hours a year**
 against the 8.8 hours a single 99.9% component would give. Five at 99.9% is already 99.5%.
+Hours here and below assume time-based availability over a 365-day year. A request-weighted
+failure fraction cannot be converted into elapsed downtime without an explicit traffic model.
 The arithmetic shows why "we are 99.9% because every dependency is 99.9%" is not justified.
 Without independence, request-weighted joint observations, routing and time correlation, the
 product is a design approximation rather than a prediction.
@@ -23,8 +25,9 @@ independent, the _unavailabilities_ multiply:
 q_total = q1 × q2 × … × qn        (q = 1 − A)
 ```
 
-Two independent 99% replicas give `0.01 × 0.01 = 1e-4` — 99.99%. This is the only reason
-redundancy works, and it holds exactly as far as independence does.
+Two independent 99% replicas give `0.01 × 0.01 = 1e-4` — 99.99%, assuming routing/failover
+and survivor capacity meet the same success contract. Partial correlation can still permit
+redundancy gains, but this independent product no longer gives their size.
 
 ## Correlation destroys the parallel term
 
@@ -35,7 +38,7 @@ replica failures (same image, config, certificate, AZ or downstream):
 q_total = q_common + (1 - q_common) × q_independent^n
 ```
 
-Two replicas at 99.9%, where a tenth of the failure budget is common-mode
+Two replicas at approximately 99.9%, where roughly a tenth of the failure budget is common-mode
 (`q_ind = 0.0009`, `q_common = 0.0001`):
 
 ```
@@ -61,16 +64,18 @@ request-level data rather than inventing independence.
 0.9995 × 0.9999 × 0.999 × 0.999 × 0.9995 = 0.9969   →  99.69%,  ~27 hours/year
 ```
 
-Making the payment gateway optional — accept the order, queue the charge, define the degraded
-behaviour and the reconciliation — removes one 0.999 term:
+For an **order-acceptance** contract that permits deferred payment, durable queueing plus
+defined degraded behavior/reconciliation can remove the gateway's 0.999 term. Include any
+new required durable queue/store in the model; here it is assumed to use existing storage:
 
 ```
 0.9995 × 0.9999 × 0.999 × 0.9995 = 0.9979   →  99.79%,  ~18 hours/year
 ```
 
-Nine hours a year recovered by one design decision and no extra hardware. That is the
-highest-leverage move available: **removing a dependency from the required path beats making
-the dependency more reliable**, because the second is someone else's roadmap.
+This model improves acceptance availability by the equivalent of about nine time-based hours
+per year. It does not improve availability of immediate payment completion by the same amount:
+that is a different success contract. Compare dependency removal, redundancy and reliability
+work against the permitted semantics and backlog/recovery capacity.
 
 Four caveats matter: dependency failures are rarely independent; traffic is not distributed
 uniformly; availability figures may use different windows or success criteria; and a
@@ -99,8 +104,8 @@ time series. Never average percentages without the matching denominator.
 
 ## Enumerating domains
 
-For each level, write what it takes down. If two things appear on the same row, they are one
-unit for availability purposes.
+For each level, write what it takes down for that cause. Shared host risk does not erase
+protection against independent process crashes; model common and individual faults separately.
 
 | Domain                   | Takes down                                                 | Typical control                                     |
 | ------------------------ | ---------------------------------------------------------- | --------------------------------------------------- |
@@ -125,7 +130,8 @@ outage:
 - Do the replicas run on the same node, the same node group, or nodes created from the same
   image at the same time?
 - Do they resolve the same hostname, and is the resolver itself redundant? DNS and service
-  discovery are dependencies of _every_ call.
+  discovery may be needed for connection establishment or refresh while existing connections
+  or cached results continue working; model that temporal dependency explicitly.
 - Do they share a database, a cache, a secret store, or a single connection-pool target?
   A read replica that fails over to the same primary is one database.
 - Do they share a control plane — the scheduler, the load balancer, the API gateway, the

@@ -1,20 +1,15 @@
 schemaVersion: 1
 
 name: allocation-profiling
-version: 2.1.0
+version: 2.1.1
 description: >-
-  Finding which code allocates and how many bytes: TLAB fast path and slow path, JFR
-  jdk.ObjectAllocationSample versus the legacy TLAB events, async-profiler alloc mode,
-  deriving allocation rate from the GC log, and validating a fix by reprofiling. Use when GC
-  overhead is above 10-15% of CPU, when collector tuning has stopped moving the number, when
-  a p99 spike is being blamed on TLAB refill, when the GC log shows (G1 Humongous
-  Allocation) pauses or ZGC allocation stalls, when a JFR recording of
-  jdk.ObjectAllocationInNewTLAB came back empty, when someone proposes pooling small objects
-  or -XX:+TraceTLAB, or when a stream pipeline in a hot path is assumed free because "the
-  JIT eliminates it". Does not cover choosing and running a profile in general
-  (jfr-and-async-profiler), why an allocation survives or is scalar-replaced
-  (jit-inlining-and-escape-analysis), or reading the resulting collection behaviour
-  (gc-log-analysis).
+  Attribute Java heap allocation to code and validate reductions in bytes per operation.
+  Use when allocation or GC frequency regresses, JFR allocation events are empty or disagree
+  with counters, large buffers trigger G1 humongous collections or ZGC stalls, or pooling,
+  TLAB tuning, or assumed JIT elimination is proposed without measurements. Covers sampling
+  semantics and allocation-specific triage; general capture selection belongs to
+  jfr-and-async-profiler, retention diagnosis to heap-dump-analysis, and scalar replacement
+  mechanisms to jit-inlining-and-escape-analysis.
 
 license: Apache-2.0
 
@@ -45,13 +40,13 @@ files:
 dependencies:
   - name: jfr-and-async-profiler
     version: ^1.0.0
-  - name: jit-inlining-and-escape-analysis
-    version: ^2.0.0
 
 suggests:
+  - gc-log-analysis
   - g1-internals
   - heap-dump-analysis
   - java-reference-types-and-leaks
+  - jit-inlining-and-escape-analysis
   - jmh-microbenchmarks
   - object-layout-and-footprint
   - pause-attribution

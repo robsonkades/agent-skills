@@ -26,7 +26,7 @@ token, password, card number, national id, email or address needs an explicit ov
 
 ```java
 record Credentials(String username, String password) {
-    @Override public String toString() { return "Credentials[username=" + username + "]"; }
+    @Override public String toString() { return "Credentials[redacted]"; }
 }
 ```
 
@@ -35,6 +35,10 @@ each use site. A record with a `char[]` component is insufficient unless it defe
 construction/access, defines content equality deliberately, and controls erasure; arrays remain
 mutable and copies limit rather than guarantee memory clearing. structured-logging covers event
 design; the rule here is that defense belongs at both the type and sink.
+
+Verify with hostile username/password values (including line breaks) that neither appears
+in the representation. Do not assume a username is safe diagnostic metadata merely because
+it is not the password. These record snippets require Java 16+.
 
 **Exclude** anything expensive or lazy. A `toString` that iterates a large collection, or
 touches a lazily loaded association, turns a log statement into a query or an O(n) scan —

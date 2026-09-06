@@ -1,10 +1,10 @@
 schemaVersion: 1
 
 name: technical-debt-decisions
-version: 1.1.0
+version: 1.1.1
 description: >-
   Deciding when a shortcut is a legitimate trade and when it is just damage: separating
-  deliberate debt from mess, the things that are never tradeable at any deadline, containing a
+  deliberate and inadvertent debt, constraints delivery pressure does not waive, containing a
   shortcut so it can be undone, recording it where someone will find it, and choosing which debt
   to repay by its carrying cost rather than by how much it annoys you. Use when a deadline or an
   incident is pushing work to be cut, when someone proposes shipping now and cleaning up later,

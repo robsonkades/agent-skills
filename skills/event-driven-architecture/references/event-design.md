@@ -37,7 +37,10 @@ record EventEnvelope<T>(
 This is a domain-oriented example, not a replacement for a standard envelope. CloudEvents
 defines interoperable core attributes such as `id`, `source`, `specversion`, `type`, optional
 `subject`, `time` and `dataschema`; broker partition key and trace propagation remain binding-
-specific. Define nullability, size and trust for every extension.
+specific. Define nullability, size and trust for every extension. CloudEvents occurrence
+uniqueness is the pair `source` + `id`; the example's globally unique eventId is a stronger
+application choice. State the deduplication key explicitly. A Java record is only shallowly
+immutable: T must be an immutable snapshot or serialized/copy-owned before asynchronous use.
 
 `occurredAt` should represent domain occurrence time when the domain can know it. Preserve
 separate observed/published/broker-append times: they diverge under backlog, retry and outbox
@@ -71,17 +74,18 @@ versioned state. See `message-ordering-and-partitioning`.
 
 ## The schema is a contract with consumers you cannot enumerate
 
-Two properties an RPC contract does not have:
+Two properties that become especially important with retained asynchronous messages:
 
 - **Consumer discovery is imperfect, not impossible.** Maintain owners, schema registrations,
   usage telemetry and deprecation acknowledgements, while assuming unknown/offline consumers
   may exist. A registry validates structural rules, not semantic dependence.
-- **Compatibility is needed in both directions at once.** A producer must be deployable without
-  touching consumers, so existing readers must tolerate fields they do not know (forward). A
-  new or reset consumer reads events written before it existed, so it must read old ones
-  (backward). Both must hold across the **retention plus replay horizon** — which for a
-  compacted or archived topic may be long. Full/transitive compatibility, upcasters or a
-  migration cutoff are alternative policies. The per-format rules belong to
+- **Choose compatibility directions from actual overlap.** Existing readers receiving new
+  writes need forward compatibility; new/reset readers replaying old writes need backward
+  compatibility. Their windows differ: deployed reader support versus oldest replayable
+  data, including archive and DLQ recovery. Choose the covered schema versions explicitly;
+  a latest-version check does not establish compatibility with all retained history.
+  Full/transitive compatibility, upcasters or a migration cutoff are alternative policies.
+  The per-format rules belong to
   `schema-evolution-and-compatibility`.
 
 Consequences to apply directly:
@@ -89,18 +93,19 @@ Consequences to apply directly:
 - Prefer additive compatible evolution, but exact legal changes are serialization-format and
   compatibility-mode specific. Defaults, nullability, enum handling, field-number reuse and
   validation changes all need old/new producer-consumer fixture tests.
-- When a change cannot be additive, publish a **new event type** and dual-publish for the
-  migration window. A `schemaVersion` bump that changes meaning is a breaking change wearing a
-  number.
-- Retire on evidence: a per-type, per-version consumption metric. Without it, the old type is
-  published forever.
+- For a breaking change, choose a new type/topic, versioned transformation or explicit cutoff.
+  If dual-publishing, keep logical occurrence identity/correlation and prevent subscribers to
+  both forms from applying the business effect twice. A version number alone does not make
+  changed meaning compatible.
+- Retire using owner acknowledgements, consumption evidence and the archive/DLQ/replay policy;
+  zero recent traffic does not prove that an offline consumer or recovery path is retired.
 - A consumer that fails on an unknown property has silently made every producer change
   breaking. The Jackson default and Spring Boot's override are in `rpc-and-api-contracts`.
 
 ## Payload contents
 
 - **Belongs in the event:** the entity id, the occurrence time, the fields that define the
-  fact, and every value that was true _at that moment_ — the price charged, the tier applied,
+  fact, and the authorized historical values needed to interpret it — the price charged, the tier applied,
   the address used. A consumer fetching them later gets today's values and computes a different
   answer for a past fact. This is the strongest argument for a fatter event.
 - **Fetch instead:** large binaries, data owned by another service, and anything whose access
@@ -118,10 +123,16 @@ projections diverge and no one can say which is right.
 ## Proving it
 
 - A CI check that runs the registry's compatibility test for the target mode against the
-  schema on the branch. This is the whole safety net; run it before merge, not before release.
+  schema on the branch and the required historical versions. This checks structural evolution;
+  semantic consumer fixtures remain necessary. Run it before merge, not before release.
 - A consumer test that deserialises a **stored fixture of an old event** — a real serialised
   record, checked in — rather than one produced by the current schema. A round-trip test with
   today's classes on both ends proves nothing about the events already in the log.
 - Contract tests for new-producer→old-consumer, old-producer→new-consumer and replayed archive
   combinations that actually occur; include unknown enums, omitted/default fields, maximum
   payload, duplicate/out-of-order versioned state and authorization redaction.
+
+## Sources
+
+- [CloudEvents 1.0.2](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md): occurrence identity and envelope attributes.
+- [Confluent schema evolution](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html): reader/writer direction and transitive versus latest-version checks.

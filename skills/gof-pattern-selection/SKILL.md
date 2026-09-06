@@ -24,12 +24,16 @@ in place — the problem is stated without a pattern name, the forces are known,
 ladder has been walked (`gof-pattern-thinking`). What remains is the mapping, and the mapping is
 worth writing down because the discriminating questions are few and the wrong ones are asked often.
 
-The output of a selection is always a **shortlist plus the simpler alternative that was rejected**,
-never a single name. If nothing simpler was considered, the selection has not happened yet.
+Output the selected approach (including no pattern), any meaningful competing candidate and why
+the simplest viable alternative was retained or rejected. Do not invent rejected options.
+
+Java 17 supports records and sealed classes; type-pattern switch is final in Java 21 (earlier
+versions require the applicable preview support). Inspect target toolchains/framework versions;
+use ordinary polymorphism or existing compatible constructs without assuming upgrades.
 
 ## The discriminating questions
 
-Six questions separate almost all twenty-three. Ask them in this order.
+Use these questions to narrow the relevant dimension; they are not sufficient conditions.
 
 ```text
 1. What kind of problem is it?
@@ -38,10 +42,10 @@ Six questions separate almost all twenty-three. Ask them in this order.
      behaviour or interaction    → behavioural family
 
 2. What varies, and along how many axes?
-     nothing yet                 → no pattern
+     no variation or other force → no pattern
      one axis, one behaviour     → Strategy (often a function value)
-     one axis, whole hierarchies → Bridge
-     which concrete type         → Factory Method
+     two independent dimensions  → Bridge
+     which concrete type         → factory; Factory Method if subclass creation hook
      a whole family of types     → Abstract Factory
 
 3. Does something cross a boundary you do not own?
@@ -64,7 +68,7 @@ Six questions separate almost all twenty-three. Ask them in this order.
 
 6. Is the structure recursive, or a stable set of types?
      recursive part/whole        → Composite
-     stable types, growing ops   → Visitor (or a sealed switch)
+     stable types, growing ops   → Visitor (or compatible exhaustive dispatch)
      growing types, stable ops   → polymorphism, not Visitor
 ```
 
@@ -134,9 +138,9 @@ Reinforcing
   Composite + Visitor            a tree, and operations over it
   Composite + Iterator           traversal separated from structure
   Abstract Factory + Builder     the family creates; the builder assembles
-  Command + Memento              do, and be able to undo
+  Command + Memento              local undo where restoring owned state is sufficient
   Command + Chain                a request offered to handlers in turn
-  State + Command                transitions triggered by reified events
+  State + Command                requested actions drive validated transitions
   Strategy + Template Method     a fixed skeleton whose steps are injected
   Decorator + Proxy              a stack of behaviour over a controlled subject
   Adapter + Bridge               the backends of a bridge are usually adapters
@@ -148,12 +152,11 @@ Fighting
   Decorator + identity checks    wrappers change `==`/runtime type; equality needs an explicit policy
   Flyweight + mutable state      shared mutation across unrelated callers
   Visitor + a growing type set   every operation breaks on every new type
-  Mediator + participants that   two sources of truth for the protocol
-    still call each other
+  Mediator + duplicate owners    competing decisions for the same protocol transition
   Proxy + a chatty interface     hidden per-call remote cost
-  Template Method + open         every base change breaks strangers' code
+  Template Method + open         base changes may break external extension contracts
     subclassing
-  Prototype + entity identity    a copy with the original's id
+  Prototype + new-entity intent  accidentally retaining the original's id/version
 ```
 
 ## References

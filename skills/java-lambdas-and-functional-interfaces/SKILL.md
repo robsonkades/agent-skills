@@ -26,6 +26,13 @@ else.
 
 ## Workflow
 
+Inspect compiler release/toolchains, target JVM, executor/callback lifecycle and existing
+failure contracts first. No single authoring baseline is declared; lambdas/function APIs
+start at Java 8, `Predicate.not`/`Files.readString` at 11 and `Stream.toList` at 16.
+Scoped-value/structured-concurrency handoffs have their own release/preview conditions.
+Do not upgrade or enable preview; missing execution/ownership evidence limits what capture
+and performance conclusions can be made.
+
 1. **Check the contract first.** A functional interface permits a lambda, but identity, lifecycle,
    serialization, annotations, diagnostic naming, extra protocol methods and state may justify a
    named implementation even with one abstract method.
@@ -35,9 +42,10 @@ else.
 3. **Take the interface from `java.util.function`** unless you can state what a custom one
    adds: a descriptive name at many call sites, a contract the standard one cannot express, a
    checked exception, or default methods worth having.
-4. **Audit the capture.** Every free variable in the body is captured by value at evaluation
-   time; every reference to an instance member captures the whole enclosing object. Ask where
-   the lambda ends up and how long it lives.
+4. **Audit the capture.** Referenced enclosing locals/parameters are captured by value;
+   object values are references, not snapshots. Instance access through `this` can retain
+   the enclosing object, while static fields are read when the body executes. Inspect which
+   receiver is retained rather than treating every member reference as enclosing-instance capture.
 5. **Decide what happens to checked exceptions before writing the pipeline**, not after the
    compiler complains — the answer changes the interface you use.
 
@@ -55,11 +63,13 @@ else.
 - Captured locals must be effectively final, and captured values are captured by _value_.
   Sidestepping that with a one-element array or an `AtomicInteger` to accumulate state is a
   signal that the code wants a loop or a collector, not a lambda. Where it is genuinely a
-  concurrent accumulator, `LongAdder` or a proper reduction is the answer, not a captured
-  array.
+  concurrent metric, `LongAdder` may fit; its sum is not an atomic snapshot. Exact counters,
+  sequence allocation and check-then-act protocols may require `AtomicInteger`/CAS or locking.
+  Choose from the required operation, not the fact that a lambda captures it.
 - Capturing a mutable **object** captures a shared reference, not a snapshot. A lambda handed
-  to another thread reads whatever that object contains when it runs, with no happens-before
-  edge beyond the one the executor provides — see java-memory-model.
+  to another thread needs publication and synchronization rules for subsequent mutations;
+  without them, it need not see the latest value. Executor submission orders prior actions,
+  not all later updates — see java-memory-model.
 - Watch what a long-lived lambda pins. A lambda stored in a registry, a scheduled task or a
   queued executor task holds every captured value, and — if it touches an instance member —
   its enclosing object. That is a live reference for the lifetime of the holder; see
@@ -95,14 +105,19 @@ else.
   rule — see jit-inlining-and-escape-analysis before restructuring anything for it.
 - Avoid serializing lambdas as durable/public contracts. An intersection cast can request
   `Serializable`, producing a form tied to
-  synthetic method names that change with any recompilation; the deserialising side then fails
+  synthetic implementation details that may change across builds; the deserialising side can fail
   in a way that looks like data corruption. Use a named type — see java-serialization-hardening.
 
-- Do not use lambdas as identity-bearing registration keys unless the API returns an explicit
+- For identity-based registration, retain and reuse the exact callback instance or an API-issued
   subscription/token. Recreating textually identical lambdas need not produce an equal or identical
   object, so listener removal and map lookup can fail.
 
 ## References
+
+Deliver the chosen interface, capture/receiver and lifetime evidence, failure policy and
+focused checks executed. For lambda/reference rewrites check evaluation timing and null
+behavior; for asynchronous use verify publication and resource ownership. Report profiling
+and behavioral assumptions separately from measured results.
 
 - [Capture, composition and exceptions](references/capture-and-composition.md) — read when a
   lambda captures state, when one is stored or scheduled, when composing predicates and

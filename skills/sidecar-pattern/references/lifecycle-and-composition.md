@@ -6,9 +6,14 @@
 # Conceptual: only the composition-relevant fields.
 spec:
   initContainers:
-    - name: proxy # a NATIVE sidecar: an init container that never exits
+    - name: proxy # native sidecar: a restartable init container
       image: registry.example/proxy:1.14.2
       restartPolicy: Always # <- this line is the whole mechanism
+      # Assumes this image serves a meaningful startup check on port 15002.
+      startupProbe:
+        httpGet: { path: /startup, port: 15002 }
+        periodSeconds: 1
+        failureThreshold: 30
       ports:
         - containerPort: 15001 # distinct from the app's port: one port space per pod
       resources:
@@ -39,12 +44,18 @@ container; what each probe should answer is `kubernetes-service-lifecycle`, not 
 
 ## Ordering, at both edges
 
-| Moment           | Ordinary sidecar                                              | Native sidecar                                                    |
-| ---------------- | ------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Startup          | No guarantee the peer is up when the app starts serving       | Started, and its startup probe satisfied, before app containers   |
-| Steady state     | Restarts independently; pod stays Running                     | Same                                                              |
-| Shutdown         | No defined order; the peer may exit while the app is draining | Terminated after the last app container exits                     |
-| `Job` completion | Pod never completes — the sidecar never exits                 | Kubelet terminates it once app containers exit; the Job completes |
+| Moment           | Ordinary sidecar                                              | Native sidecar                                                                   |
+| ---------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Startup          | No guarantee the peer is up when the app starts serving       | Process started; startupProbe, if configured, must succeed before app containers |
+| Steady state     | Restarts independently; pod stays Running                     | Same                                                                             |
+| Shutdown         | No defined order; the peer may exit while the app is draining | Stopped after app containers during graceful termination; same Pod grace budget  |
+| `Job` completion | Pod never completes — the sidecar never exits                 | Kubelet terminates it once app containers exit; the Job completes                |
+
+StartupProbe success must represent the dependency the app needs; a readinessProbe alone
+is not a startup gate. Sidecar readiness contributes to the whole Pod: for an optional log
+shipper, making all app traffic unready may be the wrong policy. Native sidecars stop in
+reverse specification order; if apps consume the grace period, sidecars may have almost no
+time to flush before SIGKILL. Ordering does not guarantee durable log delivery.
 
 The two symptoms this produces on an ordinary sidecar are worth naming, because they are read
 as application bugs:
@@ -61,7 +72,8 @@ as application bugs:
 
 The pod shares one network namespace. Consequences you must design around:
 
-- One port space: no two containers may bind the same port.
+- One port space: conflicting address/port/protocol bindings collide. Different addresses
+  or protocols can coexist; containerPort does not allocate or isolate a listening socket.
 - `127.0.0.1` reaches the peer without leaving the pod — no Service, no DNS, no kube-proxy.
 - The peer is still reachable from the pod's IP unless the process binds only to loopback.
   Binding a sidecar's admin port to `0.0.0.0` exposes it to anything with pod-network access.
@@ -74,10 +86,10 @@ The pod shares one network namespace. Consequences you must design around:
 An application talking to a sidecar must configure the call as a network call:
 
 ```java
-// Conceptual: a client for the in-pod peer. Bounded everywhere, no retry here —
+// Partial Java 11+ client sketch; connection/request timeout only, no retry here —
 // retry policy belongs to one layer only (see ambassador-pattern).
 HttpClient toSidecar = HttpClient.newBuilder()
-        .connectTimeout(Duration.ofMillis(200))   // loopback: if it is not immediate it is down
+        .connectTimeout(Duration.ofMillis(200))   // illustrative; derive from remaining budget
         .build();
 
 HttpRequest req = HttpRequest.newBuilder(URI.create("http://127.0.0.1:15001/v1/tokens"))
@@ -85,6 +97,10 @@ HttpRequest req = HttpRequest.newBuilder(URI.create("http://127.0.0.1:15001/v1/t
         .GET()
         .build();
 ```
+
+These values do not bound every streaming body, queue or retry. Select the body handler,
+read/cancellation limits and payload bound; connectTimeout matters when a connection is
+established, not when an existing connection is reused.
 
 A pool pointed at the peer must discard failed/closed connections and reconnect within the
 request deadline after a sidecar restart. Validation on borrow can detect stale connections
@@ -108,15 +124,21 @@ General pool arithmetic is `connection-pool-sizing`.
 
 ## Failure matrix
 
-| Event                        | Kubernetes sees           | The application sees                          | What to do about it                                                                |
-| ---------------------------- | ------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Sidecar crashes and restarts | `RESTARTS` climbs, events | Connection refused, then stale pooled sockets | Validate connections on borrow; alert on restart rate, not on restart count        |
-| Sidecar suspected OOM-killed | Termination reason/events | Same as above, recurring under load           | Confirm `OOMKilled` and cgroup/node evidence; exit 137 alone is only `SIGKILL`     |
-| Sidecar up but broken        | **Nothing**               | Wrong answers, or latency with no errors      | Its own readiness probe; the app's own error rate against `localhost` as an alert  |
-| App crashes                  | App container restarts    | Sidecar keeps running with no traffic         | Usually fine; a sidecar holding a lease must expire it, not depend on its own exit |
-| Sidecar cannot start         | Pod stuck in `Init`       | App never starts at all (native sidecar)      | This is the intended trade: a native sidecar makes its failure a pod failure       |
-| Pod evicted                  | Pod deleted               | Both die together                             | See the QoS note above; this is usually a requests bug                             |
+| Event                        | Kubernetes sees                     | The application sees                          | What to do about it                                                                                 |
+| ---------------------------- | ----------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Sidecar crashes and restarts | `RESTARTS` climbs, events           | Connection refused, then stale pooled sockets | Evict failed connections; optional validation; investigate restart rate and reason                  |
+| Sidecar suspected OOM-killed | Termination reason/events           | Same as above, recurring under load           | Confirm `OOMKilled` and cgroup/node evidence; exit 137 alone is only `SIGKILL`                      |
+| Sidecar up but broken        | May be unready if probes detect it  | Wrong answers, or latency with no errors      | Its own readiness probe; the app's own error rate against `localhost` as an alert                   |
+| App crashes                  | Restart depends on effective policy | Sidecar may keep running while app restarts   | A sidecar holding a lease must expire it; inspect terminal Pod/Job lifecycle when no restart occurs |
+| Sidecar cannot start         | Pod stuck in `Init`                 | App never starts at all (native sidecar)      | This is the intended trade: a native sidecar makes its failure a pod failure                        |
+| Pod evicted                  | Pod deleted                         | Both die together                             | Inspect eviction reason, pressure, priority and controller events; not uniquely a requests bug      |
 
-The row with no Kubernetes signal is the one that produces long incidents. It is the reason a
-sidecar needs its own probe and its own metrics, and the reason the app should log the peer's
-identity (container name, image tag) on every failure against it.
+Gray failures without an adequate probe can produce long incidents. Give the sidecar its own
+metrics and meaningful health checks; record available peer identity/version on failures
+without assuming the app automatically knows another container's image tag.
+
+## Primary references
+
+- [Kubernetes sidecar containers](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/) — started/probe semantics, readiness, shutdown and restart.
+- [Pod QoS](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/) — effective resource model.
+- [Pod lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/) — grace and failure conditions.

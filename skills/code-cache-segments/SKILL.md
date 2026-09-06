@@ -34,7 +34,13 @@ cache was triggering, which a bigger cache also fixes, for a different reason.
 
 ## Workflow
 
-1. **Read all three `CodeHeap` lines** from `jcmd <pid> Compiler.codecache`, never the
+Before collecting evidence, pin vendor/update, architecture, collector, compiler mode and
+effective startup flags from the deployed runtime and its CI/image configuration. The command
+baseline below is HotSpot JDK 25; JDK 17-19 retain the sweeper and need their own lifecycle
+interpretation. Do not upgrade Java or change the collector to match this skill. If attach,
+JFR or source access is unavailable, state the gap and keep the diagnosis conditional.
+
+1. **Read every available heap line** from `jcmd <pid> Compiler.codecache`, never the
    consolidated `CodeCache:` line alone. Also read the last line: `Compilation: enabled` or
    `disabled (not enough contiguous free space left)`, with `stopped_count` and
    `restarted_count`.
@@ -74,8 +80,8 @@ cache was triggering, which a bigger cache also fixes, for a different reason.
 - `profiled nmethods` holds tiers **2 and 3** only. Tier 1 — C1 without profiling — goes to
   `non-profiled` alongside tier 4 and native wrappers. A trivial method can go straight to
   `non-profiled` without ever passing through `profiled`.
-- The split between `profiled` and `non-profiled` is an exact **50/50** of what remains after
-  `non-nmethods`, not one third to two thirds. `non-nmethods` itself is 5 MB plus one
+- With default segment sizes, the two nmethod heaps divide the remainder approximately
+  **50/50**, with alignment remainder assigned by startup ergonomics. `non-nmethods` is 5 MB plus one
   compiler buffer per compiler thread, so it shrinks on a small CPU quota.
 - A full heap spills into the next one — `non-nmethods → non-profiled → profiled → non-profiled`
   (`CodeCache::allocate`, `codeCache.cpp`). `CodeHeap '<name>' is full` and the JFR
@@ -85,10 +91,10 @@ cache was triggering, which a bigger cache also fixes, for a different reason.
   `-XX:+UnlockDiagnosticVMOptions` is out of date.
 - `-XX:CodeCacheMinimumFreeSpace` does not exist. The real name is
   `-XX:CodeCacheMinimumUseSpace`, and it is `develop`-only — unavailable in production builds.
-- `jstat -compiler` reports **`Failed`**, fed by the `sun.ci.totalBailouts` counter — a
-  bailout, not a code cache failure. `Failed` (never compiled) and `Invalid` (compiled, then
-  discarded) are different diagnoses. A rising `Failed` with a constant `FailedMethod`
-  consumes interpreter CPU, not code cache — a bailout never produces an nmethod.
+- `jstat -compiler` reports **`Failed`**, fed by `sun.ci.totalBailouts`; inspect the actual
+  failure reason before excluding code-cache pressure. Temporary compiler buffers can consume
+  code-cache space even if no nmethod is installed, and older/lower-tier code may still run.
+  `FailedType` is compilation kind, not tier; `Invalid` is not a runtime deoptimization counter.
 - Declare `-XX:+SegmentedCodeCache` explicitly whenever per-segment visibility matters. Any
   `ReservedCodeCacheSize` below 240 MB — the common container setting — silently loses it.
 - There is no sweeper thread and no `zombie` state since JDK 20 (JDK-8290025). A
@@ -117,6 +123,10 @@ CodeCache for adapters` (or `for method handle intrinsic`) thrown in an applicat
   tested build). Committed can exceed live `used`, and resident memory is a separate OS
   measure. Compare NMT `Code`, `Compiler.codecache`, and process/container RSS instead of
   treating reservation, commitment and residency as interchangeable.
+
+Deliver timestamped per-heap observations, compiler state/counter deltas, the proposed cause
+and its confirming/falsifying evidence. State expected effects and a load/GC validation bound
+for any sizing change; neither high utilization nor a restart proves fragmentation.
 
 ## References
 

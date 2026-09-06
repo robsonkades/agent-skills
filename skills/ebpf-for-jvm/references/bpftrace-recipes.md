@@ -39,13 +39,15 @@ no compiled USDT notes. Resolve that before changing filters.
 ## Current-context syscall latency
 
 For a syscall tracepoint whose entry/exit run in the calling task, a TID-keyed start map is a
-reasonable shape:
+reasonable shape. This partial template follows bpftrace 0.24 documentation; it has not been
+load-tested here. Supply `$1` as the target PID in bpftrace's PID namespace and verify the
+matching `read` tracepoints. Complete lifecycle/loss handling before production use:
 
 ```bpftrace
 tracepoint:syscalls:sys_enter_read
 /pid == $1/
 {
-  @read_start[tid] = nsecs;
+  @read_start[tid] = nsecs(monotonic);
   @entered = count();
 }
 
@@ -53,11 +55,11 @@ tracepoint:syscalls:sys_exit_read
 /pid == $1/
 {
   if (has_key(@read_start, tid)) {
-    $d = nsecs - @read_start[tid];
+    $d = nsecs(monotonic) - @read_start[tid];
     @read_us = hist($d / 1000);
     @read_sum_ns = sum($d);
     @paired = count();
-    delete(@read_start[tid]);
+    delete(@read_start, tid);
   } else {
     @unmatched_exit = count();
   }
@@ -72,8 +74,11 @@ END
 }
 ```
 
-Adapt `has_key`/map syntax to the pinned bpftrace release. Define cleanup for thread/process
-exit and report remaining starts. `read(2)` duration is time in the syscall; user-space queue,
+For other releases verify PID namespace and helper syntax explicitly. Define cleanup for
+thread/process exit and report remaining starts. Classify `args.ret`: EOF, bytes read, errors,
+and kernel restart results must not become one successful-read distribution. A restarted
+syscall may produce multiple measured attempts for one user-space call.
+`read(2)` duration here spans the entry/exit tracepoints; user-space queue,
 buffer processing, later scheduling, async APIs, and work in other processes lie outside.
 
 For nested/re-entrant probes or multiple in-flight operations per TID, TID alone is not enough.
@@ -185,8 +190,10 @@ Choose the mechanism based on temporal fidelity:
 
 - **perf map:** simple snapshot/current address→symbol ranges; vulnerable to later recompilation,
   unload/address reuse and usually limited metadata;
-- **jitdump/perf JIT interface:** time-ordered code load/unload/move plus richer metadata where
-  the JDK/tool supports it;
+- **jitdump/perf JIT interface:** timestamped code load/move records and optional debug/unwind
+  metadata where supported by the producer/consumer. There is no per-method unload record;
+  `JIT_CODE_CLOSE` ends the runtime, not one compilation. Test address reuse and capture start
+  timing rather than assuming complete lifecycle reconstruction;
 - **in-process profiler:** VM-aware Java/JIT stack walking with its own event/privilege limits;
 - **JFR:** JVM event chronology and Java stack metadata, not a generic host kernel stack.
 
@@ -204,8 +211,11 @@ For high-rate event export:
 - size buffers from peak rate and consumer stall, then test saturation;
 - use LRU only when eviction semantics are acceptable and observable;
 - bound key cardinality—raw addresses, thread IDs, sockets, and request pointers churn;
-- clear interval maps intentionally without racing producers;
-- avoid synchronous per-event `printf`, symbolization, or stack rendering in production.
+- do not treat live-map `print` followed by `clear` as an atomic interval snapshot; these
+  bpftrace operations are asynchronous and producers can update the map between them. Use
+  quiesced collection or a validated epoch/drain protocol when exact interval counts matter;
+- bound per-event `printf`, symbolization, and stack rendering: bpftrace exports/prints
+  asynchronously, but records still consume buffer space and user-space processing capacity.
 
 Aggregation in kernel reduces output but hides individual timestamps and may increase map
 cardinality. Exported events preserve detail but can flood user space. Select according to the
@@ -229,7 +239,8 @@ not validation.
 ## Authoritative references
 
 - [bpftrace standard library](https://bpftrace.org/docs/release_024/stdlib) — choose the installed release documentation.
-- [bpftrace reference guide](https://bpftrace.org/docs/release_024/reference_guide)
+- [bpftrace language](https://bpftrace.org/docs/release_024/language)
+- [Linux perf jitdump specification](https://github.com/torvalds/linux/blob/master/tools/perf/Documentation/jitdump-specification.txt)
 - [Linux tracepoints](https://docs.kernel.org/trace/tracepoints.html)
 - [Linux BPF maps](https://docs.kernel.org/bpf/maps.html)
 - [libbpf CO-RE reference](https://nakryiko.com/posts/bpf-core-reference-guide/) — primary maintainer guide; validate against libbpf docs/source.

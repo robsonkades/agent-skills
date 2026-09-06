@@ -2,7 +2,9 @@
 
 ## Traversal
 
-For each scope item, walk outward in this order and stop when a ring produces nothing:
+For each accepted scope item, check each applicable concern below. An empty concern does not
+end the sweep: a scheduled job with no source callers still has state, security and tests.
+Record what was inspected, what was absent there, and what remains outside available evidence.
 
 1. **The element that changes.** The class, the file, the migration, the config key.
 2. **Its callers.** Search for them; do not recall them. Record the count.
@@ -12,8 +14,11 @@ For each scope item, walk outward in this order and stop when a ring produces no
 6. **Its cross-cutting attachments.** Security rules, transactions, metrics, logs, traces.
 7. **Its tests.** Which existing tests cover it, and what they assert.
 
-The rings matter because impact is transitive in exactly one direction: a change is visible to
-whoever depends on the changed thing, not to whatever it depends on.
+Trace effects in both directions: callers observe changed contracts; dependencies can receive
+new values, load, transaction patterns or retries. Include shared-resource contention and
+indirect consumers such as scheduled tasks, reflection/DI registrations and remote clients.
+Stop a propagation branch when evidence shows the relevant contract/load/state is unchanged,
+or record an unresolved boundary. Use visited identities to avoid cycles and repeated counting.
 
 ## Entry shape
 
@@ -21,12 +26,19 @@ whoever depends on the changed thing, not to whatever it depends on.
 IMP-01  <path>[:line]   NEW | MODIFIED | READ   INTERNAL | EXTERNAL   <change> <- SC-01
 ```
 
-- **NEW** — did not exist. No compatibility question, but a naming and placement question.
+- **NEW** — did not exist; the proposed location must be labeled. Additions can affect
+  routing, exhaustive consumers, permissions, defaults or serialization, so compatibility
+  still needs investigation.
 - **MODIFIED** — exists and changes. The interesting class.
 - **READ** — does not change, but the feature depends on its current behaviour. Include it when
   the dependency is new or heavier than before; that is how a change breaks a file nobody edited.
 
-Visibility is about observability, not about access modifiers. A private field that is
+For each entry include the evidence locator, affected party and expected verification; an
+external locator can be a topic/schema ID, qualified table, dashboard URL or deployment key.
+Distinguish verified consumers from possible consumers and searched repositories from the
+whole ecosystem. A zero text-match count is not proof of no users.
+
+Visibility is about observability relative to the named component, not about access modifiers. A private field that is
 persisted is EXTERNAL, because the stored rows outlive the deployment.
 
 ## The layers to sweep
@@ -51,18 +63,22 @@ A map that only lists application code is the common incomplete one. Sweep all o
 
 ## Boundary crossings
 
-A crossing is any impact where someone outside the change must agree or must deploy. Record it
-separately from the map, because it changes the process rather than the code:
+A crossing is an affected contract, ownership or runtime boundary. Record parties and known
+review/rollout obligations separately; do not assume every crossing requires agreement or
+coordinated deployment. Reuse existing authorization and record unresolved ownership without
+claiming approval or contacting people automatically. Independent illustrative crossings:
 
 ```text
 Crossing   IMP-07 Order created event gains a field
 Depends    two consumers (billing, notifications)
-Needs      backward-compatible addition; consumers tolerate unknown fields (verified
-           in their deserialiser configuration) -> no coordinated deploy required
+Needs      inspect old/new producer-consumer combinations, missing-field behavior, validation,
+           intermediaries and replay; unknown-field tolerance alone does not prove independent rollout
+Evidence   consumer configuration plus compatibility/behavior tests, or explicit unknowns
 
 Crossing   IMP-11 orders.status gains a value
-Depends    the reporting view groups by status
-Needs      the view updated in the same release, or it silently drops the new rows
+Depends    inspect the reporting view and its downstream consumers
+Needs      a whitelist/CASE/join may omit or misclassify the value; GROUP BY alone normally
+           creates a new group. Record the actual query and expected totals before requiring a change
 ```
 
 The second entry is the shape that costs a weekend: a change that is compatible at the code
@@ -72,7 +88,8 @@ level and wrong at the data level.
 
 The map is the input to three later decisions, and it should be read for each:
 
-- **Depth** — a map entirely INTERNAL inside one module supports a lower depth class.
+- **Depth** — locality can reduce coordination work, but security, invariants, concurrency,
+  reversibility and resource exposure determine review depth alongside it.
 - **Test level** — EXTERNAL entries need a test at the level where they are observed.
 - **Risk** — every boundary crossing is a candidate risk entry, with the consumer as its
   detection point.
@@ -82,3 +99,8 @@ The map is the input to three later decisions, and it should be read for each:
 Not a design, not an order of work, and not a task list. It answers one question — what does
 this touch — and it answers it with paths so that the answer can be checked against the diff at
 the end.
+
+## Compatibility references
+
+- [JLS 25 binary compatibility](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html) — consult the target Java version; binary compatibility does not establish source or behavioral compatibility.
+- [Protocol Buffers message evolution](https://protobuf.dev/programming-guides/proto3/#updating) — binary wire-safe changes can still affect application code; JSON and other formats have different rules. Apply the actual protocol/version rather than assuming every additive field is safe.

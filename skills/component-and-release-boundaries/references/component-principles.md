@@ -19,7 +19,7 @@ that is the granularity at which the consumer can depend on it.
 The practical consequences are unglamorous and are the ones teams skip:
 
 - Everything in the component shares one version number and one release note.
-- A change to any class in it obliges every consumer to evaluate an upgrade.
+- A release needs compatibility notes so consumers can decide whether and when to upgrade.
 - The component needs an owner who can answer "is this change breaking?".
 
 A module that nobody is willing to write a release note for is not a component. It is a
@@ -47,9 +47,9 @@ everything in it.**
 
 Everything means:
 
-- its transitive dependencies, which enter your classpath and can conflict;
-- its release cadence, which becomes a lower bound on how often you must retest;
-- its defects, including in the 90% of it you never call;
+- its resolved transitive dependencies, subject to scopes, optionality and exclusions;
+- its support/security policy, which can constrain upgrade timing;
+- defects relevant to reachable code, initialization or the shipped artifact's risk profile;
 - its removals, because a major bump you do not need still blocks the one you do.
 
 This is the principle that argues components smaller, and the one that indicts `commons`
@@ -95,16 +95,16 @@ protocol, or acknowledge one release unit.
 
 Three mechanical ways, in the order to consider them.
 
-**0. Merge the two components.** Correct whenever they were never separately releasable — the
-cycle is evidence that they are one component, and the build was already releasing them
-together. Do this before reaching for either of the others.
+**0. Consider merging the release units.** Appropriate when separate release capability has
+no demonstrated value and ownership/encapsulation does not require the split. A cycle or
+shared history prompts that assessment; it does not settle it.
 
 **1. Move the offending classes into a third component.** If `orders` depends on `billing` for
 `InvoiceNumber`, and `billing` depends on `orders` for `OrderId`, extract both identifiers
-into a third component that neither depends on.
+into a third component that both depend on and that depends on neither of them.
 
 ```text
-Before:   orders ⇄ billing            (no release order exists)
+Before:   orders ⇄ billing            (current reactor/source cycle)
 
 After:    orders ──► identifiers ◄── billing
 ```
@@ -116,6 +116,10 @@ does not.
 **2. Invert the edge.** If `billing` needs to notify `orders`, `billing` declares the
 interface it needs and `orders` implements it. The source dependency now points from `orders`
 to `billing`, against the direction of the call (`java-dependency-inversion`).
+
+Partial Java snippets: `InvoiceIssued`, package declarations, imports and assembly wiring are
+omitted. Put the event contract on the same policy side as `InvoiceListener`; the composition
+root supplies the implementation without making billing depend on orders.
 
 ```java
 // in component: billing — billing owns the interface it needs
@@ -132,10 +136,10 @@ final class OrderInvoiceListener implements InvoiceListener {
 }
 ```
 
-Merging is the right tool when the two were never separately releasable. Inversion is the
-right tool when the runtime call really must go that way. Moving classes is the right tool
-when the coupling is only about shared vocabulary. Choosing inversion for a
-vocabulary problem produces an interface with one implementation and no benefit
+Merging fits a deliberate shared release unit. Inversion fits a policy-to-implementation
+boundary that must preserve the runtime call direction. Moving classes fits genuinely
+shared vocabulary, with its ownership and evolution policy established. An interface does
+not remove disagreement about vocabulary simply by existing
 (`enterprise-architecture-smells`).
 
 ### Stable dependencies
@@ -149,6 +153,10 @@ dependencies, from 0 (depended on by many, depends on nothing; maximally rigid) 
 on many, depended on by nothing; freely changeable). `java-cohesion-coupling` covers computing
 it over packages.
 
+When `Ca + Ce = 0`, the ratio is undefined; record an isolated component instead of dividing
+by zero or assigning stability arbitrarily. State whether edges count classes, packages or
+artifacts before comparing values.
+
 Used as a design prompt, an edge from a low-I component to a high-I component deserves examination:
 a widely consumed component may import another component's churn. It is not automatically a defect;
 runtime adapters, platform contracts and compatible evolution can make the edge appropriate. As a
@@ -157,9 +165,11 @@ target — “no module may exceed I = 0.6” — it is numerology.
 ### Stable abstractions
 
 A classical heuristic says a component's abstractness should rise with its stability. If a component is hard to change
-because everything depends on it, the only way to keep it extensible is for it to be extended
-rather than edited: interfaces, sealed hierarchies and abstract policy, with implementations
-living in less stable components.
+because many consumers depend on its contract, extension points can allow new behavior
+without changing that contract. An ordinary interface can be implemented in another module.
+A sealed type deliberately restricts direct subtypes: in a named JPMS module they must be
+in that same module (or the same package in the unnamed module). Do not propose a sealed
+root as an unrestricted cross-module plugin interface.
 
 The two failure positions have names worth knowing because both are common:
 
@@ -185,13 +195,12 @@ The two failure positions have names worth knowing because both are common:
 ```
 
 The diagonal runs from the top-left (stable and abstract) to the bottom-right (unstable and
-concrete). Both ends are good positions. The two corners **off** the diagonal are the failures.
+concrete). The corners away from it are investigation prompts, not proof of failure.
 
-- **Zone of pain** — bottom-left: concrete and heavily depended upon. Every change breaks
-  consumers and there is no extension point. This is what a `commons` jar becomes. The fix is
-  to shrink it or to extract the stable abstract part.
-- **Zone of uselessness** — top-right: abstract and depended on by nobody. Interfaces written
-  for an extension that never arrived. The fix is deletion.
+- **Zone of pain** — bottom-left: concrete and heavily depended upon. Investigate incompatible
+  churn and missing extension points; a stable immutable value type may be appropriate here.
+- **Zone of uselessness** — top-right: abstract and with no observed dependents. Check external
+  plugins, reflection and planned public obligations before deleting an apparently unused API.
 
 Treat the diagonal as a hypothesis-generating diagnostic, never as a score to optimise. It ignores
 semantic stability, generated APIs, compatibility policy, ownership and change frequency. A leaf
@@ -200,23 +209,27 @@ abstract and stable. Both sit on the line, and neither got there by measuring.
 
 ## Mapping to a Java build
 
-| Concept            | Maven                            | JPMS                                                                                             |
-| ------------------ | -------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Component boundary | a module with its own artifactId | `module-info.java`                                                                               |
-| What is public     | everything on the classpath      | only `exports`ed packages                                                                        |
-| Release unit       | the published artifact + version | recordable via `--module-version`, but never used — no version resolution, no conflict detection |
-| Cycle prevention   | enforced: reactor rejects cycles | enforced: `requires` cycles rejected                                                             |
-| Consumer pins to   | a version                        | nothing — version is the build's job                                                             |
+| Concept            | Maven                                                             | JPMS                                                                                                        |
+| ------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Component boundary | a module with its own artifactId                                  | `module-info.java`                                                                                          |
+| What is public     | Java access rules still apply; Maven itself adds no encapsulation | readability plus exports and Java access rules; opens controls reflective access                            |
+| Release unit       | the published artifact + version                                  | version metadata can be recorded; selecting compatible artifact versions remains a build/deployment concern |
+| Cycle prevention   | enforced: reactor rejects cycles                                  | enforced: `requires` cycles rejected                                                                        |
+| Consumer pins to   | a version                                                         | nothing — version is the build's job                                                                        |
 
-The row that matters: **JPMS enforces encapsulation, Maven enforces release.** A `module-info`
-gives a boundary teeth at compile time, which is genuinely valuable and cheap. It does not
-make the module a component in the sense this skill is about, because there is no version and
-no independent consumer. Use JPMS to stop unwanted access; use publication and versioning to
-create a component.
+JPMS enforces module access rules; Maven resolves and publishes artifacts but does not
+enforce independent release policy. A JPMS module can be independently published and
+versioned, or remain internal. Its descriptor alone establishes neither consumer ownership
+nor compatibility support. Check reflection and service loading when introducing it.
 
 Enforce the acyclic rule mechanically. The reactor already rejects module cycles; add an
 ArchUnit rule for package cycles inside a module so they are caught before an extraction turns
 them into module cycles:
+
+Partial test snippet, requiring the project's compatible ArchUnit/JUnit dependencies and
+imports. The wildcard groups direct subpackages; confirm all intended packages were
+imported and that the slices cover the relevant edges. Do not add dependencies merely to
+use this illustration when an existing architecture check covers the same risk.
 
 ```java
 @Test
@@ -235,4 +248,14 @@ void noPackageCycles() {
 - **What the component's API should look like** once you have decided it is one
   (`java-api-design`).
 - **Whether the code should be shared at all**, as opposed to duplicated — see
-  `references/shared-code-in-a-fleet.md`.
+  [shared code in a fleet](shared-code-in-a-fleet.md).
+
+## Primary references
+
+- [Maven dependency mechanism](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html):
+  scopes, mediation, optional dependencies and exclusions.
+- [JLS 21 modules](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html#jls-7.7):
+  requires/exports/opens and module rules.
+- [JLS 21 permitted subclasses](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.1.6):
+  sealed hierarchy location constraints.
+- [Semantic Versioning 2.0.0](https://semver.org/): public API and compatibility conditions.

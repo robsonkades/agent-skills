@@ -61,10 +61,13 @@ The subject genuinely lives elsewhere
 
 ## The remote proxy problem
 
+Examples use Java 17 and partial application types. Inspect resolved Spring/Hibernate versions,
+proxy versus weaving mode and bytecode enhancement; adopting this skill does not authorize upgrades.
+
 ```java
 // looks local, is not
 Customer c = customerService.byId(id);      // a network call
-for (Order o : c.orders()) { ... }          // N more network calls
+for (Order o : c.orders()) { ... }          // may issue more calls, depending on lazy access/fetching
 ```
 
 An in-memory method normally has no network ambiguity, while local I/O can still block, fail and
@@ -79,8 +82,8 @@ Rules for any proxy over a boundary:
 The call path must carry a deadline (parameter, request context, or equivalent) or a documented bound.
 Failure must be in the signature's vocabulary — a specific exception
   or a result type — not "the same as local, but sometimes".
-Granularity must suit a round trip: bulk operations, not per-item calls.
-Retries must be explicit and idempotent, not implicit in the proxy.
+Granularity must suit the workload; bound bulk sizes, pagination and concurrency.
+Retry ownership and effect safety must be explicit; a hidden second retry layer can amplify calls.
 "Succeeded but the response was lost" must be representable.
 ```
 
@@ -92,7 +95,8 @@ client (`rpc-and-api-contracts`, `gof-patterns-and-distribution`).
 ```text
 IF a proxy hides a network call behind an interface designed for a
 local object
-THEN the interface is wrong, not the proxy. Redesign the contract.
+THEN inspect missing deadline/failure/granularity semantics. Change the contract or supported
+     implementation policy where needed; existing compatible interfaces need no gratuitous redesign.
 
 IF a proxied method is called from inside the same object (this.x())
 THEN ordinary Spring proxy-based advice is bypassed, so @Transactional, @Cacheable
@@ -125,8 +129,8 @@ THEN the check is advisory. Make the subject unreachable or move the
      check into it.
 
 IF a lazy proxy escapes the scope that can initialise it
-THEN it fails on first use — LazyInitializationException is exactly
-     this, and the fix is at the boundary, not a bigger session.
+THEN uninitialized lazy state may fail to load; already initialized values need no session.
+     Establish required fetch/lifecycle boundaries and provider settings before changing session scope.
 ```
 
 ## Cross-cutting checks
@@ -148,9 +152,9 @@ THEN it fails on first use — LazyInitializationException is exactly
   triggering a query, a caching proxy whose keys are computed by reflection on every call, a
   logging proxy building a message before checking whether the level is enabled
   (`jit-inlining-and-escape-analysis`).
-- **Testing.** Proxied beans are not the class you wrote, so `instanceof`, `getClass()`,
-  annotation lookups and field access all behave differently in an integration test than in a
-  unit test. Unwrap deliberately rather than by chance. Also test the case the proxy exists for —
+- **Testing.** Concrete identity, annotation lookup and field access depend on proxy kind;
+  interface instanceof remains valid. Test through the proxy for advice behavior, and unwrap only
+  for a justified infrastructure assertion that cannot bypass required policy. Also test its purpose —
   an expired permission, a subject never initialised, a remote failure — because those paths
   never run in a happy-path test (`java-testing-strategy`).
 
@@ -175,5 +179,5 @@ THEN it fails on first use — LazyInitializationException is exactly
   debugging a proxy.
 - [Worked example](references/worked-example.md) — a virtual proxy over an expensive report
   engine with correct publication, and a remote proxy rewritten as an honest client after a
-  transparent one caused an incident: the interface changes, the fan-out that disappeared, and
+  hypothetical transparent one exposed excessive fan-out: the bounded interface changes and
   the tests. Read when implementing.

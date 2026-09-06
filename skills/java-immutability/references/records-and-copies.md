@@ -1,5 +1,9 @@
 # Records and defensive copies
 
+Java blocks are partial snippets targeting Java 17: imports from `java.util`/`java.time`,
+the deeply immutable `OrderLine` type, and enclosing class for the wither are omitted.
+Same-named before/after declarations are alternatives, not one compilation unit.
+
 ## What a record gives you — and what it does not
 
 A record gives you: a final class, final components, a canonical constructor, `name()`
@@ -23,9 +27,10 @@ unmodifiable list. It rejects nulls, but it does not copy `OrderLine` elements�
 deeply immutable for `Order` to be. Treat reuse as an allowed implementation optimization, not a
 fixed identity/performance guarantee.
 
-`Collections.unmodifiableList` is not a substitute: it is a **view**. The caller who still
-holds the backing list mutates your "immutable" state through it. Views are for exposing a
-live collection read-only, not for storing state.
+`Collections.unmodifiableList(input)` is a view: anyone holding mutable `input` can change
+the observed state. `Collections.unmodifiableList(new ArrayList<>(input))` instead wraps
+a private copy and can be a valid shallow snapshot (including when null elements or an older
+Java target must be supported). Neither form makes elements immutable.
 
 ## Array components break value semantics twice
 
@@ -36,8 +41,8 @@ public record Signature(byte[] bytes) {}   // broken
 - Shallow: the caller who passed the array can still flip its bytes.
 - `equals`/`hashCode` are generated over the components with `Objects.equals` semantics,
   and arrays compare by identity — two `Signature`s over equal bytes are not equal, and
-  their hash codes will almost certainly differ. Sets, maps and deduplication silently
-  misbehave.
+  their hash codes need not agree. This violates an expected content-value contract; hash
+  collisions themselves are legal and do not imply broken collections.
 
 Fix by copying both ways and overriding both methods:
 
@@ -46,7 +51,7 @@ public record Signature(byte[] bytes) {
     public Signature { bytes = bytes.clone(); }
     public byte[] bytes() { return bytes.clone(); }
     @Override public boolean equals(Object o) {
-        return o instanceof Signature(byte[] other) && Arrays.equals(bytes, other);
+        return o instanceof Signature other && Arrays.equals(bytes, other.bytes);
     }
     @Override public int hashCode() { return Arrays.hashCode(bytes); }
 }
@@ -91,22 +96,28 @@ accessor hands the internal reference to every caller. Any of them calling
 `equals`/`hashCode`, the object also corrupts any `HashSet`/`HashMap` it sits in, because
 its hash changes after insertion.
 
-**After:**
+**After:** keep the class's existing identity equality; changing it to a record would also
+introduce value equality, generated text/accessors and different serialization/binder behavior.
 
 ```java
-public record Reservation(String id, List<String> seatIds) {
-    public Reservation {
-        Objects.requireNonNull(id, "id");
-        seatIds = List.copyOf(seatIds);
+public final class Reservation {
+    private final String id;
+    private final List<String> seatIds;
+    public Reservation(String id, List<String> seatIds) {
+        this.id = id;
+        this.seatIds = List.copyOf(seatIds);
     }
+    public List<String> seatIds() { return seatIds; }
 }
 ```
 
 **Trade-offs.** Up to one shallow O(n) copy per construction; the implementation may reuse a
 trusted unmodifiable input (see the costs reference before predicting cost).
 Callers that relied on mutating the returned list now get
-`UnsupportedOperationException` — that is the bug surfacing, but it surfaces at runtime,
-so run the tests. `List.copyOf` also rejects null elements the old code tolerated.
+`UnsupportedOperationException`; that is an intentional API restriction, not automatically
+a caller bug. `List.copyOf` also rejects a null list and null elements the old code tolerated.
+Confirm these changes with callers; use a privately copied wrapper if null elements must remain
+valid. Test that separate instances retain identity equality in this focused repair.
 
 **Verification.** A test that mutates the constructor argument after construction and
 asserts the reservation unchanged; a test asserting the accessor's result rejects `add`;
@@ -136,6 +147,7 @@ does not make mutable components safe or stabilize a wire schema.
 
 ## Authoritative references
 
-- [JLS §8.10.4: Record Members](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.10.4)
+- [Collections.unmodifiableList](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collections.html#unmodifiableList(java.util.List)>)
+- [JLS §8.10.4: Record Constructors](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.10.4)
 - [Record serialization](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/serial-arch.html#serialization-of-records)
 - [List.copyOf contract](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>)

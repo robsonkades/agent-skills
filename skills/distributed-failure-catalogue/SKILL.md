@@ -18,15 +18,22 @@ mechanism in minutes instead of rediscovering it during an incident.
 
 This skill deliberately **does not teach the fixes**. Every entry ends at an owner, because a
 catalogue that also explained the remedies would drift out of step with the skills that own
-them. Its value is recognition and routing — and, for a design review, a list of concrete
+them. Destructive cleanup is the explicit exception, with bounded guard guidance below.
+Its value is recognition and routing — and, for a design review, a list of concrete
 failures to argue a design against rather than a general appeal to robustness.
 
 ## Workflow
 
+This is a protocol/operations catalogue, with no Java language minimum. The scheduled-task
+reference uses the Java 25 API documentation for a long-standing contract. Inspect the target
+runtime, scheduler/framework, client retry defaults and deployment configuration before
+applying version-sensitive claims; this skill does not authorize upgrades or fault injection.
+
 1. **Write down the observation, not the theory.** "Inbound rate rose while success rate
    fell", "the queue is empty and no alert fired", "duplicates 1.5 s apart". The index below
    is keyed on observations.
-2. **Build a shared timeline and denominator.** Align deploys, topology changes, retries,
+2. **Build a shared timeline and denominator.** Record clock domains, timestamp uncertainty
+   and sampling gaps; do not infer causal ordering from cross-host timestamps alone. Align deploys, topology changes, retries,
    offered load, admissions, attempts, goodput, saturation and freshness. Rates without
    logical-request/attempt denominators routinely misidentify amplification.
 3. **Match the recognition index**, then read the full entry and try to falsify the mechanism.
@@ -48,7 +55,8 @@ Use the catalogue when:
 - a design review needs a concrete list of failures to argue a design against
 Avoid the catalogue when:
 - the pattern is already named and its owner known — open that skill directly
-- the evidence is one stack trace or one malformed request. That is a defect, not a pattern
+- a single stack trace needs local defect analysis → debugging; sparse evidence alone cannot
+  establish or rule out a distributed mechanism
 Prefer instead when:
 - the question is which faults the system tolerates rather than what is happening now →
   failure-models
@@ -102,19 +110,20 @@ Prefer instead when:
   produces/consumes first, rollback requirements, persisted messages and database migration
   order. Build a version-interoperability matrix and use expand/migrate/contract rather than
   the slogan “both directions” without a time horizon.
-- **A destructive job needs three guard rails**, and this is the one pattern whose remedy lives
-  here because no other skill owns it: a dry-run mode that reports what would be deleted; a
-  bounded batch per run; and an **absolute cap that aborts** when the predicate selects more
-  than a plausible number of rows. The canonical failure is a predicate that silently matched
-  everything — a join that returned no rows treated as "nothing is referenced", a null
-  parameter that removed the filter.
-- **Bound every fan-out at the contract**, not in the implementation. A list field with no
-  maximum length, a query with no `LIMIT`, a batch endpoint with no cap — each turns one
-  request into an unbounded amount of work, and the request is usually well within every rate
-  limit while it does so.
+- **Destructive cleanup needs executable bounds**, not only a dry-run count. Validate selection
+  inputs, preview candidates, bound each batch and cap the whole logical run across retries
+  and workers. Counting then deleting with a changed predicate/snapshot is a race; the reference
+  explains candidate identity and revalidation. Dry-run success alone does not establish safety.
+- **Bound fan-out in both contract and implementation.** Enforce size/depth/range limits and
+  resource budgets. SQL `LIMIT` bounds returned rows, not necessarily scanned rows, joins,
+  sorting or downstream fan-out; inspect actual work before calling the input bounded.
 - Patterns with a dedicated skill are not duplicated here: poison messages and dead-letter
   handling are `poison-messages-and-dlq`, distribution skew is
   `hot-partitions-and-rebalancing`, and the fault classes themselves are `failure-models`.
+
+Return a small ranked hypothesis set with observed evidence, one discriminator and competing
+explanation per hypothesis, owner skill, and the next bounded evidence request. Missing
+telemetry must remain explicit. Do not claim a mechanism was confirmed by matching its name.
 
 ## References
 

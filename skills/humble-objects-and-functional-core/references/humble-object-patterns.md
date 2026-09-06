@@ -3,9 +3,10 @@
 Each section below is one recurring hard-to-test component, what the decision inside it
 usually is, and what the component looks like once the decision has left.
 
-The test in every case is the same: **after the extraction, is there still a branch in the
-framework component that a reviewer would want covered?** If yes, the extraction stopped too
-early.
+These are partial Java 21 sketches: imports, domain types and framework wiring are omitted.
+Inspect the project's actual framework version and preserve its current transaction and
+security behavior. Extract decision branches when useful; remaining boundary branches still
+need tests for mapping, effect ordering and failure handling.
 
 ## Controller and presenter
 
@@ -61,7 +62,7 @@ public final class OrderPresenter {
 }
 ```
 
-The controller becomes humble — no branch a reviewer would ask about:
+The controller becomes humble; its status/representation mapping still deserves coverage:
 
 ```java
 @GetMapping("/orders/{id}")
@@ -77,8 +78,9 @@ ResponseEntity<?> get(@PathVariable String id,
 }
 ```
 
-The `switch` is exhaustive over a sealed type, so adding a fifth outcome is a compile error
-here rather than a silently missing case at runtime.
+The non-null `view` switch is exhaustive; adding a fifth outcome exposes the missing case
+when this source is recompiled. `Order`, `Viewer` and `lineViews` must read stable data without
+lazy I/O; detach the required snapshot in the shell where ORM entities would violate that.
 
 **Payoff:** every rule about who sees what and in which shape is now a plain test over
 `OrderPresenter`, with no web layer. The remaining controller test asserts binding and status
@@ -111,7 +113,9 @@ Extract the selection as a pure function of the accounts and the time:
 
 ```java
 /** One list, so the selection cannot drift between the two effects. */
-public record ExpiryPlan(List<String> accountIds) { }
+public record ExpiryPlan(List<String> accountIds) {
+    public ExpiryPlan { accountIds = List.copyOf(accountIds); }
+}
 
 public final class TrialExpiryPolicy {
     public ExpiryPlan plan(List<Account> accounts, Instant now) {
@@ -129,10 +133,8 @@ public final class TrialExpiryPolicy {
 void expireTrials() {
     Instant now = clock.instant();                       // read once
     ExpiryPlan plan = policy.plan(accounts.dueForReview(now), now);
-    plan.accountIds().forEach(id -> {
-        accounts.expire(id);
-        notifications.enqueueTrialExpired(id);           // same unit of work as the expiry
-    });
+    plan.accountIds().forEach(id -> expiryService.expireIfEligibleAndRecordEvent(id, now));
+    // Each service call atomically rechecks eligibility, changes state and writes an outbox event.
 }
 ```
 
@@ -144,13 +146,15 @@ query is explicit: `dueForReview` rather than `findAll`, because writing the pol
 forced the question of what it actually needs (`architecture-and-performance`).
 
 **The limit to be honest about:** the shell still owns the hard part, and this shell is not yet
-correct. With more than one replica the cron fires on every instance and sends the notification
-N times — it needs a distributed lock or single-runner election. And a crash between expiring
-an account and notifying it loses the notification permanently, because the next run's
-`dueForReview` no longer selects it. That is why the notification is enqueued in the same unit
-of work as the expiry rather than sent from the loop: the effect has to be driven off the
-expiry's own durable record, not off an in-memory plan (`idempotency`,
-`distributed-locks-and-leases`).
+complete without the service contract shown above. Multiple replicas or retries can process
+the same candidate; a conditional update/unique transition in the database can select one
+winner without requiring a cluster-wide lock. Eligibility may change after planning, so
+recheck the relevant state/version atomically with expiry. Commit its durable outbox event
+in that same transaction; writing to a remote queue after the update is not equivalent.
+Only the winning transition emits an event. An outbox dispatcher can redeliver, so downstream
+notification handling still needs the appropriate idempotency contract (`idempotency`,
+`enterprise-transactions`). A single plan list alone guarantees neither effect atomicity nor
+notification delivery.
 
 **Note the scaling limit.** `plan()` takes a `List`, which assumes the candidate set fits in
 memory. That is fine for thousands and wrong for millions. At that scale keep the policy pure
@@ -177,7 +181,7 @@ public final class OrderMessagePolicy {
         if (alreadySeen.contains(envelope.messageId())) {
             return new ConsumeDecision.SkipDuplicate(envelope.messageId());
         }
-        if (envelope.schemaVersion() > SUPPORTED_VERSION) {
+        if (!SUPPORTED_VERSIONS.contains(envelope.schemaVersion())) {
             return new ConsumeDecision.DeadLetter(envelope.messageId(), "unsupported version");
         }
         return new ConsumeDecision.Process(parse(envelope));
@@ -185,8 +189,13 @@ public final class OrderMessagePolicy {
 }
 ```
 
-The listener performs, and nothing else. Duplicate handling, poison-message routing and
-version negotiation are now tested as data-in/data-out
+`SUPPORTED_VERSIONS` is an explicit immutable set; numeric ordering is not a compatibility
+contract. `parse` is a bounded, deterministic domain decoder omitted here; map malformed
+payloads to the declared poison-message outcome rather than assuming every supported-version
+payload parses. The `alreadySeen` snapshot is only a decision input, not a deduplication lock:
+the shell must atomically claim the scoped message identity with the business write and
+validate the payload/key relationship. Concurrent deliveries can both observe absence.
+Duplicate classification, poison-message routing and schema support can be tested as data-in/data-out
 (`idempotency`, `poison-messages-and-dlq`, `delivery-semantics`).
 
 **The limit to be honest about:** the shell still owns the hard part — acknowledgement
@@ -223,13 +232,21 @@ public final class PaymentResponseInterpreter {
 }
 ```
 
+This table illustrates one hypothetical provider contract, not universal HTTP semantics.
+HTTP 409 means a conflict, not necessarily a duplicate payment. `RetryableFailure` is a
+candidate classification, never permission to repeat a charge: the shell must establish
+provider idempotency or reconcile an unknown outcome, enforce attempt/deadline budgets and
+apply bounded backoff. A 5xx or transport failure can follow a committed effect. `parse` and
+`retryAfter` are omitted; define malformed/oversized body handling and invalid header policy.
+For HTTP-date Retry-After, pass the sampled current time; do not read the clock in the core.
+
 This is the highest-value application of the pattern in a distributed system, because the
 classification is the part that is both easy to get wrong and expensive to get wrong: treating
 a permanent failure as retryable produces a retry storm (`cascading-failures`), and treating a
 retryable one as permanent loses work.
 
-Tested as a pure function, every status, every header shape and every malformed body is a
-one-line test. Tested through the gateway, each requires a stub server.
+Pure classification permits direct tests of statuses, headers and malformed bodies with
+explicit inputs. Retain transport tests for how the real client supplies those inputs.
 
 **Still needed at the shell:** the actual timeout, connection reuse and the failure paths of
 the client itself. Those get an integration test against a stub that can hang and reset
@@ -237,77 +254,54 @@ the client itself. Those get an integration test against a stub that can hang an
 
 ## Resilience policy
 
-Retry, backoff and circuit-breaker state are state machines, and a state machine is the
-purest thing in a codebase — yet they are routinely written inline around the call, where the
-only way to observe a state transition is to make the dependency fail on schedule.
+Retry and breaker policy can contain pure transition functions, but a complete breaker
+also needs atomic admission, a bounded measurement window and effect lifecycle handling.
+Use the maintained implementation already selected by the project; extract a policy only
+when it clarifies a real decision or supports a review (`circuit-breakers`).
+
+A bounded pure kernel can decide whether a **closed-state window** warrants opening:
 
 ```java
-public enum BreakerStatus { CLOSED, OPEN, HALF_OPEN }
-
-public record BreakerState(BreakerStatus status, int calls, int failures,
-                           Instant openedAt, int probesInFlight) { }
-
-public final class BreakerPolicy {
-    private final double failureRateThreshold;   // e.g. 0.5
-    private final int minimumCalls;              // e.g. 20 — below this, never trip
-    private final Duration openDuration;
-    private final int probesWhenHalfOpen;        // e.g. 3 — not the whole request stream
-
-    // constructor omitted
-
-    public BreakerState onOutcome(BreakerState current, boolean failed, Instant now) {
-        int calls = current.calls() + 1;
-        int failures = current.failures() + (failed ? 1 : 0);
-        boolean trip = calls >= minimumCalls
-                && (double) failures / calls >= failureRateThreshold;
-        return trip
-                ? new BreakerState(BreakerStatus.OPEN, calls, failures, now, 0)
-                : new BreakerState(current.status(), calls, failures, current.openedAt(), 0);
+public static boolean shouldOpen(int calls, int failures, int minimumCalls,
+                                 double failureRateThreshold) {
+    if (calls < 0 || failures < 0 || failures > calls || minimumCalls < 1
+            || !Double.isFinite(failureRateThreshold)
+            || failureRateThreshold <= 0 || failureRateThreshold > 1) {
+        throw new IllegalArgumentException("invalid window or threshold");
     }
-
-    public boolean permits(BreakerState current, Instant now) {
-        return switch (current.status()) {
-            case CLOSED -> true;
-            case OPEN -> now.isAfter(current.openedAt().plus(openDuration));
-            case HALF_OPEN -> current.probesInFlight() < probesWhenHalfOpen;
-        };
-    }
+    return calls >= minimumCalls && (double) failures / calls >= failureRateThreshold;
 }
 ```
 
-Two things in that sketch are the point, and both are places hand-rolled breakers go wrong:
-it trips on a **failure rate over a minimum number of calls**, not on a consecutive-failure
-count — a count trips on a brief blip and never trips under a partial failure that is the
-common case; and **half-open admits a bounded number of probes**, because reopening to the
-full request stream is a thundering herd aimed at the instance that just recovered
-(`circuit-breakers`).
+This is only a count-window threshold example, not an admission algorithm. Consecutive-failure
+and rate policies detect different failure shapes; choose the actual library's policy from
+traffic evidence, not from an assertion that one is universally correct.
 
-Transitions, thresholds and the half-open probe are now tested by advancing an `Instant`
-variable. No sleeping, no flakiness, no dependency.
+The shell/library must transition OPEN to HALF_OPEN **and reserve a probe atomically** before
+performing the call. A boolean `permits` check followed by a later increment can admit an
+unbounded burst. Match completions to the admitted generation/token, release reservations
+on all terminal paths, and prevent stale completions from reopening/closing a newer epoch.
+A lock, serialized owner or a correct CAS loop can enforce the state contract; simply placing
+state in an `AtomicReference` cannot. Retries of a CAS computation must not duplicate effects.
 
-**The state is pure; holding it is not.** `BreakerState` is shared across concurrent requests,
-so the shell must apply the returned state atomically — a compare-and-set on an
-`AtomicReference`, not a read-modify-write — or concurrent failures overwrite each other and
-the breaker under-counts exactly when load is highest. Purity buys a testable transition
-function; it does not buy safe publication (`java-memory-model`).
-
-**Use the library.** This is worth extracting when you are _reasoning about or reviewing_
-breaker behaviour, not as a reason to hand-roll one — a mature implementation handles that
-atomicity, the sliding window, slow-call rate and metrics, none of which the sketch above does
-(`circuit-breakers`).
+Test the pure window boundaries without sleeping. Separately test admission races, stale
+completions, cancellation and the chosen time source through the actual implementation.
 
 ## When a component resists extraction
 
 If the decision cannot be pulled out, the usual cause is one of four, and each has a
 different answer:
 
-| Symptom                                                     | Cause                                                       | Answer                                                                                            |
-| ----------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| The decision needs to fetch mid-way, based on what it found | The shell's query is too narrow                             | Widen the fetch, or split into two decide/act rounds. Do not pass the repository in.              |
-| The decision needs to write mid-way to be correct           | It is not one decision; a transaction boundary is inside it | Model it as a sequence of outcomes the shell applies in order (`enterprise-transactions`).        |
-| Purity requires loading far too much data                   | The boundary is misplaced                                   | Push selection into the query; the core decides over the result (`architecture-and-performance`). |
-| The "decision" is a single `if` on a field                  | There is nothing to extract                                 | Leave it. Not every component has a core.                                                         |
+| Symptom                                                     | Cause                                                       | Answer                                                                                                                        |
+| ----------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| The decision needs to fetch mid-way, based on what it found | The shell's query is too narrow                             | Widen the fetch, or split into two decide/act rounds. Do not pass the repository in.                                          |
+| The decision needs to write mid-way to be correct           | It is not one decision; a transaction boundary is inside it | Preserve the atomic read/write or conflict check; sequencing outcomes alone is not a transaction (`enterprise-transactions`). |
+| Purity requires loading far too much data                   | The boundary is misplaced                                   | Push selection into the query; the core decides over the result (`architecture-and-performance`).                             |
+| The "decision" is a single `if` on a field                  | Judge the rule's significance, not branch count             | Extract if it isolates a consequential rule; otherwise leave it.                                                              |
 
-The last row is the one most often ignored, and it is the reason this technique acquires a
-bad reputation: applied to components with no decision, it produces a class per method and no
-test that anyone needed.
+Branch count is not a proxy for significance: a single authorization check can justify
+direct tests, while a forwarding method may gain nothing from another abstraction.
+
+## Sources
+
+- [HTTP semantics, RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html) — idempotency (§9.2.2), Retry-After (§10.2.3), and conflict status (§15.5.10).

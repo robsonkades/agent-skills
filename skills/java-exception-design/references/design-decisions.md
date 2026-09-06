@@ -36,9 +36,10 @@ Costs to weigh honestly, in both directions:
 The test: if the "failure" appears in the business requirements ("declined payments are
 shown to the customer with the decline reason"), it is an outcome — data. If it appears
 only in the runbook ("when the gateway is down, retry"), it is an exception. A result type
-costs an extra type and forces handling at every call site — that force is the point, and
-also the reason not to use it for failures 95% of callers would only rethrow: it turns one
-throw into N boilerplate re-branches.
+costs an extra type and makes alternatives inspectable. Java permits ignoring a returned value
+or using a fallback branch, so the type does not force every caller to handle every outcome.
+Exhaustive switches help when callers choose them. If most callers only propagate failure,
+explicit result plumbing may add repetitive branches without useful decisions.
 
 ## Hierarchy sizing
 
@@ -92,9 +93,9 @@ Grep-able signals that this skill applies:
 - **Wrapping without a message** (`new DomainException(e)`) is acceptable when the type
   itself says everything the extra sentence would; it is the missing _cause_ that is
   never acceptable.
-- **`NumberFormatException` caught around `Integer.parseInt`** on user input — the JDK
-  gives no non-throwing parse; catching narrowly and converting to a validation outcome
-  is the only option.
+- **`NumberFormatException` caught around `Integer.parseInt`** on user input — catching narrowly
+  and converting to a validation outcome is legitimate. A validated parser or existing
+  non-throwing parser can also fit; do not write a second parser merely to avoid this catch.
 
 ## When not to apply
 
@@ -111,6 +112,7 @@ Grep-able signals that this skill applies:
 
 ## Authoritative references
 
+- [JLS 21 §14.8: expression statements](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.8) — a method invocation can discard its result.
 - [JLS §11: Exceptions](https://docs.oracle.com/javase/specs/jls/se25/html/jls-11.html)
 - [Throwable cause and suppressed-exception API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html)
 - [InterruptedException API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/InterruptedException.html)

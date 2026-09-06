@@ -25,7 +25,9 @@ validated, and a blocker anywhere stops all of it. Implementing without closing 
 produces resources that are "done" in the sense that code was written for them, which is
 discovered to be a different thing at review.
 
-The unit is one resource, taken all the way, then recorded. Nothing else starts until it is.
+The unit is a coherent, verifiable resource or tightly coupled group. Limit active work per
+owner; independent resources can proceed in parallel when authorized, with explicit file
+ownership and integration checks. A blocked resource does not lock the entire feature.
 
 ## The loop
 
@@ -34,7 +36,7 @@ Pick the next resource from the execution order
         |
 Mark IN_PROGRESS, record the start
         |
-Implement it, and only it
+Implement its coherent scope and necessary dependencies
         |
 Run its validation and read the output
         |
@@ -51,41 +53,45 @@ Next resource
 ```
 
 Two rules keep the loop honest, and they are the ones that get skipped under pressure: **a
-resource is not DONE until its validation has been run and read**, and **the progress artefact
-is updated before the next resource starts**, not at the end of the session.
+resource is not DONE until its required validation has passed and been read**, and **progress
+is durable at material transitions and handoffs**. Use the existing tracking convention;
+Light/Inline work need not create an artifact solely to document sub-minute steps.
 
 ## Workflow
 
 1. **Take the next unblocked resource** in the execution order. Unforced ordering means a
    blocked resource does not stop unrelated work — check the forced arrows before stalling.
 2. **Read the code you are about to change**, including its callers and its tests, before
-   editing. The plan named the files; it did not read them for you.
+   editing. Inspect the working tree and relevant JDK/toolchain/dependency/runtime settings;
+   preserve other contributors' changes. The plan named files; it did not read them for you.
 3. **Implement to the project's conventions** as the context report established them, reusing
    what exists rather than adding a parallel mechanism.
 4. **Validate at the level the resource warrants** (`references/validation-by-resource.md`).
-   Not every resource earns an integration test; every resource earns something, and the
-   validation was written when the resource was defined.
-5. **Read the output.** A suite that ran zero tests exits successfully.
+   Reuse meaningful existing checks; do not add tests merely to mirror a reversible edit.
+   If planned validation is missing or inadequate, define the needed evidence before completion.
+5. **Read the output.** A suite can exit successfully while running zero relevant tests.
 6. **Record the outcome** with what actually ran, then move on.
-7. **When implementation contradicts the plan or a decision**, stop and handle it
-   (`references/deviation-and-blockers.md`) before writing more code.
+7. **When implementation contradicts the plan or a decision**, classify the affected work
+   (`references/deviation-and-blockers.md`), reconcile the plan and continue independent work.
 
 ## Decision rules
 
 ```text
 IF a resource is larger than it looked and splits naturally
-THEN split it in the plan, with both halves recorded, and implement the first.
+THEN split it with dependency and acceptance traceability; group tightly coupled edits when
+     artificial separation would leave neither resource independently verifiable.
 
 IF implementing RES-n reveals that RES-m is unnecessary
 THEN mark RES-m CANCELLED with the reason. Do not silently skip it.
 
 IF implementation needs a decision that was never taken
-THEN it is a blocker when the accountable role is absent, and an ED-* only when
-     authority is established. It is never an unrecorded choice made in passing.
+THEN check existing user authorization and delegated authority; take routine in-scope choices.
+     Record unresolved material choices as proposals and block only dependent actions.
 
 IF a test that already existed fails
-THEN it is a finding about this change until proven otherwise. Do not adjust the
-     test to accommodate the feature without saying why the old assertion was wrong.
+THEN investigate whether the failure is caused by this change, an intended contract change,
+     the environment or a pre-existing problem. Do not assume causation or silence failure.
+     Update assertions only for justified changed requirements, preserving relevant coverage.
 
 IF the work touches a file no resource names
 THEN either the impact map missed it — amend it — or it is scope creep. Decide which,
@@ -95,23 +101,27 @@ IF a deviation changes BAC-*, CT-*, TC-*, or an accepted baseline
 THEN stop affected work, create a revision-impact entry, and return to the accountable phase.
 
 IF a resource cannot be validated as planned
-THEN the validation changes before the resource is marked, and the change is recorded.
-     Choosing an easier check after the fact is how DONE stops meaning anything.
+THEN record the missing evidence and use an alternative only if it covers the required
+     acceptance contract. A material unverified property prevents DONE; a weaker check is
+     useful partial evidence, not a substitute for the missing guarantee.
 
 IF the session is ending mid-resource
-THEN leave it IN_PROGRESS with a note saying exactly where it stands and what is next.
+THEN preserve its true IN_PROGRESS or BLOCKED state, with exactly what remains and what is next.
 ```
 
 ## Constraints
 
-- **One resource at a time.** Parallel half-finished resources have no status that is true.
+- **Bound work in progress and preserve ownership.** One coherent active unit per owner is
+  the default. Parallel work needs explicit dependencies, shared-file coordination and
+  integration validation; never revert another owner's edits to make a local check pass.
 - **Keep the diff to the resource.** Improvements to code you passed through are findings, not
   edits — the scope rules do not relax during implementation.
 - **Preserve behaviour that is not in scope.** A refactor that is necessary to implement the
   resource is part of it and is said so; a refactor that is merely improving is not.
 - **Never weaken a check to make it pass.** Deleting, disabling or loosening a test to get to
   DONE converts a real signal into a false one, and the next person inherits both.
-- **Report what ran.** The command, and what it printed. Not "tests pass".
+- **Report what ran.** Capture command, relevant counts/results, revision/environment and
+  limitations. Summarize output; do not paste secrets or imply skipped tests executed.
 
 ## Output
 

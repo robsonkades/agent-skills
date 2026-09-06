@@ -3,6 +3,10 @@
 An orders module. `Order` has a `Customer`; `Customer` has a `Membership` and a
 `ContactDetails`. Three call sites navigate the graph; each wants a different fix.
 
+These are illustrative partial Java 17 snippets. Imports, enclosing service classes and
+domain collaborators are omitted; `Tier` has `GOLD`, `SILVER` and `NONE`. Validate actual
+contracts before applying the moves, including nullable data and caller-visible failures.
+
 ## Chain 1 — fixed by moving the behaviour
 
 ```java
@@ -17,13 +21,14 @@ if (m.tier() == Tier.GOLD && m.points() >= 1_000) {
 ```
 
 **Analysis.** The caller navigates to `Membership` and then decides from membership data. Two
-services now encode the tier table; when the SILVER rule gained a points threshold, only one was
-updated. The chain is a symptom; duplicated policy is the disease. The move below is correct only
+services now encode the tier table; a future SILVER threshold change could drift between them.
+The move below preserves the shown table rather than introducing a new threshold. It is correct only
 if membership owns this rate table as part of its contract:
 
 ```java
 public record Membership(Tier tier, int points) {
     public BigDecimal discountRate() {
+        if (tier == null) return BigDecimal.ZERO; // preserves the original == checks' fallback
         return switch (tier) {
             case GOLD -> points >= 1_000 ? new BigDecimal("0.10") : BigDecimal.ZERO;
             case SILVER -> new BigDecimal("0.05");
@@ -38,6 +43,11 @@ public final class Customer {
     public BigDecimal discountRate() { return membership.discountRate(); }
 }
 ```
+
+If null tiers should instead be rejected, introduce and test that contract change separately.
+A null `Membership` still fails at the old dereference; the guard does not invent a missing-member
+default. The [Java 17 switch rules](https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.11)
+explain why switching on a null enum without this guard would change behavior.
 
 Call site: `order.customer().discountRate()`. The strict formal rule still sees a call on an
 object returned by another call; pragmatically this is acceptable only if `Customer` is a stable
@@ -80,7 +90,9 @@ public void send(EmailAddress to, String recipientName,
 ```
 
 The caller — which already holds the `Order` legitimately — performs the navigation once
-and hands over a consistent set of values. `ReceiptSender` no longer imports `Order`, `Customer` or
+and obtains a consistent set of values using the owning aggregate's snapshot/locking or
+transaction protocol, then hands them over. A mere sequence of getters proves no consistency.
+`ReceiptSender` no longer imports `Order`, `Customer` or
 `ContactDetails`, and restructuring `ContactDetails` now touches one assembly point instead
 of every consumer. **Trade-off:** the parameter list grew from one to four; if it keeps
 growing, group them into an immutable purpose-specific `ReceiptData` snapshot and defensively
@@ -110,10 +122,13 @@ behalf of the API contract. Leave it.
 ## Verification
 
 - `ReceiptSender` and the discount call sites compile without importing `ContactDetails`
-  or `Membership`; check the imports, not just the call sites.
+  or directly navigating `Membership`; inspect resolved calls/compiled dependencies, not just
+  imports. `var` can still carry a forbidden intermediate type without an import.
 - The tier table exists exactly once (search for `"0.05"` / `SILVER` comparisons outside
   `Membership`).
-- Rename a field on `ContactDetails`: only `Customer`, the mapper and the one assembly
-  point should need edits. If a service breaks, a chain survived.
+- In a temporary branch/fixture, change the published shape used by the assembly point
+  (renaming only a private field proves little). Keep `ReceiptSender.send`'s contract stable;
+  its code and tests should remain unchanged. Identify expected mapper/assembly edits explicitly.
 - Tests: `Membership.discountRate()` covered directly, including the GOLD-under-threshold
-  case both services used to disagree on.
+  and exact-threshold cases, SILVER, NONE and null tier. Retain service tests proving both
+  callers obtain the owned rate; a unit test of the moved method does not prove caller wiring.

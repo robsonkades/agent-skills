@@ -1,6 +1,10 @@
 # Routing
 
-Find the row that matches the situation. Every skill named here exists in this repository.
+Find the row that matches the situation. Names refer to catalog skills, which may not be
+installed in the applying agent's environment. Read the matching skill when available;
+if absent, report the unavailable handoff and continue work supported by project evidence.
+Do not fabricate its instructions or install it without authorization. Load only the
+skills needed for the current decision, not this entire map.
 
 ## Before writing code
 

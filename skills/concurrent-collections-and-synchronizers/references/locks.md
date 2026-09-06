@@ -154,9 +154,10 @@ synchronization control". A gauge, never an `if`.
   blocking a new reader when the apparent head of the queue is a waiting writer — "only a
   probabilistic effect", in the implementation's own comment. Symptom: writes land in bursts after
   long stalls, and write p99 sits orders of magnitude above p50.
-- **Upgrade is impossible, downgrade is legal.** "If a reader tries to acquire the write lock it
-  will never succeed." That is literal: the thread deadlocks against _itself_, forever, while
-  holding a read lock of the same object. Run on 25.0.3, the thread is `WAITING`, its
+- **A read-only holder cannot upgrade while retaining its read hold.** Blocking `lock()` can
+  wait indefinitely; untimed/timed `tryLock` instead fails or times out, and interruptible
+  acquisition can be cancelled. A thread already holding the write lock may reenter it even
+  when it also holds a read lock. In a prior blocking-read-upgrade run on 25.0.3, the thread was `WAITING`, its
   `LockInfo` names `ReentrantReadWriteLock$NonfairSync` (or `$FairSync` — not the abstract `$Sync`,
   which is what a runbook usually greps for), `lockOwner` is `null`, and both
   `findDeadlockedThreads()` and `findMonitorDeadlockedThreads()` return `null`.

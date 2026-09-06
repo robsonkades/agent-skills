@@ -12,20 +12,14 @@ public abstract class AggregateRoot<ID> {
 
     public abstract ID id();
     public long version() { return version; }
-
-    @Override public final boolean equals(Object other) {
-        return other instanceof AggregateRoot<?> that
-            && getClass() == other.getClass()
-            && Objects.equals(id(), that.id());
-    }
-
-    @Override public final int hashCode() { return getClass().hashCode(); }
 }
 ```
 
-Identity semantics, equality and the version. Every aggregate root needs all three, so the
-supertype earns its place — and centralising `equals`/`hashCode` fixes a defect that is
-otherwise written wrongly per entity (`orm-behavioral-patterns`).
+This partial JPA sketch is justified only for roots sharing this identity accessor and
+optimistic-version policy. Equality is deliberately not centralised: two unassigned ids must
+not make distinct transient entities equal, and runtime `getClass()` checks can conflict with
+ORM proxies. Choose and test identity across transient, persisted, detached and proxied states
+with `java-object-contracts`; a shared superclass alone provides no equality guarantee.
 
 **How it fails:** accretion.
 
@@ -59,7 +53,7 @@ rule is most of what ports and adapters means, and stating it as a small pattern
 demystifies the style (`layering-and-boundaries`).
 
 **Cost:** the implementation is not discoverable from the interface without tooling, and
-wiring is by configuration rather than by construction. Both are acceptable at a real
+wiring must be explicit, through manual construction or configuration. Both are acceptable at a real
 boundary and pure friction at a fake one — an interface with one implementation, no
 inversion, and no seam is a file (`enterprise-architecture-smells`).
 
@@ -150,13 +144,14 @@ how a production deployment quietly runs the wrong tax rules.
 Two patterns whose modern forms are worth naming:
 
 **Record Set** — an in-memory representation of tabular data, the natural companion to Table
-Module. In Java there is no first-class record set, and the practical equivalent is a
-`List<SomeRow>` of records plus SQL that does the set work. Attempting to simulate a rich
-record set in Java produces something worse than either objects or SQL
+Module. JDBC includes `RowSet` and disconnected `CachedRowSet`; typed application code often
+uses `List<SomeRow>` records plus SQL for set operations. Choose based on tabular API needs,
+mapping and bounded memory rather than claiming Java lacks record-set support
 (`domain-logic-organization`).
 
 **Value Object** — an object whose identity is its value. Java records give equality,
-immutability and a constructor to validate in:
+shallow immutability and a constructor to validate in; mutable components still need defensive
+ownership. This example validates a deliberately narrow legacy digit-only format:
 
 ```java
 public record TaxId(String digits) {
@@ -167,8 +162,10 @@ public record TaxId(String digits) {
 }
 ```
 
-The validation in the compact constructor is what makes it a value object rather than a
-wrapper: an invalid `TaxId` cannot exist, so no caller needs to check
+This constructor excludes null and wrong-shaped strings; it does not validate check digits,
+registration, ownership or every jurisdiction's identifier format. Value semantics do not
+require a nontrivial validator. Name the accepted format and add its actual invariants before
+claiming a valid tax identifier
 (`orm-structural-mapping` for how it is stored).
 
 ## Choosing, quickly
@@ -176,9 +173,14 @@ wrapper: an invalid `TaxId` cannot exist, so no caller needs to check
 | You are about to…               | Ask                                                             |
 | ------------------------------- | --------------------------------------------------------------- |
 | Add a base class                | Does _every_ subtype need every member?                         |
-| Add an interface                | Is there an inversion or a second implementation?               |
+| Add an interface                | Is there an inversion, test seam or runtime variation?          |
 | Add a registry or static holder | Can this be injected instead?                                   |
 | Add a null object               | Is the behaviour identical for every caller?                    |
 | Add a plugin point              | Does a second implementation exist or is one scheduled?         |
 | Add a mapper                    | Must both sides remain ignorant of each other?                  |
 | Wrap an external system         | Yes — and translate its types and its errors, not just its URL. |
+
+## Sources
+
+- [Java 17 CachedRowSet](https://docs.oracle.com/en/java/javase/17/docs/api/java.sql.rowset/javax/sql/rowset/CachedRowSet.html): disconnected tabular data support.
+- [Java 17 Record](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html): shallow immutability and component-derived equality.

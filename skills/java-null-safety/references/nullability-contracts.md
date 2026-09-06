@@ -1,14 +1,16 @@
 # Nullability contracts
 
-## JSpecify 1.0 — the current standard
+## JSpecify 1.0 vocabulary and scope
 
 JSpecify 1.0 defines a shared nullness vocabulary increasingly supported by checkers, IDEs and
 language interop. Support depth still varies—especially for generic inference, wildcards, JDK
 models and bytecode type annotations—so “uses JSpecify” does not prove equivalent enforcement.
 Two annotations carry the core contract:
 
-- `@NullMarked` — placed on a module, package (`package-info.java`) or class: every
-  unannotated type usage within is **non-null by default**.
+- `@NullMarked` — establishes null-marked scope on a module, package (`package-info.java`),
+  class or method. Ordinary concrete reference types default to non-null, but type variables
+  may carry parametric nullness and local root types are inferred. A marked package does not
+  mark its subpackages; `@NullUnmarked` opts a nested scope back into unspecified nullness.
 - `@Nullable` — a type-use annotation marking the exceptions: `@Nullable Customer
 findBy(String id)` says "null is a legal return and means something".
 
@@ -45,15 +47,20 @@ which annotations/defaults, prevent contradictory duplicates on one type use, an
 signatures deliberately; a blind mechanical replacement can change generic/array annotation
 positions and Kotlin semantics.
 
+Unmarked does not mean nullable: it means unspecified nullness. Annotate nullable DTO
+components and nested elements explicitly when they are intended to be modeled by the checker;
+otherwise record the boundary as unchecked. A module-wide `@NullMarked` also covers DTO packages
+unless an applicable `@NullUnmarked` scope overrides it.
+
 ## Boundary tactics — where null leaks in regardless of contracts
 
-| Leak                     | Behaviour                                                                                 | Tactic                                                                                                                             |
-| ------------------------ | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| JSON/XML deserialisation | absent field → null, ignoring annotations                                                 | validate the DTO once, at the adapter; convert to a domain type whose constructor enforces the contract                            |
-| ORM / JPA relations      | absent optional to-one may be null; lazy state is normally proxy/wrapper/provider-managed | derive contract from mapping/schema/provider; do not label “unfetched” as null                                                     |
-| `Map.get`                | null for absent **and** for mapped-to-null                                                | `getOrDefault` distinguishes absence but preserves an explicit null; `containsKey` distinguishes in a stable map; CHM forbids null |
-| Reference arrays         | every slot null-initialised                                                               | track fill state or validate all slots; primitive arrays instead contain zero values                                               |
-| Legacy/third-party APIs  | unannotated returns                                                                       | wrap once in an adapter that establishes your contract; do not sprinkle checks at every call site                                  |
+| Leak                     | Behaviour                                                                                         | Tactic                                                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| JSON/XML deserialisation | missing/null handling depends on mapper/creator configuration and primitive versus reference type | test the configured binder, validate raw input and construct the domain contract                                                   |
+| ORM / JPA relations      | absent optional to-one may be null; lazy state is normally proxy/wrapper/provider-managed         | derive contract from mapping/schema/provider; do not label “unfetched” as null                                                     |
+| `Map.get`                | null for absent **and** for mapped-to-null                                                        | `getOrDefault` distinguishes absence but preserves an explicit null; `containsKey` distinguishes in a stable map; CHM forbids null |
+| Reference arrays         | every slot null-initialised                                                                       | track fill state or validate all slots; primitive arrays instead contain zero values                                               |
+| Legacy/third-party APIs  | unannotated returns                                                                               | wrap once in an adapter that establishes your contract; do not sprinkle checks at every call site                                  |
 
 The shape is: establish the nullness contract where data enters/objects are constructed, then rely
 on it within the checked scope. Re-check only when another framework, override, reflective path or

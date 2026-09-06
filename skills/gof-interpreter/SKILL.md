@@ -28,6 +28,10 @@ normally needs it. And the GoF class-per-production approach fits small grammars
 user functions, recursion, optimization or strict isolation may justify a mature runtime, bytecode
 VM, or existing language rather than an ever-growing `switch`.
 
+The sealed AST plus pattern-switch examples require Java 21 or later without preview features.
+Inspect the target compiler/runtime and engine versions; adopting Interpreter does not authorize
+an upgrade. On older baselines use supported per-node dispatch or an existing evaluator.
+
 ## When it is the answer
 
 ```text
@@ -54,8 +58,8 @@ optimised, translated to SQL, shown in a UI
   are what parser generators and combinator libraries do properly.
 - **The expression comes from an untrusted source and the chosen engine exposes constructors,
   reflection, bean/type access or host functions.** That can become arbitrary code execution.
-  Prefer a capability-restricted evaluator (for example SpEL `SimpleEvaluationContext` where its
-  limits fit), an allowlisted language, or process isolation.
+  Prefer a purpose-built restricted language or isolation. SpEL `SimpleEvaluationContext` limits
+  features but is not a sandbox guarantee: reachable getters/accessors/functions may have effects.
 - **It has an unverified latency target.** A tree walk need not allocate per node and may be fast
   enough. Profile parsing and evaluation before adding closure or bytecode compilation.
 
@@ -97,13 +101,14 @@ THEN audit the evaluation context and reachable capabilities. Full reflection/ty
      method access can become arbitrary code execution; a documented restricted mode
      may be acceptable after adversarial tests.
 
-IF the grammar has precedence, nesting or useful error messages
-THEN use a parser generator or combinators. Hand-rolled parsers for
-     non-trivial grammars are where the bugs live.
+IF grammar complexity exceeds what a small, bounded recursive-descent parser can maintain
+THEN consider a generator or combinators. Precedence alone does not mandate a dependency;
+     every option needs full-input consumption, position errors and adversarial limit tests.
 
 IF the AST is walked repeatedly
-THEN consider caching only after measuring parse cost. Bound cache size/weight and key
-     normalization; request-controlled unique expressions otherwise create a retention attack.
+THEN consider caching only after measuring parse cost. Bound size/weight, key by grammar/schema
+     and relevant semantic configuration, and recheck caller permissions. Do not cache another
+     caller's authorization or captured context under expression text alone.
 
 IF evaluation is in a hot path
 THEN compare tree walking, specialized closures, bytecode and vectorized/batched
@@ -149,19 +154,23 @@ THEN revisit parser/runtime, resource accounting, stack behavior, debugging and
 - [ ] The language is small, and its growth is deliberately bounded
 - [ ] An existing expression language was considered and rejected for a stated reason
 - [ ] Any user-influenced engine input runs with an audited allowlist/capability model or isolation
-- [ ] Depth, node count and evaluation time are bounded for untrusted expressions
+- [ ] Text/token sizes, AST depth/nodes, expensive primitive work and result sizes have enforced bounds
 - [ ] Evaluation has no side effects and no access to the host environment
 - [ ] Parsing is separated; any AST cache is measured, bounded and resistant to key-cardinality abuse
 - [ ] AST nodes are immutable; evaluation state lives in a per-call context
 - [ ] An unknown node type from a newer producer is rejected, not ignored
 - [ ] Performance claims about compilation are backed by a benchmark
 
+Deliver the language's type/null/error/short-circuit contract, capability and resource limits,
+validated execution boundary, and relevant checks. Label missing parser, SQL dialect or engine
+validation explicitly; AST immutability and a sealed hierarchy alone do not establish safety.
+
 ## References
 
 - [Grammar, alternatives and safety](references/grammar-and-alternatives.md) — when to embed CEL,
   JSONLogic or a rules engine instead; the expression-language RCE class with the shapes to look
-  for; parsing options and why hand-rolling is usually wrong; resource limits for untrusted
-  expressions; and closure compilation with the numbers it typically gives. Read before designing
+  for; parsing options and their maintenance trade-offs; resource limits for untrusted
+  expressions; and closure compilation with its measurement requirements. Read before designing
   a language.
 - [Worked example](references/worked-example.md) — a filter language for a search API: the sealed
   AST, the evaluator as a fold, a second fold that compiles to SQL, closure compilation for the

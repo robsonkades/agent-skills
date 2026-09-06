@@ -23,6 +23,10 @@ Create a boundary ledger:
 If an excluded cost changes between variants or is not amortized in production, redesign the
 boundary. Setup outside timing still affects cache, heap, type profile, and contention state.
 
+For asynchronous APIs, distinguish enqueue/dispatch, completion and end-to-end response as
+different operations. Returning a handle does not wait for the work. Ensure outstanding tasks
+do not accumulate across iterations or forks, and preserve exception/cancellation semantics.
+
 ## Anti-optimization controls
 
 Use several discriminating controls; none is sufficient alone:
@@ -50,6 +54,9 @@ fork order, process start, temperature and host changes
 
 Plateau-looking throughput alone does not prove stable compiled state. Compilation in measurement
 may also be intentional for a lifecycle benchmark; state which lifecycle is being estimated.
+
+For cold runs, specify which layer is reset. A new JVM does not clear the OS page cache or a
+remote service's cache; SingleShotTime does not automatically time JVM startup or setup.
 
 ## Comparison design
 
@@ -162,6 +169,21 @@ validation [result or pending].
 For automation, hand raw results, provenance, experimental-unit identity, thresholds,
 inconclusive behavior, retry budget, and baseline governance to `performance-regression-ci`.
 
+## Review cases
+
+These are reproducible review inputs, not executed agent evaluations:
+
+- A Scope.Thread fixture stores a reference to a static mutable map and claims isolation.
+  Require an alias/state-topology audit; fail if distinct fixture instances prove no contention.
+- A benchmark returns a CompletableFuture from an executor and claims completion latency.
+  Identify dispatch-only timing and outstanding-task lifecycle; fail if Blackhole alone is
+  offered as a completion barrier.
+- Separate Param values each select one implementation, but production mixes three receivers.
+  Require a mixed-call-site case or a bounded specialization claim; fail if separate trials
+  are treated as equivalent to the production mix.
+- SingleShotTime with a fresh fork is presented as JVM launch-to-readiness time.
+  Identify excluded phases and propose an external measurement; fail if the mode alone proves it.
+
 ## Authoritative references
 
 - [OpenJDK JMH repository](https://github.com/openjdk/jmh)
@@ -169,3 +191,9 @@ inconclusive behavior, retry budget, and baseline governance to `performance-reg
 - [JMH annotation APIs](https://javadoc.io/doc/org.openjdk.jmh/jmh-core/latest/org/openjdk/jmh/annotations/package-summary.html)
 - [JMH `Level` warnings](https://javadoc.io/doc/org.openjdk.jmh/jmh-core/latest/org/openjdk/jmh/annotations/Level.html)
 - [JMH statistics implementation](https://github.com/openjdk/jmh/tree/master/jmh-core/src/main/java/org/openjdk/jmh/util)
+- [JMH 1.37 scope contract](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/annotations/Scope.java)
+- [JMH 1.37 per-invocation setup sample](https://github.com/openjdk/jmh/blob/1.37/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_38_PerInvokeSetup.java)
+- [JMH 1.37 GC profiler](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/profile/GCProfiler.java)
+  — iteration snapshot windows and operation normalization.
+- [JMH 1.37 Param contract](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/annotations/Param.java)
+  — trial parameterization rather than a per-invocation input distribution.

@@ -82,20 +82,21 @@ exponential time on a crafted input:
 
 ```java
 Pattern.compile("^(\\w+\\s?)*$").matcher("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!").matches();
-// pins a CPU core; the request never returns
+// Potentially costly near miss; duration depends on input and JDK implementation.
 ```
 
 Mitigations, in order:
 
 1. **Do not regex structured input.** Use a real parser for URLs, emails, JSON, dates, CSV.
-   `URI`, `InternetAddress`, `DateTimeFormatter` and a CSV library are all more correct and
-   faster than the regex that tries to replace them.
+   Choose a parser matching the actual grammar and validation needs; `URI` parsing alone, for
+   example, is not URL authorization or SSRF protection. Measure performance separately.
 2. **Bound the input** before matching—a cap bounds damage only if it is small enough for the
    pattern's measured worst case. Enforce request deadlines/load shedding outside the matcher too;
    Java's matcher has no reliable per-match timeout.
 3. **Remove the nesting.** Avoid `(x+)+`, `(x|y)*z` patterns with overlapping alternatives;
    prefer possessive quantifiers (`\\w++`) or atomic groups (`(?>…)`), which forbid the
-   backtracking that causes the blowup.
+   backtracking that causes the blowup. These can change the accepted language and captures:
+   `a+a` matches `aa`, but `a++a` does not. Test valid and rejected cases before substitution.
 4. **Treat a hung request with high CPU and a regex in the stack as ReDoS**, not as a slow
    dependency — a thread dump names the `Matcher` frame directly (concurrency-diagnostics).
 
@@ -103,6 +104,11 @@ Mitigations, in order:
 `split("|")` on nothing useful. For a literal separator, use `Pattern.quote`, or
 `StringTokenizer`-free alternatives such as `String.split(Pattern.quote("."))` or a simple
 `indexOf` loop.
+
+For literal replacement text containing `$` or `\`, use `Matcher.quoteReplacement`; quoting
+the pattern with `Pattern.quote` solves a different problem. Test hostile near misses at small,
+bounded sizes. Run growth probes in an isolated process with a hard external timeout, since
+interrupting a future does not reliably stop the matcher. A quick sample does not prove safety.
 
 ## Injection: the rule is "never build the other language by concatenation"
 

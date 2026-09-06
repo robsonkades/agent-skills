@@ -3,6 +3,11 @@
 A service takes payment orders, authorises them against a card gateway over HTTP, and
 records the outcome. Three layers: HTTP adapter → domain service → REST boundary.
 
+These are partial Java 21 snippets without preview. Supply imports, enclosing types, client,
+request/parser helpers, ledger and decline types; public top-level types need separate files.
+The provider contract in this illustration maps 402 to a decline; real gateways may use a
+different status or body code. Authorization approval does not mean a payment was captured.
+
 ## Before
 
 ```java
@@ -112,7 +117,7 @@ under separate evolution, so adding a permitted result remains an API compatibil
 
 ```java
 return switch (gateway.authorise(order.paymentId(), order.amount())) {
-    case Approved(String authCode) -> ledger.recordCapture(order, authCode);
+    case Approved(String authCode) -> ledger.recordAuthorisation(order, authCode);
     case Declined(DeclineCode code, String advice) -> ledger.recordDecline(order, code, advice);
 };
 ```
@@ -129,17 +134,18 @@ unexpected exceptions to 500, with one owning observability point.
 - Two exception types plus a result type replace one `RuntimeException` — more API
   surface, and every existing caller must be migrated in the same change; half-migrated
   is worse than unmigrated.
-- The sealed result forces even callers that only care about approval to write a
-  `Declined` arm. That ceremony is the mechanism working; if it feels wrong, the outcome
-  was not really expected and belonged as an exception.
+- An exhaustive switch makes this caller account for decline, but Java also permits a default
+  branch or an ignored result. Review actual handling; a sealed result alone cannot prevent
+  a caller from treating decline as success.
 - Typed transport facts add modelling surface and still do not make the decision automatically;
   that separation prevents a generic retry library from converting uncertainty into duplicate
   financial effects.
 
 ## Verification
 
-- Grep the module: `getMessage()` feeding a constructor — zero occurrences; `contains(`
-  in any catch or retry path — zero.
+- Inspect `getMessage()` feeding constructors for discarded causes, and text matching in retry
+  paths for message-based policy. These are leads, not zero-occurrence gates: a constructor
+  passing both a safe message and the original cause may be correct.
 - Every catch of `GatewayException` either handles it or rethrows; `catch (Exception)`
   survives only in the REST boundary handler.
 - Tests: a stubbed gateway returning 402 produces a recorded decline and no exception; a

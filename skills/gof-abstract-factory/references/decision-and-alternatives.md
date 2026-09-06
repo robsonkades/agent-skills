@@ -22,14 +22,14 @@ Blanks that fail the test — and mean the products should be injected independe
 
 ## Alternatives, by what they resolve
 
-| Alternative                              | Resolves                                                       | Fails to resolve                                                      |
-| ---------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Independent injection of each product    | Wiring, testing, lifecycle                                     | Nothing prevents a mixed set if two families are wired simultaneously |
-| One `@Configuration` per profile         | Deployment-time family selection, with mixing impossible       | Selection that varies per request                                     |
-| `Map<Key, Family>` where family = record | Runtime selection, family kept atomic, key set visible in code | Third-party contribution; families needing lifecycle                  |
-| Sealed `Format` + exhaustive `switch`    | Compile-time proof that every family is handled                | Families contributed by code you do not compile                       |
-| `ServiceLoader<FamilyProvider>`          | Third-party families, discovered at runtime                    | Any compile-time guarantee; ordering; classpath surprises             |
-| Configuration properties                 | Families that differ only in values                            | Families that differ in behaviour                                     |
+| Alternative                              | Resolves                                                       | Fails to resolve                                                       |
+| ---------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Independent injection of each product    | Wiring, testing, lifecycle                                     | Nothing prevents a mixed set if two families are wired simultaneously  |
+| One `@Configuration` per profile         | Deployment-time selection with coherent wiring                 | Automatic proof against multiple active profiles or incompatible beans |
+| `Map<Key, Family>` where family = record | Runtime selection, family kept atomic, key set visible in code | Third-party contribution; families needing lifecycle                   |
+| Sealed `Format` + exhaustive `switch`    | Compile-time proof that every family is handled                | Families contributed by code you do not compile                        |
+| `ServiceLoader<FamilyProvider>`          | Third-party families, discovered at runtime                    | Any compile-time guarantee; ordering; classpath surprises              |
+| Configuration properties                 | Families that differ only in values                            | Families that differ in behaviour                                      |
 
 The commonest correct answer in a Spring application is **one `@Configuration` per profile** —
 and it is not usually recognised as Abstract Factory, because the pattern has been absorbed by
@@ -56,8 +56,9 @@ until it is a service locator. Detection: any two products that are never used i
 path. Fix: split by actual usage cluster, or delete and inject.
 
 **A family of one.** One implementation, an interface, and a comment saying another will come.
-Detection: `grep` for implementors; one, plus a test double, is one. Fix: delete the interface;
-reintroduce it with the second family, when its shape is known rather than guessed.
+Detection: inspect implementors and actual consumers. Keep a justified public SPI/module boundary;
+otherwise consider removing speculative indirection. Preserve public compatibility and lifecycle
+before deleting an interface.
 
 **Family selected by a boolean.** `newFactory(boolean legacy)` grows into `newFactory(boolean
 legacy, boolean v2, boolean tenantB)` and the call sites become unreadable. Fix: a named key

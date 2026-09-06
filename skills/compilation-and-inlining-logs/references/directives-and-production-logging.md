@@ -1,8 +1,9 @@
 # Directives and production logging
 
-Two mechanisms steer one method's compilation, and four mechanisms observe it. Everything
-below was executed on Temurin 25.0.3 unless marked otherwise; the directive semantics are
-JEP 165 (JDK 9) as implemented in `compilerDirectives.cpp` and `compilerOracle.cpp`.
+The historical command captures below use Temurin 25.0.3; source-derived explanations are
+implementation claims, not additional runtime experiments. Directive semantics originate in
+JEP 165 (JDK 9), implemented in `compilerDirectives.cpp`, `compilerOracle.cpp` and task creation.
+Recheck the actual vendor/update release before depending on a diagnostic command.
 
 ## Which steering mechanism
 
@@ -128,11 +129,17 @@ jcmd <pid> Compiler.directives_remove                  # pops the top directive
 jcmd <pid> Compiler.directives_clear                   # everything but the default
 ```
 
+Capture the initial stack and track entries added by the session. `directives_remove` pops
+the current top entry, not a named session entry; recheck the stack before removal and do
+not clear unrelated operational directives to clean up a diagnostic experiment.
+
 None of these needs `-XX:+UnlockDiagnosticVMOptions` at start-up, including a directive
 that turns on `PrintInlining` (executed: a JVM started with no flags accepted it and printed
 the tree). The output goes to the JVM's stdout, not to the `jcmd` terminal.
 
-**A directive applies only to compilations that start after it is added.** In the lab, a
+**A new directive does not rewrite installed code or tasks that already captured a directive.**
+The JDK 25u implementation selects it in `CompileTask::initialize`, before compilation starts;
+tasks already queued may therefore retain old policy. In the earlier lab, a
 `PrintInlining` directive added three seconds after start-up printed nothing for the already
 tier-4 `hot` method and printed the full tree for `late`, first compiled ten seconds later.
 There is no supported way on the examined 25.0.3 build to make an existing nmethod recompile under a new
@@ -164,16 +171,16 @@ changes the stream but does not bound it.
 
 ## The JFR events
 
-| Event                          | `default.jfc`         | `profile.jfc`        | Answers                                                      |
-| ------------------------------ | --------------------- | -------------------- | ------------------------------------------------------------ |
-| `jdk.Compilation`              | on, threshold 1000 ms | on, threshold 100 ms | Which method, which tier, how long, `succeded`, `isOsr`      |
-| `jdk.CompilationFailure`       | **off**               | on                   | `failureMessage`, e.g. `out of nodes parsing method`         |
-| `jdk.CompilerInlining`         | **off**               | **off**              | Per call site: caller, callee, `bci`, `succeeded`, `message` |
-| `jdk.CompilerPhase`            | on, threshold 60 s    | on, threshold 10 s   | C2 phase timings per compile id                              |
-| `jdk.CompilerStatistics`       | every 1000 ms         | every 1000 ms        | Totals: `compileCount`, `bailoutCount`, `invalidatedCount`   |
-| `jdk.CompilerQueueUtilization` | every 10 s            | every 5 s            | Queue length per compiler; the "stuck at tier 2/3" evidence  |
-| `jdk.CodeCacheFull`            | on                    | on                   | JIT switched off                                             |
-| `jdk.Deoptimization`           | on, no stack          | on, with stack       | Which nmethod, `reason`, `action`, the bci                   |
+| Event                          | `default.jfc`         | `profile.jfc`        | Answers                                                        |
+| ------------------------------ | --------------------- | -------------------- | -------------------------------------------------------------- |
+| `jdk.Compilation`              | on, threshold 1000 ms | on, threshold 100 ms | Which method, which tier, how long, `succeded`, `isOsr`        |
+| `jdk.CompilationFailure`       | **off**               | on                   | `failureMessage`, e.g. `out of nodes parsing method`           |
+| `jdk.CompilerInlining`         | **off**               | **off**              | Per attempt: caller, callee, `bci`, `succeeded`, `message`     |
+| `jdk.CompilerPhase`            | on, threshold 60 s    | on, threshold 10 s   | C2 phase timings per compile id                                |
+| `jdk.CompilerStatistics`       | every 1000 ms         | every 1000 ms        | Totals: `compileCount`, `bailoutCount`, `invalidatedCount`     |
+| `jdk.CompilerQueueUtilization` | every 10 s            | every 5 s            | Queue length per compiler; the "stuck at tier 2/3" evidence    |
+| `jdk.CodeCacheFull`            | on                    | on                   | Code heap exhaustion; correlate compiler disable/restart state |
+| `jdk.Deoptimization`           | on, no stack          | on, with stack       | Which nmethod, `reason`, `action`, the bci                     |
 
 These defaults are from Temurin 25.0.3; inspect the `.jfc` bundled with the runtime. In the lab,
 a 1500 ms default recording produced **zero**
@@ -194,30 +201,30 @@ Views that read them without scripting: `jfr view compiler-statistics`,
 
 ## Symptom to cause
 
-| Symptom                                                             | Most likely cause                                                             | Check                                                                                  |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `-Xlog:jit` prints only a warning                                   | No tag set is exactly `jit`                                                   | `-Xlog:jit+compilation`; the warning lists the valid sets                              |
-| `awk '$4 == 4'` returns a handful of lines                          | Blank flag field emits no token                                               | Structural regex in `printcompilation-format.md`                                       |
-| `grep 'made zombie'` finds nothing                                  | State removed in JDK 20                                                       | Grep `made not entrant: uncommon trap` instead                                         |
-| JVM refuses to start on `PrintInlining`                             | Diagnostic flag, unlock missing or after it                                   | `-XX:+UnlockDiagnosticVMOptions` first                                                 |
-| Method absent from compilation log/events                           | Never invoked, currently uncompiled, excluded, or huge-method policy          | invocation evidence, `Compiler.codelist`, commands, bytecode size, tiered mode/version |
-| Method at tier 1 and never higher                                   | Trivial method (normal), or `COMPILE SKIPPED` bailout                         | Look for the `COMPILE SKIPPED:` line; `jdk.CompilationFailure`                         |
-| Method at tier 2                                                    | C2 queue congested; thresholds scaled up                                      | `Compiler.queue`, `jdk.CompilerQueueUtilization`, `k=` in events                       |
-| Method at tier 3 with high counts                                   | Thresholds not met after load-feedback scaling, or C2 queue                   | `PrintTieredEvents` `total=` and `k=`; not `CompileThreshold`                          |
-| `made not entrant: uncommon trap` repeats on one method             | Deoptimisation loop                                                           | `jdk.Deoptimization` `reason`/`action`; a different investigation                      |
-| `made not entrant: marked for deoptimization` in a burst            | Class loading broke CHA dependencies, or a directive/redefinition             | `-Xlog:class+load`, `Compiler.directives_print`                                        |
-| Tree says `callee is too large` for a 60-byte hot callee            | You are reading the tier-3 (C1) tree                                          | Find the tier-4 line of the same caller                                                |
-| `hot method too big` on a method that "used to inline"              | Callee grew past 325 bytes, or was refactored into the caller's hot path      | `javap -c`; compare the printed byte count                                             |
-| `already compiled into a big method` after a JDK or code change     | Callee's nmethod grew past `InlineSmallCode` (machine code, not bytecode)     | `Compiler.codelist` addresses give the nmethod size range                              |
-| `disallowed by CompileCommand` with no `CompileCommand` on the line | A directives file, a `jcmd` addition, or `CompileCommandFile`                 | `Compiler.directives_print`; `.hotspot_compiler`, start scripts                        |
-| `jcmd Compiler.directives_add` says added, nothing changes          | Target already compiled; directives apply to later compilations only          | `Compiler.codelist` state; wait for or force a recompilation                           |
-| Directive file rejected at start-up                                 | `(*)` in a signature, unknown key, or more than `CompilerDirectivesLimit`     | The parser prints line and byte offset                                                 |
-| JFR recording shows no `jdk.Compilation`                            | 1000 ms / 100 ms threshold                                                    | `jdk.Compilation#threshold=0ms`                                                        |
-| JFR shows no `jdk.CompilerInlining`                                 | Disabled in the examined default/profile configs or filtered by settings      | inspect target `.jfc`; enable event explicitly                                         |
-| `JFR.view compiler-statistics` says no data                         | No recording running                                                          | `JFR.start` first                                                                      |
-| `CompileCommand=log,C::m` produced no file                          | Needs `-XX:+LogCompilation` too                                               | Add it, or use `-Xlog:jit+inlining=debug:file=`                                        |
-| JITWatch instructions fail with `Unrecognized VM option`            | `-XX:+TraceClassLoading` was removed                                          | `-Xlog:class+load=info`                                                                |
-| `CompileCommand=print` prints no assembly                           | `hsdis` not on the library path: `[warning][os] Loading hsdis library failed` | Install `hsdis`; the rest of the output is still valid                                 |
+| Symptom                                                             | Most likely cause                                                             | Check                                                                                   |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `-Xlog:jit` prints only a warning                                   | No tag set is exactly `jit`                                                   | `-Xlog:jit+compilation`; the warning lists the valid sets                               |
+| `awk '$4 == 4'` returns a handful of lines                          | Blank flag field emits no token                                               | Structural regex in `printcompilation-format.md`                                        |
+| `grep 'made zombie'` finds nothing                                  | State removed in JDK 20                                                       | Inspect lifecycle/code-cache evidence; uncommon traps are not zombie events             |
+| JVM refuses to start on `PrintInlining`                             | Diagnostic flag, unlock missing or after it                                   | `-XX:+UnlockDiagnosticVMOptions` first                                                  |
+| Method absent from compilation log/events                           | Never invoked, currently uncompiled, excluded, or huge-method policy          | invocation evidence, `Compiler.codelist`, commands, bytecode size, tiered mode/version  |
+| Method at tier 1 and never higher                                   | Trivial method (normal), or `COMPILE SKIPPED` bailout                         | Look for the `COMPILE SKIPPED:` line; `jdk.CompilationFailure`                          |
+| Method at tier 2                                                    | C2 queue congested; thresholds scaled up                                      | `Compiler.queue`, `jdk.CompilerQueueUtilization`, `k=` in events                        |
+| Method at tier 3 with high counts                                   | Thresholds not met after load-feedback scaling, or C2 queue                   | `PrintTieredEvents` `total=` and `k=`; not `CompileThreshold`                           |
+| `made not entrant: uncommon trap` repeats on one method             | Deoptimisation loop                                                           | `jdk.Deoptimization` `reason`/`action`; a different investigation                       |
+| `made not entrant: marked for deoptimization` in a burst            | Class loading broke CHA dependencies, or a directive/redefinition             | `-Xlog:class+load`, `Compiler.directives_print`                                         |
+| Tree says `callee is too large` for a 60-byte hot callee            | You are reading the tier-3 (C1) tree                                          | Find the tier-4 line of the same caller                                                 |
+| `hot method too big` on a method that "used to inline"              | Callee grew past 325 bytes, or was refactored into the caller's hot path      | `javap -c`; compare the printed byte count                                              |
+| `already compiled into a big method` after a JDK or code change     | Callee's nmethod grew past `InlineSmallCode` (machine code, not bytecode)     | `Compiler.codelist` addresses give the nmethod size range                               |
+| `disallowed by CompileCommand` with no `CompileCommand` on the line | A directives file, a `jcmd` addition, or `CompileCommandFile`                 | `Compiler.directives_print`; `.hotspot_compiler`, start scripts                         |
+| `jcmd Compiler.directives_add` says added, nothing changes          | Target installed or queued task retained old policy, or pattern mismatch      | Verify stack/pattern and new task identity; controlled restart or natural recompilation |
+| Directive file rejected at start-up                                 | `(*)` in a signature, unknown key, or more than `CompilerDirectivesLimit`     | The parser prints line and byte offset                                                  |
+| JFR recording shows no `jdk.Compilation`                            | 1000 ms / 100 ms threshold                                                    | `jdk.Compilation#threshold=0ms`                                                         |
+| JFR shows no `jdk.CompilerInlining`                                 | Disabled in the examined default/profile configs or filtered by settings      | inspect target `.jfc`; enable event explicitly                                          |
+| `JFR.view compiler-statistics` says no data                         | No recording running                                                          | `JFR.start` first                                                                       |
+| `CompileCommand=log,C::m` produced no file                          | Needs `-XX:+LogCompilation` too                                               | Add it, or use `-Xlog:jit+inlining=debug:file=`                                         |
+| JITWatch instructions fail with `Unrecognized VM option`            | `-XX:+TraceClassLoading` was removed                                          | `-Xlog:class+load=info`                                                                 |
+| `CompileCommand=print` prints no assembly                           | `hsdis` not on the library path: `[warning][os] Loading hsdis library failed` | Install `hsdis`; the rest of the output is still valid                                  |
 
 ## Version notes
 
@@ -239,3 +246,4 @@ Views that read them without scripting: `jfr view compiler-statistics`,
 - [JDK 25 `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
 - [JDK 25 `jfr`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)
 - [HotSpot compiler directives source](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/compiler/compilerDirectives.cpp)
+- [JDK 25u task initialization and directive capture](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/compiler/compileTask.cpp)

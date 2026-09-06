@@ -76,7 +76,10 @@ entirely.
 
 1. **Find the decisions as they were actually made**, not as documented: where the rules are,
    what the repositories return, where `@Transactional` appears, whether versioning exists,
-   whether reads use the write model.
+   whether reads use the write model. Trace representative call paths and effective transaction
+   configuration; annotation presence alone does not prove a boundary is active. Inspect the
+   project's Java/framework/database versions before handing off version-sensitive advice;
+   this routing skill imposes no Java baseline or upgrade.
 2. **Identify the application's kind** (`references/application-types.md`) — a batch-heavy
    integration hub and a transactional web application have different right answers, and
    applying one's architecture to the other is a common source of accidental complexity.
@@ -87,11 +90,17 @@ entirely.
 5. **Record what you learn as decisions with forces**, so the architecture becomes
    re-openable rather than inherited (`architecture-decision-making`).
 
+Deliver a short map of the relevant decisions: observed code/runtime evidence, inferred force,
+unresolved constraint, specialist handoff and one check that could confirm or change the choice.
+If workload or implementation evidence is unavailable, keep the architecture proposal conditional
+and identify the smallest missing trace, representative use case or owner answer needed.
+
 ## Decision rules
 
 ```text
 Starting a new module and the structure is open
-        → answer the eight decisions in order. Do not begin with a
+        → use the eight decisions as a discovery guide, revisiting them
+          as constraints emerge. Do not begin with a
           reference architecture (pattern-selection-and-composition).
 
 An unfamiliar codebase, and the question is "how is this built?"

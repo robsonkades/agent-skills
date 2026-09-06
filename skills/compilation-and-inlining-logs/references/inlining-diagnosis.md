@@ -6,7 +6,9 @@
 # Session flags: PrintInlining is diagnostic, so the unlock must come first
 java -XX:+PrintCompilation \
      -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining \
-     -jar app.jar 2>&1 | grep -A 20 'YourClass::yourMethod'
+     -jar app.jar > jit-session.txt 2>&1
+# Search the retained capture; a fixed grep -A window may truncate or mix compilation trees.
+grep -n 'YourClass::yourMethod' jit-session.txt
 
 # Same trees, no unlock, with the compilation header they hang from
 java -Xlog:jit+compilation,jit+inlining=debug -jar app.jar
@@ -89,7 +91,7 @@ legality, profitability, profile, depth, recursion, code-size, intrinsic, and di
 still decide. C1 uses its own limits, so a tier-3 refusal does not predict C2. Read actual flag
 values from the target runtime rather than carrying these numbers across vendors/releases.
 
-Gates that apply independently of the band, in the order C2 checks them:
+Other gates to inspect independently of the size band (not a complete compiler execution order):
 
 - **Call-site type profile.** Monomorphic and some limited-polymorphic sites may be inlined;
   profile width, receiver distribution, compiler state, and speculation policy determine whether
@@ -102,16 +104,16 @@ Gates that apply independently of the band, in the order C2 checks them:
 
 ## Refusal categories
 
-| Category                    | Printed                                | What to do                                                          |
-| --------------------------- | -------------------------------------- | ------------------------------------------------------------------- |
-| Above `FreqInlineSize`, hot | `hot method too big`                   | Extract the rare part out of the common path                        |
-| Above `MaxInlineSize`, cold | `too big`                              | Wait for warm-up, or check the path is executed                     |
-| Never executed              | `not inlineable` after `(not loaded)`  | Normal — nothing to fix                                             |
-| Megamorphic call site       | `virtual call`                         | Reduce polymorphism, or accept the cost knowingly                   |
-| Depth exceeded              | `inlining too deep`                    | Rarely worth changing; usually a symptom of something else          |
-| Callee already large        | `already compiled into a big method`   | Shrink the callee, or accept; raising `InlineSmallCode` is global   |
-| Excluded                    | `disallowed by CompileCommand`         | Find the `CompileCommand` or directive; `Compiler.directives_print` |
-| Refused by C1 only          | `callee is too large` on a tier-3 tree | Nothing — read the tier-4 tree                                      |
+| Category                            | Printed                                | What to do                                                                                 |
+| ----------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Above `FreqInlineSize`, hot         | `hot method too big`                   | Extract the rare part out of the common path                                               |
+| Above `MaxInlineSize`, cold         | `too big`                              | Wait for warm-up, or check the path is executed                                            |
+| Unloaded/unresolved at this attempt | `not inlineable` after `(not loaded)`  | Correlate later class loading, invocation and compilation; not proof it never executes     |
+| No selected inline target           | `virtual call`                         | Inspect receiver profile and unresolved targets; change dispatch only with causal evidence |
+| Depth exceeded                      | `inlining too deep`                    | Rarely worth changing; usually a symptom of something else                                 |
+| Callee already large                | `already compiled into a big method`   | Shrink the callee, or accept; raising `InlineSmallCode` is global                          |
+| Excluded                            | `disallowed by CompileCommand`         | Find the `CompileCommand` or directive; `Compiler.directives_print`                        |
+| Refused by C1 only                  | `callee is too large` on a tier-3 tree | Nothing — read the tier-4 tree                                                             |
 
 ## Two decision flows
 
@@ -129,10 +131,10 @@ Suspect method
 ├── 3. Never appears at any level?
 │      > 8000 bytecodes              → check DontCompileHugeMethods plus version/mode (JDK-8366118)
 │      "excluded by CompileCommand"  → someone excluded it; directives_print, CompileCommand flags
-│      Compiler.queue backed up      → compiler threads exhausted
-│      jdk.CodeCacheFull in JFR      → JIT switched off
+│      Compiler.queue backed up      → inspect arrival/service rates, thread activity and CPU limits
+│      jdk.CodeCacheFull in JFR      → correlate current compiler state; historical event is not live status
 └── 4. At tier 4 but the hot path is still slow?
-       Not a compilation-level problem. Go to PrintInlining.
+       Profile the hot path; inspect inlining when call overhead or lost optimization is implicated.
 ```
 
 **Why was this specific call not inlined?**
@@ -141,7 +143,7 @@ Suspect method
 Tier-4 tree shows a refusal for a hot call
 ├── 1. Read the string — it names the limit
 │      too big / hot method too big  → size band; measure the callee (javap -c, or the printed number)
-│      virtual call                  → megamorphic; size is irrelevant
+│      virtual call                  → no selected inline target; inspect receiver profile before naming megamorphism
 │      inlining too deep             → depth; look at the chain above it
 │      already compiled into a big method → InlineSmallCode; the callee's nmethod is large
 │      disallowed by CompileCommand  → a flag or directive, not the compiler
@@ -153,13 +155,13 @@ Tier-4 tree shows a refusal for a hot call
 
 ## Changing limits, in order of preference
 
-| Option                                                               | Effect                                                               | When                                                     |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------- |
-| Refactor the hot/cold boundary, preserving semantics                 | Can reduce size and expose optimization; may harm locality or design | When profile and benchmark identify a real causal limit  |
-| `@CompilerControl(Mode.INLINE)` in JMH, or a directive `inline` list | Forces the attempt for one call site                                 | Isolating a call site in a benchmark; rare in production |
-| `-XX:CompileCommand=inline,C::m`                                     | Same, process-wide for that callee                                   | Confirming a hypothesis, one run                         |
-| Raise `-XX:FreqInlineSize` globally                                  | Affects many call sites and code-cache/compiler cost                 | Controlled experiment; rarely a fleet default            |
-| Raise `-XX:MaxInlineSize` globally                                   | Affects cold and hot candidates and code shape                       | Controlled experiment only                               |
+| Option                                                               | Effect                                                               | When                                                      |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------- |
+| Refactor the hot/cold boundary, preserving semantics                 | Can reduce size and expose optimization; may harm locality or design | When profile and benchmark identify a real causal limit   |
+| `@CompilerControl(Mode.INLINE)` in JMH, or a directive `inline` list | Changes matching method/caller policy, not necessarily one call site | Isolating a hypothesis in a benchmark; rare in production |
+| `-XX:CompileCommand=inline,C::m`                                     | Same, process-wide for that callee                                   | Confirming a hypothesis, one run                          |
+| Raise `-XX:FreqInlineSize` globally                                  | Affects many call sites and code-cache/compiler cost                 | Controlled experiment; rarely a fleet default             |
+| Raise `-XX:MaxInlineSize` globally                                   | Affects cold and hot candidates and code shape                       | Controlled experiment only                                |
 
 A global limit raised to fix one method is a non-local change: larger inlined bodies bloat
 generated code, hurt instruction-cache locality, and can reduce aggregate throughput even
@@ -169,8 +171,9 @@ size, not about types.
 
 ## The JFR view of inlining
 
-`jdk.CompilerInlining` is the structured form of one `@ bci` line — one event per call site
-per compilation, with the same verdict text:
+`jdk.CompilerInlining` describes an inlining attempt. A receiver branch, retry or repeated
+nested context may yield several events for the same caller/bci/compileId; do not count these
+as application invocations or assume one final decision per site:
 
 ```
 jdk.CompilerInlining {
@@ -186,8 +189,9 @@ jdk.CompilerInlining {
 
 It is **disabled in both `default.jfc` and `profile.jfc`**, and `jdk.Compilation` — which
 gives the tier (`compileLevel`) the event belongs to — is filtered by a threshold of 1000 ms
-(`default`) or 100 ms (`profile`) that drops every ordinary compilation; a `profile` recording
-of the lab contained 492 inlining events and zero compilation events. Enable both explicitly:
+(`default`) or 100 ms (`profile`) that filters many ordinary compilations. The earlier lab
+enabled inlining explicitly and captured 492 inlining events with zero compilation events;
+that was not the unmodified profile configuration. Enable both explicitly:
 
 ```bash
 -XX:StartFlightRecording:filename=jit.jfr,settings=profile,jdk.CompilerInlining#enabled=true,jdk.Compilation#threshold=0ms
@@ -197,9 +201,10 @@ jfr print --events jdk.CompilerInlining jit.jfr | grep -B6 -A3 'name = "process"
 jfr view longest-compilations jit.jfr
 ```
 
-Read `eventThread` — `C1 CompilerThread…` or `C2 CompilerThread…` — for the same reason as
-the tier column in the text form. Cost was about 85 bytes per event in the lab, roughly eight
-events per compilation; multiply by `jstat -compiler`'s `Compiled` count for an estimate.
+Join `compileId` to `jdk.Compilation` and inspect `compiler`, `compileLevel`, `isOsr` and
+`succeded` (the actual field spelling on this build). Compiler thread names are supporting
+evidence, not a portable compiler classifier. Measure event counts and bytes over the same
+capture interval; lifetime `jstat` totals and a fixed events-per-compilation ratio cannot size it.
 
 ## LogCompilation and JITWatch
 

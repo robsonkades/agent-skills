@@ -2,35 +2,39 @@
 
 ## What each source can answer
 
-| Source             | Answers                                                     | Cannot answer                                    | Volatility          | Cost to collect            |
-| ------------------ | ----------------------------------------------------------- | ------------------------------------------------ | ------------------- | -------------------------- |
-| Logs               | What the code decided to say happened, with correlation ids | Anything nobody logged; state between statements | Retained            | Low                        |
-| Metrics            | Rates, saturation, latency distribution, when it started    | Which request; why                               | Retained            | Low                        |
-| Traces             | Where the time went across services; which hop failed       | What the code was doing inside a span            | Sampled             | Low, if sampling caught it |
-| Thread dump        | What every thread is doing _right now_; lock ownership      | What happened a second ago                       | **Lost on restart** | Seconds, near-zero impact  |
-| Heap dump          | Every live object and reference chain                       | Anything about time or threads                   | **Lost on restart** | Long pause, large file     |
-| JFR recording      | Allocation, GC, locks, I/O, exceptions over a window        | Fine detail outside the enabled events           | Rolling buffer      | Low overhead               |
-| Database state     | What was actually committed                                 | What was attempted and rolled back               | Mutating            | Low; beware read locks     |
-| Deployment history | What changed and when                                       | Whether the change is the cause                  | Retained            | Free                       |
+| Source             | Answers                                                     | Cannot answer                                    | Volatility          | Cost to collect                  |
+| ------------------ | ----------------------------------------------------------- | ------------------------------------------------ | ------------------- | -------------------------------- |
+| Logs               | What the code decided to say happened, with correlation ids | Anything nobody logged; state between statements | Retained            | Low                              |
+| Metrics            | Rates, saturation, latency distribution, when it started    | Which request; why                               | Retained            | Low                              |
+| Traces             | Where the time went across services; which hop failed       | What the code was doing inside a span            | Sampled             | Low, if sampling caught it       |
+| Thread dump        | Captured thread stacks and supported lock information       | Past execution; threads omitted by the mechanism | **Lost on restart** | Target/thread-count dependent    |
+| Heap dump          | Captured objects and reference graph                        | Allocation history without other evidence        | **Lost on restart** | Potential long pause, large file |
+| JFR recording      | Allocation, GC, locks, I/O, exceptions over a window        | Fine detail outside the enabled events           | Rolling buffer      | Low overhead                     |
+| Database state     | What was actually committed                                 | What was attempted and rolled back               | Mutating            | Low; beware read locks           |
+| Deployment history | What changed and when                                       | Whether the change is the cause                  | Retained            | Free                             |
 
 The two rows in bold are the ones people destroy. A restart is the standard first response to
 an incident, and it takes the thread and heap state with it permanently.
 
 ## Collection order during an incident
 
-Mitigation and diagnosis compete. The resolution is that the cheap, fast, non-disruptive
-evidence is collected _first_, because it costs seconds:
+Mitigation and diagnosis compete. Choose cheap, relevant evidence within the incident budget;
+this order is a candidate, not a prerequisite to mitigation:
 
 1. **Note the time and the deploy version.** Free, and irreplaceable later.
-2. **Thread dump** — three of them, a few seconds apart, so you can tell a stuck thread from a
-   busy one. `jcmd <pid> Thread.print`. Near-zero impact; safe on a live node.
+2. **Thread evidence**, when relevant — repeated captures a few seconds apart can show persistence,
+   but unchanged stacks do not alone prove no progress. `jcmd <pid> Thread.print` has medium
+   documented impact depending on thread count. On virtual-thread workloads, choose a supported
+   dump mechanism with the needed coverage; traditional thread dumps omit virtual threads.
 3. **Metrics screenshot or query** for the window, before dashboards roll off.
-4. **One node out of rotation, left running**, if the cluster can spare it. This converts every
-   piece of volatile evidence into evidence you can take your time with — the single highest
-   value action available in an incident, and the one that must be decided early.
+4. **One node out of rotation, left running**, if the cluster can spare it. This may reduce
+   traffic-induced effects, but it does not freeze state: GC, background jobs, timeouts and caches
+   continue, and draining can destroy the reproduction. Capture or record that change deliberately.
 5. **Heap dump** only if the symptom is memory and you have accepted the pause:
-   `jcmd <pid> GC.heap_dump`. It stops the world for the duration and writes a file the size of
-   the live set.
+   `jcmd <pid> GC.heap_dump /approved/path/incident-<id>.hprof`. A filename is required. This is
+   a high-impact operation; by default it requests full GC unless `-all` is specified, and dump
+   size is not exactly live-set size. Inspect target help, disk headroom and supported options;
+   route detailed collection decisions to `heap-dump-analysis`.
 6. **Then mitigate** — restart, roll back, shed load — only when the service-impact budget permits
    this collection sequence. Safety, data integrity, and incident command can require mitigation at
    step 1; record the evidence traded away.
@@ -39,14 +43,20 @@ If the cluster cannot spare a node, mitigate first and say explicitly in the inc
 that the evidence was traded away. That is a legitimate decision; leaving it unrecorded is what
 turns "we could not find the cause" into a recurring incident.
 
+Command examples contain placeholders; paths are on the target host and must be writable by the
+target JVM. Check `jcmd <pid> help <command>` with compatible tools. Preserve identity, time range,
+configuration and raw artifacts securely; dumps/logs may contain credentials or personal data.
+Copy an existing rolling JFR window before it expires when relevant, rather than assuming a new
+recording can recover history. JFR contents and overhead depend on enabled events/settings.
+
 ## Reading the sources against each other
 
-A single source is usually ambiguous; two together are usually decisive.
+Correlate independent sources to test hypotheses; two agreeing signals can still share a confounder.
 
 - **Latency up, CPU flat, threads blocked** → waiting on something: a lock, a pool, a
   downstream call. Thread dump names it (concurrency-diagnostics).
-- **Latency up, CPU up, allocation up** → doing more work per request, or GC. GC log separates
-  the two (java-performance, jvm-gc-tuning).
+- **Latency up, CPU up, allocation up** → increased work, load/mix or GC are candidates. Normalize
+  by completed work and combine GC logs with allocation/CPU evidence (java-performance).
 - **Errors on one node only** → configuration, image version, or hardware. Compare the node's
   environment before reading any code.
 - **Errors start exactly at a deploy** → the deploy is the leading hypothesis, not proof. Compare
@@ -55,14 +65,14 @@ A single source is usually ambiguous; two together are usually decisive.
   known-incompatible contract blindly.
 - **Errors start with no deploy** → data, traffic, time, or a dependency's own change. Work the
   "what changed" table in `method.md`.
-- **Traces show the time inside one span with no child spans** → the missing instrumentation
-  _is_ the finding; you cannot debug what is not observable, and adding the span is the fix
-  before the next occurrence (distributed-tracing-design).
+- **Time inside one span with no children** → local work, missing/dropped instrumentation or
+  propagation failure are candidates. Correlate with profiles/logs before choosing an additional
+  span; instrumentation is a diagnostic improvement, not proof of a functional fix.
 
 ## What the logs will not tell you
 
-Logs record what someone anticipated. The gap between the last log line before the failure and
-the first one after is where the fault lives, and by construction nobody instrumented it.
+Logs record selected observations. A gap may locate investigation work, but buffering, dropped
+records, missing correlation or earlier corruption can put the initiating fault elsewhere.
 
 When a fault falls in that gap, resist adding a hundred log lines to production. Prefer:
 
@@ -76,7 +86,10 @@ When a fault falls in that gap, resist adding a hundred log lines to production.
 The cause is not established until it explains the timing, the distribution across nodes and
 customers, and why it did not happen before. Write that down while it is fresh.
 
-Then: the reproduction becomes a regression test at the narrowest level that reproduces it
+Then: where feasible the reproduction becomes a regression test at the narrowest level that reproduces it
 (java-testing-strategy), and any evidence you wished you had had becomes an instrumentation
-change — a metric, a span, a log field. An incident that produces neither is an incident you
-will have again.
+change — a metric, a span, a log field. Record unresolved causal gaps and targeted follow-up;
+do not claim recurrence is prevented merely because a test or dashboard was added.
+
+Sources: [JDK 25 jcmd command impact and syntax](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+and [JEP 444 thread-dump coverage](https://openjdk.org/jeps/444). Verify the deployed JDK's behavior.

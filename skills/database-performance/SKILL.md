@@ -21,7 +21,9 @@ Leave this skill once the owner is known.
 
 ## Triage contract
 
-Record before routing:
+Start with the symptom, time window and known environment; collect only the signals needed to
+choose the next owner. The packet below is a menu, not a prerequisite to handoff. For greenfield
+selection, route from requirements and workload evidence without inventing existing engine metrics.
 
 ```text
 business symptom, SLO impact, and exact time window:
@@ -36,7 +38,10 @@ evidence gaps, collection risk, rollback window, and success measure:
 ```
 
 Do not infer an engine mechanism from an application symptom. Align clocks and workload before
-correlating layers.
+correlating layers. Identify metric boundaries: pool usage is connection checkout-to-return,
+not SQL execution, and cumulative engine counters need interval deltas with resets accounted for.
+When JVM instrumentation or configuration is involved, inspect compiler/runtime, resolved driver,
+pool and ORM versions and transaction ownership; this router imposes no Java baseline or upgrade.
 
 ## Route by established question
 
@@ -57,13 +62,22 @@ correlating layers.
 
 ## Separating questions
 
-- If pool acquire time is high, ask whether usage time also rose. High acquire with stable usage
-  suggests admission/capacity; high usage routes to the transaction or statement holding the
-  connection.
-- If statement count scales with rows, route to the ORM before reading individual plans. Fast SQL
-  repeated 500 times is not a query-plan defect.
-- If one statement dominates, capture the executed plan with real parameters and production-shaped
-  data before proposing an index.
+- If pool acquire time is high, compare arrival rate, active/idle/pending connections, connection
+  creation failures and hold-time distribution. Stable completed-borrow usage does not exclude
+  long active borrows or leaks that have not returned. Route pool admission to `connection-pool-sizing`
+  and follow evidence of long holds into the owning transaction/statement; do not enlarge the pool
+  from acquire latency alone.
+- If statement count scales with rows, attribute repeated calls to ORM loading, handwritten loops,
+  retries or intended per-row work. Route confirmed ORM amplification to
+  `orm-fetch-and-batching-performance`; route repeated ingestion to `database-bulk-loading`.
+  Reduce avoidable call amplification before optimizing every plan, while keeping per-call cost
+  as a possible coexisting problem.
+- If one statement dominates, seek its observed plan and representative parameters/data before
+  proposing an index. An estimated plan is not an executed plan. Prefer existing traces or plan
+  history; `EXPLAIN ANALYZE` executes the statement and adds instrumentation overhead. Replays need
+  bounded duration/load and assessed side effects; rollback does not remove incurred load or every
+  possible external/nontransactional effect. If safe runtime evidence is unavailable, hand off the
+  estimate with that limitation instead of forcing a production replay.
 - If the plan is stable but elapsed time moves, compare locks, waits, I/O/cache state, log pressure,
   and replica topology in the same interval.
 - If maintenance “succeeded,” verify its observable effect. VACUUM can remove nothing, an online DDL
@@ -90,8 +104,18 @@ a vendor default, a folklore threshold, or a lab result into a production prescr
 
 ## Definition of done
 
-- The symptom, workload, engine/version, cohort, and time window are explicit.
+- Relevant symptom/workload, engine/version, cohort and time window are explicit or marked
+  unknown/not applicable; missing fields do not block an otherwise clear handoff.
 - Application, pool, statement, engine, and host signals are not mixed without aligned evidence.
 - At least one plausible alternative survives until a discriminating signal is checked.
 - The confirmed question is handed to one primary owner, with adjacent skills only when needed.
-- The recommendation predicts a measurable effect and has guardrail and rollback criteria.
+- The handoff includes the evidence, leading hypothesis, plausible alternative and next
+  discriminating check; routing to an owner is not proof of the root cause.
+- Any proposed intervention predicts a measurable effect and has guardrail and rollback criteria.
+  A routing-only answer can stop at the owner and the evidence it needs.
+
+## Sources for collection boundaries
+
+- [PostgreSQL 18 EXPLAIN](https://www.postgresql.org/docs/18/sql-explain.html) — ANALYZE executes the statement, adds overhead and excludes client network transfer costs.
+- [MySQL 8.4 EXPLAIN](https://dev.mysql.com/doc/refman/8.4/en/explain.html) — distinguish estimates from actual execution analysis for the deployed version.
+- [HikariCP configuration](https://github.com/brettwooldridge/HikariCP) — acquisition timeout, pool limits and connection lifecycle; verify the installed version.

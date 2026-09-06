@@ -20,9 +20,8 @@ description: >
 
 Decide which layer a network symptom actually lives in — the socket options the application
 sets, the kernel parameters of the host, or the path between the two endpoints — and change
-only that one. Most TCP tuning goes wrong because a sysctl is raised on one side of a pair
-whose effective value is the minimum of both, and the team concludes the parameter "does not
-work".
+only the demonstrated bottleneck. Socket, kernel and path constraints interact; they are
+not generally reducible to the minimum of two configured numbers.
 
 The specific failures this prevents: raising `net.core.somaxconn` while the Java `listen()`
 still asks for the JDK default; "fixing" TIME_WAIT by lowering `tcp_fin_timeout`, which
@@ -30,6 +29,10 @@ governs a different state entirely; and computing port exhaustion or throughput 
 numbers that describe the remedy rather than the default.
 
 ## Workflow
+
+Record the deployed Linux/vendor kernel, network namespace, iproute2, JDK and framework
+versions first. Java examples use standard APIs available on Java 17+, but socket support
+and defaults remain platform-specific. Diagnosis alone does not authorize host changes.
 
 1. **Generate competing hypotheses before touching anything.** Small-write latency can involve
    Nagle/delayed ACK; local connect failures can involve ports, source addresses or routing;
@@ -46,8 +49,10 @@ numbers that describe the remedy rather than the default.
    and security/operational boundaries; choose only after proving which bound was hit.
 5. **Confirm the setting actually took.** Read the option back from the socket, or observe the
    `setsockopt` call. A configured value is not an applied value.
-6. **Persist in `/etc/sysctl.d/`**, never only `sysctl -w`, and re-measure the same counter you
-   started from.
+6. **Validate before persistence.** Within existing authorization, test one scoped change
+   with an old value, rollback and comparable load. Persist only the validated setting through
+   the deployment's configuration owner; re-measure throughput, latency, errors and memory.
+   Return evidence, remaining hypotheses and the next discriminating check if data is missing.
 
 ## Rules
 
@@ -65,16 +70,17 @@ numbers that describe the remedy rather than the default.
   configuration can produce related errors. Prove it with tuple/state counts and packet capture.
 - The completed-connection accept queue is capped by the requested `listen()` backlog and
   kernel policy such as `somaxconn` (with implementation rounding/accounting). Pass it
-  explicitly: `new ServerSocket(port, 1024)` or `bind(addr, 1024)`. Without that, the sysctl is
-  inert.
+  explicitly when needed: `new ServerSocket(port, 1024)` or `bind(addr, 1024)`.
+  Raising the kernel ceiling above the application's request adds no backlog capacity.
 - `net.core.somaxconn` defaults to 128 below kernel 5.4 and 4096 from 5.4 on. Read it with
   `sysctl`; do not quote 128 as universal.
 - Receive-buffer autotuning is commonly enabled. `tcp_rmem[2]` governs TCP autotuning's
   receive maximum, while `net.core.rmem_max`/`wmem_max` govern application-requested socket
   buffers; do not collapse them into one ceiling. Effective throughput also depends on
   congestion window, window scaling, loss and sender behavior, not BDP alone.
-- Never compute throughput from the ~87 KB default of the `tcp_rmem` triple. With autotuning on,
-  a long-lived connection grows past it; the ceiling is what caps it.
+- Never compute throughput from an initial `tcp_rmem` value (older examples use ~87 KB).
+  With autotuning active, buffers can grow; neither the initial size nor the memory ceiling
+  directly states the effective advertised window or application throughput.
 - `TCP_NODELAY` is a per-socket option with no global sysctl equivalent. Decide from actual
   write sizes/cadence and protocol framing; bulk paths usually batch in user space or use
   zero-copy, so leaving Nagle on is not an automatic win.
@@ -85,21 +91,22 @@ numbers that describe the remedy rather than the default.
   BBRv1/v2/later revisions, pacing support, RTT fairness, policers and workload mix differ.
   Reproduce against the deployed kernel and path with throughput, RTT distribution, loss and
   fairness; published results are evidence for their experiment, not yours.
-- DCTCP needs an ECN-capable path with appropriately configured marking/AQM. With `tcp_ecn=1` and
-  `tcp_congestion_control=dctcp` set on hosts alone, behaviour is unchanged — that is not a
-  host misconfiguration, it is half a contract.
+- DCTCP needs compatible ECN negotiation and appropriately configured path marking/AQM.
+  Host settings alone do not establish its intended feedback loop; fallback and behavior
+  depend on the implementation and peer. Validate both endpoints and the fabric.
 - `SO_REUSEADDR` and `SO_REUSEPORT` solve different problems: relisten over a lingering socket
   versus scaling `accept()` across sockets. Neither addresses client-side port exhaustion.
 - Every externally dependent blocking operation needs a deadline budget. For a client socket,
-  that usually means connect and read timeouts; server/listener and non-blocking channels have
-  different APIs. Align application deadlines with retries, proxies and load balancers.
+  that includes connect and read timeouts, but `SO_TIMEOUT` bounds an individual blocking read,
+  not writes, DNS or the whole request. Align an overall budget and cancellation mechanism
+  with retries, proxies and load balancers; see `timeouts-and-deadlines` for that contract.
 - Report a latency distribution with enough samples for the claimed percentile and retain
   timeout/error counts. p99.9 from a few hundred requests is noise; a mean alone hides tails.
 
 ## References
 
 - [Sysctls and socket options](references/sysctl-and-socket-options.md) — the parameter table
-  with real defaults and what each one actually governs, a starting `/etc/sysctl.d/` file, the
+  with defaults and what each one actually governs, a scoped experiment procedure, the
   BDP worked example, and the Java calls for backlog, `SO_REUSEPORT`, keepalive and timeouts.
   Read before changing any kernel parameter or writing socket setup code.
 - [Diagnosis recipes](references/diagnosis-recipes.md) — the symptom-to-tool map and the exact

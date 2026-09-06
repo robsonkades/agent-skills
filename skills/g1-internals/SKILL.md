@@ -21,9 +21,10 @@ description: >
 
 Explain a G1 pause from the mechanism that produced it, so that the tuning action follows
 from evidence rather than from a flag someone remembers. The same 40 ms pause means
-different things depending on which phase dominates: `Object Copy` says there is a lot of
-live data to move; `Merge Heap Roots` says the remembered sets are expensive to scan.
-These have opposite fixes, and the summary line cannot distinguish them.
+different things depending on which phase dominates: `Object Copy` identifies live-data
+movement and its execution cost; `Merge Heap Roots` identifies root-card
+preparation cost. The sub-phases and supporting measurements distinguish causes; neither
+duration alone nor the summary line establishes the fix.
 
 The failure this prevents is diagnosing G1 with the vocabulary of a fixed-generation
 collector. Mixed GC is not full GC. Humongous objects are not tenured survivors. Regions
@@ -32,28 +33,33 @@ cause is not.
 
 ## Workflow
 
+The detailed source model here is OpenJDK 25; older/newer releases are labelled where discussed.
+Inspect target vendor/update, effective flags and collector before using internal names or defaults.
+These are HotSpot implementation details, not Java language guarantees; do not upgrade to apply them.
+
 1. **Read young and mixed collections separately.** They are different events with
    different budgets; grep them apart before computing any statistic.
 2. **Break the pause into phases** with `-Xlog:gc+phases` and identify which one dominates.
    Everything after this step depends on that answer.
-3. **If `Object Copy` / `Evacuate Collection Set` dominates**, the cause is the volume of
-   live data being moved — look at promotion rate and at how many old regions entered the
-   collection set.
-4. **If `Merge Heap Roots` / `Merge RS` dominates**, the cause is remembered-set scanning
-   cost, and neither allocation nor promotion rate will explain it. Check reference fan-in
-   and RSet representation.
+3. **If `Evacuate Collection Set` dominates**, distinguish `Object Copy` from root scanning.
+   For copying, correlate live bytes, promotion and CSet size with worker imbalance, CPU availability
+   and memory bandwidth; a long phase does not prove a larger live set.
+4. **If `Merge Heap Roots` / `Merge RS` dominates**, inspect card-set merging and pending dirty
+   cards; correlate `Scan Heap Roots` separately for heap-reference scanning. Check reference fan-in,
+   RSet representation and refinement activity before selecting an action.
 5. **Check humongous allocation** with `-Xlog:gc+humongous` whenever the old generation
    grows without matching application state. Short-lived buffers above half a region can mimic
    retention until eager reclaim or a completed marking cycle; prove allocation, eligibility and
    reclamation rather than declaring either leak or non-leak from occupancy alone.
-6. **Take at least ten mixed cycles** before calling anything a pattern, and report
-   p50/p99/p99.9/max for the pauses — never the mean.
+6. **Sample representative workload windows**, separating pause types and reporting event count,
+   duration, distribution and maxima. Ten mixed cycles is not a statistical guarantee; omit or label
+   unsupported tail estimates. A mean can supplement, not replace, the distribution.
 7. **Confirm every flag default in the target runtime** with `-XX:+PrintFlagsFinal
 -version` before quoting it, and show the arithmetic behind any number you report.
 
 ## Rules
 
-- A region size is chosen at startup as `clamp(1 MB, 32 MB, roundup_pow2(heap / 2048))`,
+- On OpenJDK 25, automatic region sizing uses `clamp(1 MiB, 32 MiB, roundup_pow2(max_heap / 2048))`,
   targeting about 2048 regions. The 32 MB ceiling applies to the **automatic ergonomic
   selection only**: since JDK 18 (JDK-8275056) `-XX:G1HeapRegionSize` accepts manual
   values up to **512 MB**, powers of two.
@@ -71,14 +77,14 @@ cause is not.
   percentage bounds preserve more ergonomics across heap sizes.
 - `MaxGCPauseMillis` is a best-effort goal, not a hard limit. Allocation failure, to-space
   exhaustion and a pressured old generation all force collections that violate it,
-  mixed collections most of all.
+  including mixed collections; no universal ranking of pause overruns follows from the type.
 - Through JDK 25, the post-write barrier does **not** update the RSet directly: it dirties the
   card and normally enqueues it for concurrent refinement; pause-time merging handles remaining
   work. JDK 26's delivered JEP 522 replaces the per-store fence/queue path with dual card tables
   that refinement swaps/sweeps. Confirm card size and mechanism on the target build.
-- SATB is a snapshot of the object graph taken when marking begins, not continuous
-  surveillance. A pre-write barrier records the previous value of every overwritten
-  reference so an object that moves from one referrer to another mid-cycle is not lost.
+- SATB preserves snapshot-at-the-beginning reachability without copying the entire graph.
+  While marking is active, eligible pre-write barriers log overwritten non-null values;
+  initialization/elision and queue filtering mean not every store produces a retained entry.
   Its cost depends on eligible reference-store rate, marking duration, buffer processing and the
   generated fast path; measure it rather than deriving a constant from card marking.
 - Mixed GC collects the young collection set plus selected old candidates whose liveness/cost
@@ -100,10 +106,13 @@ cause is not.
   `-XX:+ExplicitGCInvokesConcurrent` makes it a concurrent cycle,
   `-XX:+DisableExplicitGC` ignores it.
 - Never quote a per-entry RSet size or a write-barrier overhead percentage as a constant.
-  Both depend on the workload's reference fan-in; measure with `-Xlog:gc+remset` and a JMH
-  `-prof gc` run on your own code.
-- Do not cite a G1-specific JFR event name from memory. Discover what your runtime emits
-  with `jfr summary <file> | grep -i g1` and use that as the source of truth.
+  RSet cost depends on card density, tracking and representation; barrier cost also depends on
+  store paths and generated code. RSet logs measure metadata/activity; JMH `-prof gc` reports
+  allocation/GC, not isolated barrier CPU. Use controlled throughput/CPU comparisons and profiles
+  or assembly inspection to support attribution, preserving the target workload and JDK.
+- Do not cite a G1-specific JFR event name from memory. Inspect `jfr summary <file>` for recorded
+  counts and `jfr metadata` plus recording settings for availability/enabling; absence is not proof
+  the runtime lacks an event.
 
 ## Decision and validation ledger
 
@@ -124,6 +133,6 @@ and access, rotate/encrypt captures, and avoid shipping diagnostic verbosity ind
   the mechanism responsible. Read when you have a pause to explain and need to turn the
   log into a cause.
 - [Remembered sets in depth](references/remembered-sets.md) — the card table and write
-  barrier path, concurrent refinement and the hot card cache, and the three RSet
+  barrier path, concurrent refinement and legacy hot-card-cache changes, and current RSet
   representations with the cost each one shifts. Read when `Merge Heap Roots` or
   `Merge RS` dominates, or when RSet memory is suspected of squeezing the heap.

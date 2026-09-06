@@ -1,5 +1,9 @@
 # If you must implement Serializable
 
+Java blocks are partial sketches with omitted constructors, model declarations, imports and
+enclosing classes. Import the used `java.io`/`java.util` types and use target-compatible
+features (`@Serial` 14+, records 16+). Do not treat these as compiled or security-tested code.
+
 ## What you are signing up for
 
 Adding `implements Serializable` to a class:
@@ -170,7 +174,9 @@ A record's deserialization is defined to go through its **canonical constructor*
 supplies component values, and the constructor — including a compact constructor's validation
 and defensive copies — runs normally. Consequences:
 
-- No `readObject` hazard: invariants cannot be bypassed.
+- The record's own canonical-constructor checks run, but component objects are deserialized
+  before it; their hooks can already have effects. Filters, outer limits and defensive ownership
+  remain required. Constructor validation does not make an arbitrary record graph safe.
 - No serialization proxy needed for the invariant problem.
 - Records ignore `readObject`, `writeObject`, `readObjectNoData`, `writeExternal` and
   `readExternal`; the form is the component list. `writeReplace` and `readResolve` remain possible.
@@ -186,11 +192,12 @@ java-immutability covers making the components genuinely immutable.
 
 ## Related hooks
 
-- **`writeReplace`** substitutes another object at write time (the proxy pattern; also how
-  enums and some singletons work).
+- **`writeReplace`** substitutes another object at write time (the proxy pattern and some
+  class-based singletons). Enum serialization ignores `writeReplace`/`readResolve` and
+  serializes the constant name under its own special rules.
 - **`readResolve`** substitutes the deserialized object with another at read time — required
-  for a `Serializable` singleton (with every field `transient`, or an attacker can steal a
-  reference before the substitution).
+  for a conventional class-based `Serializable` singleton. Reference-valued serialized fields
+  require particular care because object graphs can expose the temporary instance before substitution.
 - **`Externalizable`** hands you full control and full responsibility, including a public no-arg
   constructor that anything can call. It is rarely justified; a custom `writeObject`/`readObject`
   covers the same needs with fewer holes.

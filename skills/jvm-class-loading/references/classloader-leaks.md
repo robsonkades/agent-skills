@@ -8,7 +8,7 @@ Weak hidden classes are an exception and may unload independently. The retaining
 often tiny while much of the cost is native Metaspace, which a heap dump does not size directly.
 
 The consequence: memory dashboards look healthy right up to
-`OutOfMemoryError: Metaspace`, or to an OOMKill if `MaxMetaspaceSize` was never set.
+`OutOfMemoryError: Metaspace`, or a process/container memory kill. A Metaspace cap does not bound total native memory.
 
 ## Confirm before hunting
 
@@ -65,8 +65,9 @@ URLClassLoader cl = new URLClassLoader(urls, parent);
 try (URLClassLoader cl = new URLClassLoader(urls, parent)) { /* ... */ }
 ```
 
-`close()` releases file handles. It does **not** release Metaspace. If any object created
-by the loader remains reachable, the loader remains alive and no class is unloaded. Both
+`close()` releases file handles. It does **not** release Metaspace. A reachable instance of an ordinary class defined by the loader retains it. Objects created
+by plugin code whose classes are parent-defined do not by themselves retain that loader.
+Closing does not invalidate already loaded classes, and weak hidden classes have separate lifetimes. Both
 halves are required: close it _and_ leave nothing reachable behind.
 
 ## Validate
@@ -80,7 +81,9 @@ and current plugins still function; forcing `System.gc()` is not a production fi
 An agent without a package filter can transform or cache far more than intended. Bound matching,
 prefer weak keys where semantics permit, remove per-loader state during shutdown, and test
 retransformation across plugin cycles. A filter reduces risk but does not prove the agent keeps
-no `Class`, `Method`, method-handle or transformed-byte cache alive.
+no `Class`, `Method`, method-handle or transformed-byte cache alive. A weak key is insufficient
+if its strongly retained value points back to that key, class or loader; inspect the complete
+retaining path rather than changing map type alone.
 
 ## Primary references
 

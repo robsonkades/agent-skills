@@ -32,7 +32,7 @@ Two aggravating cases:
   displaced by pod 1 reconnects to whichever pods are ready at that instant. The result is a
   stable, lopsided assignment that persists until the next rollout.
 
-## Proving it — the metric comparison
+## Investigating it — the metric comparison
 
 Compare two per-pod series over the same window:
 
@@ -51,8 +51,8 @@ Ratios worth writing down:
 - Capacity-normalized max/median and top-endpoint work share across pods. Do not use a
   universal threshold or max/min when one new/idle pod has zero traffic.
 - Request rate divided by connection count per pod. If that number varies by an order of
-  magnitude, connections are not equivalent units of load, and connection balancing cannot
-  work.
+  magnitude, connections are not equivalent units of load. Confirm per-connection work,
+  protocol, routing/locality and endpoint capacity before attributing skew to L4 placement.
 
 CPU per pod is a weaker signal in the same direction — it also moves for reasons unrelated to
 routing, so use it as corroboration, not evidence.
@@ -62,7 +62,7 @@ routing, so use it as corroboration, not evidence.
 | Fix                                              | What it does                                                                             | What it costs                                                                                             |
 | ------------------------------------------------ | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | **L7 proxy in the path** (ingress, mesh sidecar) | Terminates/parses HTTP/2 and can route new requests or streams                           | Possible extra hop/queue, CPU, failure domain and TLS/trust decisions; a streaming RPC remains one unit   |
-| **Client-side balancing**                        | The client resolves all endpoints and picks per request; no extra hop                    | Every client needs discovery, a policy and health state — a polyglot or third-party caller cannot         |
+| **Client-side balancing**                        | The client resolves eligible endpoints and picks per call; no extra hop                  | Every participating client needs compatible discovery, policy and health support                          |
 | **Max connection age on the server**             | Server sends GOAWAY after an age; the client reconnects, re-resolves and lands elsewhere | Periodic reconnect cost, and connection storms unless the age is jittered; rebalancing is coarse and slow |
 | **More connections per client**                  | Several connections per origin, so an L4 hop gets several decisions to make              | Approximate at best; a small client population still skews badly. A mitigation, not a fix                 |
 
@@ -82,7 +82,7 @@ endpoint and a policy that spreads across them.
 ManagedChannel channel = ManagedChannelBuilder
         .forTarget("dns:///payments-headless.svc.cluster.local:9090")  // headless: all pod IPs
         .defaultLoadBalancingPolicy("round_robin")                     // pick_first would pin
-        .usePlaintext()
+        .usePlaintext() // only where transport security is supplied or explicitly unnecessary
         .build();
 ```
 
@@ -92,6 +92,9 @@ ManagedChannel channel = ManagedChannelBuilder
 - DNS refresh and re-resolution depend on grpc-java resolver, JVM DNS caching, service config
   and connectivity events. Verify endpoint-update latency experimentally; a headless record
   existing in DNS does not prove an established channel has adopted it.
+- `defaultLoadBalancingPolicy` is a fallback; resolver-provided service config may override
+  it. Verify effective policy/provider support. The application owns channel shutdown and
+  bounded termination; do not create one channel per request.
 
 **gRPC server (grpc-java, transport-specific builder).** Maximum connection age/grace can
 initiate graceful connection replacement (GOAWAY behavior is transport/protocol specific).
@@ -101,9 +104,11 @@ is normally built into or should surround fleet-wide age policy; avoid synchroni
 **JDK `java.net.http.HttpClient`.** It negotiates HTTP/2 by default and pools connections per
 origin. Its knobs are **idle** timeouts (system property `jdk.httpclient.keepalive.timeout`,
 in seconds — verify the value and unit on your JDK), and an idle timeout never recycles a
-_busy_ connection. There is no client-side maximum connection **age**: on a steadily loaded
-HTTP/2 connection, nothing on the client side will ever move it. If you need recycling on this
-client, it has to come from the server's GOAWAY or from an L7 hop.
+_busy_ connection. There is no built-in maximum connection-age setting. Server GOAWAY or
+an L7 hop can help; an application can also rotate an owned client with bounded overlap.
+JDK 21+ provides client shutdown/termination APIs, but rotation must drain response bodies
+and in-flight calls and cannot guarantee selection of a different backend. Measure reconnect
+cost and avoid per-request client construction.
 
 **Spring's HTTP clients.** Whether you get HTTP/2 depends on the underlying client library and
 its configuration; a stack that negotiates HTTP/1.1 with keep-alive has the milder version of
@@ -115,8 +120,8 @@ about skew — check the negotiated protocol on a real connection rather than th
 - Putting gRPC behind a Kubernetes `ClusterIP` and treating the Service as a load balancer.
 - Fixing skew by raising replica count. The connections do not move; the new pods stay idle
   and the bill grows.
-- Enabling `sessionAffinity: ClientIP` to "make routing more predictable". It makes the
-  pinning stronger and permanent.
+- Enabling `sessionAffinity: ClientIP` to fix skew. It can preserve placement across new
+  connections until affinity expiry or endpoint changes, making imbalance more persistent.
 - Adding a client-side retry to fix a hot replica. The retry rides the same pinned connection
   unless the policy ejects/reselects a subchannel; it may also multiply unsafe effects.
 - Setting a max connection age with no jitter, so every client in the fleet reconnects on the
@@ -141,3 +146,4 @@ about skew — check the negotiated protocol on a real connection rather than th
 - [gRPC load balancing](https://grpc.io/blog/grpc-load-balancing/)
 - [grpc-java `ManagedChannelBuilder`](https://grpc.github.io/grpc-java/javadoc/io/grpc/ManagedChannelBuilder.html)
 - [Kubernetes virtual IPs and service proxies](https://kubernetes.io/docs/reference/networking/virtual-ips/)
+- [Java 25 HttpClient](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpClient.html) — lifecycle APIs introduced in JDK 21.

@@ -58,13 +58,15 @@ A test needs a fake implementation of an external dependency
   authority. Name and test that reason; otherwise delete it.
 - **It contains business rules.** Deciding, defaulting, validating against domain policy — that
   is domain logic in the boundary layer. Move it inward and leave translation behind.
-- **It aggregates several collaborators into one coarse call.** That is a Facade
-  (`gof-facade`), and the distinction matters because a Facade may sit above adapters but is
-  not one.
+- **Its purpose is simplifying a subsystem behind a coarse call.** Consider Facade
+  (`gof-facade`); collaborator count alone does not classify a wrapper or exclude adaptation.
 - **It adds behaviour while keeping the same interface.** That is a Decorator
   (`gof-decorator`).
 
 ## Modern Java expression
+
+Examples use Java 17 language features; inspect target compiler/runtime, actual SDK/API versions
+and compatibility obligations before implementation. No pattern choice authorizes an upgrade.
 
 ```text
 Single-method interface mismatch    a lambda or method reference:
@@ -90,6 +92,9 @@ Class adapters — `extends Adaptee implements Target` — spend Java's single i
 expose inherited public API, so composition is usually easier to isolate and replace. Inheritance
 remains useful when a framework requires subclass hooks or the adaptee cannot be delegated
 without losing protected extension behavior. Treat that as tighter coupling, not as impossible.
+An interface default is suitable only when existing operations can satisfy the new method's
+contract for all affected implementations; inspect inherited-default conflicts and behavioral
+compatibility rather than inventing a no-op to make compilation pass.
 
 ## Decision rules
 
@@ -99,26 +104,26 @@ THEN decide whether consumers now depend on vendor semantics. Translate when the
      port is meant to protect that boundary; shared standards or deliberately thin
      interoperability layers may preserve types explicitly.
 
-IF the adapter throws the adaptee's exception type
-THEN callers must catch a foreign type, and swapping the adaptee is a
-     breaking change. Translate, keeping the original as the cause.
+IF a domain-facing port promises failure isolation but exposes the adaptee's exception type
+THEN translate to the promised failure contract while preserving diagnostic cause; consumers
+     must not need vendor-specific catches. Thin interoperability contracts may differ explicitly.
 
 IF the adapter interprets, defaults or decides
-THEN that is domain logic. Move it in; keep the adapter mechanical.
+THEN distinguish provider-specific protocol interpretation from domain policy. Keep required
+     translation/validation here; move business decisions that remain after provider replacement inward.
 
-IF the adapter's interface has one method and the adaptee's has one
-method
-THEN a lambda or method reference is the adapter. No class.
+IF the target is a functional interface and the method signatures/checked failures are compatible
+THEN a lambda or method reference may suffice, regardless of how many methods the adaptee has.
+     Prefer a named class when lifecycle, state, substantial mapping or diagnostics warrant it.
 
 IF the port has exactly one implementation and no second is planned,
 and the implementation is your own code
-THEN the port is speculative indirection (gof-pattern-thinking).
-     An external dependency is the exception: the seam has value even
-     with one implementation, because it bounds the foreign model.
+THEN check dependency direction, test isolation, release boundaries and migration needs before
+     calling the port speculative. Implementation count alone is not a deletion criterion.
 
 IF the adaptee is not thread-safe
-THEN the adapter is not either, whatever it looks like. State the
-     constraint or synchronise inside it deliberately.
+THEN wrapping alone adds no guarantee. State confinement, per-call ownership or synchronization
+     covering all accesses, including aliases outside the adapter; otherwise retain the restriction.
 
 IF the adaptee is remote
 THEN its contract must expose or document latency and partial failure. Transport
@@ -128,15 +133,18 @@ THEN its contract must expose or document latency and partial failure. Transport
 
 ## Cross-cutting checks
 
-- **Concurrency.** An adapter is normally stateless and shareable. It does not confer thread
+- **Concurrency.** A stateless adapter is shareable only if its dependencies/protocol permit it. It does not confer thread
   safety on the adaptee: wrapping a non-thread-safe client in a "service" changes nothing. If
   the adapter adds state — a cache, a connection, a cursor — it now owns a concurrency
   contract and must document or enforce it.
 - **Distribution.** Adapters are where a remote dependency's failure vocabulary is turned into
-  yours, and where its schema version is pinned. Two duties are routinely missed: timeouts must
-  be set in the adapter, since the port cannot express "may hang forever"; and unknown enum or
+  yours, and where its schema compatibility is checked. Transport timeout ownership may be in
+  injected client configuration; the caller can supply an end-to-end deadline. Unknown enum or
   field values from a newer peer must be handled deliberately rather than throwing deep inside
   the domain (`rpc-and-api-contracts`).
+- **Lifecycle.** Define whether the client, response stream or cursor is borrowed or owned, who
+  closes it and how cancellation/interruption propagates. Do not close an injected shared client
+  per call or turn an interrupted wait into an ordinary retryable provider failure.
 - **Performance.** Dispatch is often inlined and translation cost ranges from zero-copy views to
   full graph allocation. Inspect large collection copies, encoding conversions and eager
   traversal; translating a lazily loaded structure can turn one query into many
@@ -153,10 +161,10 @@ THEN its contract must expose or document latency and partial failure. Transport
 - [ ] Adaptee exceptions are translated with the original preserved as the cause
 - [ ] The adapter contains no decisions that belong to the domain
 - [ ] Composition is preferred; inheritance has a documented framework/extension constraint
-- [ ] A single-method adaptation is a lambda, not a class
+- [ ] A functional-interface adaptation uses the smallest form that preserves its contract/lifecycle
 - [ ] Remote transport timeouts are configured and end-to-end resilience ownership is explicit
 - [ ] The adapter is covered by authoritative integration/contract evidence at an appropriate cadence
-- [ ] A one-to-one passthrough is justified by bounding a foreign model, or deleted
+- [ ] A passthrough has an evidenced boundary, lifecycle or compatibility responsibility, or is removed safely
 
 ## References
 

@@ -16,32 +16,43 @@
 | Does the caller have another way to reach the subject? | Usually no                    | Usually yes                   |
 | Are several of them stacked, in a chosen order?        | Rarely                        | Yes, and order matters        |
 | Who decides it exists?                                 | The subject's owner/framework | Whoever wires the object      |
-| Does it manage the subject's lifecycle?                | Often (creates it, holds it)  | No — it is given the delegate |
+| Does it manage the subject's lifecycle?                | May create/own it             | Ownership depends on contract |
 
 Both implement the subject's interface, which is why the distinction is behavioural rather than
-structural. If you find yourself stacking three proxies in a deliberate order, you have
-decorators and should reason about them with `gof-decorator`.
+structural. Stacked protection/lazy/remote proxies retain their access roles while also requiring
+the composition analysis in `gof-decorator`.
 
 ## JDK dynamic proxies against bytecode subclassing
 
 ```java
 // JDK: interfaces only
 Foo foo = (Foo) Proxy.newProxyInstance(loader, new Class<?>[]{ Foo.class },
-        (p, method, args) -> { /* before */ return method.invoke(target, args); });
+        (p, method, args) -> {
+            if (method.getDeclaringClass() == Object.class) {
+                return switch (method.getName()) {
+                    case "equals" -> p == args[0];
+                    case "hashCode" -> System.identityHashCode(p);
+                    case "toString" -> "Foo proxy";
+                    default -> throw new AssertionError(method);
+                };
+            }
+            try { return method.invoke(target, args); }
+            catch (java.lang.reflect.InvocationTargetException e) { throw e.getCause(); }
+        });
 
 // CGLIB / ByteBuddy: generates a subclass, so it can proxy classes
 ```
 
-| Mechanism         | Requires                                    | Cannot intercept                                                      |
-| ----------------- | ------------------------------------------- | --------------------------------------------------------------------- |
-| JDK dynamic proxy | An interface                                | Anything not on the interface                                         |
-| Subclass (CGLIB)  | A non-final class with a usable constructor | `final` classes, `final` methods, `private` methods, `static` methods |
+| Mechanism         | Requires                                    | Cannot intercept                                                          |
+| ----------------- | ------------------------------------------- | ------------------------------------------------------------------------- |
+| JDK dynamic proxy | Eligible interfaces                         | Target-only methods; Object.equals/hashCode/toString do reach the handler |
+| Subclass (CGLIB)  | A non-final class with a usable constructor | `final` classes, `final` methods, `private` methods, `static` methods     |
 
 Consequences that bite in practice:
 
 - Making a service class `final` — a reasonable default otherwise — disables Spring's
   subclass-based proxying for it.
-- A `private` `@Transactional` method is never advised; some versions warn, some do not.
+- A private method is not intercepted by ordinary proxy-based Spring advice; weaving differs.
 - With JDK proxies, injecting the concrete class rather than the interface fails at startup,
   which is at least loud.
 
@@ -58,20 +69,20 @@ public class OrderService {
     }
 
     @Transactional
-    public void save(Row row) { ... }  // no transaction when called from importAll
+    public void save(Row row) { ... }  // no new transaction advice here; an outer transaction may exist
 }
 ```
 
 The annotation works by the caller holding the proxy. An internal call goes straight to the
-target, so the transaction, the cache lookup, the async dispatch or the retry simply does not
-happen — and nothing fails, which is what makes it dangerous.
+target, so that method's proxy advice does not run. Existing transaction/context may still apply;
+this example assumes proxy mode, not AspectJ weaving.
 
 Three fixes, best first:
 
 1. **Move the annotated method to another bean.** The call then crosses the proxy. This is
    usually also the better design, because the annotated behaviour is a different responsibility.
-2. **Inject self.** `@Lazy OrderService self` and call `self.save(row)`. Works, and reads as the
-   workaround it is.
+2. **Inject a proxy reference to self when supported by the configuration.** Use an interface
+   compatible with proxy kind; verify circular-reference and initialization behavior.
 3. **`AopContext.currentProxy()`.** Requires `exposeProxy = true` and couples the code to Spring
    AOP. Last resort.
 
@@ -80,26 +91,29 @@ architecture test in codebases where this has happened once (`architecture-testi
 
 ## JPA lazy proxies
 
-Hibernate returns a subclass instance for a lazy association. Consequences:
+Hibernate 6.6 can use proxies or bytecode enhancement; inspect mapping and runtime settings.
+For an uninitialized polymorphic proxy, these operations need particular care:
 
 ```java
-Customer c = order.getCustomer();          // a proxy, not a Customer
-c.getClass();                              // Customer$HibernateProxy$xyz
-c instanceof PremiumCustomer               // false, even when the row is a premium customer
-c.equals(realCustomer)                     // false unless equals is id-based
-Hibernate.unproxy(c)                       // the real instance, if the session is open
+Customer c = order.getCustomer();          // may be a Customer-compatible proxy
+c.getClass();                              // may report generated proxy class
+boolean premium = c instanceof PremiumCustomer; // may be false before underlying subtype is resolved
+c.equals(realCustomer);                    // depends on the entity equality contract
+Hibernate.unproxy(c);                       // may initialize; uninitialized detached proxy can fail
 ```
 
-- **`instanceof` against a subclass fails.** Inheritance hierarchies plus lazy loading is a
-  reliable source of behaviour that differs between a freshly persisted object and one loaded
+- **Concrete subtype checks can fail.** Inheritance hierarchies plus lazy loading can produce
+  different behavior between a freshly persisted object and one loaded
   from the database (`inheritance-mapping-strategies`).
-- **`equals`/`hashCode` must be id-based**, and must use a getter rather than direct field access,
-  or the proxy compares its own uninitialised fields (`orm-structural-mapping`).
-- **`LazyInitializationException`** is the proxy escaping the scope that could initialise it. The
-  fix is to decide at the boundary what the caller needs — a fetch join, an entity graph, or a
-  projection — not to widen the session (`orm-behavioral-patterns`,
+- **Equality needs an explicit entity contract.** Stable natural keys or carefully handled generated
+  identifiers can work. Test transient/persisted/detached/proxied objects, symmetry and hash stability;
+  id-based equality alone is not sufficient (`orm-structural-mapping`).
+- **`LazyInitializationException`** can occur when unfetched state has no usable loading session.
+  Decide required fetch and lifecycle boundaries; already initialized values need no load. Compare
+  fetch joins, graphs or projections before widening session lifetime (`orm-behavioral-patterns`,
   `query-objects-and-specifications`).
-- **A lazy proxy dereferenced in a loop is an N+1.** The loop body looks like field access.
+- **A lazy dereference in a loop may produce N+1.** Measure query counts; initialization, batching
+  and fetching policy change the result.
 
 ## Safe publication in a virtual proxy
 
@@ -110,9 +124,8 @@ public Report get() {
     return target;
 }
 
-// right, when creation must happen at most once
-private final Supplier<Report> target = memoize(this::expensive);   // e.g. a holder or
-                                                                     // AtomicReference CAS
+// For one construction attempt: use an explicit synchronized failure policy, as in worked-example.
+// CAS installation alone may construct several candidates before one wins.
 
 // simplest, when creation is idempotent and cheap enough to race
 private volatile Report target;
@@ -125,8 +138,9 @@ public Report get() {
 
 The decision is whether double initialisation is acceptable. If `expensive()` opens a file,
 registers a listener or increments a counter, it is not, and the initialisation must be guarded
-so it happens once. If it is a pure computation, the racy-but-`volatile` form is correct and
-lock-free (`java-memory-model`).
+with explicit failure/retry/cleanup policy. Pure duplicate construction can be acceptable when
+different identities are allowed; volatile safely publishes but expensive() itself may block.
+Do not call the entire path lock-free without a progress argument (`java-memory-model`).
 
 ## Protection proxies that do not protect
 
@@ -137,13 +151,14 @@ DocumentStore raw = context.getBean(FileDocumentStore.class);   // bypasses Secu
 
 A protection proxy is only a control if the subject is unreachable. Ways to make that true:
 
-- The subject is package-private and the proxy is the only exported type.
+- Restrict subject visibility and wiring within the relevant trust boundary; package-private alone
+  does not protect against all same-package code, reflection or other raw-object access paths.
 - The subject is constructed by the proxy and never exposed.
 - The check moves into the subject, where no wrapper can be omitted — usually the most robust
   option, at the cost of mixing policy with the operation.
 
-Framework-based security (`@PreAuthorize`) is a proxy and inherits every limitation above,
-including self-invocation: an internal call to a `@PreAuthorize` method is unchecked.
+Ordinary Spring proxy-based method security inherits self-invocation bypass; verify the configured
+mode and any enforcement already established at the outer entry point.
 
 ## Identity and unwrapping
 
@@ -154,5 +169,9 @@ including self-invocation: an internal call to a `@PreAuthorize` method is unche
 | The real entity behind a Hibernate proxy | `Hibernate.unproxy(entity)`               |
 | A JDBC driver's native object            | `Wrapper.unwrap(Class)`                   |
 
-Publish an unwrap path for your own proxies if callers may need identity, and make it explicit
-rather than letting callers discover `getClass().getSuperclass()`.
+Restrict unwrap to justified infrastructure use. Never expose an authorization/lifecycle bypass
+merely to support identity checks; test policy through the proxy itself.
+
+Sources: [Java 17 Proxy contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/Proxy.html),
+[Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html), and
+[Hibernate 6.6 proxy/enhancement behavior](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/Hibernate.html).

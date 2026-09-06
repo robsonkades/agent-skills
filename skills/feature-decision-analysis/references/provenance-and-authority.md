@@ -4,46 +4,51 @@
 
 Ask one question: **what would I show someone who disputed this?**
 
-| Class              | What you show                                                     | What it is not                              |
-| ------------------ | ----------------------------------------------------------------- | ------------------------------------------- |
-| USER_MANDATED      | The user's words, quoted, with when they said them                | Your summary of what they meant             |
-| CORPORATE_MANDATED | The user confirming it, or a repository document that declares it | A pattern that appears consistently in code |
-| PROJECT_EXISTING   | `path:line`, and how many places                                  | Evidence that it should continue            |
-| AGENT_PROPOSED     | The option set and the separating reason                          | A default that "everyone uses"              |
+| Class              | What you show                                                                                   | What it is not                                          |
+| ------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| USER_MANDATED      | The user's words, quoted, with when they said them                                              | Your summary of what they meant                         |
+| CORPORATE_MANDATED | Attributed instruction or authoritative policy with issuer, applicable scope and current status | A repeated code pattern or an unverified document claim |
+| PROJECT_EXISTING   | `path:line`, and how many places                                                                | Evidence that it should continue                        |
+| AGENT_PROPOSED     | The option set and the separating reason                                                        | A default that "everyone uses"                          |
 
-If nothing can be shown, the provenance is AGENT_PROPOSED. That is an honest class, not a
-demotion — most decisions in a feature are legitimately the agent's proposal.
+Use AGENT_PROPOSED when the agent actually proposes the choice, not as a fallback for lost
+history. If the origin is unknown, record that fact and a source check; keep the entry pending.
+An agent proposal later accepted by a person retains its provenance and gains separate
+acceptance evidence. Cite all relevant sources when a user instruction and project practice
+jointly support a choice.
 
-## The three levels of "the project does this"
+## The levels of "the project does this"
 
 These are routinely collapsed, and collapsing them is how an accident becomes a policy:
 
 ```text
-Observed instance     One place does it. Evidence of nothing. Do not generalise.
+Observed instance     Evidence of that instance; insufficient to establish a general policy.
 
 Project pattern       Several places, no counter-example. Follow it for consistency,
                       and say that consistency is the reason. Still not a requirement.
 
 Project standard      Written down somewhere in the repository — a contributing guide,
                       an architecture document, an enforced rule, a lint configuration.
-                      Now it is a constraint, and departing from it needs a reason.
+                      Check normative status, scope and current applicability before
+                      treating it as a constraint; examples and stale drafts are not policy.
 
 Corporate standard    Someone with the authority to set it says so. Only a person
-                      establishes this. Code never does.
+                      establishes its authority; a controlled policy document can record it.
 ```
 
-When it matters and you cannot tell which level you are looking at, ask:
+First inspect available instructions and existing authorization. Ask only if the distinction
+changes an unresolved decision; otherwise record the observed convention and proceed:
 
 > Every repository under `src/main/java/.../api` returns a `ProblemDetail` on failure — 11
 > controllers, no counter-example. Is that an organisational standard I must follow, or a
 > convention in this project that this feature may follow for consistency?
 
-The answer changes nothing about what you write; it changes what happens when the feature has a
-reason to deviate.
+If there is no proposed deviation and no material uncertainty, this question is unnecessary.
 
 ## The authority test
 
-Four questions. Any **yes** means the accountable human role must be identified:
+Four questions identify consequences whose authority must be understood, not automatically
+reconfirmed. Existing user authorization or delegation may already cover them:
 
 1. **Does it change what the system does**, as opposed to how it does it?
 2. **Is it visible outside the change** — to a caller, a consumer, an operator, or in stored
@@ -51,13 +56,15 @@ Four questions. Any **yes** means the accountable human role must be identified:
 3. **Is it expensive or impossible to reverse** once it is running with real data?
 4. **Does it touch money, security, personal data, or a legal obligation?**
 
-All four no: agent-owned when the choice is also inside explicitly accepted constraints. Take it,
+All four no: agent-owned when the choice is also inside accepted constraints. Take it,
 record it in a line, and do not ask.
 
 Name authority by consequence, not by whoever is chatting: Product for behavior/value; Engineering or
 Architecture for system choices; Security/Privacy/Compliance for their obligations; Data for shared
 semantics; Operations for support/SLO commitments; Finance for material spend. A participant may inform
-a decision without authority to accept it.
+a decision without authority to accept it. Role names are illustrative; use the project's
+actual responsibility model rather than imposing nine separate approvers. A mandatory
+confirmation comes from an applicable instruction or unresolved authorization, not the label.
 
 ## Calibrating against both failure modes
 
@@ -72,8 +79,9 @@ without reading, which is worse than deciding alone.
 
 ## Recording a decision without the accountable role
 
-Sometimes a blocking question cannot be answered in time. Do not present an unconfirmed choice as an
-accepted decision. Either pause dependent work or have the accountable role accept a bounded gap:
+Sometimes a material choice is outside existing authorization and cannot be resolved from
+available evidence. Prepare the proposal, name the specific blocked action and continue
+independent work; do not present it as accepted. A bounded gap needs actual acceptance:
 
 ```text
 ED-07 Job history retained for 90 days
@@ -81,9 +89,10 @@ ED-07 Job history retained for 90 days
       Owner:       Data/Compliance — NOT CONFIRMED
       Assumption:  90 days matches the retention of the audit table (schema, V17).
       Falsified by: a stated retention policy, or a compliance obligation.
-      Contained in: one migration and one scheduled deletion; changing the number is
-                    a configuration change, changing the mechanism is not.
-      Status:      BLOCKED; no data is written under this assumption.
+      Consequence: deletion destroys historical data; changing the configured number later
+                   cannot restore it. Retention also affects collection/access obligations.
+      Status:      PENDING; retention-dependent writes/deletion are not authorized by this
+                   proposal. Independent schema analysis and tests can proceed.
 
 GAP-02 If Data/Compliance explicitly accepts proceeding to implementation, record the
        consequence, owner, expiry, reopening trigger and affected RES-* separately.

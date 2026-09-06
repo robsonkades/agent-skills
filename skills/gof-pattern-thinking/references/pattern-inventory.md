@@ -7,22 +7,21 @@ solving a neighbouring problem convincingly.
 ## Reading the columns
 
 - **Primary problem** — the force the pattern exists to resolve. If your problem is not this
-  one, the pattern is the wrong tool however well the name fits.
-- **Risk** — likelihood of misuse in modern Java, not difficulty. High-risk patterns are
-  frequently reached for when a lower rung of the ladder would do, or carry semantics that break
-  silently in the environments they are used in.
-- **Boundary class** — where the pattern's guarantees hold. `Local` guarantees evaporate across
-  a process; see `gof-patterns-and-distribution`.
+  one, inspect the owning skill before accepting it; a short row cannot enumerate every valid use.
+- **Risk** — qualitative review emphasis, not measured likelihood or severity. Actual risk depends
+  on authority, resource ownership, compatibility and effects; any pattern can cause an incident.
+- **Boundary class** — the main design concern, not a runtime guarantee. Local object contracts
+  do not establish delivery or failure semantics across a process; see gof-patterns-and-distribution.
 
 ## Creational
 
-| Pattern              | Primary problem                                                                  | Risk   | Boundary class | Skill                  |
-| -------------------- | -------------------------------------------------------------------------------- | ------ | -------------- | ---------------------- |
-| **Abstract Factory** | Keeping a _family_ of related objects mutually consistent when the family varies | Medium | Local          | `gof-abstract-factory` |
-| **Builder**          | Constructing an object whose parameters are many, optional or order-constrained  | Medium | Local          | `gof-builder`          |
-| **Factory Method**   | Letting a subtype or provider decide which concrete type a fixed algorithm uses  | Medium | Local          | `gof-factory-method`   |
-| **Prototype**        | Producing a new object from an existing instance's state rather than from a spec | High   | Local          | `gof-prototype`        |
-| **Singleton**        | Guaranteeing one instance and a global access point to it                        | High   | Process-local  | `gof-singleton`        |
+| Pattern              | Primary problem                                                                          | Risk   | Boundary class | Skill                  |
+| -------------------- | ---------------------------------------------------------------------------------------- | ------ | -------------- | ---------------------- |
+| **Abstract Factory** | Keeping a _family_ of related objects mutually consistent when the family varies         | Medium | Local          | `gof-abstract-factory` |
+| **Builder**          | Separating staged construction from representation; also ergonomic value construction    | Medium | Local          | `gof-builder`          |
+| **Factory Method**   | Letting a subtype or provider decide which concrete type a fixed algorithm uses          | Medium | Local          | `gof-factory-method`   |
+| **Prototype**        | Producing a new object from an existing instance's state rather than from a spec         | High   | Local          | `gof-prototype`        |
+| **Singleton**        | One instance and access point within an explicit scope (often per defining class loader) | High   | Process-local  | `gof-singleton`        |
 
 ## Structural
 
@@ -31,9 +30,9 @@ solving a neighbouring problem convincingly.
 | **Adapter**   | Making an existing type usable through an interface it was not written for                  | Lower  | Boundary       | `gof-adapter`   |
 | **Bridge**    | Letting an abstraction and its implementation vary independently instead of multiplying     | Medium | Boundary       | `gof-bridge`    |
 | **Composite** | Treating an individual and a composition of individuals through one interface               | Medium | Local          | `gof-composite` |
-| **Decorator** | Adding responsibilities to one object, stackably, at runtime, without changing its type     | Medium | Boundary       | `gof-decorator` |
+| **Decorator** | Adding stackable responsibilities while preserving the client interface                     | Medium | Boundary       | `gof-decorator` |
 | **Facade**    | Giving a subsystem one coherent entry point so callers do not depend on its parts           | Lower  | Boundary       | `gof-facade`    |
-| **Flyweight** | Sharing one immutable instance across many logical occurrences to bound memory              | High   | Process-local  | `gof-flyweight` |
+| **Flyweight** | Sharing intrinsic state across occurrences while keeping extrinsic state separate           | High   | Process-local  | `gof-flyweight` |
 | **Proxy**     | Controlling access to an object — lazily, remotely, protectively — behind its own interface | High   | Boundary       | `gof-proxy`     |
 
 ## Behavioural
@@ -54,39 +53,41 @@ solving a neighbouring problem convincingly.
 
 ## Risk classes, and what makes each risky
 
-The classification is a heuristic about frequency of misuse, not about the pattern's worth.
+The labels are review heuristics, not an empirical misuse ranking or the pattern's worth.
 
 **Lower risk** — local, reversible structural moves. Adapter, Facade, Strategy and Iterator each
-add one indirection with an obvious owner; a wrong call is cheap to undo. Their failure mode is
-proliferation, not damage.
+can have a small local footprint. Verify ownership and semantics: an adapter can corrupt units,
+a facade can misplace a transaction, and a resource-owning iterator can leak a connection.
 
 **Medium risk** — patterns that introduce structure other code must then live with: a hierarchy
 (Template Method, Bridge, Abstract Factory), a recursive shape (Composite, Interpreter), a
 stackable pipeline (Decorator, Chain of Responsibility), or a second representation of state
-(Memento, Command, State, Visitor, Builder). Getting these wrong costs a refactor, not an
-incident.
+(Memento, Command, State, Visitor, Builder). Check recursive bounds, side effects and compatibility;
+these are not exempt from incident risk.
 
 **High risk** — patterns whose semantics break silently in the environment they are usually used
 in:
 
-- **Singleton** — process-local uniqueness is routinely mistaken for system-wide uniqueness, and
-  the static holder hides initialisation order, thread safety and test coupling.
-- **Observer** — synchronous by default, unordered by contract, and a listener held by a
-  long-lived subject is the classic Java memory leak. It is also the pattern most often confused
-  with distributed pub/sub, which shares none of its guarantees.
+- **Singleton** — uniqueness is often per defining class loader or container, not necessarily one
+  instance per JVM or system. Class initialization safely publishes a holder, but does not make
+  mutable state thread-safe or remove lifecycle/test coupling.
+- **Observer** — thread, ordering, error and deregistration guarantees belong to the concrete API.
+  A long-lived subject may retain abandoned listeners. Distributed pub/sub adds delivery and
+  failure obligations that cannot be inferred from local callbacks.
 - **Mediator** — the hub accumulates every rule that touches two collaborators and becomes a god
   object with a respectable name.
 - **Proxy** — a remote proxy makes a network call look like a method call, hiding latency,
   partial failure and retry semantics behind assignment-like syntax.
 - **Flyweight** — a shared mutable cache under contention, sold as a memory optimisation, that
   is rarely measured against the allocator it is meant to beat.
-- **Prototype** — `Cloneable`/`clone()` is a broken contract in Java; deep-versus-shallow copying
-  of a graph with identity is a defect generator.
+- **Prototype** — Object.clone performs shallow field copying; Cloneable supplies no public clone
+  method. Define graph aliasing, identity and resource ownership, whether using clone, a copy
+  constructor or a factory.
 
 ## Boundary classes
 
 ```text
-Process-local    guarantees hold inside one JVM and nowhere else
+Process-local    inspect actual class-loader, container and object ownership scopes
                  Singleton, Iterator, Flyweight, Memento
 
 Boundary         the pattern exists to manage an interface seam
@@ -99,6 +100,11 @@ Algorithm        the pattern shapes behaviour selection inside a component
                  Strategy, State, Template Method, Visitor
 ```
 
-Creational patterns are classified `Local` because they govern construction inside one process;
+Local construction or object representation within an application
+
+Creational patterns mostly use Local because they govern construction inside one process;
 what crosses a boundary is the object's _representation_, which is a serialisation concern, not
 a creational one.
+
+Primary contract: [Object.clone in Java 17](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()>).
+Use each owning skill for the concrete lifecycle, concurrency and failure contract.

@@ -69,7 +69,8 @@ engineering necessity.>
 
 ## Traceability
 
-<Map BAC/rules/risks to engineering decisions, contracts and TC items, then TC items to EV evidence.>
+<Map BAC/rules/risks to engineering decisions, contracts and TC items; distinguish planned verification
+from executed EV evidence and link the latter only when available.>
 
 ## Decision authority
 
@@ -81,7 +82,8 @@ engineering necessity.>
 
 ## Accepted gaps
 
-<None, or GAP items with reason, consequence, authorized owner, expiry and reopening trigger.>
+<None, or GAP items with reason, consequence, authorized owner, expiry, reopening trigger and blocked
+phases/resources (or none with reason).>
 
 ## Engineering decomposition
 

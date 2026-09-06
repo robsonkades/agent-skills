@@ -13,17 +13,22 @@ consumer rather than the read-model fold.
 
 ### Position tracking and idempotency
 
-Every projection records the position it has processed, in the same transaction as the data it
-writes. Two details decide whether that is actually correct, and both are routinely got wrong.
+A transactional SQL projection can record its checkpoint with its data. Other sinks require
+equivalent idempotent/versioned writes and crash recovery; a search index cannot normally
+join a separate SQL checkpoint transaction.
 
-**Advance the position with a conditional write, never a read-then-skip.**
+**Example protocol: conditionally advance position with the fold in one transaction.**
+Partial Java 21/Spring snippet for one ordered feed and a preinitialized checkpoint row.
+`previousPosition` is the preceding feed cursor, not necessarily `position - 1` or the
+aggregate's prior revision. `RetryProjectionAdvance` is an application runtime exception;
+the subscription must retry without acknowledging a failed delivery.
 
 ```java
 @Transactional
 public void handle(RecordedEvent recorded) {
-    // Claims this event: 0 rows means another worker owns it, or it is a replay.
+    // A duplicate, missing predecessor, or competing worker can all make this fail.
     if (positions.advance(PROJECTION_NAME, recorded.position(), recorded.previousPosition()) == 0) {
-        return;
+        throw new RetryProjectionAdvance();
     }
     switch (recorded.event()) {
         case AccountEvent.FundsDeposited e -> balances.add(e.accountId(), e.amount());
@@ -37,8 +42,14 @@ public void handle(RecordedEvent recorded) {
 ```sql
 -- positions.advance(...)
 UPDATE projection_position SET position = :new
- WHERE name = :name AND position = :expected
+WHERE name = :name AND position = :expected
 ```
+
+Before acknowledging a failed advance as a duplicate, verify from committed state that
+this feed event is already covered by the checkpoint. Otherwise retain/retry it and recover
+the missing predecessor; do not skip ahead. Avoid an infinite retry loop for known duplicates:
+classify them in the subscription adapter. A missing checkpoint row is initialization failure.
+Verify rollback on fold failure and acknowledge only after successful transaction commit.
 
 This works only when position and projected rows commit in the same database transaction (or
 one equivalent atomic sink operation). The check and claim are one atomic statement. The
@@ -49,13 +60,15 @@ manual catch-up) both read the same watermark and both apply `balance = balance 
 `@Transactional` does not prevent it under read-committed. This is exactly the shape
 `idempotency` forbids.
 
-**A position is only a safe watermark if the feed has no gaps.** Any store that assigns a
+**A watermark must cover a complete committed prefix of the relevant feed.** Numeric gaps
+from filtering, aborted writes or reserved offsets can be legitimate. A store that assigns a
 position at insert but makes rows visible in commit order — a `bigserial` or `IDENTITY`
 column — can commit position 100 before 99. A projection that has recorded 100 will never
 see 99, and the balance is permanently wrong in a way that a rebuild silently corrects,
 producing two different numbers for the same account. Either use a subscription API that
-guarantees gapless in-order delivery, or track the low-water mark of the oldest in-flight
-transaction rather than the highest seen. **Establish which one your store gives you before
+guarantees ordered resumable committed delivery, or use a commit-order-safe CDC/publication
+protocol. A homemade low-water mark needs complete visibility of in-flight writers and is
+not established by polling `MAX(id)`. **Establish which one your store gives you before
 writing the first projection.**
 
 The remaining rule is unchanged and still load-bearing: **the position and the data are
@@ -69,11 +82,12 @@ the projection database (`delivery-semantics`).
 
 ### Ordering
 
-A projection that folds a running total requires per-stream order. Event stores normally
+A noncommutative fold needs its declared ordering domain. Simple additive totals may commute,
+but initialization, state transitions and business invariants often do not. Event stores normally
 provide stream order; a global cross-stream order exists only if the selected store exposes
 and preserves one. Depending on it couples the projection to that sequencing contract.
 
-**The position is per ordering domain, never a single scalar.** From a totally-ordered
+**The checkpoint is per ordering domain.** From a totally-ordered
 catch-up subscription it is one number. From a partitioned broker it is one number _per
 partition_; a single `lastProcessed` over a partitioned feed silently discards every event
 whose offset is below the highest seen on another partition. From a per-stream subscription it
@@ -109,15 +123,14 @@ When it exceeds the acceptable window:
 
 - parallelise by aggregate id — projections that fold per-aggregate state partition cleanly;
 - fold from snapshots where the projection tolerates it;
-- move older events to cold storage **only behind a closing/carry-forward event that makes the
-  archived prefix unnecessary for correctness**, and only while the archive stays replayable in
-  position order;
+- archive older events if replay tooling still reads that prefix in the required order;
+  a carry-forward event can accelerate current-state loads only if it contains all required
+  state, and does not replace historical detail needed by arbitrary projections;
 - reconsider whether that aggregate should have been event-sourced.
 
-The third option is the one to be careful with. Truncating history without a carry-forward
-event makes the snapshot the source of truth — contradicting every rule about snapshots being
-discardable — breaks the replay-from-zero in step 1, and destroys the audit property that
-justified the design. It cannot be undone.
+Archiving accessible history differs from deleting it. Deleting a prefix makes retained
+checkpoints/carry-forward facts authoritative for whatever information they preserve;
+name the changed replay/audit contract. A balance snapshot cannot reconstruct past transactions.
 
 ### Read-your-own-writes
 
@@ -130,7 +143,7 @@ production complaint about event-sourced systems and it is a design decision, no
 | Read from the write model (replay the stream) for the affected aggregate | A stream read per request                                                                             | Detail screens right after a write                            |
 | Block until the projection reaches the written position                  | Latency, a timeout and a fallback; needs a comparable position and a session pin                      | A redirect to a list the user expects to be current           |
 | Client-side optimistic update                                            | Client complexity; divergence if the command failed                                                   | Rich clients that already model pending state                 |
-| Accept the staleness and show it                                         | Free                                                                                                  | Dashboards, reports, anything already understood as lagging   |
+| Accept the staleness and show it                                         | Freshness indicators and a policy for excessive lag                                                   | Dashboards/reports whose contract permits stale results       |
 
 Two traps in that table:
 
@@ -165,26 +178,20 @@ poor fits (`serialization-performance`, `schema-evolution-and-compatibility`).
 one, applied as events are loaded. The write model and projections only ever see the current
 shape.
 
-```java
-public final class AccountEventUpcaster {
-    /** v1 had a single `amount` in cents; v2 carries Money with a currency. */
-    public AccountEvent upcast(StoredEvent stored) {
-        if (stored.type().equals("FundsWithdrawn") && stored.version() == 1) {
-            long cents = stored.payload().get("amountInCents").asLong();
-            return new AccountEvent.FundsWithdrawn(
-                    stored.payload().get("accountId").asText(),
-                    Money.ofCents(cents, "EUR"),        // the assumption is now permanent
-                    Instant.parse(stored.payload().get("at").asText()));
-        }
-        return deserialise(stored);
-    }
-}
+```text
+Pseudocode: FundsWithdrawn v1 -> v2
+require accountId, timestamp and amountInCents with their declared types
+parse amountInCents exactly; reject overflow, fractional or coercible string values
+look up currency in a versioned, immutable migration mapping for this historical account
+if no proven mapping exists: stop/quarantine with a repair record; do not default to EUR
+construct v2 Money from exact cents and the proven currency
+preserve event identity, ordering and provenance
 ```
 
-Note the comment. Upcasting frequently requires inventing information the old event did not
-carry — here, a currency. That invention becomes part of the system's history forever, so it
-must be defensible and documented. **This is the real cost of event versioning, and it is not
-technical.**
+An upcaster cannot recover a currency that history never recorded. A documented historical
+single-currency invariant or immutable reference mapping can supply it; today's mutable
+account settings cannot prove yesterday's value. Unresolved meaning needs explicit repair,
+not a convenient default. Do not silently advance a dependent projection past that event.
 
 Upcasters accumulate. Keep them in one place per event type, keep them pure, and test them
 against real archived payloads rather than freshly serialised ones.
@@ -226,11 +233,11 @@ Event payload:  { accountId: "1234",
                   holderRef: "subject-9f2a",
                   holderData: <ciphertext> }
 
-Key store:      subject-9f2a → AES key      ← delete this to erase
+Key store:      subject-9f2a → encryption key  ← all usable copies are in scope
 ```
 
-What this preserves: stream integrity, replay, projection rebuilds for everything that does
-not need the personal fields, and the audit property.
+This can preserve sequence and replay for folds that do not need the erased fields;
+it does not automatically preserve every audit query or establish tamper evidence.
 
 **What it does not do, and this is the part that gets systems into trouble: destroying every
 usable key copy may render event ciphertext inaccessible, but it does not erase other copies.**
@@ -246,20 +253,21 @@ them — projections, snapshots, indexes, caches, logs, downstream services.
 
 The rest of what must be decided up front:
 
-- **Key backups and replicas are inside the erasure boundary.** A key restored from backup
-  un-erases the subject. Either set a retention on key backups shorter than the erasure SLA, or
-  make key deletion a tombstone that propagates to every replica.
+- **Key backups and replicas are inside the erasure boundary.** A restored usable key can
+  undo the intended deletion. A tombstone prevents restoration only if every restore/access
+  path enforces it; it does not itself destroy backed-up key material. Verify key wrapping,
+  replicas, backups and restore procedures against the declared deletion contract.
 - Key management becomes a durability-critical system. Lose a key by accident and you have
   erased a subject you did not mean to.
 - Projections must tolerate unreadable fields on rebuild, after erasure. A rebuild that throws
   on a shredded payload is a rebuild you cannot run.
-- Encryption is per subject, so the subject must be identifiable in every event that carries
-  their data — a modelling decision made at design time. An event with two subjects (a
-  transfer has a payer and a payee; a message has a sender and a recipient) needs per-field
-  keys, because erasing one subject must not destroy the other's record.
+- Choose erasure/key granularity deliberately. Events involving multiple people may need
+  separate encrypted payloads, fields or segregated records; a shared key can erase too
+  much, while another key/copy may retain the same person's data. Evaluate the actual mapping.
 
 **The simpler alternative worth considering first:** keep personal data out of events
-entirely. Events reference a subject id; the personal data lives in a normal, mutable,
-deletable table. Erasure is a `DELETE`, the log keeps its integrity, and no key management
-exists. This is adequate far more often than crypto-shredding proposals assume, and it should
-be ruled out before the harder mechanism is built.
+where feasible. Events reference an identifier; personal fields live in a separately managed
+store. This simplifies deletion but identifiers and other linkable facts may still be personal
+data. A single `DELETE` does not remove backups, derived copies or downstream data. Decide
+retention and erasure obligations with the relevant owners; GDPR Article 17 includes
+conditions and exceptions, not an unconditional technical deletion recipe.

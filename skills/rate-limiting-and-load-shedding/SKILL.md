@@ -60,8 +60,11 @@ waiting for. Nothing was violated. Nothing was rejected. Throughput goes to zero
    estimate it, but must not promise recovery it cannot know. Document scope, reset semantics
    and headers in the API contract
    (`rpc-and-api-contracts`) so a client can act on them (`retries-and-backoff`).
-7. **Load-test the rejection path**, not just the happy path. Drive load past capacity and
-   assert that goodput holds flat rather than collapsing (`load-testing`).
+7. **Load-test the rejection path**, not just the happy path. Drive load past measured capacity
+   and check goodput, offered/admitted/rejected populations, fairness and recovery (`load-testing`).
+   Return the policy and evidence, failure/overage bounds and unverified assumptions. Missing
+   load or store-failover evidence leaves those guarantees conditional; inspect project versions
+   and existing quota/API contracts before changing them.
 
 ## Decision block
 
@@ -105,7 +108,7 @@ Do not use shedding as a substitute for capacity when:
 - A shared counter (Redis or equivalent) makes the limiter a required dependency on every
   request: one round trip added to every call, and a decision about what happens when it is
   unavailable. Fail-open admits everything during the outage; fail-closed rejects everything.
-  Pick one deliberately, and prefer a local fallback bucket over either.
+  Pick deliberately; a local fallback is valid only within the accepted overage/reservation policy.
 - With local escrow/leases, the error bound is the sum of outstanding grants that can still be
   spent, plus protocol failure/clock uncertainty—not a universal `replicas × burst`. A shared
   allocator must never issue overlapping budget across failover. State the exact grant,
@@ -115,19 +118,18 @@ Do not use shedding as a substitute for capacity when:
   limit; 503 means the service is temporarily unable to serve.** Another replica may share the
   same bottleneck/quota, so blind failover amplifies load. Use `Retry-After` when meaningful;
   client backoff/jitter and an end-to-end deadline remain required. A limiter that returns 500 is
-  indistinguishable from a defect and will be retried immediately.
+  indistinguishable from a defect; whether it is retried depends on the client's retry contract.
 - Do not implement shaping as unbounded `Thread.sleep` on request workers. A bounded
   asynchronous delay queue can intentionally smooth traffic when deadlines and memory permit;
   account for held connections/context and reject when waiting cannot finish usefully.
-- **CPU is a lagging and misleading shedding signal.** An I/O-bound service saturates its
-  connection pool and its queues at moderate CPU, and a CPU-based shedder acts long after
-  latency has already broken. Prefer queue depth, time-in-queue, or in-flight concurrency
-  against a measured limit.
+- **Choose signals from the actual bottleneck.** An I/O-bound service can saturate its pool
+  at moderate CPU; CPU or memory pressure can be useful for their respective bottlenecks.
+  Pair them with queue delay, deadline slack and in-flight work against measured limits.
 - Reject work whose deadline has expired first. Among live requests, rejecting new arrivals is
   simple/fair and preserves invested wait; controlled LIFO/drop-head can improve deadline
   goodput under overload but risks starvation and is safe only before execution begins. Use
   propagated deadlines or cancellation signals instead of guessing that age means abandonment.
-- Shedding must be non-uniform to be useful. Assign priority or criticality classes — health
+- Uniform shedding can protect homogeneous traffic. Where criticality differs, assign classes — health
   and control-plane calls above interactive user traffic above batch and prefetch — and shed
   from the bottom. Uniform shedding degrades everything a little, including the things whose
   failure costs the most.
@@ -137,6 +139,9 @@ Do not use shedding as a substitute for capacity when:
   alert on shedding according to error-budget burn/priority. A saturated
   service without shedding shows high throughput while delivering almost nothing useful;
   `slo-and-alerting` owns the alerting policy.
+- Keep SLI eligibility fixed when rejecting: admitted-only latency has survivor bias. Report
+  offered, admitted, quota-rejected, saturation-rejected, failed and deadline-missed outcomes
+  by bounded class, plus outstanding work. Cancellation/timeout does not prove execution ended.
 
 ## Overload control loop
 

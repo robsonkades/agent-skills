@@ -1,27 +1,29 @@
 # Session Failure Modes
 
-Each of these appears in production, none appears in a single-instance development
-environment, and most are misdiagnosed as something else.
+These failure modes can occur in production or development. Treat the listed causes as hypotheses;
+confirm the deployed storage, configuration and timeline before changing placement.
 
 ## Everyone is logged out by a deploy
 
 **Symptom:** a rolling deploy produces a spike of logins, abandoned baskets and support
 calls.
 
-**Cause:** in-process server session state. Every replaced instance drops its sessions.
+**Candidate causes:** lost in-process sessions, incompatible serialized data, changed cookie/key
+configuration, or external-store eviction/expiry. Correlate logout with node and repository events.
 
 **Misdiagnosis:** "the load balancer is not draining properly". Draining helps in-flight
 requests, not sessions that live in the instance's heap.
 
-**Fix:** move identity to a token and valuable state to the database. An external session
-store also fixes it, and is the lighter change when the session is small and transient.
+**Fix:** address the evidenced cause. Shared session storage can preserve the existing login
+protocol; durable workflow storage may be needed. A token migration is a separate contract change.
 
-**Verify:** kill one instance under load; no conversation should break.
+**Verify:** in an authorized test environment, replace one instance under load and assert the
+agreed survival/loss budget, including old/new readers and in-flight writes.
 
 ## It works on one replica and fails on two
 
 **Symptom:** a wizard loses its data intermittently; the failure rate is roughly
-`(n-1)/n`.
+`(n-1)/n` only under uniform independent routing to n replicas with state on one replica.
 
 **Cause:** server session state without sticky routing or replication.
 
@@ -30,7 +32,7 @@ obvious bug into a subtle one — the conversation now breaks only during deploy
 scale-in, which is when nobody is watching for it.
 
 **Fix:** place the state per the placement table (`state-placement.md`). Sticky routing is
-acceptable only for state that is cheap to lose.
+not a failover guarantee; it can coexist with durable/shared or replicated state for locality.
 
 ## The session store is down and everything is down
 
@@ -40,10 +42,11 @@ a session.
 **Cause:** the session filter runs before everything, has no timeout, and has no degraded
 path.
 
-**Fix:** a hard timeout on the store (a few hundred milliseconds); a defined degradation
+**Fix:** bounded connect/acquire/command waits within the request deadline; a defined degradation
 (anonymous experience, or fail only endpoints that require a session); no session lookup at
-all on endpoints that do not need one — which requires the filter to be scoped rather than
-global (`timeouts-and-deadlines`).
+all on endpoints that do not need one — inspect lazy lookup or route/filter configuration
+(`timeouts-and-deadlines`). Verify framework lookup behavior first. Never bypass required
+authentication or authorization on protected operations when the store is unavailable.
 
 **Verify:** run with the store blocked and confirm which endpoints still work. If the answer
 is none, the dependency is stronger than intended.
@@ -53,13 +56,12 @@ is none, the dependency is stronger than intended.
 **Symptom:** an account is disabled and the user keeps working for the token's remaining
 lifetime.
 
-**Cause:** self-contained tokens are valid until they expire, by construction.
+**Cause:** offline validation cannot learn an account's new status without updated authority.
 
-**Options, with their real costs:** short expiry plus refresh (revocation latency equal to
-the access token's lifetime; no per-request lookup); a denylist checked per request
-(immediate, but the store is now on the critical path and must be highly available);
-introspection against the issuer (immediate, and the issuer becomes a hard dependency of
-every request).
+**Options, with their real costs:** enforced short expiry plus revocable refresh bounds stale
+acceptance by remaining lifetime and clock leeway. Denylist/introspection or pushed revocation state
+can reduce delay, subject to propagation, cache TTL and outage policy. In-flight operations need
+their own authority/recheck contract; an invalidation does not undo completed effects.
 
 The design error is not picking the wrong option — it is not stating the revocation latency
 anywhere, so it is discovered during a security incident.
@@ -86,6 +88,10 @@ Container-managed sessions do not serialise access in any way you should rely on
 **Fix:** treat the conversation as data with a version, and detect the conflict
 (`offline-concurrency-control`). For the double-submit case specifically, an idempotency
 key on the submit is the direct answer (`idempotency`).
+Require atomic compare-and-update with affected-row/result checks, not just a version field.
+Test two writers from the same version and a stale request saving after logout/ID rotation;
+the loser must not overwrite newer state or resurrect an invalidated session. Distributed stores
+can lose updates too; container attribute-map safety does not protect mutable attribute objects.
 
 ## The session grows without bound
 
@@ -117,22 +123,28 @@ migration in its own right (`architecture-refactoring-paths`).
 
 ## Session fixation and leakage
 
-- **Fixation:** the session identifier must be regenerated on privilege change (login).
-  Frameworks do this by default; custom session handling frequently does not.
+- **Fixation:** rotate the session identifier on authentication/privilege changes and invalidate
+  the old authority according to the framework contract. Inspect defaults and test concurrent
+  requests rather than assuming rotation occurs or survives a stale replicated save.
 - **Cookie flags:** `HttpOnly`, `Secure` and an appropriate `SameSite` are not optional.
-- **Identifiers in URLs** leak through referrers, logs and shared links. Never place a
-  session or draft identifier in a query string that a user may copy.
-- **Logging.** Tokens and session identifiers must be redacted; access logs are the most
-  common place they escape redaction is a logging-configuration concern.
+- **Identifiers in URLs** leak through referrers, logs and shared links. Never expose bearer
+  session secrets there. An ordinary draft resource ID may be in a URL if every access checks
+  authorization; it must not silently act as the sole access credential.
+- **Logging.** Tokens and session identifiers must be redacted; access logs are a common
+  place they escape. Test redaction across proxies, application errors and traces.
 - **Tenant in the session, trusted downstream.** If a tenant identifier arrives in a token
-  and every query trusts it, the token's signature is the entire tenant isolation
-  mechanism. Keep a server-side check on the critical paths.
+  the service must still validate issuer/audience and enforce resource-to-tenant authorization.
+  A valid signature alone does not prove the caller can access an arbitrary resource ID.
 
 ## Diagnostic sequence
 
-1. What is in the session? Log the key set in production for a week.
+1. What is in the session? Inspect code and bounded approved names/types/size telemetry.
 2. Where does each item live, and where should it live per the placement table?
 3. What is the behaviour when the store or the instance is lost — for each item?
 4. What is the expiry and who enforces it?
 5. What happens with two tabs?
 6. What is the p99 added latency of the session lookup on the request path?
+
+Sources: [Servlet 6.0 session concurrency](https://jakarta.ee/specifications/servlet/6.0/jakarta-servlet-spec-6.0),
+[OWASP session lifecycle](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html),
+[JWT BCP](https://datatracker.ietf.org/doc/html/rfc8725).

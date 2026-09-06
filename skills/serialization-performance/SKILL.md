@@ -31,6 +31,11 @@ compression, copies, allocation, downstream parsing, schema migration, or recove
 
 ## Decision contract
 
+Inspect the project's toolchain, resolved codec versions/modules, framework configuration and
+deployed readers before choosing an API. This skill has no universal Java/library baseline;
+documentation examples are not authorization to upgrade the target. Missing measurements leave
+performance benefits hypothetical; missing compatibility evidence can block a format migration.
+
 ```text
 boundary and trust zone: in-process/cache/process/network/storage/topic
 producer/consumer languages, versions, ownership and deployment skew
@@ -85,9 +90,10 @@ be tested across deployed producers/consumers.
 - **Text/self-describing** (for example JSON): broad interoperability and inspectability; repeated
   names and lexical conversion can increase bytes/CPU. Parsers may reuse field-name symbols and
   stream tokens, so “one String per key/value” is not a valid universal model.
-- **Tagged schema formats** (for example Protocol Buffers/Avro variants): compact fields and
-  explicit evolution rules, with sequential wire scanning during parse/skip. Generated in-memory
-  objects may provide direct field access after materialization.
+- **Schema-based formats:** Protocol Buffers uses numbered field tags; Avro binary records encode
+  values in writer-schema order without per-field tags. Their parsing, skipping and evolution
+  rules differ. Generated objects may provide direct access after materialization. Use
+  `references/format-selection.md` when comparing formats or changing codec configuration.
 - **Indexed/in-place access formats** (for example FlatBuffers/Cap'n Proto designs): avoid full
   object materialization for some access patterns, while adding offset traversal, validation,
   alignment/layout, buffer-lifetime, implementation and mutation constraints.
@@ -109,6 +115,11 @@ Before reuse/pooling, define:
 - partial write/read, cancellation, timeout and exception cleanup;
 - reference-count/use-after-release and data leakage between tenants;
 - pool exhaustion/backpressure and shutdown/redeploy cleanup.
+
+An asynchronous send must retain exclusive ownership or an appropriate lease until the transport
+has finished reading the bytes. Enqueue, timeout or cancellation alone does not prove that point.
+A read-only view can still observe mutations through another alias; copy or defer reuse when the
+handoff contract cannot establish safety. Discard/reset a failed codec only by its documented policy.
 
 `ThreadLocal` avoids concurrent codec use but can retain large buffers per platform thread and
 behaves differently with virtual-thread workloads. Pools bound instances only if acquisition,
@@ -135,8 +146,10 @@ release artifact and supported JDK/platform matrix.
 
 1. **Corpus characterization:** production-derived, privacy-safe cohorts for size, nesting, values,
    optional/unknown fields, compressibility, malformed and maximum inputs.
-2. **Semantic/conformance tests:** round-trip, cross-language/version, unknown/default fields,
-   deterministic bytes where required, corruption/resource limits.
+2. **Semantic/conformance tests:** an independent contract oracle plus round-trip and
+   cross-language/version fixtures for unknown/default/null/presence and numeric fidelity;
+   canonical bytes where required, corruption/resource limits. A same-codec round trip alone
+   cannot prove interoperability or that both directions did not normalize away required data.
 3. **JMH mechanism benchmark:** encode and decode separately plus round trip where relevant; CPU,
    allocation, output size, buffer mode, lifecycle, multiple forks and raw results.
 4. **Component benchmark:** framing, registry, compression, buffer pool, network/storage and
@@ -185,6 +198,9 @@ Prefer a candidate when it:
 
 Reject or defer when the measured benefit is below migration risk/cost, only a toy corpus was tested,
 the producer/consumer rollout cannot be made compatible, or buffer/native headroom is unbounded.
+Return the contract, deployed baseline, supported observations, proposed change and validating
+experiment. Mark failed/missing measurements inconclusive; report measured gains separately from
+unexecuted rollout or failure tests. Scale the checks below to the changed boundary.
 
 ## Anti-patterns
 

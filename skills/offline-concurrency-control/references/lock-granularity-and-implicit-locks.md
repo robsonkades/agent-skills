@@ -17,12 +17,13 @@ Fine-grained (version per row):
 
 Coarse-grained (one version on Order):
     A edits line 1, B edits line 2 → one succeeds, one is told to reload.
-    The invariant is safe. Throughput on hot orders is halved.
+    The invariant is safe if every child write participates in the root check.
+    The throughput cost depends on contention, retries and transaction duration.
 ```
 
 The coarse-grained lock is the correct default wherever an invariant spans the parts. The
 cost — writers to one aggregate serialise — is the invariant's price, and if it is
-intolerable the honest fix is a smaller aggregate, not a weaker lock
+intolerable investigate smaller aggregates only where the invariant can still be preserved
 (`domain-logic-organization`).
 
 The shipping address is the interesting case: it participates in no invariant with the
@@ -32,35 +33,35 @@ locking mechanism.
 
 ### Bumping the root's version from a child change
 
-With JPA, modifying a child does not by itself increment the root's `@Version`. Two ways to
-get coarse-grained behaviour:
+Changing an existing child's scalar field does not by itself increment the root's
+`@Version`. Hibernate's `@OptimisticLock(excluded = false)` on a collection does not turn
+arbitrary changes inside its elements into root changes; collection membership and child
+entity state are different dirty-tracking concerns.
+
+For coarse-grained behavior, one explicit option is this partial JPA snippet inside the
+transaction that changes the child:
 
 ```java
-// 1. Declarative, on the association: forces the root's version on any child change.
-@OneToMany(mappedBy = "order", cascade = ALL, orphanRemoval = true)
-@OptimisticLock(excluded = false)          // Hibernate default for owned collections
-private List<OrderLine> lines = new ArrayList<>();
-
-// 2. Explicit, and clearer at the call site.
 em.lock(order, LockModeType.OPTIMISTIC_FORCE_INCREMENT);
 ```
 
-Whichever is chosen, assert it: a test that edits a child through the root and asserts the
-root's version changed. This is precisely the behaviour that a mapping change silently
-alters two years later.
+Still compare the editor's original root version. Every child write path must participate,
+including imports and administrative operations; cascade settings alone do not enforce this.
+Only report success after commit. Test existing-child scalar edits separately from additions
+and removals, with two transactions competing on the same root.
 
 ## Contention, and the lock ordering that avoids deadlock
 
 Coarse-grained locks make one row hot. Two failure shapes follow:
 
 - **A hotspot aggregate** — a `Warehouse` root guarding every stock movement serialises the
-  entire warehouse. The aggregate is wrong: stock levels per SKU are usually independent
-  invariants and belong in separate aggregates with the cross-SKU rule handled
-  asynchronously.
+  entire warehouse. Investigate whether stock per SKU has independent invariants before splitting it.
+  A strict cross-SKU invariant cannot simply be moved to asynchronous reconciliation.
 - **Deadlock across aggregates** — a transfer that locks account A then B, while another
   locks B then A. Fix by ordering acquisitions on a stable key in every path:
 
 ```java
+// Partial Java 17 example; handle sourceId == targetId before acquiring twice.
 var ordered = Stream.of(sourceId, targetId).sorted().toList();   // always ascending
 var first  = accounts.lockById(ordered.get(0));
 var second = accounts.lockById(ordered.get(1));
@@ -71,9 +72,8 @@ writing, because it looks removable (`enterprise-transactions`).
 
 ## Implicit locking
 
-The point of implicit locking is that the mechanism cannot be forgotten. A new repository
-method, a new import job, a new admin screen — none of them can omit the version check
-because none of them applies it.
+Implicit locking centralizes the normal entity-write path. It reduces omissions but does
+not constrain every bulk statement, native query, trigger or external writer.
 
 ```java
 @MappedSuperclass
@@ -83,7 +83,7 @@ public abstract class VersionedAggregate {
 }
 ```
 
-Plus an architecture test making the omission impossible to introduce quietly:
+This partial architecture rule checks the mapping convention, not the behavior of every write:
 
 ```java
 @ArchTest
@@ -97,38 +97,36 @@ static final ArchRule aggregates_are_versioned =
 
 An implicit mechanism fires from code the reader is not looking at. Pay it back:
 
-- **Log the conflict with both versions and the entity id** at the point of failure, not
-  just the framework's message.
-- **Name the exception in the API contract** — a documented `409` with a stable code beats a
+- **Log the entity id and versions actually known**, without fabricating a current version
+  from an exception that does not contain one.
+- **Name the exception in the API contract** — a documented conflict status (412 for failed `If-Match`, otherwise the API's 409 contract) beats a
   generic error (`remote-facade-and-dto`).
-- **Meter conflicts.** A conflict counter per aggregate type is the earliest available
-  signal that an aggregate is too coarse or a job is fighting users. Without it, the first
-  evidence is a support ticket.
+- **Meter conflicts.** A conflict counter per aggregate type can reveal contention worth investigating; it does not establish that the aggregate is too coarse.
 
 ## How locking gets silently defeated
 
-| Mechanism                                         | What happens                                                                                                           | Detection                                                               |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Bulk `UPDATE`/JPQL update                         | Rows change without the version being read or incremented; every concurrent optimistic lock is defeated for those rows | Review every bulk statement for `version = version + 1`; test it        |
-| Native SQL in a repository                        | Same, plus the persistence context now holds stale entities                                                            | Grep for `@Query(nativeQuery = true)` on versioned tables               |
-| Second-level cache with a stale entry             | The version compared is the cached one                                                                                 | Cache configuration review; conflicts that "should" fire and do not     |
-| Detached entity merged without the client version | Version comes from the re-read, not the editor's snapshot                                                              | The `merge` path with no version in the request payload                 |
-| `saveAndFlush` in a loop after a failure          | Retry uses re-read state; see the unsafe retry in the sibling reference                                                | Any `@Retryable` on a method taking a full-state request object         |
-| Trigger or stored procedure writing the table     | Version untouched; the ORM's next write appears valid                                                                  | Schema audit; this is the hardest to find and the most common in legacy |
-| Read-then-write across two transactions in a job  | The job is itself an offline editor and needs the same discipline                                                      | Batch code that loads, computes for a while, then saves                 |
+| Path                                            | Risk and verification                                                                                                                                                                                                                                                                                                                          |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bulk JPQL or native SQL                         | Automatic entity version checks may be bypassed. Incrementing the version invalidates older editors but does not protect the bulk operation's own stale snapshot: add expected-version predicates and check row counts when that operation depends on previously read state. Refresh or clear affected persistence contexts and handle caches. |
+| Stale second-level cache                        | Can cause stale reads or conflicts; it does not defeat a correct database version predicate. Inspect emitted SQL and cache invalidation instead of assuming silent overwrite.                                                                                                                                                                  |
+| Reconstructed entity without the client version | Re-reading current state on submission loses the original edit precondition. Verify that the client version reaches the comparison.                                                                                                                                                                                                            |
+| Retry after a failed flush                      | Reusing a failed transaction or overwriting with a stale request is unsafe. Test fresh transactions, intent revalidation and bounded attempts.                                                                                                                                                                                                 |
+| Trigger, stored procedure or external writer    | A write that leaves the version unchanged can make a pending editor look current. Audit all writers, not just ORM mappings.                                                                                                                                                                                                                    |
+| Read-then-write across transactions in a job    | The job is itself an offline editor and needs the same version or ownership discipline.                                                                                                                                                                                                                                                        |
 
-The first row is the most frequent by a wide margin, and it is usually introduced as a
-performance fix for exactly the reason bulk updates exist (`domain-logic-organization`
-covers when set-based work is right — it is, often; it just has to increment the version).
+Set-based work remains appropriate where its semantics permit it; version participation and
+its own preconditions are separate requirements.
 
 ## When no offline lock is the right answer
 
-- **Insert-only or append-only data.** There is nothing to overwrite.
+- **Insert-only or append-only data.** There is no existing row to overwrite, but uniqueness,
+  quotas and other cross-record invariants may still need concurrency control.
 - **Last-write-wins is the business rule.** A "current status from device telemetry" field
-  genuinely wants the latest value; adding a version there produces conflicts that have no
-  meaningful resolution.
+  may accept the last arrival. If "latest" means device event time, define ordering and
+  reject older events; arrival order alone is insufficient.
 - **The operation is a delta, not a state assignment.** `UPDATE balance SET n = n + :amount`
-  is correct under concurrency without any version.
+  can avoid lost increments without a version, but limits, account state and duplicate
+  requests still need protection. Increment a shared version if snapshot editors coexist.
 - **Conflicts are resolvable by construction** — CRDT-like structures, or per-user rows
   that no one else writes.
 

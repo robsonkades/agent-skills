@@ -15,6 +15,8 @@
 
 `toString()` gives a useful snapshot but is not a metrics schema. Export named accessors at a modest
 interval and retain pool identity. Avoid high-cardinality task labels.
+On Java 25, not-yet-enabled scheduled work is reported separately by `getDelayedTaskCount()`;
+ordinary queue counts alone cannot establish that all owned work is complete.
 
 ## Evidence sequence
 

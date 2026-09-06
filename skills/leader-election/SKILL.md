@@ -23,7 +23,7 @@ detection/expiry mechanism, but session locks and quorum terms are alternatives.
 **distributed lock** usually protects a critical section while an election owns a long-lived
 role, though both need the same stale-owner analysis (`distributed-locks-and-leases`). A lock
 need not be a lease. A **mutex** is in-process exclusion and unrelated
-(`java-memory-model`). A **lease** is the primitive both are built from. **Ownership by
+(`java-memory-model`). Lease expiry is one implementation choice, not a requirement. **Ownership by
 partition** is the alternative that removes the singleton altogether by assigning keys to
 instances (`sharding-and-partitioning`). **Consensus** is how the election is actually decided
 (`consensus-and-quorums`); election is a consumer of it, not a synonym.
@@ -37,9 +37,15 @@ leader, and neither logs anything unusual.
 
 ## Workflow
 
+Inspect the project's Java baseline, election-library/provider versions, grant/renewal
+semantics and every protected sink before adapting an example. The Java deadline illustration
+uses Java 17 language features; it does not authorize a runtime or dependency upgrade.
+
 1. **Ask whether the work needs a singleton at all.** If it can be partitioned by key, every
-   instance owns a disjoint subset and the singleton disappears; if it is idempotent, it can run
-   everywhere. A leader is a capacity ceiling of one — choose it deliberately.
+   instance owns a disjoint subset and the global singleton disappears. Running everywhere
+   additionally requires concurrency-safe effects and acceptable duplicate load; repeatability
+   alone does not prove either. One active worker can be a capacity ceiling; an elected
+   coordinator can also delegate partitioned work.
 2. **State the failover budget as a number.** Detection + election + warm-up is a period with no
    leader, user-visible if anything waits on the leader's work. That number sets the lease
    length, not the other way round.
@@ -51,8 +57,9 @@ leader, and neither logs anything unusual.
    remains; it must never extend that deadline. Stop admission early enough for in-flight work
    to quiesce, and do not wait to be told another leader won.
 5. **Prevent stale authority from violating safety.** Enforce a monotonically increasing term/
-   fence at every mutable resource, put the effect in the same authoritative transaction, or
-   make it idempotent/reconcilable. Local leader belief is never the enforcement boundary.
+   fence at every mutable resource, put the effect and authority check in the same transaction, or
+   ensure repeated and concurrent effects preserve the required invariant, including any
+   reconciliation window. Local leader belief is never the enforcement boundary.
 6. **Handle the rolling deploy explicitly.** Stop new work, quiesce or hand off in-flight work,
    persist a checkpoint, then release/transfer authority. Releasing first can overlap the
    successor with unfinished effects (`kubernetes-service-lifecycle`).
@@ -98,8 +105,10 @@ Prefer instead when:
   `sum(is_leader) != 1` is a diagnostic of sampled local belief, not proof: scrape gaps and
   stale metrics lie. Alert primarily on no useful progress and fence rejections; compare
   multiple leaders by overlapping terms and resource-side evidence.
-- **Two peers alone cannot elect safely.** With no external arbiter, neither can distinguish "the
-  other died" from "I am partitioned", and both leading is as defensible as both standing down.
+- **Two peers cannot guarantee both exclusive authority and continued progress after either
+  becomes unreachable in this failure model.** Requiring both votes or standing down can
+  preserve safety while losing availability; unilateral promotion cannot distinguish a failed
+  peer from a partition without additional assumptions or an arbiter.
   Two instances electing _through_ a quorum-backed store are fine — the store is the arbiter.
 - Failover time is detection/remaining grant + election + state recovery + warm-up/backlog.
   With an exclusive lease, a successor may need to wait up to the remaining duration, not at
@@ -117,8 +126,8 @@ Prefer instead when:
 - The Kubernetes `Lease` object is a renewable record of a holder identity and a duration, and
   the basis of the lease-based election controllers use. Same property: it establishes who
   _should_ lead and does not stop a stalled former holder from writing.
-- **A rolling deploy kills the leader deliberately.** On SIGTERM, stop admission and renewals,
-  drain/cancel according to the operation contract, checkpoint, then release authority. If the
+- **A rolling deploy can terminate the leader.** On SIGTERM, stop admission; continue renewal
+  only as needed for a bounded safe drain, then checkpoint and release authority. If the
   grace period expires, rely on fence/idempotency rather than an unsafe release. A deliberate
   handoff can reduce gaps but must use a new term and acknowledgement protocol.
 
@@ -132,7 +141,11 @@ Liveness: when a quorum/store and at least one eligible member remain reachable 
 
 Election gives local role information; it does not automatically enforce safety at databases,
 object stores, brokers or third-party APIs. List every sink and show how it rejects stale terms
-or tolerates duplicate effects. If a sink cannot do either, the election is only best-effort.
+or tolerates duplicate/concurrent effects. A highest-seen-term fence rejects old terms only
+after the new term is installed at that sink; it does not itself reject every post-expiry
+write. Establish the sink's authority transition before successor work, or atomically validate
+current authority with the effect when strict expiry exclusion is required. If a sink cannot
+enforce or tolerate the required invariant, election alone is insufficient.
 
 ## References
 

@@ -182,8 +182,8 @@ thread".
 1. **Spurious wakeup**, permitted as a concession to platform semantics.
 2. **`signalAll` wakes every waiter** but only one can make the predicate true.
 3. **Barging**: between the signal and the waiter re-acquiring the lock, a third thread can acquire
-   the lock and invalidate the predicate. This one is _guaranteed_ by the non-fair lock policy, not
-   a rare event — which is why `if` is wrong even on a hypothetical platform with no spurious
+   the lock and invalidate the predicate. Non-fair locking permits this; it does not guarantee
+   that it occurs — which is why `if` is wrong even on a hypothetical platform with no spurious
    wakeups.
 
 Symptom of an `if`: a bounded buffer that occasionally overwrites an element or returns a stale
@@ -191,9 +191,11 @@ one; an `ArrayIndexOutOfBoundsException` or a negative count, appearing only und
 
 ### `signal` vs `signalAll`
 
-`signal()` is safe only when all three hold: every thread waiting on _this_ condition waits for the
-_same_ predicate; a single state change enables exactly one waiter; and a woken waiter that cannot
-proceed signals onward. If waiters on one condition await different predicates, `signal()` can wake
+For the bounded buffer below, one insertion/removal enables one interchangeable waiter on
+the matching condition, and every state change signals it. No application-level onward
+signal is required merely because another thread consumed the opportunity; the loop rechecks
+the predicate. If one change enables multiple waiters, signal enough or use `signalAll()`.
+If waiters on one condition await different predicates, `signal()` can wake
 the wrong one and the right one sleeps forever — a **lost wakeup**, permanent and silent, and the
 hardest bug here to diagnose because every thread looks normally parked.
 
@@ -205,6 +207,7 @@ non-trivial state-dependent class.
 ### The bounded buffer, and why not to write it
 
 ```java
+import java.util.Objects;
 import java.util.concurrent.locks.*;
 
 final class BoundedBuffer<E> {
@@ -215,7 +218,8 @@ final class BoundedBuffer<E> {
     private int putptr, takeptr, count;
 
     public void put(E x) throws InterruptedException {
-        lock.lock();
+        Objects.requireNonNull(x);
+        lock.lockInterruptibly();
         try {
             while (count == items.length) notFull.await();     // while, never if
             items[putptr] = x;
@@ -227,10 +231,11 @@ final class BoundedBuffer<E> {
 
     @SuppressWarnings("unchecked")
     public E take() throws InterruptedException {
-        lock.lock();
+        lock.lockInterruptibly();
         try {
             while (count == 0) notEmpty.await();
             E x = (E) items[takeptr];
+            items[takeptr] = null;                    // release the consumed reference
             if (++takeptr == items.length) takeptr = 0;
             --count;
             notFull.signal();
@@ -240,7 +245,8 @@ final class BoundedBuffer<E> {
 }
 ```
 
-This is the `Condition` javadoc's own sample, and it ends with the strongest possible statement of
+This adapts the `Condition` javadoc sample with interruptible acquisition, null rejection and
+cleared consumed slots. The javadoc ends with a statement of
 "do not write this": "(The `ArrayBlockingQueue` class provides this functionality, so there is no
 reason to implement this sample usage class.)" Read it as the shape to copy when your predicate is
 genuinely novel — and reach for `ArrayBlockingQueue` when it is not.
@@ -271,6 +277,11 @@ total wait becomes N × timeout, an unbounded wait dressed as a bounded one. The
 returns `false` on timeout but gives no remaining time. A re-wait loop can still be correct by
 carrying an absolute monotonic deadline; `awaitNanos` is convenient when carrying a remaining
 budget.
+
+This fragment budgets condition waiting after an unbounded `lock.lock()`; it is not an
+end-to-end operation deadline. For that contract, include timed lock acquisition and
+predicate/processing time in one monotonic budget. Returning from await still requires
+reacquiring the lock, so timeout expiration is not a hard bound on response time.
 
 `awaitUninterruptibly()` is appropriate only when the operation deliberately defers cancellation
 and the surrounding lifecycle has another bound. In a request path it can delay shutdown

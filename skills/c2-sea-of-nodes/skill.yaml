@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: c2-sea-of-nodes
-version: 1.4.0
+version: 1.4.1
 description: >-
   How HotSpot actually executes and compiles: the runtime-generated template interpreter,
   C2's sea-of-nodes IR, a release-scoped diagnostic map of compilation phases, and why a given
@@ -47,6 +47,7 @@ dependencies:
     version: ^2.0.0
 
 suggests:
+  - graalvm-jit
   - code-cache-segments
   - escape-analysis-internals
 

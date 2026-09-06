@@ -7,7 +7,7 @@ what happens when membership changes — and on three that decide the engineerin
 
 | Function                     | Keys moved on equal-node join / removal    | Lookup cost         | Distribution quality                               | Complexity                                            |
 | ---------------------------- | ------------------------------------------ | ------------------- | -------------------------------------------------- | ----------------------------------------------------- |
-| `hash(key) % N`              | Nearly all of them                         | O(1)                | Excellent while N is fixed                         | Trivial                                               |
+| `hash(key) % N`              | Often a large fraction                     | O(1)                | Depends on hash and key population                 | Trivial                                               |
 | Ring, one point per node     | About K/(N+1) / K/N                        | O(log N)            | High variance — random gaps differ widely          | Small, but collision and wrap-around handling matter  |
 | Ring with V virtual nodes    | About K/(N+1) / K/N                        | O(log(V×N))         | Tunable: raise V until measured skew is acceptable | V and membership handoff require engineering          |
 | Rendezvous (HRW)             | About K/(N+1) / K/N                        | O(N) hashes per key | Probabilistically even; no virtual-point tuning    | Framing, unsigned order and deterministic ties matter |
@@ -17,9 +17,9 @@ K is the number of keys, N the number of nodes.
 
 ## Modulo
 
-`hash(key) % N` is not a bad hash; it is a bad _mapping_. The distribution is ideal and the
-disruption is catastrophic: changing N changes the divisor, so almost every key's result
-changes. The two shapes where it is nonetheless correct:
+Modulo can distribute a uniform hash well, but changing the divisor usually moves a large
+fraction of keys. An N-to-N+1 change moves about N/(N+1) under uniform residues; other changes
+depend on both divisors and the node-index mapping. The two useful stable arrangements:
 
 - N is fixed for the lifetime of the data and changing it is understood as a full migration.
 - N is a fixed count of **logical** partitions, far larger than the node count, which are
@@ -52,6 +52,10 @@ static String owner(String key, Collection<String> nodes) {
 }
 ```
 
+This is a partial Java helper: `UTF_8` is `StandardCharsets.UTF_8`, and `HASH` is a pinned
+Guava `HashFunction`, for example `Hashing.murmur3_128()`. Node IDs must be unique, stable
+physical-node identities; duplicate IDs in the input must not become duplicate replicas.
+
 Lengths prevent ambiguous tuples such as (`"ab"`, `"c"`) and (`"a"`, `"bc"`) from hashing
 the same byte sequence. Pin the integer encoding used by the chosen library, and define a
 stable node-ID tie-breaker for the rare equal score.
@@ -78,11 +82,14 @@ Consistent hashing bounds _disruption_, not _load_. Bounded-load consistent hash
 cap: a node may hold at most a configured factor above the average load, and a key whose
 computed owner is at its cap moves to the next node clockwise that is not.
 
-It solves overload from uneven key **sizes or rates**, at three prices: placement now depends
-on live load, so it is no longer a pure function of the key and the membership; every client
-must agree on load or they will disagree about ownership; and a key's owner can change
-without any membership change, which a data store usually cannot tolerate. It fits caches and
-request routing far better than it fits stored data.
+The [original bounded-load model](https://research.google/blog/consistent-hashing-with-bounded-loads/)
+bounds the number of unit-size balls assigned to each bin, using agreed allocation state
+and ordering. It does not by itself bound arbitrary key sizes, CPU cost or request rates.
+For those, require a documented weighted/admission variant and prove that its capacity unit
+matches the resource being protected. Independent clients using approximate live metrics
+can disagree on ownership or race past a capacity bound. Changes in the key population can
+also displace existing keys without a membership change; persistent data needs an explicit
+movement protocol. Request-routing variants belong with `load-balancing-and-routing`.
 
 It does not solve a single key that is too hot — one key has one owner under every function
 here. That is `hot-partitions-and-rebalancing`.
@@ -97,15 +104,15 @@ Requirements, in order:
    and only as stable as every component hash), plus
    any library function documented as version-unstable — Guava's `Hashing.goodFastHash`
    states this in its own contract, `Hashing.murmur3_128()` names a fixed algorithm.
-2. **Good avalanche.** One bit of input changes about half the output bits. `String.hashCode()`
-   is stable but fails this: it is a 31-multiply accumulator whose low bits barely move for
-   keys sharing a prefix, and real keys share prefixes (`user:1001`, `user:1002`).
+2. **Good avalanche.** Small input changes should mix across output bits. `String.hashCode()`
+   is a specified 31-multiply accumulator, not a placement hash; shared prefixes alone do
+   not prove poor distribution. Measure actual key sets rather than infer skew from names.
 3. **64 bits or more.** Collision probability follows the birthday bound and depends on the
    number of points; quantify it for the topology. Regardless of width, the representation
    must retain colliding points instead of silently transferring ownership.
-4. **Fast.** Placement is on every request. A cryptographic hash is correct here and simply
-   more expensive than the job requires; MD5 and SHA-1 appear in older ketama implementations
-   for historical reasons, not for their security properties.
+4. **Fits the lookup budget.** Measure the pinned implementation on representative keys.
+   Cryptographic or keyed hashes may be justified by adversarial inputs; MD5 and SHA-1 in
+   older ketama implementations do not establish a security guarantee.
 
 Specific MurmurHash3 and xxHash variants can satisfy these requirements. Pin the exact
 algorithm/variant, seed, charset, tuple framing, integer byte order, truncation and unsigned
@@ -138,8 +145,8 @@ Use fixed logical partitions with an explicit assignment map when:
 - placement must sometimes be overridden per partition (a large tenant on its own node), or
   you want membership changes to move whole partitions rather than recompute keys
 Use bounded-load when:
-- per-key cost varies enough that even key distribution still overloads a node, the workload
-  is a cache or request routing, and every client can observe the same load signal
-Never use hash(key) % N when:
-- the node count can change while the data or the cache contents outlive the change
+- the algorithm's capacity model matches the protected resource, coordinated allocation
+  is available, and displaced keys can be moved safely
+Reject direct hash(key) % physicalNodeCount when:
+- node count changes and the resulting rehash migration exceeds the disruption budget
 ```

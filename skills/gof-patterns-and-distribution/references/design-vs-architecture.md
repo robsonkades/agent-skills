@@ -9,8 +9,8 @@
 | **Architectural pattern** | The system's organisation | Layering, dependency rules, read/write split   | A migration           |
 | **Distributed pattern**   | What crosses a network    | Availability, consistency, failure, deployment | An operational change |
 
-The differences that matter in practice: a design pattern is compiled, a distributed pattern is
-deployed. One has no availability; the other has an on-call rota.
+These are different review scopes, not exclusive categories: local object design can affect a
+service's availability, while distributed contracts need deployment and recovery evidence too.
 
 ## The pairs most often conflated
 
@@ -18,11 +18,11 @@ deployed. One has no availability; the other has an on-call rota.
 | -------------- | ------------------------- | ---------------------------------------------------------------------------- |
 | Proxy          | API gateway               | A deployment, TLS termination, authentication, rate limiting, its own outage |
 | Facade         | Backend-for-frontend      | A release cycle, a team, its own scaling and failure surface                 |
-| Observer       | Event-driven architecture | Durability, schema governance, replay, consumer lag, dead letters            |
-| Mediator       | Orchestration / saga      | Durable state, compensation, timeouts, restart-resumability                  |
+| Observer       | Event-driven architecture | Explicit schema, delivery, ordering and recovery policies                    |
+| Mediator       | Orchestration / saga      | Required durable progress, deadlines and applicable compensation             |
 | Memento        | Event sourcing            | An append-only log, projections, replay, and the answer to "why"             |
 | Flyweight      | Distributed cache         | Invalidation, staleness policy, a network hop, a stampede on cold start      |
-| Command        | Message-driven design     | At-least-once delivery, versioning, dead letters, ordering per partition     |
+| Command        | Message-driven design     | Chosen delivery/ordering scope, compatibility and terminal failure policy    |
 | Adapter        | Anti-corruption layer     | A module boundary, a team agreement, and a model — not a method signature    |
 | Chain          | Workflow engine           | Persistence, retries per step, visibility, human tasks                       |
 | Singleton      | Leader election           | Consensus, leases, fencing, split-brain behaviour                            |
@@ -34,16 +34,16 @@ architecture's cost is an operational commitment.
 ## Two worked distinctions
 
 **Proxy and API gateway.** A remote proxy is a client-side class implementing the service's
-interface. A gateway is a deployed process every request passes through. The proxy's failure is
-that a caller writes a loop; the gateway's failure is that everything behind it is unreachable.
+interface. A gateway is a deployed routing boundary for the traffic assigned to it. Proxy calls
+can hide chatty access; a gateway outage can affect routes dependent on it, subject to redundancy
+and failover. Neither failure follows from the class/pattern name alone.
 Calling the gateway "our proxy layer" in a design discussion loses the second consequence, which is
 the one that appears in the incident review.
 
 **Observer and event-driven architecture.** An in-process observer is a method call to registered
-listeners. An event-driven architecture is a system-wide commitment: events are contracts with
-schemas and owners, consumers are independently deployed and independently broken, replay is
-possible and therefore consumers must be idempotent, and "who reacts to this" is discoverable only
-through a registry. Moving one listener to a broker does not create the architecture; adopting the
+listeners under the chosen threading policy. An event-driven architecture uses events as contracts:
+deployment independence, durability, replay, deduplication and discovery are decisions to establish,
+not guarantees supplied by the label. Moving one listener to a broker does not create the architecture; adopting the
 architecture is a set of decisions about governance, and the listener is one line of it
 (`event-driven-architecture`).
 
@@ -54,19 +54,19 @@ in the other direction — refusing a pattern because "we do hexagonal architect
 
 ```text
 Hexagonal / ports and adapters
-    a port is an interface; each adapter is Adapter
-    the application service at the boundary is Facade
+    a port defines an application contract; an adapter may use GoF Adapter
+    an application boundary service may play a Facade role
     the domain inside uses whatever patterns it needs
 
 CQRS
     a command is Command; its handler is a use case
-    a projection is built by a fold — Visitor's modern form
+    a projection may fold events; a fold is not automatically GoF Visitor
     read and write models may use different data-source patterns
 
 Event sourcing
     each event is a value; the aggregate's replay is a fold
     a snapshot is Memento's durable relative
-    the state machine that validates a command is State
+    command validation may use a state machine; GoF State is one implementation choice
 
 Saga / process manager
     an orchestrator is Mediator's distributed form
@@ -79,13 +79,12 @@ Layered / clean architecture
     the dependency rule is not a pattern; it is the architecture
 
 Resilience (circuit breaker, bulkhead, retry)
-    each is a Decorator around a client
+    these may be Decorators around a client, middleware or separate infrastructure
     their composition order is the design (gof-decorator)
 ```
 
-Two observations from this list. Adapter and Facade appear in almost every architecture, which is
-why they are the lowest-risk patterns — they are the vocabulary of boundaries. And the
-architectural rule itself is never a pattern: "the domain does not import the framework" is a
+Boundary roles are common, but Adapter/Facade can still expose security, compatibility or failure
+risks; frequency does not establish low risk. "The domain does not import the framework" is a
 constraint enforced by module structure and an architecture test, not by a class
 (`layering-and-boundaries`, `architecture-testing`).
 
@@ -98,23 +97,23 @@ constraint enforced by module structure and an architecture test, not by a class
 
 "The Mediator will coordinate the services"
     → an in-process hub, or a deployed orchestrator with durable state?
-      The second needs persistence, timeouts and compensation.
+      Establish required persistence, deadlines and compensation for effects needing undo.
 
 "Observer will decouple the modules"
-    → in-process events decouple compile-time dependencies and couple
-      runtime latency and failure. Across processes, they decouple
-      both and couple schemas. Different trade, same word.
+    → inspect dispatch: synchronous local callbacks couple latency/failure; asynchronous dispatch
+      changes that contract. Messaging adds buffering but can still couple availability through
+      broker capacity, producer acknowledgements and dependent progress.
 
 "A Singleton registry will keep the config consistent"
-    → consistent within one JVM. Across replicas, config drift is a
-      deployment problem, not a pattern problem.
+    → a static registry alone proves neither atomic refresh nor cross-class-loader consistency.
+      Across replicas, define configuration version, rollout and consistency requirements.
 
 "We'll add a Proxy so the service call is transparent"
     → transparency is the failure mode, not the feature.
 ```
 
-The general form of the question: **does the proposal have an operational existence?** If it can be
-paged for, it is not a design pattern, and the pattern's checklist is not the right review.
+Ask which operational guarantees the proposal needs. Add the distributed review when appropriate;
+keep relevant object-level correctness checks instead of replacing one vocabulary wholesale.
 
 ## When an architecture is proposed for an object problem
 
@@ -126,7 +125,8 @@ refactoring:
 - "We need to split this into a service" because a class has too many responsibilities — the
   boundary is a module boundary, and it should be found before it is deployed
   (`distribution-boundaries`).
-- "We need a saga" for two writes to the same database, which is a transaction.
+- "We need a saga" for writes that can safely participate in one local transaction; first verify
+  ownership, transaction support and any external effects.
 
-The test is the boundary: architectural patterns exist to manage a boundary that already exists or
-must exist. If the problem is entirely inside one component, the answer is inside one component.
+Match the change to demonstrated forces. Architecture also includes internal dependency/data rules;
+neither a local performance symptom nor a pattern name proves that deployment boundaries must change.

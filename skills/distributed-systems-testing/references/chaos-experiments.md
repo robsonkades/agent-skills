@@ -63,10 +63,10 @@ Production, wide
         scenario such as a zone evacuation.
 ```
 
-Staging is the right place to rehearse _the procedure_; production at 1% is the right place to
-learn about _the system_. A programme that never leaves staging tends to conclude that the
-system is resilient, because staging lacks the shared pools, noisy neighbours and data skew
-that cause real failures.
+Use isolated environments to falsify known claims and rehearse the procedure. Production can
+expose couplings absent there, but no fixed percentage is universally safe: shared pools and
+dependencies can spread a small targeted fault. Preserve the authorized environment and scope;
+this guidance does not itself authorize a production experiment.
 
 ## A worked experiment
 
@@ -82,7 +82,7 @@ Steady state   Completed checkouts per minute (business metric),
 
 Blast radius   10% of checkout traffic, one region, 15 minutes.
 
-Injection      Mesh rule adding 3 s of latency to the provider route
+Injection      Mesh rule adding 2.8 s to the 200 ms provider baseline
                for the selected traffic slice.
 
 Abort          Completion rate drops more than 10% below baseline,
@@ -90,6 +90,12 @@ Abort          Completion rate drops more than 10% below baseline,
 
 Rollback       Remove the mesh rule — one command, rehearsed.
 ```
+
+These numbers illustrate a plan, not recommended defaults. Validate the effective delay and
+compare the affected cohort with a contemporaneous control, normalized by offered checkout rate.
+Whole-service averages can hide failure in the 10% cohort; define cohort and global abort
+thresholds plus a short-window signal, since a five-minute average can delay detection. Removing
+the fault does not drain existing queues or undo writes: verify recovery and reconcile effects.
 
 Outcomes worth anticipating, because each is a different finding:
 

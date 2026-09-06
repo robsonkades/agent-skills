@@ -2,16 +2,21 @@
 
 ## Does `UseNUMA` do anything on this collector?
 
-| Collector       | Effect                                                                   | Mechanism                                                                                                         |
-| --------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| **Parallel GC** | Yes — the original, most mature implementation                           | TLABs allocated on the requesting thread's local node; young gen split per node                                   |
-| **G1**          | Yes, since JDK 14 (JEP 345, Linux only)                                  | Regions used for young allocation get preferred nodes; this is awareness, not hard physical partitioning          |
-| **Serial**      | Accepted, no effect                                                      | Single-threaded; no parallelism to distribute                                                                     |
-| **ZGC**         | Accepted, but not the mechanism governing the collector's NUMA behaviour | ZGC has its own internal handling not exposed through this flag                                                   |
-| **Shenandoah**  | Accepted                                                                 | Exact JDK 25 behaviour unconfirmed — do not presume parity with G1; check `PrintFlagsFinal` and the release notes |
+| Collector       | Effect                                         | Mechanism                                                                                                         |
+| --------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Parallel GC** | Yes — the original, most mature implementation | TLABs allocated on the requesting thread's local node; young gen split per node                                   |
+| **G1**          | Yes, since JDK 14 (JEP 345, Linux only)        | Regions used for young allocation get preferred nodes; this is awareness, not hard physical partitioning          |
+| **Serial**      | Accepted, no effect                            | Single-threaded; no parallelism to distribute                                                                     |
+| **ZGC**         | Yes on Linux JDK 25; inspect effective support | ZNUMA consumes UseNUMA; ZArguments enables its default when unset, subject to platform checks                     |
+| **Shenandoah**  | Accepted                                       | Exact JDK 25 behaviour unconfirmed — do not presume parity with G1; check `PrintFlagsFinal` and the release notes |
 
-The flag's default is `false`. The JVM does not enable NUMA awareness automatically even on
-detected NUMA hardware.
+Defaults depend on collector initialization and OS/topology. In JDK 25 ZArguments sets
+UseNUMA to true when still default and ZFakeNUMA is not configured; subsequent platform checks
+can disable it. Inspect the running JVM or reproduce its full options, not an unrelated
+`java -version` using a different collector.
+
+Sources: [ZArguments JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zArguments.cpp)
+and [Linux ZNUMA](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/os/linux/gc/z/zNUMA_linux.cpp).
 
 ## What `UseNUMA` does not fix
 
@@ -19,8 +24,8 @@ It primarily changes allocation placement for supported collectors; do not assum
 
 - **Object lifetime movement** — collector evacuation/relocation semantics vary by collector
   and JDK and can change the original locality.
-- **Migrating threads** — the Linux scheduler knows nothing about Java heap locality, so a
-  thread that was local at allocation time can be remote minutes later.
+- **Migrating threads** — automatic NUMA balancing can use observed memory accesses, but it does not
+  guarantee locality for Java object ownership; a thread can become remote after migration.
 - **GC worker scheduling** — workers are still Linux tasks unless the collector implements
   additional NUMA-aware work placement.
 
@@ -30,14 +35,14 @@ per node under the same workload.
 
 ## Strategy matrix
 
-| Situation                                                    | Strategy                                                                     | Trade-off                                                                       |
-| ------------------------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Heap fits in one node                                        | `--cpunodebind=N --membind=N`                                                | Maximum locality; wastes the other nodes' cores and memory if only one JVM runs |
-| Heap larger than a node, collector supports `UseNUMA`        | `-XX:+UseNUMA`, no restrictive `numactl`                                     | Partial locality; threads still migrate between nodes without CPU affinity      |
-| Heap larger than a node, collector support is absent/unclear | Compare interleave, preferred fallback and unbound first-touch               | Interleave avoids one-node exhaustion but deliberately sacrifices some locality |
-| Application tolerates multiple instances                     | One JVM per node, each `--cpunodebind=N --membind=N`, behind a load balancer | Highest achievable locality; operational cost of N processes instead of one     |
+| Situation                                                    | Strategy                                                                     | Trade-off                                                                                           |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Whole local footprint fits with headroom                     | `--cpunodebind=N --membind=N`                                                | Candidate for locality; node pressure and lost CPU/memory capacity may dominate                     |
+| Heap larger than a node, collector supports `UseNUMA`        | `-XX:+UseNUMA`, no restrictive `numactl`                                     | Partial locality; threads still migrate between nodes without CPU affinity                          |
+| Heap larger than a node, collector support is absent/unclear | Compare interleave, preferred fallback and unbound first-touch               | Interleave spreads allocation with fallback; locality and overall capacity still require validation |
+| Application tolerates multiple instances                     | One JVM per node, each `--cpunodebind=N --membind=N`, behind a load balancer | Potential locality; duplicated caches, load skew and operational cost of N processes                |
 
-Working order of questions: how many nodes → does the required heap fit in one node → does
+Working order of questions: how many nodes → does heap plus native/runtime headroom fit on allowed nodes → does
 the collector implement `UseNUMA` → does the application tolerate multiple instances.
 
 ## NUMA by deploy architecture
@@ -74,15 +79,15 @@ Before investigating:
 While observing:
 
 - [ ] Systemic `numastat` collected as allocator/host-pressure context, not remote accesses
-- [ ] `numastat -p <pid>` collected for the process's heap distribution
+- [ ] `numastat -p <pid>` collected for process residence; heap mappings identified separately
 - [ ] `perf stat -e node-loads,node-load-misses,node-stores,node-store-misses -p <pid>` run —
       not `-e numa_miss`
-- [ ] Regression correlated with a **hardware** change, not only a code or load change
+- [ ] Hardware, code, workload and placement changes separated as competing explanations
 
 While measuring:
 
-- [ ] CPU affinity fixed before measuring anything about memory affinity — both axes, never
-      one alone
+- [ ] Both CPU and memory policies recorded; hold CPU placement constant for a controlled
+      local-versus-remote experiment, or explicitly test roaming as its own scenario
 - [ ] The local-versus-remote comparison isolates the memory variable with CPU held constant
 - [ ] An analytical prediction (expected order of magnitude) recorded before the run
 - [ ] One variable changed per deploy — never `UseNUMA` plus `interleave` plus a heap resize
@@ -90,5 +95,5 @@ While measuring:
 While validating:
 
 - [ ] Predicted placement/access evidence changed **and** business metrics improved
-- [ ] No `OutOfMemoryError` introduced by a `--membind` too tight for the configured heap
+- [ ] No allocation failure, OOM kill or excessive reclaim introduced by restrictive membind
 - [ ] Change documented as a single variable with a before/after baseline

@@ -28,8 +28,16 @@ X(N) = γN / [1 + α(N−1) + βN(N−1)]
 `γ` is the fitted single-unit scale, `α` the linear contention term and `β` the quadratic
 retrograde term in the standard interpretation. Relative capacity is `C(N)=X(N)/γ`. With `β=0`,
 the normalized form matches Amdahl-style saturation; with `α=β=0`, it is linear.
+`N≥1` is a count of the declared unit, `α` and `β` are dimensionless, and `γ` has the same
+work/time units as `X`. Changing throughput units rescales `γ`, not the other coefficients.
+Do not rebase N to a different unit (such as bundles of pods) while reusing the coefficients.
+If N=1 is unobserved, gamma is an inferred baseline, not a measured single-unit capacity.
 
 ## Workflow
+
+This is a model/experiment skill with partial Python/R examples, not a Java API prescription.
+Record the target JDK/build as an experiment invariant and inspect the existing analysis runtime,
+NumPy/SciPy or R/package versions. Do not upgrade the application or analysis stack to fit an example.
 
 1. **Define `N` and the experiment.** `N` is exactly one axis: concurrent closed users, runnable
    workers, cores, JVMs or pods. State what stays fixed—hardware, per-unit hardware, dataset,
@@ -53,7 +61,9 @@ the normalized form matches Amdahl-style saturation; with `α=β=0`, it is linea
    `α<1`, continuous `N* = sqrt((1−α)/β)`. Evaluate feasible neighbouring integers and prediction
    intervals. If `N*≤1` (equivalently `α+β≥1`), the feasible curve is already non-increasing after one
    unit. With `β=0` there is no finite retrograde peak; with `α≥1`, it likewise does not rise
-   beyond the baseline under the standard interpretation.
+   beyond the baseline under the standard interpretation. With `β=0, α=1` it is constant;
+   with `β=0, α>1` the maximum is the lowest feasible N. Include no-finite-peak cases in
+   uncertainty summaries rather than discarding them before computing a peak interval.
 8. **Attribute and validate causally.** Compare denominator terms at the operating `N`, form a
    mechanism hypothesis, measure it directly, change one mechanism, and refit/hold out. Coefficient
    movement without mechanism evidence is correlation.
@@ -72,7 +82,7 @@ the normalized form matches Amdahl-style saturation; with `α=β=0`, it is linea
   is unsupported—check cache/partition effects, heterogeneity and measurement, then segment or use
   another model.
 - Do not require measured points beyond an estimated peak when crossing it would violate safety.
-  Without retrograde-region evidence, report `β/N*` as weakly identified and make only bounded
+  Without retrograde-region evidence, assess identification of `β` and `N*` explicitly and make bounded
   predictions; run a targeted breakpoint test if the decision permits.
 - Do not extrapolate by a universal multiple. Limit claims to the range where workload/topology
   invariants and prediction uncertainty remain defensible; label scenario sensitivity outside it.

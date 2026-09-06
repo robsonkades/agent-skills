@@ -10,20 +10,22 @@ public void placeOrder(OrderRequest request) {
 }
 ```
 
-The first window can leave inconsistent durable state without a durable recovery record; the
-second reports an error but may still violate the intended business outcome:
+This partial Spring sketch assumes the save joins the active local database transaction and
+the broker is not enlisted. `save` or flush is not the surrounding transaction's commit:
 
-- **Crash between 1 and 2, or a rollback after 2.** The database has the order and nobody
-  else knows, or the message is already in flight and the row it describes was rolled back.
-  An ordinary broker publish is not enrolled in the local JDBC transaction. XA enlistment or
-  an outbox is a different design and must be explicit.
-- **The publish throws.** The transaction rolls back, so the order silently does not exist —
-  which is _sometimes_ what you want, and is a decision that should be written down rather
-  than inherited from where the line happened to sit.
+- **Crash before publishing.** An uncommitted local insert normally rolls back. A committed row
+  without a message arises if the save committed independently; inspect the actual boundary.
+- **Publish succeeds, then local commit fails or the process crashes.** A message can reference
+  an absent order. An asynchronous publish not durably acknowledged before local commit can
+  instead leave the order without durable delivery.
+- **The publish throws or times out.** The broker may already have accepted the message. Local
+  rollback depends on annotation/manager rules: Spring defaults to rollback for unchecked
+  exceptions and errors, not every checked exception. Enlistment/outbox and outcome recovery must
+  be explicit; method shape alone is a review lead rather than proof of a defect.
 
-Replacing `events.publish` with `restClient.post` gives the same two windows plus a third:
-the call may have succeeded while the response was lost. `failure-models` calls that the
-third outcome; it is why the caller cannot classify the step from its own view.
+Replacing `events.publish` with `restClient.post` has the same atomicity and acknowledgement
+gaps. A lost response can leave a successful remote effect; `failure-models` treats that as an
+unknown outcome that the caller cannot classify from its own view alone.
 
 ## The five options compared
 
@@ -103,3 +105,6 @@ Accept with choreography that:
 - Two orchestrator replicas both advancing the same unversioned saga row. Use an atomic claim
   or optimistic version transition; still make participant commands repeat-safe because a
   commit response can be lost.
+
+Source: [Spring rollback rules](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html);
+inspect the project's resolved framework version and effective overrides.

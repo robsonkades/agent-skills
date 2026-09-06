@@ -13,7 +13,7 @@ UPDATE customer_order
        version = version + 1
  WHERE id = :id
    AND version = :expectedVersion;
--- affected rows = 0  →  someone else has written since :expectedVersion
+-- affected rows = 0 → stale version, missing row, or another predicate rejected it
 ```
 
 The whole pattern is that `AND version = :expectedVersion` plus the check of the affected
@@ -30,9 +30,9 @@ public class CustomerOrder {
 }
 ```
 
-The version must travel to the client and back, or the mechanism protects nothing — the
-server re-reading the entity and letting Hibernate use the freshly loaded version compares
-the row against itself.
+The editor's original version must travel to the client and back. Re-reading on submission
+protects against a concurrent database write after that read, but does not detect an edit
+that became stale during the user's thinking time.
 
 ```java
 public record UpdateOrderRequest(String shipTo, long version) { }
@@ -47,9 +47,9 @@ public void updateShipping(OrderId id, UpdateOrderRequest request) {
 }
 ```
 
-Alternatively `orders.findById(id, LockModeType.OPTIMISTIC_FORCE_INCREMENT)` or an
-`EntityManager.lock` with the expected version. The explicit comparison above is preferred
-in most codebases because the failure is raised where a useful message can be built.
+`EntityManager.lock(order, OPTIMISTIC_FORCE_INCREMENT)` accepts a lock mode, not the
+client's expected version. It can complement this comparison when a child edit must
+advance the root version; it does not replace the original-version check.
 
 Over HTTP, the natural carrier is a conditional request: `ETag` on the read,
 `If-Match` on the write, and `412 Precondition Failed` on conflict. That maps the pattern
@@ -58,52 +58,35 @@ onto a standard mechanism intermediaries already understand
 
 ### Presenting the conflict
 
-Minimum acceptable: tell the caller what changed, and let them decide.
+Return a stable conflict code and authorized recovery information. Use 412 when an
+`If-Match` precondition fails (strong ETag comparison); a business version supplied in a
+request body may instead use the API's documented 409 conflict contract. Do not map every
+optimistic failure to 409 regardless of the conditional request.
 
-```java
-@ExceptionHandler({ StaleOrder.class, OptimisticLockingFailureException.class })
-ProblemDetail onConflict(Exception e) {
-    var problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
-    problem.setTitle("The order changed while you were editing it");
-    problem.setProperty("code", "ORDER_STALE");
-    problem.setProperty("currentVersion", currentVersionOf(e));
-    return problem;
-}
-```
+An exception may not contain the current database version. Roll back first; if useful,
+read it again in a fresh transaction, with normal authorization, and label it as the state
+observed by that later read. Preserve the user's submitted work for reload or merge.
 
-Better, where the domain permits it: field-level merge. If A changed the address and B
-changed a line quantity, the edits do not conflict in business terms. Detect that by
-comparing changed field sets rather than versions — but note that this weakens the
-aggregate's invariant guarantee, so it is only safe where the fields are genuinely
-independent.
+Field-level merge needs the original base, current state and proposed changes. Disjoint
+fields can still participate in one invariant. Revalidate the combined result, then use
+a version predicate against the current state used for the merge; another writer can race
+the merge itself.
 
 ### Retry: the safe and unsafe forms
 
-```java
-// UNSAFE — reapplies the user's stale snapshot. Lost update, delayed.
-@Retryable(retryFor = OptimisticLockingFailureException.class)
-@Transactional
-public void update(OrderId id, UpdateOrderRequest request) {
-    var order = orders.byId(id).orElseThrow();
-    order.overwriteWith(request);          // request was built from version 7
-}
+A retry that reloads and overwrites with a stale full-state request loses updates.
+Reapplying an intent such as "add credit" is only conditionally valid: account status,
+limits and other invariants must be checked again. Increments, appends and state transitions
+are not automatically safe to retry.
 
-// SAFE — reapplies an intent that is still meaningful against fresh state.
-@Retryable(retryFor = OptimisticLockingFailureException.class,
-           maxAttempts = 3, backoff = @Backoff(delay = 50, random = true))
-@Transactional
-public void addCredit(AccountId id, Money amount) {
-    var account = accounts.byId(id).orElseThrow();
-    account.credit(amount);                // "add 10" is valid at any version
-}
-```
+Put a bounded retry with jitter outside the transaction. Each attempt must use a fresh
+transaction and persistence context; confirm Spring interceptor ordering and proxy invocation
+rather than assuming colocated `@Retryable` and `@Transactional` annotations establish it.
+Do not reuse a rollback-only transaction after an optimistic failure.
 
-The discriminator: **is the operation expressible as a delta or a state transition that
-remains correct against newer state?** Increments, appends and status transitions retry
-safely. "Set these fields to what I saw four minutes ago" does not — that one must reach a
-human.
-
-Retry must sit outside the transaction, with jitter (`retries-and-backoff`).
+Retry only known rolled-back work whose intent remains valid. External effects and an
+uncertain commit require idempotency or reconciliation, not blind reapplication
+(`idempotency`, `retries-and-backoff`).
 
 ## Pessimistic offline lock
 
@@ -113,59 +96,44 @@ When losing the work is expensive: a long form, a document being edited, a manua
 reconciliation, a case being worked by an agent. Telling the user "this is being edited by
 Ana" at the start is far better than telling them "your changes were lost" at the end.
 
-### The lock table
+### The lease protocol
 
-```sql
-CREATE TABLE edit_lock (
-    resource_type  VARCHAR(64)  NOT NULL,
-    resource_id    VARCHAR(64)  NOT NULL,
-    owner          VARCHAR(128) NOT NULL,
-    acquired_at    TIMESTAMP    NOT NULL,
-    expires_at     TIMESTAMP    NOT NULL,
-    PRIMARY KEY (resource_type, resource_id)
-);
-```
+Use a unique resource key, owner, acquisition time, expiry and a fresh acquisition token.
+Owner identity alone cannot distinguish an old browser tab from a new lease by the same
+user. The following is a protocol sketch, not portable executable SQL:
 
-Acquisition is a single atomic statement, never a read followed by an insert:
+1. Acquire an absent or expired resource atomically using the database's documented
+   conditional update/insert semantics and unique constraint. Choose an authoritative
+   time source and define its clock assumptions; independent application clocks can
+   disagree about expiry.
+2. Commit acquisition before reporting success. A conflict means busy or a bounded retry
+   in a fresh transaction, according to the database's error semantics.
+3. Renew only the matching token while it is still unexpired. Release only the matching
+   token. Inspect affected-row counts; an old release must not delete a successor's lease.
+4. On save, validate token and expiry together with the data write, using a short database
+   transaction that serializes against takeover (for example, locking the lease row until
+   commit). Check the editor's original data version and domain invariants too. A check
+   in one transaction followed by a write in another leaves a race.
+5. If a separate resource accepts the effects, require that resource to reject obsolete
+   fencing generations. A random acquisition token or a TTL alone is not a monotonic fence;
+   generations must not reset when lease rows are deleted.
 
-```java
-@Transactional
-public boolean acquire(String type, String id, String owner, Duration ttl) {
-    Instant now = Instant.now(clock);
-    // Steal an expired lock or take a free one, in one statement.
-    int taken = db.sql("""
-            MERGE INTO edit_lock AS target
-            USING (VALUES (:type, :id)) AS source(rt, ri)
-               ON target.resource_type = source.rt AND target.resource_id = source.ri
-             WHEN MATCHED AND target.expires_at < :now THEN
-                  UPDATE SET owner = :owner, acquired_at = :now, expires_at = :expires
-             WHEN NOT MATCHED THEN
-                  INSERT (resource_type, resource_id, owner, acquired_at, expires_at)
-                  VALUES (:type, :id, :owner, :now, :expires)
-            """)
-        .param("type", type).param("id", id).param("owner", owner)
-        .param("now", now).param("expires", now.plus(ttl))
-        .update();
-    return taken == 1;
-}
-```
+A single `MERGE` is not a portable successful-acquisition guarantee. For example,
+[PostgreSQL 17 MERGE](https://www.postgresql.org/docs/17/sql-merge.html) can raise a uniqueness
+violation for concurrent insertion; its behavior differs from `INSERT ... ON CONFLICT`.
+Verify the chosen dialect and isolation level with two competing sessions, including expiry
+takeover and failed acquisition. A unique key alone does not validate the protected write.
 
-A check-then-insert in application code loses to a concurrent caller; the primary key plus
-a single statement is what makes acquisition atomic. Where `MERGE` is unavailable, insert
-and catch the duplicate-key violation — same guarantee.
+### Recovery and renewal
 
-### The four mandatory properties
+Show the owner and acquisition time, and provide authorized, audited administrative recovery.
+A lease needs expiry and safe renewal. A durable checkout can instead require explicit
+release plus administrative recovery; it makes a different abandonment trade-off.
 
-| Property       | Why                                                         | Consequence of omitting it                           |
-| -------------- | ----------------------------------------------------------- | ---------------------------------------------------- |
-| Owner          | Show who holds it; allow the same user to resume            | "Locked by someone" is an unactionable message       |
-| Acquired-at    | Diagnostics and stale-lock reporting                        | No way to see a leaking path                         |
-| **Expiry**     | Owners crash, browsers close, pods are evicted              | Rows locked forever; an operator ticket per incident |
-| Admin override | Expiry is a compromise; sometimes someone must break a lock | Support cannot help without a database session       |
-
-Renewal (a heartbeat while the editor is open) lets the TTL be short — a short TTL with
-renewal is strictly better than a long TTL without, because it bounds the damage from a
-crash to the TTL rather than to the maximum plausible edit duration.
+Short TTLs with heartbeats shorten crash recovery but increase false expiry during pauses,
+network loss or browser suspension. Choose the TTL from those conditions, test takeover,
+and tell the old editor that ownership was lost. Neither a long TTL nor renewal removes
+the need to reject stale owners.
 
 ### Do not implement it with a held transaction
 
@@ -180,25 +148,28 @@ read-then-write **inside a single transaction** (`enterprise-transactions`).
 
 ## Proving it works
 
-```java
-@Test
-void concurrent_updates_only_one_wins() throws Exception {
-    var start = new CountDownLatch(1);
-    Callable<Boolean> edit = () -> {
-        start.await();
-        try { service.updateShipping(orderId, new UpdateOrderRequest("addr", 7L)); return true; }
-        catch (StaleOrder | OptimisticLockingFailureException e) { return false; }
-    };
-    var pool = Executors.newVirtualThreadPerTaskExecutor();
-    var a = pool.submit(edit);
-    var b = pool.submit(edit);
-    start.countDown();
+Use the deployed provider and database, with independent persistence contexts and real
+transactions. These are integration-test recipes, not an already executed test suite:
 
-    assertThat(List.of(a.get(), b.get())).containsExactlyInAnyOrder(true, false);
-    assertThat(orders.byId(orderId).orElseThrow().version()).isEqualTo(8L);
-}
-```
+1. **Stale client:** commit B's edit from v7, then submit A's different edit carrying v7.
+   Reject A and preserve B. This tests the client-version contract.
+2. **Flush race:** load v7 in two separate transactions, synchronize after both loads and
+   before either flush, then change to distinct addresses. Let both attempt commit and assert
+   exactly one commits; inspect the final address and advanced version in a third fresh
+   transaction. A barrier before entering the service is insufficient to guarantee both
+   reads occurred before either write.
+3. **Child race:** edit scalar fields on two existing children under the same root version;
+   assert one transaction fails and the aggregate invariant holds. Separately test collection
+   membership changes and bulk/native paths.
+4. **Expired lease:** acquire token A, expire it, acquire B, then attempt A's renewal,
+   release and save. All must fail without changing B's ownership or protected data.
 
-Against a real database (Testcontainers), with real transactions. This test is the only
-thing that distinguishes a working optimistic lock from a version column that is loaded,
-ignored and rewritten (`architecture-testing`).
+Bound waits and database lock/statement timeouts. On failure, release barriers, roll back
+transactions and stop owned executors so a broken locking protocol cannot hang the suite.
+Do not count a successful flush as a successful commit.
+
+JPA snippets here are partial application code using Java records (Java 16+, commonly
+Java 17 projects) and an existing JPA/Spring stack. Inspect the project's actual Java,
+namespace, provider and database versions; no upgrade is implied. The locking and bulk
+operation contracts are documented in
+[Jakarta Persistence 3.2, sections 3.5 and 4.11](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).

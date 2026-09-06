@@ -31,6 +31,10 @@ constrained optimization hint, not an asynchronous-native-call mechanism.
 
 ## Workflow
 
+Inspect the project's compiler/toolchain, runtime image, native library and target ABI first.
+The final FFM examples require JDK 22+; the reference observations use HotSpot 25.0.3.
+Applying this skill does not authorize an upgrade or removal of preview flags used by other features.
+
 1. **Specify the native contract first.** ABI, ownership, lifetime, thread affinity,
    reentrancy/upcalls, cancellation, error channel, blocking behavior and worst-case duration
    decide correctness. API choice also affects checks, maintainability and deployment.
@@ -56,7 +60,11 @@ constrained optimization hint, not an asynchronous-native-call mechanism.
 6. **Declare native access explicitly in production.** `--enable-native-access=<module>` or
    `ALL-UNNAMED`, per module, rather than relying on the current warn-only default.
 7. **Measure the boundary, do not estimate it.** JMH comparing JNI, a plain FFM downcall and
-   a `critical` one for the same function, and `-prof gc` for the copy behaviour.
+   a `critical` one for the same function. `-prof gc` measures Java allocation, not native
+   copy volume; instrument bytes/copies or inspect the native implementation separately.
+
+Return the boundary contract, observed evidence versus hypotheses, proposed change and
+the validation that would demonstrate correctness and the intended operational benefit.
 
 ## Rules
 
@@ -94,13 +102,14 @@ constrained optimization hint, not an asynchronous-native-call mechanism.
   downcall/upcall creation and library lookup, typically once per caller module—not each
   segment read. Generated bindings do not inherit an exemption; attribution follows the
   module that invokes the restricted operation.
-- FFM is final since JDK 22. No `--enable-preview` for FFM code; a start script that has it is
-  out of date.
+- FFM is final since JDK 22 and does not itself require `--enable-preview` there. Older
+  preview APIs differ; preserve flags needed by other project features.
 - `jextract` is an OpenJDK project/tool distributed separately from the standard JDK; vendor
   bundles can differ. Pin its version/target ABI and review generated ownership/error policy.
-- Close confined/shared arenas according to the native ownership boundary. Automatic/global
-  arenas are not manually closeable; their lifetimes make them unsuitable for arbitrary
-  retained pointers. JNI critical/element APIs must be released on every path.
+- Close confined/shared arenas according to the native ownership boundary. Automatic arenas
+  need a strongly reachable Java owner while native code retains pointers. The global arena
+  remains alive for the JVM lifetime, trading simple retention for no early reclamation.
+  Neither kind is manually closeable. JNI critical/element APIs must be released on every path.
 - Do not assume FFM is faster than JNI. Descriptor shape, checks, marshaling, JIT compilation,
   native work and copies dominate differently. Benchmark the same ABI/function/data path and
   retain safety and maintainability in the decision.

@@ -144,13 +144,17 @@ command. Verify support/effect against the exact build and route lifecycle revie
 - [ ] JFR/dump settings, thresholds, opportunity, loss and target JDK are validated.
 - [ ] Overlap-compatible denominators and request/SLO impact are reported.
 - [ ] Alternative preserves atomicity, callback order, failure and progress semantics.
-- [ ] Hot-key, virtual-thread, fairness, shutdown and deadlock/starvation tests pass.
-- [ ] The metric that supported contention improves without shifting failure elsewhere.
+- [ ] Relevant hot-key, virtual-thread, fairness, shutdown and deadlock/starvation checks
+      support the proposed change; unavailable checks and remaining risks are explicit.
+- [ ] A changed implementation improves the targeted metric without shifting failure elsewhere,
+      or the result is explicitly keep-current/rejected/inconclusive with its evidence.
 
 ## References
 
-- [Version-scoped monitor lifecycle](references/monitor-lifecycle.md)
-- [Measuring and reducing contention](references/measuring-contention.md)
+- [Version-scoped monitor lifecycle](references/monitor-lifecycle.md) — read when interpreting
+  inflation, wait/reacquisition, headers or monitor-state evidence.
+- [Measuring and reducing contention](references/measuring-contention.md) — read when planning
+  a capture or changing critical-section scope/partitioning.
 - [JEP 491](https://openjdk.org/jeps/491)
 - [JLS 17 monitors and waits](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
 - [OpenJDK ObjectMonitor source](https://github.com/openjdk/jdk/tree/master/src/hotspot/share/runtime)

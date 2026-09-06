@@ -162,11 +162,9 @@ What this establishes:
   placed last**.
 - **The grouping does not start at the first slot under classic headers.** The JVM hoists a
   4-byte field into the 12–15 header hole, ahead of the 8-byte group: `int i` sits at offset
-  12, before `long l` at 16. So `false-sharing-and-contended`'s description — "longs and
-  doubles first, then ints and floats, … then references" — is confirmed by this measurement
-  for **compact** headers and for everything after the header gap under classic ones, and
-  **refuted as a statement about the first slot** under classic headers. Both files are
-  reading the same JVM; the neighbour's version omits the hoist.
+  12, before `long l` at 16. Descending-size grouping therefore does not mean the first
+  field slot is always an eight-byte primitive. Use actual offsets for cache-line analysis;
+  `false-sharing-and-contended` owns that decision.
 - `AllTypes` is the instructive **zero** saving, and the obvious explanation is wrong: no hole
   migrated. Its 2-byte internal hole exists in both modes (JOL: `2 bytes internal`, both). The
   34 field bytes make `alignUp(8 + 34, 8)` and `alignUp(12 + 34, 8)` both 48, so the four
@@ -270,7 +268,9 @@ modes `[executed]`, with no hole term. Re-measure special/VM-injected, `@Contend
 value-class and future-release layouts. Holes matter for **offsets**, which is §4.
 
 Confirm before believing it: `ClassLayout.parseInstance(new Txn(1,1,1,1)).instanceSize()`
-must return 40, and `GraphLayout.parseInstance(array).totalSize()` must return the total.
+must return 40, and `GraphLayout.parseInstance((Object) array).totalSize()` must return the total
+for a fully populated array of distinct records. The cast includes the reference array itself;
+without it, Java passes its elements as varargs roots and omits the array's own footprint.
 The prediction is what transfers to the next class; the measurement is what stops the
 prediction being wrong. Do both.
 

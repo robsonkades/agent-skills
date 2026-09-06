@@ -1,139 +1,137 @@
-# Budgeting the Request Path
+# Budgeting the request path
 
-## Write the budget first
+## Define a budget without inventing a diagnosis
 
-For each significant endpoint, before measuring:
+An illustrative hypothesis, not a default SLO or measured result:
 
 ```text
-GET /orders?page=0&size=25          budget: p95 200 ms
-  database queries        ≤ 3       (page of orders, count, line summary)
-  remote calls            0
-  transaction duration    ≤ 30 ms   (read-only, or none)
-  response payload        ≤ 60 KB
-
-POST /orders                        budget: p95 400 ms
-  database queries        ≤ 8       (customer, pricing, insert order + lines, outbox)
-  remote calls            0         (inventory reservation is asynchronous)
-  transaction duration    ≤ 80 ms
+GET /orders?page=0&size=25
+  target: p95 <= 200 ms at the agreed request mix and arrival rate
+  expected SQL: <= 3 (root page, optional count, grouped line summary)
+  remote calls: 0
+  returned roots: <= 25; response: <= 60 KB
+  connection hold: measure separately from request/transaction time
 ```
 
-The budget is the hypothesis. A measured 180 queries against a budget of 8 is a located
-defect; "the endpoint takes 900 ms" is a feeling.
+Derive the numbers from the use case, consumer contract and baseline. A measured 180 queries
+against an expected 3 locates a discrepancy to explain, not proof that those queries dominate
+latency. A measured 900 ms endpoint duration is valid evidence even before attribution.
+Count background work and retries separately: an asynchronous acknowledgement is not the same
+completion contract as a synchronous finished operation.
 
-## Counting what actually happens
+## Attribute wall time without double counting
 
-**Database queries per request.** The reliable sources, in order of preference:
+Construct a timeline or dependency graph from traces and local timings. Include request queue,
+framework/authentication, pool acquisition, database/client calls, hydration/domain work,
+mapping/serialization and response transfer. Locate the critical path and unexplained gaps.
+
+Nested spans include children; overlapping calls consume time simultaneously. Sum only
+non-overlapping intervals on the path being explained. Do not subtract a sum of inclusive SQL
+or service spans from request time, or add component p99 values to obtain endpoint p99.
+A database client span may include network, server waits and result transfer; server execution
+requires server-side evidence.
+
+| Evidence                                          | Architectural question                                    | Limit                                                                          |
+| ------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Request-correlated SQL executions and rows        | Repeated access, overfetching, hidden view queries?       | Statement count alone omits row volume, plan cost and wire batching            |
+| Complete client spans with attempts               | Serial dependencies, fan-out, retries?                    | Missing/sampled spans cannot prove absence of calls                            |
+| Pool acquisition and checkout-to-return timing    | Waiting versus occupied connections?                      | Acquisition includes normal overhead; a nonzero value need not mean saturation |
+| Database plans, waits and locks                   | Expensive SQL or blocked transactions?                    | Match parameters/data and distinguish server time from client time             |
+| CPU and allocation profiles tied to the operation | Mapping, hydration or serialization cost?                 | Allocation volume does not establish elapsed CPU time                          |
+| Queue/admission and timeout/rejection metrics     | Is low throughput intentional limiting or a blocked path? | Low average CPU can hide a busy core, I/O waits or downstream throttling       |
+
+Read `allocation-profiling` for allocation evidence, `java-performance` for JVM attribution,
+and `serialization-performance` when payload processing is implicated. Payload bytes divided
+by network throughput estimates transfer time, not serialization CPU. A no-op endpoint can
+be a control for shared overhead, but different authentication, routing and queue behavior
+mean it is not a universal floor to subtract from another endpoint.
+
+## Query-count tests: scope the counter
+
+Hibernate Statistics is SessionFactory-wide and must be enabled. Its prepared-statement count
+is a preparation count, not a universal execution or network-round-trip count.
+See [Hibernate Statistics](https://docs.hibernate.org/orm/7.1/javadocs/org/hibernate/stat/Statistics.html).
+
+The reference baseline for this fragment is Hibernate 7.1 / Jakarta Persistence 3.2, with
+Java 17 as its minimum Java baseline; see [Hibernate compatibility](https://hibernate.org/orm/releases/7.1/#compatibility).
+Inspect the target's compiler release/toolchain, resolved ORM/framework/test dependencies and
+runtime image before adapting it. Use the target version's statistics API; this example does
+not authorize upgrading Java or replacing dependencies. No preview features are needed.
+
+For an isolated integration test on that baseline, the following fragment needs a supplied
+EntityManagerFactory, Hibernate Statistics/SessionFactory imports and endpoint test driver.
+It is not a standalone test:
 
 ```java
-// Hibernate statistics, per request, in a test or a dev profile
+// Enable statistics in test configuration; isolate this SessionFactory from concurrent work.
+// Finish fixture setup first; use the cache state that the test explicitly promises.
 Statistics stats = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
 long before = stats.getPrepareStatementCount();
-// ... execute the endpoint ...
-assertThat(stats.getPrepareStatementCount() - before).isLessThanOrEqualTo(8);
+executeAndFullyConsumeOrderPage(25); // test helper, includes mapping/serialization
+long prepared = stats.getPrepareStatementCount() - before;
+assertThat(prepared).isLessThanOrEqualTo(3); // derived budget, AssertJ dependency required
 ```
 
-A datasource proxy (`datasource-proxy`, `p6spy`) gives the same count in production-like
-environments and also shows the statements. Application logs at `DEBUG` are adequate for
-development and unusable under load.
+Verify statistics are enabled and a known database access is observed, so disabled instrumentation
+cannot pass as zero queries. For concurrent traffic, use request-correlated execution events or
+a datasource interceptor with propagated context; global deltas mix requests. Avoid recording
+sensitive bind values. Endpoint-tagged aggregate rates can estimate average demand but cannot
+identify an individual slow request's count.
 
-**Remote calls per request.** Client-side metrics tagged by endpoint and by callee. If a
-count per request is not available, the trace is; a distributed trace of one slow request
-answers this immediately and is worth the setup precisely for this question.
+Use several result sizes and both fresh and deliberately warm persistence/cache states. Assert
+returned contents, ordering and completeness as well as counts, including serialization where
+lazy access may occur. Do not add extra result-consuming operations that themselves query.
+Delegate detailed fetch controls to `orm-fetch-and-batching-performance` and regression placement
+to `architecture-testing`.
 
-**Transaction duration.** Frequently unmeasured and frequently the answer. Instrument the
-boundary:
+## Occupancy: measure the actual resource interval
 
-```java
-@Around("@annotation(org.springframework.transaction.annotation.Transactional)")
-public Object timed(ProceedingJoinPoint pjp) throws Throwable {
-    long start = System.nanoTime();
-    try { return pjp.proceed(); }
-    finally {
-        meterRegistry.timer("tx.duration", "name", pjp.getSignature().toShortString())
-            .record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
-    }
-}
-```
+Use checkout-to-return duration for occupied pooled connections, not annotated method time.
+A method timer can exclude commit/flush, include nontransactional work or time a method that
+joins an existing transaction. Advisor ordering, proxy invocation and propagation matter; use
+transaction-manager events when actual begin/completion is needed. See
+[Spring transaction semantics](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html).
 
-## Attributing the remainder by layer
+Request, persistence context and database transaction lifetimes may differ. OSIV allows lazy
+loads after the original transaction has completed; it does not itself guarantee one request-long
+transaction or connection checkout. Inspect provider connection handling and actual borrow/return
+events. See [Spring OSIV](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/orm/jpa/support/OpenEntityManagerInViewFilter.html)
+and [Hibernate connection handling](https://docs.hibernate.org/orm/7.1/userguide/html_single/#database-connection-handling).
 
-Once round trips are accounted for, split the residue. A practical decomposition, cheapest
-first:
-
-| Question                                         | Measurement                                                  |
-| ------------------------------------------------ | ------------------------------------------------------------ |
-| How much is the database itself?                 | Sum of statement execution times vs total request time       |
-| How much is waiting for a connection?            | Pool metrics: `hikaricp.connections.acquire` p99             |
-| How much is the framework before the controller? | Filter chain timing; a no-op endpoint's latency is the floor |
-| How much is serialisation?                       | Response size × observed throughput; a profile confirms      |
-| How much is mapping and object churn?            | Allocation profile of the endpoint (`allocation-profiling`)  |
-| How much is the JVM (GC, JIT)?                   | GC log and safepoint attribution (`java-performance`)        |
-
-The no-op endpoint floor is the most under-used of these: add an endpoint that returns a
-constant, measure it under the same load, and everything below that number is framework and
-infrastructure, not your code.
-
-## Transaction duration and the pool
-
-The pool is sized by Little's Law: `connections = arrival_rate × transaction_duration`.
+Applying Little's Law to occupied connections in a stable observation window:
 
 ```text
-120 write requests/second × 80 ms transaction = 9.6 concurrent connections
-120 write requests/second × 400 ms transaction = 48 concurrent connections
+mean occupied connections = successful checkout rate/second × mean hold seconds
+120 checkouts/s × 0.080 s = 9.6 average occupied
+120 checkouts/s × 0.400 s = 48 average occupied
 ```
 
-The second case does not need a bigger pool; it needs a shorter transaction. A pool sized
-for it will also overwhelm the database, which has its own concurrency limit — and past
-that limit, adding connections reduces throughput (`connection-pool-sizing`,
-`universal-scalability-law`).
+These are averages, not recommended pool sizes. Use checkout rate rather than endpoint rate
+unless each request borrows exactly once; account for multiple pools, replicas, retries and
+background traffic consistently. Do not insert p99 hold time into an equation for mean occupancy.
+If the boundary includes acquisition wait, the population also includes waiters, not just holders.
+See [MIT's Little's Law notes](https://web.mit.edu/1.041/www/lectures/L8-queuing-models-2024sp.pdf).
 
-What lengthens transactions, in order of frequency:
+Determine whether long holds contain avoidable remote work, lock waits, slow SQL or hydration
+before changing boundaries. Moving a call outside a transaction may change atomicity or introduce
+a race; specify the consistency mechanism and failure handling first. Shorter holds may help,
+but burstiness, database capacity and admission limits still constrain safe concurrency.
+Use `connection-pool-sizing` for configuration and `littles-law-and-queueing` for fuller models.
 
-1. A remote call inside the boundary (`enterprise-transactions`).
-2. Lazy loads triggered inside the transaction because the read path goes through the
-   write model.
-3. Mapping and serialisation performed inside the boundary — typically a controller
-   annotated `@Transactional`, or an open-session-in-view filter.
-4. Business logic that loads more state than the decision needs.
-5. Batch work that should have been chunked.
+## Transfer the comparison, not just the test result
 
-**Open Session In View** deserves naming explicitly: it keeps the persistence context open
-for the whole request so that lazy loads succeed during serialisation. It converts a
-missing-fetch bug into a silent N+1 that runs during view rendering, and it holds a
-connection for the request's full duration. Turn it off, and fix the resulting failures by
-fetching properly.
+Compare production and test request mix, offered/achieved rate, errors, data skew/selectivity,
+query plans, replica resources, downstream limits, cache state, connection reuse and JVM warmup.
+Exact duplication is often impossible; state mismatches and the conclusions they limit.
+A nested loop is not inherently bad at large table sizes: selectivity, indexes and actual rows
+processed determine its cost.
 
-## Load-test conditions that transfer
+A closed-loop harness can reduce offered load when responses slow; whether that biases the
+test depends on the intended arrival model. Route harness design to `load-testing` and
+`coordinated-omission`. Include failures/timeouts alongside latency so dropping slow requests
+does not masquerade as improvement. A high p99 warrants investigation against an SLO; it does
+not by itself establish instability or its cause.
 
-A load test result is transferable only if these match production:
-
-- **Data volume and cardinality.** Plans change with row counts and with the selectivity of
-  the values you filter on. Seeding 100 rows tests a different query plan than the one
-  production runs.
-- **Concurrency shape.** Twenty threads at full speed is not a hundred users with think
-  time; the queue behaviour differs and so does lock contention.
-- **Cache state.** A test that runs 5 minutes against a warm cache measures the cache. Test
-  the cold path deliberately as well.
-- **Client-side think time and connection reuse.** Coordinated omission makes the reported
-  latency systematically optimistic when the harness waits for slow responses before
-  issuing the next request (`coordinated-omission`).
-- **The same JVM state.** A test that never leaves the interpreter, or that never reaches
-  steady-state GC behaviour, is measuring warmup (`java-performance`).
-
-## The budget as a test
-
-```java
-@Test
-void order_list_stays_within_query_budget() {
-    var before = statementCount();
-    mockMvc.perform(get("/orders?page=0&size=25")).andExpect(status().isOk());
-    assertThat(statementCount() - before)
-        .as("query budget for the order list")
-        .isLessThanOrEqualTo(3);
-}
-```
-
-This is the highest-value performance test in most enterprise codebases, because the defect
-it catches — a fetch strategy change or an added association reintroducing an N+1 — is
-invisible in a functional test and appears in production at a data volume no other test
-uses (`architecture-testing`).
+For a change, require the predicted count/bytes/hold-time effect and the end-to-end result
+under comparable offered work. Record resource and correctness regressions even when latency
+improves. A deterministic query-budget test is an architectural regression guard, not a load test.

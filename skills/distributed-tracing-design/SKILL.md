@@ -22,6 +22,11 @@ own start/end—not from an assumption that parents must wait for or enclose chi
 The design must follow the pinned OpenTelemetry semantic-convention version. Protocol
 domains have different stability and migration rules.
 
+This is a telemetry-modeling skill, with no Java syntax baseline or executable examples.
+Inspect the target Java runtime, resolved OpenTelemetry API/SDK, Java agent/instrumentation,
+collector and backend versions, plus semantic-convention opt-ins and schema URLs. Their
+compatibility requirements govern implementation; do not upgrade to match the online docs.
+
 ## Workflow
 
 ### 1. Define questions and units of work
@@ -46,13 +51,16 @@ data; govern them.
 
 ### 3. Select kind and semantic conventions
 
-SpanKind describes remote direction and synchronous/deferred style:
+SpanKind describes the operation's role across boundaries, not whether a Java method blocks:
 
 - SERVER: inbound request/response;
 - CLIENT: outbound request/response;
 - PRODUCER: outgoing deferred work;
 - CONSUMER: processing externally initiated deferred work;
 - INTERNAL: other local work.
+
+An asynchronous HTTP client still creates a CLIENT span. Messaging receive/settle operations
+can also be CLIENT spans; use the domain convention, not an executor or callback's presence.
 
 Do not infer that every backend builds service maps or RED metrics identically. Correct
 kind and stable semantic attributes make such analysis possible; backend behavior must be
@@ -78,8 +86,15 @@ Span duration must correspond to its named operation: enqueue, send acknowledgme
 processing, settlement or end-to-end logical call. Async APIs require completion callbacks,
 not a synchronous method return, when the operation continues.
 
+Define the owner of span completion for success, synchronous submission failure, asynchronous
+failure, timeout and cancellation. A caller timeout span may end while a remote processing
+span continues; do not imply the effect stopped. Java context Scope lifetime and Span lifetime
+are separate; route thread/context propagation mechanics to `opentelemetry-performance`.
+
 Status and error attributes follow domain conventions plus application knowledge. Recording
-an exception does not mean every recovered child failure should make the root ERROR. Equally,
+an exception does not itself set the span's status. Explicitly setting OK can prevent later
+ERROR updates under the API status precedence; generic instrumentation should normally leave
+successful status UNSET. A recovered child failure need not make the root ERROR. Equally,
 some business failures represented by normal protocol statuses need an outcome attribute.
 Do not set status solely to satisfy a backend filter.
 
@@ -113,12 +128,14 @@ Prefer an attribute/event when:
 - a loop can be summarized safely;
 - extra spans exceed retrieval and cost budgets.
 
-Prefer a new trace plus link when:
+Consider links, optionally with a new trace, when:
 
 - the workflow is independently operated/retained;
 - multiple causes cannot have one parent;
 - long-lived steps would be clearer as separate trace units;
 - semantic conventions prescribe links.
+
+Links are valid within a trace too; multiple causes alone do not require a new trace.
 
 Prefer same-trace parentage when:
 
@@ -168,22 +185,28 @@ need different treatment.
 **Attributes are cheap and IDs are fine:** span attributes can create backend index,
 storage/privacy and sampling costs. Minimize and govern.
 
-**Trace ID on every log is guaranteed:** context can be absent or unsampled. Include valid
-trace/span IDs when available and retain business/request correlation appropriate to logs.
+**Trace ID on every log is guaranteed:** context can be absent, but a valid unsampled context
+still has trace/span IDs. Include valid IDs when available without promising a retained trace,
+and retain business/request correlation appropriate to logs.
 
 ## Cross-skill routing
 
-- [span modelling](references/span-modelling.md)
-- [semantic conventions](references/semantic-conventions.md)
-- [traces in incidents](references/traces-in-incidents.md)
+- [Span modelling](references/span-modelling.md) — read when choosing parent/link topology, retries, batches or long-running units.
+- [Semantic conventions](references/semantic-conventions.md) — read before selecting protocol kind/name/status or migrating instrumentation.
+- [Traces in incidents](references/traces-in-incidents.md) — read when interpreting missing/biased trace evidence or testing backend queries.
 - opentelemetry-performance for sampling, propagation and cost.
 - structured-logging for event/correlation fields.
 - metrics-and-cardinality for aggregate schemas.
 - continuous-profiling for code ownership within spans.
 
+Deliver a compact model card for changed span classes, pinned instrumentation/conventions,
+relevant fixture assertions and backend query validation. Separate executed results from
+proposed tests; unknown versions or missing spans limit the conclusions, not the need for evidence.
+
 ## Authoritative references
 
 - [OpenTelemetry Trace API](https://opentelemetry.io/docs/specs/otel/trace/api/)
+- [OpenTelemetry Trace SDK sampling](https://opentelemetry.io/docs/specs/otel/trace/sdk/)
 - [OpenTelemetry semantic conventions](https://opentelemetry.io/docs/specs/semconv/)
 - [HTTP spans](https://opentelemetry.io/docs/specs/semconv/http/http-spans/)
 - [Messaging spans](https://opentelemetry.io/docs/specs/semconv/messaging/messaging-spans/)

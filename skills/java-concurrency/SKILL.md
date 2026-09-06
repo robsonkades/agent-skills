@@ -24,6 +24,12 @@ to distributed-system skills.
 
 ## Classification contract
 
+Start with the actual compiler release/toolchain, resolved framework versions, runtime image
+and preview policy. This router uses Java 21–25 as its reference range; the target project may
+be older. Neither adopting a construct nor reading a Java 25 source authorizes a JDK upgrade,
+new dependency or preview flag. Mark missing measurements as unknown and keep performance
+recommendations conditional rather than inventing a thread count.
+
 ```text
 unit of work and semantic result:
 arrival shape: request/value/stream/scheduled/background
@@ -80,6 +86,8 @@ JDK/API status and framework constraints:
   match semantics; otherwise define atomic invariants and happens-before before locks/atomics.
 - **Overload behavior is part of correctness.** Bound, reject, queue, shed, degrade, or backpressure
   deliberately; an unbounded queue transfers the bound to latency and heap.
+  A semaphore or connection pool bounds active resource users, not the number of tasks waiting
+  to acquire it. Also bound admission/waiters, acquisition time and retained request state.
 - **Cancellation is cooperative.** Define propagation, interrupt behavior, noninterruptible calls,
   resource cleanup, partial side effects, and what happens after the caller leaves.
 
@@ -106,7 +114,7 @@ or traffic changes. Locate the wait and its owner.
 one request/task with sequential blocking calls?
   -> synchronous style; consider virtual threads if concurrency and blocker support justify it
 lexical fan-out whose subtasks must join/cancel together?
-  -> structured concurrency if target API status is acceptable; otherwise explicit owned executor
+  -> structured concurrency if target API status is acceptable; otherwise explicit task-group ownership
 callback-only or dependency graph of values?
   -> CompletableFuture/stage abstraction with explicit executor and cancellation bridge
 unbounded/time-shaped stream with consumer demand?
@@ -124,8 +132,19 @@ CPU pool; do not wrap synchronous work in futures without defining the execution
 
 Virtual threads are final in Java 21; later JDKs change implementation details such as monitor
 pinning. Scoped values and structured concurrency have evolved through preview/incubator stages.
+In Java 25, `ScopedValue` is final while `StructuredTaskScope` is still preview; do not infer
+one API's status from the other. Scoped bindings do not make a mutable bound object immutable,
+and arbitrary executor submissions do not automatically inherit them.
 Before emitting source, verify the exact target JDK's JEP/API status, preview flags, binary/source
 compatibility, and framework/tooling support. Do not encode a moving API from memory.
+
+## Deliverable
+
+Return the dominant decision and owning specialist skill, the selected model with its task owner
+and resource bound, one relevant rejected alternative, and the evidence/test that would confirm
+the choice. For an incident, separate observed waits from the suspected cause. Unknown workload
+or cancellation behavior is an explicit gap, not a capacity estimate. Keep this proportional;
+do not expand a routing answer into implementation of every listed construct.
 
 ## Review checklist
 
@@ -152,8 +171,12 @@ compatibility, and framework/tooling support. Do not encode a moving API from me
 
 ## References
 
-- [Choosing a construct](references/choosing-a-construct.md)
-- [Concurrency versus parallelism](references/concurrency-vs-parallelism.md)
+- [Choosing a construct](references/choosing-a-construct.md) — read when two models fit or
+  when crossing executor, future, stream or task-group boundaries.
+- [Concurrency versus parallelism](references/concurrency-vs-parallelism.md) — read when a
+  throughput/latency claim or proposed concurrency increase needs a measurement plan.
+- [Java 25 ScopedValue](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ScopedValue.html)
+- [Java 25 StructuredTaskScope](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html)
 - [Java concurrency API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
 - [JLS 17: Threads and locks](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
 - [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)

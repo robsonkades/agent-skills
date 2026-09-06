@@ -25,6 +25,10 @@ That opacity is the pattern, and it is what a `getState()`/`setState()` pair is 
 state as a public structure lets any holder inspect it, mutate it, and depend on its shape, which
 is the coupling the pattern exists to prevent.
 
+Inspect the project's compiler release/toolchain and state ownership before changing the API.
+Examples are partial Java 17 snippets (records and sealed types, no preview); imports, domain
+types and mutators are omitted. Keep the project baseline rather than upgrading it for a pattern.
+
 ## Memento, snapshot, event sourcing
 
 ```text
@@ -42,9 +46,9 @@ Event sourcing   state is derived by replaying an append-only log of
                  Answers: what was it, AND why did it become that?
 ```
 
-Choose by the question you must answer. If "why" never matters, event sourcing's cost — schema
-evolution across every historical event, replay, projection rebuilds — buys nothing. If "why"
-matters for audit, correction or analytics, no amount of snapshotting recovers it after the fact
+Choose by recovery and history requirements. Audit value alone does not require event sourcing:
+a separate audit trail may suffice. Event sourcing makes the event log authoritative and pays for
+replay and schema evolution; snapshots alone cannot reconstruct unrecorded intervening changes
 (`event-sourcing`).
 
 A durable state document can be both a snapshot and the memento in an undo/recovery design. The
@@ -70,11 +74,12 @@ A long computation must be resumable after a failure
 
 - **The object is immutable.** It is already its own memento: keep the reference. This removes
   most proposed uses (`java-immutability`).
-- **The operation has a cheap exact inverse.** `Move(+5)` undoes with `Move(-5)`; storing the
-  whole diagram is waste (`gof-command`).
+- **The operation has a cheap exact inverse.** `Move(+5)` can undo with `Move(-5)` only without
+  rounding, clamping, overflow or conflicting intervening edits (`gof-command`).
 - **The capture must survive the process.** Memento alone is insufficient guidance: add durable
   snapshot consistency, schema, compatibility, corruption and recovery semantics.
-- **Every change must be recoverable, with reasons.** That is event sourcing.
+- **State must be rebuilt from authoritative changes.** Route event sourcing decisions to
+  `event-sourcing`; audit-only requirements may use a separate history.
 - **The "memento" is passed to another module that reads it.** Then it is a DTO with a contract,
   and the encapsulation the pattern promised is gone.
 
@@ -102,12 +107,17 @@ full state per undo step           the object is immutable and the "undo
 public final class Editor {
 
     public sealed interface Snapshot permits State { }        // opaque to callers
-    private record State(String text, int caret, List<Mark> marks) implements Snapshot { }
+    private final Object owner = new Object();
+    private record State(Object owner, String text, int caret, List<Mark> marks) implements Snapshot {
+        @Override public String toString() { return "Editor snapshot"; }
+    }
 
-    public Snapshot capture() { return new State(text, caret, List.copyOf(marks)); }
+    public Snapshot capture() { return new State(owner, text, caret, List.copyOf(marks)); }
 
     public void restore(Snapshot snapshot) {
-        var state = (State) snapshot;                          // only Editor can see inside
+        if (!(snapshot instanceof State state) || state.owner() != owner) {
+            throw new IllegalArgumentException("foreign or null snapshot");
+        }
         this.text = state.text();
         this.caret = state.caret();
         this.marks = new ArrayList<>(state.marks());
@@ -115,8 +125,11 @@ public final class Editor {
 }
 ```
 
-A `sealed` public interface with a private record implementation gives exactly the classical
-guarantee: the caretaker can hold and return it and can do nothing else with it.
+A private implementation hides typed accessors from ordinary callers. Generated record
+`toString()` exposes components unless overridden; equality/hash codes also remain observable.
+This is API encapsulation, not a security boundary against reflection. The example rejects
+captures from another Editor and assumes immutable Mark values plus thread confinement.
+`List.copyOf` copies the list structure, not mutable elements.
 
 ## Decision rules
 
@@ -163,10 +176,9 @@ THEN consider event sourcing before building a snapshot history that
   an immutable state value swapped through a single `volatile`/atomic reference—in which case
   capture/restore of that state reference is atomic, provided no related state lives outside it
   (`java-memory-model`).
-- **Distribution.** A memento does not cross a process boundary; the moment it does it is a
-  serialised snapshot with a schema. Replaying a snapshot written by a different version needs a
-  version field and a tolerant reader, and a snapshot that omitted a field added later must have a
-  documented default. Distributed checkpointing — consistent captures across several processes —
+- **Distribution.** A persisted memento is also a serialized snapshot with a schema identity
+  and evolution policy. Reject unsupported meaning rather than assuming tolerant reading is safe;
+  added fields need validated defaults or a migration. Distributed checkpointing across processes
   is a different problem requiring barriers or a consistent-cut algorithm
   (`distributed-aggregation-and-barriers`).
 - **Performance.** A full-copy upper bound is depth × state size, but structural sharing, deduplication
@@ -181,11 +193,15 @@ THEN consider event sourcing before building a snapshot history that
 
 ## Review checklist
 
+Return the capture boundary and ownership, concurrency/restore-conflict policy, memory bound,
+and checks executed versus pending. Missing state or deployment evidence leaves completeness
+and compatibility conditional; enumerate fields and external effects before proposing restore.
+
 - [ ] The originator is genuinely mutable; otherwise the capture is a reference
 - [ ] The capture type is opaque to the caretaker
 - [ ] Every mutable component is copied at capture time
 - [ ] Capture and restore are atomic with respect to concurrent mutation
-- [ ] Adding a field to the originator breaks the capture at compile time, or a round-trip test fails
+- [ ] Independent semantic observations cover every restorable field; capture equality alone is insufficient
 - [ ] Undo depth is bounded, and the memory cost was calculated
 - [ ] A durable capture has an explicit schema identity/evolution strategy and corruption handling
 - [ ] External effects are compensated, not "restored"

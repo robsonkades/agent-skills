@@ -22,6 +22,13 @@ fork/join lifetimes to `structured-concurrency`.
 
 ## Investigation workflow
 
+The composition snippets use Java 17 final APIs unless labelled otherwise; ordinary virtual
+threads require Java 21+, and the Java 25 structured-concurrency alternative is preview.
+Inspect compiler release/toolchains, deployed JDK, resolved client/context libraries and actual
+executor configuration before applying a recipe. Do not upgrade Java, enable preview or add
+dependencies just to match a snippet. If graph ownership or client completion semantics are
+missing, request that evidence and keep the proposed fix conditional.
+
 1. Draw nodes and edges: creation, completion, dependent stages, fan-out and terminal observation.
 2. For each action, identify the executor allowed to run it. Do not infer a thread from a method
    name or a test run.
@@ -67,6 +74,9 @@ pool configuration in the environment being diagnosed.
 - `anyOf` exposes the first normal or exceptional completion as `Object`. It is neither typed nor
   “first success,” and it does not cancel losers.
 - Empty inputs matter: `allOf()` is already normally complete; `anyOf()` remains incomplete.
+- Do not block a continuation by joining an unfinished sibling on the same bounded executor
+  or completer thread. Express that dependency with `thenCombine`/`thenCompose`; completion
+  ordering and sibling registration order are not scheduling guarantees.
 
 If several inputs fail, do not promise which cause an aggregate exposes unless the application
 records each branch itself. If partial results matter, turn each branch into an explicit success or
@@ -99,7 +109,11 @@ unbounded virtual-thread executor limits neither admission nor dependency pressu
 
 Choose the bound from the protected resource: downstream quota, connection pool, partition, memory
 budget or latency SLO. Acquire interruptibly before launching the scarce operation, release in
-`finally`, and define what happens when admission exceeds its budget. Batch/windowed production can
+`finally` for synchronous work, and define what happens when admission exceeds its budget.
+For asynchronous clients, release only when the actual protected operation/resource is terminal,
+not when submission returns a stage or a caller-facing timeout completes. Do not perform a
+blocking permit acquisition on an event loop; use bounded queuing, nonblocking rejection or an
+appropriate submitting worker. Batch/windowed production can
 bound both live graph size and downstream concurrency.
 
 ## Context and security
@@ -155,10 +169,16 @@ not a linearizable accounting system.
 - [ ] Context is restored and cleared; mutable sessions/transactions are not shared unsafely.
 - [ ] Version-dependent preview alternatives are labelled.
 
+Report the relevant graph edge, execution/ownership contract, observed outcome and proposed
+change with its deterministic ordering/resource test. Mark untested cancellation or latency
+guarantees explicitly instead of equating future completion with work termination.
+
 ## References
 
-- [Composition recipes](references/composition-recipes.md)
-- [Executors, failures and context](references/pitfalls-and-executors.md)
+- [Composition recipes](references/composition-recipes.md) — read when implementing branch
+  aggregation, permit ownership, caller deadlines or a callback adapter.
+- [Executors, failures and context](references/pitfalls-and-executors.md) — read when diagnosing
+  thread affinity, exception surfaces, observer failure or lost/leaked context.
 - [Java 25 `CompletableFuture` API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
 - [Java 25 `CompletionStage` API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html)
 - [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)

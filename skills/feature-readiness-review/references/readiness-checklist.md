@@ -1,7 +1,9 @@
 # Readiness checklist
 
-Each item is PASS, N/A with a reason, or OPEN. Items marked **blocking** stop implementation
-entirely; the rest block only the resources that depend on them.
+Each item is PASS, N/A with a reason, or OPEN. The **blocking** column identifies prerequisites
+for dependent implementation, not a feature-wide stop by default. Trace affected resources and
+their dependents; only a common prerequisite blocks all implementation. Other OPEN items need an
+owner and the stage/resource where they become prerequisites. Reuse existing authority and evidence.
 
 ## Definition intake
 
@@ -79,8 +81,10 @@ entirely; the rest block only the resources that depend on them.
 
 Not every feature runs all thirty-two. By depth class:
 
-- **Light** — run definition intake and a concise completion check; skip inapplicable planning rows.
-- **Standard** — items 1–14, 17, 20–23, 26–28, 31. Skip what the feature cannot touch.
+- **Light** — run concise definition intake and applicable readiness checks before implementation,
+  then completion checks afterward. Inline requirements, resource and validation mappings suffice.
+- **Standard** — run definition intake, then items 1–14, 17, 20–23, 26–28, 31 as a starting set;
+  add other applicable checks such as migration or risk. Skip what the feature cannot touch.
 - **Deep** — evaluate all items, but mark non-applicable items N/A with evidence. Depth
   increases scrutiny; it does not make every feature touch an API, schema, migration, deployment
   sequence, security boundary, or new telemetry.
@@ -92,7 +96,7 @@ touch that concern is valid tailoring.
 ## Reporting the gate
 
 ```text
-Readiness: NOT CLEAR — 2 open, both blocking
+Readiness: RETURN TO ENGINEERING — full feature; 3 open prerequisites after N/A correction
 
 OPEN  #4  Q-08 is unanswered: is a repeated dispatch a duplicate or a second
           dispatch? Blocks RES-07 and RES-08.
@@ -102,7 +106,7 @@ OPEN  #21 The compatibility window is undefined: whether the currently deployed
 N/A   #29 (migration) — none of the resources touches persisted data.
           Wrong: RES-03 adds a column. Corrected to OPEN.
 
-Clear to start: RES-09, RES-10 (no dependency on either open item).
+Subset PASS: RES-09, RES-10 (authorized; no dependency on any open prerequisite).
 ```
 
 The corrected line is worth imitating. An N/A that turns out to be wrong is the most common way

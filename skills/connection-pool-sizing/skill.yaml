@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: connection-pool-sizing
-version: 1.2.0
+version: 1.2.1
 description: >-
   Sizing and diagnosing a JDBC connection pool: L = λ × W where W is connection hold time
   rather than query latency, the database-side ceiling, HikariCP timeouts and lifetimes,
@@ -43,6 +43,12 @@ files:
 dependencies:
   - name: littles-law-and-queueing
     version: ^1.0.0
+
+suggests:
+  - orm-fetch-and-batching-performance
+  - concurrency-limiting-and-bulkheads
+  - postgresql-performance
+  - sql-query-performance
 
 capabilities:
   - reads-source

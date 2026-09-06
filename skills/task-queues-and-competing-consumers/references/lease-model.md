@@ -1,6 +1,6 @@
 # The lease model
 
-A worker never removes a message. It acquires a **lease**: the broker hides the message from
+In an SQS-style manual-delete model, receive does not remove a message. The broker hides it from
 other consumers for a timeout, and the worker must acknowledge (delete) before the timeout
 elapses. If it does not — crash, GC pause, slow dependency, no difference — the message
 becomes visible again and another worker takes it. That is the recovery mechanism and the
@@ -34,7 +34,7 @@ some reject. Read both signals: a redelivery count above one is information, not
 Let `E` be exposure from receive until successful acknowledgement:
 
 ```
-E = prefetch wait + handler + downstream waits + acknowledgement
+E = receive-to-start + handler elapsed time (including downstream waits) + acknowledgement
 visibility timeout > selected tail(E) + clock/client/broker-resolution margin
 ```
 
@@ -47,8 +47,9 @@ visibility timeout > selected tail(E) + clock/client/broker-resolution margin
   p99.9 of the sum. Measure `receive→start` and `receive→ack`, simulate from representative
   distributions, or keep prefetch close to available slots.
 - **The distribution is not stationary.** A dependency degrading from 200 ms to 4 s moves p99.9
-  by an order of magnitude while the timeout stays where it was. Alert on
-  `p99.9(D) / timeout > 0.5` so the bet is re-examined before it is lost.
+  substantially while the timeout stays fixed. Alert on measured receive-to-ack exposure,
+  remaining headroom and extension failures against the chosen recovery objective; no universal
+  50% threshold or handler-only percentile establishes safety.
 - Separate materially different task classes when they need different timeout, retry, priority,
   security or capacity policy. Per-message visibility can reduce the timeout coupling on brokers
   that support it, but operational and head-of-line coupling may remain.
@@ -56,8 +57,8 @@ visibility timeout > selected tail(E) + clock/client/broker-resolution margin
 ## Heartbeat extension, and its failure mode
 
 Extending the lease from inside a long handler (SQS `ChangeMessageVisibility`, or an `UPDATE …
-SET claimed_until = now() + interval` for a database queue) removes the need to size for the
-worst case. It introduces a worse failure if written naively.
+SET claimed_until = now() + interval` for a database queue) permits a shorter initial visibility interval, but still requires a renewal
+schedule, bounded network calls and sufficient pause/failure headroom. It introduces a worse failure if written naively.
 
 ```java
 // Conceptual: cap and progress predicate omitted below are the point of this section.
@@ -67,22 +68,24 @@ var heartbeat = scheduler.scheduleAtFixedRate(
 ```
 
 If the work thread wedges — a socket read with no timeout, a deadlock, an infinite loop — the
-heartbeat thread is healthy and keeps renewing. The message is now **never** redelivered and
-never dead-lettered; the item is stuck until the process is restarted, and the queue looks
-empty. The lease has been converted from a recovery mechanism into a leak.
+heartbeat thread is healthy and keeps renewing. The message can remain hidden until renewal stops or a broker cap is reached.
+SQS limits visibility extension to 12 hours from the receive request; renewal does not reset that
+maximum. Other claim implementations can renew indefinitely. The lease has been converted from a recovery mechanism into a leak.
 
-Two conditions make it safe, and both are required:
+Bound renewal with these conditions; they do not eliminate duplicate execution:
 
 - **A hard cap on total lease time.** Stop renewing at `maxProcessingTime`, let the lease
-  lapse, and let redelivery do its job. The cap is a business decision — the longest this item
+  lapse, and cancel/guard the old work. Redelivery can overlap a handler that ignores cancellation. The cap is a business decision — the longest this item
   may plausibly take — not a multiple of the base timeout.
 - **Renew on credible progress where progress is observable.** Atomic CPU work or one long
   database operation may have no intermediate marker; inventing one is worse than a conservative
   maximum. Renewal must stop on cancellation/deadline, failed ownership validation or a stale
   receipt, and its own partial failures must be observed.
 
-Also cap the _number_ of extensions in a metric and alert on it: an item renewing thirty times
-is telling you the timeout, the batch size or the handler is wrong.
+Record extension count, failures and remaining headroom. Many successful extensions may be
+expected for long work; alert against its declared budget. An exception escaping a periodic
+ScheduledExecutorService task suppresses future runs: observe failures and apply a bounded
+retry/stop policy rather than silently losing renewal.
 
 ## It is not a lock — what to do instead
 
@@ -99,22 +102,31 @@ problem (`failure-models`). Any of these designs is broken:
 
 The three legitimate responses, in the order they should be considered:
 
-1. **Make the side effect repeat-safe** — a conditional insert on a key, an absolute write, a
-   state-machine transition guarded on the current state. This is `idempotency`, and it is the
-   only response that also survives redelivery after a crash, which the other two do not.
+1. **Make the side effect repeat-safe** — atomically deduplicate the logical operation with
+   its effect, or use a versioned/conditional state transition. An absolute write can still
+   overwrite newer state on stale replay; equality of payload alone is insufficient.
+   `idempotency` owns crash/commit ambiguity and external-effect reconciliation.
 2. **Guard the resource with a fencing token.** If the handler must exclude a concurrent
    holder, the exclusion belongs at the resource: a monotonic token the resource stores and
-   compares, rejecting writes from an older token. A lease number, a version column, a
-   conditional update — the resource decides, not the worker. Electing a single holder is
+   compares, rejecting writes from an older token. A receipt handle is not automatically an
+   ordered fencing epoch, and optimistic version checks have a different contract. Fencing
+   rejects stale owners after newer ownership is accepted; it does not deduplicate effects
+   already committed by an earlier owner. Electing a single holder is
    `leader-election`.
-3. **Shrink the window** — smaller batches, a tighter timeout, a heartbeat with the two
+3. **Reduce expiry exposure** — smaller prefetch/batches, sufficient visibility or a heartbeat with the
    conditions above. This lowers the probability. It never reaches zero.
 
 ## Checklist
 
 - [ ] Timeout derived from receive-to-ack exposure and a stated duplicate/recovery objective.
 - [ ] Alerts cover exposure headroom, extension failure/cap and redelivery overlap.
-- [ ] Heartbeat, if present, has a total cap and a progress predicate.
-- [ ] Redelivery count is read and logged; first delivery and redelivery are distinguishable.
+- [ ] Heartbeat has a total cap, observed failures and credible progress where observable.
+- [ ] Available redelivery flag/count and task/attempt IDs are recorded; missing broker evidence
+      is not proof of first delivery.
 - [ ] Handler is repeat-safe, or the path is documented as tolerating a duplicate.
 - [ ] No handler comment or design note asserts that only one worker holds the item.
+
+## Primary references
+
+- [SQS visibility](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html) — per-receipt semantics and the total extension cap.
+- [ScheduledExecutorService](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ScheduledExecutorService.html) — periodic task failure suppresses subsequent executions; match the deployed JDK.

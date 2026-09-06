@@ -1,16 +1,16 @@
 # Cache incident triage
 
-## Symptom to cause
+## Symptom to hypothesis
 
-| Symptom                                     | Cause                                                        |
-| ------------------------------------------- | ------------------------------------------------------------ |
-| Old Gen after collection keeps growing      | cache warm-up/growth, ineffective bound, or another retainer |
-| Periodic miss and source-load spikes        | stampede from synchronised TTL                               |
-| Hit rate falling slowly over days           | working set outgrew `maximumSize`                            |
-| Instances disagree about a value            | cross-instance invalidation failing                          |
-| `load.duration` rising with hit rate stable | the source degraded; the cache is masking it                 |
-| Hit rate suddenly zero                      | cold cache: restart, `FLUSHALL`, or bulk expiry              |
-| Cache never consulted at all, no error      | `@Cacheable` called via `this` — proxy bypassed              |
+| Symptom                                 | Candidate explanation                                        | Discriminating evidence                                                |
+| --------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| Old Gen after collection keeps growing  | Cache growth, ineffective bound or another retainer          | Heap dominators, cache occupancy and retained bytes                    |
+| Periodic miss and source-load spikes    | Correlated expiry, scheduled workload or retries             | Align expiration/invalidation events with offered traffic and attempts |
+| Hit rate falling over days              | Working-set or popularity drift, key-format change           | Compare key cardinality/distribution, eviction and deployments         |
+| Instances disagree about a value        | Lost invalidation, stale fill, replica lag or key mismatch   | Trace value versions, fill/write ordering and invalidation offsets     |
+| Load latency rises with stable hit rate | Origin slowdown or loader executor queueing                  | Separate queue delay, origin service time and in-flight work           |
+| Hit rate suddenly zero                  | Cold namespace, reset metrics, bulk expiry or routing change | Check absolute hit/miss counts, restarts, key prefixes and ownership   |
+| Cache never consulted, no error         | Proxy bypass or caching disabled/misconfigured               | Verify Spring mode, invocation path and an intercepted external call   |
 
 The last row deserves its own check: it produces no error and no log. The only signal is
 that the source is being hit at full rate while the cache reports almost no activity.
@@ -29,7 +29,8 @@ invalidation — has the best hit rate. Track it alongside:
 
 Plus:
 
-- `cache.evictions` — high evictions with low hit rate means the cache is too small.
+- `cache.evictions` — high eviction with low hit rate suggests capacity or poor reuse; distinguish
+  useful working-set pressure from scans, churn and oversized entries before allocating memory.
 - `cache.loads{result="failure"}` — the loader is failing.
 - Alert on hit rate relative to the **service's own baseline**, never to a universal number.
 
@@ -42,15 +43,15 @@ Plus:
 | One hot key, periodic miss          | `refreshAfterWrite`                          |
 | Whole cache cold                    | staggered reload; never `FLUSHALL` on deploy |
 
-Probabilistic early expiration reduces the spike; it does not remove it. The correct form is
-`P = exp(−(expiry − now) / (β · δ))`, with β in the **denominator** — the inverted form
-circulates widely and behaves the opposite way.
+Probabilistic early expiration reduces correlated refresh; it does not cap origin traffic.
+Use the equation and parameter constraints in the skill's stampede rule, then measure origin
+concurrency and apply admission control independently.
 
 ## Redis-side
 
 ```
 maxmemory-policy         # inspect explicitly; noeviction rejects memory-growing writes at maxmemory
-evicted_keys             # rising means the instance is undersized
+evicted_keys             # correlate with misses and workload; eviction alone does not prove undersizing
 allocator_frag_ratio / allocator_frag_bytes
 used_memory_rss + host/container swap and major faults
 ```

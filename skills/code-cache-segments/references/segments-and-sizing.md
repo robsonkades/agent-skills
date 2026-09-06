@@ -76,12 +76,15 @@ and the JFR `jdk.CodeCacheFull` event name. The design consequences:
   interleaved with C2 code in the heap JEP 197 created to keep it out of. That reintroduces
   exactly the fragmentation segmentation was meant to prevent, and it is invisible to a
   dashboard that sums the heaps.
-- A full `non-nmethods` heap spills adapters and compiler buffers into `non-profiled`. That
-  heap is then competing with C2 for space, and if it too is full the failure surfaces in an
+- A full `non-nmethods` heap can spill adapters and compiler buffers into `non-profiled`,
+  then `profiled` when available. These allocations compete with compiled methods for space;
+  if the entire applicable fallback path fails, an adapter allocation failure surfaces in an
   application thread as `OutOfMemoryError: Out of space in CodeCache for adapters`
   (`Method::make_adapters`, `method.cpp`).
-- "Compiler has been disabled" therefore means **two** heaps were full for that request type,
-  not one. Reading `Compiler.codecache` after the warning shows both at `free=0Kb`–`4Kb`.
+- A full warning means the requested allocation could not be satisfied after the applicable
+  fallback/expansion path. Free space need not be near zero: fragmented blocks or inability
+  to commit additional memory can also prevent allocation. Correlate requested size,
+  largest usable block, heap commitment and JVM/OS errors before calling it total exhaustion.
 - `-XX:+PrintCodeCacheExtension` prints `Extension of CodeHeap '…' failed. Trying to allocate
 in CodeHeap '…'.` on every spill — a lab-only flag, but the direct proof.
 

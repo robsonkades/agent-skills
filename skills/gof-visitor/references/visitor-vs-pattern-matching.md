@@ -1,5 +1,9 @@
 # Visitor against pattern matching
 
+Java 21 partial examples, no preview. Imports and supporting types are omitted; separate the
+classical and sealed alternatives into different compilation units. Recursive folds require a
+validated stable structure and bounded work. See worked-example.md for owned collection guards.
+
 ## The two directions, worked through
 
 Element types: `Text`, `Image`, `Section`. Operations: `render`, `wordCount`, `validate`.
@@ -22,9 +26,8 @@ Visitor / exhaustive switch
   − a new element type must be handled by all three functions
 ```
 
-The choice is a bet on which change arrives. Element sets in ASTs, protocol messages and document
-models are stable for years while operations accumulate — which is why those domains use Visitor
-and most business domains do not.
+Choose from actual type/API evolution: AST and document schemas can change frequently too.
+An established accept protocol can justify Visitor independently of predicted operation counts.
 
 ## Classical, and its boilerplate count
 
@@ -51,8 +54,9 @@ public record Section(String title, List<Node> children) implements Node {
 ```
 
 For N element types and M operations: one `accept` per element (N), one `visit` per element on the
-interface (N), and N implementations per visitor (N×M). Adding an element type touches N + M + 1
-places.
+interface (N), and N implementations per visitor (N×M). A new type normally adds its class/accept,
+one interface method and one method in each of M visitors; it need not edit all N existing elements.
+Declaration counts are not a measurement of readability or development cost.
 
 Double dispatch is the reason: `node.accept(visitor)` dispatches on the node's runtime type, and
 `visitor.visitText(this)` dispatches on the visitor's — two virtual calls to reach one behaviour
@@ -61,7 +65,7 @@ that depends on both types.
 ## Modern, and what it removes
 
 ```java
-public sealed interface Node permits Text, Image, Section {
+public sealed interface Node permits Node.Text, Node.Image, Node.Section {
     record Text(String value) implements Node { }
     record Image(URI source, String alt) implements Node { }
     record Section(String title, List<Node> children) implements Node { }
@@ -69,43 +73,44 @@ public sealed interface Node permits Text, Image, Section {
 
 static int wordCount(Node node) {
     return switch (node) {
-        case Text(String value) -> value.split("\\s+").length;
+        case Text(String value) -> words(value);
         case Image image -> 0;
         case Section(var title, var children) ->
-                title.split("\\s+").length + children.stream().mapToInt(Visitor::wordCount).sum();
+                words(title) + children.stream().mapToInt(VisitorOps::wordCount).sum();
     };
 }
 ```
+
+Place this fold in VisitorOps and import the nested Node types. For this illustration, words means
+runs of non-whitespace under Character.isWhitespace; the worked example supplies a counter.
+Empty text counts zero. This is not a locale-aware billing word definition; define that separately.
 
 Removed: the `Visitor` interface, three `accept` methods, and a visitor class per operation. Kept:
 the compile-time guarantee — no `default`, so `case Table t` is required the moment `Table` joins
 the `permits` clause, at every `switch`.
 
-Record deconstruction removes something else that matters: the pressure to expose internals.
-Classical Visitor forces elements to publish accessors for everything any visitor might need;
-`case Text(String value)` binds the component without an accessor call.
+Record patterns invoke the record component accessors, including custom accessor behavior.
+They do not restore encapsulation or justify exposing internal components. Both mechanisms need
+an intentional public representation or narrow model operations.
 
 ## Where classical Visitor still wins
 
-| Situation                                            | Why the switch does not serve                                                     |
-| ---------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Element types come from a library you do not compile | You cannot seal them, so a `switch` needs a `default`                             |
-| The library's API **is** `accept(Visitor)`           | `FileVisitor`, `ElementVisitor`, ASM's `ClassVisitor`, ANTLR's generated visitors |
-| Third parties add element types at runtime           | No closed set exists to be exhaustive over                                        |
-| The traversal is part of what varies                 | A visitor object can control its own descent; a `switch` is one level             |
-| An operation needs per-traversal setup and teardown  | Natural on a visitor object; awkward as a free function                           |
+| Situation                                           | Why the switch does not serve                                                                      |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Library-owned element types                         | They may already be sealed and accessible; otherwise inspect provided dispatch and fallback policy |
+| Established accept/visitor protocol                 | ElementVisitor and ANTLR accept; FileVisitor/ASM use related callback protocols                    |
+| Third parties add element types                     | Classical fixed visit methods also need protocol evolution or generic/extension fallback           |
+| The traversal is part of what varies                | A visitor object can control its own descent; a `switch` is one level                              |
+| An operation needs per-traversal setup and teardown | Natural on a visitor object; awkward as a free function                                            |
 
-For an open hierarchy, the classical form with a `default`-free visitor interface is still the best
-available completeness check: adding an element type breaks every visitor implementation at
-compile time, provided nobody adds a default `visit`.
+Classical Visitor checks implementations only when the interface actually gains a new abstract
+method and consumers recompile. A plugin may reuse an existing visit method or generic fallback;
+no automatic completeness guarantee follows from the pattern name. Existing binaries need a
+compatibility policy, not merely a successful rebuild of new source.
 
-```java
-// this line converts a compile error into a silent gap for every future element type
-default R visitDefault(Node node) { return null; }
-```
-
-Add it only when third parties implement your visitor interface and a breaking change is genuinely
-unacceptable — and then log the default case rather than returning silently.
+A default method matters when new visit methods delegate to it; merely declaring an unused
+visitDefault does not change dispatch. For unsupported semantic nodes, prefer explicit rejection
+or an Unknown result. Logging and returning null can still silently corrupt the operation.
 
 ## Stateful visitors, and the fold that replaces them
 
@@ -126,15 +131,16 @@ the result is retrieved out-of-band so the type says nothing about it.
 static int wordCount(Node node) { ... }
 ```
 
-Where accumulation is genuinely needed, pass it explicitly or use a `Collector`, which also gives
-associativity for parallel traversal:
+Where accumulation is genuinely needed, pass it explicitly or use a `Collector`, whose supplied functions must satisfy identity and
+associativity for parallel reduction (the API does not make arbitrary functions associative):
 
 ```java
 static <R> R fold(Node node, Function<Text, R> onText, BinaryOperator<R> combine) { ... }
 ```
 
 If a visitor must keep state — a symbol table, a scope stack, a diagnostic list — create one per
-traversal and say so in its Javadoc. Registering it as a singleton bean is a live bug.
+traversal and say so in its Javadoc. Shared use needs deliberate synchronization/reentrancy and
+result ownership; simply registering the mutable example as a singleton is unsafe.
 
 ## Separating traversal from operation
 
@@ -147,19 +153,21 @@ static Stream<Node> preOrder(Node root) { ... }
 static Stream<Node> postOrder(Node root) { ... }
 
 // operations, over any walk
-int words = preOrder(root).mapToInt(Visitor::wordCountOf).sum();
+int words = preOrder(root).mapToInt(VisitorOps::wordCountOf).sum();
 ```
 
 Worth doing when several operations need different orders, or when pruning matters ("do not descend
-into collapsed sections"). Java's `FileVisitor` shows the alternative: the visitor returns a
+into collapsed sections"). When mapping a walk, wordCountOf must count only the current node;
+calling a recursive wordCount for each visited node double-counts descendants. Java's `FileVisitor` shows the alternative: the visitor returns a
 `FileVisitResult` to control descent, which keeps traversal in the framework and gives the visitor
 a say. Either is fine; duplicating the traversal inside every operation is not.
 
 ## Depth and untrusted structures
 
 A recursive fold over a document tree from an external source is a stack-overflow surface. Bound
-the depth where the structure is parsed, and traverse iteratively where depth is genuinely
-unbounded (`gof-composite`). `StackOverflowError` can be thrown at any point, including inside a
+depth, nodes, text/row sizes and output at parsing and direct/deserialized construction boundaries.
+A recursive pre-validator can itself overflow; use a bounded iterative guard where needed.
+Traverse iteratively when depth cannot be safely bounded (`gof-composite`). `StackOverflowError` can be thrown at any point, including inside a
 `finally`, so it is not a failure mode to leave to chance in request-handling code.
 
 ## Unknown element types across a boundary
@@ -184,3 +192,7 @@ Skip it                          almost never. A filter that ignores an
 The `Unknown` variant is the underused option: it keeps the hierarchy sealed, keeps the switch
 exhaustive, and turns "what do we do about unrecognised nodes" into a decision every operation must
 state (`rpc-and-api-contracts`).
+
+Primary sources: [Java 21 record patterns call accessors](https://docs.oracle.com/en/java/javase/21/language/record-patterns.html),
+[FileVisitor protocol](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/FileVisitor.html),
+and [Collector identity/associativity contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collector.html).

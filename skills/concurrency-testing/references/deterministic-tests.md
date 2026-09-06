@@ -1,5 +1,14 @@
 # Deterministic tests
 
+Partial test snippets: supply the enclosing test class, application fixtures and imports from
+`java.util.concurrent`, `java.util.concurrent.atomic`, `java.time` and JUnit Jupiter. Awaitility
+examples require the project's existing Awaitility dependency. Ordinary virtual-thread examples
+require Java 21+; the structured-scope section specifically requires Java 25 preview.
+Every blocking fixture needs independent release/abort in teardown, including assertion failures.
+`@Timeout` requests termination according to its thread mode; it cannot forcibly stop a task,
+and `ExecutorService.close()` can still wait indefinitely. Use an external process deadline for
+deliberately uncooperative cases.
+
 ## Inject the executor, then most tests stop being concurrent
 
 ```java
@@ -12,12 +21,14 @@ class OrderService {
 new OrderService(Runnable::run);
 
 // Concurrency test: the real thing, only where concurrency is the subject
-new OrderService(Executors.newVirtualThreadPerTaskExecutor());
+// Retain the executor in the fixture and shut it down in bounded teardown.
+ExecutorService workers = Executors.newVirtualThreadPerTaskExecutor();
+new OrderService(workers);
 ```
 
-A class that calls `Executors.newFixedThreadPool(...)` in its constructor is a class whose
-concurrency cannot be tested and whose logic cannot be tested without it. Injecting the
-executor is the single highest-value testability change in concurrent code.
+An internally created executor makes controlled execution and cleanup harder. Prefer injection
+where useful, while testing the real asynchronous boundary separately: a direct executor can
+hide races, reentrancy differences and thread-local propagation defects.
 
 ## Synchronisation points instead of sleeps
 
@@ -32,9 +43,13 @@ Future<?> f = executor.submit(() -> {
     return null;
 });
 
-assertTrue(started.await(2, SECONDS));     // deterministic: the task is definitely running
-// … do the thing under test while it is in flight …
-release.countDown();
+try {
+    assertTrue(started.await(2, SECONDS)); // reached this checkpoint, not necessarily await()
+    // … do the thing under test while it is in flight …
+} finally {
+    release.countDown();
+}
+f.get(2, SECONDS);                        // expose worker failure, not just start
 ```
 
 ```java
@@ -57,27 +72,32 @@ is not.
 
 ```java
 @Test
-@Timeout(10)                                          // a deadlock fails; it does not hang CI
+@Timeout(10)                                          // supplement bounded waits/teardown
 void cancellationReleasesThePermit() throws Exception {
     int before = limiter.availablePermits();
-    CountDownLatch started = new CountDownLatch(1);
+    // Fixture signals only AFTER the real limiter has acquired its permit and entered I/O.
+    CountDownLatch acquired = client.holdNextCallAfterPermitAcquisition();
 
     Future<?> f = executor.submit(() -> {
-        started.countDown();
         return client.slowCall();                     // blocked in an interruptible call
     });
-    assertTrue(started.await(2, SECONDS));
-
-    assertTrue(f.cancel(true));
-
-    await().atMost(Duration.ofSeconds(2))
-           .until(() -> limiter.availablePermits() == before);   // the EFFECT, not the flag
+    try {
+        assertTrue(acquired.await(2, SECONDS));
+        assertEquals(before - 1, limiter.availablePermits()); // positive acquisition control
+        assertTrue(f.cancel(true));
+        await().atMost(Duration.ofSeconds(2))
+               .until(() -> limiter.availablePermits() == before);
+        client.assertOperationTerminatesWithin(Duration.ofSeconds(2)); // physical work signal
+    } finally {
+        client.releaseOrAbortHeldCall(); // independent teardown even when cancel fails
+        f.cancel(true);
+    }
 }
 ```
 
 Write the same test for each scarce resource on the path: the connection, the permit, the
-file handle, the downstream request. `cancel()` returning `true` is not one of the
-assertions.
+file handle, the downstream request. A successful `cancel()` assertion is useful setup evidence,
+but never substitutes for observed termination and release.
 
 ## Interruption
 
@@ -97,12 +117,16 @@ void taskStopsPromptlyWhenInterrupted() throws Exception {
         }
     });
 
-    assertTrue(started.await(2, SECONDS));
-    t.interrupt();
-    t.join(Duration.ofSeconds(2));                   // the bound IS the requirement
-
-    assertFalse(t.isAlive());
-    assertTrue(finished.get());
+    try {
+        assertTrue(started.await(2, SECONDS));
+        t.interrupt();
+        assertTrue(t.join(Duration.ofSeconds(2)));
+        assertTrue(finished.get());
+    } finally {
+        worker.abortForTeardown(); // independent fixture release, bounded and nonthrowing
+        t.interrupt();
+        assertTrue(t.join(Duration.ofSeconds(2)));
+    }
 }
 ```
 
@@ -112,10 +136,13 @@ survives:
 ```java
 @Test
 void interruptStatusIsRestoredRatherThanSwallowed() {
-    Thread.currentThread().interrupt();
-    assertThrows(SomeExpectedException.class, () -> service.doWork());
-    assertTrue(Thread.currentThread().isInterrupted());   // fails if the code swallowed it
-    Thread.interrupted();                                  // clear it for the next test
+    try {
+        Thread.currentThread().interrupt();
+        assertThrows(SomeExpectedException.class, () -> service.doWork());
+        assertTrue(Thread.currentThread().isInterrupted());
+    } finally {
+        Thread.interrupted(); // clear even when an assertion fails; isolated test thread
+    }
 }
 ```
 
@@ -165,29 +192,39 @@ never run in a test is a 500 with extra steps.
 @Timeout(10)
 void scopeCancelsSiblingsAndReturnsPromptly() {
     AtomicBoolean siblingStopped = new AtomicBoolean();
-    Instant start = Instant.now();
+    CountDownLatch siblingEntered = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    long start = System.nanoTime();
 
     assertThrows(StructuredTaskScope.FailedException.class, () -> {
         try (var scope = StructuredTaskScope.open()) {
-            scope.fork(() -> { throw new IllegalStateException("boom"); });
             scope.fork(() -> {
-                try { Thread.sleep(Duration.ofSeconds(30)); }
+                siblingEntered.countDown();
+                try { release.await(); }
                 catch (InterruptedException e) { siblingStopped.set(true); throw e; }
                 return null;
             });
+            scope.fork(() -> {
+                if (!siblingEntered.await(2, SECONDS)) throw new AssertionError("sibling absent");
+                throw new IllegalStateException("boom");
+            });
             scope.join();
+        } finally {
+            release.countDown();
         }
     });
 
     assertTrue(siblingStopped.get());
-    assertTrue(Duration.between(start, Instant.now()).toSeconds() < 5);   // close did not hang
+    assertTrue(System.nanoTime() - start < TimeUnit.SECONDS.toNanos(5));
 }
 ```
 
-The duration assertion is the one that catches an uninterruptible subtask, which is the
-failure mode that makes structured concurrency _look_ broken in production.
+The sibling-entry handshake prevents failure cancelling the scope before that sibling starts.
+The elapsed assertion only runs after `close()` returns; it cannot rescue a hang in close.
+This example's latch wait is interruptible. Test an uninterruptible provider in a forked
+process with an external deadline and an independent abort path.
 
-Requires `--enable-preview` in the test JVM.
+Requires JDK 25 `javac --enable-preview --release 25` and `java --enable-preview`.
 
 ## Screening for carrier capture
 
@@ -197,22 +234,35 @@ Requires `--enable-preview` in the test JVM.
 @Test
 @Timeout(30)
 void clientDoesNotHoldTheCarrier() throws Exception {
-    Instant start = Instant.now();
-    try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {
-        for (int i = 0; i < 20; i++) exec.submit(() -> client.call());   // each ~200 ms
+    long start = System.nanoTime();
+    var exec = Executors.newVirtualThreadPerTaskExecutor();
+    List<Future<?>> tasks = new ArrayList<>();
+    try {
+        for (int i = 0; i < 20; i++) tasks.add(exec.submit(() -> client.call()));
+        long deadline = start + TimeUnit.SECONDS.toNanos(10);
+        for (Future<?> task : tasks) {
+            task.get(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
+        }
+    } finally {
+        client.abortForTeardown();
+        tasks.forEach(task -> task.cancel(true));
+        exec.shutdownNow();
+        assertTrue(exec.awaitTermination(2, SECONDS));
     }
-    // Unmounts → about 200 ms. Captures or pins the single carrier → about 4 s.
-    assertTrue(Duration.between(start, Instant.now()).toMillis() < 2_000);
+    assertTrue(System.nanoTime() - start < allowedElapsedNanos); // calibrated fixture bound
 }
 ```
 
-With no compensation available, capture and pinning both serialise, which makes this a cheap
-regression test against a dependency upgrade that introduces a native transport.
+Run in a separate JVM so scheduler properties take effect before scheduler initialization.
+Use a controlled dependency and a known unmounting positive control; account for CPU quota,
+client connection limits and service latency before attributing serialization to carrier capture.
+Elapsed time is a screening signal, not proof of pinning. Corroborate with JFR/stacks; JDK 24+
+removed monitor-induced pinning, while native/foreign behavior remains version-sensitive.
 
 ## Anti-patterns
 
 - `Thread.sleep` anywhere in a test as a synchronisation mechanism
-- Asserting on thread names, `getPoolSize()`, or "exactly 8 threads ran"
+- Asserting incidental thread names or pool sizes that the API contract does not promise
 - `@Disabled("flaky")` on a concurrency test
 - A test that catches `InterruptedException` and ignores it — the test now can no longer fail
   for the reason it exists

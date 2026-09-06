@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-thread-safety-contracts
-version: 1.2.0
+version: 1.2.1
 description: >-
   Specifying and reviewing thread-safety as a caller-visible behavioral contract: ownership and
   confinement, immutability, atomic operations and compound invariants, consistency/iteration,

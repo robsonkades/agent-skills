@@ -27,6 +27,12 @@ thread-safe collection does not make a sequence atomic belongs to java-thread-sa
 the mechanism it implies is here. Baseline **Java 25**; vendor support status and
 version-sensitive claims must be checked separately.
 
+Before applying that authoring baseline, inspect the target compiler release/toolchain,
+deployed JDK/vendor/build and existing dependencies. Do not upgrade or enable preview merely
+to apply this skill. `StructuredTaskScope` is preview in Java 25; route to
+structured-concurrency for its version-specific API and compiler/runtime flags, and use
+existing stable coordination APIs when preview is not authorized.
+
 ## Workflow
 
 1. **Name the admission policy before choosing an implementation.** If overload can occur, state
@@ -109,10 +115,11 @@ map.put(…)` is a race. Use `mappingCount()` when an approximate `long` count i
 - `IllegalStateException("Recursive update")` is only required for a _detectable_ recursive update
   that would otherwise not complete. It is not an enforcement boundary. Any map mutation from a
   remapping function violates the API constraint even when a particular build does not throw.
-- Iterators come in two kinds, neither a consistent view. **Weakly consistent** (CHM, skip lists,
+- Distinguish two iterator contracts. **Weakly consistent** (CHM, skip lists,
   `ConcurrentLinkedQueue`) never throws `ConcurrentModificationException` and may reflect later
-  writes; **snapshot** (copy-on-write) never throws CME and definitely will not — a listener
-  registered during dispatch is silently skipped, and iterator mutation throws.
+  writes; **snapshot** (copy-on-write) captures a consistent sequence of element references
+  at creation, but not a deep snapshot of mutable element state. It ignores later list changes;
+  a listener registered during dispatch waits for a later traversal, and iterator mutation throws.
 - Copy-on-write cost is **writeRate × size**, not the read:write ratio. Use it for
   configuration-shaped state whose write rate is bounded by human or control-plane action, never
   for request-scoped data; batch with `addAll`. `CopyOnWriteArraySet.contains` is a linear scan.
@@ -136,9 +143,11 @@ map.put(…)` is a race. Use `mappingCount()` when an approximate `long` count i
 - Choose `ReentrantLock` over `synchronized` on **capability**: timed and interruptible acquisition,
   `tryLock`, fairness, non-block-structured locking, more than one condition queue. Pinning has not
   been a reason since JEP 491 (JDK 24) — virtual-threads-internals owns that diagnosis.
-- `ReentrantReadWriteLock` upgrade **never** succeeds — a read-lock holder taking the write lock
-  deadlocks against itself forever, and `findDeadlockedThreads()` returns null because it is no
-  cycle. Downgrade is legal; `readLock().newCondition()` throws. The reader cap is **65535 on JDK
+- A read-only `ReentrantReadWriteLock` holder cannot upgrade while retaining its read hold:
+  blocking acquisition may wait indefinitely, whereas `tryLock` can fail or time out. A thread
+  already owning the write lock may reenter it. Standard deadlock detection may miss read-hold
+  stalls; inspect stacks and ownership. Downgrade is legal; `readLock().newCondition()` throws.
+  The reader cap is **65535 on JDK
   21** and `Integer.MAX_VALUE` on **JDK 25**; measure against a plain lock before adding an RRWL.
 - `StampedLock` is not reentrant, has no ownership and no fairness policy. Re-entry through a
   callback, listener or guarded object's method can self-deadlock and is not represented as an
@@ -152,15 +161,17 @@ map.put(…)` is a race. Use `mappingCount()` when an approximate `long` count i
 
 - **jcstress for the substitution table.** Two `@Actor`s racing `containsKey`+`put` against
   `putIfAbsent` on one key, an `@Arbiter` reading the result, the interleaved outcome `FORBIDDEN`;
-  run both shapes so the compound one demonstrably produces it. `Mode.Termination` is the only
-  mechanical catch for a lost wakeup or a permit leak — a `STALE` outcome is the lost signal.
+  run both shapes and record observed outcomes; a finite run need not expose every race.
+  Bounded liveness tests and jcstress termination tests can expose hangs; a stale outcome is
+  evidence of non-termination under that test, not proof of a particular lost signal.
 - **Invariant checks in tests and diagnostics:** fixed-limit semaphores should never exceed their
   configured permit count; queue construction should expose its admission policy; non-reentrant
   designs should test callback/re-entry. Java assertions are disabled unless enabled and cannot be
   the production enforcement mechanism.
-- **An architecture test on queue construction** — fail the build on the no-arg
-  `new LinkedBlockingQueue<>()` and on any queue reaching a pool whose `remainingCapacity()` is
-  `Integer.MAX_VALUE`. The executor factories that hide one are executors-and-task-lifecycle's;
+- **Review queue construction against the admission policy** — flag effectively unbounded
+  queues and require an explicit external bound or workload argument. Encode that repository
+  policy in a gate where useful; `remainingCapacity()` alone does not prove absence of a bound.
+  The executor factories that hide queues are executors-and-task-lifecycle's;
   how to write the rule is architecture-testing's.
 - **JFR with an explicit recording configuration.** AQS-based waits commonly surface through park
   events, while monitor contention has monitor events. Event enablement and thresholds vary by JDK

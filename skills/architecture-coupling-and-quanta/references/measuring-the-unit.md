@@ -1,152 +1,158 @@
 # Measuring the unit
 
-Three measurements that turn a coupling argument into a number, and the honest list of what has no
-measurement at all. Every version and date below was verified on **2026-08-28**; re-check before any
-of them decides anything, because a stale tool fact is how a fitness function quietly stops meaning
-what it says.
+Use these measurements to investigate edges, not to manufacture a quantum count.
+Record environment, window, input revision/query, exclusions, artifact-to-target mapping
+and missing coverage. Save raw counts alongside ratios. A clean result from incomplete
+telemetry is not evidence of independence.
 
-Whether any of these should be governed — what happens when one goes red, who owns it — is
-`architecture-fitness-functions`' decision, not this file's. What follows is candidate metrics with
-their preconditions, defaults and lies.
+## 1. Co-change: locate candidate change obligations
 
-## 1. Change coupling — the one with an empirical literature
+Map files to deployment targets using build/package ownership before aggregating.
+Within each revision, count a target at most once even if many of its files changed.
+Keep unmapped files visible. Across repositories, commit hashes are not shared change IDs;
+use verified PR/feature links or report that cross-repository support is unknown.
 
-**What it measures.** For a pair of artefacts (A, B) over a window of revisions: coupling degree =
-shared revisions ÷ revisions of whichever of the two changes more often, expressed 0–100. Read it as
-code-maat's own README does: each time one is modified, that is the percentage risk the other must be
-modified too.
+For A and B, let nA and nB be their eligible revision counts and s their shared count:
 
-**Granularity, and why it matters here.** Compute it between **modules or repositories**, not files.
-The architecture-scale question is which deployables co-change; file-level change coupling is a
-code-level concern and belongs to `java-cohesion-coupling` and the code-review skills. Running it at
-file level and then aggregating by eye is how a real signal gets turned into an anecdote.
+- Directional observed co-change: s/nA and s/nB. Neither proves the other change was required.
+- Code Maat's coupling degree uses s divided by the **average** of nA and nB, times 100,
+  with implementation-specific output rounding. It is not a directional probability and
+  does not use the larger count as denominator.
+- Example: nA=20, nB=10, s=10 gives directional rates 50% and 100%, and a symmetric degree
+  of about 66.7% before rounding. These different statistics must not share one label.
 
-**Tool: code-maat v1.0.4.**
+To reproduce a history analysis:
 
-```bash
-git log --pretty=format:'[%h] %an %ad %s' --date=short --numstat > logfile.log
-java -jar code-maat-1.0.4-standalone.jar -l logfile.log -c git -a coupling
-```
+1. Select an explicit start/end window, branch and merge policy; export commit IDs and changed
+   paths (for example with Git history tooling). Document renames, squash merges and shallow
+   clone limitations. Avoid copying author data or commit messages when paths/IDs suffice.
+2. Apply the reviewed path-to-target mapping. Separate generated, mechanical and broad-format
+   changes; retain counts of exclusions so legitimate cross-target migrations are not hidden.
+3. Compute the counts above. Inspect linked diffs/PRs for the highest-impact pairs and low-volume
+   pairs implicated by an incident; low support means uncertainty, not permission to discard them.
+4. Record the mechanism, or leave “required co-change” as a hypothesis. Validate by inspecting
+   compatible version combinations or a representative independent change.
 
-Its defaults, from the project README:
+Code Maat is optional. If used, pin the actual binary/source revision, choose its documented
+Git parser and export format together, supply and inspect its layer mapping, and compare a
+small known pair against the counts above before interpreting estate output. Its README lists
+filters such as minimum revisions/shared revisions and maximum changeset size; configure and
+record them explicitly. Do not substitute CodeScene defaults or assume an unconfigured
+file-level command measures deployables. No install is required by this skill.
 
-| Option                  | Default | Meaning                                          |
-| ----------------------- | ------- | ------------------------------------------------ |
-| `-n, --min-revs`        | 5       | minimum revisions for an entity to be considered |
-| `-m, --min-shared-revs` | 5       | minimum revisions the pair must share            |
-| `-i, --min-coupling`    | 30      | minimum coupling degree (%) to report            |
-| `-x, --max-coupling`    | 100     | upper cut-off                                    |
+Source: [Code Maat implementation](https://raw.githubusercontent.com/adamtornhill/code-maat/master/src/code_maat/analysis/logical_coupling.clj)
+and [usage](https://github.com/adamtornhill/code-maat), checked 2026-09-05. The master URL moves;
+verify the formula/options against the version actually run. No Code Maat execution was
+performed for this skill revision.
 
-**Maintenance status, which must be stated whenever the tool is named.** Last release 2023-02-20;
-last commit 2025-07-03; 2,626 stars; not archived and not dead, but not actively developed, and its
-own README directs users to the commercial CodeScene as its successor. This is the lesson the older
-skills in this suite learned from recommending an archived tool: name the date, not just the tool.
+## 2. Co-deployment versus required coordination
 
-**Thresholds, and where they come from.** Report a pair only at **≥10 shared commits** and **≥50%
-coupling degree**, excluding changesets touching **more than 50 files**. These are CodeScene's
-published production defaults — its documented rationale is that below ten revisions the coupling may
-be accidental, and that sweeping renames and formatting commits generate false pairs. They are
-strictly stricter than code-maat's own defaults above, so they under-report rather than over-report,
-which is the direction you want for a number that will be used in an argument. **They are not derived
-from a study**, and no threshold here is; what they have is a stated rationale and production use.
+Collect target, artifact digest/version, environment, timestamp, change reference and
+deployment outcome. Deduplicate retries of the same deployment; distinguish rollbacks and
+no-op redeployments. Choose whether the unit of analysis is a rollout event or a change
+episode and use that unit consistently.
 
-**The limitation to state out loud.** Kirbas et al. (_JSEP_ 29(4), 2017) found evolutionary coupling
-_"is less likely to have a relationship to software defects for parts of the software with fewer files
-and where fewer developers contributed"_. Run over a two-person module, this measurement produces
-noise that looks exactly like signal.
+One useful exploratory statistic is:
 
-**Where it runs.** On a schedule, over a 90-day window or one release train, reviewed by people. Never
-a build gate: the input is history, and no commit can fix history. A fitness function that fails on
-the past fails forever.
+    A episodes associated with a B rollout / eligible A episodes
 
-## 2. Deployment coupling — measuring "must release together"
+State how episodes are linked and the window used. Check deployments before as well as
+after A; a provider-first migration would be missed by looking only for a subsequent B.
+Compute the reverse ratio separately. “8 of 10” is an observation, not an 80% proof that
+independent deployment is impossible.
 
-**There is no off-the-shelf tool.** DORA's loosely-coupled-teams capability frames the question — can
-teams _"make large-scale changes to the design of their systems without the permission of somebody
-outside the team or depending on other teams"_, and its component criteria include deploying and
-releasing independently of service dependencies and testing on demand without an integrated
-environment — but that is a survey instrument, not a measurement of your estate.
+A shared release train, bundled feature or monorepo automation can produce high ratios.
+Even the same change reference does not distinguish policy from technical necessity.
+Inspect artifact changes and ask what would fail if only A changed:
 
-**The computation, on data you already have.** Treat each production deployment as an event
-`(service, timestamp, change-ref)`. For each ordered pair (A, B), confidence = the fraction of A's
-deployments in the window that are followed by a deployment of B for the same change-ref inside a
-coordination window. It is the same association statistic as §1, applied to deploy events instead of
-commits. Sources: GitHub Actions deployment events, Argo CD `Application` sync history, Spinnaker or
-Harness pipeline executions, or a change-management table.
+- Can old/new provider and consumer versions coexist under the contract?
+- Can A roll back while B stays on its current version, including persisted data?
+- Is coordination a mandatory sequence with an overlap window, or an atomic lockstep release?
+- Was coordination chosen for convenience, or demonstrated necessary by a failure/test?
 
-**Threshold: confidence ≥ 0.8 over ≥ 10 deployments of A. This is this skill's own construction, not
-an empirical result.** No study establishes 0.8, and none establishes 10. The justification is
-definitional: at 0.8 the sentence "these deploy independently" is false four times in five, which is
-enough to make the pair one deployment unit in practice. State that it is definitional every time you
-report it, and replace it with a figure your own release record justifies once you have one.
+A compatible independent deployment refutes a universal “always lockstep” claim but does
+not prove every future change independent. A rare destructive migration can matter even
+when the historical ratio is low. Preserve the scope of each conclusion.
 
-**The two confounders, without which the metric lies — and it lies in the flattering direction, which
-is worse.**
+[DORA's loosely coupled teams capability](https://dora.dev/capabilities/loosely-coupled-teams/)
+supports asking about independent deployment and testing; it supplies no quantum-count
+algorithm or threshold for these ratios.
 
-1. **A release train.** If everything ships on Thursday, every pair's confidence approaches 1.0 and
-   the metric has measured your process, not your architecture. Fix: compute over **change-refs**, not
-   wall-clock proximity — pairs that shipped together because one change touched both.
-2. **Deploy-on-merge in a monorepo.** Every merge redeploys services whose own inputs did not change,
-   producing identical artefacts and perfect confidence. Fix: exclude no-op deployments.
+### Compatibility evidence for the actual release
 
-**A cheaper leading indicator on the same data:** count cross-repository pull requests that must merge
-together — the linked or "depends on" PRs. One shared-library upgrade forcing N coordinated PRs is
-Segment's 120 live library versions in embryo (see `evidence-and-disagreements.md`).
+This mapping skill has no Java execution baseline or executable Java example. For Java
+artifacts, inspect Maven/Gradle release/toolchain settings, resolved dependency versions,
+packaged artifacts, CI and production runtime images before claiming compatible deployment.
+Do not upgrade Java, libraries or build tools to make an independence claim hold.
 
-## 3. Shared-database coupling — three techniques, weakest first
+Separate three checks: recompiling consumer source, linking an already-built consumer with a
+replacement JAR, and preserving behavior under the operation contract. Passing one does not
+establish the others. A same-process JAR replacement exposes Java linkage constraints; two
+processes using different JAR versions instead need compatible wire formats and semantics,
+not identical Java classes. Check each artifact's runtime requirements independently. A build
+on a newer JDK is not proof that its packaged dependencies run on the older production JVM.
+Missing resolved-version or runtime evidence makes that edge unknown, not compatible.
 
-**The finding is: more than one service writing to a schema.** Read-only consumers are a graded case,
-reported separately, because that is exactly the point where the two taxonomies disagree — the quantum
-reading is binary and Newman's is graded. The justification is definitional and both taxonomies agree
-on the writer case.
+For retained events, compatibility is also temporal: record which writer versions remain in
+the log, backlog or dead-letter store, and which reader versions can run after rollback.
+Validate those combinations with representative payloads and business invariants. A new
+reader accepting old events does not prove an old reader accepts new events after rollback;
+compatibility with the immediately previous schema does not necessarily cover retained history.
+An unsafe combination is evidence for a rollout/replay constraint, not automatically an
+atomic release group. Hand off remediation design once that constraint is established.
 
-1. **Static — scan the configuration.** Grep every service repo for JDBC or connection URLs and group
-   by `host + database + schema`. Cheap, catches the common case, and fails precisely where the
-   interesting cases hide: config servers and secret managers, where the datasource is not in the
-   repo at all. An estate that answers this question from config alone will report itself clean.
-2. **Runtime, from the database — the most reliable.** Every connecting application declares itself
-   and the database records it.
-   - PostgreSQL: `pg_stat_activity` exposes `datname`, `usename`, `client_addr` and
-     **`application_name`**, which the client sets in its connection string. Group distinct
-     `application_name` per `datname`; more than one is shared-database coupling, on the record.
-   - SQL Server: the equivalent column is `program_name` in `sys.dm_exec_sessions`.
-   - **The precondition that makes or breaks it:** if services do not set `application_name` /
-     `Application Name=`, every session appears under the driver's default and the query returns
-     nothing useful. Setting it is a one-line change per service and is a **prerequisite** for this
-     measurement, not an afterthought — put it in the ADR, as `SKILL.md`'s sketch does.
-3. **Runtime, from tracing — crosses services and databases at once.** OpenTelemetry's database client
-   span conventions are Stable as of semantic conventions **v1.33.0 (2025)**. Group distinct
-   `service.name` per (`db.system.name`, `db.namespace`) — `db.system.name` takes values such as
-   `postgresql`, `microsoft.sql_server`, `mysql`, `oracle.db`; `db.namespace` is the database name,
-   or `{instance_name}|{database_name}` for a named SQL Server instance. With statement-level
-   attributes collected you can go to table granularity. **Migration warning:** these are the _new_
-   stable names. Older instrumentation emits `db.system` and `db.name`, and OTel publishes a migration
-   guide; a query or an example written against the old names is wrong today, and a mixed estate will
-   emit both.
+Sources checked 2026-09-05: [JLS 17 binary compatibility](https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html)
+distinguishes binary linkage from source compatibility;
+[javac 17](https://docs.oracle.com/en/java/javase/17/docs/specs/man/javac.html) documents release targeting.
+These are reference editions, not a required project upgrade. Match the target Java edition.
+[Confluent compatibility modes](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html)
+distinguishes reader/writer direction and transitive history checks; verify the actual registry,
+schema format and effective mode. Schema acceptance alone does not validate business semantics.
 
-**Where it runs.** A scheduled query against the database or the observability backend. Never a build
-gate — the fact being measured is production topology, which no build can see.
+## 3. Shared data: identify objects and access, not just connections
 
-## 4. What has no measurement at all
+Start with resolved configuration and deployment metadata, then correlate runtime identity.
+Use instance/cluster identity, database, schema and object where available. Database names
+repeat across hosts, and an endpoint may be an alias or pooler. Do not print credentials.
 
-State this plainly rather than letting a reader assume a gap is an oversight.
+- PostgreSQL `pg_stat_activity` exposes sessions including database, user, client and
+  `application_name`. It is a snapshot, not a history of table ownership or writes.
+  Application names are client supplied and may be missing or misleading. Correlate service
+  roles, deployment identity and connection pooling; visibility depends on privileges.
+- SQL Server `sys.dm_exec_sessions.program_name` is a similar session attribution hint,
+  not proof that a named program wrote a particular table.
+- Database client spans can connect service identity to database operations. Check actual
+  instrumentation/schema versions and sampling coverage. Current OTel conventions use
+  `db.system.name` and `db.namespace`; legacy instrumentation can still emit `db.system`
+  and `db.name`. Normalize known versions deliberately rather than declaring old data invalid.
+  Include server/instance identity; namespaces alone need not be globally unique.
 
-- **Connascence has no analyser.** The curated `analysis-tools.dev` catalogues list 137 Java tools and
-  135 Python tools, and nothing connascence-specific appears in either. No linter in general use
-  implements the taxonomy. Any claim that a pipeline enforces connascence is false; it is a review
-  vocabulary and its governance surface is the review itself.
-- **Quantum count has no analyser.** It is derived by hand from §2 and §3 plus the dependency graph.
-  This is not a tooling gap waiting to be filled — the derivation needs the judgement calls in
-  `SKILL.md`'s method, and a tool that guessed them would produce a confident wrong number.
-- **Abstractness and distance from the main sequence stop at the deployable.** ArchUnit 1.5.0
-  (released 2026-08-04, latest as of 2026-08-28) computes them inside a codebase —
-  `ArchitectureMetrics.componentDependencyMetrics(components)` exposes afferent and efferent coupling,
-  instability, abstractness and normalised distance from the main sequence — but across a process
-  boundary "abstract" has no nominal type system to count, so the metric has no referent at all.
-  Their use inside a codebase belongs to `component-and-release-boundaries`, which also holds this
-  suite's position on absolute thresholds for them; do not import a number from there to here.
+Then inspect migrations, grants, queries and representative audit/query records to distinguish
+reads, writes, DDL ownership, stored procedures, triggers and shared transactions. Grants
+show permitted access, not observed access; sampled statements show observations, not all
+possible access. Do not enable broad production query/payload capture just to fill a map.
 
-**One Maven Central caveat worth carrying.** On 2026-08-28 `search.maven.org`'s index still reported
-1.4.1 as the latest `archunit-junit5` version while `maven-metadata.xml` for
-`com.tngtech.archunit:archunit` already listed 1.5.0. Verify tool versions against `maven-metadata.xml`
-rather than the search UI, or a fitness function's stated version will be wrong the day it is written.
+Examples: two services on one host with isolated schemas share an infrastructure risk;
+two writers maintaining one table's invariant have a data coordination obligation; a reader
+can still break on a column rename. State each mechanism rather than equating every session
+with a shared-schema writer.
+
+Sources checked 2026-09-05:
+[PostgreSQL monitoring](https://www.postgresql.org/docs/current/monitoring-stats.html),
+[SQL Server sessions](https://learn.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-exec-sessions-transact-sql?view=sql-server-ver17),
+[OTel database spans](https://opentelemetry.io/docs/specs/semconv/db/database-spans/),
+[OTel migration guide](https://opentelemetry.io/docs/specs/semconv/non-normative/db-migration/).
+Match privileges and fields to the deployed versions.
+
+## 4. Runtime dependence and validation
+
+For the named operation, trace what it must wait for, then test dependency absence/delay
+in an isolated environment. Check accepted versus completed work, valid degraded output,
+freshness, backlog limits and recovery. A happy-path trace shows an invocation, not its
+necessity; an error response after timeout is not proof of independence.
+
+Historical metrics usually suit periodic review. Runtime monitors, pre-deployment checks and
+CI contract tests can each enforce a defined property; there is no universal “never a gate”
+rule. Choose freshness, failure policy and ownership with `architecture-fitness-functions`.
+Automate graph/count computation only after defining edge semantics; an algorithm cannot
+supply missing evidence or establish functional cohesion.

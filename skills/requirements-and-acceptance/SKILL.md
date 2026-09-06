@@ -18,33 +18,42 @@ description: >
 
 ## Purpose
 
-Most rework is not caused by bad code. It is caused by building a correct implementation of a
-requirement nobody had actually agreed, where the gap only becomes visible once the work is
-done and expensive to change.
+Prevent rework caused by implementing an unexamined interpretation of a request. Make the
+important interpretation visible while changes are still cheap.
 
 The cheap moment to find that gap is before the first line. This skill is the set of questions
 that finds it, and the artefacts — assumptions and acceptance criteria — that make the answer
 durable enough that the next person can check it.
+
+## Context and scope
+
+Read the request, prior user decisions, applicable project instructions, existing contracts
+and relevant code/tests before asking. An explicit implementation choice may be a real
+constraint; separate its purpose without discarding it or reopening existing authorization.
+This skill is language-neutral. For Java tasks, preserve the evidenced compiler/runtime,
+framework and compatibility constraints; requirements analysis does not authorize upgrades.
 
 ## Workflow
 
 1. **Separate the four things.** A request usually mixes them:
    - **Requirement** — what must become true, in the domain's terms.
    - **Implementation** — a solution someone already picked. Often reasonable; still not the
-     requirement, and holding it fixed hides cheaper options.
+     requirement; determine whether it is a binding constraint or an optional proposal.
    - **Assumption** — something you filled in. Legitimate, provided it is written down.
    - **Acceptance criterion** — how anyone will know it is done.
-2. **Restate the requirement without the solution.** "Add a Redis cache to the customer
-   endpoint" restates as "the customer endpoint must respond within X at Y requests/second".
-   Now caching is one option, and the number is the thing to agree.
-3. **Run the ambiguity checklist** (`references/ambiguity-checklist.md`). Most tickets have
-   three or four unstated cases; the ones that matter are the ones where two readings produce
-   different code.
-4. **Sort what you found**: ask about anything where different answers mean materially
-   different work; assume the rest and write the assumption down where it will be read.
+2. **Separate the desired outcome from the selected mechanism.** "Add a Redis cache" may
+   target latency, downstream load or a mandated architecture. Use existing evidence to
+   identify the purpose; do not invent a latency target. Preserve an explicitly fixed
+   mechanism and explain trade-offs if an alternative is relevant.
+3. **Run the relevant ambiguity checks** (`references/ambiguity-checklist.md`). Focus on
+   readings that change behavior, contracts or consequential implementation choices.
+4. **Sort unresolved gaps**: ask only when the answer materially changes scope, correctness,
+   cost or authority and cannot be inferred safely. Use stated, reversible assumptions for
+   routine choices. Pending answers block only dependent work; continue independent
+   authorized work.
 5. **Write acceptance criteria** at the behaviour level, one per rule, each derivable into a
    test (`references/acceptance-criteria.md`).
-6. **Say what is out of scope**, explicitly. Scope is defined as much by the exclusions as by
+6. **Record material scope boundaries** without inventing exclusions to requested work. Scope is defined as much by the exclusions as by
    the inclusions, and unstated exclusions are where "but obviously it should also…" lives.
 
 ## Rules
@@ -52,32 +61,41 @@ durable enough that the next person can check it.
 - Never invent a requirement silently. If you filled a gap, the assumption goes in the ticket,
   the pull request description or the commit message — somewhere the person who knows can
   contradict it. An assumption that lives only in the code is indistinguishable from a defect.
-- Ask when the answers diverge, not when you are merely uncertain. If both readings lead to
-  the same code, pick one and note it; if they lead to different data models, ask. This is the
-  whole test for "should I ask or proceed".
+- Different code alone does not require a question: routine implementation choices may
+  already be delegated. Assess consequence, reversibility, available evidence and authority.
+  Conversely, identical code can implement materially different contractual promises.
 - Adjectives are not requirements. Fast, scalable, secure, robust, user-friendly and real-time
   each need a number, a scenario, or a named standard before they can be built or verified.
-- Surface contradictions; do not resolve them by choosing. "Every action is audited" and
-  "personal data is erased on request" conflict, and the resolution is a decision someone with
-  authority makes — implementing one and hoping is the failure mode.
+- Surface actual contradictions after checking scope and existing decisions. Auditing and
+  erasure can coexist depending on retained fields and policy; do not invent a conflict or
+  a legal exception. Apply an already authorized resolution; ask the appropriate owner only
+  when the incompatible obligation remains unresolved.
 - The failure behaviour is part of the requirement. What happens when the dependency is down,
   the input is malformed, the operation is retried, or two users act at once — an unstated
   answer here becomes an incident, not a feature request.
-- Non-functional requirements are stated as scenarios with numbers, or they are decoration:
-  "p99 under 200 ms at 500 rps with a 20 ms database" is checkable; "must be performant" is not.
-- Acceptance criteria describe observable behaviour, not implementation. A criterion mentioning
-  a class, a table or a framework has stopped describing what the user gets and started pinning
-  how it is built.
-- "Done" includes the things nobody puts in the ticket: tests, migration, rollback, logging,
-  documentation the next person needs. Agree the standing list once rather than negotiating it
-  per change.
+- Quantitative requirements need workload, population, measurement boundary and window.
+  Qualitative requirements need an observable rule or review method; avoid inventing numbers
+  merely to replace adjectives. See the acceptance reference for conditional examples.
+- Prefer observable outcomes. Record implementation constraints separately when explicitly
+  required by a user, contract or project policy; a mandated mechanism is also checkable.
+- Apply the existing definition of done and checks proportionate to the changed risks.
+  Do not turn an example checklist into new mandatory approvals, migrations or telemetry.
+- Report criteria as met, unmet or unverified with supporting evidence. A passing test proves
+  only the cases and environment exercised; missing measurements are unknown, not success.
+
+## Output
+
+For a small task, provide a short restatement with material assumptions, observable criteria,
+and unresolved questions only if needed. Trace consequential criteria to the request or
+existing contract; label proposed targets as proposals. At completion, map criteria to
+actual validation and disclose what remains unverified.
 
 ## References
 
 - **The ambiguity checklist** — `references/ambiguity-checklist.md`. Categories of unstated
   requirement — quantity, boundary, concurrency, failure, authority, lifecycle, scope — each
-  with the question that exposes it, plus a worked example turning a two-line ticket into eight
-  answerable questions and three recorded assumptions. Read before implementing anything whose
+  with the question that exposes it, plus a worked example identifying eight inspection
+  questions and three candidate defaults. Read before implementing anything whose
   edges are unstated.
 - **Writing acceptance criteria** — `references/acceptance-criteria.md`. Criteria at the right
   level of abstraction, the Given/When/Then form and where it misleads, deriving tests from

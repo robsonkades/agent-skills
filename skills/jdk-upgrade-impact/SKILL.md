@@ -23,20 +23,28 @@ Turn "we are moving to a newer JDK" into a list of things that will break, found
 rather than in production, and a measured statement of what the move actually bought.
 
 Two failures this prevents. The first is discovering the breakage at deploy: most of it is
-findable in an afternoon by running the existing artefact on the new runtime with warnings made
+findable before deployment by running the existing artefact on the new runtime with warnings made
 visible. The second is the upgrade credited with a speedup nobody measured — a JDK move usually
 changes several things at once, which is exactly the condition under which coincidence is
 mistaken for cause.
 
 ## Workflow
 
+Inspect exact source/target vendor builds, compiler `--release`, Maven/Gradle toolchains,
+CI/runtime images, dependency/agent support and deployment constraints. The concrete examples
+cover JDK 17–25; they do not authorize another upgrade, preview use or unrelated dependency
+changes. A JEP's delivery/target release does not establish what is active in the deployed
+build. Return observed failures, fixes and checks, unresolved compatibility evidence, and
+the measured result or the explicit absence of a performance baseline.
+
 1. **State both versions and the reason.** "Security support ends", "we want compact object
    headers", "the vendor image moved" are different reasons with different success criteria. An
    upgrade with no stated reason has no way to be judged finished.
 2. **Run the existing artefact on the new JDK before changing a line.** Same jar, same flags, new
-   runtime. Most of the breakage surfaces here and nothing else has been perturbed yet.
-3. **Make the warnings impossible to miss.** The JVM's compatibility warnings go to stderr at
-   startup, once, and are routinely lost in container logs. Capture them deliberately — see
+   runtime, in an isolated compatibility environment. Exercise lazy paths and rebuild separately;
+   successful startup does not cover runtime-only or compiler/toolchain changes.
+3. **Make the warnings impossible to miss.** Compatibility warnings can occur at startup or
+   when the affected operation first runs, and are routinely lost in container logs. Capture them — see
    `references/verification-and-rollout.md`.
 4. **Classify each failure into one of five kinds** using
    `references/breakage-classes.md`: a retired flag, strong encapsulation, a removed or changed
@@ -52,17 +60,20 @@ mistaken for cause.
 
 ## Rules
 
-- **Compiling is not the test.** `--release` targets a bytecode level; it says nothing about what
+- **Compiling is not the test.** `--release` constrains language, class-file version and the
+  documented platform API for that release; it does not validate third-party binaries or what
   the runtime encapsulates, removes or refuses at startup. A green build on the new JDK proves
   very little — and a _degraded_ API proves nothing at all: `Thread.stop()` (JDK 20),
   `Subject.getSubject` (23) and `System.setSecurityManager` (24) still compile and throw
-  `UnsupportedOperationException` when reached, so the test suite is the only detector. The
+  `UnsupportedOperationException` when reached (for `Subject.getSubject`, JDK 23's default
+  disallows the Security Manager; JDK 24 disables it permanently). Exercise those paths. The
   release-by-release list is in `references/removed-and-degraded-apis.md`.
 - **A JVM that refuses to start is the good case.** It is loud, immediate and unambiguous. The
   expensive failures are the ones that start: an ignored flag whose value silently no longer
   applies, and a changed default that only shows under load. Two changed defaults produce no
-  message at all: from JDK 23 `javac` runs no annotation processor found only on the classpath
-  (exit 0, generated code missing, seen later as unrelated compile errors or a
+  dedicated migration warning: from JDK 23 `javac` no longer implicitly discovers annotation
+  processors solely from the classpath without explicit processing configuration
+  (generated code can be missing, seen as compile errors or a
   `NoSuchMethodError`), and from JDK 20 CLDR 42 puts a NARROW NO-BREAK SPACE before `AM`/`PM`
   in `en_US`, breaking any assertion or parser written for a plain space.
 - **`-Djava.security.manager=allow` stops the JVM from starting on JDK 24 and later.** Executed on
@@ -79,25 +90,28 @@ Security Manager` during VM initialisation. It became permanently disabled in JE
   removal in JEP 471 (JDK 23) and warn on first use from JEP 498 (JDK 24). Run with
   `--sun-misc-unsafe-memory-access=deny` in a test environment: it turns a warning you will
   ignore into a failure you cannot.
-- **Third-party bytecode breaks before your code does.** Instrumentation agents, mocking
-  frameworks, bytecode generators and proxy libraries parse class files, so they fail on a class
-  file version the day it exists. Upgrade them first, as their own change.
-- **Preview APIs are version-locked by design.** Class files compiled with `--enable-preview`
-  refuse to run on any other release, which makes them an upgrade obligation rather than an
-  upgrade risk.
+- **Check third-party bytecode support early.** Instrumentation agents, mocking frameworks,
+  generators and proxy libraries may reject unsupported class-file versions when loaded or
+  exercised. Use documented compatible versions; separate upgrades when they also support the
+  old JDK, otherwise record the unavoidable combined change.
+- **Preview-dependent class files are version-locked.** A class marked with minor version
+  65535 requires the matching Java release and runtime `--enable-preview`. Merely supplying
+  the compiler flag does not mark every class as preview-dependent. Recompile and review
+  actual preview usage on the target; do not assume source compatibility.
 - **Retired flags are their own subject.** The three states — deprecated, obsolete, expired — and
   which release each flag entered them in belong to `jvm-performance-review`; that skill's
   lifecycle matrix is the reference to run the command line against.
 - **The command line you audit is not the whole command line.** `JDK_JAVA_OPTIONS`,
   `JAVA_TOOL_OPTIONS`, `@argfile`s, `-XX:VMOptionsFile` and the executable-jar manifest
   (`Add-Opens`, `Enable-Native-Access`, honoured only under `java -jar`) all contribute.
-  `jcmd <pid> VM.flags` and `VM.system_properties` show what took effect, whichever source it
-  came from — see `references/removed-and-degraded-apis.md`.
+  `jcmd <pid> VM.flags -all`, `VM.command_line` and `VM.system_properties` supply different
+  evidence, not a complete launch/module-access inventory; inspect the contributing files
+  and wrapper configuration too. Protect secrets in this output.
 - **Do not carry a performance claim across the boundary.** Any number measured on the old JDK is
   a number about the old JDK, including your own baselines and any threshold in CI.
-- **Class-data and AOT archives do not survive the move.** They are tied to the runtime that
-  produced them and must be regenerated; a stale one is silently ignored, and the startup win
-  disappears without an error.
+- **Regenerate class-data/AOT artifacts for the target build.** Compatibility checks and launch
+  mode can reject an archive, fall back or fail startup. Verify actual use and diagnostics;
+  silent fallback is not guaranteed. Preserve the old image and matching artifacts for rollback.
 
 ## References
 

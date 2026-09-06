@@ -2,18 +2,25 @@
 
 ## The anatomy of an actionable comment
 
-Four parts. Missing any one of them produces a comment the author cannot act on without a
-round trip, and round trips are what make reviews slow.
+Use the requested output schema first. For a defect, make these elements available without
+requiring the author to reverse-engineer the claim:
 
-1. **What** — the observation, specific to a line or a block.
+1. **What and where** — the changed path/line and reachable triggering input or interleaving.
 2. **Why it matters** — the consequence, concretely. Not "this is bad practice".
-3. **What you would do** — a suggestion, so the author can accept it in one step.
-4. **Severity** — blocking, or not.
+3. **Evidence and adjustment** — the inspected call path, contract or executed reproduction,
+   with a direction that fixes the behavior. Do not demand a particular patch when alternatives work.
+4. **Severity** — impact/urgency and blocking status, using repository vocabulary. Keep confidence
+   separate: an uncertain premise is not made true by assigning high severity.
 
-> **Blocking.** `orders.findById(id).get()` on line 42 throws `NoSuchElementException` with no
-> message when the id is unknown, and this path is reachable from the public endpoint — a
-> client typo becomes a 500 with no diagnostic. Suggest `orElseThrow(() -> new
-OrderNotFound(id))`, which the existing handler already maps to a 404.
+Illustrative finding; the endpoint and handler are assumptions to verify in a real review:
+
+> **Blocking.** `OrderController.java:42`: for an unknown ID, `orders.findById(id).get()`
+> throws `NoSuchElementException`. The endpoint's existing exception handling maps this to 500,
+> violating its documented 404 contract. Use `orElseThrow(() -> new OrderNotFound(id))`, which
+> the inspected handler maps to 404, and cover an unknown ID through the endpoint.
+
+The [Optional.get contract](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html#get()>)
+specifies the exception for absence, not an application HTTP status or diagnostic message.
 
 Compare with "don't use `get()`", which is a rule the author now has to look up, argue with, or
 guess the scope of.
@@ -23,12 +30,12 @@ guess the scope of.
 Agree on three or four labels and use them on every comment. The exact words matter less than
 their consistency:
 
-| Label          | Meaning                                                           | Blocks merge  |
-| -------------- | ----------------------------------------------------------------- | ------------- |
-| **Blocking**   | Defect, security or data risk, breaking contract, missing test    | Yes           |
-| **Question**   | I do not understand this; the answer may or may not change things | Not by itself |
-| **Suggestion** | I would do it differently; your call                              | No            |
-| **Nit**        | Trivial and optional; ideally automated away                      | No            |
+| Label          | Meaning                                                                                                         | Blocks merge  |
+| -------------- | --------------------------------------------------------------------------------------------------------------- | ------------- |
+| **Blocking**   | Supported defect or contract violation, concrete security/data risk, missing test for identified risky behavior | Yes           |
+| **Question**   | I do not understand this; the answer may or may not change things                                               | Not by itself |
+| **Suggestion** | I would do it differently; your call                                                                            | No            |
+| **Nit**        | Trivial and optional; ideally automated away                                                                    | No            |
 
 Two disciplines make the labels work. First: if more than a couple of comments on a review are
 **Nit**, the pipeline is missing a check — say that rather than repeating the nits next time.
@@ -52,8 +59,9 @@ concrete rather than by repetition.
    stop the review and escalate to a decision with the people who will live with it
    (architecture-decision-making). A pull request comment thread is the wrong instrument for an
    architectural choice, and the wrong record of it.
-5. **Timebox.** More than two rounds on one thread means it belongs in a call. Write the
-   outcome back into the thread afterwards so the decision has a record.
+5. **Timebox.** If replies repeat without new evidence, suggest a focused discussion with the
+   relevant owner. Record the technical decision and reason; do not contact others or publish
+   comments unless the user requested that action.
 
 ## Receiving review
 
@@ -62,8 +70,8 @@ concrete rather than by repetition.
 - Answer every comment, including the ones you decline — "leaving as is; the empty case cannot
   reach here because the caller filters, see line 12" resolves it. Silence reads as either
   agreement or dismissal, and the reviewer cannot tell which.
-- A comment that misreads the code is a finding: if a competent reader misread it, the next one
-  will too. Consider whether the fix is a clearer name rather than a reply.
+- A misreading may reveal unclear code or missing context. Check which before proposing a rename;
+  a corrected misunderstanding is not itself a defect that must block the change.
 - Do not rewrite the world in response to a suggestion. Take the fix; put the larger idea in a
   ticket and link it.
 - Push back when you have a reason. "I considered a fake here, but the contract test in
@@ -73,9 +81,9 @@ concrete rather than by repetition.
 
 ## When pairing replaces review
 
-Pairing or mobbing on a change means the review already happened, continuously and with more
-context than a diff can carry. Treating it as _also_ needing a full second review is
-duplicated cost.
+Pairing supplies continuous review with shared context. It can replace a separate pass only
+where repository policy permits and independent approval is not required; shared assumptions
+can still hide defects. Record pairing coverage and leave explicit independent gates intact.
 
 It is the better instrument when:
 
@@ -92,10 +100,13 @@ seen, and by whom.
 
 ## For an agent producing a review
 
-- Do not report a finding you have not checked against the actual code. A plausible-sounding
-  defect that does not exist costs the author more time than a missed one
-  (coding-agent-discipline).
+- Check findings against the actual code and target versions. Trace the trigger through callers,
+  guards and handlers, and establish what the diff introduced or worsened. Static reasoning can
+  support a finding without a runnable environment; name assumptions and do not claim reproduction
+  unless it ran. An unresolved possibility belongs in questions/limitations, not invented findings.
 - Say what you did not review — the parts you did not run, the tests you did not execute, the
   behaviour you could not verify without the environment.
-- Rank by severity and stop. A list of forty comments, mostly nits, will not be read; five
-  ordered by consequence will be.
+- Rank supported findings by severity and combine duplicates of one root cause. Do not impose an
+  arbitrary finding quota or omit an independent consequential defect to keep the list short.
+- With no supported findings, say so and identify the reviewed revision/scope and residual test
+  gaps. Do not manufacture nits or convert incomplete coverage into an unconditional approval.

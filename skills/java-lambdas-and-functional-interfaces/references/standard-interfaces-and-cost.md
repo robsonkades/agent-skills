@@ -14,8 +14,9 @@
 Everything else in `java.util.function` is one of these with a prefix:
 
 - `Bi*` — two arguments (`BiFunction`, `BiConsumer`, `BiPredicate`).
-- `Int`/`Long`/`Double` prefix — the argument is that primitive (`IntPredicate`,
-  `IntFunction<R>`, `IntUnaryOperator`).
+- `Int`/`Long`/`Double` specialize relevant inputs/results: `IntPredicate` takes an int,
+  `IntFunction<R>` takes an int and returns R, `IntSupplier` takes no arguments and returns int,
+  and `IntUnaryOperator` takes and returns int. Read the SAM signature, not just the prefix.
 - `To*` prefix — the **result** is that primitive (`ToIntFunction<T>`, `ToLongBiFunction<T,U>`).
 - `Obj*Consumer` — mixed (`ObjIntConsumer<T>` takes `(T, int)`).
 
@@ -78,15 +79,17 @@ consequences:
 
 - **A lambda handed to an executor is a heap-shared object.** Everything it captured is now
   reachable from another thread; the executor's own submission provides the happens-before edge
-  for the captured values as of submission, and nothing more. Mutating a captured object after
-  submission is a race (java-memory-model).
+  for actions before submission. Later mutations require their own ordering/coordination;
+  they are not automatically races if locks, volatile/atomic operations or other publication
+  protocols provide the required guarantees (java-memory-model).
 - **Request context does not travel merely because code is a lambda.** A `ThreadLocal` is not
   automatically copied to arbitrary pool tasks. Use explicit context/task wrappers; `ScopedValue`
   bindings propagate to structured child tasks under the StructuredTaskScope contract, not to
   unrelated executor submissions (scoped-values, structured-concurrency).
-- **A queued lambda holds its captures until it runs or is discarded.** A bounded queue of tasks
-  each capturing a request payload is a bounded memory cost; an unbounded one is a leak with a
-  throughput problem in front of it.
+- **Retained callbacks can retain captured graphs.** A bounded task count only bounds memory
+  if capture sizes and other holders are also bounded. Running/discarding a queued task does
+  not release references retained by registries, futures or application code; trace ownership
+  and cleanup instead of inferring collection from task completion alone.
 
 ## Reviewing lambda-heavy code
 
@@ -96,7 +99,10 @@ consequences:
       not capture `this` unintentionally.
 - [ ] Standard interfaces used where they fit; each custom one justified by name, signature,
       contract or default methods, and annotated `@FunctionalInterface`.
-- [ ] Primitive specialisations on bulk primitive paths; no `Function<Integer, Integer>` in a
-      hot loop.
+- [ ] Primitive specialisations considered where measured boxing cost matters; preserve existing
+      API compatibility and reject allocation claims unsupported by evidence.
 - [ ] Checked exceptions handled by one deliberate strategy, never by sneaky throw.
 - [ ] No overload pairs distinguished only by functional interface type.
+
+Primary references: [LongAdder sum semantics](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/LongAdder.html)
+and [ExecutorService memory consistency](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html).

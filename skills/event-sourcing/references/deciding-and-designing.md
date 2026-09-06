@@ -25,8 +25,8 @@ customer profile is a normal table is well designed, not inconsistent.
 
 ### The costs to state out loud when proposing it
 
-- Every query needs a projection, and every new query needs a new projection built from
-  history.
+- Queries need a state representation: an existing view may serve many queries; direct
+  stream folds and inline views are alternatives to a separate asynchronous projection.
 - Every retained event type is a schema commitment for its replay/evolution horizon.
 - The team needs an operational answer for rebuilds, projection lag and position tracking.
 - Onboarding cost: this is unfamiliar to most Java developers, and mistakes are structural
@@ -91,6 +91,10 @@ needed; long history alone does not prove the boundary wrong.
 
 **Name them as facts in the business's language, past tense.**
 
+Partial Java 21 domain examples: `Instant`, `List` and the application `Money` type/imports
+are omitted. `Money` uses exact arithmetic and rejects incompatible currencies; the example
+assumes an existing account whose stream identity/schema/order were checked while loading.
+
 ```java
 public sealed interface AccountEvent {
     record AccountOpened(String accountId, String holder, Instant at) implements AccountEvent { }
@@ -137,7 +141,7 @@ public final class Account {
         this.balance = Money.zero();
     }
 
-    /** Reconstitution: fold the stream. No validation here — these already happened. */
+    /** Reconstitution: fold structurally verified history without rerunning command rules. */
     public static Account replay(String id, List<AccountEvent> history) {
         Account account = new Account(id);
         history.forEach(account::apply);
@@ -155,6 +159,9 @@ public final class Account {
 
     /** Decision: validate against current state, return the outcome. Appends nothing. */
     public Decision withdraw(Money amount, Instant at) {
+        if (!amount.isPositive()) {
+            return new Decision.Rejected("amount must be positive");
+        }
         if (frozen) {
             return new Decision.Rejected("account is frozen");
         }
@@ -173,8 +180,9 @@ public final class Account {
 
 Three properties to preserve:
 
-- **`apply` never validates.** It is replaying facts. A validation in `apply` means an old
-  event can fail to load after a rule changes — the system breaks retroactively.
+- **`apply` does not rerun command validation.** Reject corrupt payloads, stream-identity
+  mismatches and unsupported schemas at the loading boundary. Do not discard malformed
+  history or rejudge old accepted facts against new business rules.
 - **The command method returns the outcome; it does not store it.** The application service
   appends. This keeps the aggregate testable as a pure function of history and command.
 - **A rejected command is an expected outcome, not an exception.** "Insufficient funds" is a
@@ -213,11 +221,13 @@ public WithdrawResult withdraw(String accountId, Money amount, CommandId command
 This is optimistic concurrency control, and it behaves as it does over a version column
 (`offline-concurrency-control`):
 
-- The conflict is detected reliably; the store enforces it with a unique constraint on
-  `(streamId, version)`.
-- **Retrying means re-deciding, not re-appending.** Reload the stream, replay, and run the
-  command again against fresh state. Appending the previously computed events at a new version
-  applies a decision made against state that no longer holds.
+- The store must atomically enforce the expected revision. A transactional table can use
+  a unique `(streamId, version)` constraint with an atomic batch; native stores may use
+  different mechanisms. An unconditional append does not enforce this invariant.
+- **After a confirmed concurrency conflict**, reload and check command identity before
+  re-deciding if allowed. Never move stale events to a new expected revision. Retrying the
+  identical append at its original revision/event IDs after an unknown result may be supported
+  by the store's idempotent-append contract; verify its exact conditions.
 - Some commands cannot be retried automatically at all. A withdrawal that was valid against
   the old balance may be invalid now; that is a user-visible conflict, not a transient error
   (`retries-and-backoff`).
@@ -235,15 +245,21 @@ an unbounded stream may be too costly, so use store-supported event identity or 
 whose uniqueness/transaction boundary is explicit. On an expected-version conflict, reload and
 repeat the command-ID check before any re-decision (`idempotency`).
 
+Bind command identity to tenant/stream and a canonical request fingerprint; reject reuse
+with different input. Define the deduplication horizon and whether rejected/no-event outcomes
+must also remain stable on retry. The snippet only recovers accepted outcomes retained in
+the stream; snapshot loading or prefix retention must not silently drop required identities.
+
 **One assumption underlies all of this: linearizable conditional append for the stream.** A
 single primary is one implementation; a quorum service can also provide it. The decision read
 and expected-version append must participate in the store's stated consistency contract. An
 active-active store using last-writer-wins without conditional stream append does not provide
 this invariant.
 
-Where an invariant spans aggregates, event sourcing does not help: the answer is the same as
-anywhere else — redesign the boundary, or accept eventual consistency with a compensating
-process (`distributed-transactions-and-sagas`).
+For a cross-aggregate invariant, inspect supported multi-stream atomic append before choosing
+between redesign and eventual recovery. KurrentDB's documented multi-stream APIs are
+server/version-specific; event sourcing itself guarantees no cross-stream transaction.
+State the actual resource boundary (`distributed-transactions-and-sagas`).
 
 ## Choosing the store and the payload format
 
@@ -259,9 +275,9 @@ commit-order-safe subscription strategy (`message-ordering-and-partitioning`).
 
 **The payload format** is a schema commitment on the same horizon. Choose one that tolerates
 unknown and missing fields, so an additive change stays the cheap change: JSON with lenient
-deserialisation, or Avro/Protobuf with defaults. Never Java serialisation — it welds the stored
-bytes to the class shape that wrote them, so the first refactor of a record makes old events
-unreadable (`serialization-performance`).
+deserialisation, or Avro/Protobuf with compatible schemas/defaults. Avoid Java native
+serialization for long-lived events due to class coupling, security and interoperability
+costs; not every class refactor is inherently incompatible (`serialization-performance`).
 
 ## Snapshots
 
@@ -278,8 +294,9 @@ measurement shows load time is the actual problem.
 
 - Deleting every snapshot must leave the system correct. If not, the snapshot has become the
   source of truth.
-- A snapshot is tied to the shape of the state class. Change that shape and old snapshots must
-  be invalidated — version them, and discard rather than upcast; they are rebuildable.
-- Snapshot on a threshold of events, not on a timer. The cost is a function of stream length.
+- Bind snapshots to stream identity, exact revision and compatible fold/schema version.
+  Validate compatibility or discard and replay; a change need not invalidate every snapshot.
+- Choose event-count, measured replay-cost or time-based snapshot policies from recovery SLOs;
+  capture state and revision consistently and prevent an older snapshot replacing a newer one.
 - Do not snapshot by folklore. It is a rebuildable cache with version/invalidations; add it
   when measured load/recovery cost or bounded replay SLO justifies it.

@@ -1,9 +1,9 @@
 schemaVersion: 1
 
 name: java-numeric-types
-version: 1.2.0
+version: 1.2.1
 description: >-
-  Choosing and using Java's numeric types correctly: why float and double cannot represent
+  Choosing and using Java's numeric types correctly: binary floating-point limits for exact
   decimal amounts, BigDecimal construction, scale, rounding and the equals/compareTo split,
   integer overflow and the exact-arithmetic methods, primitives versus boxed types, the
   boxed-value caching that makes == appear to work for some values, unboxing NPEs,

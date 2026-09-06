@@ -22,6 +22,10 @@ primary attempts remain incomplete at the trigger. Extra attempts are not exactl
 \(1-q\) in production: distribution drift, errors, timer races, retries, cancellation lag
 and per-cohort differences change the rate.
 
+That approximation assumes a representative uncensored primary completion distribution and
+negligible mass at the trigger. A success-only p95 does not describe pending calls when errors
+or timeouts are omitted; ties and the strict/non-strict timer rule matter too.
+
 A fixed historical p95 delay can approach a 100% hedge rate when the callee shifts slower.
 Control observed attempts:
 
@@ -31,12 +35,21 @@ amplification=\frac{\text{all attempts}}{\text{logical calls}}
 
 Track hedge issue/win/cancel/completion rates, useful throughput and downstream cost.
 
+Enforce both proportional and absolute attempt-rate limits, in-flight/queued work and payload
+budgets at the owning scope. Admit a duplicate atomically against those budgets; a low ratio
+under high logical-call load can still overload the callee. Track canceled work that continues.
+
 ## gRPC behavior
 
 Current gRPC service configuration supports max attempts, hedging delay, non-fatal status
 codes, retry throttling and server pushback. Deadlines cover the entire hedged call, and
 outstanding attempts are canceled after success. Language/version support differs; verify
 the deployed library.
+
+An unlisted fatal status can terminate the call and cancel peers; a non-fatal status can
+accelerate the next attempt. gRPC retry-throttling state is client-side per server name,
+not a globally coordinated fleet quota. Budget aggregate demand across clients separately.
+Generic hedging must define acceptable-result semantics, not merely take the first completion.
 
 Do not combine independent retry and hedging policies on the same layer. gRPC describes
 hedging as its alternative retry policy, but application/framework layers can still create
@@ -60,9 +73,10 @@ or overhead as a universal default.
 
 ## Deadlines and retries
 
-A deadline bounds the logical operation. Derive per-attempt budgets from remaining time,
-connect/queue/service distributions and value of a second attempt. Stop obsolete downstream
-work.
+A deadline sets the logical operation's budget; enforcement, callback scheduling and cleanup
+can delay actual return or resource release. Derive attempts from remaining time including
+admission, connect, queue and cleanup. Cancel obsolete work cooperatively and measure residual
+server activity; a timer or canceled future is not a hard execution cutoff.
 
 Timeout is ambiguous: the first attempt may have committed. Retry only safe operations and
 use backoff/jitter/budgets for transient conditions. Attempts across layers multiply; choose

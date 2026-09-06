@@ -23,6 +23,11 @@ pool capacity math to `thread-sizing-and-virtual-threads`, and benchmark validit
 
 ## Decision workflow
 
+Use Java 17 as the portable baseline for the task/blocker snippets; inspect the target toolchain,
+runtime build and deployment limits before applying release-specific APIs. Virtual-thread executors
+require Java 21+; `close()` and `setParallelism` require Java 19+. Do not upgrade the project merely
+to apply a recommendation. API claims below are checked against Java 25 unless otherwise labelled.
+
 1. Identify the actual pool and entry path: `invoke`, external submission, `fork`, parallel stream,
    or an executor-less async API.
 2. Describe the task DAG: parent/child dependencies, joins, exceptional paths, and unowned work.
@@ -62,6 +67,8 @@ costs and does not by itself make blocking safe.
   intermediate shared state still needs its own synchronization.
 - Cancellation is best effort. `ForkJoinTask.cancel` does not generally interrupt the executing
   thread. Long computations need explicit cooperative checks where cancellation is a requirement.
+  Cancelled task status is not proof the task body has exited; do not release shared resources on
+  that status alone.
 - Exceptions surface through `join`/`invoke`/`get`; an event task with no observer can fail without
   reaching a request owner. Worker uncaught-exception handlers are not a substitute for observing
   task outcomes.
@@ -157,8 +164,14 @@ good balance or bad granularity.
 
 ## References
 
-- [Pool mechanics and contracts](references/pool-internals.md)
-- [Diagnosis and experiment design](references/diagnosing-and-sizing.md)
+- Read [Pool mechanics and contracts](references/pool-internals.md) when implementing task graphs,
+  managed blocking or release-specific lifecycle behavior.
+- Read [Diagnosis and experiment design](references/diagnosing-and-sizing.md) when investigating
+  symptoms or designing threshold, blocking and shutdown checks.
 - [Java 25 `ForkJoinPool`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinPool.html)
 - [Java 25 `ForkJoinTask`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinTask.html)
 - [Java 25 streams package](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/package-summary.html)
+
+Return the pool/JDK baseline, task and wait dependencies, evidence versus hypotheses, the scoped
+change and its verification. Distinguish planned experiments from observed results; a focused
+review need not perform every profiling or benchmark check in the checklist.

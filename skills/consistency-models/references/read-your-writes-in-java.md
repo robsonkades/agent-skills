@@ -1,8 +1,13 @@
 # Read-your-writes on a Java/Spring read-replica setup
 
 The requirement: the session that just wrote must observe its own write. Everything else may
-read a replica. This is a session guarantee, not linearizability, and it is achievable with
-routing rather than coordination.
+read a replica. This is a session guarantee, not linearizability. Routing can enforce it when
+the selected node is known to contain the write and the read snapshot includes it.
+
+The Java blocks are partial Spring/JDBC sketches: imports, data-source registration,
+`PrimaryReadWindow`, session storage and event publication are application-specific. Inspect
+the project's JDK, Spring and driver versions and transaction/proxy configuration before adapting
+them; no dependency upgrade or preview feature is required by this guidance.
 
 ## What `@Transactional(readOnly = true)` is and is not
 
@@ -11,13 +16,13 @@ for flush/dirty-checking/connection optimizations, with version-specific behavio
 by itself choose a data source or wait for replication. It becomes routing policy only when code
 such as an `AbstractRoutingDataSource` deliberately reads the flag.
 
-It becomes a _routing input_ only when an `AbstractRoutingDataSource` reads it:
+Example routing input:
 
 ```java
 public class ReplicaRoutingDataSource extends AbstractRoutingDataSource {
     @Override protected Object determineCurrentLookupKey() {
         return TransactionSynchronizationManager.isCurrentTransactionReadOnly()
-                && !PrimaryReadWindow.active()      // read-your-writes override
+                && !PrimaryReadWindow.active()      // probabilistic freshness override
                 ? "replica" : "primary";
     }
 }
@@ -47,55 +52,68 @@ void onWrite(EntityWritten event) {
 }
 ```
 
-- The window must be **per session or per entity**, never global — a global pin routes the
-  whole fleet's reads to the primary after any write and removes the reason replicas exist.
-- Store the pin where the session lives: a `ScopedValue` or a request attribute for one
+- Prefer a window **per session or per entity**: a global pin sends all reads to the primary
+  after any write and can defeat read offloading.
+- Store the pin where the session lives: a request attribute for one
   request, a short-lived Redis entry keyed by session or user id for a pin that must survive
   across requests and instances. A `ThreadLocal` will not survive a request boundary and will
   not follow work handed to another thread.
 - Five seconds is not a constant to copy. Derive it from the chosen lag percentile and define
   what happens beyond it; re-derive after topology/failover changes.
+- An after-commit callback can fail or the process can die before the pin is recorded.
+  Do not advertise strict read-your-writes based on this callback. Define write-response/token
+  delivery and session-state failure behavior if clients depend on the guarantee.
 
 **Position-based is stronger where the engine exposes a token tied to the committed write.** A
 pre-commit “current WAL position” may precede the commit record and is not sufficient. Obtain a
 documented commit/causal token, require a replica watermark at least that high, and bound the wait
 by the request deadline before falling back/rejecting. PostgreSQL LSN and MySQL GTID mechanisms
 need engine/version-specific commit semantics and privilege checks.
+Compare tokens only within a documented compatible history/epoch. A promoted asynchronous
+replica may lack an acknowledged write; routing to the new primary cannot restore it. Verify
+the acknowledgement/durability policy, preserve the session's requirement across failover, and
+reject or wait when no surviving path can satisfy it. A stale response with a marker explicitly
+relaxes the strict contract.
 
 ## Detecting stale reads in tests
 
-A test against a healthy local replica proves nothing: lag is near zero, so every read looks
-fresh and an incorrect implementation passes. Make the lag real.
+A healthy-replica test may miss the defect because lag is near zero. Make the lag real.
 
 - **Introduce deterministic lag.** Testcontainers with a real primary/replica pair, then
-  pause replication (suspend the replica container, or use the engine's own delay control) so
-  the replica is provably behind for the duration of the assertion. Write, then read, then
-  assert which node answered.
+  pause replication apply with the engine's supported control while keeping the replica readable.
+  Suspending its whole container tests unavailability instead. Establish its old watermark,
+  commit a new version, read through the application, and assert the route and observed version.
 - **Assert on the route, not only on the value.** Record the resolved lookup key per query
   and assert that a post-write read inside the window went to the primary. Asserting the
   returned value alone gives a green test whenever lag happens to be zero.
-- **Deterministic sequence test.** Drive a session through replicas with controlled watermarks and
-  failover, asserting its observed version never decreases. Uncontrolled virtual-thread loops can
-  pass without exercising lag and are stress signals, not proof.
+- **Separate session tests.** For read-your-writes, reject a snapshot missing the session's own
+  committed write. For monotonic reads, reject regression below any previously observed state.
+  These are distinct guarantees; in a totally ordered version history, writing version 1 then
+  reading versions 3 and 2 satisfies the first but violates the second. Exercise token loss,
+  window expiry with lag still present and failover with controlled watermarks.
 - **Fault injection for the partition case.** If a requirement claims behaviour during a
   partition, integration evidence should create one—block traffic between the
-  application and the primary and assert the documented behaviour (refuse, or serve stale
-  with a marker). An untested partition claim is not a claim.
+  application and the primary and assert the documented behavior. Under strict read-your-writes,
+  a successful read must still include the write; otherwise wait within the deadline or refuse.
 
 ## Anti-patterns, as shapes
 
 ```java
 // 1. Uniqueness check on a replica: stale read decides a write.
-if (!repo.existsByEmail(email)) { repo.save(new User(email)); }   // on a replica: two rows
+if (!repo.existsByEmail(email)) { repo.save(new User(email)); }   // duplicates unless constrained
 
 // 2. Read-modify-write across the split.
 var balance = replicaRepo.findBalance(id);      // stale
 primaryRepo.updateBalance(id, balance - amount); // lost update, no error
 
 // 3. A cache in front of the primary, populated by a replica read.
-//    The path's staleness is now the cache TTL and the write invalidates nothing.
+//    TTL starts at fill time and does not bound the age of the replica's source data.
 ```
 
 Rule for all three: route a decision read to the authoritative write transaction when supported,
 and always enforce the invariant with a conditional write/constraint/version predicate. A fresh
 read alone still races another writer.
+
+For proxy acquisition semantics, consult the
+[Spring LazyConnectionDataSourceProxy API](https://docs.spring.io/spring-framework/docs/7.0.x/javadoc-api/org/springframework/jdbc/datasource/LazyConnectionDataSourceProxy.html)
+and verify the corresponding documentation and behavior for the project's resolved version.

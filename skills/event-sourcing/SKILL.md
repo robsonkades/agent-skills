@@ -22,10 +22,16 @@ tamper-evident, legally immutable or semantically reproducible: missing external
 changed projection code and retention/redaction policies still matter. The durable obligation
 is to keep event meaning, replay tooling and governance compatible for the declared horizon.
 
-The two failures this exists to prevent: adopting event sourcing for auditability, which an
-audit table delivers at a hundredth of the cost; and adopting it without designing for schema
-change, projection rebuilds and erasure, which are the three problems that arrive at year two
-and have no clean solution retrofitted.
+Compare audit/history storage before adopting event sourcing solely for auditability;
+measure actual operating cost rather than assuming a fixed ratio. Design schema
+evolution, projection rebuilds and retention/erasure before committing long-lived history.
+
+Inspect the target JDK, event-store/server and client versions, append/subscription contracts,
+retention and transaction manager. Java examples use Java 21 standard pattern switches
+and are partial domain examples, not client SDK implementations. Do not upgrade a project
+to use them. With missing evidence, keep adoption/correctness claims conditional and name
+the store-level test needed. Return the driver, alternative, authoritative boundary,
+recovery/visibility contract and validation evidence.
 
 ## Workflow
 
@@ -65,14 +71,14 @@ and have no clean solution retrofitted.
                               projection    projection   projection
                               (SQL view)    (search)     (report)
                                     │            │            │
-                                    └──── all EVENTUALLY consistent ────┘
-                                         and all REBUILDABLE
+                                    └──── asynchronous example ────────┘
+                                         rebuildable from retained facts
 ```
 
 Three consequences follow, and they are the whole of the trade:
 
-- **You cannot change the past.** A wrong event is corrected with a compensating event, never
-  with an `UPDATE`. This is a feature for a ledger and an obstacle for a typo.
+- **Normal business correction appends a new fact.** Exceptional redaction or repair needs
+  the controlled migration and retention contract described below.
 - **Queries need a state representation.** It may be a direct fold, snapshot or projection;
   only asynchronously maintained projections are necessarily stale.
 - **The write model and the read model diverge on purpose.** That divergence is what makes
@@ -82,9 +88,8 @@ Three consequences follow, and they are the whole of the trade:
 
 ```text
 The driver is "we need an audit trail"
-        → first compare an append-only history table, temporal tables and
-          database's temporal tables, gives auditability without making
-          every query a projection.
+        → compare append-only history and temporal tables against required
+          actor, retention and tamper-evidence controls; replay is a separate need.
 
 The driver is "we might want to analyse this later"
         → do not event source. Emit events to a log or warehouse
@@ -121,9 +126,9 @@ a long-lived account)
 
 ## Rules
 
-- **Events are facts that already happened**, named in the past tense, in the business's
-  vocabulary, and never rejected on replay. An event that a rule can invalidate later is not a
-  fact — validation belongs before the append, in the aggregate.
+- **Events record committed facts.** Validate commands before append; replay must not
+  reapply today's command rules to yesterday's accepted decisions. Still reject/quarantine
+  corrupt, unknown or structurally invalid history rather than silently inventing state.
 - The aggregate decides; the event records. Load the stream, fold it into state, validate the
   command against that state, emit events. This is a functional core with an append at the end
   (`humble-objects-and-functional-core`).
@@ -139,8 +144,10 @@ a long-lived account)
   Exceptional redaction/repair may be legally or operationally required; use a controlled,
   auditable stream-rewrite/version migration and rebuild every dependent projection. Append-
   only storage alone is not tamper evidence.
-- Projections are derived and disposable, and must claim each event with an **atomic
-  conditional advance of their position**, not a read-then-skip. Two workers reading the same
+- For a transactional projection, apply the fold and advance its checkpoint atomically,
+  using a conditional advance or another proven ownership/deduplication protocol. A failed
+  advance can mean a missing predecessor, not just a duplicate; do not acknowledge it blindly.
+  Two workers reading the same
   watermark both apply a non-idempotent fold; this is the check-then-act that `idempotency`
   forbids (`delivery-semantics`).
 - **Rebuild time is a capacity metric.** Measure it as history grows, and know the number

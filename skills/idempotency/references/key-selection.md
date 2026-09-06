@@ -54,16 +54,19 @@ Prefer an absolute write instead when:
 The scope is the namespace the uniqueness holds within. Getting it wrong is the most common
 production defect in an otherwise correct implementation.
 
-| Scope                                  | Meaning                                                             | Choose when                                                                               | Failure                                                                                                                                                                         |
-| -------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Per client (tenant/API key) + endpoint | two arrivals collide only for the same caller on the same operation | almost always — this is the default                                                       | none material; costs a slightly wider index                                                                                                                                     |
-| Per endpoint, global across clients    | any caller's key can collide with any other's                       | never for client-supplied keys                                                            | one tenant's UUID collision or deliberate replay suppresses another tenant's request. It is also an information leak: the replayed response was computed for a different caller |
-| Per client, global across endpoints    | one key namespace per caller                                        | when the client's retry library attaches one id per logical operation regardless of route | a client reusing an id across two different operations gets the first operation's response back from the second endpoint                                                        |
-| Per consumer group / per handler       | a broker message deduplicated once per independent consumer         | fan-out, where several consumers must each process the message                            | a shared scope makes the first consumer's processing suppress every other consumer's                                                                                            |
+| Scope                                     | Meaning                                                            | Choose when                                                                               | Failure                                                                                                                                                                         |
+| ----------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stable tenant/client identity + operation | retries share a namespace across credentials and equivalent routes | when that identity matches the business intent owner                                      | rotating API credentials, route aliases or renamed endpoints must not open a new namespace for an existing intent                                                               |
+| Per endpoint, global across clients       | any caller's key can collide with any other's                      | never for client-supplied keys                                                            | one tenant's UUID collision or deliberate replay suppresses another tenant's request. It is also an information leak: the replayed response was computed for a different caller |
+| Per client, global across endpoints       | one key namespace per caller                                       | when the client's retry library attaches one id per logical operation regardless of route | a client reusing an id across two different operations gets the first operation's response back from the second endpoint                                                        |
+| Per consumer group / per handler          | a broker message deduplicated once per independent consumer        | fan-out, where several consumers must each process the message                            | a shared scope makes the first consumer's processing suppress every other consumer's                                                                                            |
 
 Encode the scope in the primary key (`PRIMARY KEY (scope, key)`), not in application code
 that filters after the read — the uniqueness must be the database's, or the concurrent case
 is unprotected.
+Derive the tenant/principal from authenticated context, not an untrusted body field. Choose
+whether credentials acting for the same tenant share an operation namespace; authenticate and
+authorize each replay without using a rotating secret itself as the durable identity.
 
 ## Retention
 
@@ -82,9 +85,11 @@ permits replay beyond dedup retention, document that it may execute again or pre
 smaller permanent business-operation uniqueness key. Derive the duration; do not cargo-cult
 24 hours.
 
-Delete expired rows with a bounded batch job, not a `DELETE … WHERE expires_at < now()` over
-the whole table — the second one is a lock-holding scan that fires during the same incident
-that grew the table.
+Delete eligible terminal rows in bounded indexed batches. Do not delete `PENDING`/`UNKNOWN`
+merely because `expiresAt` elapsed; recover/reconcile them. Coordinate cleanup with claims and
+replays, and test the selected database's locking/isolation behavior. An unbounded deletion
+can cause large transactions, lock contention and I/O spikes; its cost depends on the plan
+and eligible row count.
 
 ## Payload binding
 

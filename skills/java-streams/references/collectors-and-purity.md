@@ -9,14 +9,11 @@ orders.stream()
       .forEach(o -> skus.add(o.sku()));      // works... sequentially, today
 ```
 
-Three things are wrong with this beyond taste:
+This sequential terminal action is legal, but has two design costs:
 
 - **It is not safe if the stream ever becomes parallel.** `ArrayList` is not thread-safe;
   adding `.parallel()` produces lost elements or `ArrayIndexOutOfBoundsException`, not an
   error message about concurrency.
-- **It invalidates the stream contract.** The implementation may elide stages or stop early
-  where the terminal result permits it; a side effect makes observable behaviour depend on
-  traversal details the API intentionally does not promise.
 - **It hides the result.** The written form of the operation is "collect the SKUs of active
   orders", which the pipeline should state directly:
 
@@ -26,6 +23,9 @@ List<String> skus = orders.stream().filter(Order::isActive).map(Order::sku).toLi
 
 The rule that follows: intermediate operations compute values; accumulation happens in the
 terminal operation, through a collector that knows how to combine partial results.
+Elision is a separate issue for intermediate side effects: `map` or `peek` can be skipped when
+the terminal result permits it (for example, a sized source followed by `count`). Terminal
+`forEach`/`forEachOrdered` actions are not subject to that elision permission.
 
 ## Choosing a collector
 
@@ -48,6 +48,10 @@ terminal operation, through a collector that knows how to combine partial result
 
 ## The toMap traps
 
+`Stream.toList()` accepts null elements; `toUnmodifiableList()` rejects them. Both are
+unmodifiable, not deeply immutable. Replacing an externally accumulated ArrayList with
+`toList()` changes mutability; use `toCollection(ArrayList::new)` when callers need mutation.
+
 ```java
 Map<String, Order> byCustomer = orders.stream()
     .collect(toMap(Order::customerId, identity()));
@@ -59,8 +63,9 @@ Map<String, Order> byCustomer = orders.stream()
   `(a, b) -> a`, or a domain merge only when duplicates are valid and encounter-order semantics
   make the choice deterministic enough for the use case. Pre-validate or throw a domain-specific
   error when the default diagnostic is insufficient.
-- **A null value throws NPE**, because `toMap` accumulates through `Map.merge`, which forbids
-  null values. This surprises people who expect `HashMap`'s tolerance. If values may be null,
+- **A null mapped value throws NPE in current JDK implementations**; merge overloads use
+  `Map.merge`, while the two-argument implementation checks directly. Do not infer null support
+  from `HashMap`'s tolerance. If values may be null,
   use `groupingBy` with a list downstream, or a loop, or make the absence explicit with a
   sentinel/`Optional` value type.
 - **Null-key behaviour is collector/map dependent.** The default `toMap` implementation currently
@@ -113,8 +118,8 @@ String joined = names.stream().collect(StringBuilder::new, StringBuilder::append
 
 The distinction that matters: `reduce`'s accumulator must be **pure** — it returns a new value
 and mutates nothing. A `reduce` whose accumulator mutates and returns its first argument
-appears to work sequentially and silently loses data in parallel, because partial results are
-combined out of order. Mutable accumulation is `collect`'s job, and `collect` requires a
+can appear to work sequentially but violates the reduction contract: the mutable identity may
+be shared across parallel partial reductions, corrupting or duplicating data. Mutable accumulation is `collect`'s job, and `collect` requires a
 combiner precisely so the parallel case is expressible.
 
 Two further points:

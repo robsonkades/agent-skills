@@ -23,6 +23,11 @@ text, and failures silently converted into false success.
 
 ## Workflow
 
+Use Java 21 without preview as the example baseline. Before changing a surface, inspect the
+project's release/toolchain, framework exception mapping, supported callers and public contracts.
+Do not upgrade Java or add dependencies for an example. Mark absent caller or failure-path
+evidence explicitly; do not invent handlers or retry guarantees from a type name.
+
 1. **List the failure modes** of the component and classify each one: an expected
    alternative outcome, a recoverable operational failure, or a programming error.
 2. **Choose a representation per handling shape.** Expected outcomes that callers normally
@@ -40,8 +45,7 @@ text, and failures silently converted into false success.
 
 - Checked exceptions are useful when the supported caller population should be forced to
   acknowledge/recover/translate a condition. They become costly through intermediate layers and
-  broad APIs, and compose poorly
-  composes badly with lambdas and streams (`Function` and friends declare no `throws`),
+  broad APIs, and compose poorly with lambdas and streams (`Function` and friends declare no `throws`),
   so a checked exception on a frequently mapped-over API forces a wrapper at every call
   site. That is the trade, not a law: a checked exception on a narrow, directly-called
   API whose caller genuinely branches on it is still legitimate.
@@ -90,6 +94,13 @@ text, and failures silently converted into false success.
 - Treat interruption/cancellation as control flow, not ordinary transient failure. Propagate
   `InterruptedException` when the API permits; if converting to an unchecked outcome, restore the
   interrupt flag and ensure retry loops stop. Do not relabel it as a retryable dependency outage.
+
+## Deliverable
+
+For each changed failure path, show the caller-visible outcome, typed facts, cause/cleanup
+preservation and compatibility impact. Report the targeted success/failure/cancellation tests
+actually executed and remaining gaps. A review finding needs a concrete location and consequence;
+grep alone does not establish a lost cause or unsafe retry.
 
 ## References
 

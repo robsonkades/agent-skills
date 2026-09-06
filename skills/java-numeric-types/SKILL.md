@@ -1,7 +1,7 @@
 ---
 name: java-numeric-types
 description: >
-  Choosing and using Java's numeric types correctly: why float and double cannot represent
+  Choosing and using Java's numeric types correctly: binary floating-point limits for exact
   decimal amounts, BigDecimal construction, scale, rounding and the equals/compareTo split,
   integer overflow and the exact-arithmetic methods, primitives versus boxed types, the
   boxed-value caching that makes == appear to work for some values, unboxing NPEs,
@@ -27,6 +27,12 @@ behaviour differ from the primitive it looks like.
 
 ## Workflow
 
+0. **Inspect compatibility and contracts.** Read compiler release/toolchains, serializer and
+   JDBC/database versions, schema constraints and consumer numeric types. The references use
+   Java 17-compatible code (records and `Stream.toList()` need Java 16+, `RandomGenerator`
+   Java 17+). Preserve the target; use existing classes/collectors rather than upgrading.
+   If range, rounding or boundary policy is absent, identify the missing decision before
+   changing persisted values or a public JSON representation.
 1. **Classify the quantity.** Exact decimal (money, tax, decimal contractual units) →
    `BigDecimal` or integral minor units. Counting/identity → `int`/`long`. Physical measurement
    or statistics where bounded floating-point error is acceptable → `double`. Never decide by
@@ -66,16 +72,20 @@ behaviour differ from the primitive it looks like.
   numerically with `compareTo(other) == 0`, and never put `BigDecimal` in a `HashSet` or use it
   as a map key expecting numeric identity. `TreeSet` uses `compareTo` and will silently treat
   them as one element — see java-object-contracts.
-- Normalize to the scale defined by the domain/ledger contract before storing or comparing—not
+- Normalize to a fixed scale only when defined by the domain/ledger contract—not
   blindly to `Currency.getDefaultFractionDigits()`, which is an ISO default and returns `-1` for
   pseudocurrencies. Use `setScale(domainScale, roundingMode)`, not
-  `stripTrailingZeros`. `stripTrailingZeros().toString()` produces scientific notation for
-  values like `600` (`6E+2`); `toPlainString()` is the safe rendering.
+  `stripTrailingZeros` for fixed-scale money. For scale-insensitive non-money identity,
+  canonicalization may be appropriate. `stripTrailingZeros().toString()` can produce `6E+2`;
+  `toPlainString()` avoids exponents but requires bounded precision/scale for untrusted values
+  because expansion can be huge. Choose the wire format explicitly.
 - Integer arithmetic wraps silently. Use `Math.addExact`, `subtractExact`, `multiplyExact`,
   `incrementExact` and `toIntExact` wherever an overflow would be a defect rather than a
   wrap — id arithmetic, sizes, durations in millis, accumulators. `(low + high) / 2` in a
-  binary search overflows for large arrays; `low + ((high - low) >>> 1)` does not.
-- `%` on negative operands yields a negative result, which breaks the standard "hash into a
+  binary search can overflow; `low + ((high - low) >>> 1)` is safe for ordered nonnegative
+  array bounds. Integer `MIN_VALUE / -1` also overflows silently; reject that pair when exact
+  division is required, and range-check narrowing casts before they discard bits.
+- `%` with a negative dividend can yield a negative remainder (exact multiples yield zero), which breaks the standard "hash into a
   bucket" idiom. With a positive bucket count, use `Math.floorMod(x, n)` (and understand
   `floorDiv`) when the operand can be negative—a partition index computed from a hash is the
   case that reaches production. Zero divisors still fail, and a negative divisor changes the
@@ -109,11 +119,19 @@ behaviour differ from the primitive it looks like.
   `SecureRandom` for security-bearing tokens, nonces and unguessable ids. Do not make performance
   or reproducibility claims about `Math.random()` without measuring the target JDK, and never use
   it for security.
-- Numbers change meaning at boundaries. A JSON number is an IEEE-754 double for many consumers,
-  so a `long` above 2^53 loses precision in a browser and in some parsers; serialise large ids
-  and monetary decimals as **strings**. In the database, use `DECIMAL/NUMERIC` with an explicit
+- Numbers change meaning at boundaries. JavaScript Number cannot distinguish every integer
+  outside `[-(2^53-1), 2^53-1]`; some larger integers remain exactly representable. Use a
+  string contract for large ids/exact decimals when binary-number consumers must preserve them,
+  or an explicitly verified lossless parser contract. Treat a number-to-string API change as
+  a compatibility migration. In the database, use `DECIMAL/NUMERIC` with an explicit
   precision for money—not `FLOAT`/`REAL`—and make Java's scale/rounding policy compatible with
   the column and driver behaviour.
+
+## Deliverable
+
+State the representation, valid range, equality and rounding stages, boundary encoding and
+behavior on overflow/absence/non-finite input. Show the failing input and checks actually run;
+separate arithmetic tests from serializer/database round trips and measured allocation evidence.
 
 ## Diagnostic map
 

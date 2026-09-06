@@ -17,6 +17,11 @@ work uniformly for non-associative functions or joins that need raw matches. A s
 gap may never finalize; a fixed-size accumulator can remain bounded per key while raw events or
 merge metadata continue to grow. Price the actual engine representation.
 
+These are semantic bounds, not guaranteed memory ceilings. Event-time cleanup needs watermark
+progress; a stalled input can retain windows while faster inputs add records. Bound key/event
+cardinality, payload bytes and progress skew; consider alignment/admission limits. Processing-time
+TTL may cap retention but can discard valid late matches, so it is a correctness policy too.
+
 ## The unbounded-state failure
 
 The classic pipeline death is a join or table whose state grows in **unmatched events or live
@@ -41,9 +46,10 @@ unless lifecycle eviction exists.
 
 - **State store size and entry count, per store, exported as a metric.** The number must exist
   in a dashboard, not only in a heap dump. A monotonically rising entry count with flat
-  throughput is the signature, and it is visible weeks ahead.
-- **Ratio of state entries to records processed per window.** Stable means the state is
-  turning over; rising means keys are entering and never leaving.
+  throughput is a lead to investigate; workload/key-distribution changes can explain it too.
+- **Entries, inserts and evictions over aligned intervals.** A stable entry/processed-record
+  ratio can hide linear growth. Measure generation/cleanup and oldest retained timestamps;
+  neither that ratio nor rising entries alone proves missing eviction.
 - **Old Gen occupancy after collection** for an in-heap store, or local/remote checkpoint,
   changelog and disk-compaction growth for an on-disk one. Track checkpoint duration, upload
   bytes, restore time and compaction/write amplification; local bytes alone understate cost.
@@ -51,7 +57,8 @@ unless lifecycle eviction exists.
 **Bound it.** In order of preference: a window whose size comes from how late the other side can
 legitimately arrive; an explicit retention on the store with a stated eviction policy; a
 key-space bound where the domain provides one (a closed order can be evicted; an open one
-cannot). "Emit and forget" is not a bound — it is the absence of one.
+cannot without a declared timeout/late policy). Immediate discard can bound state but may lose
+future matches or corrections; emitted output is not proof that retained state was cleaned up.
 
 ## Watermarks and late data
 
@@ -70,12 +77,12 @@ can change it. Measure watermark lag and idle partitions in production.
 
 Then decide, separately, what happens to an event that arrives after its window closed:
 
-| Policy                | What it does                                      | Choose when                                                                     |
-| --------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------- |
-| **Drop**              | Discard silently                                  | Only with a **counter and an alert**. A silent drop is unattributable data loss |
-| **Side output**       | Route to a separate stream for reconciliation     | The default for anything a business reconciles — it keeps the record            |
-| **Emit a correction** | Update/retract a prior result                     | Sink supports stable keys, versions and upsert/retraction semantics             |
-| **Extend the grace**  | Keep the window open longer for this class of key | Lateness is systematic for a known source, not random                           |
+| Policy                | What it does                                      | Choose when                                                              |
+| --------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Drop**              | Discard with accounted reason/count               | An explicit loss budget permits it; alert when that budget is threatened |
+| **Side output**       | Route to a separate stream for reconciliation     | The default for anything a business reconciles — it keeps the record     |
+| **Emit a correction** | Update/retract a prior result                     | Sink supports stable keys, versions and upsert/retraction semantics      |
+| **Extend the grace**  | Keep the window open longer for this class of key | Lateness is systematic for a known source, not random                    |
 
 Framework defaults vary. Treat an implicit policy as a defect: even side output needs durable
 delivery, retention, access control and a reconciliation owner. Replay does not inherently make
@@ -92,10 +99,12 @@ Replay is the capability windowed state most often destroys:
   reproduce historical buckets. Event time is still insufficient without pinned timestamp
   extraction, watermark/idleness rules, late policy, code/config versions and deterministic
   state/sink behavior.
-- **State must be reset or rebuilt** before the replay, or the run mixes old aggregates with new
-  input and produces a number that matches neither.
-- **The output must tolerate the rewrite.** An append-only sink accumulates both runs; an
-  upsert-keyed sink converges. Decide which the sink is before the replay, not during it.
+- **Separate recomputation from recovery.** A full historical recomputation uses isolated/reset
+  state and pinned inputs. Checkpoint recovery instead restores matching state/source positions;
+  blindly clearing state while resuming later offsets loses prior contributions.
+- **The output must tolerate the rewrite.** Upsert keys alone do not guarantee convergence:
+  stale replay may overwrite newer values, removed results need deletion, and append sinks may
+  duplicate effects. Specify output generation, ordering/version guards, reconciliation and cutover.
 - **Downstream consumers see the history again**, so they must be repeat-safe (`idempotency`) —
   including the ones nobody remembers subscribing.
 
@@ -107,19 +116,22 @@ technique is to make event time an input.
 - **Drive event time from the records.** Every test record carries an explicit timestamp; the
   test advances the watermark by feeding a record (or an explicit watermark, where the framework
   exposes one) rather than by sleeping. `Thread.sleep` in a windowing test is the failure.
-- **Inject the clock** for anything that reads processing time. A `Clock` parameter, not
-  `Instant.now()`, so the test can step it. This is ordinary dependency injection and it is what
-  makes the next two tests possible at all.
+- **Control processing time too.** Inject `Clock` for application code and use the engine's
+  test timer service/harness for framework timers; an application Clock does not replace those.
+  Feeding one record may not emit a periodic watermark until that generator is advanced.
 - **Test the boundary cases explicitly**, and they are the whole point of the test:
-  - a record exactly on a window boundary lands in exactly one window
+  - a tumbling boundary follows the assigner's interval convention; sliding/hopping records can
+    belong to multiple windows, so assert the exact expected memberships
   - a record arriving after the watermark passed follows the stated late-data policy — assert
     the side output or the counter, not just the absence of a crash
-  - a session closes after the gap and not before
+  - a session's trigger/cleanup follow gap, watermark and allowed-lateness rules; a processing-
+    time gap alone does not close an event-time session if progress stalls
   - the same versioned input replayed produces semantically equivalent versioned output; require
     byte identity only when serialization/order is itself part of the contract
-- **Test state bounds, not only results.** Feed N distinct keys, advance time past the window,
-  and assert the store's entry count returns to its baseline. This is the test that catches the
-  missing retention, and no correctness assertion on the output will catch it for you.
+- **Test state bounds, not only results.** Feed N distinct keys, advance the relevant watermark/
+  timer beyond cleanup, and assert semantic state eviction. Allow documented asynchronous backend
+  compaction/physical-byte reclamation. Also stall one input while another advances and verify the
+  state/admission budget; a healthy-watermark run misses this failure.
 - **Test recovery and evolution.** Crash between input, checkpoint and sink commit; restore from
   checkpoint/savepoint; rescale/repartition; upgrade state serializers; add an idle partition;
   regress a watermark; and inject a record behind it. Assert no silent loss, duplicate effect or
@@ -142,3 +154,5 @@ audit replay/correction operations.
 - [Apache Flink event-time and watermarks](https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/time/)
 - [Apache Flink state and fault tolerance](https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/stateful-stream-processing/)
 - [Kafka Streams state stores](https://kafka.apache.org/documentation/streams/developer-guide/processor-api.html#state-stores)
+- [Flink windows](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/datastream/operators/windows/) — assignment, firing, allowed lateness and cleanup.
+- [Flink watermark generation](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/datastream/event-time/generating_watermarks/) — idleness and alignment for skewed progress.

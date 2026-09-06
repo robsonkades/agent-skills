@@ -1,10 +1,10 @@
 schemaVersion: 1
 
 name: reactive-backpressure
-version: 1.1.0
+version: 1.1.1
 description: >-
   Backpressure in reactive and asynchronous pipelines: Reactive Streams request semantics,
-  the operators that break the protocol, bounded buffers and overflow strategies, blocking
+  operators that reshape demand, bounded buffers and overflow strategies, blocking
   inside a non-blocking pipeline, and measuring where demand is actually being throttled.
   Use when memory grows in proportion to time under load, when a sequence terminates with an
   unexpected overflow error, when onBackpressureBuffer is used with no size or no
@@ -13,7 +13,7 @@ description: >-
   pipeline, or when a dashboard queries a Reactor metric name that returns no series. Does
   not cover the queueing arithmetic behind a bounded buffer (littles-law-and-queueing), the
   thread-per-request alternative (thread-sizing-and-virtual-threads), or the scheduler
-  underneath parallel operators (forkjoinpool-and-work-stealing).
+  underneath parallel operators (executors-and-task-lifecycle).
 
 license: Apache-2.0
 

@@ -4,9 +4,9 @@ description: >
   The breaker as a state machine that stops calling a failing dependency: closed, open and
   half-open; choosing rate windows versus consecutive failures; why half-open admits a bounded
   number of probes; the failure predicate—classifying correlated dependency failures rather than
-  blindly counting status classes—and the honest limit, that a
-  breaker converts a slow failure into a fast one and creates no availability unless the
-  caller has a fallback. Use when a breaker trips on consecutive failures, when it never
+  blindly counting status classes—and the distinction between protecting caller resources
+  by failing fast and providing a semantically valid fallback. Use when a breaker trips on
+  consecutive failures, when it never
   trips or trips on one client's bad requests, when half-open sends full traffic at a
   recovering dependency, when a breaker sits on a call with no timeout under it, or when a
   dependency is slow rather than failing. Does not cover bulkheads
@@ -20,11 +20,11 @@ description: >
 ## Purpose
 
 A circuit breaker is a state machine in the caller that stops calling a dependency which is
-already failing, so calls fail immediately instead of waiting for a timeout. Its whole value
-is that the caller's threads and connections are not held by calls that were going to fail —
+already failing, so calls fail immediately instead of waiting for a timeout. It avoids tying
+up additional caller threads and connections in calls predicted to fail —
 the amplification point `cascading-failures` names as pool exhaustion.
 
-**A breaker does not make a system available. It converts a slow failure into a fast one.**
+**A breaker fails fast on rejected calls; it does not supply a successful result for them.**
 That protects the caller's resources even when the only honest result is a typed error. A
 fallback or degraded response can preserve useful availability, but is not a prerequisite for
 resource protection. Decide both the fast-failure contract and any fallback first.
@@ -40,8 +40,16 @@ HALF_OPEN → OPEN       the completed probe sample breaches a threshold (per im
 
 ## Workflow
 
-1. **Check the failure is dependency-wide, not request-specific.** Failures that track one
-   caller's input, one tenant or one endpoint are not a breaker's problem.
+The Java illustration requires Java 21+ without preview; configuration guidance is checked
+against Resilience4j 2.3.0 and its CircuitBreaker guide. Inspect compiler release/toolchain,
+runtime image, resolved breaker/client dependencies and Spring/programmatic integration before
+using property names or decorators. Do not upgrade the project to adopt this example. Without
+per-instance traffic, mapped outcomes and decorator order, keep tuning conditional and request
+the smallest missing trace/configuration or control test.
+
+1. **Check failures predict later calls within the proposed scope.** An invalid payload is
+   request-specific; an independently failing tenant backend or endpoint may justify a bounded
+   scoped breaker. Do not make unrelated callers share that failure history.
 2. **Decide what the caller does with a fast failure**, including status/type, retry guidance,
    fallback provenance and whether accepted writes may be queued.
 3. **Put a timeout under the breaker.** A breaker counts outcomes, and a call that never
@@ -53,6 +61,8 @@ HALF_OPEN → OPEN       the completed probe sample breaches a threshold (per im
    number of calls before the rate is evaluated, the failure-rate threshold, and — separately
    — a slow-call rate threshold, so a dependency that is slow but returning 200s still trips.
 6. **Bound the half-open probes and set the wait duration.** Trial calls, not full traffic.
+   Include a half-open residence bound and fleet-wide simultaneous probe load; a probe limit
+   per instance is not a fleet limit.
 7. **Instrument state and transitions**, then prove both directions in a test: force the trip
    under injected failure, assert the probe count, assert recovery. See
    `references/fallbacks-and-testing.md`.
@@ -116,9 +126,17 @@ Prefer instead when:
 - A fallback that silently returns wrong data is worse than an error. An empty list the caller
   persists, a zero balance, a default entitlement that grants access — each turns an
   availability incident into a data one. Mark degraded responses as degraded.
+- Opening rejects new admissions; it does not cancel calls already in flight or bound closed-state
+  concurrency. Preserve real client deadlines/cancellation and add a bulkhead when that resource
+  needs a concurrency limit. A fallback inside the recorded operation can mask every backend
+  failure as success; record the primary outcome before applying fallback.
 - Instrument the breaker as a **dependency health signal**: state, transitions and the rates
   it computed. Alert on time spent open, not on transitions. A breaker that has never opened
   is an untested hypothesis.
+
+Deliver the breaker scope, measured traffic/sample assumptions, outcome classification and
+decorator order, proposed settings, and trip/probe/recovery assertions. Separate observed state
+and downstream calls from hypotheses about dependency health; report checks not executed.
 
 ## Primary sources
 

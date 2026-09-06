@@ -4,6 +4,10 @@ Permissions are granted at any level of an org unit tree and inherited downward,
 deny overriding an inherited grant. The client asks one question — "may this user do X on this
 unit?" — and does not care whether the answer came from the unit itself or from six levels up.
 
+Partial Java 21 sketches: imports, rule implementations, path lookup and testing-library fixtures
+are omitted. Here explicit deny is sticky across all ancestors; that is this example's chosen
+policy, not a universal authorization rule. Child names are unique within each division.
+
 ## Before — transparent composite with a throwing leaf
 
 ```java
@@ -73,18 +77,20 @@ public final class PermissionResolver {
 
     /** Walks from the root down to the target, applying inheritance; deny beats grant. */
     public Decision decide(Division root, Path path, User user, Action action) {
+        var segments = List.copyOf(path.segments());
+        if (segments.size() > MAX_DEPTH) throw new StructureTooDeep(MAX_DEPTH);
         Decision effective = Decision.DENY;          // closed by default
         OrgNode current = root;
-        int depth = 0;
 
-        for (String segment : path.segments()) {
-            if (++depth > MAX_DEPTH) throw new StructureTooDeep(MAX_DEPTH);
-            effective = current.ownDecision(user, action).orElse(effective);
-            if (effective == Decision.EXPLICIT_DENY) return effective;
+        for (String segment : segments) {
+            if (effective != Decision.EXPLICIT_DENY) {
+                effective = current.ownDecision(user, action).orElse(effective);
+            }
             current = childNamed(current, segment)
                     .orElseThrow(() -> new UnknownOrgUnit(segment));
         }
-        return current.ownDecision(user, action).orElse(effective);
+        return effective == Decision.EXPLICIT_DENY ? effective
+                : current.ownDecision(user, action).orElse(effective);
     }
 }
 ```
@@ -92,36 +98,40 @@ public final class PermissionResolver {
 Three deliberate choices:
 
 - **Iterative, over a path.** The question is about one unit, so the walk is a single descent —
-  no recursion, no stack risk, and the cost is the depth rather than the size of the tree. Where
+  no recursive call-stack growth. Lookup cost is O(depth) only with bounded/constant-time child
+  lookup; linear child-list searches also pay fan-out at each level. Where
   a full-tree operation is genuinely needed, use an explicit `ArrayDeque`, not recursion.
 - **Default deny.** The composite's uniform interface makes "no rule found" easy to overlook; an
   authorisation walk that returns `GRANT` for an unmatched path is the classic failure.
-- **Explicit deny short-circuits.** The precedence rule lives in the walk, in one place, rather
-  than being distributed across node types where it would be re-implemented differently.
+- **Explicit deny stays sticky.** Rule evaluation can stop, but this example still validates the
+  full path. Excessive depth and missing units are rejected even beneath a denied ancestor.
 
 ## Caching an aggregate, safely
 
-Resolution is on the request path, so the effective rule set per (unit, user) is cached. That is
-only sound because the nodes are deeply immutable:
+Caching needs more than an immutable tree. Snapshot the tree and all decision-relevant subject
+attributes; tenant, roles/membership, resource attributes, policy revision and time-based rules
+can change independently of user ID. Cache only when the key/invalidation policy covers them:
 
 ```java
 private final Map<CacheKey, Decision> cache = new ConcurrentHashMap<>();
 
-public Decision decide(Division root, Path path, User user, Action action) {
-    return cache.computeIfAbsent(new CacheKey(root.version(), path, user.id(), action),
-                                 k -> compute(root, path, user, action));
+public Decision decide(PolicySnapshot policy, Path path, SubjectSnapshot subject, Action action) {
+    var key = new CacheKey(policy.tenant(), policy.version(), path, subject.id(),
+                           subject.authorizationVersion(), action);
+    return cache.computeIfAbsent(key, k -> compute(policy.root(), path, subject, action));
 }
 ```
 
-`root.version()` is in the key because the tree is replaced wholesale on change:
+`PolicySnapshot` is a wrapper containing tenant, version and immutable root; version is not a
+method on the `Division` record above. Publish the wrapper atomically and read it once per decision:
 
 ```java
-private volatile Division root;      // reassigned on reload; never mutated in place
+private volatile PolicySnapshot policy; // replace snapshot on reload
 ```
 
 Had the tree been mutable, this cache would serve decisions from a structure that no longer
-exists — an authorisation bug that is invisible until an audit. Immutability plus a versioned
-root is what makes the cache correct; it is not an optimisation bolted onto a mutable design.
+exists. Deep immutability plus complete versioned inputs permits caching; bound retention and
+invalidate on revocation. Include expiry for time-dependent decisions, or do not cache them.
 
 ## What was rejected
 

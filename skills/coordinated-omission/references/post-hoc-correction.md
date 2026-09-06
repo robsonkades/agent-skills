@@ -1,6 +1,6 @@
 # Post-hoc correction of omission-prone data
 
-Use HdrHistogram correction only when raw measurements are response-coupled, a regular expected
+Use HdrHistogram correction only when raw measurements are omission-prone, a regular expected
 interval is a defensible counterfactual, and the experiment cannot be rerun. It generates a
 sensitivity scenario; it does not reconstruct requests, concurrency or queue state that never
 existed.
@@ -38,6 +38,11 @@ HdrHistogram also exposes post-recording forms such as
 precision and exception behaviour. At-recording and post-hoc correction are mutually exclusive for
 the same omission: applying both synthesises values twice.
 
+The library's nonpositive expected interval disables synthetic additions; validate positivity
+explicitly when the caller intends correction. Values below the interval still contribute their
+original observation. Post-hoc correction works from histogram equivalent-value buckets, so it
+need not be numerically identical to correcting raw values before quantisation.
+
 ```java
 Histogram corrected = raw.copyCorrectedForCoordinatedOmission(expectedIntervalNanos);
 
@@ -52,6 +57,13 @@ Keep an immutable/raw artefact. Persist:
 - whether correction occurred during recording or after it;
 - raw and corrected counts/distributions, clearly labelled;
 - overflow/add failures and whether auto-resize was enabled.
+
+Specify the population behind the interval. With independent serial workers, applying the
+aggregate inter-arrival interval to every worker's long response can multiply hypothetical
+arrivals. For example, ten workers each reporting a 100 ms stall with a 10 ms per-worker
+interval synthesize 100 total entries; using the 1 ms aggregate interval creates 1000. Neither
+count proves what users experienced. Preserve stream-specific assumptions and correct before
+merging when interval models differ; do not infer an interval solely from completed throughput.
 
 ## Why this is not an open-loop replay
 
@@ -78,19 +90,25 @@ missed schedule slots. If logs contain only send/completion pairs, any fill-in m
 counterfactual:
 
 ```python
-def hdr_style_sensitivity(raw_latencies_ns, expected_interval_ns):
-    assert expected_interval_ns > 0
-    corrected = []
+def hdr_style_sensitivity(raw_latencies_ns, expected_interval_ns, max_samples):
+    if expected_interval_ns <= 0 or max_samples <= 0:
+        raise ValueError("positive interval and output budget required")
+    emitted = 0
     for value in raw_latencies_ns:
-        corrected.append(value)
-        missing = value - expected_interval_ns
-        while missing >= expected_interval_ns:
-            corrected.append(missing)
-            missing -= expected_interval_ns
-    return corrected
+        if value < 0:
+            raise ValueError("negative latency")
+        samples = max(1, value // expected_interval_ns)
+        if emitted + samples > max_samples:
+            raise ValueError("synthetic sample budget exceeded")
+        for offset in range(samples):
+            yield value - offset * expected_interval_ns
+        emitted += samples
 ```
 
-This illustrates the model; prefer the library API for HdrHistogram data because it preserves the
+This Python 3 iterator illustrates integer-nanosecond arithmetic; it is not a histogram library.
+Consume it fully and discard partial results on failure. The explicit output budget limits
+synthetic expansion; this counterfactual can otherwise take work proportional to latency/interval.
+Prefer the library API for HdrHistogram data because it preserves the
 configured equivalent-value/precision semantics. Do not compare the synthetic empirical interval
 as though its entries were independently observed.
 
@@ -116,6 +134,6 @@ model, not a preferred load-tool feature, chooses the abstraction.
 ## Sources
 
 - [HdrHistogram README: corrected versus raw recording](https://github.com/HdrHistogram/HdrHistogram#corrected-vs-raw-value-recording-calls)
-- [HdrHistogram Java implementation/Javadoc](https://github.com/HdrHistogram/HdrHistogram/blob/master/src/main/java/org/HdrHistogram/AbstractHistogram.java)
+- [HdrHistogram 2.2.2 implementation/Javadoc](https://github.com/HdrHistogram/HdrHistogram/blob/HdrHistogram-2.2.2/src/main/java/org/HdrHistogram/AbstractHistogram.java)
 - [Schroeder et al., “Open Versus Closed: A Cautionary Tale” (NSDI 2006)](https://www.usenix.org/conference/nsdi-06/open-versus-closed-cautionary-tale)
 - [wrk2 constant-throughput/intended-start model](https://github.com/giltene/wrk2)

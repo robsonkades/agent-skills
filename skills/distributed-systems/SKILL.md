@@ -24,18 +24,23 @@ write. In a distributed system the expensive mistakes are made at design time an
 
 ## Workflow
 
+This router has no Java language minimum. Before a specialist implementation, inspect the
+project runtime/toolchain, resolved clients/frameworks and deployed broker/store versions;
+the specialist's compatibility contract applies. Routing does not authorize upgrades.
+
 1. **Say which boundary is crossed.** Process, host, availability zone, region, or an
    organisational boundary. The answer changes the fault model, the latency budget and who can be
-   trusted; a question stated without it cannot be routed.
-2. **Fix the fault model before anything else** if it is not already written down —
-   `failure-models`. Every decision below is an answer to "which faults do we tolerate?", and a
-   design that skipped it has answered by accident.
+   trusted. Missing details permit a provisional route, not an unsupported guarantee.
+2. **Record the known fault assumptions and gaps.** Use `failure-models` when choosing a
+   guarantee or when unknown outcomes are central. During an incident, do not delay a clear
+   specialist handoff until a complete fault model has been written.
 3. **Route from the table below.** If it gives two candidates, use `references/triage-map.md`.
 4. **For a design or review rather than an incident**, walk `references/design-review.md` in
    order instead — it asks the questions in the sequence that makes later ones answerable.
 5. **Hand off.** The specialist skill carries the workflow, the decision block and the Java.
-6. **During an incident, name the pattern first.** `distributed-failure-catalogue` maps a symptom
-   to a named failure and its owner faster than reasoning from first principles.
+6. **During an incident, use the catalogue only if the owner remains unclear.** Treat names
+   from `distributed-failure-catalogue` as hypotheses requiring discriminating evidence;
+   otherwise go directly to the owner with the observed symptoms and uncertainty.
 
 ## The routing table
 
@@ -56,6 +61,7 @@ write. In a distributed system the expensive mistakes are made at design time an
 | Can this service be replicated at all?                  | `stateless-service-design`             |
 | How does a request reach a replica?                     | `load-balancing-and-routing`           |
 | Too much traffic, or more than we can serve             | `rate-limiting-and-load-shedding`      |
+| One dependency exhausts a JVM's shared capacity         | `concurrency-limiting-and-bulkheads`   |
 | Should this data be split across owners?                | `sharding-and-partitioning`            |
 | Which key belongs to which node?                        | `consistent-hashing`                   |
 | One shard is hot while the rest are idle                | `hot-partitions-and-rebalancing`       |
@@ -71,7 +77,7 @@ write. In a distributed system the expensive mistakes are made at design time an
 | A message that can never succeed                        | `poison-messages-and-dlq`              |
 | Kafka consumers, offsets, rebalances, lag               | `kafka-consumers-in-java`              |
 | Compose pipeline stages — filter, split, shard, merge   | `streaming-pipeline-topologies`        |
-| A multi-service operation must not end half-done        | `distributed-transactions-and-sagas`   |
+| Atomicity or recovery across transactional owners       | `distributed-transactions-and-sagas`   |
 | Combine results computed across many workers            | `distributed-aggregation-and-barriers` |
 | Agreement, quorum sizing, etcd or ZooKeeper             | `consensus-and-quorums`                |
 | Only one process may do this at a time                  | `distributed-locks-and-leases`         |
@@ -92,8 +98,9 @@ write. In a distributed system the expensive mistakes are made at design time an
 - Route the **decision**, not the technology. "We are adding Kafka" is not a question; "these two
   services must not be deployed together" and "this work must survive a consumer restart" are,
   and they route differently.
-- Establish idempotency before discussing retries, and the fault model before either. A retry
-  policy over an operation of unknown repeat-safety is a decision to corrupt data on a schedule.
+- Before enabling retries, establish repeat-safety or evidence that the previous attempt
+  could not have applied. Unknown repeat-safety means duplication risk; route the missing
+  contract to `idempotency`/`failure-models` without asserting corruption already occurred.
 - **Three questions are asked at the wrong altitude more than any others.** "Should we shard?" is
   usually "should we cache or add a replica?" (`sharding-and-partitioning` says so). "We need a
   distributed lock" is often a conditional write or a partitioned owner
@@ -102,7 +109,7 @@ write. In a distributed system the expensive mistakes are made at design time an
   progress and effect (`delivery-semantics`, `idempotency`).
 - Never accept "ordered", "exactly-once", "consistent" or "guaranteed" without a named scope. If
   the scope cannot be named, the claim is not yet a design.
-- During an incident, route to the pattern before the mechanism. More replicas, longer
+- During an incident, route from evidence without requiring a catalogue detour. More replicas, longer
   timeouts or more retries can deepen a cascade under specific saturation/recovery conditions;
   require evidence and a rollback trigger before changing them.
 - Do not stay in this skill once the owning skill is known. It carries no depth by design.
@@ -114,6 +121,10 @@ write. In a distributed system the expensive mistakes are made at design time an
   order another JVM, cancellation of a `CompletableFuture` need not cancel remote work, and
   virtual threads increase local concurrency capacity but do not create distributed
   backpressure.
+
+Return the primary owner, the separating evidence, any conditional secondary owner, and the
+next concrete question/check. Carry the boundary, effect, timestamps/IDs and unknowns into the
+handoff. Naming a skill is not evidence that the cause has been established.
 
 ## References
 

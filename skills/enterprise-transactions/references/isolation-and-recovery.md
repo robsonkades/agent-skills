@@ -7,66 +7,67 @@ preventing; do not choose a level by name.
 
 | Anomaly             | What a client observes                                                                    | Prevented from     |
 | ------------------- | ----------------------------------------------------------------------------------------- | ------------------ |
-| Dirty read          | Reads a value another transaction wrote and then rolled back                              | READ COMMITTED     |
+| Dirty read          | Reads another transaction's uncommitted write, whether it later commits or rolls back     | READ COMMITTED     |
 | Non-repeatable read | Reads a row twice in one transaction, gets two values                                     | REPEATABLE READ    |
 | Phantom read        | Runs the same range query twice, gets a new row the second time                           | SERIALIZABLE       |
 | Lost update         | Two transactions read, both write; the second silently overwrites the first               | Not by level alone |
 | Write skew          | Two transactions each read a set, each writes based on it, jointly violating an invariant | SERIALIZABLE       |
 
-The last two are the ones that reach production, and the fourth is the important
-subtlety: **no isolation level below SERIALIZABLE prevents a lost update across two
-requests**, and no isolation level at all prevents one across two _user interactions_.
-That is what optimistic locking is for (`offline-concurrency-control`).
+These are minimum standard-level distinctions; engines may prevent additional anomalies.
+For a read-modify-write within one transaction, conflict detection or locking can prevent
+lost updates below SERIALIZABLE. For a stale value read in a completed transaction and
+written in a later transaction, even SERIALIZABLE does not validate the earlier observation:
+use a version or another explicit precondition (`offline-concurrency-control`). HTTP request
+count alone does not define the relevant transaction boundaries.
 
 ## Engine differences that break portable assumptions
 
-- **Naming does not imply behaviour.** MySQL's `REPEATABLE READ` uses consistent snapshots
-  and does not exhibit classic phantoms in the way the standard permits; PostgreSQL's
-  `REPEATABLE READ` is snapshot isolation and aborts on write conflicts; SQL Server's is
-  lock-based and blocks instead.
-- **Two implementations of SERIALIZABLE.** Lock-based (SQL Server without snapshot,
-  DB2) blocks and can deadlock. Optimistic/serialisable-snapshot (PostgreSQL SSI) does not
-  block but aborts transactions with a serialisation failure at commit. Code written for
-  one behaves badly under the other: with SSI you **must** retry, and code that does not
-  simply fails.
-- **Readers and writers.** MVCC engines (PostgreSQL, Oracle, MySQL InnoDB, SQL Server with
-  `READ_COMMITTED_SNAPSHOT`) do not block readers behind writers. SQL Server in its default
-  lock-based `READ COMMITTED` does — which is why the same application blocks under load on
-  one engine and not the other, with no code change.
-- **Defaults differ**: `READ COMMITTED` in PostgreSQL, Oracle and SQL Server;
-  `REPEATABLE READ` in MySQL InnoDB.
+- **Naming does not imply behaviour.** PostgreSQL REPEATABLE READ uses a transaction
+  snapshot, prevents phantoms and can abort concurrent updates, but permits write skew.
+  Do not transfer these guarantees to another engine based on the isolation name.
+- **Serializable implementation matters.** PostgreSQL SSI tracks dependencies without
+  blocking through its predicate locks, but ordinary write/row locks can still wait or
+  deadlock. Serialization failures can occur during a statement or at commit.
+- **MVCC is not "no blocking".** Ordinary snapshot reads differ from locking reads and
+  DDL interactions. Inspect statement types, engine/version and actual wait evidence.
+- **Inspect effective defaults**, including session settings and datasource configuration;
+  do not infer isolation or snapshot options from an engine family alone.
 
 Consequence for portable code: pick the anomaly-specific mechanism (constraint, version
-column, explicit row lock) rather than an isolation level whenever you can, because the
-mechanism means the same thing everywhere.
+column, explicit row lock) when it enforces the invariant economically. These mechanisms
+also have engine-specific lock, null, indexing and error semantics; verify those semantics.
 
 ## Choosing the mechanism instead of the level
 
-| Problem                                 | Targeted mechanism                                                                       | Why not isolation                                                |
-| --------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Duplicate rows from concurrent inserts  | Unique constraint; catch the violation                                                   | No level makes check-then-insert safe; the constraint does       |
-| Lost update within one transaction pair | `SELECT ... FOR UPDATE` on the row before deciding                                       | Costs blocking only on that path, not globally                   |
-| Lost update across two requests         | `@Version` column, optimistic lock                                                       | Isolation cannot span requests at all                            |
-| Counter increments                      | `UPDATE t SET n = n + 1` — atomic in the engine                                          | Read-modify-write in the application needs a lock; this does not |
-| Reserve limited stock                   | Conditional update: `UPDATE ... SET qty = qty - :n WHERE qty >= :n`, check the row count | Reads no rows, holds one row lock briefly, races impossible      |
-| Invariant over a set (write skew)       | Range lock, a materialised aggregate row to lock, or SERIALIZABLE + retry                | This is the one case where the level is often the honest answer  |
+| Problem                                   | Targeted mechanism                                                                             | Why not isolation                                                                                    |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Duplicate rows from concurrent inserts    | Unique constraint matching the business key; handle conflict                                   | Directly protects every write path; SERIALIZABLE can also prevent an unsafe interleaving by aborting |
+| Lost update within one transaction pair   | `SELECT ... FOR UPDATE` on the row before deciding                                             | Costs blocking only on that path, not globally                                                       |
+| Stale update across separate transactions | `@Version` or explicit version predicate, check affected rows                                  | Later isolation does not validate an earlier completed read                                          |
+| Counter increments                        | `UPDATE t SET n = n + 1 WHERE id = :id`                                                        | Removes the application read/write gap; the engine still locks or detects conflicts                  |
+| Reserve limited stock                     | `UPDATE stock SET qty = qty - :n WHERE id = :id AND qty >= :n`, check exactly one affected row | With positive n and a unique id, protects this row's stock invariant; may block or abort             |
+| Invariant over a set (write skew)         | Range lock, a materialised aggregate row to lock, or SERIALIZABLE + retry                      | This is the one case where the level is often the honest answer                                      |
 
 The conditional-update idiom is the single most useful of these and the most under-used:
 it moves the decision into the statement, so there is no window between reading and acting.
 
 ## Retryable failures
 
-Under snapshot-based SERIALIZABLE, and under any level when a deadlock is detected, the
-engine aborts a transaction that was doing nothing wrong. That is normal operation, and the
-application must retry.
+Serialization conflicts and deadlocks can be retryable, but retry the whole aborted
+transaction with fresh reads only when the business operation remains valid. Classify the
+actual engine error and rollback scope. PostgreSQL recommends retrying SQLSTATE `40001`
+and considering `40P01`; constraint violations are not all transient.
 
-```java
-@Retryable(
-    retryFor = { CannotAcquireLockException.class, ConcurrencyFailureException.class },
-    maxAttempts = 3,
-    backoff = @Backoff(delay = 50, multiplier = 2, random = true))
-@Transactional
-public void settle(InvoiceId id) { ... }
+```text
+Pseudocode, independent of retry-library version:
+within an overall deadline and bounded attempt count:
+    start a fresh transaction
+    reread inputs, decide, write, attempt commit
+    on a classified retryable conflict:
+        finish rollback and release resources
+        if budget remains, wait with bounded jitter and retry
+    on unknown commit outcome or nonretryable failure:
+        reconcile or propagate; do not blindly repeat
 ```
 
 Three requirements that are easy to miss:
@@ -74,27 +75,29 @@ Three requirements that are easy to miss:
 1. **The retry must be outside the transaction.** Retrying inside a rolled-back transaction
    does nothing. With annotations, that means the retry proxy must wrap the transaction
    proxy — verify the order rather than assuming it.
-2. **The work must be re-runnable.** Everything the method did before failing was rolled
-   back, but anything it did _outside_ the database was not (`idempotency`).
-3. **Jitter is not optional.** Two transactions deadlocking and retrying in lockstep
-   deadlock again (`retries-and-backoff`).
+2. **The work must be re-runnable.** Verify rollback of transactional changes. Remote effects,
+   independent transactions and engine-specific nontransactional operations (such as sequence
+   allocation) are not necessarily undone (`idempotency`).
+3. **Bound retries and add jitter under contention.** Synchronized retries can collide
+   again; backoff does not repair inconsistent lock ordering. Define exhausted-budget
+   behaviour (`retries-and-backoff`).
 
 ## Deadlocks
 
-A deadlock is two transactions each holding a lock the other needs. The engine kills one;
-the application sees a lock-acquisition failure. They are not a bug in the engine, and they
-are usually not a tuning problem.
+A deadlock is a cycle of waits, potentially involving more than two transactions. The engine
+selects a victim; inspect its error and rollback scope rather than assuming every lock wait
+is a deadlock.
 
-**Causes, in order of frequency:**
+**Candidate causes to verify in the wait graph:**
 
 1. **Inconsistent lock ordering.** Use case A updates account 1 then 2; use case B updates
    2 then 1. Fix: order acquisitions by a stable key (primary key ascending) in every path
    that touches more than one row.
 2. **Lock escalation and range locks.** A large update takes a table-level lock where you
    expected row locks; another transaction touching an unrelated row now waits.
-3. **Index-driven locking.** Locks are taken on index entries; two transactions updating
-   different rows can conflict on the same index range, especially with a monotonically
-   increasing key (the last-page hotspot).
+3. **Index-driven locking.** Index/range locks can connect otherwise distinct writes.
+   Page-latch contention from an append hotspot is a different mechanism; do not diagnose
+   it as a transaction deadlock without the wait cycle.
 4. **Long transactions widening the window.** The most effective deadlock fix is often
    simply making transactions shorter.
 
@@ -112,12 +115,22 @@ The costs are concrete and rarely stated:
 - **Locks held for the whole protocol**, including across the network to the coordinator.
 - **In-doubt transactions** after a coordinator failure: rows locked, resolvable only by an
   operator or a recovery log.
-- **Availability multiplies down.** The transaction succeeds only if every participant and
-  the coordinator are up.
-- **Most modern participants do not support it well.** HTTP APIs and Kafka do not, so the
-  common "distributed transaction" is not one.
+- **Failure coupling.** Required participants and the coordinator affect progress and
+  recovery; do not multiply availabilities without an explicit independence model.
+- **Participation must be explicit.** Ordinary HTTP calls and Kafka transactions do not
+  automatically join a database XA transaction. Verify every resource's protocol support.
 
-At service boundaries the practical answers are: a saga with explicit compensations for
-each step, or an outbox with idempotent consumers and at-least-once delivery. Both replace
+At service boundaries consider saga compensation/forward recovery, or an outbox with
+idempotent consumers and durable at-least-once retry. Both replace
 atomicity with a designed, visible intermediate state — which is the honest trade
 (`distribution-boundaries`, `delivery-semantics`).
+
+## Sources and validation
+
+- [PostgreSQL 18 isolation](https://www.postgresql.org/docs/18/transaction-iso.html): concrete engine example, not a cross-database contract.
+- [PostgreSQL 18 serialization-failure handling](https://www.postgresql.org/docs/18/mvcc-serialization-failure-handling.html): error classification and complete-transaction retries.
+
+For the target database, use two independent connections and barriers to force the disputed
+interleaving. Assert final committed state and conflict outcomes, including commit-time errors.
+Run a stale-read case across separate transactions as well as overlapping transactions;
+an in-memory database or a sequential happy-path test does not establish production isolation.

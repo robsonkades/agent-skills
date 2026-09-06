@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: consistency-models
-version: 1.3.0
+version: 1.3.1
 description: >-
   Choosing distributed consistency guarantees as an engineering decision: linearizability,
   sequential/causal ordering, session guarantees (read-your-writes, monotonic reads), bounded
@@ -60,5 +60,5 @@ agentOverrides:
   codex:
     interface:
       display_name: Consistency Models
-      short_description: Linearizable to eventual, and what a client sees
+      short_description: Observable consistency and session guarantees
       default_prompt: Use Consistency Models to pick the weakest model that meets this requirement.

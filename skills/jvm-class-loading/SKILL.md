@@ -1,8 +1,8 @@
 ---
 name: jvm-class-loading
 description: >
-  Class loading, class identity and classloader leaks: parent-first delegation, {loader,
-  defining loader and binary name} identity, loading versus linking versus initialisation, Metaspace retention,
+  Class loading, class identity and classloader leaks: parent-first delegation,
+  {defining loader, binary name} identity, loading versus linking versus initialisation, Metaspace retention,
   and CDS/AOT cache for startup. Use when a ClassCastException reports identical type names
   on both sides, when Metaspace grows monotonically across redeploys or plugin reloads, when
   ClassNotFoundException and NoClassDefFoundError need to be told apart, when
@@ -27,6 +27,11 @@ an initiating loader may merely delegate to that definition. Ordinary classes no
 unloadable with their defining loader. Weak hidden classes are the deliberate exception: unless
 defined with `STRONG`, they may unload while their marked defining loader remains reachable.
 
+Inspect the Java toolchain, JVM vendor/build, launch/module paths and loader implementation
+before applying commands or version-sensitive advice. Examples use Java 17-compatible partial
+snippets; diagnostic output is scoped to Temurin 25.0.3 and AOT features state their own minimum
+release. This does not authorize an upgrade or a global access override.
+
 ## Workflow
 
 1. **On a confusing `ClassCastException`, print the loaders of both sides first**, before
@@ -39,10 +44,10 @@ defined with `STRONG`, they may unload while their marked defining loader remain
    exception, complete cause chain, failing instruction and loader identities—message text alone
    is not a complete taxonomy.
 3. **Check whether it is a module problem instead.** `IllegalAccessError` mentioning
-   "does not export" is a static reference that needs `--add-exports`;
-   `InaccessibleObjectException` mentioning `does not "opens"` is `setAccessible` and
-   needs `--add-opens` — `--add-exports` does not satisfy it. No JAR reorganisation fixes
-   either. See `references/module-access.md`.
+   "does not export" points to ordinary access; `InaccessibleObjectException` mentioning
+   `does not "opens"` points to deep reflection. Prefer fixing the API, dependency or owned
+   module descriptor; use narrow `--add-exports`/`--add-opens` only when justified.
+   An export alone does not permit access to private members. See `references/module-access.md`.
 4. **For suspected leaks, establish a cohort and unloading opportunity:** capture
    `jcmd <pid> VM.classloader_stats`, exercise N equivalent reload/redeploy cycles, allow the
    configured collector to perform class unloading, then capture again. Persistent growth in
@@ -59,17 +64,18 @@ violation` means two namespaces were forced to agree on a descriptor type and di
 
 ## Rules
 
-- `close()` on a `URLClassLoader` releases the JARs, **not** Metaspace. If any object
-  created by that loader is still reachable, the loader stays alive and nothing is
-  unloaded. Confusing these two is the most common cause of "I close the loader and
+- `close()` on a `URLClassLoader` releases the JARs, **not** Metaspace. A reachable instance of an ordinary class
+  defined by that loader retains its class/loader; a parent-defined value created by plugin
+  code does not necessarily retain the plugin. Weak hidden-class exceptions still apply. Confusing these two is the most common cause of "I close the loader and
   Metaspace keeps growing".
 - Parent-first delegation preserves namespace consistency and helps prevent child artifacts from
   shadowing platform/shared API classes. Child-first isolation requires an explicit boundary:
   always delegate platform namespaces and shared contract types, define package/resource order,
   and test split-package, service-provider and sealing behavior.
-- Custom loaders are not parallel-capable by default. Without
-  `registerAsParallelCapable()` in their `<clinit>`, the lock is the whole loader and all
-  loading in that subsystem serialises. Registration also depends on the superclass chain;
+- Custom loaders are not parallel-capable by default. For the standard
+  `loadClass` implementation, absent successful `registerAsParallelCapable()` registration,
+  `getClassLoadingLock` uses the whole loader rather than a per-name lock. Overrides can
+  change synchronization and must establish their own correctness. Registration also depends on the superclass chain;
   check the boolean result/`isRegisteredAsParallelCapable()` and keep `loadClass` idempotent under
   concurrent requests for the same name.
 - `Class.forName(name)` initializes through the caller's defining loader. Use that for
@@ -77,10 +83,10 @@ violation` means two namespaces were forced to agree on a descriptor type and di
   isolated code. Use the thread context class loader only for APIs whose provider-discovery
   contract requires it, scope any temporary change with `try/finally`, and avoid retaining it on
   long-lived pooled threads.
-- Keep `<clinit>` trivial. The first thread to touch the class pays the cost while holding
-  the initialisation lock, blocking other threads whose active use requires initialization—and this is the
-  ingredient of initialisation deadlock. Two classes whose initialisers touch each other,
-  first touched from two threads, deadlock permanently; the tell in `jcmd <pid>
+- Keep `<clinit>` trivial. The initializing thread marks initialization in progress and releases
+  the protocol lock before executing initializers. Other threads whose active use requires
+  completion still wait for that initialization—and this enables initialization deadlock. If two threads each begin one of two mutually dependent initializers,
+  they can wait for each other permanently; the tell in `jcmd <pid>
 Thread.print` is `- waiting on the Class initialization monitor for X` under a thread
   reported as `RUNNABLE`, so a deadlock detector that looks only at monitors and locks
   reports nothing. See `references/class-initialisation.md`.

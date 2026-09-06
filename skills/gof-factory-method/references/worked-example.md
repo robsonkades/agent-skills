@@ -2,6 +2,11 @@
 
 ## Before
 
+Partial Java 17 snippets: domain types, imports, repository wiring and parser implementations
+are omitted. Assume eager parsing closes file resources before returning rows; parsers themselves
+hold no closeable resources. A streaming or closeable parser needs explicit per-run cleanup,
+including parse/save failure paths.
+
 ```java
 public abstract class ImportJob {
 
@@ -36,19 +41,20 @@ There is real inherited behaviour here (`run`), so this is genuine GoF Factory M
 misnamed `Supplier`. It is still the wrong shape, for a different reason: the variation is one
 value per kind, and the kinds are data.
 
-## After — the parser is passed in
+## After — the per-run creation function is passed in
 
 ```java
 public final class ImportJob {
-    private final Parser parser;
+    private final Supplier<? extends Parser> parsers;
     private final ImportRepository repository;
 
-    public ImportJob(Parser parser, ImportRepository repository) {
-        this.parser = parser;
-        this.repository = repository;
+    public ImportJob(Supplier<? extends Parser> parsers, ImportRepository repository) {
+        this.parsers = Objects.requireNonNull(parsers);
+        this.repository = Objects.requireNonNull(repository);
     }
 
     public ImportResult run(Path file) {
+        var parser = Objects.requireNonNull(parsers.get(), "parser supplier returned null");
         var rows = parser.parse(file);
         var valid = rows.stream().filter(Row::isComplete).toList();
         repository.saveAll(valid);
@@ -58,7 +64,9 @@ public final class ImportJob {
 ```
 
 Three classes became one. `ImportJob` is now `final`, which removes the whole
-fragile-base-class surface, and it can be constructed in a test with a lambda parser.
+fragile-base-class surface. The supplier runs once per invocation, preserving the original
+creation frequency when wired to constructors. A supplier returning a shared parser changes
+that lifetime and requires a separate justification.
 
 ## Selection moves to one visible place
 
@@ -68,44 +76,46 @@ public enum SourceFormat { CSV, XML, FIXED_WIDTH }
 @Configuration
 class Parsers {
     @Bean
-    Map<SourceFormat, Parser> parsers() {
-        return Map.of(SourceFormat.CSV, new CsvParser(';'),
-                      SourceFormat.XML, new XmlParser(),
-                      SourceFormat.FIXED_WIDTH, new FixedWidthParser(LAYOUT));
+    Map<SourceFormat, Supplier<Parser>> parsers() {
+        return Map.of(SourceFormat.CSV, () -> new CsvParser(';'),
+                      SourceFormat.XML, XmlParser::new,
+                      SourceFormat.FIXED_WIDTH, () -> new FixedWidthParser(LAYOUT));
     }
 }
 ```
 
 ```java
-Parser parser = parsers.get(format);
-if (parser == null) throw new UnsupportedSourceFormat(format, parsers.keySet());
+Supplier<Parser> selected = parsers.get(format);
+if (selected == null) throw new UnsupportedSourceFormat(format, parsers.keySet());
+var job = new ImportJob(selected, repository);
 ```
 
 Every supported format is now readable in one place, and adding one is a map entry rather than a
 class plus its wiring.
 
-If the parsers are stateless, the map holds shared instances and construction disappears
-entirely. If a parser is stateful per file, hold `Map<SourceFormat, Supplier<Parser>>` instead —
-that supplier _is_ the factory method, expressed as a value.
+Share instances only when the parser and its collaborators support concurrent reuse and their
+lifetime permits it. A supplier is a creation function replacing the GoF hook, not that
+inheritance pattern. The Spring configuration is optional wiring and needs the project's
+existing Spring dependencies; the map can be built directly without a framework.
 
 ## Where the hook correctly stays
 
-A framework that instantiates your class cannot hand you anything:
+A framework may expose a required creation hook. This illustrative SPI invokes it after
+construction; retain it when the published extension contract requires this shape:
 
 ```java
-public class TenantRoutingDataSource extends AbstractRoutingDataSource {
-    @Override
-    protected Object determineCurrentLookupKey() {
-        return TenantContext.currentTenant();
+abstract class FrameworkImporter {
+    public final ImportResult execute(Path file) {
+        return createJob().run(file);
     }
+    protected abstract ImportJob createJob();
 }
 ```
 
-The framework constructs `AbstractRoutingDataSource`'s machinery and calls into the subclass;
-there is no seam at which a `Supplier` could have been injected. The same applies to
-`HttpServlet`, `AbstractProcessor`, custom `HandlerMethodArgumentResolver`s, and JUnit
-extensions. Recognising these as Factory Method (or Template Method) is useful; replacing them
-is not.
+Inspect actual registration/injection options before assuming the creator must be framework
+constructed with no arguments. Spring's `AbstractRoutingDataSource.determineCurrentLookupKey()`
+selects a lookup key, not a new product: it is a routing hook, not a creation-hook example.
+See its [API contract](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/datasource/lookup/AbstractRoutingDataSource.html).
 
 ## The trap this refactor also removed
 
@@ -119,8 +129,9 @@ public abstract class ImportJob {
 }
 
 public final class CsvImportJob extends ImportJob {
-    private final char delimiter = ';';
-    @Override protected Parser createParser() { return new CsvParser(delimiter); }  // ' '
+    private final char delimiter;
+    public CsvImportJob(char delimiter) { this.delimiter = delimiter; }
+    @Override protected Parser createParser() { return new CsvParser(delimiter); }  // NUL in super()
 }
 ```
 
@@ -137,7 +148,7 @@ class TestImportJob extends ImportJob {
 }
 
 // after: a lambda
-var job = new ImportJob(file -> List.of(new Row("a", "b")), repository);
+var job = new ImportJob(() -> file -> List.of(new Row("a", "b")), repository);
 ```
 
 The second version does not break when `ImportJob` gains a second hook, does not require the

@@ -12,10 +12,10 @@ description: >
 
 ## Purpose
 
-Decide whether two components should exchange a **fact** or a **call**. An event is a
+Decide whether two components should exchange a **fact** or a **call**. An event is an
 immutable observation about something that happened in the publisher's domain
 (`OrderPlaced`); a command is an instruction to a named recipient with an expected outcome
-(`ShipOrder`); request/response is one command style whose outcome the caller waits for. An
+(`ShipOrder`); request/response can carry a command or a query and returns an outcome. An
 asynchronous command can return outcome later through status, callback or event. This
 is a coupling decision, not a technology one, and the honest answer is often
 request/response — a broker between two parties that each need the other's outcome buys a
@@ -40,13 +40,22 @@ it from logs.
    recovery owner favors orchestration—participant count alone is not a threshold.
 4. **Design the payload.** Decide what the event carries versus what the consumer fetches,
    and name the authority for the current value — `references/event-design.md`.
-5. **Fix the compatibility direction and the window.** The window is the topic's retention
-   plus the replay horizon, not the deploy's duration; the rules are `rpc-and-api-contracts`.
+5. **Fix the compatibility direction and the window.** Historical reader support follows the
+   oldest data that can reappear from topics, archives or DLQs; old-reader/new-writer overlap
+   follows deployment and consumer support policy. These are not one additive duration;
+   use `schema-evolution-and-compatibility` for the format-specific contract.
 6. **Prove the commit boundary.** A local DB transaction does not include an ordinary broker
    send. Use an outbox/CDC, an explicitly enlisted XA resource, or a broker-local transaction
    whose exact boundary fits; “before versus after commit” alone leaves a failure window.
 7. **Choose the consumer's runtime last** — long-lived process or FaaS — from throughput,
    burst shape and whether a partition assignment must be held.
+
+Inspect broker/client, serializer and Java/framework versions plus retention, replay and retry
+configuration before implementation advice. The envelope reference uses Java 16+ record syntax;
+preserve the target rather than upgrading it. Deliver the interaction choice, outcome/recovery
+owner, commit boundary, reader/writer horizon and one confirming failure/compatibility case.
+If these facts are missing, state a conditional choice and the smallest contract/configuration
+evidence needed to resolve it.
 
 ## Decision block
 
@@ -65,7 +74,7 @@ Avoid events when:
   obscures a synchronous dependency
 Prefer request/response instead when:
 - the interaction is a query. Publishing an event to ask a question is a request/response
-  call with an extra hop and no correlation
+  interaction requiring correlation, timeout and reply lifecycle; model it as such
 - the outcome must be surfaced to a user inside the current request
 - the consumer count is one and stable, and the added broker is pure operational surface
 ```
@@ -75,9 +84,10 @@ Prefer request/response instead when:
 - Events can reduce synchronous **temporal** coupling while increasing schema, semantic,
   operational and retention coupling. Maintain consumer ownership/usage evidence where
   possible; a schema registry checks structural compatibility, not business meaning.
-- The compatibility window is the data's lifetime. An event on a seven-day topic must be
-  readable by old and new consumers for at least seven days; an event kept for replay must be
-  readable or transformable for the supported replay horizon. Archives can use versioned
+- New readers must read or transform historical events within the supported replay horizon;
+  old readers must tolerate new events for their supported deployment overlap. Seven-day
+  topic retention alone establishes neither every reader's support duration nor archive/DLQ
+  replay limits. Archives can use versioned
   upcasters/migrations; “forever” is a costly policy, not a default.
 - Adding a subscriber is a capacity and governance change when it adds broker reads,
   fan-out or shared downstream load. Budget quotas, PII access and replay impact per consumer;
@@ -96,7 +106,9 @@ Prefer request/response instead when:
   resyncs after a gap.
 - **Anti-pattern — publish inside the transaction.** A `send()` between the write and the
   commit publishes facts that may never become true; a `send()` after the commit loses them on
-  a crash. Both are the dual-write problem and both need the outbox
+  a crash. For independent sends, these are dual-write windows: select an atomic publication
+  intent (such as outbox/CDC) or an explicitly supported transaction boundary, then test
+  relay/retry recovery and duplicates
   (`distributed-transactions-and-sagas`).
 - End-to-end redelivery is common but product/configuration boundaries differ: at-most-once,
   at-least-once and transactional broker-local processing all exist. Handlers that may see a
@@ -118,7 +130,8 @@ Prefer request/response instead when:
 
 ## References
 
-- [CloudEvents specification](https://github.com/cloudevents/spec/blob/main/cloudevents/spec.md)
+- [CloudEvents 1.0.2 specification](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md)
+- [Transactional outbox](https://microservices.io/patterns/data/transactional-outbox.html): local atomic publication intent and duplicate relay delivery.
 - [AWS Lambda with Kafka event sources](https://docs.aws.amazon.com/lambda/latest/dg/with-kafka-configure.html)
 
 - [Choosing the style](references/choosing-the-style.md) — events versus commands versus

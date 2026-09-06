@@ -2,15 +2,15 @@
 
 ## The record
 
-Six fields. Anything longer does not get written under pressure, which is the only time it
-matters.
+Six useful fields; reuse existing issue/decision records. Add evidence or acceptance details
+only when the risk warrants them. Review can happen during routine planning too.
 
 ```
-WHAT      Exports are capped at 12 months of data.
+WHAT      Exports reject more than 50,000 rows, with measured byte/runtime guardrails.
 WHY       Async export job was 4 days; the pilot date was fixed.
 COST      Support handles the occasional request manually (~1/month so far).
-TRIGGER   A tenant above the cap is onboarded, or complaints exceed one a week.
-UNDO      Remove EXPORT_MONTHS_CAP, implement AsyncExportJob (see spike branch).
+TRIGGER   Before onboarding a tenant needing larger exports, or at the pilot review.
+UNDO      Validate bounded async export, migrate callers, then lift MAX_EXPORT_ROWS.
 OWNER     Billing team.
 ```
 
@@ -27,7 +27,7 @@ code.
 - **A ticket** in the normal backlog, tagged, so it competes for time like everything else. A
   separate "tech debt board" is a place things go to be not prioritised.
 - **A comment at the site**, pointing at the ticket:
-  `// Capped at 12 months; async export is BILL-4471`. This is the version that reaches the
+  `// Capped at 50,000 rows; async export is BILL-4471`. This is the version that reaches the
   person who is about to build on the shortcut, and it is why the comment must name the ticket
   rather than saying "temporary".
 - **A decision record**, when the shortcut shaped an architectural boundary
@@ -48,8 +48,9 @@ A trigger must be an event someone will observe without looking for it.
 | "Soon"                  | "At the next change to this table's schema"           |
 | "Before it's a problem" | "When support tickets about it exceed one a week"     |
 
-Where the trigger is a threshold, create the alert at the same time. A trigger nobody can
-observe is the same as no trigger, and building the observation is usually ten minutes.
+Give the trigger an observer and response: an existing metric, onboarding check, scheduled
+review or justified alert. A date with an owner and review action is valid; inventing an alert
+or a ten-minute estimate is unnecessary. A trigger nobody observes is unreliable.
 
 ## Estimating carrying cost
 
@@ -60,11 +61,14 @@ roughly in order of reliability:
    day of care, that is measurable from the history and is the strongest argument available.
 2. **Incidents or defects attributable to it.** Price severity, frequency, detection and recovery;
    one incident does not imply a universal priority over accumulated delivery delay.
-3. **Blocked work.** Debt that prevents a feature from being built has a cost equal to that
-   feature's delay, which is often the largest number and the one nobody computes.
+3. **Blocked work.** Estimate the opportunity cost of the attributable delay using the value
+   and timing of the blocked capability; days of delay alone are not a monetary cost.
 
-If none of the three produces a number, the debt may be costing nothing. That is a real
-finding, and it belongs in the next section rather than in a backlog.
+Missing numbers leave carrying cost unknown. Use ranges and supporting examples; history alone
+does not isolate the delay caused by debt from scope, staffing or workload changes. Include
+security/support exposure, recovery and lost options. Compare expected avoided cost over a
+stated horizon against repayment effort, migration risk and displaced work; do not manufacture
+precision or double-count the same incident as both lost delivery and support cost.
 
 ## Repayment strategies
 
@@ -80,7 +84,8 @@ Requires a real argument in the business's terms, which the carrying-cost number
 
 **Strangled** — build the replacement alongside, route traffic incrementally, remove the old
 path when nothing uses it. Correct for debt that is load-bearing and cannot be modified in
-place. Slow, safe, and the only approach that keeps working while you do it
+place. It can support continued operation, but dual paths, state synchronization and cutover
+introduce risk; it is neither inherently safe nor the only online migration approach
 (architecture-refactoring-paths).
 
 **Never** — see below.
@@ -98,12 +103,17 @@ A legitimate and under-used outcome. Close the ticket with the reason:
 > tests pass, and no planned work touches it. If it needs a change, the first task will be to
 > add characterisation tests — noted in the module's README.
 
+That record also needs the assessed exposure/recovery risks and revisit condition below;
+without them, it is insufficient evidence for declining repayment.
+
 This is better than leaving it open for ever, because an unrepaid backlog item is
 indistinguishable from a forgotten one, and a backlog full of forgotten items is why nobody
 reads the backlog.
 
-The condition for closing rather than deferring: the debt is contained, it is not growing, and
-nothing planned goes near it. If any of those is false, it is deferred, not declined.
+Closing rather than deferring requires evidence that repayment is not worthwhile under the
+accepted risk/horizon, including exposure and recovery burden, plus a revisit condition.
+Low change frequency and passing tests alone do not establish low risk; missing evidence is
+not a reason to declare the cost zero.
 
 ## For an agent
 
@@ -112,6 +122,10 @@ nothing planned goes near it. If any of those is false, it is deferred, not decl
   information the user can act on; discovering it later is not.
 - Do not take a shortcut that touches the never-tradeable list to satisfy a request for speed.
   Say what it would cost and offer the smaller scope instead (engineering-communication).
-- Do not repay debt you were not asked to repay. Noticing it and mentioning it is useful;
-  expanding the change to fix it makes the diff unreviewable and mixes behaviour changes into a
-  refactoring (java-refactoring, coding-agent-discipline).
+- Stay within authorized scope, including necessary prerequisite fixes and explicitly delegated
+  cleanup. Record unrelated opportunities without expanding the task; keep behavioral changes
+  reviewable (java-refactoring, coding-agent-discipline).
+
+## Primary reference
+
+- [Fowler: Technical Debt](https://martinfowler.com/bliki/TechnicalDebt.html) — carrying cost, repayment and uncertainty in effort estimates.

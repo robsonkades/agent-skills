@@ -1,199 +1,101 @@
 ---
 name: architecture-trade-off-analysis
 description: >
-  Analysing architectural trade-offs through coupling, comparable options, domain scenarios,
-  qualitative evidence and controlled measurement. Use when a scorecard is being totalled, a
-  generic comparison or case study is offered as a verdict, candidates sit at different abstraction
-  levels, advocates disagree on the basis for choosing, or a benchmark is proposed. Produces a
-  recommendation with applicability conditions, costs and reversal signals. Does not own ADR
-  discipline (architecture-decision-making), pattern selection, deliberate technical debt,
-  estimation uncertainty or architecture-smell detection.
+  Compare architectural alternatives when quality goals conflict, a scorecard or case study
+  is being used as a verdict, options mix abstraction levels, advocates disagree, or a
+  benchmark needs a decision rule. Build comparable options, separate constraints from
+  preferences, test domain scenarios and uncertainty, and recommend a choice or a bounded
+  next step. Excludes ADR lifecycle (architecture-decision-making), quality-driver
+  elicitation (architecture-characteristics), domain pattern selection and debt repayment.
 ---
 
 # Architecture Trade-off Analysis
 
-## Purpose
+Determine which feasible option best fits the stated conditions, what it costs, and how
+sensitive that conclusion is to uncertain facts or stakeholder preferences. The result
+may be a recommendation, a conditional choice, or an explicit finding that evidence does
+not yet support selection. Always give an actionable next step; never manufacture a winner.
 
-Two practitioner heuristics (_Fundamentals_, 1st ed., ch. 1; a third is reported in the 2nd ed., ch. 27, wording
-unverified, so nothing rests on it). First: _"Everything in software architecture is a trade-off."_
-Corollary 1: _"If an architect thinks they have discovered something that isn't a trade-off, more
-likely they just haven't identified the trade-off yet."_ Second: _"Why is more important than
-how."_ The authors infer that no context-free best practice settles a complex system. Treat that as
-a challenge to unsupported defaults, not proof that transferable practices or dominant options
-never exist. The deliverable is a recommendation with its applicability conditions.
+## Workflow
 
-**This skill holds no domain opinions**; it is the method other skills defer to. It never withholds
-an answer, though: every run ends in a recommendation carrying its winning conditions, its costs
-and its reversal signal, and analysis handed back with none has failed. The four sections below are
-instantiated on the analysis itself — mode decision, mode table, drivers, failure signature — and
-A–D are scaffolding here, not the authors' vocabulary.
+1. **Frame the decision.** Identify the affected system/operation, decision owner, deadline,
+   current implementation and credible alternatives. Obtain requirements and constraints,
+   workload/change/failure scenarios, relevant deployment/data ownership, and the evidence
+   available. Separate measured facts, forecasts, assumptions and preferences. Ask only for
+   missing inputs that can change the conclusion; analyze known constraints while waiting.
+2. **Choose proportionate effort.** Use the modes below. Reversal cost depends on data,
+   consumers, migration and commitments after adoption, not team size or a technology name.
+   A small team can face a consequential decision; a clear, dominant feasible option does
+   not need an invented trade-off.
+3. **Make the options comparable.** Describe complete alternatives for the same boundary,
+   required behavior and operating conditions. Include credible status quo, staged/hybrid
+   and defer options where relevant; record material exclusions and their reasons.
+   Components that can coexist are not necessarily rival architectures. Read
+   [qualitative and quantitative analysis](references/qualitative-and-quantitative.md) when
+   constructing an option set, checking Java compatibility, building a matrix/numerical
+   model or designing an experiment.
+4. **Establish feasibility before preference.** Test each option against mandatory
+   constraints; mark pass, fail or unknown with evidence. A better score cannot compensate
+   for a failed obligation. Keep nondifferentiating obligations as checks even if they leave
+   the ranking matrix. If all options fail, expose the conflict and seek a revised option
+   or an authorized constraint change.
+5. **Explain the mechanisms.** For each material scenario, trace how a candidate changes
+   dependencies, execution, state/transaction scope, failure/recovery, deployment and
+   operating work. Use `architecture-coupling-and-quanta` when the dependency boundary
+   itself needs investigation. A topology label is not proof of isolation, consistency,
+   scalability or latency. Read the [worked analysis](references/worked-analysis.md) when
+   translating coupling and scenarios into a recommendation.
+6. **Compare and challenge.** Use anchored qualitative judgments and measured/modelled
+   quantities where useful. Do not add ordinal labels as if they were measured values.
+   Seek counterexamples, boundary conditions and uncertain inputs that could change the
+   preference; do not keep searching until a reversal is manufactured. Preserve important
+   disagreements instead of averaging them away. Read
+   [bias and evidence](references/bias-and-evidence.md) when reviewing advocacy, sunk-cost
+   arguments, case studies or contested conclusions.
+7. **Reduce material uncertainty.** Before an experiment, state the hypothesis, decision
+   boundary and what outcomes would change the recommendation. Prefer existing evidence,
+   a defensible model or a narrow experiment when sufficient. Combine numerical evidence
+   with remaining qualitative criteria; one easy-to-measure metric must not decide by
+   default. Stop when further information is unlikely to change the choice enough to
+   justify its cost, or report why unresolved uncertainty prevents a supported choice.
+8. **Deliver the decision basis.** State the preferred option and its conditions, decisive
+   evidence, accepted costs, unresolved risks, and signals that warrant review. Distinguish
+   recommendation from authorization and planned validation from completed measurement.
+   For compound requests, carry this basis into `architecture-decision-making` for the ADR;
+   do not turn the analysis itself into a status-lifecycle procedure.
 
-## When to use — and when not
+## Analysis modes
 
-Use it when dimensions are entangled: moving one moves others, and no option wins on every axis.
+A–D are this skill's effort heuristic, not a formal standard or fixed time budget. Modes
+can combine: compare qualitatively, measure one uncertain mechanism, and make a conditional
+recommendation while a separate question remains open.
 
-- **Too small for the decision to matter** — all three, the third being the veto: one deployable;
-  one team under about eight engineers (a rule of thumb, not sourced); the change reversible by one
-  person in a day. A small team choosing a process boundary fails the third — mode A's _loses when_.
-- **No option differs on any driver**, or **a constraint already settles it** (regulation, contract,
-  data residency): record the constraint — a comparison with a fixed outcome is theatre.
-- **A driver is missing, not an analysis** (`architecture-decision-making`); or the disagreement is
-  about who decides, or about budget. None of those is analysis.
+| Mode                              | Use when                                                                              | Required result                                                                        |
+| --------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| A — decide with existing evidence | The choice is clear at the relevant impact/reversal cost                              | Brief rationale, important limits and a proportionate revisit condition                |
+| B — compare scenarios             | Several feasible alternatives differ on meaningful outcomes                           | Comparable alternatives, scenario-specific mechanisms, costs and preference conditions |
+| C — reduce uncertainty            | A plausible result could alter selection or establish feasibility, at worthwhile cost | Bounded model/experiment, decision rule, results or explicit execution limits          |
+| D — defer selection               | Missing evidence/authority is material and an explicit interim action is acceptable   | What is awaited, owner, deadline/event, interim behavior and delay cost                |
 
-## The decision this skill makes
+A deadline does not supply missing evidence. Under pressure, shorten B to the deciding
+constraints, credible alternatives and the most consequential uncertainty. Recommend a
+bounded reversible action if supported; otherwise explain why none is established as
+feasible. A missed deferral date triggers review, not silent acceptance of an option.
 
-**Which analysis mode does this situation warrant?** One dominates; they compose only as below.
+## Boundaries and minimum result
 
-- **A — Decide now.** No dedicated analysis; state the choice and the trigger to revisit.
-- **B — Qualitative comparison.** A decision-complete set rated on this system's own entangled dimensions.
-- **C — Build and measure.** A spike or load test producing a number about _this_ system.
-- **D — Refuse to decide yet.** Name what you await and the event that ends the wait. Modes compose
-  in sequence — B then C; A plus D's revisit trigger — but never blend into one hedged answer.
+Use `architecture-characteristics` when stakeholders cannot yet say what “fast,”
+“available” or “easy to change” means. Budget and stakeholder preference can be legitimate
+comparison inputs; an unresolved authority dispute cannot be settled by a score.
+Use `architecture-fitness-functions` to design ongoing checks for accepted risks, rather
+than embedding unvalidated monitoring thresholds here.
 
-| Mode  | Cost, and the confidence it produces                                                      | Wins when                                                                         | Loses when                                                                                         |
-| ----- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **A** | minutes; no confidence beyond the decider's experience                                    | reversible in a day, one module, one owner                                        | the target is a published contract, a datastore engine, a process boundary                         |
-| **B** | hours to days of others' time; ordinal, contestable, never a score                        | two or more credible options, entangled dimensions, people who know the system    | the deciding factor is a real quantity — throughput, unit cost, tail latency — nobody has measured |
-| **C** | days to weeks plus the build; estimates with stated uncertainty, valid for the experiment | deciding dimensions are measurable and being wrong costs more than the experiment | workloads, implementations or environments cannot be made representative enough for the decision   |
-| **D** | ongoing carrying cost; buys optionality, not knowledge                                    | the option is genuinely open and delay costs less than a wrong turn               | delay itself forecloses options, or a team is blocked                                              |
+For a small decision, a paragraph can suffice. For a material comparison, provide the
+decision/scope, feasibility findings, the few differentiating criteria/scenarios with
+evidence, the recommendation or unresolved branch, accepted costs and next validation or
+revisit signal. For a review, locate the unsupported claim and give its consequence,
+correction and verification. State what was executed and what was inferred.
 
-What each charges even when right, how it goes wrong, what reverses it — and the deadline case:
-
-- **A** — price: no record, so the next team re-decides. Fails as the unnamed dimension dominating
-  by year three; dishonest when it dodged an argument. Exit: the question returns a third time.
-- **B** — price: an ordinal answer an advocate can re-argue. Fails as dimensions picked by the
-  winner's advocate and a summed matrix; dishonest presented as objective. Exit: it comes out level.
-- **C** — price: a number valid only for the workload modelled. Fails by measuring the prototype;
-  dishonest when it ends an argument it did not answer. Exit: the spike grows a second question.
-- **D** — price: every later decision made blind. Fails as deferral rebranded as prudence;
-  dishonest when dodging an unwelcome answer. Exit: the date passes unchanged — D has become A.
-- **Under a deadline**, run B short rather than skip it: a comparable option set and one inverting scenario are
-  load-bearing; isolated ratings and the full matrix drop first. Ship that, plus what stays open.
-
-## The method
-
-_Hard Parts_ ch. 2 and 15, verbatim: **1.** Find what parts are entangled together. **2.** Analyse
-how they are coupled to one another. **3.** Assess trade-offs by determining the impact of change
-on interdependent systems.
-
-Coupling has one test and no moral loading: _"if someone changes X, will it possibly force Y to
-change?"_ Static coupling is how parts are wired, dynamic coupling how they call one another at
-runtime. Dimensions come from step 1: proposing candidates for the room to accept or reject is
-eliciting and is the job; filling in a borrowed list is importing (_"each architecture is unique"_).
-The coupling map may give the correlation directly; the matrix is one route to it. Then, in order:
-
-- **Make the option set decision-complete.** Compare candidates at the same abstraction level and
-  include credible status quo, hybrid and defer options. Literal exhaustiveness is usually
-  impossible in an open technology market; document exclusions and recheck material arrivals.
-- **Rate each option in isolation, then consolidate** into ordinal words, and **read the matrix for
-  correlations, never for a total** — summing is the Out-of-Context Scorecard anti-pattern. Weighted
-  scoring totals by design; side against it here because the weights are the advocate's ("Honest
-  standing" below), not because scoring is settled.
-- **Delete the dimensions your context makes irrelevant.** In the shared-service/shared-library
-  example the real context removes five of eight and the apparent winner no longer holds. If
-  nothing deletes, that is a finding — the decision is genuinely multi-dimensional — not a failure.
-- **Model concrete domain scenarios until one inverts the apparent winner.** _"Thinking about
-  architecture problems in the generic and abstract gets an architect only so far."_
-- **Reduce to one "which is more important?" question in business language**, then **fix the most
-  constraining dimension first**, iterate, and stop when _"what's left is design."_
-
-Read `worked-analysis.md` to run this end to end; `qualitative-and-quantitative.md` for B vs C.
-
-## Drivers for more analysis, and for deciding now
-
-_Hard Parts_ ch. 7 uses **disintegrators**/**integrators** for granularity only; applying them to
-analysis effort is this skill's extension, not the authors'. The columns list forces, not pairs.
-
-| Disintegrators — analyse further                                                            | Integrators — decide now                            |
-| ------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| Irreversibility (Fowler, _IEEE Software_ 2003 — not the books' term)                        | Reversible by one person in one commit              |
-| Blast radius spans teams, clients or data; entangled dimensions; an advocate with an answer | Blast radius is one module; cost of delay compounds |
-
-When both columns are heavy, use B to identify separating dimensions and C where an experiment can
-materially reduce uncertainty. More measurement is not worthwhile when no plausible result changes
-the choice.
-
-## Resisting evangelism, including your own
-
-Bias here is measured; the method is not. Borowa et al. (arXiv:2309.14175) recorded **155 bias
-occurrences across 12 architects** — anchoring 24, irrational escalation 20, bandwagon 19 — and a
-later experiment (arXiv:2502.04011) found **practitioners more susceptible than students**.
-
-- Force every advocate, yourself included, to state the disadvantages — _"nothing in software
-  architecture is all good"_ — refuse the two-sided-argument framing, and treat a shocking new
-  capability as a claim to test with a scenario. Anecdote is compelling and still anecdote.
-
-Read `references/bias-and-evidence.md` when an advocate is in the room or sunk cost is invoked.
-
-## Fitness functions
-
-Encode the failure mode you accepted risk on. A metric with no collection mechanism, threshold,
-evaluation site or consequence is inert:
-
-```text
-Characteristic  Modularity — the monorepo decision accepted the risk of accidental coupling
-                between projects through repository proximity.
-Metric          Imports crossing a module boundary the target does not publish.
-Tool            ArchUnit (v1.5.0, 2026-08-04): noClasses().that().resideInAPackage("..billing..")
-                .should().dependOnClassesThat().resideInAPackage("..pricing.internal..").
-                Confirm any tool is still maintained — Simian Army (Fundamentals ch. 6) is archived.
-Threshold       Zero NEW violations — FreezingArchRule, today's count as a baseline. Zero because a
-                crossing costs a minute to avoid while the code is written and a migration
-                once others depend on it; the baseline stops the gate blocking on legacy.
-Site            The pull-request check. Nightly is too late: the import is merged by
-                then, and a fitness function that reports after the fact is a dashboard.
-```
-
-The other two are the same shape: services per engineer, on-call pages per destination, from the
-service registry and paging tool, reviewed weekly, alerting on a rising gradient over three
-months, not an absolute value. **Do not build a cabal** — the authors warn against _"an impossibly
-complex, interlocking set of fitness functions that merely frustrate developers and teams."_
-(`architecture-characteristics` and `architecture-fitness-functions` go deeper.)
-
-## Failure signature — of the analysis, not of any one choice
-
-| Pattern                               | 18 months on                                                                                                                                                                                                                                                           | Earliest detectable symptom                                                                                      |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| **A dimension never on the list**     | Segment (Noonan, 2018): right at t=0 — per-destination queues killed head-of-line blocking — wrong at t=3y: _"operational overhead increased linearly with each added destination"_; 140+ services and repos, library versions diverged                                | A cost growing with a count nobody plots. Plot services, repos and pages against units of growth from month one. |
-| **The out-of-context comparison**     | Prime Video (team write-up, reached here via devclass, May 2023): a hard limit at ~5% of expected load, rebuilt as one process for >90% infrastructure cost reduction. The deciding dimension — per-state-transition cost per second of video — is in no generic table | The table would read identically at another company. If nothing in it names your domain, it has not been done.   |
-| **Dimensions chosen by the advocate** | MongoDB/Jepsen 4.2.6: transactions defaulting to `local` and `w: 1` with ~80% of users on defaults; the vendor's summary of the audit _"discusses only passing results … buries the actual report in a footnote"_                                                      | The evaluation ran on the vendor's configuration, or every reported dimension was one the vendor chose.          |
-| **A situated analysis generalised**   | Uber→MySQL (2016) reused as a verdict on PostgreSQL. Haas disputed not their experience but the missing inputs: untried replication tools, `hot_standby_feedback`, fixes in newer releases                                                                             | A case study cited without naming the citing team's constraints. Ask which of their conditions you share.        |
-
-All four end the same way: **nobody can re-open the decision**, because the record says what was
-chosen and not what it depended on. The Second Law failing.
-
-## How to record it
-
-_Hard Parts_ ch. 1, crediting Nygard:
-
-```text
-ADR-014  Payment processing granularity
-Context      One payment service or several. Entangled: extensibility, data consistency,
-             deployability. The MECE option set; what was ruled infeasible, and why.
-Decision     A single payment service, and the mode that produced it (B, three scenarios).
-Consequences The trade-offs considered, the ones we dislike included: every new payment
-             type touches a shared deployable. The observation that would reverse it.
-Compliance   FF-07, weekly platform review — a trailing metric cannot gate a PR. Payment-service
-             deploys against the estate median, rolling quarter, alerting above 2x: a service
-             changing at twice the median is absorbing changes that belong to its callers.
-```
-
-Write it when the decision is made — a retrospective record captures justification, not reasoning.
-Record discipline and reversibility pricing belong to `architecture-decision-making`.
-
-## Honest standing of this method
-
-**No study shows that trade-off analysis — this technique, ATAM, matrices or ADRs — produces better
-architectures.** No outcome evidence exists for any; the bias findings above concern decision-makers,
-not the method. Three disagreements are live, all sides in `references/bias-and-evidence.md`.
-_Rigour?_ The SEI school says yes (ATAM: utility trees, quality-attribute scenarios, auditable);
-_Hard Parts_ dismisses them in one sentence for lacking _"focus on real problems architects face on
-a daily basis"_; Dasanayake et al. found methodology supporting **2 of 10** architects, intuition 7.
-_Prioritising characteristics?_ Utility trees assume yes; Richards and Ford call rank-ordering _"a
-fool's errand"_. _"It depends"?_ Analysis only if the dependencies are named and each one answered.
-
-## References
-
-- [Worked analysis](references/worked-analysis.md) — the method run end to end on one decision.
-- [Qualitative and quantitative analysis](references/qualitative-and-quantitative.md) — B vs C.
-- [Bias and the evidence base](references/bias-and-evidence.md) — counter-moves, all three disagreements.
+When evaluating this skill's behavior or selection, use
+[validation cases](references/validation-cases.md). Neither a completed matrix nor repository
+tests demonstrate that the skill improves agent decisions.

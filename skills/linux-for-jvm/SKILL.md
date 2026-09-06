@@ -19,8 +19,16 @@ description: >
 ## Purpose
 
 Separate what the JVM manages from what the kernel manages. The JVM administers virtual
-addresses; the kernel administers physical RAM — and the misalignment between the two
-produces most of the incidents that arrive labelled "a GC problem".
+addresses and allocations; the kernel controls mappings, residency and scheduling. A client
+stall that overlaps GC is not by itself proof of a collector problem.
+
+## Environment contract
+
+Inspect the deployed JDK/collector, kernel, cgroup version and mount/cgroup namespaces,
+service manager, container image and metric labels before applying commands. These are Linux
+shell fragments, not Java programs; cgroup v2 examples need the target process hierarchy,
+not an assumed host root. Missing permissions or files mean missing evidence, not zero.
+Do not upgrade the runtime or change host-wide policy merely to use this skill.
 
 ## Workflow
 
@@ -31,12 +39,17 @@ produces most of the incidents that arrive labelled "a GC problem".
 2. **Classify with independent records**: cgroup v2 `memory.events`, pod termination reason,
    runtime/kubelet events, and kernel journal where permitted. `dmesg` can be inaccessible,
    rate-limited or already rotated.
-3. **Measure the non-heap footprint with NMT under real load** before adjusting any size.
+3. **Compare memory accounting under real load**: NMT for tracked HotSpot allocations,
+   RSS/PSS for residency, and cgroup usage for charged memory. NMT committed is not RSS,
+   does not cover every native allocation, and cannot be subtracted from RSS to quantify
+   unexplained native bytes.
 4. **Correlate the logged GC pause with the observed pause** and attribute the difference
-   to a specific layer — TTSP, throttling, swap or I/O.
+   to a layer only when evidence supports it — TTSP, throttling, swap, I/O or request queueing.
+   Keep unresolved causes as hypotheses; do not subtract unrelated latency percentiles.
 5. **Check throttling with deltas**: periods throttled says frequency;
-   `throttled_usec / elapsed_usec` says denied CPU time. Correlate both with runnable demand,
-   quota/period and latency; a lifetime ratio alone is not diagnosis.
+   `throttled_usec` accumulates throttled run-queue time and can overlap across CPUs.
+   Its delta divided by elapsed microseconds is not lost CPU capacity or request stall
+   percentage and can exceed 1. Correlate with demand, ancestor quotas and latency.
 6. **Check descriptor and thread counts against their limits** before believing a resource
    is exhausted.
 
@@ -63,26 +76,38 @@ produces most of the incidents that arrive labelled "a GC problem".
   `AnonHugePages`, TLB/CPU benefit and compaction stalls, then record the chosen policy.
 - Distinguish global OOM from memory-cgroup OOM by evidence. Victim selection can incorporate
   `oom_score_adj` within applicable constraints; it is not a protection against exceeding a
-  pod's `memory.max`. Kubernetes QoS influences scores, while container memory budgeting and
-  `memory.events` identify the resource failure that must be fixed.
+  container's or ancestor's `memory.max`. Kubernetes QoS influences scores; correlate
+  `memory.events` with limit scope and kernel/runtime records to identify the failure.
 - Never `kill -9` first. `SIGKILL` cannot be intercepted: no shutdown hooks, no connection
-  drain, no heap dump, and a truncated JFR file. Send `SIGTERM`, wait, then escalate — and
+  drain or final dump-on-exit. Previously completed JFR chunks/dumps may survive, while
+  buffered events and the active chunk can be lost. Send `SIGTERM`, wait, then escalate — and
   make `terminationGracePeriodSeconds` match the real drain time.
-- Persist `LimitNOFILE` and `LimitNPROC` in the systemd unit. `ulimit` in a shell does not
-  survive the next start. And note that `OutOfMemoryError: unable to create native thread`
-  misleads by its name — a heap dump does not help, because the problem is not in the heap.
+- Inspect the actual launcher limits. For systemd services, persist `LimitNOFILE` and use
+  `TasksMax` for service task limits; `LimitNPROC` applies across the real UID and has privileged
+  exemptions. Shell limits affect descendants, not an independently started systemd unit.
+  Native-thread OOME needs PID/task, stack and memory evidence; heap retention can still
+  explain unbounded thread creation.
 - Alert on OOM kills explicitly (`node_vmstat_oom_kill`, and the pod-level
-  `OOMKilled` reason). Without it the incident arrives as "the service went down for no
-  reason" and consumes hours of log analysis that by definition contains nothing.
-- `-XX:+UseNUMA` is implemented only by Parallel GC and G1 (JEP 345, JDK 14, Linux). With
-  ZGC or Shenandoah it is accepted and does not do what is expected.
+  `OOMKilled` reason), with host and container attribution. Application logs can contain
+  useful precursors even when they contain no final termination record.
+- NUMA behavior is collector/build-specific. Parallel GC and G1 are not the only users:
+  Linux ZGC in JDK 25 consumes `UseNUMA`. Check effective flags and allocation policy rather
+  than treating an accepted flag as proof of an optimization; detailed placement belongs to
+  `cpu-cache-and-numa`.
 - Linux began transitioning the fair scheduler toward EEVDF in 6.6. Do not apply CFS tuning
   knobs from a runbook without checking the node kernel, scheduler documentation and whether
   the knob exists; `vruntime`, eligibility and virtual deadlines are related but not
   interchangeable models.
 - PSI (`/proc/pressure/*`, and cgroup-local `*.pressure` on cgroup v2) measures shares of time
   with some or all non-idle tasks stalled. It is a valuable saturation signal, not
-  automatically the earliest one; baseline `some`/`full` deltas against SLO symptoms.
+  automatically the earliest one. `avg10/60/300` are percentages; `total` is cumulative
+  microseconds. System-level CPU `full` is undefined and reported as zero for compatibility;
+  do not interpret it as no CPU pressure. Compare the same scope and interval with symptoms.
+
+## Output
+
+Return scoped, timestamped observations, supported hypotheses, the smallest justified action,
+and how to verify it. Report unavailable evidence and unresolved attribution explicitly.
 
 ## References
 

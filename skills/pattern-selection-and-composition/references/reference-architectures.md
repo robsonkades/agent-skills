@@ -10,14 +10,16 @@ HTTP request
           │     └── Data Mapper / JPA  Unit of Work + Identity Map + Lazy Load
           ├── Domain Model             rules and invariants; state transition
           ├── Repository.save          (usually implicit: dirty checking)
-          └── Outbox / event           published after commit
+          └── Outbox row               written with business state in SAME transaction
+                └── Relay             publishes committed rows; retries/deduplication
       └── Response record            projection or mapped from the aggregate
 ```
 
-**Consequences, stated concretely:** a write costs the aggregate's load (a fixed, small
-number of queries); invariants cannot be bypassed by any path that goes through the
-repository; bulk work must be explicit and must handle versions; and **reads must not use
-this path** — a list screen through the aggregate is the N+1 this composition is famous for.
+**Consequences:** aggregate fetch cost depends on graph size and fetch plan. Repository access
+alone does not enforce rules: mutation paths must invoke domain behavior and coordinate
+concurrent changes. Bulk work must preserve required invariants and versions. Reuse this
+read path when its graph/cost fits; use projections when it loads unnecessary state.
+An after-commit callback alone is not a durable outbox: a crash before publish can lose the event.
 
 **Where it fails:** unbounded aggregates; rules that leaked into the service; reads forced
 through the write model.
@@ -36,8 +38,9 @@ HTTP request
 reason about; and duplication is the failure mode — the same rule in several scripts,
 diverging.
 
-**Where it fails:** when rules start depending on each other. The signal is textual, and it
-is measurable: the same business term implemented in three files.
+**Where it fails:** when interacting rules become hard to maintain. The signal is semantic:
+the same decision duplicated with divergent behavior or costly coordinated edits,
+not simply a business term appearing in three files.
 
 ## Composition 3 — remote API over an application
 
@@ -51,12 +54,15 @@ Client
       └── DTO out                    assembled INSIDE the transaction
 ```
 
-**Consequences:** one round trip per client interaction; the wire contract evolves
-independently of the model; retries are safe; and the facade holds no rules, so a job or a
+**Consequences:** fewer required client round trips; the wire contract can evolve
+separately from the model. Safe retries require atomic deduplication relative to effects,
+stable operation identity and defined replay/retention; a key and separate cache alone are
+insufficient, especially when the existing system is remote. The facade holds no domain rules, so a job or a
 consumer can invoke the same use case.
 
-**Where it fails:** a facade that forwards call-for-call to fine-grained services — the
-chattiness moved inside and the latency is unchanged.
+**Where it fails:** leaving fine-grained remote calls in the client interaction or behind
+the facade can retain network cost. Fine-grained local calls are a valid implementation;
+measure the actual hop topology before asserting unchanged latency.
 
 ## Composition 4 — read/write split (no CQRS infrastructure)
 
@@ -70,9 +76,10 @@ Controller                           Controller
 ```
 
 **Consequences:** the write path keeps its invariants and its aggregate cost; the read path
-costs one query and hydrates nothing it will not send; the two evolve independently. This is
-two interfaces over one database — no event sourcing, no separate store, no eventual
-consistency.
+can use a tailored projection with a measured query budget; both still share schema and
+database constraints. Two interfaces over the primary do not require eventual consistency,
+but a read replica may lag. State the freshness/isolation contract rather than infer it
+from the absence of a projection pipeline.
 
 **Where it fails:** treating it as a licence to write through the read path. The read side
 is read-only, and enforcing that (no entities, no repository) is what keeps it simple.
@@ -84,33 +91,32 @@ rebuild procedure (`consistency-models`).
 
 ## The relationship graph
 
-Which pattern implies, enables or conflicts with which. Read `→` as "implies or strongly
-suggests".
+Common collaborators and tensions, not logical implications. Read `→` as "consider when
+the named force applies"; optional mechanisms must still earn their cost.
 
 ```text
 Domain Model
   → Data Mapper (or Active Record if shape matches)
-  → Unit of Work            (the ORM's persistence context)
-  → Identity Map            (the ORM's first-level cache)
+  → Unit of Work            (when tracked persistence fits)
+  → Identity Map            (when managed identity is needed)
   → Lazy Load               (a decision per use case, not a default)
-  → Repository              (one per aggregate root)
+  → Repository              (per aggregate root when adopting DDD aggregates)
   → Service Layer           (for the transaction boundary)
   → Coarse-Grained Lock     (versioning at the aggregate)
-  ↛ conflicts with per-table repositories, row-returning repositories,
-    reads routed through the aggregate
+  ↛ write paths through table/row APIs that bypass invariant enforcement;
+    read projections and persistence-internal row mappings are compatible
 
 Transaction Script
   → Table Data Gateway / Row Data Gateway
-  → Service Layer           (only when a use case writes twice)
+  → Service Layer           (transaction/policy/orchestration or stable caller boundary)
   ↛ conflicts with a half-built domain model (two homes for a rule)
 
 Table Module
   → set-based SQL
-  → bypasses the domain model's invariants and version columns
-    (must be named and bounded)
+  → explicit set-level invariants and version/conflict handling
 
 Data Mapper
-  → Unit of Work, Identity Map, Lazy Load
+  → optional Unit of Work, Identity Map, Lazy Load (common ORM mechanisms)
   → Metadata Mapping        (annotations or external)
   → Query Object            (for composition beyond derived methods)
 
@@ -121,7 +127,8 @@ Active Record
     and with using the same type as the API payload
 
 Repository
-  → Aggregate boundary      (without one, it is a DAO)
+  → collection-like domain-object access
+  → aggregate-root boundary when adopting DDD aggregates
   → Query Object            (for the criteria it exposes)
   → a separate read model   (for everything it should not serve)
 
@@ -129,7 +136,7 @@ Remote Facade
   → DTO                     (always)
   → Idempotency             (writes, because clients retry)
   → Gateway                 (on the calling side)
-  ↛ conflicts with fine-grained services behind it
+  ↛ remote chattiness left in the operation; local fine-grained calls are compatible
 
 Optimistic Offline Lock
   → Identity Field, version column
@@ -149,22 +156,34 @@ Front Controller
 Distribution
   → Remote Facade + DTO
   → Idempotency, timeouts, retries, circuit breaking
-  → saga or outbox          (atomicity is gone)
-  ↛ conflicts with a shared database, shared DTO libraries, and
-    synchronous chains three or more hops deep
+  → assess cross-resource atomicity; saga/outbox only for the actual coordination need
+  ↛ shared database/schema or DTO release coupling; synchronous chains exceeding
+    measured latency/availability budgets (no universal hop-count threshold)
 ```
 
 ## Using the graph
 
 Two ways, both cheap:
 
-**Forward** — having chosen a pattern, check that its implications are present. A Domain
-Model with no Service Layer and no aggregate-level versioning has two implications
-unfulfilled; each is a question, not necessarily a defect.
+**Forward** — having chosen a pattern, inspect the relevant collaborators. For a Domain
+Model without a Service Layer or aggregate versioning, identify who owns use-case policy
+and concurrency instead; those named mechanisms are not mandatory.
 
 **Backward** — seeing a pattern in code, check that its prerequisites are present. A
-Repository with no aggregate is a DAO; a Remote Facade with no DTO is leaking the model; an
+Repository should provide collection-like domain access; check aggregate-root boundaries
+when the model uses DDD aggregates. A Remote Facade with no explicit wire contract risks model leakage; an
 Optimistic Offline Lock with no conflict handling is a version column that produces 500s.
+
+For aggregate versioning, verify every relevant child mutation participates in the root's
+conflict protocol; placing `@Version` only on the root does not establish that automatically.
+Inspect the ORM version/mapping and test two concurrent edits. These are conceptual Java
+compositions, not executable configurations or permission to upgrade the project's stack.
+
+Primary definitions: [Remote Facade](https://martinfowler.com/eaaCatalog/remoteFacade.html),
+[Service Layer](https://martinfowler.com/eaaCatalog/serviceLayer.html),
+[Active Record](https://martinfowler.com/eaaCatalog/activeRecord.html), and
+[Repository](https://martinfowler.com/eaaCatalog/repository.html), plus
+[Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html).
 
 ## Explaining an existing architecture
 

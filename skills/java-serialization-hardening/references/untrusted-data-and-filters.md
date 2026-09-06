@@ -46,8 +46,11 @@ can write these bytes?
 
 ## Filters (JEP 290 and JEP 415)
 
-`ObjectInputFilter` inspects each class, array length, graph depth, reference count and stream
-size before the object is created. Three ways to apply it:
+`ObjectInputFilter` checks selected classes, array lengths and graph metrics during reading.
+It is not called for concretely encoded `String` instances or primitive values, and `maxbytes`
+is evaluated only at filter callbacks. Bound total input independently before buffering and
+through a bounded stream while reading; a large string must not bypass the resource budget.
+Three ways to apply it (partial snippets; supply `java.io` imports and application types):
 
 ```java
 // 1. Per stream — the narrowest and the one to prefer
@@ -60,9 +63,9 @@ in.setObjectInputFilter(filter);
 ```
 
 ```properties
-# 2. JVM-wide baseline, as a system property or in conf/security/java.security.
+# 2. JVM-wide baseline in conf/security/java.security.
 # java.base/* is broad; narrow it when the application's graph is known.
--Djdk.serialFilter=maxdepth=20;maxarray=10000;maxrefs=1000;maxbytes=1048576;com.acme.**;java.base/*;!*
+jdk.serialFilter=maxdepth=20;maxarray=10000;maxrefs=1000;maxbytes=1048576;com.acme.**;java.base/*;!*
 ```
 
 ```java
@@ -70,6 +73,11 @@ in.setObjectInputFilter(filter);
 //    including for streams created by libraries you do not control
 ObjectInputFilter.Config.setSerialFilterFactory(new PerContextFilterFactory());
 ```
+
+For a command line, pass the complete `-Djdk.serialFilter=...` argument quoted for the shell
+so semicolons stay in the property. Install process-wide policy only in application-owned
+startup configuration, and test factories in isolated JVMs. Close input streams on success
+and failure; per-stream filters must be installed before the first object read.
 
 Rules for writing one:
 
@@ -91,11 +99,17 @@ Rules for writing one:
 - **Test the filter**, including that it rejects a class you deliberately removed from the
   allow-list; filters written and never exercised are frequently misspelled and silently
   permissive.
+- Include an oversized serialized string, primitive arrays above the configured limit, and a
+  harmless denied class with an observable read hook. The denied hook must not execute, and
+  the outer byte cap must reject oversized input even when the class filter receives no callback.
 
 Filters reduce the reachable surface. They do not make deserialization of hostile input safe:
 if any allowed class is itself a usable gadget, the filter passes it. A filter is invoked zero or
 more times and sees classes/array lengths/graph metrics, not domain field validity; keep invariant
 validation and outer request-size/deadline controls.
+
+Primary API details: [ObjectInputStream filter invocation](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/ObjectInputStream.html#setObjectInputFilter(java.io.ObjectInputFilter)>)
+and [ObjectInputFilter factory/composition](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/ObjectInputFilter.html).
 
 ## Removing the mechanism
 

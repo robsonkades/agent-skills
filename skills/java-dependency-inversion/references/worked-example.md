@@ -1,5 +1,10 @@
 # Worked example: notification dispatch decoupled from its transport
 
+These are partial Java 17-compatible snippets, not a complete mail application. `Order`
+is an existing domain type with the shown accessors; `SmtpClient` and `SmtpMessage` are
+illustrative vendor placeholders, not supplied dependencies. Public types belong in their
+own named files; the recording double also needs `java.util.List` and `ArrayList` imports.
+
 ## Before
 
 Order confirmation policy, welded to SMTP:
@@ -29,8 +34,9 @@ public final class OrderConfirmer {
   separate product decision: this contract currently contains an email destination, so a truly
   multi-channel policy may honestly require its own contract change.
 - `new SmtpClient(...)` inside the class hides the dependency and hardcodes the
-  endpoint; no test can run `confirm` without a mail server or bytecode-level
-  mocking of `SmtpClient`.
+  endpoint; under the assumed directly connecting client, a test needs a mail server or
+  interception. Inspect the actual client's existing test hooks before concluding a new
+  seam is necessary.
 - The seam test passes on two counts: the mail relay is a system boundary, and the
   policy needs a test double that cannot otherwise be built. Inversion is
   justified — this is not an interface-for-its-own-sake case.
@@ -128,6 +134,14 @@ final class RecordingSender implements ConfirmationSender {
 The test constructs `new OrderConfirmer(new RecordingSender())` and asserts on
 `sent` — outcomes, not interaction scripts. No framework, no network.
 
+For this sketch, `send` is synchronous and `OrderConfirmer` does not catch failures. A
+throwing double should demonstrate propagation with no policy retry or success signal.
+Before implementing the adapter, define the policy-level failure type and map actual SDK
+exceptions there; neither this placeholder adapter nor the double verifies that mapping.
+Returning normally is evidence of the adapter's configured handoff, not proof that a customer
+received mail. The composition root owns the shared client's shutdown if that API requires
+closing; a borrowed client must not be closed after each call by policy code.
+
 ## Trade-offs
 
 - Three types now exist where one did: port, adapter, root. Navigation from
@@ -144,9 +158,12 @@ The test constructs `new OrderConfirmer(new RecordingSender())` and asserts on
 
 ## Verification
 
-- `shop.orders` compiles with `shop.smtp` absent from the classpath or module
-  graph (`jdeps` shows no edge; under JPMS the policy module has no `requires`).
+- `shop.orders` compiles with `shop.smtp` absent from the classpath/module path;
+  `jdeps` shows no static edge. Under JPMS it reads only `java.base` in this sketch.
 - The policy test suite runs with the recording double only.
+- A throwing double checks the declared failure behavior. Adapter tests separately check
+  recipient/subject/body translation and vendor-failure mapping; run a wiring/integration
+  check with an isolated transport before claiming the full notification path works.
 - Replacing one email transport with another touches a new adapter and the composition root, not
   `shop.orders`. Adding SMS changes only adapters **only if** the policy contract was already
   channel-neutral and carried a valid phone destination; this example deliberately is not.

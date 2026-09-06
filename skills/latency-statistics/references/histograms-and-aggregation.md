@@ -56,7 +56,8 @@ metric names match.
 
 A sample quantile is an estimator based on order statistics. Multiple interpolation conventions
 exist (Hyndman–Fan enumerate nine), so small-sample results can differ across tools. For empirical
-CDF/type-1 semantics, p99 over 200 observations is near the second-largest observation: it is a
+CDF/type-1 semantics, p99 over 200 observations is order statistic `ceil(200 × .99) = 198`,
+the third-largest when values are distinct: it is a
 valid sample statistic, but a noisy estimate of a population tail.
 
 `n(1-p)` is the expected count beyond population quantile `p`, useful as a resolution warning—not
@@ -90,8 +91,9 @@ Timer timer = Timer.builder("http.server.duration")
 - Range, unit and precision jointly determine footprint. Use
   `getEstimatedFootprintInBytes()` on the actual configuration rather than copying a universal
   kilobyte figure.
-- Plain `Histogram` has a single-writer contract. Use `Recorder`, `SingleWriterRecorder` or a
-  concurrent variant according to ownership, and obtain interval histograms without racing reset.
+- Plain `Histogram` is unsynchronized: a single writer alone does not make concurrent reads,
+  merging or reset safe. Use `Recorder`, `SingleWriterRecorder` or a concurrent variant
+  according to ownership, and obtain stable interval snapshots without racing reset or reuse.
 - Adding can fail or lose the intended precision when the destination cannot represent a source
   value/configuration. Pre-size the destination, test merge compatibility, and count failures;
   auto-resize trades bounded memory for resilience.

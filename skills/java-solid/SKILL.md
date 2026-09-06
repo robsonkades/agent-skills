@@ -22,6 +22,11 @@ evidence of concrete harm or a credible committed constraint; otherwise there is
 
 ## Workflow
 
+0. **Establish compatibility and contract scope.** Inspect compiler release/toolchains,
+   framework requirements, public consumers and accepted null/error/mutation behavior.
+   The worked refactoring targets Java 21 without preview; records need Java 16+, sealed
+   types Java 17+, and pattern switches/record patterns Java 21+ without preview. Keep older
+   targets using ordinary classes/polymorphism rather than upgrading or enabling preview.
 1. **Read the change, requirements, ownership and history.** For mature code, `git log --follow`
    exposes independent pressures. For new code, use accepted requirements, extension contracts,
    team/release boundaries and known failure modes; invented future variation is not evidence.
@@ -39,14 +44,16 @@ evidence of concrete harm or a credible committed constraint; otherwise there is
 
 ## Finding format
 
-Observation → impact → evidence → recommendation → what to avoid. One finding:
+Observation → impact → evidence → recommendation → validation → what to avoid.
+Use actual repository evidence; the counts in this illustrative finding are not facts to reuse:
 
 > **Observation:** `TariffService` computes customs duty and renders the CSV
 > customs declaration. **Impact:** the next duty-rule change risks breaking the
 > declaration format, which the customs broker parses. **Evidence:** 14 commits in
 > six months — 9 touch only rate logic, 5 touch only CSV layout; two different
 > authors own them. **Recommendation:** move declaration rendering behind its own
-> type; the duty calculator keeps no knowledge of the file format. **Avoid:**
+> type; the duty calculator keeps no knowledge of the file format. **Validation:** compare
+> duty outcomes and exact CSV output for existing caller fixtures. **Avoid:**
 > splitting the calculator itself — its methods change together, so it is one
 > responsibility regardless of its size.
 
@@ -66,14 +73,19 @@ Observation → impact → evidence → recommendation → what to avoid. One fi
   thread-safety/nullness guarantees, and equality policies that become asymmetric across
   subclasses. A more specific exception for the same documented failure is not a violation.
 - ISP: judge an interface by its clients, not its method count. The evidence is a
-  client depending on methods it never calls, or an implementor forced to throw
-  `UnsupportedOperationException`.
+  client harmed by capabilities/changes it does not need, or an implementor unable to honor
+  required operations. Unused methods or `UnsupportedOperationException` are signals, not
+  proof: inspect optional-operation and failure contracts first.
 - DIP in one paragraph: policy should not depend on mechanism; both depend on
   abstractions — but only where a genuine seam exists, because an interface with
   one implementation and no seam is indirection. The full treatment — ports and
   adapters, plain-Java injection, JPMS, the interface-per-class critique — is the
   java-dependency-inversion skill. Consult it before any finding that asks for a
   new interface.
+
+For an implemented recommendation, distinguish mechanical restructuring from API, validation
+or policy changes; report checks actually run. Missing history does not establish independent
+responsibilities, and a new interface does not by itself demonstrate lower coupling.
 
 ## References
 

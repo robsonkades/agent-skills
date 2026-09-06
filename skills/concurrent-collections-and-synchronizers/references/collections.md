@@ -36,6 +36,12 @@ final class Frequencies {
 `computeIfAbsent` here is safe because `new LongAdder()` allocates and returns; it takes no lock,
 performs no I/O and touches no map.
 
+The frequency example never removes/replaces counters; otherwise an increment may land on
+a detached `LongAdder`. `sum()` is not an atomic snapshot during concurrent updates, so this
+is telemetry, not an exact quota or balance. Likewise `compute` serializes mapping updates,
+not arbitrary mutations through leaked value references: prefer immutable replacement values
+or give the mutable value its own synchronization contract.
+
 **Not atomic, whatever the map:** `putAll` and `clear` ("may reflect insertion or removal of only
 some entries"), and the bulk `forEach`/`search`/`reduce` family, whose result "is not necessarily
 atomic with respect to the map as a whole unless it is somehow known to be quiescent".
@@ -156,8 +162,17 @@ so a concurrent refresh that already installed a new one is not clobbered. It al
 concurrent-waiter case safe — two callers sharing one future both see the same
 `ExecutionException`, and the second removal is a no-op rather than a clobber.
 
-If you need eviction, refresh or statistics as well, stop hand-rolling and use a cache library —
-Caffeine's `AsyncLoadingCache` removes failed entries for you.
+This minimal memoizer has no size/expiry bound and caches a successfully returned null inside
+the Future. Require bounded key cardinality or a real cache policy. Loaders for one key must
+mean the same thing, and must not recursively request the same key or form cross-key cycles:
+the future can otherwise wait for its own completion. Loading runs on the winning caller;
+`get()` provides neither an operation timeout nor a way to stop a stuck loader. Interrupting
+a waiting caller does not cancel shared loading. If a winning loader throws
+`InterruptedException`, it is wrapped in `ExecutionException`; the caller must apply its
+cancellation policy rather than assume this method propagated interruption directly.
+
+For eviction, refresh or statistics, evaluate an existing cache library against the project's
+version and failure/cancellation semantics instead of expanding this illustration blindly.
 
 ## Views, counts and iteration
 
@@ -173,11 +188,11 @@ Caffeine's `AsyncLoadingCache` removes failed entries for you.
 
 Choosing a set view:
 
-| Want                          | Use                             | Note                                         |
-| ----------------------------- | ------------------------------- | -------------------------------------------- |
-| a new concurrent set          | `ConcurrentHashMap.newKeySet()` | also `newKeySet(int initialCapacity)`        |
-| a mutable set view over a map | `map.keySet(sentinel)`          | `add` inserts `sentinel`; NPE if null        |
-| a read-only key view          | `map.keySet()`                  | `add` throws `UnsupportedOperationException` |
+| Want                          | Use                             | Note                                               |
+| ----------------------------- | ------------------------------- | -------------------------------------------------- |
+| a new concurrent set          | `ConcurrentHashMap.newKeySet()` | also `newKeySet(int initialCapacity)`              |
+| a mutable set view over a map | `map.keySet(sentinel)`          | `add` inserts `sentinel`; NPE if null              |
+| a removal-capable key view    | `map.keySet()`                  | additions unsupported; remove/clear affect the map |
 
 Bulk operations take a `parallelismThreshold` and run on `ForkJoinPool.commonPool()` — shared with
 parallel streams and `CompletableFuture`'s default async execution. `Long.MAX_VALUE` suppresses

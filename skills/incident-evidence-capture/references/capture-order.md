@@ -118,13 +118,19 @@ Before histogram/dump:
 memory hypothesis and why heap evidence distinguishes it
 target drained/serving state and minimum capacity
 live-only versus all-object semantics
-measured comparable capture duration/bytes and worst-case margin
+measured comparable elapsed capture time, safepoint pause, bytes and worst-case margin
 volume free bytes/inodes, IOPS/blast radius, upload bandwidth
 liveness/watchdog/termination/OOM risk during capture
 JDK-supported compression/parallel options and their measured trade-offs
 privacy classification and authorized analysts
 abort/cancel semantics and partial-file handling
 ```
+
+For OpenJDK 25, heap walking occurs inside the `VM_HeapDumper` safepoint and output merging
+occurs afterward in `DumpMerger`. Budget and measure both phases: the overall command/JFR
+heap-dump duration is not a safepoint-duration measurement. Merging can continue consuming
+CPU/I/O after application threads resume. Preserve relevant safepoint logs/events rather than
+deriving a pause from the artifact's timestamps.
 
 Never pipe the dump through a network connection as the only copy unless interruption behavior
 and partial detection are proven. Prefer local durable completion plus verified upload when
@@ -177,6 +183,7 @@ timeline.
 ## Authoritative references
 
 - [JDK 25 `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+- [OpenJDK 25 heap dumper source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/services/heapDumper.cpp) — the safepoint walk and subsequent merge phases.
 - [JDK 25 troubleshooting guide](https://docs.oracle.com/en/java/javase/25/troubleshoot/)
 - [Kubernetes debug running pods](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/)
 - [Kubernetes resource metrics pipeline](https://kubernetes.io/docs/tasks/debug/debug-cluster/resource-metrics-pipeline/)

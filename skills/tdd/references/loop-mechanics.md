@@ -1,10 +1,22 @@
 # The loop, executed
 
-A real session on JDK 25 with Jupiter 6.1.3 and AssertJ 3.27. Every output below is the actual
-runner output, not a reconstruction.
+The five stages were reproduced with JDK 25.0.3, Jupiter 6.1.3 and AssertJ 3.27.7, compiling
+with `--release 17`: pass/fail counts were 0/1, 1/0, 7/1, 8/0 and 8/0. The failure excerpts
+below match that run; stack-line numbers and runner formatting are version-dependent.
+The snippets are partial: supply `java.math.*`, `java.util.*`, Jupiter `Test`,
+`ParameterizedTest`, `ValueSource`, and static AssertJ `Assertions.*` imports in the project's
+test source layout, then use its focused test command. Jupiter 6 requires Java 17 or later;
+the example's production APIs also compile with `--release 17`. Keep an older project's
+existing supported runner rather than upgrading it for this walkthrough.
 
 **The requirement:** split a total into N instalments in cents, such that the instalments
 always sum back to the total.
+
+For this small exercise, `total` is non-null, nonnegative and already expressed in exact
+whole cents (`total.setScale(2, RoundingMode.UNNECESSARY)` succeeds); count is bounded by the
+caller so allocating a list is reasonable. All leftover cents go to the first instalment,
+which need not be within one cent of the others. Validation of fractional-cent, null,
+negative and excessive-count inputs is outside this iteration, not implemented protection.
 
 ## Red 1 — a failing test, and a stub that fails honestly
 
@@ -65,8 +77,8 @@ static List<BigDecimal> split(BigDecimal total, int count) {
 ```
 
 `RoundingMode.DOWN` and an explicit remainder rather than `HALF_UP` on each share: rounding
-each instalment independently is the classic way to end up a cent short of the total. There is
-no test for that yet — which is exactly what the next step is for.
+each instalment independently can leave the sum short or over the total. The first test
+covers one uneven split; the next step checks more selected counts.
 
 ## Red 2 — stating the invariant finds a real defect
 
@@ -113,12 +125,13 @@ Two things happened, and both are the loop doing its job:
   single cent. That is evidence the `DOWN`-plus-remainder approach was right — evidence the
   first test alone did not provide.
 - The degenerate case exposed a defect that had already been written and would have shipped: a
-  caller passing 0 gets `ArithmeticException: / by zero` from deep inside `BigDecimal`, not a
+  caller passing 0 gets an `ArithmeticException` from `BigDecimal`, not a
   message naming their mistake.
 
-`isEqualByComparingTo`, not `isEqualTo`: `BigDecimal.equals` compares scale, so `100.00` and
-`100.0` are unequal. Asserting a sum with `isEqualTo` produces a failure that looks like an
-arithmetic bug and is a scale mismatch (java-test-design).
+`isEqualByComparingTo` checks numeric conservation; `BigDecimal.equals` also compares scale.
+If two-decimal representation is part of the contract, assert scale separately rather than
+letting numeric equality hide a fractional-cent value. Neither six selected counts nor a
+passing example proves the invariant for every input.
 
 ## Green 2
 
@@ -157,10 +170,14 @@ verified is an edit.
 
 ## What the session shows about step size
 
-Four runs, each under a minute of work, each with an unambiguous result. When a step goes
-wrong the cause is in the last edit, and the fix is to revert that edit rather than to debug.
+Five stages are shown, including the post-refactor run. Small changes narrow investigation,
+but a failure can still arise from setup, nondeterminism or environment. Inspect the failure
+before reverting an isolated edit; do not discard unrelated work.
 
 The step that would have been too big: writing `split`, the validation, the invariant and a
 currency-aware variant before running anything. The suite would then have gone red in three
 places at once, and separating an arithmetic mistake from a validation mistake from a scale
 mistake is exactly the debugging the loop exists to avoid.
+
+Compatibility and arithmetic contracts: [JUnit 6 guide](https://docs.junit.org/6.0.0/user-guide/)
+and [BigDecimal API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html).

@@ -2,12 +2,17 @@
 
 ## The two directions, and who deploys first
 
-| Property            | A reader on …                            | Deploy order                    | Changes that keep it                                         |
-| ------------------- | ---------------------------------------- | ------------------------------- | ------------------------------------------------------------ |
-| Backward compatible | the **new** schema can read **old** data | consumers, then producers       | delete a field; add a field that has a default               |
-| Forward compatible  | the **old** schema can read **new** data | producers, then consumers       | add a field; delete a field that had a default               |
-| Full (both)         | either reads either                      | **any order**                   | additive-optional only                                       |
-| Breaking            | neither direction holds                  | none — coordinate or don't ship | rename, retype, narrow, reuse a number, add a required field |
+| Property            | Meaning                                                    | Typical rollout, subject to actual pairs               |
+| ------------------- | ---------------------------------------------------------- | ------------------------------------------------------ |
+| Backward compatible | new reader accepts old writer data with required semantics | consumers before producers                             |
+| Forward compatible  | old reader accepts new writer data with required semantics | producers before consumers                             |
+| Full (both)         | both reader/writer pairs preserve the contract             | either order for those tested versions                 |
+| Incompatible pair   | one required pair fails parsing or semantics               | bridge, restrict rollout pairs or version the contract |
+
+These labels do not classify a field edit by themselves. Defaults, unknown-field behavior,
+presence, aliases, generated APIs and domain meaning determine the result. An optional
+addition can break a strict JSON reader; removing an unused optional field can be compatible
+for tolerant readers. Test each supported format/version and the intended semantics.
 
 Full compatibility permits arbitrary producer/consumer coexistence. A controlled consumer-
 first or producer-first rollout can rely on one direction, but only when services are deployed
@@ -21,21 +26,25 @@ one symmetric retention window.
 
 ## Expand → migrate → contract
 
-**Deploy 1, expand.** Add the new field, endpoint or column alongside the old. Producers
-write both. Consumers tolerate the new one being absent and keep reading the old one. This
-deploy is additive-optional in both directions, so the rolling upgrade is safe.
+**Phase 1, expand.** Add the new field, endpoint or column alongside the old. Producers
+write both. Consumers tolerate the new one being absent and keep reading the old one. Verify old readers tolerate the extra field and new readers accept its absence;
+dual-writing is not automatically safe. Define authoritative value and conflict handling if
+old/new fields disagree, and keep updates consistent through old writers and rollback.
 
-**Deploy 2, migrate.** Backfill stored data. Switch consumers to read the new field, still
+**Phase 2, migrate.** Backfill stored data. Switch consumers to read the new field, still
 falling back to the old. Producers still write both. Nothing is removed.
 
-**Deploy 3, contract.** Stop writing the old field, then remove it — but only once a
-per-field or per-version usage metric shows no consumer reads it, **and** the retention
-window of any stored message containing it has passed. A constraint such as NOT NULL or a
-required-field validation is added here, after the backfill has proved there are no gaps,
-never in deploy 1.
+**Phase 3, contract.** Stop writing the old field, then remove it — but only once a
+supported-client inventory, contract evidence and usage/acknowledgements establish that
+required readers no longer depend on it. Field reads inside clients may not be observable
+at the server. Stored old data may remain if readers retain tested aliases/defaults or a
+migration adapter; elapsed retention alone does not address backups and replay. A constraint such as NOT NULL or a
+required-field validation can be added only after data and every still-supported writer meet
+it, including rollback writers; a successful backfill alone is insufficient.
 
-A rename is exactly this sequence: add the new name, write both, move readers, delete the old
-name. There is no rename operation on a contract.
+This sequence is a common rename bridge, not the only one. Protobuf binary identity uses
+field numbers and Avro reader aliases can support selected renames; JSON, generated APIs,
+reflection and application semantics still require independent checks.
 
 ## Per format
 
@@ -75,8 +84,9 @@ Ship a new major version when:
 - the operation's idempotency or ordering properties change
 
 Avoid a new version when:
-- the change is an optional field, a new endpoint, or a new enum value for which every
-  deployed/generated reader has tested unknown-value behaviour
+- the change is an optional field, a new endpoint, or a new enum value and the affected
+  deployed/generated clients have tested compatible behavior (including strict schemas,
+  unknown values and routing interactions)
 - the change is only to human-readable text, diagnostics or documentation
 
 Prefer expand-and-contract instead when:
@@ -87,8 +97,9 @@ Prefer expand-and-contract instead when:
 ```
 
 When a new version does ship, both must run simultaneously for the whole deprecation, and
-retirement is gated on a requests-per-version metric carrying a client identifier. Without
-that metric the old version is removed on a guess.
+retirement needs evidence covering supported callers and replay. Version metrics, protected
+client-level logs and consumer acknowledgements can contribute; avoid unbounded client-ID
+metric labels and account for dormant clients.
 
 ## What a consumer-driven contract test proves
 
@@ -103,8 +114,9 @@ anything about latency, ordering or failure paths that were never recorded; or t
 fixture state resembles production.
 
 Two operational rules follow. Provider verification runs in the **provider's** pipeline
-against every registered consumer's expectations and blocks its deploy — run nightly, it
-documents breakage instead of preventing it. And error responses need recorded interactions
+against the consumer versions the candidate can actually coexist with, according to the
+existing deployment policy. Registered historical versions outside support need not all
+block forever; nightly verification alone cannot prevent an intervening incompatible deploy. And error responses need recorded interactions
 too: a suite covering only happy paths leaves the error contract, which is the part clients
 branch on, entirely unverified.
 
@@ -126,3 +138,4 @@ branch on, entirely unverified.
 - [Protocol Buffers field presence](https://protobuf.dev/programming-guides/field_presence/)
 - [Apache Avro specification: schema resolution](https://avro.apache.org/docs/current/specification/#schema-resolution)
 - [JSON Schema specification](https://json-schema.org/specification)
+- [Jackson 3.0 release notes](https://github.com/FasterXML/jackson/wiki/Jackson-Release-3.0) — changed unknown-property default; inspect the actual target mapper.

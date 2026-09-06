@@ -6,7 +6,7 @@ The question this answers: _"we are about to store N of these — should it be a
 final class, a primitive array, four parallel primitive arrays, or a map?"_ — asked before
 any code exists, with no duplicates to share, no heap dump to read and no symptom to
 diagnose. If the framing is instead _many duplicates of a small distinct set_, that is
-`gof-flyweight`'s question and interning beats every shape below.
+`gof-flyweight`'s question: evaluate sharing, lookup overhead and retention there.
 
 **Environment.** Temurin **25.0.3+9**, Windows x64, `-Xmx6g`, JOL `jol-core:0.17`,
 `GraphLayout.totalSize()`, N = 1,000,000, both header modes on the same build `[executed]`.
@@ -54,7 +54,7 @@ columnar layout on a large one, and a population large enough to ask the questio
 what pushes the heap past the threshold in the first place.
 
 `HashMap<Integer,Integer>` is the starkest row: **88,777,296 → 88,777,288**, an 8-byte saving
-on 88 MB. Above the threshold compact object headers do essentially nothing for a boxed map at
+on 88 MB. Above the threshold compact object headers do essentially nothing for this Integer map at
 any size — the same conclusion §3 of `compact-object-headers.md` reaches at N = 1000, holding
 three orders of magnitude up.
 
@@ -62,8 +62,10 @@ three orders of magnitude up.
 
 **Parallel primitive arrays are the floor, and they are exactly the payload.** 24.00 bytes
 per element against 24 bytes of data: the four array headers are amortised across a million
-elements and vanish into the third decimal place. Nothing beats this, and nothing needs to —
-the question is what the other shapes buy for their overhead.
+elements and vanish into the third decimal place. This is the floor among these uncompressed,
+full-width representations, not an information-theoretic limit: bounded domains may admit
+packing/compression, with their own access/update costs. Compare equivalent required operations;
+two arrays do not supply HashMap lookup semantics without an additional algorithm or index.
 
 **A record costs exactly what a final class costs.** 44.00 versus 44.00, byte for byte, in
 both modes. `record` is not a footprint optimisation and is not a footprint pessimisation;
@@ -82,7 +84,7 @@ backing array grows by 1.5× and can be up to 50% larger than needed — measure
 `GraphLayout.totalSize()` on the real thing, not on a presized model, if capacity is not
 controlled.
 
-**A `HashMap` costs four times its payload, and boxing is most of it.**
+**The map rows pay for nodes, spare table capacity and boxes as well as payload.**
 `HashMap<Integer,Integer>` is **9.0×** two `int[]` under classic headers and **8.0×** under
 compact. That is not a tuning problem; it is a shape problem. The components at N = 1000
 (`compact-object-headers.md` §3) show where every byte goes: the `Node[]` table, one 32-byte
@@ -126,8 +128,9 @@ at best and an 8-byte loss at worst, and it trades away every field name for tha
 The break-even is therefore not about object size at all. It is about **how many headers the
 array replaces**:
 
-- **One object → one array of its fields:** never worth it. Tie or loss, in both modes.
-- **N objects → one array per field (columnar / parallel arrays):** worth it, and this is the
+- **One object → one array of the same full-width primitive fields:** no footprint win in
+  these tested shapes; other semantics or representations require a fresh comparison.
+- **N objects → one array per field (columnar / parallel arrays):** footprint can fall, and this is the
   whole win — 44 → 24 bytes per element at N = 1,000,000, because you replaced a million
   headers with four.
 
@@ -150,7 +153,8 @@ a recommendation that ignores the following is not a recommendation:
   one array being resized without the others. Domain-modelling skills own this trade; the
   bytes here are one input to it.
 - **The columnar shape is a rewrite, not a refactor.** Every read site changes. The 20 bytes
-  per element it saves are worth 800 MB at 40 M elements and nothing at 40 K.
+  per element it saves are worth 800 MB at 40 M elements and 0.8 MB at 40 K; whether the
+  latter matters depends on the actual budget.
 - **`ClassLayout` is shallow.** Every deep number on this page came from
   `GraphLayout.totalSize()`. A shape holding `String` fields will have a deep footprint
   several times its shallow one — `new String("EUR")` is 24 shallow and 48 deep `[executed]`.
@@ -158,9 +162,10 @@ a recommendation that ignores the following is not a recommendation:
 - **Nothing here is a performance measurement.** Be precise about the causal claim too, since
   footprint per object, allocated byte rate, live-set bytes and RSS are four different
   quantities. Halving object size at a constant object count reduces live-set bytes and
-  allocated bytes but not allocation _count_. Fewer live bytes reduce marking and evacuation
-  work for a collector whose cost tracks the live set; young-collection frequency falls only
-  if the allocated byte rate falls with it, and either effect can be zero. Neither is measured
+  allocated bytes but not allocation _count_ at unchanged lifetimes and operation rates.
+  Marking often tracks object/reference counts, so shrinking primitive payload or headers
+  need not reduce it; copying and collection frequency depend on collector behavior, budget
+  and allocation rate. Either benefit can be zero. Neither is measured
   here, and no JMH benchmark was run. If the argument for the change is speed rather than
   headroom, it needs a benchmark — `java-performance`'s territory, not this one.
 
@@ -171,8 +176,10 @@ Report, in this order:
 1. **N**, stated. Without it there is no answer, only a per-object size.
 2. **Payload bytes** — the fields, summed, before any header.
 3. **The table**: each candidate shape, total at N and bytes per element, in **both** header
-   modes, with the build and tool named.
-4. **The overhead ratio** per shape (bytes per element ÷ payload bytes). 1.00 is the floor.
+   modes when supported, with the build and tool named. Unsupported modes are explicitly
+   source-derived models, not a reason to upgrade the target.
+4. **The overhead ratio** per shape (bytes per element ÷ payload bytes), when payload is
+   nonzero. 1.00 is the full-width uncompressed payload baseline for these comparisons.
 5. **The break-even N** at which the cheapest shape stops being worth its cost in type safety
    and rewrite effort — usually where the saving crosses a container memory limit or a
    compressed-oops boundary, both of which are `jvm-memory-regions`' and

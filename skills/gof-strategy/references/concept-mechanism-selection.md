@@ -20,21 +20,21 @@ the concept. Naming the level resolves them.
 
 ## Mechanism: lambda or named type
 
-| Criterion                                      | Lambda / method reference | Named type |
-| ---------------------------------------------- | ------------------------- | ---------- |
-| One operation                                  | ✓                         | ✓          |
-| Two or more operations (`apply` + `supports`)  | ✗                         | ✓          |
-| Selected by a key from data                    | Awkward                   | ✓          |
-| Needs injection or its own dependencies        | ✗                         | ✓          |
-| Must be decorated (cached, timed, retried)     | Possible, unreadable      | ✓          |
-| Appears by name in stack traces and profiles   | ✗ — `lambda$foo$3`        | ✓          |
-| Has its own tests and its own reason to change | Possible                  | ✓          |
-| Supplied by the caller                         | ✓                         | Heavy      |
-| Defined at the call site, used once            | ✓                         | ✗          |
+| Criterion                                      | Lambda / method reference             | Named type                   |
+| ---------------------------------------------- | ------------------------------------- | ---------------------------- |
+| One operation                                  | ✓                                     | ✓                            |
+| Two or more operations (`apply` + `supports`)  | ✗                                     | ✓                            |
+| Selected by a key from data                    | Map/registration metadata             | ✓                            |
+| Needs injection or its own dependencies        | Captured references                   | ✓                            |
+| Must be decorated (cached, timed, retried)     | Function composition                  | ✓                            |
+| Appears by name in stack traces and profiles   | Named method references/tags can help | Named methods/types can help |
+| Has its own tests and its own reason to change | Possible                              | ✓                            |
+| Supplied by the caller                         | ✓                                     | Heavy                        |
+| Defined at the call site, used once            | ✓                                     | ✗                            |
 
-The diagnosability row is under-weighted. A calculation that will appear in a flame graph, a thread
-dump or an error report should have a class name; `PricingService.lambda$price$2` in a production
-stack trace costs more time than the class would have cost to write
+Choose a diagnostic identity that operators can use: named methods/types or bounded metric/log
+metadata. A lambda's captured dependencies still need correct lifetime and thread-safety contracts;
+capture does not copy or freeze the referenced objects
 (`flame-graph-analysis`).
 
 ```java
@@ -52,18 +52,19 @@ final class TieredVolumeDiscount implements DiscountRule { /* named, injected, t
 ```
 
 Declaring a domain-named functional interface rather than reusing `Function<Order, Money>` costs
-one file and buys a name at every call site, in every profile, and in every error.
+one file and supplies domain vocabulary at typed call sites; it does not guarantee a label in every
+optimized profile or exception trace.
 
 ## Selection mechanisms
 
-| Mechanism                                     | Fails how                                                             |
-| --------------------------------------------- | --------------------------------------------------------------------- |
-| `if/else` chain on a code                     | Silently falls through to the last `else`; grows without bound        |
-| `Map<Key, Strategy>`                          | Missing key returns `null` unless handled — handle it                 |
-| Sealed key + exhaustive `switch`              | Cannot fail; a new key breaks compilation. Best when closed           |
-| Injected `List<Strategy>` + `supports()`      | Order matters and is implicit; two may match                          |
-| Injected `Map<String, Strategy>` (bean names) | The key is a bean name — a rename silently changes behaviour          |
-| `ServiceLoader`                               | Class-path dependent; no compile-time guarantee; ordering unspecified |
+| Mechanism                                     | Fails how                                                                            |
+| --------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `if/else` chain on a code                     | Silently falls through to the last `else`; grows without bound                       |
+| `Map<Key, Strategy>`                          | Missing key returns `null` unless handled — handle it                                |
+| Sealed key + exhaustive `switch`              | Checks known cases at compilation; null, binary evolution and branch failures remain |
+| Injected `List<Strategy>` + `supports()`      | Order matters and is implicit; two may match                                         |
+| Injected `Map<String, Strategy>` (bean names) | Generated bean names may change on rename; explicit names are separate contracts     |
+| `ServiceLoader`                               | Class-path dependent; no compile-time guarantee; ordering unspecified                |
 
 ```java
 // keyed by something the strategy declares, validated at startup
@@ -75,17 +76,16 @@ Map<ShippingMethod, ShippingCost> shippingCosts(List<ShippingCost> strategies) {
     var missing = EnumSet.allOf(ShippingMethod.class);
     missing.removeAll(byMethod.keySet());
     if (!missing.isEmpty()) throw new MissingStrategies(missing);      // fail at startup
-    return byMethod;
+    return Map.copyOf(byMethod); // freeze the validated registry; strategies need their own contracts
 }
 ```
 
-Two guarantees for the price of six lines: a duplicate key fails the build's startup test rather
-than silently winning, and a method with no strategy is discovered at deploy rather than by the
-first customer who chooses it.
+When this factory runs, duplicate and missing required keys fail. Ensure context tests exercise
+it and required validation runs before readiness; lazy bean creation can otherwise defer discovery.
 
 Binding to Spring bean names (`Map<String, Strategy>`) is convenient and fragile: the key becomes a
-bean name, so renaming a class changes behaviour, and nothing in the code says which names are
-expected.
+bean name; renaming can change generated names, while explicitly named beans keep their name.
+Use stable domain keys and test the required configured set.
 
 ## The constants test
 
@@ -113,9 +113,9 @@ shipping:
     OVERNIGHT: 24.99
 ```
 
-The saving is not the three classes. It is that a rate change becomes a configuration change
-rather than a deployment, and that the rates are visible in one place instead of spread across a
-package.
+Rates become visible together. Avoiding a deployment additionally requires an approved reload and
+distribution mechanism; startup-loaded configuration still needs restart. Validate currency, range,
+rounding and version consistency, not merely YAML syntax.
 
 The inverse mistake also exists: pushing genuine branching logic into configuration until the
 config file is a programming language with no type checking. The line is whether the difference is
@@ -134,15 +134,15 @@ class TieredDiscount implements DiscountRule {
 }
 ```
 
-Strategies are selected once and shared. Any mutable field is shared by every concurrent caller,
-and the symptom — one customer's discount influenced by another's order — is intermittent,
-unreproducible and reaches production.
+Strategies may be shared or confined. This accumulator leaks previous-order state even sequentially
+unless accumulation is the intended contract, and concurrent calls add races. Reproduce with distinct
+orders and controlled interleavings; it is not inherently unreproducible.
 
-The rules: fields are `final` and immutable; per-call state is a parameter or a context object; if
-a strategy genuinely needs per-invocation scratch space, allocate it inside the method.
+Keep per-call scratch state local or explicitly owned. Stateful algorithms are valid with a declared
+lifetime, synchronization/confinement and failure policy; final references alone do not imply deep immutability.
 
-An exception worth naming: a strategy holding an immutable configuration object or an injected
-collaborator is fine — that is not per-call state.
+Injected collaborators also need thread-safety/lifetime guarantees. Determinism must include the
+pricing/configuration snapshot, clock and other inputs on which the operation depends.
 
 ## The shared contract test
 
@@ -161,10 +161,9 @@ class TieredVolumeDiscountTest extends DiscountRuleContractTest { ... }
 class CampaignDiscountTest extends DiscountRuleContractTest { ... }
 ```
 
-Every strategy inherits the specification. Adding an invariant to the contract makes every
-non-conforming implementation fail at once, which is the only mechanism that keeps a growing set of
-strategies honest — the fifth one written by someone who never read the first four is exactly where
-"discount exceeds order total" appears.
+Only test invariants the domain actually promises. Determinism/concurrent use require suitable fixed
+inputs and sharing contracts. Ensure every implementation is registered in the test suite; parameterized
+contract tests or reusable assertions can serve the same purpose. A finite test does not prove thread safety.
 
 This is one of the few cases where an inheritance-based test base class is clearly right: the
 subclass supplies a value and inherits a specification (`java-composition-over-inheritance`).
@@ -179,3 +178,7 @@ subclass supplies a value and inherits a specification (`java-composition-over-i
 | A fixed sequence with varying steps            | Template Method (`gof-template-method`) |
 | Several may apply, in order, until one handles | Chain of Responsibility                 |
 | The variation is which object to instantiate   | Factory Method (`gof-factory-method`)   |
+
+Sources: [JLS 17 lambdas and capture](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27),
+[Spring bean collection injection](https://docs.spring.io/spring-framework/reference/core/beans/annotation-config/autowired.html),
+and [Java 21 pattern switch](https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html).

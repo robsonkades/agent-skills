@@ -3,6 +3,10 @@
 The same pattern, two uses with almost nothing in common operationally. Seeing both is what stops
 "we use the Command pattern" from meaning anything on its own.
 
+These are partial Java 17 sketches with domain types/imports and framework implementations
+omitted. Property annotations assume an existing property-testing library. No deployment or
+remote-provider behavior is established by these examples alone.
+
 ## 1. A diagram editor's undo stack
 
 In-process, synchronous, no serialisation, exact inverses available.
@@ -41,23 +45,48 @@ public final class History {
     private final Deque<EditCommand> redo = new ArrayDeque<>();
     private Diagram current;
 
+    public History(Diagram initial) {
+        current = java.util.Objects.requireNonNull(initial, "initial");
+    }
+
     public void execute(EditCommand command) {
-        undo.push(command.inverse(current));
-        current = command.apply(current);
+        var inverse = java.util.Objects.requireNonNull(command.inverse(current));
+        var next = java.util.Objects.requireNonNull(command.apply(current));
+        undo.push(inverse);
+        current = next;
         redo.clear();                     // a new edit invalidates the redo branch
     }
 
     public void undo() {
         if (undo.isEmpty()) return;
-        var inverse = undo.pop();
-        redo.push(inverse.inverse(current));
-        current = inverse.apply(current);
+        var inverse = undo.peek();
+        var forward = java.util.Objects.requireNonNull(inverse.inverse(current));
+        var next = java.util.Objects.requireNonNull(inverse.apply(current));
+        redo.push(forward);
+        undo.pop();
+        current = next;
+    }
+
+    public void redo() {
+        if (redo.isEmpty()) return;
+        var forward = redo.peek();
+        var inverse = java.util.Objects.requireNonNull(forward.inverse(current));
+        var next = java.util.Objects.requireNonNull(forward.apply(current));
+        undo.push(inverse);
+        redo.pop();
+        current = next;
     }
 }
 ```
 
 `redo.clear()` is the line people forget, and its absence produces a redo stack that reapplies
 edits against a diagram they were never computed for.
+
+This ordering preserves history if inverse calculation or application throws, provided `Diagram`
+is immutable and operations do not partially mutate external state. Confine `History` to one
+thread and route every edit through it. Bound history retention. `Move`'s negated delta is exact
+only for reversible arithmetic without rounding, overflow, snapping or clamping; otherwise save
+the prior position. A `Delete` inverse also needs a permitted restoration command in the sealed set.
 
 ### The property test that matters
 
@@ -70,9 +99,10 @@ void undo_restores_the_previous_diagram(@ForAll("diagrams") Diagram before,
 }
 ```
 
-One property, generated inputs, and it covers every command type — including the ones added next
-year. Hand-written undo tests reliably miss the case where a command is applied to a shape that
-another command has since changed.
+Generate valid `(before, command)` pairs, including each supported command; unrelated generators
+can produce missing-shape cases outside the operation's preconditions. Also test execute failure,
+undo failure, redo and branch invalidation. The single inverse property does not exercise history
+ordering or guarantee that future command types are covered by the generator.
 
 ### Stack ordering is a constraint, not a convention
 
@@ -111,6 +141,13 @@ is attempted for a payment that was never marked (`event-driven-architecture`).
 
 ### The handler
 
+Illustrative flow only: before using it, require an atomic unique command claim scoped to tenant
+and operation, payload fingerprint checks, and stored terminal outcomes. `contains` then `record`
+alone races under concurrent delivery. Local payment/dedup records share a transaction; a remote
+gateway does not join it. The gateway must durably deduplicate the same key and payload through
+the entire replay horizon or expose reconciliation for an unknown outcome. Serialize conflicting
+payment transitions or use conditional version checks; different command IDs can target one payment.
+
 ```java
 @Transactional
 public void handle(SettlePayment command) {
@@ -119,7 +156,9 @@ public void handle(SettlePayment command) {
     var payment = payments.byId(command.paymentId())
             .orElseThrow(() -> new UnknownPayment(command.paymentId()));
 
-    if (!payment.isPendingSettlement()) return;                   // already settled elsewhere
+    if (!payment.isPendingSettlement()) {
+        throw new SettlementStateConflict(payment.id());         // classify from actual state
+    }
     if (command.issuedAt().isBefore(clock.instant().minus(SETTLEMENT_WINDOW))) {
         throw new CommandTooOld(command.id(), command.issuedAt());  // → dead letter, not retry
     }
@@ -132,15 +171,17 @@ public void handle(SettlePayment command) {
 
 Five things this handler does that the editor's did not need:
 
-- **Deduplicates by command id**, recorded in the same transaction as the effect.
+- **Deduplicates local recording** under the atomic-claim prerequisite above; the remote effect
+  additionally requires the provider protocol. Acknowledge the queue only after durable outcome.
 - **Re-checks the precondition.** The payment may have been settled by an operator between issue
   and execution; the command's validity when created says nothing about now.
 - **Rejects stale commands.** A settlement command released from a queue after a six-hour outage
   may no longer be appropriate; that is a business rule and it belongs here, explicitly.
-- **Passes the idempotency key downstream**, so the gateway also deduplicates. Idempotency at one
-  layer is not idempotency end to end (`idempotency`).
-- **Distinguishes retry from dead-letter.** `UnknownPayment` and `CommandTooOld` are permanent;
-  retrying them consumes the queue forever (`poison-messages-and-dlq`).
+- **Passes the key downstream**; this helps only when the provider implements the stated contract.
+  A timeout after acceptance needs retry under that guarantee or reconciliation, not a fresh key.
+- **Classifies failures with evidence.** Unknown payment may mean terminal bad input or a bounded
+  ordering/visibility delay. Expiry is a business rule. Record a terminal rejection or bounded retry
+  policy; neither every failure nor every missing payment automatically belongs in a DLQ.
 
 ### Undo does not exist here
 
@@ -159,10 +200,10 @@ public record SettlePayment(CommandId id, int schemaVersion, PaymentId paymentId
                             Instant issuedAt, Optional<AccountId> settlementAccount) { }
 ```
 
-Optional, with a documented default resolved from the payment when absent. The alternative —
-version 2 as a separate type with a translator — is correct for a breaking change and was not
-needed for an additive one. What was not acceptable was making it a required field, which would
-have thrown on every command written before the deploy.
+Normalize absent values during deserialization; Java `Optional` alone does not configure a wire
+default. Resolving the account from current payment state is safe only if that is the accepted
+legacy meaning. Otherwise preserve the issued account or translate versioned intent explicitly.
+An additive field can change semantics; test queued old commands and old consumers before rollout.
 
 ## Side by side
 

@@ -25,6 +25,11 @@ link and is often worse than the chain.
 
 ## Workflow
 
+0. **Inspect target and call-path evidence.** Check compiler release/toolchains, declared
+   contracts, null/empty behavior, runtime proxy/ORM types and policy ownership. Worked code
+   fits Java 17 (records require Java 16+ without preview); `List.getFirst()` in the detection
+   reference requires Java 21+. Adapt examples without upgrading or enabling preview. If only
+   source is available, separate observed navigation from hypotheses about runtime I/O.
 1. **Classify the chain.** Fluent calls on one conceptual receiver and Stream/Optional dataflow
    are not structural navigation by themselves (callbacks still may navigate). Records/DTOs
    expose structure as contract, so walking them is intentional schema coupling rather than
@@ -37,10 +42,11 @@ link and is often worse than the chain.
 3. **Price the fix against the chain.** Count the forwarding methods it would add and the
    classes it would touch. A `getCustomerCity()` on `Order` that exists to shorten one call
    site is a Middle Man, not an improvement.
-4. **Leave boundary code alone.** Mappers, serialisers, reports and test assertions
-   navigate structure because structure _is_ their subject.
-5. **Verify**: after the fix, the caller's imports no longer name the intermediate types,
-   and a change to those types' shape no longer reaches the caller.
+4. **Treat boundary navigation deliberately.** Mappers, serialisers, reports and assertions
+   may legitimately publish/inspect shape; still check invariants, nulls, consistency and I/O.
+5. **Verify** with caller contract tests and a representative intermediate-shape change.
+   Imports are clues: inferred types and fully qualified calls can hide edges. Check generated
+   code/bytecode dependencies when needed, and query/trace evidence for runtime claims.
 
 ## Rules
 
@@ -50,14 +56,15 @@ link and is often worse than the chain.
 - A chain is coupling when the caller could not do its job without knowing how the
   intermediate objects are composed; it is data access when the objects are records or DTOs
   whose shape is the published contract.
-- Fix priority: move the behaviour to the type that owns the data; failing that, pass the
+- Fix priority: place behavior with the module that owns its policy and required data; otherwise pass the
   needed value instead of its container; wrap only when a real abstraction boundary exists,
   never to launder a chain.
 - Do not add a forwarding method merely to reduce dots. Even one caller can justify a query that
   protects a real aggregate/module boundary or names stable domain meaning; demonstrate what
   internal shape can now change independently.
-- One navigation at an orchestration point — fetching a collaborator once and passing it on
-  — is acceptable; the same navigation repeated across call sites is the coupling to remove.
+- Navigation at an orchestration point can be appropriate when that point owns assembly and
+  honors aggregate/consistency boundaries. Repetition raises change cost; one occurrence can
+  still leak an invariant or trigger unwanted I/O.
 - Getters on a record you own, read locally for data, are not violations. Query, reporting
   and mapping code navigates structure legitimately.
 - Chains that mix navigation with mutation (`getX().getY().setZ(...)`) are the worst case:
@@ -78,6 +85,13 @@ link and is often worse than the chain.
   together; copy mutable collections at the boundary.
 - Hiding a chain may reduce source coupling while leaving semantic/schema coupling unchanged.
   Verify with an actual shape change and runtime query/trace evidence, not import count alone.
+
+## Deliverable
+
+Identify the exposed composition or intentional schema, observed consequence, ownership and
+smallest useful correction (including keeping the chain). State which internal change should
+become local and which contract remains coupled. Report exact checks performed; do not claim
+behavior preservation, snapshot consistency or fewer queries from shorter source alone.
 
 ## References
 

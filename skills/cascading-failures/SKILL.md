@@ -33,6 +33,13 @@ usable capacity can also recover the system when it does not amplify the bottlen
 
 ## Workflow
 
+Inspect the deployed JDK/toolchain, server/client libraries, retry owners, queue/pool limits,
+deadline/cancellation behavior and autoscaling/probe configuration before recommending an API
+or configuration change. The topology guidance has no Java baseline; the executor reference
+states its snippet baseline. Preserve project versions. When traces or counters are missing,
+state the candidate loop and collect the smallest discriminating evidence; do not invent a
+capacity number or diagnose metastability solely because recovery is slow.
+
 1. **Distinguish trigger from feedback.** Compare logical calls with attempts, admitted load with
    goodput, queue age, pool occupancy and capacity/routing changes. No single metric proves a
    cascade; reconstruct the time order (`references/cascade-response.md`).
@@ -66,16 +73,16 @@ Reduce offered load (shed, cap concurrency, trip the breaker) when:
   timeout period
 - the dependency's inbound rate is above its normal rate while its success rate is below it
 Add capacity when:
-- utilisation is high, latency is elevated, and goodput still rises with offered load —
-  that is under-provisioning, not a cascade
+- evidence shows extra warm capacity at the actual bottleneck can increase useful completions
+  without overloading a shared dependency; test a bounded increment and its rollback threshold
 Avoid adding capacity when:
 - goodput is falling as offered load rises and new instances would hit the same bottleneck. New instances start with cold caches, cold JIT
   and empty pools, take a full share of a backlog, saturate, and add a fresh source of
   timeouts and retries against the same dependency
 Avoid raising a timeout when:
-- the dependency is already slower than the caller's budget. A longer wait holds each
-  thread longer, which raises concurrency at the dependency by Little's Law
-  (littles-law-and-queueing) and slows it further
+- the dependency is already slower than the caller's budget and the change would retain more
+  useless work. At fixed admitted rate, longer residence time increases average in-flight work;
+  a hard concurrency cap instead increases waiting/rejection. Verify actual cancellation.
 Restart when:
 - evidence identifies unrecoverable in-process state/resource failure or it is the safest way to
   discard explicitly disposable work; preserve durable work and ramp admission per failure domain
@@ -84,8 +91,9 @@ Restart when:
 ## Rules
 
 - **Goodput, not throughput, is the incident metric.** Throughput counts responses produced;
-  goodput counts responses delivered inside the caller's deadline. A saturated system holds
-  throughput flat while goodput goes to zero — every response arrives after its caller left.
+  goodput counts successful logical operations satisfying the caller's correctness and deadline
+  contract. Count retries once and track approved degraded successes separately. Fast errors and
+  shed responses do not become goodput just because they arrive on time.
 - An unbounded queue converts sustained overload into growing latency/memory. Work past an
   propagated request deadline is waste only when it has no durable side effect obligation;
   accepted commands/jobs may still require completion or reconciliation after the caller leaves.
@@ -94,12 +102,13 @@ Restart when:
   fault: a slow dependency occupies request threads and pooled connections in its caller, so
   endpoints that never touch it start failing on acquisition. One pool shared across
   dependencies lets the slowest starve the rest — `concurrency-limiting-and-bulkheads`.
-- An inner timeout must be shorter than the caller's remaining budget, checked over the whole
-  path rather than per hop. Stacked the other way, the outer hop returns an error while every
-  resource the inner call holds stays held for the difference.
+- Fit inner operations inside the caller's remaining deadline with time for local cleanup and
+  response delivery. A timeout may only stop waiting: verify transport/task cancellation and
+  resource release separately, and reconcile durable effects that continue after abandonment.
 - **A metastable failure has two states under the same load.** The trigger moved the system
   into the bad one and removing it does not move the system back, because retries and backlog
-  now supply the excess load. The exit is to destroy work — shed, drain, reject — not to wait.
+  now sustain excess resource demand. Reduce admitted work or restore usable capacity enough
+  to leave that feedback regime; preserve durable obligations and measure whether backlog shrinks.
 - Restarting the fleet at once produces a thundering herd — synchronised cache fills,
   connection storms and retry waves. Stagger restarts, jitter reconnect (`retries-and-backoff`).
 - A shared dependency is a shared failure domain whatever the topology says: two services
@@ -114,14 +123,25 @@ Restart when:
   without it, and test threshold/hysteresis. Probe design is `kubernetes-service-lifecycle`, ejection is
   `load-balancing-and-routing`.
 - Prove the loop is cut before the incident: load-test at capacity, inject latency into one
-  dependency, and assert goodput on paths that do not use it stays flat (`load-testing`,
+  dependency, and assert unaffected paths stay inside explicit goodput/error/latency bounds
+  under representative shared-resource load (`load-testing`,
   `distributed-systems-testing`).
+
+## Deliverable
+
+Return the observed timeline, proposed feedback edge and competing explanation, intervention
+with expected metric movement, durable-work constraints, and recovery ramp/abort thresholds.
+Record what actually improved versus what remains a hypothesis. A design review should name
+the fault-injection scenario and acceptance bounds; configuration checks alone do not prove
+cancellation, isolation or recovery under load.
 
 ## Primary sources
 
 - [Google SRE — Addressing Cascading Failures](https://sre.google/sre-book/addressing-cascading-failures/)
 - [Google SRE — Handling Overload](https://sre.google/sre-book/handling-overload/)
 - [AWS Builders' Library — Avoiding insurmountable queue backlogs](https://aws.amazon.com/builders-library/avoiding-insurmountable-queue-backlogs/)
+- [Java 17 ThreadPoolExecutor contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+- [Resilience4j CircuitBreaker behavior](https://resilience4j.readme.io/docs/circuitbreaker)
 
 ## References
 

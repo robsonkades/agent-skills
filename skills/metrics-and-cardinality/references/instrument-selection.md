@@ -28,6 +28,11 @@ Gauge of “last duration” loses the distribution. Counter of a current level 
 decrements. Timer of only completed work hides currently stuck operations unless paired
 with active/age signals.
 
+For asynchronous work, tie decrement/stop to the operation's actual terminal completion, not
+the submitting method's `finally` block. Count rejection, cancellation and exceptional paths
+exactly once. A client timeout does not imply the server released its resources; choose the
+boundary the in-flight metric actually represents.
+
 ## RED, USE and business signals
 
 RED is a serving-entry checklist:

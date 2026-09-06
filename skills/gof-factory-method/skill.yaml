@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-factory-method
-version: 1.2.0
+version: 1.2.1
 description: >-
   Factory Method in modern Java, and the three different things that share its name: the GoF
   pattern (a creation hook a subclass overrides inside an inherited algorithm), Effective Java's

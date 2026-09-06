@@ -26,7 +26,7 @@ safe. A child waiting for an unrelated future, lock, socket or another pool can 
 starve. Draw wait-for edges across executors and synchronizers rather than assuming work stealing
 breaks them.
 
-The classic binary pattern is:
+The classic binary pattern is this partial snippet inside a task with access to child computation:
 
 ```java
 left.fork();
@@ -38,6 +38,9 @@ return combine(leftResult, rightResult);
 This avoids immediately forking both branches and then waiting while the current worker could compute.
 Use `invokeAll` when it improves clarity; benchmark rather than treating source shape as proof of
 speed.
+If direct `compute()` or combination fails, the forked sibling is still owned work. Define how its
+outcome and actual exit are observed before shared resources are released; cancellation alone does
+not wait for that exit. `invokeAll` also does not promise that all siblings have stopped on failure.
 
 ## Memory visibility and task state
 
@@ -68,22 +71,32 @@ may expand/activate spare capacity. Therefore a blocker must:
 - propagate/restores interruption according to the enclosing operation's contract;
 - release resources on failure and cancellation.
 
+This Java 17-compatible class uses imports from `java.util.concurrent`. Confine one blocker instance
+to one calling thread and invoke it through `ForkJoinPool.managedBlock(new AwaitLatch(latch))`.
+
 ```java
 final class AwaitLatch implements ForkJoinPool.ManagedBlocker {
     private final CountDownLatch latch;
+    private boolean awaited;
 
     AwaitLatch(CountDownLatch latch) { this.latch = latch; }
 
     @Override public boolean isReleasable() {
-        return latch.getCount() == 0;
+        return awaited;
     }
 
     @Override public boolean block() throws InterruptedException {
         latch.await();
+        awaited = true;
         return true;
     }
 }
 ```
+
+`getCount() == 0` alone is not the latch API's documented publication boundary. Even for an already
+open latch, this example calls `await()` successfully before reporting release; interruption
+propagates without claiming completion. The extra managed-block check may cost compensation work,
+so measure its suitability rather than treating this as a universal optimal blocker.
 
 Compensation can increase thread count and memory/context-switch pressure. It cannot increase a
 database pool, remote quota or disk throughput. Pair it with resource-local admission control.
@@ -98,9 +111,13 @@ but parameter behavior is version-sensitive (`corePoolSize` is documented ignore
 The common pool ignores shutdown requests and uses daemon workers. A dedicated pool has normal
 executor lifecycle. `shutdownNow()` for a fork/join pool always returns an empty list in Java 25; do
 not infer that there was no queued work.
+On Java 17 use `shutdown()` and bounded `awaitTermination` with an explicit failure policy instead
+of `close()`. On Java 25 scheduled delayed tasks can extend orderly shutdown; inspect ownership and
+the documented `cancelDelayedTasksOnShutdown()` policy before changing it.
 
 ## Authoritative references
 
 - [Java 25 `ForkJoinPool`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinPool.html)
 - [Java 25 `ForkJoinTask`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinTask.html)
+- [CountDownLatch publication contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CountDownLatch.html)
 - [Java Language Specification §17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5)

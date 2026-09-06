@@ -1,13 +1,14 @@
 # The unknown outcome
 
-A local method call has two outcomes. A remote call has three, and the third one has no
-syntax in Java — it arrives as an exception indistinguishable from the second.
+A remote write can have a known applied effect, a known non-applied effect or an unknown
+effect. Java return/exception syntax alone does not distinguish these. Even a local exception
+can follow partial mutation; remote calls add uncertainty about an independently executing peer.
 
 ```java
 // Conceptual: the shape the fault model forces on every remote write.
 sealed interface Outcome<T> {
     record Applied<T>(T value) implements Outcome<T> {}
-    // Provably never applied: safe to retry, safe to fail the caller.
+    // Provably never applied; retry eligibility still depends on cause and budget.
     record Rejected<T>(Throwable cause) implements Outcome<T> {}
     // May or may not have applied: retrying duplicates, not retrying may lose.
     record Unknown<T>(Throwable cause) implements Outcome<T> {}
@@ -27,7 +28,7 @@ effect?** Everything below follows from that.
 | ------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | HTTP                | locally proven pre-dispatch failure, such as invalid URI or DNS failure with no usable cached route          | response/read timeout, reset after dispatch, client cancellation, and proxy 502/504 unless intermediary evidence proves non-forwarding                                                                                |
 | JDBC statement      | failure acquiring a connection before dispatch; server rejection whose transaction semantics prove no effect | socket timeout or disconnect during execution; a driver may not know whether a trigger/procedure or transaction effect occurred                                                                                       |
-| JDBC `commit()`     | —                                                                                                            | **always potentially unknown**: an exception from `commit()` may mean the commit record was durable and only the acknowledgement was lost                                                                             |
+| JDBC `commit()`     | proven pre-dispatch/protocol rejection with known transaction state                                          | disconnect/exception after possible commit dispatch can mean the commit was durable and only its acknowledgement was lost                                                                                             |
 | Kafka `send()`      | synchronous serialization/size/configuration failure before the record enters the accumulator                | delivery timeout or disconnect after possible transmission; classify from producer metadata and protocol evidence, because `TimeoutException` can also arise while metadata or buffer progress never allowed dispatch |
 | Kafka offset commit | —                                                                                                            | a failed commit may have been applied; a rebalance then redelivers                                                                                                                                                    |
 
@@ -46,10 +47,11 @@ Two consequences that surprise people:
 
 ## What Unknown forces the design to provide
 
-Exactly one of these three, chosen per write path and written down:
+Choose an explicit resolution policy per write path; these mechanisms can be combined:
 
-1. **Idempotent by key.** The write carries a caller-generated key and repeating it is a
-   no-op. This is the default answer; the mechanics — key choice, storage, retention,
+1. **Idempotent by key.** The write carries a caller-generated key; repeating the same
+   logical intent must not repeat its business effect. Preserve the key
+   and payload semantics, and resolve the original result. The mechanics — key choice, storage, retention,
    concurrent-duplicate handling — are `idempotency`.
 2. **Reconcilable.** The write is not repeat-safe, so the caller records its intent durably
    before the call and a later reconciliation reads the peer's state to decide whether the
@@ -61,11 +63,16 @@ Exactly one of these three, chosen per write path and written down:
 
 These are the terminal strategies; a protocol may combine them (for example, status lookup
 before a keyed retry). A write path with none leaves the business outcome unresolved.
+An absent lookup result is not proof of failure while the original request may still complete,
+or the query can be stale. Require authoritative terminal status, a protocol guarantee that the
+operation cannot apply later, or a retry that remains safe despite that race.
 
 ## Read paths are not exempt, only cheaper
 
-An unknown read is safe to retry — it has no side effect at the peer. But it still has a
-cost the model must account for: the retry doubles the load on a peer that is already slow,
+Retry a read only when its actual semantics are safe to repeat: a name or HTTP verb does not
+prove a custom endpoint is free of business side effects. A later read may also return a
+different version, so preserve required snapshot/precondition semantics. Repetition has a
+cost the model must account for: another attempt adds load to a peer that may already be slow,
 and it consumes the caller's remaining deadline. Retry budgets and backoff belong to
 `retries-and-backoff`; what belongs here is the classification that says a read may be
 retried at all, and a non-idempotent write may not.
@@ -93,8 +100,8 @@ Do not test this with mocks that throw. Test it with a fault that is genuinely a
   dependency, allow the request to apply, and close or black-hole the response. This is a
   faithful unknown-outcome case; also test the complementary pre-dispatch cut to prove the
   client distinguishes the two.
-- Assert on the **downstream row count**, not on the caller's return value. The bug being
-  hunted is a second row, and the caller cannot see it.
+- Assert the **business effect** at the peer: row count, balance, ledger entries or external
+  action count as appropriate. Duplicate increments can corrupt one row without creating another.
 
 ## Evidence hierarchy
 
@@ -112,6 +119,7 @@ itself roll back a peer-side commit.
 
 ## Primary references
 
-- [RFC 9110: HTTP Semantics, §9.2.2 Idempotent Methods](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.2)
+- [RFC 9110: HTTP Semantics, §9.2.2 Idempotent Methods](https://httpwg.org/specs/rfc9110.html#idempotent.methods)
+- [Java 17 Connection.commit](<https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html#commit()>): commit contract and exceptions; determine actual outcome from protocol evidence.
 - [JDBC 4.3 specification, transactions](https://jcp.org/aboutJava/communityprocess/mrel/jsr221/index3.html)
 - [Apache Kafka producer configuration: delivery timeout and idempotence](https://kafka.apache.org/documentation/#producerconfigs)

@@ -30,11 +30,11 @@ can answer it.
 
 ## Workflow
 
-1. **Start from the unknowns**, not from a checklist. Every question traces to a ledger entry;
-   a question with no entry behind it is a question you invented.
-2. **Use the context report first.** For each unknown, identify repository evidence that would settle
-   it and run a focused check only when the report did not already do so. Only what survives becomes a
-   question.
+1. **Start from the unknowns**, not from a checklist. Trace each question to an existing unknown
+   or record the newly discovered gap; a small Inline task needs only a concise entry.
+2. **Reuse supplied answers and the context report.** Check accepted session decisions and applicable
+   policy/contract evidence before asking again. Run a focused repository check only when it could
+   settle the remaining gap; a scope question needed to locate relevant code can come first.
 3. **Price each surviving question** by impact, and mark BLOCKING or NON-BLOCKING
    (`references/impact-and-blocking.md`). Most questions are neither high-impact nor blocking.
 4. **Group dynamically into rounds** (`references/question-rounds.md`). Ask one question when its
@@ -61,13 +61,15 @@ close it  NO     YES
        Record   Is it about business intent, an organisational
        as LOW,  standard, or authority the code cannot hold?
        proceed   |
-                 +-- YES -> ask; BLOCKING if HIGH impact
-                 +-- NO  -> propose, recommend, proceed on the record
+                 +-- YES -> reuse valid authority, otherwise ask;
+                 |          block only work depending on the answer
+                 +-- NO  -> proceed within existing authority if reversible;
+                            otherwise resolve the missing decision
 ```
 
-The repository answers questions about **what is**. It never answers questions about **what
-must be** — an implementation found in the code is evidence of a practice, not authority for a
-requirement.
+Implementation evidence answers **what is**, not automatically **what must be**. An accepted,
+applicable policy, contract or decision stored in the repository can establish requirements;
+cite its authority, revision and scope. Resolve conflicts rather than choosing the most common code.
 
 ## Question classes
 
@@ -84,31 +86,33 @@ requirement.
 | Technical        | Repository                                            | LOW to MEDIUM  |
 | Convention       | Repository                                            | LOW            |
 
-Security, compliance and business-rule questions never resolve to "the repository says so".
-The code shows what was built, which may be the defect.
+Security, compliance and business rules need applicable authority, which may already be supplied.
+Code alone shows what was built, which may be the defect. Typical impact is a prompt to inspect
+consequences, not a fixed score by category.
 
 ## Decision rules
 
 ```text
-IF an unknown's two answers produce the same implementation
-THEN do not ask it. Record the answer you will proceed on.
+IF plausible answers change no behavior, acceptance, obligation, scope or relevant work
+THEN do not ask now. Record irrelevance or a bounded assumption, not an invented answer as fact.
 
 IF the answer is discoverable by reading the repository
-THEN read it, cite path:line, and close the unknown as a FACT — asking wastes the
-     one resource the user actually spends, which is attention.
+THEN read it, cite path:line and revision/scope, and close only the proposition established
+     by that evidence. A failed search or unavailable source leaves a bounded unknown.
 
 IF the question is about intent, policy, authority or a standard
-THEN it is not discoverable, however much code exists. Ask.
+THEN reuse applicable accepted evidence; ask only for the unresolved decision or conflict.
 
 IF a question is BLOCKING
 THEN stop dependent work. Offer the focused next round or pause; do not start
      dependent implementation or bury it in a list of twelve.
 
-IF three or more questions can be answered together without ordering between them
-THEN batch them into one round rather than sending them one at a time.
+IF two or three questions share a decision area and none depends on another's answer
+THEN batch them; do not turn all remaining unknowns into one questionnaire.
 
 IF a question has been asked and the answer was ambiguous
-THEN restate it as a choice between two named options, not as an open question.
+THEN name the unresolved distinction and offer concrete options where useful, allowing correction
+     or another answer instead of forcing a false binary.
 
 IF the participant can explain a decision but cannot approve its consequence
 THEN record the context and keep the question open for the accountable role.
@@ -116,17 +120,17 @@ THEN record the context and keep the question open for the accountable role.
 
 ## Constraints
 
-- **One question, one decision.** A question containing "and" is two questions and gets two
-  answers, or one.
+- **One question, one decision.** Split independent decisions; related context may belong together.
 - **Never present a preference as a question.** If you have a recommendation, give it, with the
-  reason, and ask for confirmation. "Which of these five do you want?" transfers your job.
+  reason. Ask for confirmation only when the choice needs missing authority or intent;
+  routine authorized decisions do not need a preference poll.
 - **Never ask a question whose answer you will override.** If the project's constraints already
   rule an answer out, say so instead of asking.
 - **A silent user is not an answer.** Unanswered blocking questions leave work blocked; they do
   not decay into permission.
 - **After every round, recommend the next transition.** `Continue`, `Close the stage`, or `Blocked`,
-  with the concrete reason. Ask whether to run the next focused round, close, or pause; do not ask a
-  content-free “continue?”.
+  with the concrete reason and affected scope. Continue within existing authorization; ask only
+  for missing input or a genuinely undecided transition, not permission to ask another question.
 
 ## Output
 
@@ -137,12 +141,16 @@ Q-03  Should a failed run be retried automatically, or surfaced for manual retry
       Class:       Functional
       Impact:      HIGH
       Status:      BLOCKING
-      Why:         Automatic retry requires idempotency in the downstream call and a
-                   dead-letter path; manual retry requires an operator-facing endpoint.
-      Tried:       No retry policy exists in the codebase (grep over the module found none).
-      If A:        SC-05 (retry policy) and SC-06 (dead-letter) enter scope.
-      If B:        SC-07 (operations endpoint) enters scope; SC-05 and SC-06 do not.
+      Why:         The next resource must define retry safety and failure recovery.
+      Tried:       <paths/revision/search> found no applicable policy in that scope;
+                   supplied decisions did not settle it. This is not proof of global absence.
+      If A:        Define retry bounds and duplicate-effect handling for retriable operations.
+      If B:        Define an authorized manual recovery path, reusing existing operations tooling.
+      Affected:    <dependent resources>; independent <resources> can proceed.
 ```
+
+These are candidate consequences, not permission to add a dead-letter queue or new endpoint.
+Scale the record to the question; do not require the full block for a simple clarification.
 
 Then a one-line summary: how many questions, how many blocking, and what proceeds meanwhile.
 Also report the checkpoint recommendation and the decision area another round would resolve.

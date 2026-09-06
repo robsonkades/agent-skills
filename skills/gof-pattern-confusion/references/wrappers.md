@@ -5,6 +5,11 @@ forwarding". What differs is intent, and intent has observable consequences.
 
 ## The same shape, four ways
 
+Partial Java 17 shape sketches, not executable SDK integrations: constructors, mappings, return
+bodies and lazy initialization are omitted. Inspect actual project SDK/framework versions.
+Payment retry requires an outcome-aware idempotency contract and bounded deadline/attempts;
+volatile alone does not make lazy initialization once-only. Use the specialist skills to implement.
+
 ```java
 // ADAPTER — different interface; the foreign type stops here
 public final class StripeGateway implements PaymentGateway {     // your interface
@@ -44,35 +49,33 @@ public final class Checkout {
      no  → 2
      yes → 3
 
-2. How many objects does it hold, and did you design them?
-     one, foreign      → Adapter
-     one, yours        → probably an unfinished refactoring; consider
-                         deleting it (gof-adapter)
-     several, yours    → Facade
-     several, foreign  → an anti-corruption layer built from adapters
+2. What incompatibility or complexity does it hide?
+     translates collaborator API/semantics → Adapter
+     presents a simpler subsystem entry   → Facade
+     both                                 → describe both roles
 
-3. Could two of them be stacked meaningfully?
-     yes, and order changes behaviour  → Decorator
-     no; it decides whether you reach
-       the subject at all              → Proxy
+3. What responsibility does it own?
+     adds behavior around a component → Decorator
+     controls access/lifecycle/location → Proxy
+     either may compose; inspect order and bypass paths
 ```
 
-Question 3's second branch is the reliable Proxy tell. A lazy loader, a security check and a
-remote stub all answer "no": stacking two lazy loaders is meaningless, and the caller's belief that
-it holds the real object is the point.
+Object count and authorship are not discriminators: an adapter can bridge your own legacy API,
+and a facade can simplify one complex foreign service. Proxies can stack; inspect which contract
+each layer preserves and what happens when a layer short-circuits or fails.
 
 ## Ownership and reachability
 
-| Question                                             | Adapter        | Decorator     | Proxy                              | Facade                |
-| ---------------------------------------------------- | -------------- | ------------- | ---------------------------------- | --------------------- |
-| Can the caller reach the wrapped object another way? | Usually yes    | Usually yes   | **Usually no**                     | Yes (classically)     |
-| Who decides the wrapper exists?                      | The integrator | Whoever wires | The subject's owner or a framework | The subsystem's owner |
-| Does it manage the wrapped object's lifecycle?       | No             | No            | Often                              | No                    |
-| Does it change the interface?                        | **Yes**        | No            | No                                 | Yes, coarser          |
-| Is the wrapped type foreign?                         | **Yes**        | No            | Either                             | No                    |
+| Review question                   | Evidence to inspect                                                    |
+| --------------------------------- | ---------------------------------------------------------------------- |
+| Can protected access be bypassed? | Actual exposed references and caller trust, not the pattern label      |
+| Who owns lifecycle?               | Acquisition, initialization, close and failure contracts of each layer |
+| What interface is preserved?      | Client-facing operations, results and failures; helper APIs may differ |
+| What is translated or simplified? | Mapping and workflow code, regardless of collaborator count/authorship |
 
-The first row is the practical difference in review. If a protection "decorator" can be bypassed
-because the subject is also a bean, it is not enforcing anything — the check is advisory
+These are common arrangements, not guarantees from pattern names. Establish lifecycle ownership
+explicitly. If an untrusted caller can bypass a protection wrapper through another reference,
+the wrapper does not enforce that boundary; an internal trusted reference alone is not proof
 (`gof-proxy`).
 
 ## The composed case
@@ -101,24 +104,23 @@ name tells a reader what to expect:
 
 ## Common misclassifications and what they cost
 
-**"Decorator" that changes the interface.** It is an Adapter, and calling it a decorator implies it
-can be stacked — someone will try, and the types will not compose. Cost: a wasted refactoring
-attempt, and a wrong mental model of where foreign types stop.
+**"Decorator" that does not preserve the component contract.** Inspect whether it instead
+translates an API or simplifies a subsystem. Extra helper methods alone do not break conformity;
+verify the client-facing contract before promising stackability.
 
-**"Adapter" that wraps your own type and renames its methods.** Usually an unfinished refactoring.
-Cost: a file, a stack frame and a layer readers must trace through for no translation. Delete it,
-unless it exists to bound a foreign model — for an external dependency, a one-implementation port
-does earn its place (`gof-adapter`).
+**"Adapter" over your own type.** Valid for incompatible legacy/versioned contracts. Remove only
+when it performs no useful translation or boundary role and callers/public contracts permit it
+(`gof-adapter`).
 
-**"Proxy" that is stacked three deep.** If they stack and the order matters, they are decorators.
-Cost: the ordering question — retry outside or inside the timeout — never gets asked, because
-nobody thinks of a proxy as having an order (`gof-decorator`).
+**"Proxy" stacked three deep.** Can remain a proxy stack, possibly with decorator duties.
+Check ordering, such as authorization before caching and retry within a total deadline;
+stackability alone does not rename the layers (`gof-decorator`).
 
-**"Facade" invoked by its own collaborators.** It is a Mediator. Cost: it will accumulate the
-participants' interaction rules and become a god object, and nobody will see it coming because a
-facade is expected to stay thin (`gof-mediator`).
+**"Facade" invoked by collaborators.** A callback alone does not establish mediation. If it owns
+their interaction protocol, identify and bound that additional role (`gof-mediator`).
 
-**"Facade" over a single collaborator.** A wrapper. Cost: indirection with no coupling reduction.
+**"Facade" over one collaborator.** Useful if that collaborator is a complex subsystem and the
+facade supplies a stable, simpler contract; count does not measure coupling reduction.
 
 **"Adapter" containing business rules.** The rules are in the boundary layer where nobody looks for
 them, and they will be lost when the vendor is replaced. The test: would the rule still be true
@@ -126,15 +128,20 @@ after swapping the vendor? Then it does not belong in the vendor's adapter.
 
 ## Framework wrappers are the same four
 
-| Framework thing                         | Which pattern                                                    |
-| --------------------------------------- | ---------------------------------------------------------------- |
-| `@Transactional` / `@Cacheable` proxy   | Proxy — the caller cannot reach the target through the container |
-| Servlet `Filter`, `HandlerInterceptor`  | Decorator (a pipeline), ordered explicitly                       |
-| `RestClient` interceptors               | Decorator                                                        |
-| Hibernate lazy association              | Proxy — virtual                                                  |
-| A Spring Data repository implementation | Adapter over JDBC/JPA, generated                                 |
-| An application service                  | Facade                                                           |
+| Framework thing                         | Which pattern                                                               |
+| --------------------------------------- | --------------------------------------------------------------------------- |
+| `@Transactional` / `@Cacheable` proxy   | Proxy-based advice when enabled; self-invocation can bypass it              |
+| Servlet `Filter`, `HandlerInterceptor`  | Ordered processing chain; may stop continuation                             |
+| `RestClient` interceptors               | Decorator                                                                   |
+| Hibernate lazy association              | Proxy or bytecode enhancement; inspect mapping/runtime                      |
+| A Spring Data repository implementation | Repository abstraction; may combine proxy, adapter and query implementation |
+| An application service                  | May expose a facade; inspect actual responsibilities                        |
 
 Knowing which is which explains the failure modes: proxies bring self-invocation and `instanceof`
 problems; decorators bring ordering questions; adapters bring translation duties; facades bring
 transaction-boundary decisions.
+
+Verify the actual mechanism: [Spring AOP proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html)
+documents self-invocation bypass for proxy advice (AspectJ weaving differs).
+[Jakarta Servlet 6 Filter](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/filter)
+can invoke the chain or block it; do not infer that every layer must run from a decorator label.

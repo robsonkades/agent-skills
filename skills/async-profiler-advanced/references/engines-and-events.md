@@ -12,7 +12,7 @@ population and weight of observations.
 | Process CPU timer (`itimer`)                     | process CPU timer expiration delivered to an eligible thread | fallback/portable compatibility                      | uneven thread selection; no perf kernel chain; timer resolution                      |
 | Wall-clock                                       | eligible thread set on elapsed-time schedule                 | running plus off-CPU residency                       | volume/overhead scales with thread population; sampled state is not causal wait time |
 | JVMTI/JVM allocation event                       | sampled allocation activity                                  | allocation sites/estimated volume                    | sampling/threshold semantics; does not establish retention                           |
-| Lock event                                       | thresholded/sampled contended waits                          | monitor/park contention supported by release         | omits uncontended cost and non-lock queues                                           |
+| Lock event                                       | completed contended waits sampled by cumulative duration     | monitor/park contention supported by release         | omits uncontended cost and non-lock queues                                           |
 | Instrumentation/hooking                          | selected calls/allocations                                   | exact selected call count/latency or native lifetime | perturbation scales with event frequency; semantic coverage depends on hooks         |
 
 All stack-sampling modes aim to avoid classic safepoint-only observation, but that does not
@@ -25,7 +25,7 @@ still shape the sample.
 For every recording retain:
 
 ```text
-asprof version and package checksum
+local asprof version/package checksum and target-loaded agent version
 target JVM version/build and PID namespace
 `asprof list <pid>` output
 exact start/stop command and profiler log
@@ -53,6 +53,17 @@ Thread grouping and filtering are distinct:
 - JFR output carries event thread metadata under its own schema;
 - `--filter` restricts collection to supported thread IDs/modes;
 - include/exclude frame filters change retained output, not necessarily collection overhead.
+
+For v4.5, producer `--filter` is a wall-clock thread-ID selector, not a generic CPU filter.
+Producer `-I`/`-X` use simple name patterns with edge wildcards for supported aggregate outputs;
+converter `-I`/`-X` take regular expressions. Do not copy patterns between them unchanged or
+expect a JFR recording to be reduced by HTML-output filters. Verify the intended retained
+population with a known stack and keep collection cost separate from output size.
+
+In v4.5, batched wall output uses `profiler.WallClockSample`; one JFR record can represent
+multiple logical samples. Compare expanded weights using a matching converter, not raw JFR
+record count against duration/interval. `--nobatch` changes this representation and collection
+cost; it is not automatically a better recording.
 
 Validate behavior on the pinned release, especially for batched wall events and virtual
 threads. An application thread name can be reused; keep thread ID, lifecycle, state, and
@@ -98,6 +109,35 @@ Attach failures and perf failures are orthogonal. Diagnose:
 Do not send diagnostic signals blindly: JVM signal use, process supervisors, and application
 handlers can differ. Prefer official `asprof` diagnostics and the target runtime's attach
 documentation.
+
+## Stack fidelity
+
+Stack collection has three layers:
+
+1. **Trigger/selection:** perf overflow, CPU timer, wall sweep, JVMTI event, or instrumentation.
+2. **Java/JIT walking:** HotSpot-specific VM metadata or another supported mechanism.
+3. **Native/kernel unwinding and symbols:** frame pointers, VM metadata, unwind information,
+   perf call chains, build IDs/debug symbols, and kernel symbol policy.
+
+Current releases can prefer the VMStructs stack walker on supported HotSpot combinations;
+older releases and unsupported combinations behave differently. Options such as `vm`, `vmx`,
+`fp`, `dwarf`, or aliases have changed meaning across releases. Discover them from the pinned
+binary. Do not carry forward blanket advice such as always enabling `DebugNonSafepoints` or
+always using one `--cstack` mode without reproducing the missing-frame symptom on that stack.
+
+Classify broken output rather than guessing:
+
+- unknown Java frames: unsupported/redefined code, walker limitation, truncated/corrupt sample;
+- missing native prefix/suffix: unwinder boundary, omitted call chain, absent unwind metadata;
+- raw native/kernel addresses: symbol visibility/build-ID/kernel policy issue;
+- shallow stacks: stack-depth limit, recursion truncation or unwinder failure;
+- missing newly encountered stacks: exhausted call-trace storage or other dropped observations;
+- missing virtual-thread logical ancestry: carrier-centric sampling or incomplete continuation
+  reconstruction in that profiler/JDK combination.
+
+Virtual-thread coverage is version- and mode-dependent. A platform-thread sample can show a
+carrier without the complete mounted/unmounted logical task history. Validate with a known
+workload and complement with JFR events or application context before attributing ownership.
 
 ## Native and kernel stacks
 
@@ -146,8 +186,23 @@ miss rate or latency.”
 - Native-memory hooks cover the allocator APIs/interposition paths the profiler implements.
   Custom arenas, direct syscalls, device memory, other processes, and ownership transfers may
   be absent.
-- Lock thresholds weight supported contended waits, not all latency. Queueing before a lock,
-  I/O, condition protocols, and scheduler delay require other evidence.
+- In v4.5, `--lock 2ms` records on cumulative wait-duration counter overflow; it is not a
+  filter selecting only individual waits longer than 2 ms. Completed shorter waits can
+  contribute. Monitor contention is recorded on entry after waiting, so a still-stuck wait
+  need not appear. Supported park hooks include Reentrant lock synchronizers and Semaphore;
+  do not generalize to every park, condition, queue, or deadlock.
+- Keep recorded-event count separate from duration weighting. An empty lock profile does not
+  refute a current hang: correlate wall residency, thread dumps, and lock ownership.
+- Producer `--live` concerns Java allocations. For native memory, capture allocation **and
+  free** activity and use converter `--nativemem --leak`; `--nofree` prevents meaningful
+  matching of frees. The result is unmatched tracked allocations from this recording, not
+  RSS growth or a complete inventory. The converter's default tail exclusion is 10% of the
+  window, so record that setting before comparing runs.
+
+These v4.5 details are verified in [lock tracing source](https://github.com/async-profiler/async-profiler/blob/v4.5/src/lockTracer.cpp)
+and [profiling modes](https://github.com/async-profiler/async-profiler/blob/v4.5/docs/ProfilingModes.md).
+A retention/leak interpretation remains a hypothesis requiring longer windows, ownership,
+and corroborating memory evidence.
 
 ## Version-sensitive checks
 
@@ -164,9 +219,9 @@ help for:
 
 ## Authoritative references
 
-- [async-profiler README](https://github.com/async-profiler/async-profiler/blob/master/README.md)
-- [Profiler options](https://github.com/async-profiler/async-profiler/blob/master/docs/ProfilerOptions.md)
-- [Release changelog](https://github.com/async-profiler/async-profiler/blob/master/CHANGELOG.md)
+- [async-profiler README](https://github.com/async-profiler/async-profiler/blob/v4.5/README.md)
+- [Profiler options](https://github.com/async-profiler/async-profiler/blob/v4.5/docs/ProfilerOptions.md)
+- [Release changelog](https://github.com/async-profiler/async-profiler/blob/v4.5/CHANGELOG.md)
 - [Linux kernel perf security](https://docs.kernel.org/admin-guide/perf-security.html)
 - [`perf_event_open(2)`](https://man7.org/linux/man-pages/man2/perf_event_open.2.html) — Linux
   man-pages project documentation for event attributes, permissions, and errors.

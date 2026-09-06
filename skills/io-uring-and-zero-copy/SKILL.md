@@ -8,7 +8,7 @@ description: >
   a service streams files or proxies bytes, when a loop reads into a ByteBuffer only to
   write it straight back out, when someone claims java.nio uses io_uring underneath, when a
   Netty io_uring bootstrap fails at runtime with NoSuchMethodError or
-  ClassNotFoundException, when SO_BACKLOG is set on IoUringChannelOption, or when JFR
+  ClassNotFoundException, when separating generic and io_uring-specific channel options, or when JFR
   reports no socket events from a service plainly doing network I/O. Does not cover owning
   and managing native memory (off-heap-memory), the host layer generally (linux-for-jvm), or
   network-stack tuning (tcp-tuning).
@@ -64,13 +64,19 @@ FFM/JNI binding, or an external component. Name and verify that route.
   registration/pinning overhead but do not by themselves make payload movement copy-free.
 - `IORING_OP_SEND_ZC` is a Linux-kernel capability, not a JDK capability. Availability also
   depends on the native transport version, operation type and fallback behavior.
+- For send-zero-copy, an initial CQE with `IORING_CQE_F_MORE` does not release the buffer:
+  wait for the notification CQE marked `IORING_CQE_F_NOTIF`. Keep memory valid and unchanged
+  until the operation's documented release point, including cancellation/shutdown. A zero-copy
+  request can fall back to copying; a completion alone does not prove copy elimination.
 - Do not impose a global ban on heap buffers. Prefer transfer APIs when their channel semantics
   fit; otherwise choose direct versus heap buffers from measured copy cost, buffer size,
   pooling, lifetime and native-memory limits.
 - Against Netty 4.2 GA the API is `IoUring*` in `io.netty.channel.uring`, with
   `MultiThreadIoEventLoopGroup(IoUringIoHandler.newFactory())`. The all-caps `IOUring*` spelling
   belongs to the 4.1.x incubator line. Artifact version and spelling must match.
-- `SO_BACKLOG` is `ChannelOption.SO_BACKLOG`; it is not a field of `IoUringChannelOption`.
+- `SO_BACKLOG` is declared by `ChannelOption` and inherited by `IoUringChannelOption` in
+  Netty 4.2. Qualify it with `ChannelOption` for clarity; subclass-qualified access alone is
+  not an API/linkage error or an io_uring-specific option.
 - Presence of `io_uring_enter` proves ring activity, not that all I/O uses the ring or that
   batching/zero-copy is effective. Correlate operations, queue depth and workload phase.
 - Socket buffers and application watermarks jointly affect buffering, utilization and
@@ -80,6 +86,11 @@ FFM/JNI binding, or an external component. Name and verify that route.
   payload, concurrency, connection lifecycle and backpressure behavior between comparisons.
 - Treat every throughput and CPU figure as environment-specific. Validate the fallback path and
   behavior under queue saturation, peer cancellation, shutdown and native-memory exhaustion.
+
+Record the project's JDK/toolchain, resolved Netty/native versions, kernel/architecture and
+container restrictions before selecting a route. This skill does not authorize upgrades or
+relaxing sandbox policy. Return the measured bottleneck, selected mechanism/fallback, ownership
+contract and actual checks; distinguish source-supported expectations from measured benefits.
 
 ## References
 

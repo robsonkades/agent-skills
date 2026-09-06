@@ -13,7 +13,7 @@ decision-relevant configurations:
 smallest practically important regression (MPIR):
 absolute guardrail:
 maximum false-block probability:
-desired power at MPIR:
+desired power at a declared effect above MPIR; decision rates at the margin:
 maximum inconclusive rate:
 time and compute budget:
 ```
@@ -101,6 +101,13 @@ otherwise  -> inconclusive
 If the objective also includes proving a meaningful improvement, define a separate margin
 and direction. Do not infer improvement merely from a negative point estimate.
 
+This rule does not achieve high regression-detection probability exactly at M. For example,
+under a normal estimate with a central 95% interval and true effect M, the lower bound
+exceeds M only in the upper 2.5% tail, regardless of sample size. Greater precision shrinks
+the inconclusive region in effect units, but does not turn the boundary into a high-power
+alternative. Calibrate at M and at a separately declared larger effect; change the decision
+protocol explicitly if the product requires different behavior near the boundary.
+
 The confidence level is part of the policy, but it is not enough by itself. Evaluate power
 and actual false-block behavior through calibration. Repeated looks, selecting the worst
 benchmark, and rerunning until a preferred result all change those rates.
@@ -131,7 +138,8 @@ the comparison specified by the experimental design.
 Use pilot data to simulate the intended gate:
 
 1. Resample complete independent blocks under no effect; estimate false blocks.
-2. Inject or simulate effects at MPIR and larger; estimate detection power.
+2. Inject or simulate effects at MPIR and larger; estimate all three decision rates at the
+   boundary and detection power at the declared above-margin alternative.
 3. Reproduce the exact multiplicity, retry, missing-data, and baseline-selection policy.
 4. Vary the number of blocks and plot power, inconclusive rate, and CI duration/cost.
 5. Select the smallest design meeting the declared operating constraints.
@@ -172,8 +180,9 @@ policy and start a recorded calibration epoch after incompatible changes.
 - **Unit conversion:** convert only dimensionally equivalent units; record the conversion.
 - **Timeout/OOM/crash:** these are outcomes, not samples to discard. Classify against the
   benchmark contract and preserve diagnostics.
-- **Zero throughput/no successful operations:** ratio effects are undefined; use an absolute
-  failure guardrail.
+- **Zero throughput/no successful operations:** ratio effects are undefined. Use an absolute
+  failure guardrail only when a valid executed workload establishes failure; an unstarted or
+  broken runner is invalid/inconclusive evidence, not measured zero throughput.
 - **Outliers:** investigate and apply only a predeclared robust rule; never delete a slow run
   because it changes the decision.
 - **Multiple retries:** keep all attempts and include the retry policy in calibration.

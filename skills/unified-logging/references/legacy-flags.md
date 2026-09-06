@@ -7,7 +7,7 @@ For the exact target JDK:
 1. inventory startup scripts, env-injected options and container manifests;
 2. run java option validation in CI;
 3. consult that JDK's official GC/runtime mapping tables;
-4. classify old flags as removed, deprecated aliases or still-live non-UL options;
+4. classify old flags as removed, obsolete/accepted-but-ignored, deprecated aliases or still-live non-UL options;
 5. replace one subsystem at a time;
 6. compare representative old/new output where an old JDK can still run it;
 7. update parsers/collectors/runbooks;
@@ -17,9 +17,16 @@ Do not assume all Print or Trace flags map one-to-one. Some information is alway
 some combines under one tag, some changes level, and some non-UL diagnostic flags remain
 valid.
 
+An obsolete option may print a warning and continue while doing nothing. Capture diagnostics
+and assert the required behavior/configuration; do not infer application from exit status.
+Obsoletion/removal schedules apply to specific builds, not just a remembered major version.
+
 ## CI matrix
 
 Test every supported runtime vendor/version:
+
+Use isolated output paths and inspect injected options before running these probes. Copying
+production options verbatim can truncate existing logs or activate unrelated agents/actions.
 
 ```text
 java <production options> -version

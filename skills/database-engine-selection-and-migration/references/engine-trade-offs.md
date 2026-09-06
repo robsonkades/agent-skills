@@ -2,16 +2,16 @@
 
 Use this as a question set, not a scorecard with default weights.
 
-| Dimension             | SQL Server                                          | MySQL/InnoDB                                               | PostgreSQL                                        | Evidence question                                                    |
-| --------------------- | --------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------- |
-| Default concurrency   | locking READ COMMITTED; RCSI explicit               | MVCC consistent reads; RR locking reads use next-key locks | MVCC READ COMMITTED; SSI at SERIALIZABLE          | Which critical interleavings block, abort, or succeed?               |
-| Version maintenance   | version store in `tempdb` under row versioning      | undo/history purge                                         | dead tuples, VACUUM, freeze                       | Can on-call see and repair the inevitable debt?                      |
-| Physical organization | clustered index is table                            | PK is clustered; PK copied into secondary leaves           | heap separate from indexes                        | What does key width/order cost for this schema?                      |
-| Connection model      | SQLOS workers/sessions                              | thread per connection in Community                         | process per connection                            | What is the fleet-wide safe connection budget?                       |
-| Specialized access    | rowstore, filtered/computed, columnstore            | B-tree, functional, full-text; no INCLUDE                  | B-tree, GIN/GiST/SP-GiST/BRIN, partial/expression | Does the workload require a structure without a measured substitute? |
-| Online change         | operation and edition dependent                     | INSTANT/INPLACE/COPY by operation                          | concurrent index build; lock rules per DDL        | Can the largest change meet the availability budget?                 |
-| Native ingest         | Bulk Copy                                           | LOAD DATA                                                  | COPY                                              | Are security, reject, trigger, and restart semantics acceptable?     |
-| Ecosystem cost        | T-SQL, Query Store, AG, Microsoft licensing/tooling | binlog/replication and broad managed availability          | extensions, rich types, open ecosystem            | Does the concrete benefit pay for lock-in and skills required?       |
+| Dimension             | SQL Server                                                         | MySQL/InnoDB                                                                        | PostgreSQL                                        | Evidence question                                                    |
+| --------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------- |
+| Default concurrency   | READ COMMITTED locking or RCSI by database/service setting         | MVCC consistent reads; RR locking reads may use next-key locks                      | MVCC READ COMMITTED; SSI at SERIALIZABLE          | Which critical interleavings block, abort, or succeed?               |
+| Version maintenance   | traditional `tempdb` version store or ADR persistent version store | undo/history purge                                                                  | dead tuples, VACUUM, freeze                       | Can on-call see and repair the inevitable debt?                      |
+| Physical organization | rowstore heap or clustered-index leaf data                         | clustered PK or selected/generated clustering key; key carried in secondary indexes | heap separate from indexes                        | What does key width/order cost for this schema?                      |
+| Connection model      | SQLOS workers/sessions                                             | thread per connection in Community                                                  | process per connection                            | What is the fleet-wide safe connection budget?                       |
+| Specialized access    | rowstore, filtered/computed, columnstore                           | B-tree, functional, full-text; no INCLUDE                                           | B-tree, GIN/GiST/SP-GiST/BRIN, partial/expression | Does the workload require a structure without a measured substitute? |
+| Online change         | operation and edition dependent                                    | INSTANT/INPLACE/COPY by operation                                                   | concurrent index build; lock rules per DDL        | Can the largest change meet the availability budget?                 |
+| Native ingest         | Bulk Copy                                                          | LOAD DATA                                                                           | COPY                                              | Are security, reject, trigger, and restart semantics acceptable?     |
+| Ecosystem cost        | T-SQL, Query Store, AG, Microsoft licensing/tooling                | binlog/replication and broad managed availability                                   | extensions, rich types, open ecosystem            | Does the concrete benefit pay for lock-in and skills required?       |
 
 ## Proof gates
 
@@ -24,3 +24,14 @@ Use this as a question set, not a scorecard with default weights.
 
 Record raw scripts, datasets, versions, topology, hardware/service tier, percentiles, and work
 counters. A result without reproducible conditions does not support a durable choice.
+
+SQL Server defaults depend on deployment: Azure SQL Database enables RCSI by default, unlike
+the SQL Server default. Inspect the database setting rather than inferring it from the product
+name. ADR, available in SQL Server 2019+, stores row versions in the database's persistent
+version store; do not budget only `tempdb` when ADR is enabled. These are examples of why the
+table is an inventory prompt, not an edition-independent specification.
+
+Sources: [Microsoft isolation-level documentation](https://learn.microsoft.com/en-us/sql/t-sql/statements/set-transaction-isolation-level-transact-sql?view=sql-server-ver17)
+and [ADR architecture](https://learn.microsoft.com/en-us/sql/relational-databases/accelerated-database-recovery-concepts?view=sql-server-ver17);
+MySQL 8.4 [clustered/secondary indexes](https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html)
+and [InnoDB locking](https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html).

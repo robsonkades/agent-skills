@@ -88,10 +88,10 @@ each `final`.
 purpose, not several. Steps: rename the first use-range, compile (the compiler finds every
 use you did not update), repeat.
 
-The payoff is mechanical: effectively-final locals are what lambda capture requires, and
-what lets Extract Method take a local as a parameter instead of returning it. "Local
-variables referenced from a lambda must be final or effectively final" is, most of the
-time, a reused variable asking to be split.
+Effectively-final locals are required for lambda capture, not for ordinary extracted method
+parameters. Extraction requires explicit live inputs and outputs: if the extracted block changes
+a local the caller needs afterward, return that value. Split only genuinely distinct purposes;
+a legitimate mutable accumulator need not become final merely to silence a capture error.
 
 ## Replace Temp with Query
 

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jmh-advanced
-version: 1.2.0
+version: 1.2.1
 description: >-
   Designing advanced JMH experiments: shared and asymmetric state topologies, groups,
   parameter matrices, auxiliary counters, fixture arbitration, fork/JVM controls, profilers,

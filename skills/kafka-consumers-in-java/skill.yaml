@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: kafka-consumers-in-java
-version: 1.3.0
+version: 1.3.1
 description: >-
   Operating a Kafka consumer from Java: the log-not-a-queue model where consumption removes
   nothing and position is an offset; the rebalance as the central operational event, with

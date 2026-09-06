@@ -73,11 +73,16 @@ calibrated. “Always take CPU plus allocation” wastes budget and can perturb 
 
 ## CPU, wall, and duration events
 
-CPU sampling selects runnable/on-CPU or CPU-event consumption according to its engine. It ranks
+CPU sampling selects CPU consumption or an engine-specific approximation; Java RUNNABLE
+state alone does not prove a thread was executing on a CPU. It ranks
 where CPU/event samples land, not response time. Wall sampling observes eligible threads over
 elapsed time, including idle/waiting states; its volume and denominator depend on thread
 population and implementation. JFR duration events record qualifying operations with start/
 duration and fields; thresholds censor shorter events.
+
+Wall is not off-CPU-only: it includes execution as well as waiting. A dedicated off-CPU
+mechanism observes descheduled intervals with its own coverage; do not subtract unrelated
+CPU and wall percentages to derive blocked time.
 
 For latency, combine:
 
@@ -144,7 +149,10 @@ Use synthetic positive/negative controls:
 - known below/above-threshold contention should demonstrate censoring;
 - target/non-target threads/processes should prove scope.
 
-Run until the design has sufficient evidence, not until one frame reaches a folklore count.
+Use isolated controls or a representative canary; do not inject CPU/allocation/contention
+load into an affected production JVM merely to satisfy this list. If controls are unavailable,
+report the resulting uncertainty. Stop at the capture/incident budget and report insufficient
+evidence rather than extending collection until one frame reaches a folklore count.
 
 ## JFR baseline decision
 
@@ -169,6 +177,10 @@ Pin/download async-profiler through an approved artifact supply chain with relea
 provenance. Discover `asprof -v`, `list`, and help on the target. Generic CPU, perf-events,
 `ctimer`, `itimer`, wall, stack walkers, batching, virtual-thread support, and converter options
 change by release/platform.
+
+The checked async-profiler v4.4 distribution targets HotSpot-based JVMs on Linux/macOS;
+do not assume native Windows or another JVM implementation is supported. Use appropriate
+JFR evidence or a matching supported environment without upgrading the application by default.
 
 Container failure can be attach, PID/filesystem namespace, UID, seccomp/LSM, perf policy,
 capabilities, PMU virtualization, limits, or symbols. `ctimer` may avoid perf-event privilege but
@@ -254,8 +266,10 @@ are version/workload dependent. Discover, calibrate, fingerprint, and preserve e
 
 ## References
 
-- [Choosing a profile](references/choosing-a-profile.md)
-- [Command and production capture protocol](references/commands.md)
+- [Choosing a profile](references/choosing-a-profile.md) — read when choosing the clock,
+  population, controls or escalation for a symptom or empty recording.
+- [Command and production capture protocol](references/commands.md) — read before capture
+  to check target access, storage, lifecycle and artifact validation.
 - [JFR API Programmer's Guide](https://docs.oracle.com/en/java/javase/25/jfapi/)
 - [JDK 25 `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
 - [async-profiler repository](https://github.com/async-profiler/async-profiler)

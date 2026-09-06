@@ -28,6 +28,11 @@ current mechanism, batch size, transaction size, throughput, CPU/I/O/log/network
 window/SLO, staging/disk/log headroom, privileges, and rollback constraints:
 ```
 
+For JVM implementation changes, inspect compiler release/toolchains, runtime images, resolved
+JDBC driver and ORM versions, connection properties and transaction-manager ownership. This skill
+imposes no Java baseline; preserve the project's target and dependencies. Without phase timings
+or failure semantics, propose a bounded pilot and mark mechanism/sizing conclusions conditional.
+
 ## Workflow
 
 1. Measure rows/s and bytes/s by phase. Attribute time to client materialization, network
@@ -35,19 +40,23 @@ window/SLO, staging/disk/log headroom, privileges, and rollback constraints:
    replication. A single total duration cannot select a mechanism.
 2. Choose the mechanism level deliberately: individual statements, JDBC batch, driver statement
    rewrite, native bulk API, or server-side set operation from staging.
-3. Define transaction and error semantics before tuning. `executeBatch()` is not atomic; the
-   transaction is. Capture update counts, SQL state/vendor code, warnings, rejected rows, and what
+3. Define transaction and error semantics before tuning. `executeBatch()` is not atomic; verify
+   an explicit transaction encompasses all intended writes on transactional storage, including
+   native API participation. DDL, sequences and external trigger effects can escape rollback.
+   Capture update counts, SQL state/vendor code, warnings, rejected rows, and what
    remains committable after an error.
 4. Prefer staging when validation, deduplication, transformation, index suspension, or online
    isolation matters. Load into a table with intentionally minimal structures, validate, then move
    with set-based SQL.
 5. Find the batch-size knee under representative data. Network benefit approaches saturation while
    memory, lock duration, retry granularity, statement size, and replication lag keep growing.
-6. Parallelize only after identifying a round-trip/client bottleneck and partitioning work by a
-   stable key range. Stop when engine CPU/I/O/log, lock waits, replica lag, or online latency reaches
-   its guardrail.
-7. Make progress and data change one transaction: a committed chunk records its checkpoint in the
-   same commit. Re-run and interruption tests must prove idempotency.
+6. Pilot parallelism only with a bottleneck hypothesis, spare capacity and independently owned
+   key ranges/partitions. It may overlap client waits or use idle server resources; it cannot
+   remove a saturated shared log or lock bottleneck. Stop when CPU/I/O/log, lock waits, replica lag,
+   or online latency reaches its guardrail.
+7. Commit the destination checkpoint with the data wherever they share a transaction resource.
+   Acknowledge an external source only after destination commit, with idempotent replay across
+   that gap. Reconcile unknown commit outcomes before retrying; see the recovery reference.
 8. Finish by checking accepted/rejected/warning counts, constraints, samples or checksums, target
    invariants, statistics, replica convergence, and online SLOs.
 
@@ -56,8 +65,9 @@ window/SLO, staging/disk/log headroom, privileges, and rollback constraints:
 - Separate three costs: round-trips, work per statement, and work per row. JDBC batching attacks the
   first; rewrite/native APIs attack the first two; only server-side choices reduce index,
   constraint, trigger, logging, and data-work cost.
-- Batch benefit roughly follows `1 - 1/B`: moving from 1 to 50 removes most per-round-trip overhead;
-  moving from 50 to 500 buys much less while increasing blast radius. Measure the knee.
+- If a batch of B rows uses one round-trip instead of B, its round-trip component falls by
+  `1 - 1/B`. This is not total elapsed-time improvement: row work, commits and driver behavior
+  remain. Measure the knee and vary JDBC batch size separately from transaction/chunk size.
 - Never infer batch from an API name or ORM log. Verify server statement/round-trip counts and the
   driver's effective properties.
 - Native APIs have different correctness defaults. PostgreSQL `COPY` validates constraints and

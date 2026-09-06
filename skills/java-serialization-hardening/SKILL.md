@@ -29,6 +29,13 @@ intended to maintain.
 
 ## Workflow
 
+Inspect compiler release/toolchains, exact JDK build, active filters/factory, mapper/provider
+versions and released serialized forms before edits. No single authoring baseline is declared;
+references use Java SE 25. Standard `ObjectInputFilter` needs Java 9+ (older vendor backports
+can differ), `@Serial` Java 14+, records Java 16+, and the filter factory Java 17+.
+Use target-supported mechanisms without upgrading or enabling preview. Missing forms/config
+mean compatibility or filter coverage remains unverified; state the needed evidence.
+
 1. **Find every deserialization entry point.** Direct `ObjectInputStream`, RMI/JMX paths,
    JNDI providers that can return serialized state, a distributed cache configured with a JDK serializer, session replication, a
    message consumer, and any framework that stores state as bytes. List the ones whose bytes
@@ -43,7 +50,8 @@ intended to maintain.
    or custom, `serialVersionUID` declared, invariants revalidated on read, mutable components
    copied.
 5. **Prefer a design where deserialization runs a constructor** — a record, or a serialization
-   proxy — so the invariants cannot be bypassed at all.
+   proxy — so the owning type's constructor invariants run. This does not prevent hooks in
+   component graphs from executing first or eliminate size, aliasing and replacement-object risks.
 6. **Test compatibility and rollout explicitly**: released golden data must still deserialize.
    If old readers coexist, keep writing the old/enveloped form or dual-write safely until they are
    gone; merely teaching the new release to read both formats does not protect the old release.
@@ -62,7 +70,8 @@ intended to maintain.
   chain does not need your classes to be malicious — it needs a library on your classpath that
   can be driven into doing something, and popular libraries have repeatedly qualified.
 - A filter is a mitigation, not a proof of safety. `ObjectInputFilter` (JEP 290) and the filter factory
-  (JEP 415) let you allow-list classes, cap array sizes, graph depth and total bytes; set the
+  (JEP 415) let you allow-list classes and check array sizes, graph depth and observed bytes;
+  string/primitive callback gaps require an independent input-byte cap. Set the
   narrowest filter that works and treat a rejection as a security event. An allow-list of exact
   classes is worth having; a deny-list of known gadget classes is not — the list of gadgets
   grows with every dependency.
@@ -103,9 +112,10 @@ intended to maintain.
   `readObject` invariant-bypass hazard. Its `writeObject`, `readObject`, `readObjectNoData`,
   `writeExternal` and `readExternal` hooks are ignored, but `writeReplace`/`readResolve` may still
   substitute objects. Records also do not preserve cycles through their components.
-- A singleton that implements `Serializable` needs `readResolve` returning the canonical
-  instance and every field declared `transient`, or deserialization mints a second instance —
-  see java-object-construction, where an enum removes the problem entirely.
+- A class-based serializable singleton normally needs `readResolve` returning the canonical
+  instance; review reference fields for back-reference theft before substitution and keep
+  non-logical state out of the form. Primitive fields do not inherently require `transient`.
+  An enum uses special name-based serialization, not these hooks—see java-object-construction.
 - A related attack shape exists in JSON. Jackson's class-name default typing and broad
   `@JsonTypeInfo(use = Id.CLASS)` let the document name the class to instantiate, which is
   the JSON version of a gadget chain. Use logical type ids registered with
@@ -118,6 +128,10 @@ intended to maintain.
   is "we flush the cache on deploy", write it down and make the flush automatic.
 
 ## References
+
+Deliver the entry point and byte provenance, exact effective filter/outer limits, retained
+construction invariants and migration policy. Report hostile-fixture and old/new-reader checks
+executed, failures and missing coverage; a passing round trip does not establish safe deserialization.
 
 - [Untrusted data and filters](references/untrusted-data-and-filters.md) — read when
   `ObjectInputStream` reads anything not produced by code you deploy, when configuring

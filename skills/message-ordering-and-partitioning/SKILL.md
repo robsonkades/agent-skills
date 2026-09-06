@@ -3,7 +3,7 @@ name: message-ordering-and-partitioning
 description: >
   Ordering guarantees and their exact scope/stage: common logs order per partition while a
   global total order requires a serialized sequencer; per-key ordering depends on key-to-partition
-  mapping is stable; why the partition count is nearly a one-way door; what silently breaks
+  mapping remaining stable; why the partition count is nearly a one-way door; what silently breaks
   order in a consumer or producer; and whether ordering is required at all — version guards,
   commutative handlers, state-machine guards. Use when a design says messages are processed
   in order with no scope, when partitions are added to a
@@ -35,12 +35,18 @@ cannot.
 
 ## Workflow
 
+Inspect client/broker versions, key serialization/partitioner configuration, Java toolchain,
+consumer execution and sink transactions. Kafka references use 4.1 semantics; examples are
+partial and do not authorize upgrading a project or changing its delivery contract.
+
 1. **Write the required scope down as a sentence.** "Records for the same account id must be
-   applied in production order" is a specification. "The queue is ordered" is not, and it is
+   applied in authoritative account-version order at sink commit" identifies a scope and stage.
+   Define the version authority as well. "The queue is ordered" does not, and it is
    the thing that ships.
 2. **Ask whether ordering is required at all before designing for it.** Commutative handlers,
-   or a version guard on the record, remove the requirement entirely — and with it the key
-   constraint and the scaling ceiling. See `references/designing-without-ordering.md`.
+   or a version guard on full snapshots, can relax arrival order for specified outcomes.
+   Check intermediate transitions and external effects before relaxing keys or sequencing.
+   See `references/designing-without-ordering.md`.
 3. **Choose the partition key from the ordering scope**, then check it for skew. The entity
    whose order must hold forces the key; whether that key is evenly loaded is a separate
    question, owned by `sharding-and-partitioning` and `hot-partitions-and-rebalancing`.
@@ -53,8 +59,9 @@ cannot.
    (`references/where-ordering-breaks.md`).
 6. **Audit the producer**: a missing key, concurrent producers for one key, and in-flight
    retries that can be overtaken.
-7. **Test by shuffling.** Deliver the same records in a randomised order and assert the same
-   final state. If that test cannot pass, the ordering requirement is real — carry its cost.
+7. **Test by shuffling and concurrency schedules.** Assert final state and every required
+   intermediate/external invariant. Failure can expose a handler bug, missing metadata or a
+   true domain ordering requirement; passing finite cases is evidence, not a general proof.
 
 ## Decision block
 
@@ -65,10 +72,10 @@ Require per-key ordering when:
   rejected — a cancel arriving before its create, a delete before its update
 - a create/delete pair for one key can be reordered into a resurrection
 Avoid requiring ordering when:
-- the handler is commutative: setting fields from an authoritative snapshot, appending to a
-  log, or a counter update keyed by an idempotency token
-- the record already carries a monotonic version or sequence from the source of truth
-- the consumer's job is a projection that can be rebuilt from a snapshot
+- the handler uses a commutative, duplicate-safe merge for the required outcome
+- complete snapshots have authoritative versions and an atomic guard; intermediate effects
+  may be intentionally skipped (a versioned delta alone does not satisfy this)
+- a rebuildable projection also tolerates out-of-order intermediate behavior
 Prefer a version guard instead when:
 - per-key throughput exceeds what one handler can sustain, so ordering costs capacity
 - the chosen ordering key is skewed and the hot key would become a serial bottleneck
@@ -85,9 +92,10 @@ Require a global total order only when:
   common scopes include channel/partition, key/message group and a single total-order log.
   Redelivery, retry, failover and parallel handlers can change delivery/completion/effect order
   even when append order remains intact.
-- A record produced with **no key** is placed by the client's partitioner — round-robin or
-  sticky batching — so it has no per-key ordering at all. Nothing raises an error. This is the
-  most common way per-key ordering is lost.
+- A record with **no key** normally relies on the client's partitioner; across multiple
+  partitions this does not preserve domain-key order. An explicit stable partition or a
+  single-partition topic can still provide append order. Inspect actual routing, including
+  configurations that ignore keys; the presence of a key alone proves nothing.
 - With the default modulo-style mapping, per-key log ordering holds only while mapping is
   stable. **Adding partitions remaps some keys**: new records for key K can land on a different partition while K's earlier records
   sit in the old one, and there is no ordering relation between two partitions. There is no
@@ -100,21 +108,24 @@ Require a global total order only when:
   not an ordering either — clock skew between producers is unbounded.
 - There is no ordering across topics, and none across partitions of one topic. A flow that
   spans both has no order at all unless the records carry one.
-- **Consumer, parallel dispatch**: handing polled records to an executor inside the poll loop
-  destroys per-partition order. Keyed dispatch — `hash(key) % workers`, one queue per worker —
-  preserves _per-key_ order only, and makes one slow key block every key that shares its
+- **Consumer, parallel dispatch**: unordered concurrent execution of polled records can break
+  per-partition completion order. Keyed dispatch — `hash(key) % workers`, one queue per worker —
+  preserves _per-key_ order only with stable mapping, FIFO admission and completion before
+  the next task (including effects), and makes one slow key block every key that shares its
   worker. Choose it knowingly.
 - **Consumer, retry**: republishing a failed record to the back of the topic or to a retry
   topic lets later records for the same key overtake it. Blocking in-place retry preserves
   order at the cost of head-of-line blocking on the whole partition. Both are defensible; the
   bug is choosing one without noticing (`retries-and-backoff`).
 - **Consumer, DLQ**: routing one record aside and continuing means the next record for that key
-  is applied to a state the skipped record never reached. The result is wrong, not late. Where
+  is applied without the skipped effect. This violates the contract when later transitions
+  require it; an explicitly skippable independent event may be safe. Where
   per-key order matters, pause the key or the partition instead
   (`poison-messages-and-dlq`).
 - **Consumer, rebalance**: a partition can be revoked while records remain in flight, and the
   new owner resumes from a checkpoint. Group assignment does not fence late side effects.
-  Stop admission, commit only contiguous completion and make the sink reject stale ownership
+  Stop admission, commit only the completed prefix of delivered records (offset numbers can
+  have gaps), and make the sink reject stale ownership
   epochs or tolerate duplicates.
 - **Producer, in-flight retries**: non-idempotent producers with multiple batches in flight can
   reorder a failed/retried batch behind a later success. Kafka's idempotent producer preserves
@@ -133,7 +144,8 @@ Scope: accountId
 Source order: monotonically increasing account version committed by the authority
 Broker order: same key maps to one partition within mapping epoch E
 Delivery: at-least-once; retries may be out of delivery order
-Apply rule: commit v only when v == current + 1; duplicates v <= current are acknowledged
+Apply rule: atomically commit v only when v == current + 1
+Duplicate rule: verify event identity/payload; quarantine conflicting equal versions
 Gap rule: park boundedly, then fetch snapshot/replay missing range
 Visibility: account state commits in version order; notifications may arrive later
 Mapping change: close E, record barrier, drain through barrier, open E+1
@@ -159,6 +171,6 @@ Mapping change: close E, record barrier, drain through barrier, open E+1
   and before changing a partition count.
 - [Designing for no ordering requirement](references/designing-without-ordering.md) — version
   guards, commutative operations, last-write-wins with its data-loss caveat, state-machine
-  guards that reject invalid transitions, and the shuffle test that proves handlers are
+  guards that reject invalid transitions, and shuffle tests that challenge whether handlers are
   order-insensitive. Read before accepting an ordering requirement, and when per-key throughput
   is the bottleneck.

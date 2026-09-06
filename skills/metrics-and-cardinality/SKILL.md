@@ -18,7 +18,7 @@ description: >
 Build aggregate signals that answer operational and product questions without making
 telemetry a reliability, cost, privacy or control-plane hazard.
 
-Every unique label set is a time series. Cardinality is therefore a workload-dependent
+In Prometheus, metric name plus its complete label set identifies a time series. Cardinality is therefore a workload-dependent
 resource demand, not just naming style. “Bounded and enumerable at design time” is a useful
 ideal but too strict: versions, nodes and controlled tenants evolve. What matters is a
 declared maximum/growth model, owner, retention/churn behavior and containment.
@@ -96,6 +96,10 @@ limits, relabel drops, backend quotas and alerts on active series/churn/ingestio
 whether overflow is dropped, collapsed to OTHER, sampled or fails the scrape. Dropping a
 meter can corrupt denominators; collapsing can hide cohorts.
 
+Collapse through an actual source aggregation: relabeling distinct exported series to one
+identity does not sum them. Backend drops also do not reclaim meters already registered in
+the application. Validate containment separately at registration, scrape and storage layers.
+
 ### 7. Validate and migrate
 
 Load-test instrumentation overhead and worst cardinality. Fixture-test label normalization,
@@ -118,7 +122,7 @@ classes. Use separate metric families when labels would mix incompatible quantit
 
 ## Operational rules
 
-- A gauge is a scrape-time observation; short peaks require event counters, max-since-reset
+- A gauge observes current state at collection (scrape for pull registries); short peaks require event counters, max-since-reset
   state, or a distribution with documented reset semantics.
 - Some Micrometer gauge forms weakly reference observed objects. Verify the chosen API and
   retain lifecycle ownership; NaN/disappearance can also be scrape or computation failure.
@@ -164,9 +168,12 @@ sampling, retention and access controls.
 
 ## Cross-skill routing
 
-- [instrument selection](references/instrument-selection.md)
-- [cardinality budget](references/cardinality-budget.md)
-- [Micrometer and Prometheus](references/micrometer-and-prometheus.md)
+- [instrument selection](references/instrument-selection.md) — read when choosing quantity,
+  lifecycle and instrument semantics.
+- [cardinality budget](references/cardinality-budget.md) — read when labels or representation
+  change series count, churn or containment.
+- [Micrometer and Prometheus](references/micrometer-and-prometheus.md) — read when configuring
+  meters, filters, exposition, queries or migrations.
 - latency-statistics for quantile meaning.
 - opentelemetry-performance for collection/export overhead.
 - slo-and-alerting for objectives and paging.

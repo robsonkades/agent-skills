@@ -27,10 +27,14 @@ gets deleted the first time a deadline arrives.
 
 ## Workflow
 
+Inspect the project's JDK/toolchain, resolved Jupiter/assertion versions, lifecycle/parallel
+configuration and existing test command first. Reference snippets were authored for JDK 25,
+use Java 17+ syntax and Jupiter 5 APIs, and do not authorize upgrades or new dependencies. When a
+failure cannot be reproduced, report the observation and diagnostic next step, not a guessed cause.
+
 1. **Name it after the condition and the expected behaviour**, so a reader can predict the
    assertion from the name alone: `renewalOneDayAfterTheWindowIsNotDue`, not
-   `testIsDueWithin2`. A name containing a method name and a digit is naming the
-   implementation.
+   `testIsDueWithin2`. Method names or digits are fine when they help describe the contract.
 2. **Give it one reason to fail.** Multiple assertions are fine when they describe one
    outcome; two unrelated outcomes are two tests, because the first failure hides the second.
 3. **Make the arrangement disappear.** A builder with sensible defaults, where the test names
@@ -40,13 +44,15 @@ gets deleted the first time a deadline arrives.
    prints both lists on failure; `assertTrue(list.equals(...))` prints `false`.
 5. **Remove every input you do not control** — the system clock, iteration order, default
    locale and zone, randomness, the filesystem. See `references/determinism.md`.
-6. **Break the production code on purpose once** and read the failure. If the message does
-   not identify the fault, the assertion is wrong, not the code.
+6. **For a consequential new regression test, check a representative fault** with a temporary
+   local mutation or the known failing revision. Restore the mutation and rerun the test;
+   inspect both fault detection and diagnostic clarity. Do not leave broken production code.
 
 ## Rules
 
-- No logic in a test. An `if`, a loop or a `try/catch` that decides what to assert means the
-  test has branches of its own, and those branches are untested. Parameterise instead.
+- Keep scenario selection explicit: parameterise data-only cases instead of branching to choose
+  unrelated assertions. Loops, generated cases and property assertions are valid when their oracle
+  is independent, readable and identifies the failing input.
 - One behaviour per test; `assertAll` only for several facets of the _same_ outcome, so that
   all of them are reported rather than just the first.
 - Shared mutable fixture state is the cause of "passes alone, fails together". Construct in
@@ -56,7 +62,7 @@ gets deleted the first time a deadline arrives.
   is noise, or it is not and the sleep is a race (concurrency-testing owns the alternatives).
 - Never assert against a value the test computes with the same expression the code uses. That
   asserts the expression equals itself and passes when both are wrong. Write the expected
-  value as a literal.
+  value as a literal for example-based tests, or use an independent oracle/property.
 - Assert on the resulting value whenever the outcome is observable as one. Verifying that a
   collaborator was called is a claim about implementation, and is only justified when the
   call _is_ the outcome (java-test-doubles).
@@ -65,15 +71,20 @@ gets deleted the first time a deadline arrives.
   `try/fail/catch` and cannot silently pass when nothing is thrown.
 - Parameterise only cases that differ in data alone. If the expected result needs a
   conditional to compute, they were different tests wearing one name.
-- A flaky test is a defect report — about the test or about the code. `@RepeatedTest`, a retry
-  extension or `@Disabled` converts a report into silence. Diagnose it or delete it and say so.
-- Helpers may arrange; they may not assert. An assertion buried in a helper reports the
-  helper's line number, and the test no longer states what it expects.
+- A flaky test is a defect report about the test, code or environment. Preserve the regression
+  signal: do not delete, weaken or disable it just to pass. Bounded repetition can diagnose a
+  flake if every outcome is retained; retry-until-green is not a fix.
+- Assertion helpers/custom assertions are useful for recurring domain contracts when names,
+  actual/expected values and caller context make failures clear. Avoid helpers that hide which
+  behaviour is asserted or duplicate production logic.
+
+Report the behaviour covered, relevant boundary/failure cases, exact command and executed test
+count, and any untested hypothesis. A green command with zero matching tests is not validation.
 
 ## References
 
-- **Verified JUnit patterns** — `references/junit5-patterns.md`. Compiling, passing examples
-  (JDK 25, Jupiter): test data builder, `@ParameterizedTest` with `@CsvSource` and implicit
+- **JUnit patterns** — `references/junit5-patterns.md`. Partial examples
+  (Java 17+ syntax, Jupiter 5 APIs): test data builder, `@ParameterizedTest` with `@CsvSource` and implicit
   `java.time` conversion, `@Nested` for context, exception assertions, and the lifecycle
   choices that create shared state. Read when reaching for a Jupiter feature.
 - **Removing non-determinism** — `references/determinism.md`. The controllable inputs a test

@@ -148,9 +148,15 @@ awk '$4 == 4' jit.txt | wc -l                                  # 6  — only lin
 grep -cE '^ *[0-9]+ +[0-9]+ [ %s!bn]{5} 4 ' jit.txt           # 21 — every tier-4 line
 ```
 
+These filters assume tiered HotSpot 25.0.3 output with default compiler-name/verbosity settings.
+`CIPrintCompilerName` adds a compiler prefix and diagnostic verbosity may add columns; reject or
+handle those formats explicitly. Count status lines separately from successful compilations:
+a retirement line repeats a compile ID and is not another compilation.
+
 The structural pattern follows the printf format — timestamp, spaces, id, one space, five
 flag characters, one space, the tier — and survives a five-digit id and an eight-digit
-timestamp (checked with a synthetic line). Portable extraction into tab-separated fields:
+timestamp (checked with a synthetic line). Extraction below assumes GNU-compatible sed/awk tab
+escapes; validate the installed tools:
 
 ```bash
 # timestamp \t id \t [flags] \t tier \t rest
@@ -185,8 +191,10 @@ jcmd <pid> Compiler.codelist | grep 'com.myapp.Service.process'
 Columns are compile id, tier, state (`0` in use, `1` not entrant), the method in descriptor
 form — `Class.method(descriptor)`, **not** `Class::method` — and code addresses. A method with
 only a live tier-3 entry has no listed tier-4 nmethod. No entry means “no currently listed
-nmethod”, not necessarily “ordinary Java bytecode is interpreted”: the method may be uninvoked,
-native, intrinsic, excluded, unloaded, or retired. The command is documented as medium impact;
+nmethod”, not necessarily “ordinary Java bytecode is interpreted”: the method may be inlined in
+callers, uninvoked, native, intrinsic, excluded, unloaded, or retired. OSR and ordinary-entry code
+may coexist; this snapshot does not prove which compiled body served a sampled request.
+The command is documented as medium impact;
 use it as a one-off rather than a poll.
 
 Adjacent one-line answers:
@@ -196,6 +204,11 @@ jstat -compiler <pid>          # Compiled Failed Invalid Time FailedType FailedM
 jcmd <pid> Compiler.queue      # what is waiting — a long C2 queue explains tier 2 and "stuck at 3"
 jcmd <pid> Compiler.codecache  # occupancy per code heap
 ```
+
+`jstat -compiler` reports aggregate compiler work. `FailedType` is compilation kind, not tier;
+`Invalid` counts compilation invalidation before installation, not all runtime deoptimizations.
+Correlate task IDs, status lines and JFR for lifecycle conclusions instead of treating these
+counters as a tier or deoptimization history.
 
 ## Why is it stuck at tier 3
 

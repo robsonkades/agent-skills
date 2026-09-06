@@ -70,9 +70,11 @@ Extract only what the user established. Use `feature-discovery` to separate fact
 unknowns, and decisions. Mark missing mandatory sections as `OPEN`; never fill them with plausible
 content.
 
-Assign the shared lifecycle identifiers as items appear: `OBJ-*`, `BR-*`, `BAC-*`, `SC-*`, `Q-*`,
-`IMP-*`, `ED-*`, `EXP-*`, `CT-*`, `TC-*`, `RES-*`, `RISK-*`, `EV-*`, and `GAP-*`. Do not reuse a
-prefix for another artefact type or renumber identifiers merely to tidy the document.
+Assign the shared lifecycle identifiers as items appear: `OBJ-*`, `F-*`, `A-*`, `U-*`, `BR-*`,
+`BAC-*`, `PF-*`, `TF-*`, `SC-*`, `Q-*`, `IMP-*`, `ED-*`, `EXP-*`, `CT-*`, `TC-*`, `RES-*`,
+`RISK-*`, `EV-*`, and `GAP-*`. Use the namespace in `feature-engineering`'s artefact contract.
+Do not reuse a prefix for another artefact type or renumber existing identifiers merely to
+tidy the document; add an explicit alias if an existing brief uses a different namespace.
 
 For each consequential decision, record the decision, accountable owner, consulted roles, status, and
 source. A participant can supply context without having authority to approve it. Keep the item `OPEN`
@@ -105,6 +107,11 @@ Question order is adaptive, but normally moves through:
 
 Do not open a later area while an earlier answer can invalidate it.
 
+Use supplied answers and authoritative context before asking; a challenge already resolved
+by that evidence does not need to be asked again. Independent questions can proceed while
+one dependent area waits. An instruction to draft or revise authorizes that work, not a
+fabricated approval of the resulting definition.
+
 Before closing a stage, use at least one challenge question wherever the answer could expose false
 value, solution bias, excess scope, or a hidden invariant. Useful challenges include the counterfactual
 of doing nothing, the evidence for the problem, the smallest outcome that still creates value, behavior
@@ -131,6 +138,12 @@ Each downstream item names its upstream justification; each objective and rule n
 demonstrate it. An item with no upstream reason is speculative. An upstream item with no downstream
 criterion is not yet verifiable. For Light depth this may be a few inline `Trace:` fields; use a matrix
 when Standard or Deep work would otherwise become hard to audit.
+
+This diagram spans the lifecycle, not a demand to create every item during definition.
+At the product stage, trace OBJ/BR to BAC and scope; add engineering links during analysis
+when applicable. Record a planned verification method for each criterion and distinguish it
+from executed `EV-*` evidence. Delivery resources and execution results belong to later
+authorized lifecycle work; their absence alone does not block a definition brief.
 
 Challenge scope or rules with a concrete consequence, not generic disagreement. When the user chooses
 against a recommendation, record the decision and its trade-off; do not keep relitigating it unless
@@ -255,6 +268,7 @@ Consequence  credible failure or rework created by proceeding
 Owner        role authorized to accept that consequence
 Expiry       date, milestone, or condition after which acceptance is invalid
 Reopen       observable trigger and next action
+Blocks       phases/resources blocked, or none with a reason
 ```
 
 The participant requesting progress is not automatically the risk owner. Missing authority, an unknown
@@ -267,10 +281,12 @@ accepted gaps, and approval. Engineering analysis names its Product Definition r
 names both. A later semantic change creates a new revision and applies the change-impact rule instead of
 rewriting history.
 
-Then hand the complete artefact package to `feature-engineering` as a fresh validation pass. Do not
+Then use `feature-engineering` for a separate validation pass over the supplied revisions. Do not
 claim readiness only because either workshop converged. Incorporate validation findings through a
-focused loop with the owner of the affected stage. Stop when `feature-engineering` reports no blocking
-readiness gaps or the accountable owner explicitly accepts a named gap.
+focused loop with the owner of the affected stage. Owner acceptance creates a proposed `GAP-*`;
+the validation pass must still determine that it is valid and non-blocking for the next phase.
+If that skill or required reviewer is unavailable, return the package as `Ready for validation`
+with validation `Not run`; do not invent a PASS or imply a separate person reviewed it.
 
 Normalize that independent result to one status with reasons and affected IDs:
 
@@ -290,11 +306,14 @@ with the accountable role and creates a new snapshot when resolved.
 - Never infer business rules, corporate standards, compliance, priority, or authority from code.
 - Prefer one recommended option plus its trade-off over a menu with no analysis.
 - Keep a visible `OPEN` list; unanswered blocking questions do not decay into assumptions.
-- Ask which role is participating before entering engineering analysis; never infer authority from
-  technical fluency.
+- Establish the participating role before engineering analysis from explicit session/document
+  evidence; ask only if still unknown. Never infer authority from technical fluency.
 - Preserve authorship and decision provenance when information crosses the product/engineering handoff.
 - Distinguish approval authority from participation; never record consensus merely because no one
   objected.
+- Stage handoff names an artefact, owner and next action; it does not authorize messaging
+  that owner, publishing a ticket or spawning another agent. Use those actions only when
+  authorized by the user or applicable instructions. Local drafting can continue independently.
 - Do not optimize wording while semantics remain unresolved.
 - Respect “good enough” only after the convergence gates; do not prolong the loop for polish.
 - Do not implement code, create delivery tasks, estimate, or assign people unless the user expands the
@@ -316,6 +335,7 @@ Draft        <only the affected excerpt, unless a full draft was requested>
 
 At a product-stage handoff, return the agreed Product Feature, its revision, engineering-analysis
 requirement and status, and the unresolved items assigned to engineering. At final convergence, return
-the complete Product Feature plus Engineering Analysis, or the Tech Feature, followed by accepted
+the Product Feature plus required Engineering Analysis (or its accountable not-required rationale),
+or the Tech Feature, followed by accepted
 assumptions/risks, decision authority, traceability, accepted gaps, snapshot revisions, decomposition if
 any, and the normalized `feature-engineering` validation result.

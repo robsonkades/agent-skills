@@ -66,9 +66,9 @@ Not provided — you must design it
    actual guarantees and extension points before wrapping or rebuilding it.
 2. **For the second group, separate mechanism from decision.** The framework supplies the
    mechanism; the decision is still yours and is where the value is.
-3. **Check what the framework's version actually guarantees**, not what the pattern
-   classically guarantees. The gaps are listed in the references and each has produced
-   production incidents.
+3. **Inspect the actual toolchain, dependencies and configuration:** Java release, provider,
+   transaction manager, proxy/weaving mode, context lifetime and enhancement where relevant.
+   Do not infer guarantees from annotation names or upgrade to match an example.
 4. **Express the pattern in modern Java** where the language now does the work — records for
    value objects and DTOs, sealed interfaces for closed hierarchies, exhaustive switch for
    dispatch.
@@ -82,16 +82,16 @@ Not provided — you must design it
 
 ```text
 The framework provides the pattern completely
-        → configure it. A wrapper adds a name and removes features.
+        → configure it first; add a wrapper only for a demonstrated semantic boundary.
 
 The framework provides the mechanism, you own the decision
         → make the decision explicitly and write it down. This is where
           the pattern knowledge actually pays.
 
 The framework provides something similar with different guarantees
-        → read the guarantee. An identity map is not a cache; a
-          persistence context is not a request scope; @Version does not
-          survive a bulk update.
+        → read the guarantee. Context-local identity is not cross-context caching;
+          context lifetime is integration-dependent; bulk updates need explicit
+          version participation.
 
 The framework does not provide it
         → design it, using the pattern as the starting point rather
@@ -103,8 +103,8 @@ A pattern's classical implementation conflicts with a modern idiom
 
 A pattern appears obsolete
         → check whether it was absorbed rather than refuted. Table
-          Module's idea survives as set-based SQL; Row Data Gateway's
-          survives as a row record.
+          Module's idea survives as set-based SQL; a Row Data Gateway
+          must still own row persistence, not just carry projection data.
 ```
 
 ## Rules
@@ -122,15 +122,16 @@ A pattern appears obsolete
   and Open Session In View can outlive one service transaction; evaluate their explicit consistency,
   query and connection behavior rather than calling every longer scope inherently worse
   (`orm-behavioral-patterns`).
-- **The first-level cache is an identity map, not a cache.** It disappears with the
-  transaction. Anything that must survive is a second-level cache, with invalidation and
-  staleness of its own (`caching-strategies`).
-- `@Version` implements detection only. The conflict's presentation, the retry policy, and
-  the fact that bulk statements bypass it are yours to design
+- **The first-level cache provides context-local identity.** It lasts with the persistence
+  context, which need not end at transaction completion. It does not provide freshness or
+  thread safety. Cross-context caching requires an explicit cache/provider and invalidation
+  contract (`caching-strategies`).
+- `@Version` implements managed-entity conflict detection. The client's original version,
+  conflict presentation, valid retry and bulk SQL participation remain application concerns
   (`offline-concurrency-control`).
-- **JPA does not require a mutable JavaBean.** It requires a no-arg constructor (which may
-  be `protected`) and field access. Setters are a choice, and omitting them is what lets an
-  entity protect its invariants (`domain-logic-organization`).
+- **JPA does not require public JavaBean setters.** Portable entities need a public/protected
+  no-arg constructor and a valid field or property access strategy. Field access supports
+  mutation through domain methods; persistent fields must not be final (`domain-logic-organization`).
 - Records are often effective for immutable values, DTOs, commands and events. They are not JPA
   entities and do not fit aggregates that require in-place mutation/proxying, but aggregate state is
   not mutable “by definition”; immutable replacement/event-sourced models exist.
@@ -146,6 +147,12 @@ A pattern appears obsolete
 - **A pattern absorbed by a framework is still worth understanding.** The framework's
   surprising behaviours are the pattern's classical consequences, and someone who knows the
   pattern predicts them instead of debugging them.
+
+For the proposed implementation, return the framework mechanism and its verified scope,
+the application responsibility it leaves open, and a targeted test of the relevant gap
+(for example rollback, context lifetime, stale-client writes or cache interception).
+When configuration evidence is missing, state the assumption and how to verify it; do not
+present the feature as an established guarantee. Keep the response proportional to the task.
 
 ## References
 

@@ -30,12 +30,26 @@ The table assigns the next investigation; no single signal proves root cause by 
 
 ## Common false attributions
 
-- A GC event overlaps latency, therefore GC caused all of it. Overlap is necessary, not sufficient.
+- A GC event overlaps latency, therefore GC caused all of it. Overlap alone is insufficient;
+  conversely, GC-induced queueing may outlast the pause. Establish that causal path from request
+  arrival/service progress rather than requiring every affected request to overlap the GC.
 - No safepoint events were parsed, therefore none occurred. First validate decorators, event names,
   thresholds, recording loss, and clock alignment.
 - A parked virtual thread is pinned. Parking normally unmounts; inspect carrier stacks and the
   runtime/version-specific pinning events.
 - CPU throttling is “JVM pause.” It can delay JVM progress without being a VM safepoint and needs an
   OS/container remediation.
+- `cpu.stat` throttled duration is missing request/CPU time. It is scheduler/cgroup accounting
+  that may aggregate across run queues; do not subtract it from a request or divide by wall
+  time as a lost-CPU percentage without checking the kernel's metric semantics.
+- No completed JFR duration event means no current stall. A blocked operation may not emit its
+  duration event until it finishes; verify thresholds, enabled events and in-progress evidence.
+- A dump taken afterward proves the earlier stack. Dumps are snapshots, and collection may
+  perturb the workload. Traditional `Thread.print` and JDK 21+ `Thread.dump_to_file` have
+  different collection semantics; JEP 444's latter command avoids pausing the application
+  globally, but is not an atomic snapshot of all threads. Choose and label the evidence.
 - Lowering a safepoint poll interval is free. It may reduce time-to-safepoint while reducing
   optimisation opportunities or throughput; measure both sides.
+
+Sources for collection/accounting boundaries: [JEP 444 thread dumps](https://openjdk.org/jeps/444)
+and [Linux 6.12 CFS throttling accounting](https://github.com/torvalds/linux/blob/v6.12/kernel/sched/fair.c).

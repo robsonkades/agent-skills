@@ -1,7 +1,8 @@
 # What to look for, in payoff order
 
-Work down. Stop at the level where you find something that invalidates the change — there is no
-point reviewing the naming in a method that should not exist.
+Choose passes from the change's risk, using this order as a starting point. A blocker may make
+local polishing pointless, but continue independent paths and report any intentionally deferred
+coverage. Inspect surrounding implementation and consumers; the diff alone is not the contract.
 
 ## 1. Is it the right thing?
 
@@ -45,6 +46,9 @@ get imagined.
 - Old and new versions run simultaneously during a deploy — does this change survive that?
 - Does the change alter behaviour a caller could reasonably depend on without changing the
   signature? Those are the breakages nobody notices until production.
+- Which compiler release/toolchain and resolved dependency versions does the project actually
+  use? Check proposed APIs against those versions, distinguishing source, binary and behavioral
+  compatibility; do not silently introduce preview flags or a newer runtime.
 
 ## 5. Security
 
@@ -77,7 +81,8 @@ get imagined.
 
 ## 8. Readability and structure
 
-Real, but last — and most of it is the author's judgement to make.
+Review readability where it affects understanding or safe modification; keep preferences
+non-blocking unless an explicit repository rule applies.
 
 - Will the next reader understand the intent without running it (java-clean-code)?
 - Do the names carry the domain's vocabulary (java-api-design)?
@@ -86,18 +91,25 @@ Real, but last — and most of it is the author's judgement to make.
 
 ## What to hand to automation instead
 
-Every item here is a machine's job. If you are writing review comments about them, the fix is
-in the pipeline, not in the review (quality-gates).
+Delegate repetitive checks to configured automation, but inspect whether it ran and what it
+can detect. A tool's potential capability does not establish coverage or excuse an observed defect.
+Tool adoption and rollout belong to `quality-gates`; this is a routing table, not an instruction
+to add every tool during a review.
 
-| Instead of reviewing          | Enforce with                                          |
-| ----------------------------- | ----------------------------------------------------- |
-| Formatting, import order      | Spotless / google-java-format, checked in CI          |
-| Unused variables, raw types   | `javac -Xlint:all -Werror`                            |
-| Common bug patterns           | Error Prone, SpotBugs                                 |
-| Nullability contract breaks   | NullAway with JSpecify annotations (java-null-safety) |
-| Layer and dependency rules    | ArchUnit (architecture-testing)                       |
-| Known-vulnerable dependencies | Dependency scanning in CI                             |
-| Test coverage of new lines    | A coverage _report_ on the diff — as information      |
+| Instead of reviewing                                | Enforce with                                                                           |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Formatting, import order                            | Spotless / google-java-format, checked in CI                                           |
+| Raw/unchecked types and supported compiler warnings | Project-compatible `javac -Xlint` settings; inspect enabled categories                 |
+| Unused locals/imports                               | Configured IDE or static-analysis rule; javac does not generally warn on unused locals |
+| Common bug patterns                                 | Error Prone, SpotBugs                                                                  |
+| Nullability contract breaks                         | NullAway with JSpecify annotations (java-null-safety)                                  |
+| Layer and dependency rules                          | ArchUnit (architecture-testing)                                                        |
+| Known-vulnerable dependencies                       | Dependency scanning in CI                                                              |
+| Test coverage of new lines                          | A coverage _report_ on the diff — as information                                       |
 
 A reviewer's remaining job after all of that is the part requiring a model of the system, the
 domain and the operational reality. That is the part worth the wait.
+
+Compiler categories were checked against the [Java 17 javac manual](https://docs.oracle.com/en/java/javase/17/docs/specs/man/javac.html).
+Inspect the actual project's JDK before suggesting flags; enabling all warnings as errors can
+break an existing build and is not a prerequisite for a useful review.

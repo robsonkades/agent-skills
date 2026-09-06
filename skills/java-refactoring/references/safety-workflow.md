@@ -22,6 +22,10 @@ exact numeric representation). Branch coverage alone does not establish behavior
 
 ### Before
 
+The shipping example is a teaching fixture. Assume an immutable `Order` with side-effect-free
+accessors; preserve invalid-input exception behavior too unless its contract is deliberately
+changed. The test snippet needs the project's compatible JUnit Jupiter parameterized-test setup.
+
 ```java
 public int costCents(Order order) {
     int cost = 0;
@@ -69,6 +73,7 @@ the point.
     "10.0, BR-NE, true,  50000, 2250",   // express DEFEATS free shipping — bug? pinned, filed as SHIP-311
     "35.0, BR-N,  false, 50000,    0",
     "10.0, BR-S,  false, 30001,    0",
+    "10.0, BR-S,  false, 30000,  900",   // equality must not receive free shipping
 })
 void pinsCurrentBehaviour(double kg, String dest, boolean express, int total, int expected) {
     assertEquals(expected, calculator.costCents(new Order(kg, dest, express, total)));
@@ -81,10 +86,11 @@ its own test _after_ the refactoring.
 
 ### The steps
 
-Each line was one commit, tests green after each:
+Apply each as a small independently checked step:
 
-1. Extract `freeShippingApplies(order)` and convert it to a leading guard clause —
-   legal only because the pinned table proves no path both zeroes and then modifies.
+1. Extract `freeShippingApplies(order)` but retain its evaluation after the other computations.
+   Moving it first would skip preceding accessor calls and failures; for example a null
+   destination previously fails even for an otherwise free-shipping order.
 2. Extract `baseCost(weightKg)`; introduce the `HEAVY_KG` constant, replacing both
    `> 20` occurrences.
 3. Extract `remoteSurcharge(cost, destination)`.
@@ -94,30 +100,30 @@ Each line was one commit, tests green after each:
 
 ```java
 public int costCents(Order order) {
-    if (freeShippingApplies(order)) {
-        return 0;
-    }
     int cost = baseCost(order.weightKg());
     cost += remoteSurcharge(cost, order.destination());
     cost = expressCost(cost, order);
+    if (freeShippingApplies(order)) {
+        return 0;
+    }
     return cost;
 }
 ```
 
 ### Trade-offs
 
-The pinned suite asserts magic numbers and one probable bug — it documents the present,
-not the intent, so it must not survive as the permanent suite. Step 1 changed evaluation
-order (guard first instead of last), which is exactly the kind of step that is safe
-_only_ because the interaction rows exist; with a thinner table it would have been an
-unverified behaviour change.
+The pinned suite documents present behavior and one possible policy defect. Replace opaque rows
+with intent-revealing tests when intent is known, retaining valuable regression cases. Keeping
+the guard last preserves evaluation order; return-value rows alone could not justify moving it
+across fallible computations. Do not infer equivalence for unseen invalid inputs from nine rows.
 
 ### Verification
 
-All eight rows green before and after every step; a deliberate mutation of the guard
-(`>= 30000`) fails row 8, proving the boundary is actually covered. After the
-refactoring, the characterisation rows were rewritten as named intent tests
-(`freeShippingRequiresNonExpress`, …) and SHIP-311 proceeded separately.
+Check all nine rows against both forms. A deliberate `>= 30000` mutation must fail row 9
+(`total=30000`); row 8 alone cannot distinguish `>` from `>=`. Also compare the null-destination
+failure for an otherwise free order: both must throw, exposing a prematurely moved guard.
+Then rewrite applicable rows as named intent tests (`freeShippingRequiresNonExpress`, …),
+keeping the boundary regression. SHIP-311 is the fixture's hypothetical separate policy decision.
 
 ## Pinning a dimension that is not the return value
 

@@ -1,200 +1,155 @@
-# Writing the Record
+# Writing the record
 
-## The worked record
+Read when sizing or drafting an ADR, turning analysis into a record, or reviewing its
+reasoning. Use the repository's existing fields; the forms here are adaptable conventions.
 
-An architecture decision record is short, and — on the majority position, which is not unanimous (see "Supersede, or edit?" below) —
-immutable once accepted, and superseded rather than edited. Nygard's five parts — title, status, context, decision, consequences —
-carry everything that matters; the record below adds the alternatives, which is where re-litigation usually starts.
+## Compatibility evidence when recording Java choices
+
+This record-making method has no Java runtime baseline, and its Markdown proposal below
+is illustrative documentation, not executable Java. When an ADR depends on an API, JVM
+feature or framework version, inspect the target project's Maven/Gradle release settings,
+toolchains, resolved dependencies, CI and runtime images. Record conflicting or missing
+version evidence instead of inferring compatibility from the machine drafting the ADR.
+Distinguish a proposed upgrade from the currently supported environment, including preview
+or incubator requirements where relevant. Documenting a choice does not authorize changing
+the project's JDK, dependencies or runtime flags. Link version-specific primary evidence
+and the required compatibility check before asserting that the choice works on the target.
+
+## How much record does the choice earn?
+
+N/S/F/O are this skill's shorthand, not a published standard or empirically validated
+classification. Assess reversal **after adoption**: what data, consumers, deployments,
+operating procedures and contracts will depend on the choice? State the horizon relevant
+to this system; six months can be a useful question, not a universal cutoff.
+
+| Depth                                           | Evidence about impact                                                                       | What to preserve                                                                                         |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| N — existing commit/issue rationale             | Local choice, easily reversed, no material consumer/data/organizational obligation          | The choice and reason in the existing artifact; use S if local policy requires an ADR                    |
+| S — short ADR                                   | Durable rationale is useful, but scope and consequences are contained                       | Identity/status, context, decision and consequences; a brief alternative or trigger when material        |
+| F — fuller ADR                                  | Credible options, disputed assumptions, migration or coordination costs matter              | S plus genuine alternatives and rationale, evidence links, uncertainty, verification and review triggers |
+| O — hard to reverse within the relevant horizon | External commitments or migration/rollback costs make reversal impractical for this context | F plus commitment boundary, narrower/staged options considered, reversal limits and cost of delay        |
+
+Escalate depth for significant uncertainty or impact even if editing the code is easy.
+Do not turn these into required document lengths or time estimates. A public API with
+versioned consumers may be reversible; changing a “local” identifier persisted in external
+data may be expensive. If the deployment/consumer scope is unclear, use
+`architecture-coupling-and-quanta` to investigate it before assigning reversal cost.
+
+Record what can actually be undone: code rollback, data restoration, compatibility with
+old clients, and escape from vendor/operational commitments differ. Reintroducing old code
+does not restore discarded data. If deferral is chosen, preserve its cost, interim behavior,
+owner and ending condition; do not assume waiting is free or always wise.
+
+## Evidence and rationale fields
+
+| Item              | Record                                                                            | If missing                                                                                     |
+| ----------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Problem and scope | Operation/boundary affected, current behavior and reason a decision is needed     | Draft the bounded question; do not invent a problem to justify a preferred pattern             |
+| Drivers           | Requirements and constraints with source, owner and effective date where relevant | Mark source/authority unknown; distinguish a desired goal from a mandatory constraint          |
+| Measurement       | Artifact, date, build/configuration, workload and metric definition               | Label a forecast or hypothesis; never convert a target into a measured result                  |
+| Decision          | Chosen/proposed action and scope, including exceptions                            | Keep the outcome proposed or unresolved; preserve any available recommendation separately      |
+| Alternatives      | Plausible options actually considered, including status quo when relevant         | Say they were not recorded; distinguish newly suggested alternatives from historical ones      |
+| Consequences      | Benefits, costs, risks and remaining work, with evidence or uncertainty           | Investigate likely effects; do not manufacture a drawback just to fill a “Bad” bullet          |
+| Verification      | Check or review, expected result and responsible role                             | State the missing check; a passing Markdown linter does not verify the design                  |
+| Revisit condition | Assumption, observable trigger, observer and next decision step                   | Use an explicit review date if event monitoring is unavailable; do not claim monitoring exists |
+
+A decision with only benefits warrants scrutiny, not an automatic conclusion that it was
+never reviewed. A single feasible option can be documented honestly without inventing a
+competitor. An organizational constraint belongs in context as such, not disguised as
+technical impossibility.
+
+For quality goals, carry an observable scenario from `architecture-characteristics`:
+stimulus, operating conditions, response and measure. Preserve scope and metric: a 40 ms
+p95 aggregate-load measurement does not establish an 800 ms end-to-end p99 checkout goal.
+For nonnumeric obligations, a verifiable condition can suffice, such as which role can
+read a field. Missing numbers do not make a requirement irrelevant.
+
+## Worked proposal
+
+**Illustrative only.** The following is a fictional proposal, not evidence of a real review,
+measurement or approved database change. Its named roles and supplied facts are example
+inputs. In a real record, replace them only with supported context and resolvable evidence
+links. Unknowns are deliberately retained.
 
 ```markdown
-# ADR-014: Enforce order invariants in the domain model, not in SQL
+# ADR-014: Centralize order pricing calculations
 
-Status: accepted (2026-03-11) · supersedes ADR-006
+Status: proposed
+Decision owner: Order team lead (acceptance pending)
+Scope: Order pricing on the checkout write path
+Evidence: Illustrative supplied code inventory; complete writer inventory unavailable
 
 ## Context
 
-Order pricing rules changed 9 times in 12 months. They currently live in three places:
-a stored procedure, `OrderService`, and a trigger on `order_line`. Two of the last four
-production incidents were a rule applied in one place and not the others. Peak load is
-12k orders/hour. The ledger schema is owned by Finance and cannot change.
+The supplied inventory identifies pricing calculations in OrderService and a stored
+procedure. Finance uses the existing schema for reporting. Its owner requires schema
+compatibility. The agreed target is checkout p99 <= 800 ms at 12,000 orders/hour under
+the specified month-end payload mix. This is a requirement, not a benchmark result.
 
-## Decision
+Unknown: which other applications write prices or rely on the stored procedure's
+validation. The Order team must establish that inventory before approving removal.
 
-Order pricing invariants are enforced in the `Order` aggregate. Persistence is a Data
-Mapper over the existing schema. The trigger is dropped; the stored procedure is
-retained read-only for the Finance report until ADR-015 replaces it.
+## Proposed decision
+
+Use the Order domain model as the pricing calculation owner for checkout. Keep existing
+database integrity constraints and other writers' behavior until a reviewed migration
+defines how their invariants remain enforced. This proposal does not authorize dropping
+a trigger, constraint or procedure.
 
 ## Alternatives considered
 
-- Keep the rules in SQL, add a test harness. Cheapest. Rejected: rule changes need a
-  DBA-owned deploy window, which is why they arrive in batches and diverge.
-- Transaction Script in the service layer. Adequate today. Rejected: 7 pricing rules,
-  4 of them conditional on each other — that interaction is the specific condition
-  under which scripts stop being cheaper.
+- Keep calculations in the stored procedure: minimizes data access changes, but the
+  supplied delivery history identifies coordination with the DBA release schedule.
+- Keep calculations in OrderService: avoids introducing an aggregate boundary; the
+  proposal favors the domain model to colocate interacting pricing behavior. The
+  comparative maintenance benefit remains a hypothesis requiring design review.
 
 ## Consequences
 
-- Pricing an order costs one aggregate load (4 queries) where the procedure did one.
-  Measured 40 ms p95 on production-shaped data, against an 800 ms budget. Accepted.
-- The Finance report still reads the schema directly, duplicating the discount rule.
-  Known, accepted until ADR-015, listed in the risk register.
-- New engineers must learn the aggregate boundary before touching pricing.
+Checkout gains one explicit calculation owner if the migration is completed.
+Loading domain state may add queries and latency; no representative benchmark is available.
+Database/report compatibility and competing writers remain migration obligations.
+Developers will need to understand and maintain the chosen model boundary.
 
-## Compliance
+## Confirmation and review
 
-ADR010 and ADR013 on the pull-request check for `docs/adr`; the `supersedes ADR-006` link is set
-in this same change, not later.
+Before acceptance, inventory all price writers and obtain the required reviews.
+Before rollout, exercise pricing equivalence and invariant tests for those paths and
+measure end-to-end checkout p99 at the specified load and payload mix.
+Passing tests verifies defined behavior; the load result tests the performance target.
+The Order team lead owns review if another writer must bypass the proposed calculation
+owner or representative checkout performance misses the target.
 ```
 
-Note what the consequences section does: it names costs that are already known to be unpleasant, with numbers. **A record whose
-consequences are all positive has not been reviewed; it has been advertised.** Nygard's own instruction says the same thing and is
-worth quoting at anyone who resists it: "All consequences should be listed here, not just the 'positive' ones."
+The useful result is a reviewable proposal with a clear unresolved dependency. “Accepted”
+would misrepresent its state. If this replaced an existing ADR, link that record as a
+**proposed** replacement first; do not retire the current decision until the new outcome
+is authorized under the repository's lifecycle.
 
-Two more things the record above does, both of which the majority of real records skip. It states a **rejected alternative in terms
-its advocate would recognise** — "adequate today" is a concession, and a record that cannot make one gets re-fought. And it names an
-**organisational constraint** as a constraint: the ledger schema is owned by Finance, not "the schema is legacy".
+## Retrospective records
 
-**Placeholders and coaching are not the same thing, and only one of them belongs inside the record.** An unknown stays in, marked, so
-that the gap is visible to the next reader and to whoever reviews it — `Peak load is «measured peak at month-end, owner: Priya»`.
-Advice to the author — what still needs checking, what to delete before committing — goes outside the fenced record. A record that
-instructs its own author has not been finished, and the instruction ships when nobody deletes it.
+When rationale is missing, inspect contemporaneous issues, PRs, meeting notes, release
+history and surviving participants' accounts. Separate:
 
-## Classifying reversibility
+- Observed current implementation, with code/build scope.
+- Historical decision and rationale supported by dated evidence.
+- Recollections or plausible explanations that remain unconfirmed.
+- A new recommendation about what should happen now.
 
-Ask what undoing the decision would cost **after** six months of code has been written on top of it.
+Use the creation date of the reconstructed record and separately state the known or
+unknown historical decision date. Do not backdate authorship, invent advocates' arguments,
+or imply that working code proves approval. Where local policy supports it, record an
+evidenced historical acceptance without demanding a fictional new decision meeting.
 
-| Class               | Test                                                        | Examples                                                                           | Proportionate effort              |
-| ------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------- |
-| Trivial             | A refactor inside one module                                | Mapper library, package layout, validation style                                   | Just decide                       |
-| Cheap               | A refactor plus its tests; one team, one deploy             | Transaction Script to Domain Model in one module; adding a Query Object            | An afternoon                      |
-| Expensive           | Data migration, or a coordinated deploy with another team   | Inheritance mapping strategy; splitting an aggregate; session state placement      | Prototype the risky part          |
-| Effectively one-way | Published contract, datastore engine, or a process boundary | Public API shape; synchronous to asynchronous between services; service extraction | Full comparison; delay if you can |
+## Triggers that lead to review
 
-These four map onto the record classes **N**, **S**, **F** and **O** in `SKILL.md` — the class is what the record costs, this table is
-what the mistake costs. Two consequences follow, and they pull in opposite directions:
+A useful trigger is an early warning with lead time, not necessarily the point at which
+an assumption has already failed. For example, a supported 20,000-orders/hour capacity
+assumption might motivate review at sustained 15,000/hour **if** the owner explains the
+headroom and time needed to respond. Without that basis, the numbers are placeholders.
 
-- **For one-way decisions, delay is a strategy.** Keeping a boundary in-process today costs little and keeps extraction available;
-  extracting today forecloses the in-process option (`distribution-boundaries`).
-- **For cheap decisions, delay is pure cost.** Deliberation over a reversible choice burns the budget the one-way decisions need.
-  Deciding quickly and correcting later is the cheaper path, and saying so explicitly is part of the decision.
-
-**Provenance, kept separate.** The reversibility framing is Fowler's (_IEEE Software_, 2003), and Fowler credits _irreversibility_ as
-a driver of complexity to the economist Enrico Zaninotto, from a talk at XP 2002; Fowler's own contribution is the next move — that an
-architect's job includes finding ways to eliminate irreversibility. **One-way and two-way doors is a different framing from a
-different author**: Bezos, 2015 shareholder letter, under "Invention Machine", with its own warning that firms habitually applying the
-light-weight Type 2 process to Type 1 decisions "go extinct before they get large". Both are useful; blending them into one attributed
-idea is wrong, and common.
-
-## Drivers versus wishes
-
-A driver has at least one of these properties:
-
-- **A requirement with a stakeholder** who will notice its absence.
-- **A constraint** — a fixed database, a regulated retention period, a team boundary, a deployment window, an existing client you
-  cannot change.
-- **A measured fact** about the current system: this query takes 900 ms, this table has 400M rows, this endpoint is called 40 times
-  per page render.
-
-Everything else is a wish. Wishes are not worthless, but they are not evidence, and they do not belong in the record's Context as
-though they were.
-
-**Watch for drivers that are actually organisational.** "Two teams must deploy independently" is one of the strongest architectural
-drivers in enterprise systems and one of the least often written down; it is usually laundered into a technical justification. Write
-it as what it is. It survives scrutiny better than the technical proxy, and it changes when the organisation changes — which is
-precisely the signal you want. MADR 4.0.0's `decision-makers` / `consulted` / `informed` fields are the record-side of the same idea,
-and are the only mainstream template fields that admit an organisation exists.
-
-**What this section is not.** Ranking drivers, striking the ones on which the options do not differ, and reading a comparison matrix
-are `architecture-trade-off-analysis`' method, not this skill's. Collect the drivers, write them down, hand the comparison over.
-
-## The scenario form
-
-One characteristic — already named, capped and agreed by `architecture-characteristics` — enters the record as an observable scenario.
-The naming is theirs; the sentence below is what the record carries.
-
-> **When** _stimulus_ **in** _context_, **the system** _response_ **within** _measure_.
-
-| Written as                                        | The record carries instead                                                                                |
-| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| no load, no dimension, no limit                   | When order volume reaches 12k/hour at month-end, p99 checkout stays under 800 ms with 8 app instances     |
-| no change named                                   | When a payment method is added, no file under `pricing/` is modified and no schema migration runs         |
-| no failure named                                  | When one database replica is lost, reads continue with staleness under 5 s and writes fail for under 30 s |
-| no operation, no percentile                       | When the catalogue page is requested, at most 3 database round trips and p95 under 200 ms server-side     |
-| no asset, no adversary                            | When a support user queries an order, fields marked PII are absent from the response payload              |
-| a promise of flexibility, neither free nor scalar | When a tenant needs a custom tax rule, it ships as configuration without a deploy                         |
-
-If a scenario cannot be written, one of two things is true: the characteristic does not matter here, or nobody has decided what it
-means. Both are worth discovering **before** the record is written around it — and the first belongs back with
-`architecture-characteristics`, as an Others Considered line rather than a slot.
-
-## Risk, stated so it can be tracked
-
-For each accepted decision, record the assumption most likely to be wrong and the observation that would disprove it:
-
-> **Assumption:** peak order volume stays below 20k/hour.
-> **Trigger:** sustained 15k/hour for three consecutive days.
-> **Then:** re-open ADR-014 — aggregate load per order becomes the constraint.
-
-This separates a considered decision from a bet. It also converts the perennial "but what if we need to scale?" objection from
-speculative design work into a monitored condition (`architecture-and-performance`). **Nothing in the literature reviewed for this
-skill writes this three-line form down.** Fowler's 2026 bliki entry comes closest — "it's handy to record the confidence level of the
-decision. This is a good place to mention any changes in the product context that should trigger the team to reevaluate the decision"
-— and MADR's optional "More Information" section allows it without asking for it. Treat the form as this package's own construction,
-useful and unvalidated.
-
-Note the word "confidence" is a collision risk: this is a self-assessment attached to a reversal trigger, not an estimate with a
-confidence interval (`estimation-under-uncertainty`).
-
-## The rejected record
-
-**Record the decisions not to do something.** "We did not split billing into a service, and here is why" is the record that stops the
-question being re-asked every six months, and it is the one most often missing. AWS Prescriptive Guidance is the clearest named source
-for the mechanism: the owner adds a reason for the rejection "to prevent future discussions on the same topic", and moves the state to
-`Rejected`.
-
-Two boundaries on this. **The status value is an accretion** — `rejected` is not in Nygard's four (proposed, accepted, deprecated,
-superseded); it comes from MADR, from AWS, and from the Joel Parker Henderson collection. And **the act of refusing is not this
-skill's** — delivering the no, handling the escalation, leaving a yes on the table, all belong to `engineering-communication`. What
-belongs here is the artefact: a status, a reason, a date, and a number the next proposal can be pointed at.
-
-## Keeping the set alive
-
-- **Supersede, never edit.** An amended record loses the thing that makes the set valuable: what people believed at the time, and why.
-  **This is the majority position, not a settled one** — Nygard, Fowler, Microsoft's Well-Architected Framework and AWS all say
-  immutable; MADR 4.0.0's template ships a `date` field meaning "when the decision was last updated", which is a mutation affordance.
-  Nothing has tested either. Pick, and say so.
-- **Link decisions to code.** A one-line comment naming the ADR number at the boundary it governs is the only mechanism that reliably
-  reaches whoever is about to violate it.
-- **Review triggers, not the whole set.** Quarterly re-reading of 60 records does not happen. Reviewing the eight with live triggers
-  does. Zimmermann's ceiling is the same observation with a number attached: over 100 entries, an AD log "will probably put you
-  readers (and you) to sleep, and be really hard to maintain".
-- **Record the decisions not to do something** — above.
-
-## Failure modes
-
-- **The record as ceremony.** Written after implementation to satisfy a process gate, with alternatives invented afterwards.
-  Detectable: the rejected alternatives are strawmen.
-- **The record as design document.** Twelve pages of class diagrams. The record answers _why_; the code answers _how_, and stays true
-  when the code changes. Nygard's own limit is "one or two pages"; Fowler's is "typically a single page".
-- **Status never changes.** Everything is "accepted", nothing superseded or deprecated, and the set no longer describes the system. An
-  ADR set with more than two years of history and no superseded entries is unmaintained — read it as archaeology, not as constraint.
-  Backstage is the counter-instance and shows the honest rate: 15 records over about five and a half years, with a real ADR013 →
-  ADR014 supersession nearly three years apart.
-- **Consequences written as benefits.** The single most reliable indicator that the decision was announced rather than compared.
-- **One giant record.** Name the decision in one sentence, in the form "we must choose how X"; a decision that took a paragraph to
-  state was several decisions, with different drivers and different reversibility. They will need re-opening at different times and
-  cannot be superseded independently. Microsoft's Well-Architected Framework says this independently: "Break one decision into
-  multiple if an architectural decision is going to result in multiple phases … Log each phase as its own decision record."
-
-## Anti-patterns in driver collection
-
-- **Retrofitted drivers.** Requirements discovered after the design, which happen to be exactly what the design satisfies. Symptom:
-  one option meets every driver perfectly.
-- **Aggregated stakeholders.** "The business wants real-time." Which person, which decision do they make with it, and what does
-  real-time mean in seconds?
-- **Load figures with no distribution.** An average request rate hides the month-end peak that determines the architecture. Ask for
-  the peak and its shape (`littles-law-and-queueing`).
-- **Attributes borrowed from a reference architecture.** Multi-region, multi-tenancy and polyglot persistence appear in decisions for
-  systems with one region, one tenant and one database, because they appeared in the document being copied.
-- **Drivers with no owner.** If no named person will be unhappy when the scenario is missed, the scenario is decoration; it will not
-  be defended in the first schedule squeeze, so do not build for it now.
+Attach the signal source, observation window and owner. Then name the action: revisit
+capacity evidence, compare options, and decide whether a replacement ADR is warranted.
+Do not declare the old rationale false or switch technologies automatically when an alert
+fires. Changed requirements, newly discovered risks or platform capabilities can also
+justify review even if the original ADR omitted that trigger.

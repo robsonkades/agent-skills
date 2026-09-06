@@ -32,8 +32,8 @@ break, a test that cannot be written, a cost that is being paid for nothing.
 1. **Observe, do not diagnose.** Record what is actually there: file counts per change,
    layer counts, imports, method bodies that only forward.
 2. **Find the evidence in the history**, not only in the code. `git log` on a suspected god
-   class shows whether unrelated features really do all edit it — which is the difference
-   between a large class and a class with no responsibility.
+   class suggests whether unrelated features edit it; inspect the diffs and use cases to
+   distinguish cohesive work from competing responsibilities.
 3. **Name the harm.** Which future change is riskier? Which bug does this shape allow? If no
    harm can be named, drop the finding rather than softening it into a nitpick.
 4. **Cost the fix.** Splitting costs navigation and wiring; adding an abstraction costs
@@ -42,6 +42,12 @@ break, a test that cannot be written, a cost that is being paid for nothing.
 5. **Check the acceptable case.** Every smell in the catalogue has a situation in which it
    is the right design. Check that situation before writing the finding.
 6. **Order by impact and give the concrete first edit**, not a target architecture.
+
+Inspect the project's JDK, persistence namespace/version, Spring proxy/transaction configuration
+and public contracts before recommending Java-specific edits. This skill has no executable
+Java baseline; examples are partial shapes or policy snippets, not standalone programs. Do not
+upgrade dependencies to apply them. If history or runtime evidence is unavailable, state the
+missing evidence and a discriminating check; do not invent a confirmed finding.
 
 ## The two failure modes of a review
 
@@ -53,40 +59,41 @@ False positive: "this violates the pattern"
 
 False negative: "each file looks fine"
         Every class is reasonable in isolation; the problem is in the
-        relationships. Only visible from counting — files per change,
-        layers per call, forwarding methods per class.
+        relationships. Trace representative changes and runtime paths;
+        file/layer/forwarding counts help select where to investigate.
 ```
 
 ## Decision rules
 
 ```text
 An abstraction exists with one implementation and no inversion
-        → indirection, unless it narrows a wide framework surface or
-          exists to make a dependency point inward
-          (enterprise-base-patterns). Ask which.
+        → inspect narrowing, policy, compatibility and extension contracts
+          before treating the indirection as waste (enterprise-base-patterns).
 
-Adding a field touches more than about four files
-        → count the layers it crossed. Two of them are probably
-          structurally identical (remote-facade-and-dto).
+Adding a field touches many files
+        → inspect why each changes: migrations, tests and independent
+          contracts can justify them. Investigate duplicate responsibility
+          and manual mapping drift (remote-facade-and-dto).
 
 A class is edited by every feature team for unrelated reasons
-        → god class, confirmed by history rather than by size.
+        → investigate competing responsibilities and concrete change conflicts.
 
 Rules are enforced in services and entities have only accessors
         → anaemic model — a finding ONLY if a domain model was the right
           choice here (domain-logic-organization).
 
 Two services must be deployed together
-        → distributed monolith. This is the most expensive smell on the
-          list (distribution-boundaries).
+        → distinguish contract incompatibility from release policy or a
+          temporary migration; assess lost deployment independence and
+          actual operational cost (distribution-boundaries).
 
 A persistence type appears in a controller signature or an API payload
-        → persistence leakage. Schema is now the contract.
+        → inspect exposed fields, serialization and lazy access; mapping
+          annotations alone do not make every column the wire contract.
 
-An abstraction's stated purpose is portability that will never be
-exercised
-        → the cost is paid every day; the benefit is contingent and
-          usually illusory (architecture-decision-making).
+An abstraction's only stated purpose is hypothetical portability
+        → compare present cost with a concrete supported migration contract;
+          do not assume future use or non-use (architecture-decision-making).
 
 The codebase is unfamiliar but consistent, and change is cheap
         → not a finding. Consistency has value; personal preference does
@@ -96,36 +103,37 @@ The codebase is unfamiliar but consistent, and change is cheap
 ## Rules
 
 - **Evidence first.** Line counts, method counts and import counts are prompts to look at
-  the history, never findings by themselves. A 900-line class that changes for one reason is
-  healthier than a 200-line class that changes for six.
-- The strongest available evidence in this domain is **files touched per feature**. Compute
-  it from the last twenty feature commits; it exposes excessive layering, scattered
-  responsibilities and missing boundaries at once, and it is hard to argue with.
-- **Complexity is conserved.** An abstraction that claims to remove complexity has moved it
-  — into configuration, into the framework, into a naming convention, or into the next
-  team's onboarding. Locate it before approving the change.
+  the history, never findings by themselves. A cohesive 900-line class may be less costly
+  to change than a 200-line class serving conflicting responsibilities; verify actual harm.
+- **Files touched per feature is a screening metric.** Group commits by actual feature/PR,
+  separate generated files, tests and migrations, and compare similar changes. Squashes,
+  formatting, renames and unrelated bundled work distort counts; corroborate with diffs,
+  incidents, lead time or repeated correction sites. Twenty matching commits is a sample,
+  not a confidence guarantee.
+- An abstraction can remove duplication and accidental complexity as well as move costs.
+  Compare caller simplicity with configuration, maintenance and onboarding costs; do not
+  assume complexity is a conserved quantity.
 - Anaemia is only a smell where a rich model was the right choice. Over transaction scripts
   with a gateway, "entities with no behaviour" is the design, correctly applied
   (`domain-logic-organization`).
-- **A wrapper must add behaviour.** Translation, narrowing, a policy, an aggregate boundary,
-  error mapping. A wrapper that forwards is a file, a mock in every test and a hop in every
-  stack trace.
-- Pattern overuse and pattern absence are equally real defects, and reviews are
-  systematically biased towards finding the second. Ask "what would this cost if we deleted
-  it?" as often as "what is missing?".
-- **A smell in a stable, rarely-changed module is not worth fixing.** The cost of a smell is
-  paid in change; a module that does not change is not paying it. Prioritise by change
-  frequency, which `git log` gives directly.
+- **A wrapper must justify its boundary.** Translation, narrowing, policy, independent
+  ownership or compatibility may justify forwarding. Inspect annotations and interceptors
+  before concluding that an empty-looking body contributes nothing.
+- Investigate both unnecessary patterns and missing boundaries. Ask "what would this cost
+  if we deleted it?" as well as "what is missing?"; neither category is a defect by itself.
+- Change frequency affects maintenance priority, but stable modules can still impose
+  security, correctness, availability or operating costs. Rank observed harm and exposure
+  alongside change cost; stability alone neither requires nor rules out a fix.
 - Do not recommend a target architecture. Recommend the next edit, with the harm it removes.
   Wholesale rewrites are how a real finding becomes a six-month project that stalls
   (`architecture-refactoring-paths`).
-- Distinguish accidental from essential complexity. A saga is complex because distributed
-  consistency is complex; a generic repository is complex for no reason. The first is a cost
-  of the requirement, and removing it removes the capability.
+- Distinguish accidental from essential complexity. Evaluate whether distributed consistency
+  is required before defending a saga, and whether shared repository behavior serves real
+  callers before rejecting genericity. Name the capability that removal would lose.
 
 ## Finding format
 
-Observation → harm → evidence → first edit → what to avoid.
+Observation → harm → evidence/confidence → first edit → validation → what to avoid.
 
 > **Observation:** `OrderService` (3 240 lines, 11 collaborators) contains the pricing rules,
 > which also appear in `QuoteService` and the nightly re-rate job.
@@ -135,6 +143,8 @@ Observation → harm → evidence → first edit → what to avoid.
 > of those touch exactly two of the three sites.
 > **First edit:** extract `Pricing` as a domain type with the discount chain, and have all
 > three call it. Do not move anything else.
+> **Validation:** preserve pricing outcomes at all three entry points, including rounding
+> and rejected inputs; verify that one representative rule change updates one policy site.
 > **Avoid:** splitting `OrderService` by layer first — that reshuffles the duplication
 > without removing it.
 

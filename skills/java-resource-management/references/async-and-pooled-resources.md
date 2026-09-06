@@ -2,6 +2,11 @@
 
 ## The lexical scope stops being the lifetime
 
+Code below is partial Java 21 pseudocode showing ownership. `pool`, `query`, `Report` and
+`ioExecutor` are application placeholders; real JDBC acquisition/query/close throw checked
+SQLExceptions that a Supplier must translate with the original cause. Do not copy the lambda
+as a complete JDBC adapter or assume it supplies transaction/cancellation policy.
+
 `try`-with-resources ties release to the _block_, which is correct only while the block also
 bounds the _use_. Every asynchronous construct breaks that assumption in the same way:
 
@@ -18,7 +23,7 @@ Under a fast test this often passes — the supplier may run before the close. U
 fails intermittently with a closed-resource error, and the stack trace points at the
 supplier, not at the `try`. Three legitimate fixes, in order of preference:
 
-1. **Make the scope wait.** Acquire _inside_ the async task instead, so the borrow is short
+1. **Move acquisition into the task.** Acquire _inside_ the async task, so the borrow is short
    and the scope that opens is the scope that closes:
    ```java
    return CompletableFuture.supplyAsync(() -> {
@@ -29,9 +34,9 @@ supplier, not at the `try`. Three legitimate fixes, in order of preference:
    Return the dependent stage that performs release and preserve close failures. Do not assume
    `whenComplete(close)` is enough: cancellation may complete a `CompletableFuture` callback while
    an underlying task that ignores/does not receive cancellation still uses the resource.
-3. **Use structured concurrency**, where the scope's `close` waits for forked threads;
-   forks, so a resource held for the duration of the block really is held for the duration of
-   the work. See structured-concurrency for the lifetime guarantee and its limits.
+3. **Use structured concurrency**, placing the task scope inside the resource scope so all
+   resource-using subtasks finish before the resource closes. Reversing close order is still
+   unsafe. See structured-concurrency for the lifetime guarantee and its limits.
 
 The same defect appears with `executor.submit(() -> use(resource))` after the enclosing
 try-with-resources block, and with a `Stream` returned from inside a block that closed the
@@ -75,8 +80,9 @@ A pooled `Connection`, an HTTP connection lease, a Netty `ByteBuf` from a pooled
   legitimate long transaction can exceed the threshold and a returned connection may be reported
   before the detector observes its return.
 
-A borrow that must survive a request boundary is not a pooled resource any more; that is
-session state, and session-state-strategies covers where it should actually live.
+A borrow can outlive a request while remaining a pool lease, but it needs a new explicit owner
+and termination policy. Do not retain database connections as conversational session state;
+session-state-strategies covers alternative state placement.
 
 ## Virtual threads remove the accidental limit
 
@@ -99,9 +105,13 @@ is the part that is usually missing:
 2. Drain in-flight work with a bound: `shutdown()` then `awaitTermination(timeout)`; on expiry,
    capture tasks never started, invoke `shutdownNow()`, and wait again with a final bound while
    recording tasks that ignore interruption.
-3. Close resources in reverse acquisition order — consumers before the connections they use,
+3. If tasks still run, do not proceed as though draining succeeded: report the surviving work
+   and follow an explicit escalation policy. Resource closure may be a documented cancellation
+   mechanism only if its contract supports concurrent close/use; otherwise keep dependencies
+   alive until use ends or terminate the process according to the shutdown policy.
+4. Close resources in reverse acquisition order — consumers before the connections they use,
    connections before the pool.
-4. Only then let the process exit.
+5. Complete normal shutdown only after release, distinguishing it from forced termination.
 
 A JVM shutdown hook runs on an unspecified thread with no ordering between hooks and no
 guaranteed completion — the process may be killed while a hook runs, and `SIGKILL` skips

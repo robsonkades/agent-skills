@@ -23,7 +23,7 @@ environment drift, and produce `pass`, `regression`, or `inconclusive` without s
 turning missing evidence into success.
 
 The objective is not zero alerts. It is a known operating characteristic: acceptable false
-block probability, useful power against the smallest regression the product cares about,
+block probability, useful power at a declared alternative beyond the decision margin,
 bounded cost, and an auditable baseline. A green gate with weak power is not evidence of
 equivalence.
 
@@ -75,6 +75,12 @@ otherwise                       -> inconclusive
 absolute guardrail breached     -> regression, independently of relative baseline
 ```
 
+Apply these rules only to valid, comparable measurements. Define whether an absolute
+guardrail is a deterministic contract violation or an uncertain estimate requiring its own
+calibrated rule; a broken runner or missing measurement cannot establish a performance breach.
+With the lower-bound rule, an effect exactly at M is a boundary case, usually inconclusive,
+not a high-power alternative. Declare the above-M effect at which useful detection power is required.
+
 This is a non-inferiority-style framing. It prevents “not statistically significant” from
 being translated into “the versions are equivalent.” A team may instead use a calibrated
 tolerance interval, control chart, Bayesian decision rule, or sequential test; document its
@@ -94,6 +100,8 @@ signedRelativeChange = baseline / current - 1
 
 The ratio form keeps positive = worse, but it requires positive scores. For zero, negative,
 or transformed scores, define an absolute effect or a domain-specific transformation.
+Translate the product margin consistently: a 5% throughput decrease corresponds to
+`1 / 0.95 - 1`, about 5.263% on the inverse-ratio scale, not 5%.
 Never compare values until benchmark identity, parameter tuple, score unit, mode, and
 direction are compatible.
 
@@ -126,7 +134,7 @@ Collect unchanged-code runs across the times, hosts, and restart boundaries the 
 experience. Then inject representative regressions near the MPIR. Estimate:
 
 - false-block rate under no change;
-- power at the MPIR and at larger effects;
+- decision probabilities at the MPIR boundary and power at declared larger effects;
 - inconclusive frequency and retry cost;
 - host/day/JDK variance and outlier behavior;
 - sensitivity to order, warm-up, thermal state, and dependency drift.
@@ -229,9 +237,11 @@ Use distinct machine-readable statuses and stable exit codes, for example:
 | invalid      |            2 | Missing/malformed/incompatible input or comparator defect             |
 | inconclusive |            3 | Valid evidence is insufficient for a decision                         |
 
-Always emit a report artifact before returning the code. If output is piped through `tee`
+Attempt to emit a report artifact before returning the code; kills/disk failures may prevent it.
+If output is piped through `tee`
 under Bash, temporarily disable `errexit`, run the pipeline, immediately capture
-`PIPESTATUS[0]`, restore `errexit`, publish the status, and exit explicitly. `${PIPESTATUS[0]}`
+the entire `PIPESTATUS` array, restore `errexit`, publish comparator and logging statuses,
+and apply the artifact-failure policy. `${PIPESTATUS[0]}`
 alone cannot execute after a failed pipeline when the shell was launched with `-e` and
 `pipefail`.
 

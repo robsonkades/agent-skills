@@ -35,9 +35,11 @@ Escape routes to detect in review:
 Fix: complete construction, then publish — a static factory that constructs and _then_
 registers is the standard shape.
 
-## Non-final fields get nothing
+## Ordinary fields need a publication argument
 
-Initialisation safety covers final fields only. An object with any non-final field,
+For an ordinary field of the published object, the special final-field rule does not apply.
+This differs from constructor-time state reached through a final reference, which receives
+the specified final-field visibility protection. An object with an ordinary field,
 published without a happens-before edge (volatile write/read, synchronisation, a
 concurrent collection, thread start/join), can be seen by another thread with that field
 in its default state — `null`, `0` — or in a stale one. "It is only written once, in the
@@ -49,10 +51,7 @@ Use a normal happens-before handoff so visibility, ownership and lifecycle are r
 
 ## The racy single-check idiom — a non-final field that is still safe
 
-`String.hashCode` caches its hash in a non-final, non-volatile field (current JDKs add
-a `hashIsZero` flag so even a zero hash is cached — a second way to satisfy condition 3;
-the race pattern is the same). Two threads may race; the idiom is safe only when **all**
-of these hold:
+For an integer hash cache, two threads may race safely only when **all** of these hold:
 
 1. The cached value is computed **deterministically from final fields** — every thread
    that computes it computes the same value, so it does not matter who wins.
@@ -81,9 +80,11 @@ can change regardless of the cache race.
 Redundant computation under contention is the cost; it is a benign race, not a bug. In
 review, a non-final field in an otherwise immutable class is a finding **unless** it
 matches this idiom point for point — then it is a documented technique, not a smell.
-Anything cached that is expensive enough to make redundant computation unacceptable, or
-that is a mutable object, needs `volatile` plus double-checked locking or an eager final
-field instead.
+If redundant computation is unacceptable, consider eager final computation or synchronized
+initialization (correct double-checked locking additionally needs volatile publication).
+These establish initialization/visibility, not the safety of later mutation. A cached mutable
+referent still needs confinement, locking or an immutable snapshot; marking its reference
+volatile or final cannot make its contents immutable.
 
 ## Authoritative references
 

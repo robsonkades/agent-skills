@@ -21,6 +21,12 @@ own JMM correctness, lock internals, executor lifecycle, virtual-thread mechanic
 
 ## Evidence workflow
 
+The reference baseline is HotSpot Java 25. Inspect the project's toolchain, runtime image,
+actual vendor/update and diagnostic tool version before using the matrix. Scheduler MXBean
+access requires Java 24+; virtual-thread dumps require a supporting runtime. Keep the target
+version unchanged and use available evidence when a tool is unsupported or attach is denied.
+Record that limitation instead of interpreting missing output as no threads or no contention.
+
 1. Freeze the incident interval: timestamps, deployment/JDK build, traffic, CPU quota, changes and
    affected operation/tenant.
 2. Define progress numerically: completions, queue age, successful state transitions or durable
@@ -31,8 +37,9 @@ own JMM correctness, lock internals, executor lifecycle, virtual-thread mechanic
    locks/deadlock detection and `Thread.dump_to_file` for virtual threads/containers.
 5. Record JFR with inspected event settings and pair CPU with wall-clock profiling when off-CPU time
    matters.
-6. Form competing hypotheses and list the signal each predicts. Change nothing until evidence can
-   discriminate at least the leading alternatives.
+6. Form competing hypotheses and list the signal each predicts. Preserve evidence before a
+   targeted fix. If restoring service cannot wait, record a reversible mitigation and its
+   expected effects; recovery after a restart alone does not establish the root cause.
 7. Apply the smallest reversible remediation, then validate progress, latency, residual work and
    resource recovery.
 
@@ -72,7 +79,9 @@ Java 21/25 incident. Record the exact runtime and dump schema.
 | leaked/late work                | caller completes/cancels but operation remains active | operation IDs persist past owner deadline; resources not returned       | provider confirms cancellation and in-flight returns to baseline |
 
 Thread state alone is not classification. `BLOCKED` specifically means monitor entry, while
-`WAITING`/`TIMED_WAITING` can be healthy queue, join, condition or I/O protocol behavior. Virtual
+`WAITING`/`TIMED_WAITING` can be healthy queue, join, condition or I/O protocol behavior.
+`RUNNABLE` is a JVM state, not proof of CPU consumption: a native socket read can appear there.
+Confirm CPU execution with per-thread CPU deltas/profiles, or elapsed blocking with wall/I/O evidence. Virtual
 threads can be unmounted while waiting; OS thread count is not their concurrency count.
 
 ## Virtual-thread evidence
@@ -105,8 +114,10 @@ Fix the wait-for graph: ordering, ownership, nested acquisition or alien calls.
 
 ## Production guardrails
 
-- Instrument lifecycle conservation: `accepted = running + queued + terminal` for a clearly defined
-  instant/model; label rejection and cancellation separately. Snapshot races require tolerances.
+- Instrument lifecycle conservation using disjoint physical-work states: accepted work is queued,
+  running or physically terminated within a defined accounting interval. Track caller-result
+  cancellation separately: a cancelled Future can still have running work and held resources.
+  Rejection is outside accepted work; snapshot races, retries and resets require explicit accounting.
 - Track queue _age_ as well as depth. A short deep burst and one ancient item require different action.
 - Use monotonic deadlines for waits and correlate caller timeout with actual provider cancellation.
 - Preserve incident artifacts before tuning parallelism, capacity or retries.
@@ -135,10 +146,16 @@ Fix the wait-for graph: ordering, ownership, nested acquisition or alien calls.
 - [ ] Absence of JFR/detector events is not treated as absence without configuration coverage.
 - [ ] Remediation was validated for useful progress, tail latency, residual work and resource return.
 
+Deliver the affected progress metric and incident interval, artifact/setting locations, supported
+diagnosis versus remaining hypotheses, and one discriminating check or measured remediation result.
+For a straightforward interpretation, keep this to the relevant finding rather than a full report.
+
 ## References
 
-- [Thread dump interpretation](references/thread-dump-reading.md)
-- [Failure-mode triage](references/failure-mode-triage.md)
+- [Thread dump interpretation](references/thread-dump-reading.md) — read when collecting dumps,
+  interpreting monitor/virtual-thread evidence or using scheduler/diagnostic MXBeans.
+- [Failure-mode triage](references/failure-mode-triage.md) — read when separating loss-of-progress
+  causes and choosing the evidence needed before handing off a repair.
 - [Java 25 `ThreadMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadMXBean.html)
 - [Java 25 `VirtualThreadSchedulerMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html)
 - [Java 25 virtual-thread guide](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)

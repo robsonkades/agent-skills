@@ -27,6 +27,7 @@ budgets:
   exportQueueBytes: bounded-limit
 ```
 
+This YAML is a policy sketch with placeholders, not a runnable vendor configuration.
 The deployment translates this policy to the pinned JFR/profiler/vendor API. Validate the
 translation against runtime metadata/help and emit the effective configuration. Third-party
 Java APIs and defaults move; do not preserve uncompiled SDK snippets as platform truth.
@@ -44,6 +45,12 @@ jcmd <pid> help JFR.start
 jfr configure --interactive
 jfr metadata
 ```
+
+These are POSIX-shell sketches with placeholders. `jcmd <pid>` queries the running target;
+`jfr metadata` without a recording and `jfr configure` use the local tool's JDK. Use the target's
+toolchain or inspect a target-produced recording (`jfr metadata recording.jfr`) before assuming
+event support. Run interactive configuration only in a deliberate output directory; preserve
+existing policy files and review the generated settings before deployment.
 
 A conceptual continuous recording uses a low-overhead settings file, no finite duration, and
 bounded age/size:
@@ -77,7 +84,9 @@ to take a snapshot unless the operational protocol requires it.
 
 ## RecordingStream design
 
-`RecordingStream.start()` blocks; `startAsync()` returns a thread. That API fact does not make
+`RecordingStream` requires JDK 14+ with JFR support. `start()` blocks; `startAsync()` starts
+asynchronous processing and returns `void`, not a thread handle. Use `awaitTermination` where
+waiting is required and assign ownership of closure. That API fact does not make
 an exporter safe. Event handlers must avoid blocking I/O, unbounded maps, per-event logging,
 and expensive symbol/string transformations.
 
@@ -85,7 +94,7 @@ Architecture:
 
 ```text
 RecordingStream callback
-  -> validate/minimize event
+  -> validate/minimize and copy required data into an owned payload
   -> bounded in-memory handoff
   -> batch/encode/export worker
   -> retry with bounded spool
@@ -93,8 +102,15 @@ RecordingStream callback
 ```
 
 Specify overload behavior: sample/drop by class, spill to bounded disk, or disable a channel.
-Expose dropped-event and queue-age metrics. Closing the stream must stop workers, flush within
-a deadline, and leave recoverable spool state. Test application shutdown, exporter exception,
+With event reuse enabled (`setReuse(true)`), do not retain `RecordedEvent` references beyond the
+callback. Copy the required fields/stack representation before handoff, or deliberately disable
+reuse and budget the retained objects. Bound the stream's own disk retention with `setMaxAge`
+and/or `setMaxSize` as well as the exporter queue/spool; without either limit its recording may
+grow indefinitely. These are recording retention controls, not a filesystem quota.
+
+Expose dropped-event and queue-age metrics. The pipeline owner must close the stream, stop its
+separate workers, flush within a deadline, and leave recoverable spool state; stream closure
+does not manage application-owned workers. Test application shutdown, exporter exception,
 callback exception, backend timeout, and schema rejection.
 
 Preserve full stack and event weight where profiling queries require them. A map keyed only by

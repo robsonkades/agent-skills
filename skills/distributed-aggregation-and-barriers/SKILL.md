@@ -35,8 +35,8 @@ count)` pair; variance becomes `(n, mean, M2)`; a percentile becomes a mergeable
    histogram; a ratio carries numerator and denominator separately.
 3. **Choose a summary per metric and state its error.** Exact where cardinality is small, an
    approximate mergeable sketch where it is not — with the error in the dashboard label.
-4. **Partition by cost, not by count**, using a measured size per key. This removes more
-   stragglers than any mitigation applied afterwards.
+4. **Partition by measured cost**, not merely count, when skew explains stragglers; distinguish
+   deterministic data skew from host faults or transient resource contention.
 5. **Place the barriers deliberately and count them.** Every barrier converts the slowest
    participant into everyone's latency. Ask what breaks if this one is removed.
 6. **Define attempt identity and output commit.** Every logical partition may execute more
@@ -49,6 +49,12 @@ count)` pair; variance becomes `(n, mean, M2)`; a percentile becomes a mergeable
    contract, inject duplicate attempts and crashes at commit boundaries, and compare against
    a trusted sequential oracle. A shuffled-order example alone is not a proof.
 
+Inspect the target JDK/toolchain, engine and sketch-library versions, input snapshot, numeric
+domain and sink commit guarantees. Java records in the reference require JDK 16+; test sketches
+assume project-specific JUnit/AssertJ fixtures and are not standalone programs. Do not upgrade the
+target to fit an example. Deliver the aggregate/equivalence contract, evidence for merge and
+recovery semantics, expected participant/completeness record and remaining validation gaps.
+
 ## Decision block
 
 ```text
@@ -59,8 +65,8 @@ Use a barrier when:
 The barrier is affordable when:
 - measured max-stage latency, not merely p99/p50, fits the job SLO at the actual task count
 Avoid a barrier when:
-- the task duration distribution has a long tail; the barrier costs the maximum over
-  participants, so one straggler stalls everything
+- incremental consumption preserves the required semantics and waiting adds unnecessary
+  exposure to stragglers; retain a required completeness gate despite a long tail
 - participants can join or fail mid-stage and no epoch/membership protocol defines who
   counts as a participant
 - the downstream stage could consume results incrementally instead
@@ -76,7 +82,9 @@ Speculatively re-execute a straggler only when the task is idempotent and side-e
 
 - **A barrier is as fast as its slowest participant.** This is the max-of-N property
   `scatter-gather` owns inside one request, at batch scale: the expected wait grows with the
-  number of participants and with the width of the task-duration tail, not with the mean.
+  number of comparable participants and their tail behavior. With queued task waves, stage
+  latency is the latest completion from stage start, including scheduling and retries; it is
+  not simply the longest isolated task duration.
   Plot the per-task duration distribution before adding workers.
 - Partitioning by task _count_ assumes tasks cost the same. When key sizes span orders of
   magnitude that assumption manufactures a straggler on every run; partition by measured
@@ -86,11 +94,12 @@ Speculatively re-execute a straggler only when the task is idempotent and side-e
   Commutativity is additionally required for unordered arrival; ordered concatenation is a
   valid associative reduce when the engine preserves encounter order. Safe when domains and
   overflow are handled: exact or intentionally modular integer sum,
-  min, max, count, bitwise OR, set union, HyperLogLog merge. Unsafe: average, median,
-  subtraction and division. `first`/`last` require a stable ordering key. Re-execution is a
+  min, max, count, bitwise OR, set union, HyperLogLog merge. Unsafe as scalar combiners: average,
+  median, subtraction and division. Ordered `first`/`last` can be associative; unordered arrival
+  needs an ordering key with deterministic ties. Re-execution is a
   separate property: sum is associative and commutative but counts a duplicate twice.
 - **Floating-point addition is not associative**: `(a + b) + c` and `a + (b + c)` differ for
-  doubles. A distributed sum of doubles is therefore non-deterministic whenever the
+  doubles. A distributed sum of doubles can therefore change when the
   partition or merge order changes, and the difference is real money in a reconciliation
   report. Do not assume two sums over the same doubles agree — order and the summation
   algorithm both move the result. Three fixes, and the design must name which is used:
@@ -98,7 +107,8 @@ Speculatively re-execute a straggler only when the task is idempotent and side-e
   integer minor units with an explicit currency/scale and overflow policy) — normally the
   right model for contractual money; **compensated summation**
   (Kahan/Neumaier), which bounds the error without making the operation associative; or a
-  **deterministic order** — sort within a partition, merge partitions in a fixed sequence.
+  **deterministic evaluation** — fix partition boundaries, within-partition order and the merge
+  tree, or use an algorithm guaranteeing reproducibility across the required regroupings.
 - Average is not directly reducible from per-partition averages: reduce `(sum, count)` and
   divide once at the end. The same
   rewrite applies to variance, standard deviation, rate and any ratio — carry both terms.
@@ -106,12 +116,14 @@ Speculatively re-execute a straggler only when the task is idempotent and side-e
   consequence is the design: each worker emits a _histogram_, the coordinator merges the
   histograms, and the quantile is read once from the merged structure. A worker that emits
   only its own p99 has destroyed the information needed to compute the fleet's.
-- **Mergeability keeps intermediate state bounded and hierarchically combinable.** A summary
+- **Mergeability permits hierarchical combination; it does not imply bounded state.** Exact
+  set union merges but grows with distinct input. A summary
   that cannot merge may require retaining or repartitioning raw data and concentrating final
   work; it does not literally require every record to traverse one node. Choose by what is
   traded: HyperLogLog for distinct counts (fixed
   memory, a stated relative error, merged by per-register maximum), count-min sketch for
-  frequencies (over-estimates, never under-estimates), t-digest or HdrHistogram for
+  non-negative frequencies (one-sided over-estimation with compatible hashes and no counter
+  overflow), t-digest or HdrHistogram for
   quantiles. Exact distinct counting needs memory proportional to cardinality — that is the
   cost a sketch buys off.
 - Broadcast join when the small side fits in each worker's memory alongside its working set,

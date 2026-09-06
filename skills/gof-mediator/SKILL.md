@@ -20,7 +20,7 @@ description: >
 
 Take the interaction rules out of the participants and put them in one place. When five components
 each know about the other four, a change to one ripples through the set; when each knows only a
-hub, the ripple stops there.
+hub, peer dependencies are reduced; changes to the shared protocol can still affect participants.
 
 The trade-off is concentration: the mediator owns interaction rules and therefore becomes a
 coupling and operational hotspot if its protocol boundary is too broad. It need not know every
@@ -37,8 +37,8 @@ Mediator   peer interactions are routed/coordinated through a hub, directly
            or through messages; the hub owns their collaboration protocol.
 ```
 
-If your "facade" is invoked by its own collaborators, it is a mediator and it will accumulate
-their interaction rules (`gof-facade`).
+Callbacks alone do not establish a mediator: inspect whether the hub actually owns peer
+collaboration rules (`gof-facade`).
 
 ## When it is the answer
 
@@ -68,11 +68,14 @@ compensation and visibility
 - **It is dispatch, not coordination.** A class that routes a request to its single handler is a
   command dispatcher; the "mediator" label — borrowed from libraries in other ecosystems — hides
   that there is no protocol and no participants calling back (`gof-command`).
-- **Participants still call each other.** A partial mediator is the worst of both: the rules exist
-  in two places, and the hub's version is the one that will be out of date.
+- **The same protocol rule remains owned in two places.** Direct calls outside the mediated
+  protocol can be valid; duplicate authority over its transitions is the actual defect.
 - **It has become the application.** See the god-object criteria below.
 
 ## Decision rules
+
+Examples use Java 17 records/APIs and include partial snippets and labeled pseudocode. Inspect
+target toolchains and transaction frameworks; the pattern does not authorize dependency upgrades.
 
 ```text
 IF participants or methods change for unrelated protocols
@@ -80,9 +83,8 @@ THEN split by protocol, consistency boundary or lifecycle. Count is only a signa
      a large cohesive mediator may be safer than several hubs with duplicated state.
 
 IF a participant notifies the hub, which notifies that participant
-THEN reentrancy: a loop, or a stack overflow, or a partially applied
-     change observed by the participant that caused it. Break it with
-     a change-in-progress guard, or by queueing notifications.
+THEN inspect reentrancy and feedback. Guards may discard required events; queues can turn recursion
+     into infinite queued work. Define coalescing/idempotent transitions and a bounded delivery policy.
 
 IF the hub holds mutable protocol state
 THEN its thread-safety contract must be explicit. A single-threaded
@@ -114,14 +116,15 @@ THEN compare explicitly: choreography distributes coordination and failure handl
 - **Concurrency.** Two hazards, in opposite directions. A hub with mutable protocol state shared
   by many threads needs real synchronisation, and lock ordering becomes its problem because it
   touches every participant. Conversely, a deliberately single-threaded hub — a queue and one
-  consumer, actor-style — makes the protocol trivially safe and is often the right design, at the
-  price of being a throughput ceiling. Reentrancy is the third hazard and belongs to both: a
+  consumer, actor-style — serializes owned state only if callbacks and offloaded completions return
+  through that queue. Capacity, failure and shutdown still need contracts. Reentrancy is another hazard: a
   notification that re-enters the hub while it is mid-update sees inconsistent state
   (`java-memory-model`).
 - **Distribution.** The distributed mediator is an orchestrator, and the differences are
   operational rather than structural: it must survive its own restart (state persisted, steps
-  resumable), every call to a participant can fail or time out, compensation replaces rollback,
-  and its availability multiplies into everyone's. Choreography — participants reacting to each
+  resumable) when progress must survive restart; calls can fail or time out, compensation is a
+  semantic policy rather than rollback, and dependent flows can stall while the hub is unavailable.
+  Choreography — participants reacting to each
   other's events — distributes those duties; it still needs durable delivery, idempotency,
   observability and can support cancellation only through an explicit protocol
   (`event-driven-architecture`).
@@ -139,22 +142,25 @@ THEN compare explicitly: choreography distributes coordination and failure handl
 ## Review checklist
 
 - [ ] Peer collaboration is coordinated through the hub—otherwise compare a facade/dispatcher
-- [ ] No participant retains a direct reference to another
+- [ ] No competing owner enforces the same mediated transition
 - [ ] Participants share one coherent protocol, lifecycle or consistency reason
-- [ ] The hub's methods share protocol state; unrelated methods mean it is two mediators
+- [ ] Methods serve a coherent protocol; shared fields alone do not establish cohesion
 - [ ] Reentrant notification is prevented or explicitly safe
 - [ ] The hub's thread-safety model is stated (single-threaded queue, or synchronised state)
-- [ ] The distributed form persists its state and defines compensation per step
+- [ ] Restart-surviving flows persist progress and define retry, terminal and applicable compensation policies
 - [ ] Orchestration versus choreography was a stated choice
 - [ ] A command dispatcher is not described as a mediator
 
 ## References
+
+Deliver the protocol owner, state/effect ordering, callback/threading contract and checks for
+duplicates, failure and cancellation. State which guarantees remain unverified.
 
 - [Mediator against the alternatives](references/mediator-vs-alternatives.md) — the direction test
   in detail; Mediator against Facade, Observer, event bus and command dispatcher; god-object
   criteria with the splitting technique; reentrancy patterns and guards; and orchestration versus
   choreography with the properties each gives up. Read when classifying or splitting a coordinator.
 - [Worked example](references/worked-example.md) — an order-fulfilment coordinator: the
-  many-to-many web it replaced, the reentrancy bug found in review, the split when it reached nine
+  illustrative many-to-many web, reentrancy and duplicate-effect hazards, the split across protocols with nine
   participants, and the distributed orchestrator version with persistence, timeouts and
   compensation. Read when implementing.

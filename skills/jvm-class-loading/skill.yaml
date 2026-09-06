@@ -1,10 +1,10 @@
 schemaVersion: 1
 
 name: jvm-class-loading
-version: 1.4.0
+version: 1.4.1
 description: >-
-  Class loading, class identity and classloader leaks: parent-first delegation, {loader,
-  defining loader and binary name} identity, loading versus linking versus initialisation, Metaspace retention,
+  Class loading, class identity and classloader leaks: parent-first delegation,
+  {defining loader, binary name} identity, loading versus linking versus initialisation, Metaspace retention,
   and CDS/AOT cache for startup. Use when a ClassCastException reports identical type names
   on both sides, when Metaspace grows monotonically across redeploys or plugin reloads, when
   ClassNotFoundException and NoClassDefFoundError need to be told apart, when

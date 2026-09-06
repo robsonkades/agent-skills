@@ -29,10 +29,11 @@ computed only when the recording is written with `path-to-gc-roots=true`
 `JFR.start`); that walk is itself a stop-the-world heap traversal, so ask for it once at
 dump time, not on a continuous recording. With those two settings the event answers the
 same broad question as a dump, but sampled and with different completeness. Under
-generational ZGC, OpenJDK issue JDK-8375615 (still unresolved, targeted to 27 when checked
-2026-09-03) reports that the event's weak handles can retain sampled young objects until an
-old collection and cause allocation stalls. Do not invent update-release disablement from
-an open issue: inspect the exact build/settings, measure with and without the event, and
+generational ZGC, [JDK-8375615](https://bugs.openjdk.org/browse/JDK-8375615) has been cited for
+sampled-young-object retention and allocation stalls. Recheck its current status, affected
+builds and fix version before applying it; this review could not access the issue. Do not
+infer affected releases or disablement from the identifier: inspect exact build/settings,
+measure with and without the event, and
 treat an empty view as “no samples observed,” not proof of no retention. Use a controlled
 heap dump when completeness is required.
 
@@ -84,6 +85,11 @@ the current one, so a value set on a container thread propagates into pools crea
 and a `ThreadLocal` value that references an application class pins that class's loader
 (see #6). On virtual threads the map dies with the thread, but the value now exists once per
 task — use `ScopedValue` for request context there.
+
+The remove-in-finally sketch assumes this scope owns the binding. For nested/reentrant scopes,
+restore the outer binding on exit through an explicit scope abstraction; unconditional removal
+can erase the caller's context. Thread inheritance can be disabled and `childValue` customized,
+so inspect the actual thread factory and ThreadLocal subclass rather than assuming every child inherits.
 
 ### 4. Unbounded caches and maps keyed by outside data
 
@@ -138,7 +144,8 @@ instance.
 Error paths that accumulate: a list of failed messages "for later inspection", a map of
 in-flight requests whose completion handler is only invoked on success, a `CompletableFuture`
 map with no timeout removing entries, exception objects held in a diagnostics ring buffer with
-their whole stack of captured locals. Distinctive shape: heap grows _only_ during incidents,
+causes, suppressed exceptions, custom fields or runtime backtrace metadata. A normal Java stack
+trace does not snapshot arbitrary local variables. Distinctive shape: heap grows _only_ during incidents,
 which is when it is least affordable.
 
 ## Fixing and verifying

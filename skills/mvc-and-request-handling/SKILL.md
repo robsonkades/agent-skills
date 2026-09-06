@@ -34,14 +34,14 @@ Presentation model  what the view needs: already formatted, already decided
 Framework model     the map of attributes handed to a template (Spring's Model)
 ```
 
-The classical MVC separation:
+The separation used here for a web boundary:
 
 ```text
 Controller   interprets the request, invokes the application, selects the response.
-             Owns NO business rules and NO persistence.
+             Delegates business rules and use-case transaction ownership.
 View         renders. Owns no decisions beyond presentation.
-Model        the state being presented. In a web request this is a
-             presentation model built for this response, not the aggregate.
+Model        application state/behavior in MVC's broader vocabulary;
+             prefer a deliberate presentation model at the response boundary.
 ```
 
 Web MVC is not the original Smalltalk MVC: there is no observer relationship and no
@@ -51,24 +51,27 @@ long-lived view. The name persists; the mechanism is request → controller → 
 
 ```text
 Page Controller      one handler per page or action. Simple, local, and every
-                     shared concern must be repeated or inherited.
+                     shared concern needs a shared mechanism such as filters
+                     or composed collaborators.
 
 Front Controller     one entry point receives every request, applies shared
                      concerns, and dispatches to a handler. Shared concerns
                      exist once; the handler stays small.
 ```
 
-Every modern Java web framework is a Front Controller (Spring's `DispatcherServlet`, JAX-RS'
-servlet, a reactive router), and your `@Controller`/`@RestController` methods are Page
-Controllers behind it. The practical questions are therefore not "which pattern" but **which
+Many Java web frameworks provide a Front Controller (for example Spring's `DispatcherServlet`),
+and handler methods play the page/action role behind it. These patterns can coexist.
+The practical questions are **which
 concerns belong in the front controller's chain and which in the handler**, and whether the
 chain's stages are being used correctly.
 
 ## Workflow
 
-1. **Check the handler's contents.** A controller should bind input, call one application
-   service, and map the result. Rules, persistence calls and transaction demarcation in a
-   controller are misplaced (`layering-and-boundaries`).
+1. **Check the handler's contents and runtime.** Inspect routing, security configuration,
+   Java and framework versions first. Examples use Servlet Spring MVC; `ProblemDetail`
+   requires Spring 6+ (Java 17+), not an implicit upgrade. A controller should bind input,
+   invoke application behavior, and map the result. Trace business rules and transaction
+   ownership; a simple read need not gain a pass-through service (`layering-and-boundaries`).
 2. **Find duplicated policy.** Repetition count alone does not justify indirection; shared
    authorization, error mapping, correlation, tenant and envelope semantics often belong in the
    chain when centralization prevents drift and preserves ordering.
@@ -92,12 +95,14 @@ request logging, tenant resolution)
 
 A concern applies to a group of handlers and needs to know which handler
 was selected (authorisation on an annotation, feature flags per route)
-        → an interceptor or method-level security, after routing.
+        → enabled method security for authorisation; an interceptor can
+          handle non-security route metadata. Keep request security in
+          the security filter chain, with consistent path matching.
 
 A concern turns an exception into a response
-        → one exception handler for the application, producing one error
-          shape (exception mapping in a single advice). Never a
-          try/catch repeated per handler.
+        → consistent error mapping at each boundary: MVC advice for MVC
+          exceptions, security/filter/container handlers for their failures.
+          Share the contract; avoid duplicated generic catches.
 
 A concern turns request data into a domain-shaped parameter
 (the current user, a parsed range, a tenant)
@@ -129,20 +134,20 @@ The API is REST over resources
   invariants in the web layer (`service-layer-design`).
 - Cross-cutting concerns implemented per handler can diverge. Repeated policy plus observed drift or
   ordering/security risk is the signal, and
-  the fix is one chain stage, not a base controller class — inheritance for cross-cutting
-  concerns fails as soon as a handler needs two of them.
-- **Choose the chain stage by what it must see.** A filter runs before routing and cannot
-  know which handler will be chosen; an interceptor runs after and can. Authorisation that
-  depends on the handler's annotation cannot be a plain filter.
+  consider a shared chain stage or collaborator before a base controller: Java's single
+  class inheritance makes independently varying base-class policies awkward to combine.
+- **Choose the chain stage by what it must see.** Ordinary Servlet filters run before MVC
+  handler selection. Interceptors see the selected handler but are not a sufficient security
+  boundary: Spring warns of path-matching mismatches. Use the security chain and enabled
+  method security; test uncovered routes and alternate dispatches.
 - The framework's model map is a presentation concern. Putting entities in it couples the
-  template to the schema and triggers lazy loading during rendering
+  template to entity properties and can trigger lazy loading during rendering
   (`orm-behavioral-patterns`).
 - Validation splits in two and both halves are needed: **syntactic** (required, format,
   range) belongs at the boundary, on the request type; **semantic** (this customer may not
   order this product) belongs in the domain, where it can be enforced regardless of the
   caller.
-- One error shape for the whole application, produced in one place. Per-handler error
-  formats are the most common API defect, and RFC 9457 problem details give a standard
+- One deliberate error contract across the application's HTTP boundaries. RFC 9457 problem details give a standard
   target (`rpc-and-api-contracts`).
 - **Application Controller is the least-known pattern here and the most useful** where it
   applies: multi-step flows, approval chains, state machines. Its value is that the flow
@@ -151,9 +156,13 @@ The API is REST over resources
   commands, workflows and hypermedia; Remote Facade is useful when network granularity requires it,
   not a synonym for every REST endpoint
   (`remote-facade-and-dto`).
-- Handler tests are boundary tests: binding, validation, status codes, error shape. If a
-  handler test needs a database, either the handler is doing too much or the test is at the
-  wrong level (`architecture-testing`).
+- Handler tests cover binding, validation, status codes and error shape with application
+  doubles where useful. Separate integration tests may legitimately include a database to
+  verify transaction, authorization or serialization behavior (`architecture-testing`).
+
+Return the observed responsibility/ordering issue, the proposed placement and its evidence,
+and the focused checks performed or still needed. Missing configuration makes claims about
+filter coverage, authorization and transaction scope conditional; inspect it before diagnosing.
 
 ## References
 

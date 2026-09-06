@@ -2,7 +2,7 @@
 
 A resource is the smallest unit that is implemented, validated and tracked as one thing. It is
 the unit the whole lifecycle downstream operates on: the plan orders resources, execution
-implements them one at a time, and progress reports their status.
+honors dependency and ownership constraints, and progress reports their status.
 
 ## Required fields
 
@@ -16,56 +16,66 @@ RES-03 Dispatch state column and migration
       Validation    Migration applies to a copy of the current schema; existing rows
                     read back as LEGACY; the entity maps the column.
       Decisions     ED-03 (default value), ADR-001
+      Owner         <implementation and validation owner when work is shared>
       Status        TODO
       Notes         -
 ```
 
-Every field is present or explicitly `-`. Two of them do the real work:
+Use fields needed for the feature; a Light item may be one line with identity, scope and validation.
+Do not invent impact/decision IDs or populate an unrelated status ledger just to fill the example.
+For shared work, identify ownership and files that require coordination. Two fields do the real work:
 
 - **Validation** — written before implementation starts, not chosen afterwards to fit what was
   built. A validation invented after the fact tests what the code does, not what was wanted.
-- **Depends on** — the only input to the execution order. If it is wrong, the order is wrong.
+- **Depends on** — necessary inputs and their readiness criteria. Shared-file conflicts and
+  release/validation prerequisites also constrain safe execution; label them explicitly.
 
 ## Resource kinds
 
-| Kind                     | Typical validation                                                    |
-| ------------------------ | --------------------------------------------------------------------- |
-| API endpoint             | Contract test or request test covering success and the named failures |
-| Request or response type | Serialisation and validation rules, including the rejected cases      |
-| Application service      | Unit tests over the behaviour, including the failure paths            |
-| Domain component         | Unit tests over the invariants                                        |
-| Repository or query      | Test against a real database engine, not a substitute one             |
-| Migration                | Applied to a copy of the current schema; existing rows checked        |
-| Message producer         | Payload shape, and that it is emitted at the right point              |
-| Message consumer         | Handling, idempotency, and what happens on a poison message           |
-| Outbound client          | Timeout, retry and failure translation                                |
-| Configuration            | Defaults resolve; the application starts without the new value set    |
-| Security component       | The rule denies what it should, verified for each role                |
-| Metric or log            | Emitted, with the field names the plan says                           |
-| Test harness             | The tests that need it can run                                        |
-| Documentation            | Matches the shipped behaviour                                         |
+| Kind                     | Typical validation                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------------------ |
+| API endpoint             | Contract test or request test covering success and the named failures                            |
+| Request or response type | Serialisation and validation rules, including the rejected cases                                 |
+| Application service      | Unit tests over the behaviour, including the failure paths                                       |
+| Domain component         | Unit tests over the invariants                                                                   |
+| Repository or query      | Test against a real database engine, not a substitute one                                        |
+| Migration                | Applied to a copy of the current schema; existing rows checked                                   |
+| Message producer         | Payload shape, and that it is emitted at the right point                                         |
+| Message consumer         | Handling, idempotency, and what happens on a poison message                                      |
+| Outbound client          | Timeout, retry and failure translation                                                           |
+| Configuration            | Optional defaults resolve; required missing/invalid values fail explicitly according to contract |
+| Security component       | The rule denies what it should, verified for each role                                           |
+| Metric or log            | Emitted, with the field names the plan says                                                      |
+| Test harness             | The tests that need it can run                                                                   |
+| Documentation            | Matches the shipped behaviour                                                                    |
 
 ## Sizing
 
 A resource is about right when it can be implemented and validated without stopping, and when
 its status is unambiguous — you can say TODO or DONE about it without qualification.
 
-Too big: it has two validations, or it is half-done for a long time. Split it.
+Too big: distinct outcomes can reach acceptance separately, or an independent handoff is hidden
+inside one status. Consider splitting; several tests of one invariant do not imply several resources.
 
-Too small: its status changes in the same minute you set it, or it cannot be validated on its
-own. Merge it into the resource whose behaviour it serves.
+Too small: tracking it adds no independently useful acceptance or handoff. Consider merging into
+the behavior it serves. A dependent resource can still be valid: name its fixture, prerequisite
+or integration validation instead of requiring it to run in isolation.
 
 ## Dependencies
 
-Three kinds, and only the first two force order:
+Distinguish dependencies from scheduling preferences:
 
 - **Produces-consumes** — RES-02 needs the column RES-01 adds. Forced.
 - **Contract** — RES-04 implements CT-01 defined by RES-03. Forced.
+- **Validation/release** — implementation can use an agreed contract or fixture, but final
+  integration/release needs the real producer. State the separate gate rather than blocking
+  all implementation until the other resource is finished.
 - **Preference** — it is tidier to do the endpoint first. Not forced; say so, so that a blocked
   resource does not stall unrelated work.
 
-Write the order as a line, and mark which arrows are forced. When a resource blocks, the
-unforced arrows are how work continues.
+Record the dependency graph and currently ready resources; give a preferred sequence separately.
+Check every referenced ID exists, reject cycles, and distinguish missing evidence from a real
+dependency. A blocked node need not stall unrelated work; shared-file ownership still matters.
 
 ## Child features, when they are used
 
@@ -79,8 +89,9 @@ PF-02  A caller can ask whether a dispatch finished
 TF-01  Dispatch delivery uses the operated cluster with measurable replay/recovery
        Enables    PF-01, PF-02
        Resources  RES-01, RES-02, RES-03
-       Done when  An event published by the producer is consumed and acknowledged in
-                  an integration test.
+       Done when  A representative event reaches its effect; a consumer restart and
+                  replay recover the expected state without duplicate business effects,
+                  within the agreed recovery objective on the target cluster configuration.
 ```
 
 A story's "done when" is not the sum of its resources' validations. It is the one observable

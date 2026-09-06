@@ -16,34 +16,40 @@ jcmd <pid> Thread.print -l
 jcmd <pid> Thread.dump_to_file -format=json threads.json
 ```
 
-The second is not a globally simultaneous snapshot and the Java 25 MXBean contract permits only some
-virtual threads depending on tracking/runtime support. Traditional output excludes virtual threads.
+The second is not a globally simultaneous snapshot and the Java 25 `HotSpotDiagnosticMXBean.dumpThreads`
+contract permits only some virtual threads depending on tracking/runtime support. Traditional
+output excludes virtual threads.
 See `concurrency-diagnostics` for exact interpretation.
 
 ## Scheduler evidence (Java 24+)
 
-`VirtualThreadSchedulerMXBean` exposes estimated pool, mounted and queued counts plus target
+`VirtualThreadSchedulerMXBean` exposes pool size, estimated mounted/queued counts and target
 parallelism. Correlate:
 
-| Scheduler/CPU shape                                        | Candidate interpretation                                     |
-| ---------------------------------------------------------- | ------------------------------------------------------------ |
-| queued rises, CPU saturated/throttled, CPU-heavy VT stacks | CPU demand exceeds effective capacity                        |
-| pool grows above parallelism, file/native waits visible    | compensation/capture; identify blocking API                  |
-| pin events plus queued rise/latency                        | pinning may constrain carriers; inspect native/foreign stack |
-| many parked VTs, scheduler queue low                       | cheap waiting; inspect protected resource/queue age instead  |
-| live/retained VTs rise after caller timeout                | cancellation/admission leak                                  |
+| Scheduler/CPU shape                                        | Candidate interpretation                                        |
+| ---------------------------------------------------------- | --------------------------------------------------------------- |
+| queued rises, CPU saturated/throttled, CPU-heavy VT stacks | CPU demand exceeds effective capacity                           |
+| pool grows above parallelism, file/native waits visible    | compensation/capture; identify blocking API                     |
+| pin events plus queued rise/latency                        | pinning may constrain carriers; inspect native/foreign stack    |
+| many parked VTs, scheduler queue low                       | cheap waiting; inspect protected resource/queue age instead     |
+| live/retained VTs rise after caller timeout                | residual task lifetime; check cancellation and admission policy |
 
-Counts are estimates and may return `-1`; use trends and application progress.
+Pool, mounted and queued counts may return `-1` when unknown; parallelism is a target, not
+another live count. Mounted is not identical to consuming CPU and queued is not all live or
+parked requests. Use trends with application progress; residual work can be intentional or
+still terminating, so a single post-timeout observation does not prove a leak.
 
 ## JFR event selection
 
 Potential signals include virtual-thread pin/submit-failure/start/end, monitor enter/wait, park,
 socket/file I/O and thread sleep. Inspect the active recording configuration: event availability,
-enablement and thresholds vary. Absence under a threshold is censored evidence.
+enablement and thresholds vary. Short filtered events and unfinished duration events may be
+absent; absence is not proof that blocking or pinning did not occur.
 
-JDK 24+ monitor usage no longer pins because of JEP 491. A `jdk.JavaMonitorEnter` contention event is
+JDK 24+ removes pinning caused solely by monitor usage through JEP 491. A `jdk.JavaMonitorEnter` contention event is
 still relevant for latency even though it is not a pin. Remaining pin stacks should identify native
-or foreign-function execution; confirm impact with scheduler queue and completion latency.
+or foreign-function frames, including callbacks into Java; confirm impact with scheduler queue
+and completion latency. Monitor changes do not remove those separate native-frame constraints.
 
 ## Profile choice
 
@@ -96,4 +102,5 @@ signal change, make one reversible intervention, and validate useful progress pl
 
 - [Java 25 virtual threads](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
 - [Java 25 `VirtualThreadSchedulerMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html)
+- [Java 25 `HotSpotDiagnosticMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/com/sun/management/HotSpotDiagnosticMXBean.html)
 - [JEP 491](https://openjdk.org/jeps/491)

@@ -27,6 +27,12 @@ class loader in one JVM among N replicas.
 
 ## Workflow
 
+Use Java 21 without preview as the example baseline. Inspect compiler/toolchain, runtime,
+framework construction/serialization rules and supported callers before changing a creation
+path. Do not upgrade Java or add a container for these examples. Reference code blocks are
+partial or alternative sketches; supply imports and collaborators, and compile alternatives
+separately. Missing lifecycle/identity evidence makes a recommendation conditional.
+
 1. **State what the caller needs to say.** If two ways of creating the object differ in
    _meaning_ rather than in parameter types, that difference belongs in a name, not in an
    overload. `Money.ofMinor(1050)` and `Money.ofMajor(new BigDecimal("10.50"))` should not be
@@ -44,8 +50,9 @@ class loader in one JVM among N replicas.
 5. **Push variability to the caller.** Anything the class cannot substitute later — clock,
    HTTP client, repository, random source — arrives through the constructor. `new` on such
    a thing inside domain logic is the decision you will need to undo first.
-6. **Verify.** Every creation path is reachable in a test without a container or a network;
-   no static holds mutable state that outlives a request; and each factory's identity
+6. **Verify.** Domain construction is testable without unrelated infrastructure. Resource-owner
+   integration tests cover acquisition failure and cleanup using isolated resources. Any static
+   mutable state has a justified scope, concurrency and shutdown policy; each factory's identity
    promise (fresh, cached, or unspecified) is written down.
 
 ## Rules
@@ -58,7 +65,9 @@ class loader in one JVM among N replicas.
 - Follow the platform naming conventions — `of`, `from`, `valueOf`, `instance`/`getInstance`,
   `create`/`newInstance`, `copyOf`, `parse`. A factory called `build`, `make` or `get` on a
   type whose neighbours use `of` costs the caller a Javadoc lookup.
-- A static factory with a private constructor removes subclassing. That is usually the
+- A private-constructor-only surface blocks ordinary external subclass construction; nested
+  code with private access is a separate case. Use `final` when the type must prohibit all
+  subclasses. Blocking external extension is usually the
   point; take it deliberately, not by accident, and say so in the Javadoc rather than
   leaving callers to discover it from a compile error.
 - Document whether fresh or canonical identity is guaranteed. An implementation is free to add
@@ -89,6 +98,10 @@ class loader in one JVM among N replicas.
   really must be built lazily; and prefer eager initialisation to both unless the cost of
   building it is proven and the object is genuinely often unused. java-memory-model owns
   the correctness argument.
+
+For the change report, name the creation/identity contract, preserved callers, ownership on
+success/failure, and targeted checks run. Tests of one implementation do not establish a new
+public identity guarantee or a cluster-wide singleton.
 
 ## References
 

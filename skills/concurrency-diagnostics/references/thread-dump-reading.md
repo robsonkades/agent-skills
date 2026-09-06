@@ -18,6 +18,9 @@ stating the question.
 Collection is diagnostic work with operational cost. `Thread.dump_to_file` impact scales with thread
 count and its output file must be protected. Confirm attach permission, container PID namespace,
 available disk and overwrite policy. Capture timestamp and runtime version embedded in the output.
+Use a new absolute target path in the JVM's filesystem namespace; a relative `dump.json` is
+resolved by the target JVM, which may have a different working directory/container mount.
+The shell examples use Bash/jq; adapt quoting for the current shell without changing the filter.
 
 ## Consistency model
 
@@ -75,7 +78,8 @@ insufficient. Instrument logical resource/owner IDs or reproduce with controlled
 ## Structured containers
 
 The JSON dump records thread containers and parent/owner relationships, so named Java 25 preview
-`StructuredTaskScope` instances can expose a task hierarchy. Use the scope's `Config.withName` and a
+`StructuredTaskScope` instances can expose a task hierarchy. Use the scope's
+`Configuration.withName` through the configuration function passed to `open`, and a
 useful thread factory name. The hierarchy shows lifetime and location; it does not prove why a child
 has not stopped.
 
@@ -85,6 +89,11 @@ whether interruption was delivered/observed and whether the provider call suppor
 ## Scheduler evidence (Java 24+)
 
 Use `jdk.management.VirtualThreadSchedulerMXBean` rather than inferring carriers from names:
+
+Partial Java 24+ snippet: import `java.lang.management.ManagementFactory`; custom runtime
+images must include `jdk.management`. The getters below are observational; do not call
+`setParallelism` merely to collect evidence. Treat `-1` as unknown, not a negative queue size
+or a value to replace silently with zero.
 
 ```java
 var scheduler = ManagementFactory.getPlatformMXBean(
@@ -101,8 +110,10 @@ by itself a fault.
 
 ## JFR and profiles
 
-Before reading absence, inspect recording settings (`jfr summary`, event metadata, template/custom
-configuration). Monitor contention, monitor wait, park, socket/file I/O and virtual-thread events
+Before reading absence, inspect the actual recording's enabled events, thresholds, stack settings
+and collection interval. `jfr summary` reports recorded counts and metadata describes schemas;
+neither alone proves which events were enabled. Preserve the recording configuration and inspect
+`jdk.ActiveSetting` when available. Monitor contention, monitor wait, park, socket/file I/O and virtual-thread events
 answer different questions. A park event does not identify a lock owner; a pin event does not say the
 operation caused the service SLO breach.
 
@@ -119,6 +130,10 @@ virtual-thread start/end can be expensive at very high creation rates.
 ## Programmatic dumps
 
 Java 21+ HotSpot exposes:
+
+Partial Java snippet with a `java.lang.management.ManagementFactory` import and a new absolute
+path string named `absoluteNewPath`; `jdk.management` must be present. Execute against the
+intended JVM, not an unrelated diagnostic helper whose threads differ from the service's.
 
 ```java
 var diagnostic = ManagementFactory.getPlatformMXBean(
@@ -138,3 +153,4 @@ policy.
 - [Java 25 `HotSpotDiagnosticMXBean.dumpThreads`](<https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/com/sun/management/HotSpotDiagnosticMXBean.html#dumpThreads(java.lang.String,com.sun.management.HotSpotDiagnosticMXBean.ThreadDumpFormat)>)
 - [Java 25 `ThreadMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadMXBean.html)
 - [Java 25 `VirtualThreadSchedulerMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html)
+- [Java 25 `StructuredTaskScope.Configuration` (preview)](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.Configuration.html)

@@ -27,6 +27,12 @@ In particular, do not add p99 values, treat a whole fleet as M/M/1, or multiply 
 single-replica latency limit by a USL efficiency coefficient. Quantiles are not additive,
 and throughput scaling does not determine a latency distribution.
 
+This skill has no fixed Java API baseline or executable Java examples. Its authoring
+contract is version-neutral measurement; the target project's build toolchain, deployed
+JDK/vendor, flags and dependency versions determine which runtime behaviors apply.
+Inspect those before recommending JVM or container changes. Applying this skill does not
+authorize a Java/framework upgrade, preview features or new infrastructure dependencies.
+
 ## Required output: capacity decision record
 
 Record:
@@ -46,6 +52,11 @@ Record:
 
 If any of these are unknown, label the answer provisional. Do not hide uncertainty behind
 an extra “safety factor.”
+
+For a narrow sizing question, report the demand/scenario, calculation and assumptions,
+evidence gap and next validation rather than requiring the full record. When no feasible
+envelope exists, give conditional arithmetic or an experiment plan; do not invent a safe
+replica count. The full record is for a provisioning decision.
 
 ## Workflow
 
@@ -278,12 +289,12 @@ incident that invalidates an assumption.
 
 ## References
 
-- [Sizing arithmetic](references/sizing-arithmetic.md) — capacity envelopes, scenario
-  enumeration, survivorship and autoscaling reaction arithmetic.
-- [Provisioning decision](references/provisioning-decision.md) — evidence gates,
-  configuration selection, controls and decision-record template.
-- [Inputs, forecast and cost](references/inputs-forecast-and-cost.md) — measurement inputs,
-  forecast validation and full cost basis.
+- [Sizing arithmetic](references/sizing-arithmetic.md) — read when calculating envelopes,
+  survivorship or autoscaling backlog; includes an idle-then-burst sanity case.
+- [Provisioning decision](references/provisioning-decision.md) — read when selecting or
+  reviewing a production configuration; evidence gates, controls and decision template.
+- [Inputs, forecast and cost](references/inputs-forecast-and-cost.md) — read when assembling
+  experiment inputs, forecasting exhaustion or comparing full costs.
 - [Kubernetes scaling controls](references/kubernetes-scaling-controls.md) — HPA, VPA,
   in-place resize, QoS and JVM startup ergonomics. Read when choosing how Kubernetes should
   change capacity rather than merely calculating how much capacity is needed.

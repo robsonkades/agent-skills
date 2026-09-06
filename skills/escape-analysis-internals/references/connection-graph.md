@@ -3,7 +3,8 @@
 Source names below were read from the `jdk-25-ga` tag of `openjdk/jdk`
 (`src/hotspot/share/opto/escape.{hpp,cpp}`, `macro.cpp`, `compile.cpp`, `callnode.{hpp,cpp}`,
 `ci/bcEscapeAnalyzer.cpp`, `runtime/deoptimization.cpp`). Behaviour marked "measured" was
-confirmed on Temurin 25.0.3; the numbers are in `diagnosing-elimination.md`.
+reported on Temurin 25.0.3 by the original skill; the numbers and their reproducibility
+limitations are in `diagnosing-elimination.md`.
 
 ## Nodes and edges
 
@@ -105,8 +106,9 @@ else                                      -> ArgEscape
 if (call_analyzer->is_arg_returned(k))    -> the call's result may alias the argument
 ```
 
-Every argument to a non-inlined call is therefore at least ArgEscape. No summary, however
-precise, produces NoEscape across a call boundary: only inlining does. The summary is refused
+Every object argument handled by this ordinary non-inlined Java-call path is at least ArgEscape.
+Its BCEA summary does not produce NoEscape across that boundary; intrinsics and specially
+modelled runtime operations follow other paths. The summary is refused
 outright (`clear_escape_info`, everything GlobalEscape) when the callee's bytecode exceeds
 `MaxBCEAEstimateSize` or the nesting exceeds `MaxBCEAEstimateLevel`.
 
@@ -175,11 +177,14 @@ allocation. An `AllocateNode` leaves through one of three doors:
 The second door is why "0 bytes/op" is not proof of escape analysis. An object whose every
 field load folded into the constructor's stores has no use left; C2 discards it with
 `-XX:-DoEscapeAnalysis` and `-XX:-EliminateAllocations` alike (measured: 0 bytes/op under
-both; 24 bytes/op once the object is kept live across a call). A benchmark that builds an
-object and immediately consumes its fields is measuring this door, not EA.
+both; 24 bytes/op once the object is kept live across a call). Immediate field consumption can
+produce this shape, but does not by itself prove which elimination path ran. Compare controls
+and compiler evidence without returning/publishing the object merely to defeat elimination:
+that can change the escape question the benchmark is meant to ask.
 
 There is no partial expansion through the third door. That, plus the first two, is the
-mechanical reason `gc.alloc.rate.norm` behaves as a binary signal per allocation site.
+mechanical distinction for one compiled graph. Measured bytes/op need not be binary: execution
+frequency, caches, mixed compiled versions, warm-up and rematerialization can produce averages.
 
 For locks the doors are analogous. `EliminateLocks` removes a `LockNode`/`UnlockNode` pair
 whose object is NoEscape or ArgEscape (`can_eliminate_lock`, kind `NonEscObj`);
@@ -254,8 +259,8 @@ into a real field, a return to the caller, a call that cannot be summarized, an 
 comparison, a real monitor enter — Graal can insert materialization on the affected control-flow
 path rather than forcing the allocation for all paths. Paths that do not pass through it
 keep the object virtual. `ReduceAllocationMerges` narrows the gap for one shape (a merge read
-through field loads) but is not flow-sensitivity: a rarely taken escaping store still costs C2
-every path.
+through field loads) but is not flow-sensitivity: an escaping store that remains in the compiled
+graph can make the allocation survive on every path.
 
 Graal's partial escape analysis also runs iteratively, interleaved with inlining decisions,
 rather than after parse-time inlining has settled, so the decision to inline a callee can
@@ -272,8 +277,8 @@ the subject of `graalvm-jit`.
 
 Source links:
 
-- [HotSpot `escape.cpp`](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/opto/escape.cpp)
-- [HotSpot `macro.cpp`](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/opto/macro.cpp)
+- [HotSpot `escape.cpp`, JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/escape.cpp)
+- [HotSpot `macro.cpp`, JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/macro.cpp)
 - [JDK-8287061: allocation merge rematerialization](https://bugs.openjdk.org/browse/JDK-8287061)
 - [JDK-8316991: nullable allocation merges](https://bugs.openjdk.org/browse/JDK-8316991)
 - [JEP 410: Remove the Experimental AOT and JIT Compiler](https://openjdk.org/jeps/410)

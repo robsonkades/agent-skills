@@ -1,5 +1,8 @@
 # A worked smell pass
 
+This is a fictional teaching fixture, not a measured audit of this repository. Its supplied
+history and ticket identifiers are assumptions to practice weighing, not facts to cite elsewhere.
+
 The subject: `InvoiceService`, 310 lines, the file with the second-highest commit count in
 the repository over six months. The pass, the findings, and — as important — what was
 deliberately not reported.
@@ -56,7 +59,7 @@ caller can produce the illegal combination. Fix: Replace Type Code with a sealed
 `CustomerKind` (`Retail`, `Export`, `Domestic`); currency becomes a validated type.
 `periodStart`/`periodEnd` are a Data Clump for the same Parameter Object move.
 
-**4. Long Method — `issue`, 74 lines.** Reported last, deliberately: it is a _symptom_ of
+**Sequencing note, not a fourth finding — `issue`, 74 lines.** It is a _symptom_ of
 findings 1 and 3. Extracting sub-methods now would be re-arranged furniture in a room
 that is being split. Note it, sequence it after the Extract Class.
 
@@ -72,7 +75,7 @@ that is being split. Note it, sequence it after the Extract Class.
 ## Output shape
 
 Each finding shipped as: smell → location → evidence (checkable) → severity argument
-(frequency × radius, with the log data) → named java-refactoring technique → sequencing
+(change pressure, impact and counter-evidence argued separately) → named java-refactoring technique → sequencing
 note. No code was changed during the pass; the fixes were scheduled as separate
 refactoring work under java-refactoring's safety workflow.
 

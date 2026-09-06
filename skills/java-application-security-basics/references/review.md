@@ -8,8 +8,10 @@ this pass are recorded, not silently fixed.
 
 1. **What are the actual KDF parameters, and when were they last benchmarked?** Not the class
    name. `defaultsForSpringSecurity_v5_8()`, `new BCryptPasswordEncoder()` and
-   `createDelegatingPasswordEncoder()` are all _below_ current OWASP guidance
-   (`password-storage.md` §3). If no date is recorded anywhere, that is the finding.
+   `createDelegatingPasswordEncoder()` need different conclusions: Argon2 defaults fall below
+   the cited parameter floor, while bcrypt strength 10 meets its minimum. Check the algorithm
+   choice, measured cost and binding standard separately (`password-storage.md` §3).
+   Missing benchmark evidence is a gap, not proof of inadequate security.
 2. **Is a general-purpose digest being used as a password hash?**
    `rg 'MessageDigest\.getInstance\("(SHA|MD5)'` near anything called password. SHA-256 is fast
    by design; a modern GPU does billions per second. Note the confusing corner: the same class's
@@ -49,7 +51,8 @@ this pass are recorded, not silently fixed.
     ASVS L2 assessment: 11.5.1 ends "Note that UUIDs do not respect this condition", naming
     them as not meeting the 128-bit bar. Ask which applies before raising it: where L2 is
     claimed, emit 16 bytes from `SecureRandom` Base64url-encoded; otherwise leave it.
-    `UUID.nameUUIDFromBytes` is deterministic MD5 and is unsafe in every context.
+    `UUID.nameUUIDFromBytes` is deterministic MD5 and unsuitable for unguessable credentials;
+    deterministic non-secret identifiers are outside this finding.
 
 ## Authorisation
 
@@ -96,14 +99,15 @@ this pass are recorded, not silently fixed.
 ## Secrets and leakage
 
 24. `rg -i 'password|secret|token|api[-_]?key' -- '*.yml' '*.yaml' '*.properties'` — a literal
-    value means git history holds it permanently. Rotating without purging history is not
-    remediation.
+    value may expose a real credential in history; distinguish fixtures and placeholders.
+    Revoke or rotate an exposed credential first and verify the old value no longer works.
+    History cleanup reduces residual exposure but cannot revoke copies in clones or backups.
 25. **Is a secret in an environment variable being treated as sufficient?** OWASP's Secrets
     Management Cheat Sheet discourages it in its _Containers & Orchestrators_ section: visible
     in `/proc`, in `docker inspect`, in crash dumps and to child processes. Prefer a mounted
     file or an in-memory fetch from a secret store.
 26. **Is there secret scanning in CI at all** (`gitleaks`, `trufflehog`, platform scanning)?
-    Without it, findings 22–23 are made by an outsider.
+    Without it, this automated detection layer is absent; scanning is not proof of no leaks.
 27. **Does a record, a Lombok `@Data` class or a JPA entity carry a secret and generate
     `toString()` from it?** `log.info("processing {}", request)` then leaks a value nobody wrote
     into a log statement. Redaction at the encoder (`structured-logging`) is the backstop;
@@ -134,7 +138,8 @@ this pass are recorded, not silently fixed.
     need binding so a valid ciphertext cannot be transplanted into another context.
 35. **Can keys rotate without decrypting everything in one outage window?** Require a versioned
     envelope, old-key read/new-key write, auditable re-encryption, rollback semantics and a
-    retirement criterion. Ensure data-encryption keys are not stored with the ciphertext.
+    retirement criterion. Plaintext data keys must not accompany ciphertext; wrapped data keys
+    may, provided the wrapping key remains separately protected.
 
 ## What not to raise
 

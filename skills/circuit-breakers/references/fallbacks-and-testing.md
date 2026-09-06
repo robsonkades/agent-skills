@@ -16,7 +16,10 @@ A breaker's output is a fast failure. The fallback decides what that failure bec
 converts an availability incident into a data incident, which is slower to detect, harder to
 bound and sometimes irreversible. An empty list read as "the customer has no orders" and
 written back is the canonical shape. Make the degraded case a different **type**, so the
-caller cannot ignore it:
+caller can handle it explicitly. A sealed hierarchy enables exhaustiveness checks; it cannot
+prevent a caller deliberately collapsing all variants to one value. This partial Java 21+
+example uses final record patterns and pattern-switch syntax (no preview) and requires
+`java.math.BigDecimal` and `java.time.Instant` imports in an enclosing class:
 
 ```java
 sealed interface Quote {
@@ -25,7 +28,7 @@ sealed interface Quote {
     record Unavailable(String reason) implements Quote {}
 }
 
-// The caller cannot silently treat Stale as Live: the switch must be exhaustive.
+// Handle each permitted variant explicitly rather than hiding degradation in a default.
 String render(Quote q) {
     return switch (q) {
         case Quote.Live(var price)         -> price.toPlainString();
@@ -67,6 +70,11 @@ duration. Then submit more concurrent calls than the probe limit and assert the 
 rejected without reaching the stub. Counting **stub invocations**, not exceptions, is what
 makes this assertion real.
 
+Hold admitted probes inside the stub with a latch/barrier while submitting excess calls.
+Assert those excess calls are rejected before releasing the probes; otherwise fast successes
+can close the breaker and legitimately admit later calls, making a correct breaker fail the
+test. Bound latch waits and always release them in teardown.
+
 Direct transitions test probe gating, not the configured wait duration or automatic transition.
 Test timing separately with a controllable clock/scheduler where supported, or a narrowly bounded
 integration test; do not make the suite depend on long sleeps.
@@ -74,6 +82,9 @@ integration test; do not make the suite depend on long sleeps.
 **3. It closes again.** From half-open, return successes for the probe count and assert the
 state is closed and traffic flows. A breaker tested only in the open direction has an untested
 recovery path — the half that keeps an outage going after the dependency is back.
+
+Also run the half-open failure direction and an incomplete sample with a configured maximum
+half-open wait. Verify reopening, and separately whether outstanding client work terminated.
 
 Do not sleep to cross the wait duration. Either drive the transitions directly, or inject the
 implementation's clock so time can be advanced; the general rule is in

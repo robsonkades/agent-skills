@@ -23,6 +23,11 @@ mechanics belong to `virtual-threads-internals`, executor queues/shutdown to
 
 ## Decision workflow
 
+Inspect compiler/toolchain, runtime image, resolved libraries and effective container/JVM settings.
+The virtual-thread example requires Java 21+ without preview; platform-pool APIs also work on
+Java 17. Java 24/25 diagnostics and APIs below are conditional on the deployed build. Do not
+upgrade the project or enable preview merely to apply this skill.
+
 1. Describe tasks by CPU time, blocking/wait time, allocation/retained state, service-time variance,
    cancellation and external resources—not only “I/O-bound.”
 2. Measure target throughput/concurrency, CPU quota/throttling, dependency latency, current pool
@@ -64,6 +69,9 @@ Little's Law relates average in-system concurrency, throughput and residence tim
 population. Required average `λW` is not a safe pool size by itself: service variance and bursts need
 queueing headroom, while downstream ceilings can make the required throughput infeasible. Route the
 math to `littles-law-and-queueing`.
+Use consistent units and one boundary: admitted/completed throughput with mean residence time
+for the same stable population. Offered demand with rising backlog is not achieved throughput;
+request latency including the executor queue does not directly measure occupied workers.
 
 Platform thread stack reservation/commit, guard pages and native metadata vary by OS, architecture,
 JDK, `-Xss`/`ThreadStackSize` and actual stack depth. Do not budget a fixed “1 MB per thread” without
@@ -90,6 +98,9 @@ request.
 Do not pool virtual threads to limit concurrency. Use a semaphore/client pool/weighted gate around
 the limited operation. Remember that blocked virtual threads and queued task objects both retain task
 state; cheap waiting is not free or bounded.
+Bound total admission/waiters as well as active provider calls, and budget limits across replicas,
+fan-out and retries. Release a resource permit when the protected operation actually relinquishes
+the resource, not merely when its caller times out or its Future becomes cancelled.
 
 CPU-heavy code still consumes carriers/cores. A million CPU-ready virtual threads add scheduling and
 retained-state overhead without adding CPU capacity. Separate/bound CPU phases when they compete with
@@ -99,11 +110,12 @@ latency-sensitive request work.
 
 - Virtual threads are final in Java 21 (JEP 444).
 - Java 24 JEP 491 removes pinning caused by monitor acquisition/holding and `Object.wait`; choosing
-  `ReentrantLock` merely to avoid `synchronized` pinning is obsolete on 24+.
+  `ReentrantLock` merely to avoid monitor-only pinning is obsolete on 24+. Blocking with a
+  native/foreign frame still on the stack can remain pinned, including callbacks into Java.
 - Native methods and foreign functions can still pin. A pin event must be correlated with scheduler
   queue/latency before it is called a bottleneck.
-- Java 24 adds `VirtualThreadSchedulerMXBean` estimates for scheduler parallelism, pool size, mounted
-  and queued virtual threads.
+- Java 24 adds `VirtualThreadSchedulerMXBean`: target parallelism, scheduler platform-thread
+  pool size, and estimates of mounted and queued virtual threads.
 - Scoped values are final in Java 25 (JEP 506). Structured concurrency remains preview in Java 25;
   keep its API version-scoped.
 
@@ -162,9 +174,13 @@ resource-local wait/in-flight. Thread count alone does not reveal useful concurr
 
 ## References
 
-- [Sizing and adoption experiments](references/sizing-and-adoption.md)
-- [Incident triage and observability](references/incident-triage.md)
+- Read [Sizing and adoption experiments](references/sizing-and-adoption.md) for a pool-size or migration decision.
+- Read [Incident triage and observability](references/incident-triage.md) for stalls, queue growth or post-migration regressions.
 - [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)
 - [JEP 491: Synchronize Virtual Threads without Pinning](https://openjdk.org/jeps/491)
 - [JEP 506: Scoped Values](https://openjdk.org/jeps/506)
 - [Java 25 virtual-thread guide](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
+
+Return the measured workload/CPU budget, selected execution/admission limits and their scope,
+evidence supporting the choice, and peak/failure checks run versus pending. Without usable
+measurements, give a bounded experiment and conditional starting range, not an optimal size.

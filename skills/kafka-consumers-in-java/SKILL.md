@@ -28,12 +28,17 @@ business effect happened.
 
 Two decisions follow. **Where the commit sits relative to the work** decides the guarantee (the
 vocabulary is `delivery-semantics`; do not re-derive it here). **How long the handler takes
-between polls** decides whether the group rebalances, and a rebalance redelivers everything
-processed but not committed. The failure this prevents is the consumer that reprocesses a batch
+between polls** affects membership, and reassignment can replay work beyond its recovery
+checkpoint. The failure this prevents is the consumer that reprocesses a batch
 every few minutes under load with no error, no retry and no broker fault: a slow handler trips
 the poll interval, the member is evicted, the group rebalances, the batch comes back.
 
 ## Workflow
+
+First inspect the resolved Kafka client, Java toolchain, broker version, `group.protocol`,
+assignment mode (`subscribe` versus manual `assign`) and any Spring container configuration.
+References use Kafka 4.1 API semantics; snippets are partial, not a runnable application or
+authorization to upgrade. Manual assignment does not participate in group rebalances.
 
 1. **Fix the guarantee first** — where the commit sits relative to the side effect.
    `delivery-semantics` owns the answer; everything below assumes at-least-once plus a
@@ -48,12 +53,17 @@ the poll interval, the member is evicted, the group rebalances, the batch comes 
 4. **Choose the assignment strategy and membership shape** — incremental cooperative
    assignment, plus static membership if rolling restarts dominate rebalances
    (`references/poll-loop-and-rebalance.md`).
-5. **Decide `auto.offset.reset` per topic.** It applies only when there is no valid committed
-   offset, which is exactly the 3 a.m. situation.
+5. **Decide reset behavior for the consumer's subscriptions.** `auto.offset.reset` is a consumer
+   configuration used when no initial offset exists or its current offset is unavailable.
+   Different per-topic policies require separate consumers or explicit assignment/seek handling.
 6. **Instrument lag in time, per partition**, and alert on that rather than record counts
    (`references/offsets-and-lag.md`).
 7. **Prove it by fault injection** — kill the consumer mid-batch and assert no loss; force a
    rebalance under load and assert the downstream outcome.
+
+Report the observed poll/commit/rebalance evidence, the proposed failure mechanism, and the
+test that would confirm it. Missing logs or completion tracking leave the diagnosis conditional;
+polling regularly is not proof that offloaded work is completing.
 
 ## Decision block
 
@@ -121,24 +131,27 @@ Raise max.poll.interval.ms when:
   reuse have different behavior; static membership is not a blanket way to eliminate rolling
   rebalances. The price is partitions remaining unavailable until session expiry after a dead
   member.
-- **`auto.offset.reset` applies only when there is no valid committed offset** — a new group, a
-  typo in `group.id`, expired offsets, or a committed offset outside retention. `latest`
-  silently skips everything produced during the gap; `earliest` replays the whole retained
-  topic downstream; `none` fails loudly and makes a human decide.
+- **`auto.offset.reset` is a fallback**, not an instruction to override a valid position.
+  New groups, expired checkpoints or offsets outside retention can activate it. `latest`
+  skips retained records preceding the resolved end; `earliest` starts at the affected
+  partition's retained beginning; `none` raises an error for explicit recovery handling.
 - **No single lag number is sufficient.** Record lag needs arrival/service rates to estimate
   catch-up; timestamp age can be producer-clock skewed, sparse, compacted or based on create
   versus append time. Track per-partition next-record age where meaningful, oldest in-flight
   age, record/byte lag, arrival and completion rates, and projected catch-up time.
-- Consumer shutdown is a drain: stop polling, finish or abandon in-flight work, commit what
-  completed, then `close()` so the member leaves the group instead of waiting out the session
-  timeout. Sequencing and the grace budget are `kubernetes-service-lifecycle`.
+- Consumer shutdown is a drain: stop admission, bound in-flight completion while maintaining
+  ownership when feasible, commit safe positions, then `close()` within the grace budget.
+  Static membership/protocol can retain assignment after close until expiry; do not promise
+  immediate reassignment. Sequencing is `kubernetes-service-lifecycle`.
 - Deserialisation runs on the poll thread and bills as consumer cost, not handler cost. A record
-  that cannot be deserialised is permanently poison and blocks its partition
+  that cannot be deserialised can block progress, but schema-service outages or configuration
+  errors can be recoverable. Preserve raw bytes/offset and classify before routing or skipping
   (`poison-messages-and-dlq`); the format's own cost is `serialization-performance`.
 - `KafkaConsumer` is not thread-safe. Keep `poll`, assignment, pause/resume, seek and commit on
   the owning thread; other threads signal it through a thread-safe queue and `wakeup()`. For
-  parallel processing, commit only the next offset after the highest contiguous completed
-  record per partition—never the numerically largest completed offset.
+  parallel processing, advance only across the completed prefix of delivered records per
+  partition and ownership epoch. Offsets may have numeric gaps; never wait for nonexistent
+  records or commit past unfinished delivered records.
 
 ## References
 

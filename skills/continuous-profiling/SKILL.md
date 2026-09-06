@@ -88,12 +88,15 @@ query cost      ~= series/stack partitions touched * window * resolution
 Approximate opportunity rates:
 
 ```text
-CPU samples       ~ consumed CPU time / interval
+CPU-time samples  ~ consumed CPU time / CPU-time interval
 wall candidates   ~ eligible thread population * elapsed time / interval
 allocation events ~ allocated bytes / sampling interval
 lock events       ~ qualifying contentions under threshold/sampling policy
 ```
 
+This CPU-time estimate applies to CPU-clock sampling, not every event called a CPU profile.
+Traditional JFR `ExecutionSample` uses periodic thread sampling; its raw count is not measured
+CPU time. Preserve the actual engine, clock, event weights and population in the schema.
 The implementation may batch, throttle, skip, or bias these opportunities. Measure actual
 events, drops, CPU seconds per operation, allocation/GC effects, latency percentiles,
 export bytes, and backend cost on a representative canary. Repeat at peak thread/allocation
@@ -239,6 +242,13 @@ to `performance-regression-ci`.
 
 ## Definition of done
 
+Scale the result to the request: return the proposed policy or query, supporting measurements,
+known omissions, and the next discriminating validation. Inspect build/toolchain and runtime image,
+JDK vendor/version, pinned agent/backend versions and effective settings before recommending APIs.
+JDK 25 references below are an authoring reference, not permission to upgrade the target. Missing
+coverage or calibration evidence makes the policy provisional; do not report unchecked items as
+completed or demand a fleet rollout to answer a narrow query.
+
 - [ ] Retroactive questions, event semantics, minimum detectable contribution, and omissions
       are documented.
 - [ ] Architecture and privilege choices are justified against alternatives.
@@ -253,8 +263,8 @@ to `performance-regression-ci`.
 
 ## References
 
-- [Architecture and cost model](references/architecture-choice.md)
-- [Collection, context, storage, and query protocol](references/setup-and-queries.md)
+- [Architecture and cost model](references/architecture-choice.md) — read when selecting a collector/backend or calibrating permanent budgets.
+- [Collection, context, storage, and query protocol](references/setup-and-queries.md) — read when implementing collection/export, context handoff, retention or deploy comparisons.
 - [JDK 25 `java` command: Flight Recording settings](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html) — `default.jfc` versus `profile.jfc`; use deployed-JDK docs.
 - [JFR `RecordingStream` API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/consumer/RecordingStream.html)
 - [JEP 509: JFR CPU-Time Profiling](https://openjdk.org/jeps/509)

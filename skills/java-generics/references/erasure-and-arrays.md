@@ -2,9 +2,13 @@
 
 ## What erasure actually removes
 
-At compile time `List<String>` and `List<Integer>` are different types. At runtime both are
-`List`, and there is no object anywhere holding "String". Consequences that drive every rule
-in this skill:
+At compile time `List<String>` and `List<Integer>` are different types. At runtime, instances
+of the same implementation class need not carry distinct element arguments. Explicit type
+tokens and declaration metadata can still retain `String`. Consequences for this skill:
+
+The `instanceof List<String>` rejection below assumes an `Object` operand. Newer Java can
+permit some parameterized type tests when the operand's static type already makes the
+conversion checkable; that still does not inspect list elements at runtime.
 
 | Not possible at runtime                        | Because                                      | What to do instead                                       |
 | ---------------------------------------------- | -------------------------------------------- | -------------------------------------------------------- |
@@ -22,7 +26,8 @@ promise that was not kept.
 Generic type information does survive in the class file as metadata for _declarations_
 (fields, method signatures, supertypes) — which is how frameworks read
 `List<String> names` reflectively and how the `TypeReference` trick works. It never survives
-for _instances_: no object knows its own type arguments.
+as automatically reified arguments of ordinary generic instances; explicit tokens or a concrete
+subclass's generic-superclass metadata are different mechanisms.
 
 ## Raw types disable more than they appear to
 
@@ -33,8 +38,9 @@ List<String> names = raw;          // unchecked warning, compiles
 String first = names.get(0);       // ClassCastException here — far from the mistake
 ```
 
-Using a raw type erases the whole type, not just the element type: every generic member of
-the class becomes raw too. `List<Object>` and `List<?>` are the two safe alternatives, and
+Raw instance member types are erased according to the declaring/inherited-member rules;
+static members do not lose their signatures just because the qualifier is raw.
+`List<Object>` and `List<?>` are the two safe alternatives, and
 they are not interchangeable:
 
 | Type           | Can pass a `List<String>` to it | Can add a `String` | Can add `null` | Meaning               |
@@ -61,8 +67,8 @@ Every unchecked warning names an operation the compiler cannot verify. The order
 ```java
 public <T> T[] toArray(T[] a) {
     if (a.length < size) {
-        // The array is created with the same component type as the argument, so every
-        // element written into it is assignable to T. Safe by construction.
+        // Same runtime array class as a. The cast is safe; incompatible stored elements
+        // are rejected by Arrays.copyOf with ArrayStoreException, not silently accepted.
         @SuppressWarnings("unchecked")
         T[] result = (T[]) Arrays.copyOf(elements, size, a.getClass());
         return result;
@@ -88,7 +94,8 @@ objects[0] = 42;                      // compiles; throws ArrayStoreException at
 List<Object> list = new ArrayList<String>();   // does not compile — the error is at the right place
 ```
 
-Creating an array whose component type has a type argument (`new List<String>[10]`) is illegal
+Creating an array with a non-reifiable component (`new List<String>[10]`) is illegal;
+`new List<?>[10]` is legal because the unbounded-wildcard component is reifiable. The former is illegal
 precisely because the runtime store check would compare erased types and let the wrong element
 through. The residual danger is the deliberate compromise that library code makes:
 
@@ -108,15 +115,18 @@ implicit cast (`Object[]` cannot be assigned to `String[]`). Keep the array priv
 ## Heap pollution and generic varargs
 
 Heap pollution is a variable of parameterised type referring to an object that is not of that
-type. Generic varargs create it structurally, because the varargs array's component type is
-non-reifiable:
+type. Non-reifiable varargs enable it through unsafe aliases/writes; declaring varargs alone
+does not necessarily pollute anything. This deliberately unsafe partial example returns the
+value so the caller's inserted cast exposes the pollution:
 
 ```java
-static <T> void dangerous(List<T>... lists) {
+static <T> T dangerous(List<T>... lists) {
     Object[] array = lists;               // legal: arrays are covariant
     array[0] = List.of(42);               // no store check can catch this
-    T first = lists[0].get(0);            // ClassCastException in the *caller*
+    return lists[0].get(0);              // erased T is Object here
 }
+
+String first = dangerous(List.of("safe")); // caller's String cast throws ClassCastException
 ```
 
 `@SafeVarargs` asserts that the body and code it calls perform no potentially unsafe operation on
@@ -134,8 +144,9 @@ alternative — often better — is to take a `List<T>` parameter instead and le
 
 ## Where erasure meets the network
 
-A value that arrives from outside the process has no type arguments, and the compiler will
-not warn you at the point of use:
+An untyped deserializer can build values that violate the target element promise. For JSON
+object elements under usual Jackson defaults, this unchecked assignment warns at compilation
+and fails later on use; strings, numbers and custom mapper configuration have different shapes:
 
 ```java
 List<OrderLine> lines = mapper.readValue(json, List.class);   // actually List<LinkedHashMap>
@@ -156,5 +167,11 @@ types.
 
 The related failure is a cache or a shared map that hands back a `List<String>` written by
 another code path as a `List<Long>`. Nothing checks it, and the exception surfaces in the
-reader. If a structure is shared across code paths, key it by a type token and cast through
-`Class.cast` so the check happens where the value is retrieved.
+reader. `Class.cast` checks reifiable classes, not `List<String>` elements: `List.class.cast`
+accepts either list. Use a typed insertion API with a justified invariant, or validate each
+element (and nested structure) at the boundary, copying when untrusted mutable aliases remain.
+
+## Sources
+
+- [JLS 21 §4.6–4.8: erasure, reifiable and raw types](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.6)
+- [Java 21 Class.cast](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html#cast(java.lang.Object)>)

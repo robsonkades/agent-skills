@@ -1,5 +1,9 @@
 # When reflection is justified, and what to use instead
 
+Java blocks are partial Java 17-compatible sketches: imports, enclosing classes and domain
+types (`Event`, handlers, codecs and `ConfigurationException`) are omitted. The named-module
+provider sketch also needs `requires` on the service API module; its consumer needs `uses`.
+
 ## The decision table
 
 | Requirement                                             | Reach for                                                      | Reflection needed?                 |
@@ -22,15 +26,21 @@ or a `Class.forName(prefix + name)` where the set of possibilities is enumerable
 Object handler = Class.forName("com.acme.handlers." + type + "Handler").getDeclaredConstructor().newInstance();
 handler.getClass().getMethod("handle", Event.class).invoke(handler, event);
 
-// Same behaviour, checked at compile time, and greppable
+// Typed dispatch; preserve the declared unknown-event failure rather than silently ignoring it
 Map<EventType, EventHandler> handlers = Map.of(
     EventType.ORDER_PLACED, new OrderPlacedHandler(repo),
     EventType.ORDER_SHIPPED, new OrderShippedHandler(tracker));
-handlers.getOrDefault(event.type(), EventHandler.NOOP).handle(event);
+EventHandler selected = handlers.get(event.type());
+if (selected == null) throw new IllegalArgumentException("unsupported event type");
+selected.handle(event);
 ```
 
 The second form makes dependency injection explicit, can fail during composition rather than a
 request, and can be verified by a test that asserts every `EventType` has exactly one policy.
+This changes construction from per-call to shared handlers: confirm thread safety, state and
+resource lifecycle. Use suppliers for per-event handlers when sharing is not the old contract.
+Translate the old reflective failure into the agreed public error rather than promising identical
+exception types automatically.
 
 ## ServiceLoader, for genuinely open sets
 
@@ -50,8 +60,9 @@ Why prefer it to scanning: the JDK owns lookup, the contract is declarative, the
 understands it (`uses`/`provides`), and the consumer never names an implementation class.
 Native-image/tooling support still depends on reachability metadata and the exact toolchain.
 `ServiceLoader.Provider` lets you inspect
-`type()` before instantiating, which matters when construction is expensive or when a provider
-must be filtered.
+`type()` before instantiating, which can help filter candidates. With a module provider factory,
+it returns the factory method's declared return type, not necessarily the provider class or actual
+implementation; it is not sufficient provenance/authorization evidence.
 
 Its limits: do not depend on one global provider order; discovery/instantiation can throw
 `ServiceConfigurationError`; there is no lifecycle or failure isolation. Named-module providers
@@ -74,11 +85,22 @@ static Codec codecFor(String name) {
     if (type == null) throw new ConfigurationException("unknown codec: " + name);
     try {
         return type.getDeclaredConstructor().newInstance();
+    } catch (InvocationTargetException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof Error error) throw error;
+        if (cause instanceof InterruptedException) Thread.currentThread().interrupt();
+        if (cause instanceof java.util.concurrent.CancellationException cancelled) throw cancelled;
+        throw new ConfigurationException("codec construction failed", cause);
     } catch (ReflectiveOperationException e) {
         throw new ConfigurationException("codec " + name + " is not constructible", e);
     }
 }
 ```
+
+Here constructor checked/runtime failures become configuration failures with the original cause;
+errors and cancellation propagate, and a wrapped interruption restores interrupt status. If the
+factory API supports propagating `InterruptedException` directly, prefer that contract instead.
+Initialization/linkage failures can also propagate as errors outside `InvocationTargetException`.
 
 - The allow-list, not the input, decides which classes can exist.
 - `asSubclass(Codec.class)` is a type check when a trusted plugin descriptor genuinely names a
@@ -135,6 +157,7 @@ test is a design signal, not a tool.
 
 ## Primary references
 
+- [Java 17 ServiceLoader.Provider.type](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.Provider.html#type()>)
 - [Java 25 `ServiceLoader`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ServiceLoader.html)
 - [Java 25 `Class.forName`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html#forName(java.lang.String,boolean,java.lang.ClassLoader)>)
 - [Java 25 core reflection](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/reflect/package-summary.html)

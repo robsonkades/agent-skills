@@ -2,6 +2,10 @@
 
 ## The exception semantics that decide the shape
 
+The first block is pseudocode: its query-capable connection is not `java.sql.Connection`
+(JDBC queries use Statement/PreparedStatement). Later blocks are partial Java 21 sketches;
+supply imports, `LedgerLine`, fields and UTF-8 constant as required.
+
 ```java
 // try-finally: the body's exception is lost if close() also throws
 Connection c = pool.get();
@@ -50,7 +54,7 @@ whole stream and the caller has nothing left to do with it, that belongs in the 
 ```java
 public final class LedgerExport implements AutoCloseable {
     private final BufferedWriter out;
-    private boolean closed;                       // guarded by the instance; not thread-safe by design
+    private boolean closed;                       // thread-confined; not synchronized
 
     private LedgerExport(BufferedWriter out) { this.out = out; }
 
@@ -77,7 +81,7 @@ public final class LedgerExport implements AutoCloseable {
     @Override public void close() throws IOException {
         if (closed) return;        // idempotent
         closed = true;             // set before the risky work, so a failed close is not retried blindly
-        out.close();               // flush happens here; a failure here means the export is incomplete
+        out.close();               // failure means completion/durability cannot be claimed
     }
 }
 ```
@@ -103,9 +107,8 @@ try (var out = new BufferedWriter(new FileWriter(path))) { ... }
 ```
 
 If the `BufferedWriter` constructor throws — allocation failure, or a decorator whose
-constructor validates — the `FileWriter` is open and unreferenced. It closes only when the
-garbage collector eventually gets to it, which under load is exactly when file descriptors
-are already scarce. Declare them separately:
+constructor validates — the `FileWriter` is open and unreferenced. GC-driven cleanup, if any,
+is not a deterministic release guarantee; file descriptors may exhaust first. Declare them separately:
 
 ```java
 try (var raw = new FileWriter(path);

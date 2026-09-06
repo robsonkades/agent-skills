@@ -18,8 +18,9 @@ Produce the intended HotSpot evidence on the exact runtime without relying on re
 tags, defaults or diagnostic wording. Unified logging is a versioned JVM interface: tags,
 call-site levels, async modes and legacy aliases change across JDK releases and vendors.
 
-The only authoritative discovery sources for a target process are its JDK documentation,
-java -Xlog:help, effective startup command/environment and jcmd help/configuration.
+Start discovery with its JDK documentation, java -Xlog:help, effective startup
+command/environment and jcmd help/configuration. Where these leave consequential ambiguity,
+inspect matching implementation sources and reproduce on the target build.
 
 ## Workflow
 
@@ -32,8 +33,10 @@ java -Xlog:help
 java -Xlog:<selection> -version
 ```
 
-The first exposes syntax/tags/decorators/output options for that build. The second proves
-selection parsing, not that a workload will emit the desired events.
+Use the target executable, not an unrelated java on PATH. Run probes with disposable output
+paths and controlled child-process option injection: even -version can create or rotate files.
+The first exposes syntax/tags/decorators/output options for that build. The second checks
+parsing; inspect warnings even after exit zero. Neither proves workload event coverage.
 
 ### 2. Select tag sets correctly
 
@@ -45,8 +48,9 @@ selection = tag[+tag...][*][=level]
 ```
 
 Without wildcard, a selection matches the exact tag set. With wildcard, it matches tag
-sets containing at least those tags. Comma unions selections; plus combines tags in one
-set. A level is a threshold including that level and more severe levels.
+sets containing at least those tags. Comma lists selections; the last matching selection
+wins when they overlap, including off. Plus combines tags in one set. A level is a threshold
+including that level and more severe levels.
 
 Examples:
 
@@ -83,10 +87,12 @@ overwrite an existing file. Pin and set explicit production values.
 
 Synchronous logging can block at log sites. Current JDK 25 supports global async modes:
 
-- drop: bounded buffer and nonblocking log-site writes, messages can be lost;
+- drop: bounded buffer, discards when full instead of waiting for space; messages can be lost;
 - stall: writers wait for buffer space, preserving more evidence at latency risk.
 
-No mode is universally safe. Size/test buffer and sink throughput, monitor drop notices,
+This is not a lock-free or bounded-latency guarantee: JDK 25 uses producer/consumer locks
+and has synchronous fallback paths. Stall does not guarantee durable or lossless output.
+Size/test buffer and sink throughput, monitor drop notices,
 and test shutdown/crash behavior. Do not extrapolate overhead from a different selection or
 workload.
 
@@ -99,8 +105,9 @@ jcmd <pid> help VM.log
 jcmd <pid> VM.log list
 ```
 
-Snapshot before/after effective configuration, make the smallest change, trigger a known
-event and restore. Runtime reconfiguration cannot be assumed equivalent to every startup
+Within existing operational authorization, snapshot before/after effective configuration,
+make the smallest change, trigger a known event and restore only owned changes after checking
+for intervening edits. Runtime reconfiguration cannot be assumed equivalent to every startup
 directive; test async/global behavior on the exact JDK.
 
 ### 7. Migrate legacy flags from official mapping
@@ -109,6 +116,7 @@ Classify each old option for the target JDK:
 
 - removed/unrecognized: replace with documented -Xlog selection;
 - deprecated compatibility alias: replace proactively and compare output semantics;
+- obsolete/accepted-but-ignored: warning plus successful startup is not an applied setting;
 - still-live non-unified flag: do not translate merely because it prints diagnostics.
 
 Use the target JDK java man page's GC/runtime mapping and test startup. Do not maintain a
@@ -176,14 +184,14 @@ permanently; decide from measured rate, sensitivity and value.
 **Disable defaults without restoring warnings/errors:** -Xlog:disable clears the default
 configuration; re-enable intended baselines explicitly.
 
-## Cross-skill routing
+## Conditional references
 
-- [selection syntax](references/selection-syntax.md)
-- [outputs and rotation](references/outputs-and-rotation.md)
-- [runtime reconfiguration](references/runtime-reconfiguration.md)
-- [async and cost](references/async-and-cost.md)
-- [legacy flags](references/legacy-flags.md)
-- [production troubleshooting](references/production-and-troubleshooting.md)
+- [Selection syntax](references/selection-syntax.md) — when combining selectors or diagnosing missing tags.
+- [Outputs and rotation](references/outputs-and-rotation.md) — when setting retention or building a parser.
+- [Runtime reconfiguration](references/runtime-reconfiguration.md) — before changing a live process.
+- [Async and cost](references/async-and-cost.md) — when choosing drop/stall or evaluating overhead.
+- [Legacy flags](references/legacy-flags.md) — when migrating startup options to another runtime.
+- [Production troubleshooting](references/production-and-troubleshooting.md) — when launch wrappers or collection obscure the output.
 
 ## Authoritative references
 

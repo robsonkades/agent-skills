@@ -1,10 +1,10 @@
 schemaVersion: 1
 
 name: engineering-communication
-version: 1.1.0
+version: 1.1.1
 description: >-
   Communicating engineering facts to people who will act on them: stating what is true, what
-  follows from it, what is still uncertain, the options and a recommendation — in that order.
+  follows from it, what is still uncertain, and the options and recommendation when needed.
   Covers raising a risk early, saying no to a request in a way that leaves a
   yes on the table, resolving technical disagreement by making the checkable claim checkable,
   escalating without going around someone, and status updates during an incident. Use when bad

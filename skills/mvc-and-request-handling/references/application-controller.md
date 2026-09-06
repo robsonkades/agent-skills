@@ -27,8 +27,9 @@ every handler; and no way to test the flow without driving HTTP.
 
 ## The pattern
 
-A single object owns the flow: given the current state and what just happened, it decides
-the next step. It knows nothing about HTTP.
+A single object computes the next presentation step from authoritative state. It knows
+nothing about HTTP. This partial Java example omits `ApplicationState` and static enum
+imports. `isConfirmed()` denotes an irreversible submitted state for this example.
 
 ```java
 public enum ApplicationStep { IDENTITY, CREDIT_CHECK, COMPANY_DETAILS, SUMMARY, SUBMITTED }
@@ -37,41 +38,44 @@ public enum ApplicationStep { IDENTITY, CREDIT_CHECK, COMPANY_DETAILS, SUMMARY, 
 public final class ApplicationFlow {
 
     public ApplicationStep next(ApplicationState state) {
+        if (state.isConfirmed())                          return SUBMITTED;
         if (!state.hasIdentity())                         return IDENTITY;
         if (state.needsCreditCheck() && !state.hasCredit()) return CREDIT_CHECK;
         if (state.isBusiness() && !state.hasCompany())      return COMPANY_DETAILS;
-        if (!state.isConfirmed())                           return SUMMARY;
-        return SUBMITTED;
-    }
-
-    public boolean canEnter(ApplicationStep step, ApplicationState state) {
-        return ordinalOf(step) <= ordinalOf(next(state));   // no skipping ahead by URL
+        return SUMMARY;
     }
 }
 ```
 
-The handler becomes uniform, and there is exactly one of it:
+Keep typed handlers when steps have different input and validation contracts. For example,
+the identity handler delegates one transition to an application service (partial snippet):
 
 ```java
-@PostMapping("/application/{id}/{step}")
-String submit(@PathVariable UUID id, @PathVariable ApplicationStep step,
-              @Valid StepForm form) {
-    ApplicationState state = applications.stateOf(id);
-    if (!flow.canEnter(step, state)) {
-        return "redirect:/application/" + id + "/" + flow.next(state);
-    }
-    applications.apply(id, step, form.toCommand());
-    return "redirect:/application/" + id + "/" + flow.next(applications.stateOf(id));
+@PostMapping("/application/{id}/identity")
+String submitIdentity(@PathVariable UUID id, @Valid IdentityForm form,
+                      @CurrentUser Actor actor) {
+    ApplicationState updated = applications.submitIdentity(id, actor, form.toCommand());
+    return "redirect:/application/" + id + "/" + flow.next(updated);
 }
 ```
+
+`submitIdentity` must authorize the actor for this application, validate the permitted
+transition against current state, and apply it atomically (for example, transaction plus
+version check). Reject or reconcile stale submissions and define duplicate-submit behavior.
+A controller-side read/check followed by a separate write races concurrent requests.
+Navigation output never authorizes a mutation. Explicitly define whether prior steps are
+editable, how edits invalidate dependent credit checks, and which steps apply: enum ordinal
+comparison cannot encode these rules. Protect browser mutations with the project's CSRF
+policy; a hidden field or URL is not trusted flow state.
 
 ## Why this is worth the class
 
 - **The flow is testable without HTTP.** A table-driven unit test covers every path in
   milliseconds, including the ones nobody clicks through manually.
-- **The flow is stated once.** A new step or a changed condition is one edit.
-- **Direct URL access is handled** by construction. `canEnter` closes the hole that
-  hand-written redirects always leave — a user bookmarking step 4 and returning later.
+- **The navigation decision is stated once.** A new step may still need a form, route and
+  transition validation.
+- **Direct URL access is checked separately.** Navigation guards improve the journey;
+  application authorization and transition checks protect writes from every caller.
 - **The flow can be driven by something other than the web.** An API, an import, a
   back-office tool, or a test.
 
@@ -87,26 +91,26 @@ void next_step(ApplicationState state, ApplicationStep expected) {
 
 The Application Controller decides; something else remembers.
 
-| Placement                      | When                                                    | Reference                   |
-| ------------------------------ | ------------------------------------------------------- | --------------------------- |
-| Derived from the domain object | Best: the state is already there ("has a credit check") | `domain-logic-organization` |
-| A row per in-progress process  | Long-running, resumable, valuable, auditable            | `session-state-strategies`  |
-| Server session                 | Short flows only; lost on deploy                        | `session-state-strategies`  |
-| Hidden fields in the form      | Trivial flows; visible and tamperable                   | —                           |
+| Placement                      | When                                                            | Reference                   |
+| ------------------------------ | --------------------------------------------------------------- | --------------------------- |
+| Derived from the domain object | When authoritative state already contains the required progress | `domain-logic-organization` |
+| A row per in-progress process  | Long-running, resumable, valuable, auditable                    | `session-state-strategies`  |
+| Server session                 | Retention and deploy survival depend on the session store       | `session-state-strategies`  |
+| Hidden fields in the form      | Trivial flows; visible and tamperable                           | —                           |
 
-Prefer the first. A flow whose state is derived from the application's own data cannot
-desynchronise from it, needs no cleanup, and survives everything. The most common failure of
-the second and third is a flow state that says "credit checked" while the domain says
-otherwise.
+Prefer deriving progress when it represents the journey accurately, avoiding a second
+independently updated truth. Consistent reads, stale clients, retention and process-version
+changes still matter. Persist separate progress when the journey contains information the
+domain does not own; keep its updates consistent with the relevant domain transitions.
 
 ## When a flow object is overkill
 
 - **A single form.** One handler, one redirect, no decision. Do not build a flow.
 - **Linear steps with no conditions.** A next-step array or the framework's own wizard
   support is enough.
-- **A REST API.** There is no navigation; the client drives. What the server owns is the
-  legal state transitions of the resource, which belongs in the domain as a state machine,
-  not in a controller layer (`domain-logic-organization`).
+- **An API with no server-owned journey.** Do not invent page navigation. APIs can expose
+  workflow or hypermedia transitions; business legality must still hold independently of
+  those links (`domain-logic-organization`).
 
 ## Application Controller versus a domain state machine
 

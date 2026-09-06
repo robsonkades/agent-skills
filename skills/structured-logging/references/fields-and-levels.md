@@ -49,16 +49,29 @@ common outcomes with metrics and retain sampled/diagnostic examples as policy al
 Field names and types are APIs. For breaking changes:
 
 1. add event schema version;
-2. dual-emit or dual-read old/new fields;
+2. support old/new fields in readers or temporarily emit both fields in one event;
 3. update parsing, dashboards, detections and retention rules;
 4. test mixed-version deployment;
-5. remove old form after consumer confirmation.
+5. retire old writers after mixed-deployment/rollback requirements are satisfied, and retain
+   old reader support while old records remain queryable or replayable, including archives
+   and restored backups.
+
+Consumer confirmation for live traffic does not prove historical queries still work. If
+two event records must be emitted, preserve occurrence identity and define deduplication so
+counts, alerts and audit consumers do not interpret them as two actions.
 
 Avoid dynamic field names; put bounded keys in values or nested validated maps only when the
 backend schema supports them.
+Reserve envelope keys and define collision precedence explicitly. Do not flatten arbitrary
+MDC or caller maps over trusted severity, timestamp, identity or event-name fields; use an
+allowlisted namespace and reject collisions. Duplicate JSON member names are not portable:
+readers may keep different values or reject the record.
 
 ## Data policy
 
 Classify fields by public/internal/confidential/restricted and map each class to masking,
 access, geography and retention. Test nested objects and exception chains. Record access to
 sensitive logs and protect integrity for security/audit evidence.
+
+See [RFC 8259 section 4](https://www.rfc-editor.org/rfc/rfc8259#section-4) for duplicate-member
+interoperability; test the producer and actual downstream parser together.

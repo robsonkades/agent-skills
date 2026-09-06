@@ -21,6 +21,10 @@ failure caching/backoff, disposal of losing values, and close racing with create
 
 ## Static holder
 
+All snippets are partial Java 25 examples requiring an application Resource/create factory.
+Assume create returns a non-null value; successful publication does not make the resource's later
+mutable operations thread-safe or define its ownership/close policy.
+
 ```java
 private static final class Holder {
     static final Resource VALUE = create();
@@ -29,8 +33,9 @@ private static final class Holder {
 static Resource value() { return Holder.VALUE; }
 ```
 
-Class initialization provides synchronization. Caveats: scope is class loader, initialization
-failure is wrapped and effectively sticky for that class initialization, circular initialization
+Class initialization provides synchronization. Caveats: scope is class loader, a non-Error failure
+is wrapped in ExceptionInInitializerError while an Error propagates directly; subsequent active use
+of the erroneous class fails with NoClassDefFoundError. Circular initialization
 can surprise/deadlock, and first access pays cost.
 
 ## Synchronized instance initialization
@@ -44,7 +49,10 @@ synchronized Resource value() {
 }
 ```
 
-Correct for one-shot creation if holding this lock during `create` is safe. Prefer a private lock.
+Serializes creation if holding this lock during `create` is safe and creation is non-reentrant.
+Returning null or throwing leaves the field unset, so later calls retry; this is not exactly-once
+external execution. Use explicit states for cached failure, nullable results or recursion rejection.
+Prefer a private lock unless callers rely on this monitor as a documented external protocol.
 Remote/blocking creation needs deadline, interruption, failure/retry and prevention of unrelated
 operations queueing behind it.
 
@@ -52,6 +60,7 @@ operations queueing behind it.
 
 ```java
 private volatile Resource value;
+private final Object lock = new Object();
 
 Resource value() {
     Resource r = value;

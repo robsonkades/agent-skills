@@ -1,16 +1,17 @@
 # Process-to-cluster boundary
 
 This file does not define a distributed limiter. It identifies when the process-local mechanism in
-this skill is insufficient and routes ownership to Category F.
+this skill is insufficient and routes protocol design to the named distributed-system skills.
 
 ## Aggregate exposure
 
-With per-process limits `Li`, dependency concurrency is bounded above by the sum of active instance
-limits plus any other callers and work not covered by those gates:
+With per-process limits `Li`, dependency concurrency can be bounded only when each permit covers
+the full protected operation and its fan-out. Express every term in simultaneous operations:
 
 ```text
 observed dependency concurrency
-  <= Σ active local limits + uncovered/other-client concurrency
+  <= Σ (active local limit × simultaneous downstream operations per permit)
+     + uncovered/other-client/late-server concurrency
 ```
 
 `limit × replicas` is only the equal-limit upper bound, not the actual concurrency. Traffic skew,
@@ -31,8 +32,10 @@ aggregate unused allocation, rejected demand and routing/tenant distribution.
 
 ## When coordination is required
 
-A hard aggregate concurrency entitlement cannot be implemented exactly by independent semaphores.
-It requires a distributed semaphore/lease/allocation protocol with:
+Independent semaphores can conservatively enforce an aggregate ceiling if disjoint static shares
+sum below it, maximum active membership is bounded, and all work/lifetimes are covered. This may
+strand idle shares. Reclaiming/reassigning shares under failures while preserving the hard bound
+requires a coordinated allocation or provider-enforced protocol with:
 
 - authoritative membership or leased capacity chunks;
 - expiry, renewal and recovery from client/process failure;
@@ -42,8 +45,9 @@ It requires a distributed semaphore/lease/allocation protocol with:
 - monotonic identity and auditability where quota has legal/financial consequences.
 
 A token bucket governs rate, not in-flight concurrency, unless tokens are leased and returned under a
-separate concurrency protocol. Batch leasing reduces coordination round trips while increasing
-temporary oversubscription and stranded capacity.
+separate concurrency protocol. Batch leasing can reduce coordination round trips and strand unused
+capacity. Oversubscription is not inevitable: it occurs if stale and replacement allocations can
+act simultaneously without enforcement/fencing. State whether the protocol prevents or tolerates it.
 
 Failure policy is more than a slogan: fail-closed protects entitlement but reduces availability;
 fail-open protects availability but can breach it; a bounded cached allocation can degrade between

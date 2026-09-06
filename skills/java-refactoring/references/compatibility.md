@@ -42,9 +42,10 @@ canonical constructor, changing the compatibility story). Inside a module with n
 external consumers, all four are checkable and the conversion is routine; on a published
 type it is a major-version event.
 
-The reverse — record to class — silently _removes_ guarantees clients may depend on
-(finality, state-based equality, the canonical constructor): behaviourally breaking even
-where it links.
+The reverse — record to class — requires explicitly retaining finality, component accessors,
+constructor and equality behavior if those contracts must remain. A final class with final
+fields can preserve those properties, but record reflection/serialization contracts still
+change. Do not call every such conversion behaviorally equivalent or automatically unsafe.
 
 ## Where a refactoring must stop
 

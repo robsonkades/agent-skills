@@ -1,15 +1,14 @@
 schemaVersion: 1
 
 name: architecture-trade-off-analysis
-version: 1.2.0
+version: 1.2.1
 description: >-
-  Analysing architectural trade-offs through coupling, comparable options, domain scenarios,
-  qualitative evidence and controlled measurement. Use when a scorecard is being totalled, a
-  generic comparison or case study is offered as a verdict, candidates sit at different abstraction
-  levels, advocates disagree on the basis for choosing, or a benchmark is proposed. Produces a
-  recommendation with applicability conditions, costs and reversal signals. Does not own ADR
-  discipline (architecture-decision-making), pattern selection, deliberate technical debt,
-  estimation uncertainty or architecture-smell detection.
+  Compare architectural alternatives when quality goals conflict, a scorecard or case study
+  is being used as a verdict, options mix abstraction levels, advocates disagree, or a
+  benchmark needs a decision rule. Build comparable options, separate constraints from
+  preferences, test domain scenarios and uncertainty, and recommend a choice or a bounded
+  next step. Excludes ADR lifecycle (architecture-decision-making), quality-driver
+  elicitation (architecture-characteristics), domain pattern selection and debt repayment.
 license: Apache-2.0
 
 authors:
@@ -39,6 +38,7 @@ dependencies: []
 
 suggests:
   - architecture-characteristics
+  - architecture-coupling-and-quanta
   - architecture-decision-making
   - architecture-fitness-functions
 
@@ -49,5 +49,5 @@ agentOverrides:
   codex:
     interface:
       display_name: Architecture Trade-off Analysis
-      short_description: The method, not the decision — entanglement, MECE, honest modes
+      short_description: Compare options, constraints, evidence and uncertainty
       default_prompt: Use Architecture Trade-off Analysis to choose the analysis mode and run it.

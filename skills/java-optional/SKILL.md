@@ -3,8 +3,8 @@ name: java-optional
 description: >
   Optional as designed: a return type for "no result is a normal outcome". Covers orElse
   versus orElseGet (eager versus lazy), orElseThrow over get, map/flatMap/filter chains
-  versus a plain conditional, or(), ifPresentOrElse, stream() integration, why Optional does
-  is usually costly in fields, parameters or collections, valid exceptions, and when Optional makes an API worse. Use
+  versus a plain conditional, or(), ifPresentOrElse, stream() integration, the costs of Optional
+  in fields, parameters or collections, valid exceptions, and when Optional makes an API worse. Use
   when reviewing Optional.get() without a guard, orElse with a costly or side-effecting
   fallback, isPresent()+get() pairs, Optional-typed fields or parameters, or when deciding
   whether a lookup should return Optional, null or throw. Nullability contracts and
@@ -23,6 +23,11 @@ an allocation nobody measured.
 
 ## Workflow
 
+Examples use Java 21 without preview. Inspect the target compiler release/toolchain and existing
+API/nullability contracts first; adopting this skill does not authorize an upgrade. Java 8 has
+Optional but not `or`, `stream`, `ifPresentOrElse` (9), no-arg `orElseThrow` (10), or `isEmpty`
+(11). On older targets keep a compatible conditional/API rather than adding preview or libraries.
+
 1. **Classify the absent case.** Normal outcome → return Optional. Programming error or
    broken invariant → throw. “No elements” from a collection-valued method usually means an empty
    collection; `Optional<List<T>>` is justified only for a distinct state such as not-loaded/not-applicable. Not observable by the caller → keep null local
@@ -37,7 +42,8 @@ an allocation nobody measured.
 4. **Check the eager/lazy line.** Every `orElse(expression)` argument is evaluated even
    when the value is present. Any fallback that allocates, queries, logs or throws
    belongs in `orElseGet`/`orElseThrow`.
-5. **Verify.** Unguarded `get()` and redundant `isPresent()`+`get()` pairs are removed; a test covers the
+5. **Verify.** Review unguarded `get()` and redundant `isPresent()`+`get()` pairs; retain clear
+   conditionals with established invariants. A test covers the
    empty path of every Optional-returning method; any hot-path Optional introduction is
    backed by a measurement, not an assumption either way.
 
@@ -68,6 +74,14 @@ an allocation nobody measured.
   `identityHashCode`) as semantics. `map` converts a null mapper result to empty, whereas `flatMap`
   requires the mapper to return a non-null Optional; do not let this silently erase invariant
   violations. `OptionalInt/Long/Double` avoid boxing but have a smaller combinator API.
+- A method promising Optional must return an Optional, never null. Distinguish a null Optional
+  reference (broken contract) from `Optional.empty()` (normal absence); do not silently flatten
+  one into the other. Lazy combinators defer callback invocation, not evaluation of the callback
+  expression itself: `orElseGet(makeSupplier())` still calls `makeSupplier()` eagerly.
+
+For a review/change, report the absence contract, preserved or deliberately changed fallback
+effects, compatibility impact and present/empty tests actually run. Mark performance reasoning
+without measurements as a hypothesis.
 
 ## References
 

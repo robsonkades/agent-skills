@@ -18,11 +18,18 @@ Discover and validate target commands. A possible bounded JFR shape is:
 jcmd <pid> help JFR.start
 jcmd <pid> JFR.start name=locks settings=/approved/locks.jfc duration=60s \
   filename=/durable/locks.jfr
+# JFR.start returns before duration expires. Wait boundedly for completion,
+# or use a supported JFR.dump to obtain a snapshot of the active recording.
+# Verify the resulting file on the target filesystem; transfer only a complete artifact.
 jfr summary /durable/locks.jfr
 ```
 
 Do not assume stock profile settings answer short-contention questions. Validate metadata, counts,
 loss, capture interval and positive-control behavior.
+
+Inspect `JFR.check` for recording status and the target's `help JFR.dump` if taking an
+early snapshot; report the shorter window. A destination path in the start command does
+not mean the recording file already exists or is complete.
 
 ## Thread evidence
 

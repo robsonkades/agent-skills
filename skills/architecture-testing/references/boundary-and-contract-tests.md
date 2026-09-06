@@ -1,181 +1,141 @@
 # Boundary and Contract Tests
 
-## Architecture tests: rules that execute
+## Structural rules that test what they name
 
-A boundary described in a document decays. A boundary asserted by a failing build does not.
+Start from an agreed dependency direction and import the production classes from every
+relevant module. A passing rule over the wrong classpath says nothing. Reflection, generated
+wiring, external configuration and remote calls need additional evidence.
+
+The following is a complete JUnit Jupiter test for one example policy. Prerequisites:
+compiled production classes under `com.acme`, a domain package, ArchUnit core and JUnit Jupiter
+on the test classpath, and a runner that discovers Jupiter tests. The example was written for
+ArchUnit 1.5.0 and JUnit 5, with release 17 compilation (runtime validation is recorded in
+[validation cases](validation-cases.md)); use the project's compatible versions. Adapt package names and
+forbidden dependencies to the accepted architecture; framework-free domains are not universal.
 
 ```java
-@AnalyzeClasses(packages = "com.acme", importOptions = ImportOption.DoNotIncludeTests.class)
+package com.acme.architecture;
+
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.core.importer.ImportOption;
+import org.junit.jupiter.api.Test;
+
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 class ArchitectureTest {
+    @Test
+    void domain_does_not_depend_on_infrastructure() {
+        var production = new ClassFileImporter()
+                .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+                .importPackages("com.acme");
 
-    @ArchTest
-    static final ArchRule domain_has_no_framework =
+        assertTrue(production.stream().anyMatch(c ->
+                c.getPackageName().equals("com.acme.domain")
+                || c.getPackageName().startsWith("com.acme.domain.")),
+                "No domain classes imported; check package roots and build outputs");
+
         noClasses().that().resideInAPackage("..domain..")
-            .should().dependOnClassesThat().resideInAnyPackage(
-                "org.springframework..", "jakarta.persistence..",
-                "com.fasterxml.jackson..", "jakarta.servlet..");
-
-    @ArchTest
-    static final ArchRule no_entities_outside_persistence =
-        noClasses().that().resideOutsideOfPackages("..persistence..")
-            .should().dependOnClassesThat().areAnnotatedWith(Entity.class);
-
-    @ArchTest
-    static final ArchRule transactions_only_in_application =
-        methods().that().areAnnotatedWith(Transactional.class)
-            .should().beDeclaredInClassesThat().resideInAPackage("..app..");
-
-    @ArchTest
-    static final ArchRule one_repository_per_aggregate =
-        classes().that().haveSimpleNameEndingWith("Repository")
-            .should().haveSimpleNameNotEndingWith("EntityRepository");   // project convention
-
-    @ArchTest
-    static final ArchRule modules_are_acyclic =
-        slices().matching("com.acme.(*)..").should().beFreeOfCycles();
-
-    @ArchTest
-    static final ArchRule no_field_injection =
-        noFields().should().beAnnotatedWith(Autowired.class);
-}
-```
-
-Two practices that keep these useful rather than annoying:
-
-- **Exemptions name the class and the reason**, in the rule, rather than widening the
-  pattern. A widened pattern silently exempts everything added later.
-- **Add a rule when a violation is found in review**, not speculatively. Rules that encode
-  taste rather than a boundary get disabled during the first deadline.
-
-## Web boundary tests
-
-The web layer's responsibilities are binding, validation, status codes and response shape.
-Test exactly those, with the application mocked:
-
-```java
-@WebMvcTest(OrderController.class)
-class OrderControllerTest {
-
-    @Autowired MockMvc mvc;
-    @MockitoBean PlaceOrder placeOrder;      // Spring Framework 6.2+
-    @MockitoBean OrderQueries queries;
-
-    @Test
-    void rejects_a_request_with_no_lines() throws Exception {
-        mvc.perform(post("/orders").contentType(APPLICATION_JSON)
-                .content("""{"customerId":"...","lines":[]}"""))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.title").value("Validation failed"))
-            .andExpect(jsonPath("$.errors[0].field").value("lines"));
-        verifyNoInteractions(placeOrder);
-    }
-
-    @Test
-    void maps_a_domain_conflict_to_409() throws Exception {
-        when(placeOrder.place(any())).thenThrow(new OrderAlreadyPlaced(orderId));
-        mvc.perform(post("/orders").contentType(APPLICATION_JSON).content(validBody()))
-            .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.code").value("ORDER_ALREADY_PLACED"));
-    }
-
-    @Test
-    void response_exposes_only_the_agreed_fields() throws Exception {
-        when(queries.detail(any())).thenReturn(Optional.of(aDetailView()));
-        mvc.perform(get("/orders/{id}", id))
-            .andExpect(jsonPath("$.total.currency").value("BRL"))
-            .andExpect(jsonPath("$.customerInternalScore").doesNotExist())   // ← the guard
-            .andExpect(jsonPath("$.version").doesNotExist());
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "..persistence..", "org.springframework..",
+                        "jakarta.persistence..", "jakarta.servlet..")
+                .because("the domain must not depend on infrastructure")
+                .check(production);
     }
 }
 ```
 
-The negative assertion in the third test is the one that pays. Accidental exposure happens
-when a field is added to a view type, and nothing else notices
-(`remote-facade-and-dto`).
+Validate it with a production domain class that depends on a persistence class: expect the
+dependency rule, not compilation, to fail. Restore the dependency and expect a pass. Also
+exercise a wrong import root so the explicit selection guard fails. Do not globally disable
+empty-selection protection.
 
-## Gateway tests, including the failures
+Other useful rules need equally accurate names:
 
-```java
-class HttpCreditBureauTest {
+- A repository suffix restriction is a naming convention. “One repository per aggregate”
+  requires an explicit aggregate/port mapping and a check of that mapping, or review.
+- A method-only annotation rule misses class-level and composed annotations. State which
+  forms it covers and test them; none establishes effective runtime transaction behavior.
+- Slice cycle rules depend on the package grouping. A package rename can change what gets
+  counted as a module; verify the grouping and a known cycle.
+- Entity leakage restrictions apply only where persistence entities are deliberately internal.
+  Intentional entity/domain mapping is a different policy, not a test failure to hide.
 
-    static MockWebServer server;                      // or WireMock
-    CreditBureau bureau;
+Exempt specific members/classes with a reason and owner, without exempting future classes
+through a broad package wildcard. A build-enforced boundary still needs discovery and
+coverage checks.
 
-    @Test
-    void translates_a_decline() throws Exception {
-        server.enqueue(new MockResponse()
-            .setBody("""{"decision":"DECLINE","code":"NO_HISTORY"}""")
-            .addHeader("Content-Type", "application/json"));
+Source: [ArchUnit guide](https://www.archunit.org/userguide/html/000_Index.html),
+checked 2026-09-05 (1.5.0): bytecode import, rule execution and empty-selection behavior.
 
-        assertThat(bureau.assess(taxId, limit))
-            .isEqualTo(new Declined(DeclineReason.NO_HISTORY));
-    }
+## Web boundaries
 
-    @Test
-    void a_server_error_becomes_unavailable_not_an_exception() {
-        server.enqueue(new MockResponse().setResponseCode(503));
-        assertThat(bureau.assess(taxId, limit)).isInstanceOf(Unavailable.class);
-    }
+Use a web slice when the claim is binding, validation, status or serialized fields. Load
+the actual relevant exception advice, validators, converters and filters. Spring Boot slice
+and mocking annotations vary by version; inspect the project's dependencies before copying
+configuration. A mock application service is appropriate for isolating HTTP translation, not
+for proving transaction behavior.
 
-    @Test
-    void a_hang_is_bounded_by_the_read_timeout() {
-        server.enqueue(new MockResponse().setBodyDelay(30, SECONDS));
-        assertTimeoutPreemptively(Duration.ofSeconds(5),
-            () -> assertThat(bureau.assess(taxId, limit)).isInstanceOf(Unavailable.class));
-    }
+For each request, make unrelated preconditions valid. An invalid UUID, missing authentication
+or missing CSRF token can make a “reject empty lines” test pass without reaching line validation.
+Assert the intended field/error code and that the use case was not invoked. For error translation,
+supply valid input and deliberately trigger the expected domain outcome.
 
-    @Test
-    void a_malformed_payload_does_not_leak_a_parse_exception() {
-        server.enqueue(new MockResponse().setBody("<html>maintenance</html>"));
-        assertThatThrownBy(() -> bureau.assess(taxId, limit))
-            .isInstanceOf(UnexpectedBureauResponse.class);          // not JsonParseException
-    }
-}
-```
+Test public payloads from actual serialization. Check sensitive fields are absent as keys,
+including null-valued fields and nested objects where relevant. A strict field allowlist can
+protect confidential data but should reflect the policy for benign additions. Do not ban a
+version field if the API uses it for concurrency control. Include authorization/tenant boundary
+cases when those are part of the promise; a service mock does not validate service-side access.
 
-The last three tests are the reason to write gateway tests at all. The happy path rarely
-breaks; the timeout, the 503 and the maintenance page are what production delivers, and they
-are where a gateway either contains the vendor or leaks it
-(`enterprise-base-patterns`).
+Avoid ambiguous example JSON: use a normal escaped Java string or a text block whose opening
+delimiter is followed by a newline. Project-specific error shapes and fixture helpers must be
+identified as such, not presented as framework defaults.
 
-## Contract tests
+A mapper's unmapped-target compiler check catches omissions, not swapped same-type fields,
+rounding, conversions or intentional omission of secrets. Keep tests for those semantics.
+Likewise, verifying that this controller applies validation tests your wiring, not Spring's
+generic validation implementation.
 
-The point is that **both sides verify independently**, so neither has to run the other.
+## Gateways
 
-```text
-Consumer side   states its expectation → produces a contract artefact
-Provider side   replays the contract against the real implementation
-CI              provider's build fails when it breaks a consumer's expectation
-```
+Exercise the real adapter and configured HTTP client against a controlled local server.
+Start and close the server explicitly, inject its URL, prohibit accidental external calls,
+and verify outbound method/path/headers/body. Choose the stub API matching the installed
+WireMock/MockWebServer version rather than assuming examples are interchangeable.
 
-With a schema-first contract (OpenAPI, Protobuf, Avro), the equivalent is:
+Cover the failure classes in the gateway contract: connect failure, delayed headers/body,
+non-success status, malformed content and abrupt disconnect where relevant. Verify domain
+translation at the public adapter boundary; either an exception or a result type may be correct.
+Also count attempts if retries are configured.
 
-```java
-@Test
-void the_api_still_matches_the_published_schema() {
-    var actual = openApiFromRunningApplication();
-    var published = readResource("openapi/orders-v1.yaml");
-    assertThat(breakingChanges(published, actual))
-        .as("removals and type changes break consumers")
-        .isEmpty();      // additions are permitted
-}
-```
+Use a delay long enough to exceed the client's configured timeout and a separate bounded test
+watchdog. Verify the actual failure classification and request count, not just “finished within
+five seconds.” Preemptive test timeouts run work on another thread and can invalidate thread-bound
+transaction assumptions. Client timeouts and explicit shutdown are still required: interrupting
+a test is not guaranteed to stop a socket operation or undo a side effect.
 
-Compatibility depends on the contract technology and consumer behavior. Additive fields are often
-backward-compatible for tolerant JSON readers, but closed schemas, generated clients, enums,
-validation constraints and event consumers can make an addition breaking. Configure the checker
-for the actual compatibility policy (`rpc-and-api-contracts`).
+A stub verifies the adapter against the behavior you modeled; it does not certify the vendor's
+live protocol. Link the fixture to published examples/contracts and use controlled provider
+verification or sandbox checks where required. Never require live third-party calls in an
+otherwise isolated test.
 
-For events, the same discipline applies and is more often missing: a published event's shape
-is a contract with every consumer, and a renamed field in an event payload is a silent break
-that appears as a consumer that stopped acting (`distribution-boundaries`).
+## Contracts: artifact, implementation and version pair
 
-## What not to test at this level
+Consumer-driven testing should exercise the actual consumer client against the contract mock.
+Provider verification replays those interactions against the actual provider endpoint with
+controlled provider states. Record consumer/provider versions, contract identity and verification
+result; CI must use the combinations eligible for deployment, not only whichever contract is newest.
 
-- **Framework behaviour.** That `@Valid` triggers validation is the framework's test.
-- **Getter/setter round trips.** Zero information.
-- **A mapper's every field, by hand.** Configure the generator to fail on unmapped targets
-  and delete the test (`metadata-mapping`).
-- **The presence of an annotation.** `@Transactional` being present does not mean a
-  transaction started; assert the rollback outcome instead
-  (`persistence-and-concurrency-tests.md`).
+A schema diff is a different check. Declare direction (old consumer/new provider or the reverse),
+schema format and compatibility policy. Test that the implementation actually conforms to the
+schema as well as comparing artifacts. OpenAPI/Protobuf/Avro checkers cover different changes;
+do not treat them as interchangeable or a schema diff as end-to-end behavioral proof.
+
+Additions may break closed readers, enums or stricter validation. Semantics such as money units,
+ordering and idempotency can change without a schema change. Test the promised semantics through
+representative consumer behavior. For events, exercise producer serialization and consumer
+handling, including relevant old versions and absent/unknown fields.
+
+Source: [Pact's model](https://docs.pact.io/getting_started/how_pact_works), checked 2026-09-05.
+Pact is one implementation of consumer/provider verification; schema-only checks are not equivalent.
+Contract policy belongs to `rpc-and-api-contracts`, payload design to `remote-facade-and-dto`.

@@ -1,20 +1,14 @@
 schemaVersion: 1
 
 name: ambassador-pattern
-version: 1.3.0
+version: 1.3.1
 description: >-
-  A sidecar that owns the outbound leg: the app connects to localhost and the ambassador
-  decides where the call goes — service discovery, shard-aware routing, canary and A/B
-  splits, mirrored traffic, TLS and the connection pool — so routing policy ships
-  independently of the application release. Use when every service reimplements discovery,
-  sharding or retry configuration in its own language, when changing a route means upgrading
-  a client library across a fleet, when a canary needs a percentage or header split without
-  an app release, when shadow traffic is being introduced, when the proxy's retries and the
-  app's retries multiply, or when a mesh is already deployed and a hand-rolled proxy would
-  put policy in two places. Does not cover pod-level container mechanics (sidecar-pattern),
-  load-balancing algorithms (load-balancing-and-routing), the resilience policies themselves
-  (retries-and-backoff, timeouts-and-deadlines, circuit-breakers), or the shard function
-  (consistent-hashing, sharding-and-partitioning).
+  Choose or review a local outbound proxy when discovery or routing changes require client
+  releases, a canary or shadow needs routing outside the app, or retries overlap across app,
+  proxy and mesh. Define the listener, policy ownership, deadlines and failure behavior.
+  Covers shard-map consumption and experiment routing, not shard algorithms
+  (sharding-and-partitioning), container lifecycle (sidecar-pattern), or output normalization
+  (adapter-sidecar-pattern).
 
 license: Apache-2.0
 

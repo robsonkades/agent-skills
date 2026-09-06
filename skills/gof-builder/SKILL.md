@@ -28,6 +28,9 @@ For a fluent value builder, readability, defaults, staged input and invariant en
 usual justification. For a GoF representation builder, the justification is reuse of the
 construction process across outputs. A builder that provides neither is ceremony.
 
+Examples use Java 17 records/sealed types, without preview features. Inspect the target release,
+generated code and framework versions first; this skill does not authorize a toolchain upgrade.
+
 ## When it is the answer
 
 ```text
@@ -53,14 +56,14 @@ The object is built from parsed or streamed input arriving in pieces
 - **A small, obvious value with required, well-typed components.** A record's canonical
   constructor already checks arity and types; Java remains positional, so repeated or weak types
   can still justify named factories or a builder.
-- **All components required and of distinct types.** Mis-ordering does not compile; the builder
-  removes a compile-time check and replaces it with a runtime one.
+- **All required components have unambiguous types.** A constructor often suffices; a conventional
+  optional-setter builder can lose presence checks, though staged or required-argument builders need not.
 - **The variants are few and nameable.** Two or three static factories
   (`Money.of`, `Money.zero`, `Retry.none`) beat a builder and document intent better.
-- **The builder is a field, or is reused between calls.** That is shared mutable state; see the
-  hazards below.
-- **The object is mutable anyway.** Builder's payoff is safe construction of an immutable value.
-  Building a mutable bean adds a second way to reach the same state.
+- **A mutable builder is shared across requests without ownership.** Fix its lifecycle; storing
+  a confined builder in a field or deliberately reusing it sequentially is not inherently unsafe.
+- **A mutable bean has no construction constraints.** A value builder may add little. GoF builders
+  can legitimately produce mutable trees/documents; define ownership and valid completion instead.
 
 ## Modern Java expression
 
@@ -68,10 +71,10 @@ The object is built from parsed or streamed input arriving in pieces
 Small, all required                 record Point(int x, int y)
 Few named shapes                    static factories on the record
 Optional components, sensible
-  defaults                          record + builder, or record +
-                                    compact constructor with @DefaultValue
-                                    style config binding
-Deriving a variant of an instance   withX() copy methods, not a builder
+  defaults                          record + builder or named factories;
+                                    framework config defaults are binding-specific
+Deriving a variant of an instance   withX() for a small change; toBuilder()
+                                    can support several coordinated changes
 Required-then-optional, enforced
   at compile time                   staged builder (one interface per step)
 Test fixtures                       test data builder with a valid default
@@ -94,15 +97,16 @@ THEN builder, or a record whose optional components have documented
 
 IF some components are required and mis-ordering is possible
 THEN either distinct types (a Money, an OrderId — not two Strings), or a
-     staged builder that will not compile until required steps are called.
+     staged builder or required-argument builder. Stages enforce calls, not non-null
+     or semantically valid values; constructor validation still applies.
 
-IF validation lives only in build()
-THEN move it into the constructed type's constructor and have build()
-     delegate. Validation on the outside of a value is not validation.
+IF an intrinsic value invariant lives only in build() and other construction paths exist
+THEN enforce it at the value's constructor/factory boundary and delegate from build().
+     A GoF mutable representation may instead need explicit completion validation.
 
 IF the builder is stored in a field or shared between requests
-THEN it is mutable shared state. Create it per construction, or make the
-     accumulating type immutable and return a new builder per step.
+THEN inspect ownership and escape paths. Prefer per-construction confinement;
+     alternatives need an explicit immutable or synchronized lifecycle contract.
 
 IF the builder can produce an object that later throws because a
 combination was illegal
@@ -117,13 +121,12 @@ THEN verify the generated constructor path, identity/lifecycle rules, associatio
 
 ## Cross-cutting checks
 
-- **Concurrency.** A builder is mutable and is not thread-safe; nothing about the pattern makes
-  it so. The hazard is not two threads sharing one builder — that is obvious — but a builder
+- **Concurrency.** A conventional mutable builder is not thread-safe by default. The hazard can be a builder
   held as a field of a singleton, or captured by a lambda that outlives the call. Build inside
   the scope that needs the object, publish the finished immutable value.
 - **Distribution.** Builders are the normal shape for protocol messages and outbound requests,
-  and generated ones (protobuf, Avro, gRPC, cloud SDKs) already exist — do not wrap them in a
-  second builder. What crosses the wire is the built value, so its invariants must hold after
+  and generated ones (protobuf, Avro, gRPC, cloud SDKs) already exist — reuse them unless an
+  application-owned contract or validation boundary justifies an adapter. What crosses the wire is the built value, so its invariants must hold after
   deserialisation too: a builder-enforced rule that the deserialiser does not re-run is not
   enforced (`java-immutability`).
 - **Performance.** A conventional mutable builder introduces a candidate allocation and may also
@@ -137,24 +140,27 @@ THEN verify the generated constructor path, identity/lifecycle rules, associatio
 
 ## Review checklist
 
-- [ ] The built type is immutable, and its own constructor enforces the invariants
-- [ ] `build()` delegates validation rather than owning it exclusively
+- [ ] Value-product constructors enforce invariants; mutable GoF products have explicit ownership and completion rules
+- [ ] Every public value-construction path enforces intrinsic invariants; builder-specific state checks remain local
 - [ ] Cross-field rules are checked at `build()` and name both fields when violated
 - [ ] Required components are enforced — by a staged builder, or by a check that names them
-- [ ] No builder instance is shared across calls, threads or requests
+- [ ] Builder confinement, reuse/reset semantics and failed-build behavior are explicit
 - [ ] Call-site ambiguity, optionality, staged construction, or representation variance actually
       justifies it; parameter count alone does not
-- [ ] Collections are defensively copied on the way in and unmodifiable on the way out
-- [ ] `withX` copy methods exist for deriving a variant, rather than a builder round trip
-- [ ] No generated builder is wrapped in a hand-written one
+- [ ] Immutable products snapshot collections at construction; mutable elements are addressed separately
+- [ ] Variant construction revalidates the result, whether through factories, `withX` or `toBuilder`
+- [ ] Generated-builder adapters have a concrete boundary benefit rather than merely duplicating setters
+
+Report the chosen variant, why simpler construction is insufficient, invariant/ownership boundary
+and validation performed. For a small review, a concrete finding and focused check suffice.
 
 ## References
 
-- [Decision and alternatives](references/decision-and-alternatives.md) — the arity and
-  optionality thresholds, records and static factories against builders, staged builders and
+- [Decision and alternatives](references/decision-and-alternatives.md) — selection signals,
+  records and static factories against builders, staged builders and
   what they cost, where validation must live, and the Lombok `@Builder` failure modes on
   entities and records. Read before adding or removing a builder.
 - [Worked example](references/worked-example.md) — a payment instruction with mutually exclusive
-  fields, taken from telescoping constructors to a record with static factories, then to a
-  builder and a staged builder, with the validation placement made explicit and a test data
+  fields, taken from telescoping constructors to a record and builder, then a staged API sketch,
+  with the validation placement made explicit and a test data
   builder derived from it. Read when implementing.

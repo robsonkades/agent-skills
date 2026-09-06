@@ -84,11 +84,14 @@ The sea-of-nodes unifies the control graph and the data graph. Each operation is
 every edge carries one of three meanings — **data**, **control**, **memory**. There is no
 implicit fourth category for "order within a basic block".
 
-That absence is the whole point. A node with only data dependencies (a `CmpI`, say) can float
-to any point compatible with its real dependencies, so hoisting, sinking and loop-invariant
-code motion fall out of scheduling rather than needing separate, fragile passes. In a
-conventional CFG with SSA, moving an instruction between blocks requires explicit dominance
-analysis.
+An unpinned node with only data dependencies (a `CmpI`, say) can be scheduled within the
+region permitted by its inputs and uses. This freedom does not remove dominance analysis
+or dedicated loop transformations: C2's global code motion uses dominators and loop depth
+when choosing placement. Control and memory dependencies constrain motion, and trapping
+operations must preserve exception behavior. Do not infer that source-level loop hoisting
+is legal merely because the IR is a sea of nodes.
+
+Implementation reference: [OpenJDK 25u global code motion](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/opto/gcm.cpp).
 
 ## Inlining limits
 
@@ -120,15 +123,24 @@ depended on the call boundary disappearing.
 
 ## The three escape states
 
-| State          | Definition                                                                                    | Consequence                                                                                                 |
-| -------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `NoEscape`     | Does not escape the method and is unreachable outside the allocating thread                   | Full **scalar replacement** — removed from the graph, fields become independent values or registers         |
-| `ArgEscape`    | Passed as an argument to a call, but not persistently stored by it                            | Usually still heap-allocated: the non-inlined call boundary blocks scalar replacement. Enables lock elision |
-| `GlobalEscape` | Stored in a field, returned, thrown, or otherwise reachable outside the local scope or thread | Normal heap allocation; other independent optimisations may still apply                                     |
+| State          | Definition                                                                             | Consequence                                                                                                   |
+| -------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `NoEscape`     | Does not escape the analyzed method or thread and is not passed to a remaining call    | Eligible for scalar replacement; not proof that elimination succeeded                                         |
+| `ArgEscape`    | Passed as an argument to a call, but not persistently stored by it                     | Usually still heap-allocated: the non-inlined call boundary blocks scalar replacement. Enables lock elision   |
+| `GlobalEscape` | Escapes the analyzed method or thread, including a store into globally reachable state | Normally remains heap-allocated; a store into another non-escaping object alone does not establish this state |
 
 `ArgEscape` is often misread. An object passed across a call C2 cannot analyze inline is
 normally blocked from scalar replacement by that boundary. Inspect compiler evidence rather
 than treating the state label as a Java semantic guarantee.
+
+`NoEscape` and scalar replaceability are separate properties. Unsupported uses, array size
+or field reconstruction constraints can prevent elimination even without escape. Inspect
+the elimination result and failed condition before changing source. The analyzed method
+includes inlined callees, so returning an object from an inlined helper need not make it
+escape the caller's compilation.
+
+Implementation references: [OpenJDK 25u escape states and scalar-replaceable flag](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/opto/escape.hpp)
+and [allocation elimination checks](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/opto/macro.cpp).
 
 ## Strip mining
 
@@ -144,12 +156,17 @@ before the thread actually reaches a requested global safepoint.
 
 ## nmethod lifecycle states in PrintCompilation
 
-- **`made not entrant: <reason>`** — no new call enters this code; threads already inside
-  finish normally. JDK 25 prints the reason. `not used` is the normal 0 → 3 → 4 promotion
+- **`made not entrant: <reason>`** — new normal calls no longer enter this code. Existing
+  activations can continue when valid, or be deoptimized if their assumptions fail;
+  the state transition alone does not prove what happened to active frames.
+  JDK 25 prints the reason. `not used` commonly accompanies normal 0 → 3 → 4 promotion
   retiring the tier-3 code; `OSR invalidation of lower level` is the same for OSR code;
   `uncommon trap` is a deoptimisation; `marked for deoptimization` is a dependency — class
-  loading, `RedefineClasses` — invalidated from outside. Only the last two are worth a second
-  look.
+  loading, `RedefineClasses` — invalidated from outside. Correlate the reason with the
+  replacement compilation and deoptimization events before attributing a regression.
+
+  See [OpenJDK 25u nmethod transitions](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/code/nmethod.cpp).
+
 - **`made zombie` no longer exists.** The sweeper thread and the zombie state were removed in
   JDK 20 (JDK-8290025). A not-entrant nmethod is unloaded by the GC once no frame references
   it, so reclaiming code cache is a GC event — `code-cache-segments` covers what that changed.

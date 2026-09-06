@@ -3,8 +3,8 @@ name: gof-prototype
 description: >
   Prototype in modern Java: producing a new object from an existing instance's state, when the
   configuration is expensive or the concrete type is unknown to the caller. Covers why
-  Cloneable/clone() is a broken contract and what replaces it, the deep-versus-shallow decision
-  on graphs with identity and cycles, why immutability removes the need to copy at all, the
+  Cloneable/clone() needs an explicit contract and what replaces it, the deep-versus-shallow decision
+  on graphs with identity and cycles, when immutable values can be shared, the
   torn-copy hazard under concurrency, and the identity rules when copying persisted objects. Use
   when clone() or Cloneable appears, when an object is duplicated by serialising and
   deserialising it, when a configured template must be instantiated many times, when a JPA entity
@@ -19,7 +19,7 @@ description: >
 ## Purpose
 
 Create a new object by copying a configured one. The pattern applies when the state that makes
-an object useful was assembled at runtime and cannot be re-derived from parameters — a document
+an object useful was assembled at runtime and is costly or undesirable to re-derive — a document
 template, a pre-wired processing pipeline, a scenario fixture — or when the copier does not know
 the concrete class it is duplicating.
 
@@ -28,6 +28,11 @@ Java's built-in copying mechanism (`Cloneable`) has a weak contract. What surviv
 normally use explicit copy constructors or copy factories; interoperability with a hierarchy
 that already has a correct `clone()` contract is a constrained exception, not a reason to spread
 that API.
+
+Java 17 is the baseline for these partial examples; no preview features are required. Inspect
+compiler settings, copy APIs, persistence mappings/provider and ownership before applying them.
+Do not upgrade Java or persistence libraries merely to fit an example. Deliver the copy purpose,
+per-field ownership/identity policy, concurrency precondition and relevant validation or gaps.
 
 ## When it is the answer
 
@@ -43,7 +48,7 @@ the registry does not know their classes
 A mutable working object must be duplicated so two paths can diverge
 (a scenario, a draft, a what-if calculation)
         → Prototype — and consider making the type immutable instead,
-          which removes the need entirely.
+          which may allow sharing when distinct identity/ownership is unnecessary.
 ```
 
 ## When it is not
@@ -53,11 +58,11 @@ A mutable working object must be duplicated so two paths can diverge
   object even when exposed state is immutable (`java-immutability`).
 - **The state can be re-derived from parameters.** Then a factory or builder is clearer, and the
   new object does not inherit whatever the source accumulated.
-- **The concrete type is known.** A copy constructor is more discoverable, type-safe and
-  documentable than a polymorphic `copy()`.
+- **Only polymorphic discovery is unnecessary.** A known concrete type can use a copy constructor
+  or named factory; that may still implement Prototype intent without a copy interface.
 - **Only a few fields differ from the original.** Hand-written or generated `withX` methods can
   express "the same but for X" directly; Java records do not generate withers themselves.
-- **The object is an entity with identity.** A copy of an entity is a _different_ entity; see
+- **The object is an entity with identity.** Name whether this is a new entity or a snapshot; see
   the identity rules below before duplicating anything with an id, a version or a lifecycle.
 
 ## Modern Java expression
@@ -71,8 +76,8 @@ Object clone()                        Config(Config other)
                                       static Config copyOf(Config other)
 
 deep copy via serialise/deserialise an explicit copy that names each
-                                    field, so a new field is a compile
-                                    error rather than a silent share
+                                    field policy, with construction and
+                                    semantic tests for omissions
 
 polymorphic clone() on a hierarchy  an abstract copy() returning the
                                     interface type, implemented per
@@ -83,25 +88,26 @@ polymorphic clone() on a hierarchy  an abstract copy() returning the
                                     from the original
 ```
 
-`clone()`'s specific defects — `Cloneable` declares no `clone` method, the protected modifier
-forces every subclass to cooperate, the default is a field-for-field shallow copy that bypasses
-constructors so `final` fields cannot be reassigned, and no subclass can be trusted to have
-implemented it correctly — are why every replacement above is preferred. Details in
+Cloneable declares no copy method, Object.clone performs shallow field copying without constructor
+validation, and independently owned final mutable fields complicate repair of a super.clone result.
+These are limitations to audit, not proof that every clone implementation is invalid. Preserve a
+correct inherited contract when compatibility requires it; see
 [references/copying-in-java.md](references/copying-in-java.md).
 
 ## Decision rules
 
 ```text
-IF the type is immutable
-THEN do not copy. Share the reference.
+IF the type is transitively immutable and identity/ownership permits sharing
+THEN share the reference; distinct lifecycle or logical identity may still require a new object.
 
 IF the copy shares any mutable substructure with the original
-THEN it is not a copy; it is an alias with two names. Decide, per field,
-     whether sharing is intended, and write it down.
+THEN classify the operation as shallow/selective/deep. Shared fields retain aliases;
+     decide whether that sharing is intended and compatible with ownership.
 
 IF the graph contains cycles or object identity is meaningful
 THEN a naive deep copy either loops forever or duplicates shared nodes.
-     Use an identity map keyed by the original node, or refuse to copy.
+     Use a per-operation identity map keyed by the original node. Bound depth/nodes/work;
+     a visited map alone does not stop stack overflow on a deep acyclic chain.
 
 IF the source can be mutated while it is being copied
 THEN the copy can be internally inconsistent. Copy under the same lock
@@ -129,15 +135,15 @@ THEN tests or construction structure must expose an omitted copy policy. A const
   thread mutating the source mid-copy yields a "copy" that never existed — fields from before
   and after the change. Either copy while holding whatever lock guards the source, or have the
   source expose an immutable snapshot and copy that. A `copy()` documented as thread-safe with
-  no synchronisation is documentation, not safety (`java-memory-model`).
-- **Distribution.** Copying a DTO is not copying the entity it represents; the copy shares no
-  identity, no version and no server-side state. Where a prototype is transmitted, the receiving
+  no explanation of immutability, locking or snapshot publication is not evidence of safety (`java-memory-model`).
+- **Distribution.** Copying a DTO can preserve logical IDs and versions but does not duplicate
+  the server entity or its lifecycle. Where a prototype is transmitted, the receiving
   process reconstructs it from bytes — which is deserialisation, with its own trust boundary,
   not this pattern. Never build a prototype registry keyed by class names supplied by a remote
   peer.
 - **Performance.** "Copying is faster than constructing" is an assumption, not a fact: a deep
-  copy allocates the whole graph again and defeats escape analysis, while construction of a
-  simple object is one of the cheapest things the JVM does. Justify a prototype by the
+  copy may traverse and allocate a large graph; escape analysis depends on the call context,
+  not the pattern name. Justify a prototype by the
   _configuration_ being expensive to reproduce, not by allocation cost — and if the claim is
   about cost, measure it (`allocation-profiling`).
 - **Testing.** A shared mutable prototype used as a test fixture is a cross-test dependency: one
@@ -150,20 +156,20 @@ THEN tests or construction structure must expose an omitted copy policy. A const
       inherited, documented and tested across subtypes
 - [ ] Every field is accounted for: copied, deliberately shared, or deliberately reset
 - [ ] Adding a field is caught by construction structure, generated code, or copy-contract tests
-- [ ] Mutable collections and arrays are copied, not aliased
+- [ ] Independently owned mutable containers and elements are copied; intentional sharing is explicit
 - [ ] Identity, version, lifecycle and correlation fields follow an explicit
       clone-as-new versus snapshot/transfer policy
 - [ ] Copying under concurrency is either locked or performed on an immutable snapshot
-- [ ] No copy is implemented by serialisation round-trip
-- [ ] The type is not simply immutable, in which case the copy should not exist
+- [ ] Any retained serialization copy has a justified format, graph, trust and resource contract
+- [ ] Immutable values are shared when identity and ownership permit it
 
 ## References
 
-- [Copying in Java](references/copying-in-java.md) — why `Cloneable` is broken in detail, copy
+- [Copying in Java](references/copying-in-java.md) — Cloneable limitations and compatibility, copy
   constructors against copy factories against wither methods, the deep-versus-shallow decision
   table, cycles and identity maps, the serialisation round-trip's costs and security surface,
   and the rules for copying JPA entities. Read before implementing any copy.
 - [Worked example](references/worked-example.md) — a registry of configured document templates
-  instantiated per request: the `Cloneable` version and its two defects, the copy-factory
+  instantiated per request: the Cloneable version and its ownership risks, the copy-factory
   version, identity reset when the copy is persisted, and the snapshot that makes copying safe
   under concurrency. Read when implementing.

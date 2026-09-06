@@ -1,19 +1,14 @@
 schemaVersion: 1
 
 name: architecture-testing
-version: 1.3.0
+version: 1.3.1
 description: >-
-  Testing what an enterprise architecture actually promises: that boundaries hold, that a
-  use case is atomic, that persistence mapping matches the schema, that concurrent edits are
-  detected, that a query budget is not exceeded, and that a contract stays compatible. Use
-  when every test needs the whole application context, when a test suite is slow enough that
-  people skip it, when an N+1 or a lost update reached production despite green tests, when
-  a mapping change broke a client, when concurrency is "tested" with a mocked repository,
-  when a layering rule exists only in a wiki, when an integration test uses an in-memory
-  database that behaves differently from production, or when deciding what belongs at which
-  test level. Does not cover general unit-testing practice, the architecture decisions
-  themselves (layering-and-boundaries, architecture-decision-making), load and performance
-  testing (load-testing), or contract versioning policy (rpc-and-api-contracts).
+  Write or review tests for architectural promises: dependency boundaries, transaction
+  atomicity, persistence mappings, stale-write detection, query budgets and API/event
+  compatibility. Use when green tests missed a lost update or N+1, a boundary exists only
+  in documentation, or an integration test may hide the behavior it claims to verify.
+  Does not choose the architecture or governance thresholds (architecture-fitness-functions),
+  replace general unit-test design, or establish production capacity (load-testing).
 
 license: Apache-2.0
 
@@ -51,6 +46,7 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - architecture-fitness-functions
   - architecture-and-performance
   - distribution-boundaries
   - enterprise-base-patterns

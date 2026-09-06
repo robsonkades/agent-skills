@@ -17,10 +17,10 @@ build, not an ABI or a sizing constant:
 ```
 
 A **non-strong hidden class gets its own CLD** on this implementation, so the measured
-trivial generated class initially occupied 3 KB of committed chunks, of which roughly 1 KB
-was used (20,000 trivial
-hidden interfaces raised `Metaspace` used by 1044 B each and `Compressed Class Space` by
-520 B each). Real generated classes — a proxy with a dozen methods, a compiled script — are
+illustrated class occupies 3 KB of committed chunk capacity, with about 2.46 KB used in
+this row. Chunk-accounted capacity is not a private OS commitment granule per hidden class;
+classes can share commitment granules. Do not combine this row with unrelated per-class
+averages or treat it as a general footprint constant. Real generated classes — a proxy with a dozen methods, a compiled script — are
 larger, and their constant pools and bytecode all land in the non-class space. Growth is
 approximately `class count × metadata shape` plus arena/chunk overhead. Both factors can
 change: method count, constant-pool/debug metadata and generator strategy affect per-class
@@ -28,26 +28,27 @@ cost, although cardinality and loader lifetime usually dominate.
 
 ## Which generator is bounded and which is not
 
-| Source                                                                                                                     | One class per …                                                      | Bounded by                                               | Unbounded when                                                                                                                |
-| -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Lambdas and method references (`InnerClassLambdaMetafactory`)                                                              | normally a linked call site                                          | linked call sites and defining-loader lifetime           | new loaders/call sites are continually introduced; verify the JDK/framework implementation                                    |
-| `java.lang.reflect.Proxy`                                                                                                  | (loader, interface list) — 200 instances of one interface, one class | the set of interface combinations                        | Interface lists are built dynamically per request, or per-request loaders                                                     |
-| `MethodHandle` combinators (`LambdaForm$MH`, `Holder` classes)                                                             | implementation-specific form/shape                                   | cached shapes in that JDK build                          | user-driven composition keeps introducing shapes; do not assume warm-up is finite                                             |
-| ByteBuddy / CGLIB / Spring AOP / Hibernate proxies                                                                         | proxied type (and advisor set)                                       | the number of beans and entities                         | Proxies are created per instance instead of per type — `Enhancer` called inside a request, a bean scope that rebuilds proxies |
-| Mockito and other mock libraries                                                                                           | maker/version/fork-specific generated form                           | framework caches and fork lifecycle                      | cache keys/loaders grow across a long-lived test JVM; measure rather than infer from mock count                               |
-| Scripting engines (Groovy, JavaScript engines, JRuby)                                                                      | engine- and compilation-mode-specific unit                           | engine cache and loader lifecycle                        | distinct source or fresh engines/loaders continually define classes                                                           |
-| Expression and template engines (SpEL compiled mode, JSP, Thymeleaf-like precompilers, JAXB/Jackson bytecode accelerators) | expression or template                                               | the distinct expressions, if the compiled form is cached | Expressions are interpolated with data (`"price > " + threshold`), so every value is a new expression                         |
-| `Lookup.defineHiddenClass` / `defineClass` in application code                                                             | call                                                                 | whatever the caller caches                               | The caller does not cache — the same bytes defined again are a new class, never a lookup                                      |
-| Serialisation libraries with generated (de)serialisers                                                                     | module/generator-specific `(type, configuration)`                    | enabled generator and its caches                         | generator modules/loaders are recreated or the type/configuration key space is unbounded                                      |
+| Source                                                                                                                     | One class per …                                                      | Bounded by                                               | Unbounded when                                                                                                              |
+| -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Lambdas and method references (`InnerClassLambdaMetafactory`)                                                              | normally a linked call site                                          | linked call sites and defining-loader lifetime           | new loaders/call sites are continually introduced; verify the JDK/framework implementation                                  |
+| `java.lang.reflect.Proxy`                                                                                                  | (loader, interface list) — 200 instances of one interface, one class | the set of interface combinations                        | Interface lists are built dynamically per request, or per-request loaders                                                   |
+| `MethodHandle` combinators (`LambdaForm$MH`, `Holder` classes)                                                             | implementation-specific form/shape                                   | cached shapes in that JDK build                          | user-driven composition keeps introducing shapes; do not assume warm-up is finite                                           |
+| ByteBuddy / CGLIB / Spring AOP / Hibernate proxies                                                                         | proxied type (and advisor set)                                       | the number of beans and entities                         | Class cache is bypassed/disabled, or keys/loaders change; proxy instance creation alone does not prove new class definition |
+| Mockito and other mock libraries                                                                                           | maker/version/fork-specific generated form                           | framework caches and fork lifecycle                      | cache keys/loaders grow across a long-lived test JVM; measure rather than infer from mock count                             |
+| Scripting engines (Groovy, JavaScript engines, JRuby)                                                                      | engine- and compilation-mode-specific unit                           | engine cache and loader lifecycle                        | distinct source or fresh engines/loaders continually define classes                                                         |
+| Expression and template engines (SpEL compiled mode, JSP, Thymeleaf-like precompilers, JAXB/Jackson bytecode accelerators) | expression or template                                               | the distinct expressions, if the compiled form is cached | Expressions are interpolated with data (`"price > " + threshold`), so every value is a new expression                       |
+| `Lookup.defineHiddenClass` / `defineClass` in application code                                                             | call                                                                 | whatever the caller caches                               | Hidden-class calls define distinct classes; named defineClass with the same name/loader fails with LinkageError             |
+| Serialisation libraries with generated (de)serialisers                                                                     | module/generator-specific `(type, configuration)`                    | enabled generator and its caches                         | generator modules/loaders are recreated or the type/configuration key space is unbounded                                    |
 
 The two questions that classify any of these: **is the key of the generator's cache derived
 from code or from data**, and **does the loader that defines the class die**? Code-keyed
 generation often plateaus once the observed code paths are linked; data-keyed generation can
 grow with distinct input cardinality rather than request count alone. New deployments,
 loaders, tenants and call sites invalidate a simple code-versus-data binary classification.
-A class in a loader that is later collected is released as that loader's chunks
-(`num_arena_deaths` in `VM.metaspace basic` counts them); a class in a loader that lives
-forever is permanent.
+Ordinary named classes normally share their defining loader lifetime. Non-strong hidden
+classes can unload while that loader remains alive; their own CLD reachability matters.
+`num_arena_deaths` counts arenas, not loaders, and reclaiming them does not require all freed
+capacity to be returned to the OS.
 
 ## Attribution
 
@@ -66,8 +67,8 @@ whose count grew is a hypothesis for the generator; confirm it with defining loa
 From a recording, `jdk.ClassDefine` (one event per defined class, with the defining loader
 and a stack trace when enabled) names the code path that mints them, and
 `jdk.ClassLoadingStatistics` gives the loaded-versus-unloaded trend. At the failure itself,
-`jdk.MetaspaceAllocationFailure` carries the stack of the allocation that could not be
-satisfied. `-Xlog:class+load` prints every definition with its `source:` and is the
+`jdk.MetaspaceAllocationFailure` can carry the stack when enabled; a failed allocation can
+recover after collection/expansion and does not alone prove terminal exhaustion. `-Xlog:class+load` prints every definition with its `source:` and is the
 zero-tooling fallback; keep it short-lived, it is one line per class.
 
 ## Remediation, by finding
@@ -86,3 +87,6 @@ an eviction/lifetime model, reuse or retire loaders, interpret instead of compil
 tenant, or reject work under pressure. User-controlled scripts/expressions are a resource-
 exhaustion boundary: cap source size, compilation rate, distinct keys and per-tenant budget;
 do not use an unbounded cache as the remedy.
+
+[Lookup API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html)
+distinguishes named definition, hidden-class identity and strong versus weak lifetime.

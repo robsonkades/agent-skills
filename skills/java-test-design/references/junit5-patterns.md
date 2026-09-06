@@ -1,8 +1,10 @@
-# JUnit patterns, verified
+# JUnit patterns
 
-Every listing below was compiled and executed on JDK 25 with Jupiter 6.1.3, AssertJ 3.27 —
-9 tests, all passing. The same code compiles unchanged on JUnit 5.x; nothing here uses an API
-that changed between Jupiter 5 and 6.
+These are partial snippets, not a bundled executable suite or an assertion of a passing test
+count. They use Java 17+ language features and Jupiter 5 APIs (reviewed against 5.13.4). Supply
+Jupiter API/engine/params, AssertJ, java.time and static assertion/builder imports, and place
+the parameterised/nested tests inside RenewalPolicyTest. Use the project's resolved versions;
+Jupiter 6 compatibility must be checked with its engine/build integration rather than assumed.
 
 ## The code under test
 
@@ -52,8 +54,8 @@ final class SubscriptionBuilder {
 ```
 
 The point is not the fluency. It is that a test names _only the field it depends on_, so the
-reader sees the one input that matters. When the record gains a component, the builder gets a
-default and no test changes.
+reader sees the relevant input. When a record gains a component, centralize incidental defaults
+in the builder, but explicitly revisit tests whose behaviour depends on the new component.
 
 Keep builders in test source, one per aggregate you construct often. A builder for a
 two-component record is ceremony; construct it directly.
@@ -107,10 +109,10 @@ void windowBoundaries(LocalDate renewsOn, boolean due) {
 ```
 
 Jupiter's implicit conversion parses the `String` into a `LocalDate` using ISO-8601 — no
-converter is needed for `java.time` types. Verified: all four cases run as separate tests.
+converter is needed for this LocalDate parameter. The four rows should be reported as four invocations.
 
-The `name` attribute matters. Without it the report says `[1]`, `[2]`, `[3]` and a failure
-does not name the case.
+The `name` attribute expresses the scenario clearly. Default names normally include the index
+and arguments, and are configurable; do not assume they contain only `[1]`, `[2]`, `[3]`.
 
 Use `@MethodSource` when the arguments are objects rather than literals, or when building
 them needs code. Do not use `@CsvSource` with a case whose expected value you must compute —
@@ -156,17 +158,18 @@ void blankIdIsRejectedAtConstruction() {
 further assertions. Both fail correctly when _nothing_ is thrown — which the `try { …;
 fail(); } catch` idiom gets wrong often enough to be worth banning.
 
-Assert `hasMessage` only when that exact message is a contract. When it is merely helpful,
-`hasMessageContaining` on the identifying part avoids a test that breaks on rewording.
+Assert `hasMessage` only when that exact message is a contract. Use `hasMessageContaining`
+when a required diagnostic fragment is the contract; omit message assertions for incidental
+wording and prefer stable structured exception fields where available.
 
 ## Lifecycle, and where shared state comes from
 
-| Choice                                     | Instance per test | Consequence                                             |
-| ------------------------------------------ | ----------------- | ------------------------------------------------------- |
-| Default (`PER_METHOD`)                     | Yes               | Fields are fresh; no leakage                            |
-| `@TestInstance(PER_CLASS)`                 | No                | Fields persist across tests — every field is now shared |
-| `static` field                             | No                | Shared across the whole class, and across parallel runs |
-| `@BeforeAll` (needs `static` or PER_CLASS) | No                | Whatever it builds is shared                            |
+| Choice                                     | Instance per test | Consequence                                               |
+| ------------------------------------------ | ----------------- | --------------------------------------------------------- |
+| Default (`PER_METHOD`)                     | Yes               | Instance fields are fresh; static/external state can leak |
+| `@TestInstance(PER_CLASS)`                 | No                | Fields persist across tests — every field is now shared   |
+| `static` field                             | No                | Shared across the whole class, and across parallel runs   |
+| `@BeforeAll` (needs `static` or PER_CLASS) | No                | Whatever it builds is shared                              |
 
 `PER_CLASS` exists so `@BeforeAll` and `@MethodSource` can be instance methods. Choosing it
 for that convenience silently converts every field into shared state; if you take it, keep the

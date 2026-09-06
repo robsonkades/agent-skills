@@ -32,30 +32,37 @@ guessing is most expensive.
    and adopting it early is how the wrong subsystem gets investigated for a day.
 2. **Reproduce it.** Deterministically if possible, intermittently if not — but know which,
    because "I cannot reproduce it" and "it reproduces one time in ten" lead to different work.
-   If it only happens in production, collect evidence there before touching anything
+   If it only happens in production, collect evidence within the mitigation budget
    (`references/production-evidence.md`).
 3. **Shrink.** Remove inputs, steps, data and configuration until removing anything more makes
-   the fault disappear. What remains is the fault's actual surface, usually far smaller than
-   the report, and often small enough to be a unit test.
+   the fault disappear, while preserving the original failure signature. Stop when the next
+   reduction costs more than it helps; a minimal reproduction need not identify the full cause.
 4. **State a hypothesis that predicts something you have not yet looked at.** "If the cause is
    the missing time zone, then the row written at 23:30 local will carry yesterday's date."
-   A hypothesis that only explains what you already saw cannot be wrong, and so cannot be
-   tested.
+   Also name an observation that would refute it. Explaining existing evidence is useful;
+   a discriminating prediction makes the next experiment useful.
 5. **Test it by changing exactly one thing**, and record the result whether it confirms or
    refutes. Two changes at once means a confirmed hypothesis is still ambiguous.
-6. **Confirm the cause explains everything**, including the parts that seemed irrelevant — the
-   frequency, the timing, the customers affected and the ones not. An explanation that covers
-   the symptom but not its distribution is usually a second symptom.
+6. **Check the explanation against the distribution** — frequency, timing, affected and unaffected
+   users. Record remaining contradictions and uncertainty instead of forcing one cause to explain
+   unrelated failures.
 7. **Write the failing test, then fix, then verify** (tdd). The reproduction from step 3 is
-   the test; it costs nothing extra at this point.
+   a candidate test. Use the narrowest level preserving the failure; a race may need controlled
+   scheduling or integration coverage. Record when reproduction remains intermittent.
+
+Inspect deployed versus source JDK/toolchain, dependencies, JVM flags, configuration and data
+versions before version-sensitive diagnostics or changes. This workflow has no universal Java
+baseline. Preserve the target environment; upgrading it is a separate decision. Return the fault,
+evidence, tested/refuted hypotheses, fix or mitigation, validation and unresolved gaps. Missing
+access or reproduction permits an evidence plan, not an invented root cause.
 
 ## Rules
 
 - Prefer a causal explanation before a permanent fix. During an incident, a reversible mitigation
   may precede diagnosis; label it as mitigation, preserve the evidence the response budget allows,
   and do not present symptom disappearance as root-cause proof.
-- One variable at a time. If a batch of changes makes it work, you have learned nothing about
-  which one mattered, and you now carry the other four for ever.
+- Prefer one controlled variable per experiment. If a batch helps, it implicates the batch but
+  does not isolate a member or interaction; reduce/revert the batch in a controlled environment.
 - Read the whole stack trace, including cause and suppressed chains. The deepest application frame
   is a useful boundary candidate, not a verdict: framework callbacks, generated code, reflection,
   native frames, and library defects can move or hide the causal frame.
@@ -63,17 +70,17 @@ guessing is most expensive.
   Capture cheap, non-disruptive evidence first when the error budget permits; mitigate immediately
   when delay is unsafe, and record which volatile evidence the action destroyed
   (`references/production-evidence.md`).
-- "It works now" is not a resolution. Either you know what changed, or the fault is still
-  present and you have lost the reproduction.
+- Symptom disappearance is evidence of recovery, not proof of cause or durable correction.
 - Question the assumption that the fault is where the symptom is. Corrupted state is written
   in one place and observed in another, often much later; the write is the bug.
-- Bisect when the code used to work. `git bisect` over a reliable reproduction script finds the
-  commit in log₂(n) steps and is almost always faster than reasoning about the diff.
+- Consider `git bisect` when verified good/bad revisions and a reliable classifier exist.
+  It can narrow a monotone change in roughly log₂(n) classifications; build cost, skipped commits
+  and intermittent or nonmonotone outcomes affect that benefit. See the reference's exit protocol.
 - Delete the debugging output before the change ships, and if a log line was genuinely useful,
   promote it deliberately with a level and structure (structured-logging) rather than leaving
   a `System.out.println`.
-- Timebox. If two hours of hypotheses have all been refuted, the model of the system is wrong
-  somewhere; go back to observations, or ask someone who has a different model.
+- Timebox according to incident severity and experiment cost. Repeated refutations are a signal
+  to revisit observations, harness assumptions and the system model or seek another perspective.
 
 ## References
 

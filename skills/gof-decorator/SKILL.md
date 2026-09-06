@@ -60,6 +60,9 @@ The addition is cross-cutting and the interface is stable
 
 ## Ordering is semantics
 
+Examples are partial Java 17 unless a framework is named. Inspect the project's resolved framework,
+HTTP provider and instrumentation versions; no decorator choice authorizes upgrades or dependencies.
+
 ```text
 Read a stack outermost-first. Each layer sees the one below it as
 "the call".
@@ -72,21 +75,21 @@ Read a stack outermost-first. Each layer sees the one below it as
 
   Metrics(
     Retry(
-      CircuitBreaker(  ← sees each attempt; retries hammer an open breaker
+      CircuitBreaker(  ← sees each attempt; reject open-breaker failures from retry eligibility
         Timeout(
           Client))))
 ```
 
-| Arrangement                    | Meaning                                                  | Choose when                                              |
-| ------------------------------ | -------------------------------------------------------- | -------------------------------------------------------- |
-| Timeout **inside** Retry       | Per-attempt deadline; total time is attempts × timeout   | Attempts are cheap and the caller has budget             |
-| Timeout **outside** Retry      | One overall budget; retries stop when it is spent        | The caller has a deadline (usually correct in a service) |
-| Cache **outside** Retry        | A hit avoids retries entirely; failures are never cached | Normal                                                   |
-| Cache **inside** Retry         | Each attempt consults the cache — usually pointless      | Almost never                                             |
-| Breaker **outside** Retry      | The breaker sees logical operations                      | Normal                                                   |
-| Breaker **inside** Retry       | Retries beat on an open breaker, failing fast N times    | Only with a deliberate reason                            |
-| Metrics **outside** everything | Latency includes retries — the caller's true experience  | Usually retain as logical-operation telemetry            |
-| Metrics **inside** Retry       | Per-attempt counts and error rates                       | In addition, under a different metric name               |
+| Arrangement                    | Meaning                                                 | Choose when                                      |
+| ------------------------------ | ------------------------------------------------------- | ------------------------------------------------ |
+| Timeout **inside** Retry       | Per-attempt bound plus backoff/queueing in total        | Pair with remaining caller budget                |
+| Timeout **outside** Retry      | Outer completion bound; inner work must honor deadline  | Propagate cancellation and remaining time        |
+| Cache **outside** Retry        | A valid hit avoids downstream retries                   | Hit semantics and cache failure policy permit it |
+| Cache **inside** Retry         | Each attempt consults cache; concurrent fill may matter | Explicit cache/load/concurrency contract         |
+| Breaker **outside** Retry      | The breaker sees logical operations                     | Normal                                           |
+| Breaker **inside** Retry       | Breaker counts attempts; rejection must not be retried  | Attempt-level failure isolation is intended      |
+| Metrics **outside** everything | Latency includes retries — the caller's true experience | Usually retain as logical-operation telemetry    |
+| Metrics **inside** Retry       | Per-attempt counts and error rates                      | In addition, under a different metric name       |
 
 A common starting point is **logical metrics → propagated deadline/budget → breaker → retry →
 per-attempt timeout → client**, with separate attempt telemetry. It is not universal: breaker
@@ -104,20 +107,21 @@ THEN attempts can multiply: 3 at the client × 3 at the gateway = 9 requests
      (retries-and-backoff, cascading-failures).
 
 IF a retry decorator wraps a non-idempotent operation
-THEN it can duplicate side effects. Retry only with an idempotency key
-     or a provably safe operation (idempotency).
+THEN it can duplicate side effects. Require provider-enforced idempotency within its scope,
+     matching parameters/retention, or an independently safe operation; a key alone proves nothing.
 
 IF callers use ==, instanceof or equals on the decorated object
-THEN wrapping breaks them: the wrapper is a different object of a
-     different class. Provide an unwrap path, or do not decorate.
+THEN inspect the actual identity/equality contract. Interface instanceof still works; concrete
+     checks may fail. Preserve registration identity; avoid automatic equality forwarding or an
+     unrestricted unwrap path that bypasses access, transaction or lifecycle policy.
 
 IF the decorator holds state — a cache, a counter, a breaker
 THEN the composed object is stateful and shared. Its thread safety is
      now the decorator's responsibility, not the delegate's.
 
 IF the framework has a mechanism for this concern
-THEN use it. A hand-rolled chain is invisible to the framework's
-     ordering, metrics and tracing.
+THEN prefer it when it satisfies the contract; verify ordering, metrics and tracing configuration.
+     Custom composition remains valid when integrated explicitly or the framework cannot fit.
 
 IF the stack obscures call order, context propagation or failure attribution
 THEN make wiring observable, collapse inseparable policies, or use a framework chain.
@@ -133,8 +137,8 @@ THEN it is changing the contract, not decorating it. State that
 - **Concurrency.** A decorator over a stateless, thread-safe delegate can make the composition
   unsafe: a counter, a cache, an `HashMap` of in-flight keys, a non-atomic read-modify-write of a
   breaker's state. Each stateful layer needs its own memory-model argument. Conversely,
-  a decorator cannot make an unsafe delegate safe unless it serialises every call — which usually
-  defeats the delegate's purpose (`java-memory-model`).
+  safety can also come from confinement or separate owned instances; synchronization must cover
+  all conflicting access, including aliases outside the wrapper (`java-memory-model`).
 - **Distribution.** This is where resilience layers live, so the ordering table above is a
   production concern rather than a stylistic one. Two failures dominate: retry amplification
   across layers, which converts a partial outage into a full one; and a timeout placed so that
@@ -155,7 +159,7 @@ THEN it is changing the contract, not decorating it. State that
 - [ ] The wrapper implements the same interface as what it wraps
 - [ ] The stacking order is deliberate and documented at the wiring site
 - [ ] Retry ownership and the shared attempt/deadline budget prevent cross-layer amplification
-- [ ] Any retried operation is idempotent or carries an idempotency key
+- [ ] Retry safety is established by the operation/provider contract, not merely the presence of a key
 - [ ] The total time of the stack fits the caller's deadline
 - [ ] Stateful layers state their thread-safety guarantee
 - [ ] Identity-sensitive behavior is eliminated, explicitly delegated, or exposed through a
@@ -172,5 +176,5 @@ THEN it is changing the contract, not decorating it. State that
   reordering a stack.
 - [Worked example](references/worked-example.md) — an outbound pricing client decorated for
   metrics, breaking, retry, timeout and caching: the wiring with its order justified, the
-  per-layer tests, the order test, and the reordering that caused a real outage. Read when
+  per-layer tests, the order test, and an illustrative amplification scenario. Read when
   implementing.

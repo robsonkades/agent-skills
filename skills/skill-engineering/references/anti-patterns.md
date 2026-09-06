@@ -26,8 +26,9 @@ every time, or not.
 **Unreachable resources.** Files nothing routes to. The agent never opens them, so they
 are pure package weight and slowly drift out of date.
 
-**Duplicated knowledge.** The same rule in the body and in a reference. They will
-diverge, and the reader will not know which is current. One home per fact.
+**Duplicated knowledge.** Detailed rules copied between files can diverge. Keep one
+authoritative explanation; a short guard or routing summary may need repetition so it is
+visible before the action it constrains.
 
 **Unfalsifiable rules.** "Ensure high quality." "Write maintainable code." Nothing can be
 checked against the output. Restate as something observable or remove it.
@@ -49,9 +50,10 @@ Every meaningful workflow ends in something verifiable.
 formats attached to a skill whose output is a renamed file. Match the machinery to the
 stakes.
 
-**Runtime coupling.** Instructions naming a specific agent, model or vendor inside the
-skill body. The same skill should work anywhere the format is read; vendor metadata has
-its own place.
+**Unnecessary runtime coupling.** Do not assume one client's behavior applies everywhere.
+Client-specific guidance is legitimate when the skill's task requires it; declare the
+compatibility boundary and verify claims against that implementation. UI metadata belongs
+in the target client's supported location.
 
 **Vestigial structure.** Directories created because a template showed them. An empty
 `examples/` is a promise the skill does not keep.
@@ -60,8 +62,9 @@ its own place.
 
 Answer these before finalising. Any "no" that matters is a reason to revise, not to ship.
 
-**Value** — Does the agent do measurably better with this than without it? If you cannot
-name the difference, the skill is not ready.
+**Value** — What observable decision or failure should this improve? Distinguish that
+expected benefit from any measured comparison. Lack of an executed comparison limits the
+claim; it does not erase a supported correctness fix.
 
 **Expertise** — Does it encode judgement that would otherwise be lost? Or does it restate
 what a capable agent already knows?
@@ -69,7 +72,7 @@ what a capable agent already knows?
 **Selection** — Read only the description. Can you tell which requests should reach this
 skill, and which should not?
 
-**Restraint** — Is there anything in the body that is only sometimes relevant?
+**Restraint** — Is conditional detail large enough to route away without hiding a guard?
 
 **Checkability** — Take three rules at random. Could you tell, from a piece of finished
 work, whether each was followed?
@@ -77,7 +80,8 @@ work, whether each was followed?
 **Routing** — Is every supporting file reachable by a stated condition?
 
 **Robustness** — What does the skill do when context is missing or the input is
-ambiguous? If the answer is "proceeds anyway", add the rule that makes it ask.
+ambiguous? Does it inspect context, distinguish harmless assumptions from consequential
+unknowns, and continue authorized work that does not depend on the missing information?
 
 **Composability** — Would this conflict with a neighbouring skill if both were selected?
 
@@ -88,7 +92,7 @@ every file?
 
 Before finalising, go through the skill once looking only for what to remove.
 
-For each paragraph: _would the agent behave differently without this?_ If not, cut it.
-This pass typically removes a third of a first draft, and the result is more likely to be
-followed — instructions compete with each other for attention, and every sentence that
-changes nothing dilutes the ones that do.
+For each paragraph, identify its decision rule, prerequisite, evidence requirement or
+teaching value. Remove unsupported repetition without a target reduction percentage.
+Retain necessary context and safety/correctness constraints; shorter text alone is not
+evidence of better agent behavior.

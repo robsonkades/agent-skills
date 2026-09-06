@@ -13,12 +13,15 @@ Everything else is outside it until the user says otherwise.
 
 ## Opportunistic improvement versus expansion
 
-The line is the footprint of the change you were asked to make.
+The boundary is the requested behavioral change and its necessary support, not merely the
+method or file being edited. Inspect the initial working tree before judging the diff;
+pre-existing user changes are not cleanup candidates.
 
 **Inside** — do it, mention it in one line:
 
 - Fixing a name in the method you are already rewriting.
-- Adding the missing null check on the path you just changed.
+- Adding a null check required by the changed contract, preserving the intended failure
+  behavior; a new check that rejects previously accepted inputs is a behavior change.
 - Removing a variable your change made unused.
 - Correcting a comment your change made wrong.
 
@@ -26,8 +29,8 @@ The line is the footprint of the change you were asked to make.
 
 - Reformatting the file. Ten lines of change become four hundred, and the review is dead.
 - Renaming beyond the change's reach.
-- Fixing a bug you noticed in a neighbouring method. It may be deliberate; it certainly needs
-  its own test and its own commit.
+- Fixing an independent bug in a neighbouring method. Report it with evidence; separate
+  follow-up work and verification may be needed, but do not create an unsolicited commit.
 - Upgrading a dependency because a newer version exists.
 - Adding tests to untested code you did not touch — valuable, and a separate piece of work.
 - Restructuring "while I am in here".
@@ -49,12 +52,13 @@ this here?" If so, it belongs in a report, not the diff.
 
 ## When to stop and ask
 
-Stop when continuing would commit the user to something expensive to reverse, and when you
-cannot decide from the code in front of you:
+Check the request, prior decisions, repository evidence and applicable instruction hierarchy
+first. Ask only when a necessary decision remains unresolved and materially changes the
+authorized scope or commits the user to something expensive to reverse:
 
 - Two readings of the request produce materially different designs.
-- The change requires a new dependency, a schema change, or a public API change that was not
-  discussed.
+- A new dependency, schema or public API change is neither already authorized nor a routine
+  implementation detail implied by the requested outcome.
 - The correct fix is much larger than the request implies — say so and propose the smaller one
   as well.
 - The request appears to contradict an existing convention in the codebase, and you cannot tell
@@ -67,8 +71,9 @@ version, whether a method has other callers. Those are searches, not questions.
 ## When blocked, deliver everything else
 
 A blocked part does not block the rest. Do all the work that does not depend on the answer,
-isolate the part that does behind the smallest decision point, and report both together — what
-is done and what is waiting, in one message.
+avoid implementing guessed behavior for the dependent part, and report what is done and
+what decision remains. Ask early enough that the answer can guide the work; do not add an
+abstraction solely to conceal a missing contract.
 
 Scaling the work down because part of it was hard is the user's call, not yours. If you left
 something out, the report must say so in a sentence that cannot be missed.

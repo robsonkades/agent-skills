@@ -42,7 +42,9 @@ during the capture.
 
 ## Time semantics
 
-`bpf_ktime_get_ns`/bpftrace `nsecs` generally use a monotonic kernel clock; JFR and application
+`bpf_ktime_get_ns` excludes system suspend. In bpftrace 0.24, bare `nsecs` defaults to
+`boot`, which includes suspend; `nsecs(monotonic)` excludes it. Choose one clock explicitly
+for both endpoints and record suspend behavior. JFR and application
 events expose timestamps through their own mapping. Align with start/end markers captured in
 both systems and retain clock metadata. Wall-clock/NTP steps should not change monotonic
 durations but can shift displayed UTC alignment.
@@ -78,10 +80,9 @@ experiment to claim attribution.
 | USDT hit                     | target JVM emitted that semantic probe           | complete event population or low overhead   | flag/config, expected control count, lost-event metrics             |
 | Kernel stack sample          | sampled kernel path                              | time exclusively caused by leaf function    | sample total, event semantics, off-CPU/application outcome          |
 
-Never attach universal remediation thresholds such as “run queue >5 ms means resize” or “futex
-
-> 1 ms means a lock bug.” Compare with SLO, workload, CPU quota, service time, and baseline for
-> that system.
+Never attach universal remediation thresholds such as “run queue above 5 ms means resize” or
+“futex above 1 ms means a lock bug.” Compare with SLO, workload, CPU quota, service time, and
+baseline for that system.
 
 ## Scheduler reasoning
 
@@ -186,7 +187,8 @@ population.
 
 ```text
 histogram looks plausible
-  -> entries approximately equal exits/paired + unmatched?
+  -> exits = paired + unmatched exits for the same scope/window?
+  -> entries reconciled with pairs, active starts, cleanup, overwrites, and loss?
   -> key supports concurrent/nested lifecycle?
   -> map high-water/eviction/loss acceptable?
   -> target includes dynamic threads and excludes non-targets?
@@ -234,6 +236,7 @@ Next discriminating experiment:
 
 ## Authoritative references
 
+- [bpftrace 0.24 clocks and helpers](https://bpftrace.org/docs/release_024/stdlib)
 - [Linux scheduler tracepoints source](https://github.com/torvalds/linux/blob/master/include/trace/events/sched.h) — inspect the running kernel tag/config.
 - [Linux block tracepoints source](https://github.com/torvalds/linux/blob/master/include/trace/events/block.h)
 - [Linux futex UAPI](https://github.com/torvalds/linux/blob/master/include/uapi/linux/futex.h)

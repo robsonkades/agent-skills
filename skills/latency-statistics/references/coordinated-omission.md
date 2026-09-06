@@ -109,7 +109,9 @@ Inject a known pause or service-time step while arrivals remain scheduled. Verif
 
 - offered/start timestamps retain the intended cadence until an explicit bounded drop policy;
 - client queue time is included or separately reported;
-- completed + failed + timeout + cancelled reconciles with admitted work;
+- mutually exclusive terminal outcomes plus still-in-flight work reconcile with admitted
+  work for the same arrival cohort; for a wall-clock window, also account for in-flight
+  work at its start and end (do not count a timeout again as a generic failure);
 - the histogram shows the expected queue/recovery shape rather than one long request only;
 - generator saturation alarms before the generator becomes the bottleneck.
 

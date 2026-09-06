@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-tell-dont-ask
-version: 1.2.0
+version: 1.2.1
 description: >-
   Decision ownership: the type that owns an invariant or policy makes the decision. Use when a service
   reads state with getters, decides, and writes state back (if (acct.getBalance() > x)

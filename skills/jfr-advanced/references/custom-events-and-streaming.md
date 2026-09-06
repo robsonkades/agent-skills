@@ -82,16 +82,23 @@ Correct duration-aware pattern:
 
 ```java
 RequestOperationEvent event = new RequestOperationEvent();
+boolean succeeded = false;
 event.begin();
 try {
     response = service.handle(request);
+    succeeded = true;
 } finally {
     event.end();
     if (event.shouldCommit()) {
-        event.operation = canonicalOperation(request);
-        event.outcome = canonicalOutcome(response);
-        event.responseBytes = boundedResponseSize(response);
-        event.commit();
+        try {
+            event.operation = canonicalOperation(request);
+            event.outcome = succeeded ? "success" : "failure";
+            event.responseBytes = succeeded ? boundedResponseSize(response) : 0;
+            event.commit();
+        } catch (RuntimeException telemetryFailure) {
+            // Optional bounded, non-throwing telemetry-error accounting.
+            // Preserve the operation's result or original exception.
+        }
     }
 }
 ```
@@ -105,9 +112,10 @@ Subtleties:
 - A static `EventType` coarse guard can avoid allocation/preamble when disabled, but event
   registration and dynamic concurrent settings must be tested. It cannot know a duration
   threshold before execution.
-- If `handle` throws, populate outcome in a catch/finally design without swallowing/changing the
-  exception. Ensure `response` is initialized and avoid the simplified snippet's null hazard in
-  production code.
+- This is partial application code: initialize `response` before the try, and make the size
+  helper handle the application's valid responses (including null if permitted). Failed calls
+  record a bounded failure label and do not dereference an absent response. Expected telemetry
+  failures must not replace the business exception; this is not a policy to suppress fatal VM errors.
 - Multiple recordings use the most permissive active need for whether application event work
   may execute. Test enabling/disabling dynamically.
 
@@ -166,6 +174,8 @@ Use for live local reactions/export when callback processing is bounded:
 
 ```java
 try (RecordingStream stream = new RecordingStream()) {
+    stream.setMaxAge(Duration.ofMinutes(1));
+    stream.setMaxSize(64L * 1024 * 1024);
     stream.enable("com.example.RequestOperation")
         .withThreshold(Duration.ofMillis(5))
         .withoutStackTrace();
@@ -176,18 +186,23 @@ try (RecordingStream stream = new RecordingStream()) {
     });
     stream.onError(error -> consumerErrors.increment());
     stream.startAsync();
-    // own stream lifetime and orderly close elsewhere
+    stream.awaitTermination(Duration.ofSeconds(30)); // bounded example window; then close
 }
 ```
 
-The callback example intentionally performs no network I/O. `minimize` must copy only required
-values because `RecordedEvent`/repository lifetime and queue retention need explicit ownership.
+The callback example intentionally performs no network I/O. It requires imports, a bounded handoff
+queue, counters and a minimizing function; interruption must propagate or restore interrupt status.
+`minimize` copies only required values into an immutable application value. If `setReuse(true)` is
+enabled, retaining the callback's `RecordedEvent` after return is explicitly invalid; copying also
+bounds payload retention independently of that option.
 Use a bounded queue; track oldest-event lag, drops, exceptions, memory, export retries, and
 shutdown deadline. Event ordering across threads/types is not equivalent to causal ordering.
 
 `start()` blocks the caller until close; that can be correct on a dedicated owned thread. Use
-`startAsync()` when lifecycle code must continue, and retain/control the returned future/thread
-according to the API.
+`startAsync()` when lifecycle code must continue. It returns `void`, not a future/thread;
+retain the stream, use `awaitTermination`/`close`, and coordinate draining the application queue
+separately. Leaving a try-with-resources block immediately after `startAsync()` closes the stream
+before a useful observation window. Stream close alone does not prove queued exports completed.
 
 ## Offline `RecordingFile`
 

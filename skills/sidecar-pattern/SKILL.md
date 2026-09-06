@@ -19,8 +19,8 @@ description: >
 
 ## Purpose
 
-A sidecar buys exactly one thing: a capability delivered to a process whose source, build or
-language you do not control, packaged as a container instead of a dependency. The pod is the
+A sidecar can deliver a capability independently of the application's language/build,
+including when you own the application but need separate process or operational ownership. The pod is the
 mechanism — one scheduling unit, one network namespace so `localhost` reaches the peer, and
 volumes both containers can mount — and that is the whole reason a sidecar can wrap a binary
 no library could reach.
@@ -30,6 +30,14 @@ process with its own memory, its own patch cadence and its own lifecycle, multip
 replica; and unless it is declared as a **native sidecar**, the pod gives no ordering
 guarantee between it and the application at either edge of the pod's life — so the app can
 serve before the proxy is up, and the proxy can exit while the app is still draining.
+
+## Target and evidence
+
+Inspect cluster/API/kubelet versions, feature gates, injected containers, controller rollout
+policy and effective resources. Preserve the deployed Java baseline (the HttpClient sketch
+requires Java 11+) and cluster policy; the skill does not authorize upgrades. Missing probe,
+resource or traffic evidence is unknown. Return the selected placement, lifecycle/failure
+contract, peak resource cost, validation performed and remaining operational checks.
 
 ## Workflow
 
@@ -51,7 +59,7 @@ serve before the proxy is up, and the proxy can exit while the app is still drai
 5. **Write down the coupling surface** — which `localhost` port, which shared volume, and
    nothing else. Filesystems and the PID namespace are not shared unless you ask for it.
 6. **Decide what the app does when the sidecar is up and answering wrongly.** A crash loop is
-   visible to Kubernetes; a gray failure is visible only in the app's error rate.
+   visible to Kubernetes; a gray failure needs meaningful probes and request-path telemetry.
 7. **Instrument per container**, not per pod: restarts, memory and CPU broken out by
    container name, or the sidecar's regression stays invisible inside the pod's totals.
 
@@ -85,15 +93,17 @@ Prefer changing the application instead when:
   call: it has a connect timeout, a read timeout, a queue and its own failure mode. A client
   pointed at `127.0.0.1` with default (often unbounded) timeouts is the same bug as one
   pointed across a datacentre.
-- Containers in a pod **share the port space**. Two containers binding 8080 is a startup
-  failure of the second, not a routing question. Allocate ports explicitly.
+- Containers in a pod **share the port space**. Conflicting address/port/protocol bindings
+  collide; different addresses or protocols can coexist. Allocate listeners explicitly.
 - Ordinary containers have **no ordering guarantee**. The kubelet does not wait for one app
   container to become ready before starting the next, and gives no defined termination order
   between them. Every "start the proxy first" hack — a sleep, a retry loop, an init container
   that polls — is a workaround for that missing guarantee, not a fix for it.
 - A native sidecar guarantees **ordering relative to the app containers**: started first,
-  terminated last, and restarted independently even when the pod's `restartPolicy` is `Never`
-  or `OnFailure`. It guarantees nothing about the peer's own upstreams being reachable.
+  stopped after app containers during graceful termination, and restarted independently even when the pod's `restartPolicy` is `Never`
+  or `OnFailure`. Without a startupProbe, started means its process is running, not that it
+  can serve. Readiness affects Pod readiness, not initial startup ordering. Termination shares
+  the Pod grace budget; node failure or force-kill cannot guarantee an ordered graceful drain.
 - In a `Job`, an ordinary sidecar that never exits keeps the pod `Running` forever and the
   Job never completes. This is the most common reason a batch pod hangs at 1/2 containers
   ready. A native sidecar is terminated by the kubelet once the last app container exits,
@@ -103,19 +113,21 @@ Prefer changing the application instead when:
   can instead classify from Pod-level resources when that beta feature is enabled. Verify the
   effective cluster policy; QoS influences node-pressure eviction preference but is not an
   absolute eviction order independent of requests, priority and actual usage.
-- A container that exceeds its own memory limit is OOM-killed **individually** and restarted
-  per the pod's restart policy; the app container keeps running. Sizing the JVM under its own
-  limit is `container-awareness`.
+- A container-cgroup OOM is often localized, but inspect killed processes, cgroup level and
+  node evidence. Pod-level limits, node OOM or eviction can affect the app too. Restart follows
+  the effective container policy; native sidecars use Always during Pod life. Sizing the JVM
+  under its actual limit is `container-awareness`.
 - A crash-looping sidecar is loud (`RESTARTS` climbs, events fire). A sidecar that is up and
-  broken is a **gray failure**: Kubernetes sees a healthy container and only the app's error
-  rate against `localhost` reveals it. Give the sidecar its own readiness probe rather than
-  inferring its health from the app's — probe semantics are `kubernetes-service-lifecycle`.
+  broken is a **gray failure**: without meaningful probes Kubernetes may see a healthy
+  container. Observe errors, latency and correctness against the peer. A sidecar readiness
+  probe affects the whole Pod; choose that routing policy deliberately — probe semantics
+  are `kubernetes-service-lifecycle`.
 - The app must survive a sidecar restart. Bound connect/request timeouts and make the pool evict
   failed or closed connections; validation on borrow is one option, with an extra round trip or
   health-check cost, not a universal requirement.
-- `kubectl logs` needs `-c <container>` once there are two containers, and any metric without
-  a `container` label sums two unrelated processes into one series. Fix both before you need
-  them at 03:00.
+- Use `kubectl logs -c <container>` explicitly to select the peer; defaults/annotations may
+  otherwise select a container. Inspect metric identity and aggregation: a missing container
+  label does not itself imply summation or identify which process was measured.
 - Never justify a sidecar as "transparent to the application". It adds latency, a startup
   dependency and a new failure mode. If you cannot say which of the three you measured, the
   claim is unfalsifiable.

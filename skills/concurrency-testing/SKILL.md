@@ -29,44 +29,50 @@ as strong evidence is how a race gets shipped with confidence.
 
 ## Workflow
 
+The ordinary examples use Java 21+ final APIs and JUnit Jupiter; the structured-scope example
+uses Java 25 preview. Inspect compiler release/toolchains, CI JDK, resolved test libraries and
+timeout mode before adapting them. Keep the project's baseline and existing test framework;
+do not upgrade Java or enable preview merely to use this skill.
+
 1. **Separate the logic from the concurrency.** Inject the executor. Test the logic with a
    same-thread executor, deterministically; test the concurrency separately and explicitly.
 2. **Write the failure-path tests first**, because they are the ones that will otherwise not
    exist: cancel mid-flight, interrupt, time out, reject at the limit, fail the dependency.
 3. **Replace every sleep with a synchronisation point** — a latch, a barrier, `Awaitility`
    with a bound. A sleep is either a flaky test or a slow one, and usually both.
-4. **Assert invariants, not schedules.** "Submitted equals completed plus failed plus
-   rejected", "the balance is never negative", "the permit count returns to its start".
-5. **Add a stress test with a repeat count** for anything with shared mutable state, and run
-   it in CI with a time budget.
-6. **Add a soak assertion for leaks**: after N iterations, permits, connections and heap
-   after a full GC must return to their starting values.
-7. **Put a timeout on every test** so a deadlock fails the build instead of hanging the
-   agent.
+4. **Assert invariants, not schedules.** After owned work terminates, account for every
+   submission as success, failure, cancellation or rejection with disjoint definitions;
+   check resource bounds and recovered permit counts at their specified observation points.
+5. **Add budgeted stress where competing accesses remain a material risk**, retaining worker
+   outcomes and varying relevant contention shapes. A shared field alone does not require a soak.
+6. **Check resource recovery after quiescence.** Owned permits/connections should return;
+   retained-heap trends require warmed baselines and allowances for caches/runtime growth.
+7. **Bound waits and teardown.** A test timeout does not forcibly terminate stuck Java work;
+   isolate intentional uncooperative deadlocks in a child process with an external deadline.
 
 ## Rules
 
-- **A passing concurrency test proves that one interleaving was acceptable.** It is not
-  evidence of correctness under other interleavings, other hardware, or other JDK versions.
+- **A passing run shows no checked invariant failed in its exercised executions.** It does not
+  establish correctness under unobserved interleavings, other hardware, or other JDK versions.
   Say this out loud in review when a test is offered as proof of thread safety.
 - **Never `Thread.sleep` to wait for another thread.** Use `CountDownLatch` for "has it
   started", `CyclicBarrier` for "start together", `Awaitility` (or a bounded poll) for "has
   the effect happened". A sleep encodes a timing assumption that CI hardware will violate.
-- **A flaky concurrency test is a bug report.** Diagnose it before touching it; the usual
-  cause is a real race in the code under test. Adding a retry, a longer sleep or
+- **A flaky concurrency test is a bug report.** Diagnose whether the cause is a product race,
+  faulty oracle, harness coordination or environment. Adding a retry, a longer sleep or
   `@Disabled` deletes the only evidence you had.
 - **Test cancellation explicitly, and assert the effect, not the flag.** `f.cancel(true)`
-  returning `true` proves nothing. Assert the connection returned to the pool, the permit was
+  returning `true` does not prove work stopped. Assert the connection returned to the pool, the permit was
   released, the file was closed, within a bound.
 - **Test interruption explicitly.** Interrupt a task mid-blocking-call and assert it
-  terminates within a bound and that the interrupt status is either propagated or restored.
-  Swallowed `InterruptedException` has no other automated detector.
+  terminates within a bound and handles interruption according to its ownership contract:
+  propagate, restore at a boundary, or deliberately consume at a terminal owner.
 - **Test the limit at its boundary.** Saturate the semaphore or pool, assert the rejection is
   the one you designed (a 503 with `Retry-After`, a fallback value), and assert it is counted.
   An untested rejection path is a 500 waiting for peak traffic.
-- **Do not assert on thread names, thread counts or pool sizes.** These are implementation,
-  they change with a configuration flag, and they break wholesale under virtual threads.
-  Assert on outcomes.
+- **Avoid incidental thread names/counts/pool sizes.** Assert resource concurrency or executor
+  affinity when it is the actual contract, using controlled identities/measurements rather than
+  a naming convention. Otherwise assert outcomes.
 - Determinism beats concurrency in unit tests: a same-thread executor
   (`Runnable::run` as an `Executor`) makes the surrounding logic testable without any
   scheduling at all. Keep the concurrent tests for what actually needs concurrency.
@@ -74,19 +80,23 @@ as strong evidence is how a race gets shipped with confidence.
   and repeat in CI — but never report "the stress test passed" as "there is no race". For an
   ordering claim about a specific pair of accesses, the tool is `jcstress`
   (`java-memory-model`).
-- **Soak for leaks.** Permits, connections, file handles and heap after full GC are all
-  monotonic-decline detectors; a five-minute loop with a before/after assertion catches what
-  no unit test will.
+- **Use soak to expose accumulating leaks**, while retaining focused unit tests for individual
+  ownership paths. Sample after comparable quiescent phases; elapsed time alone does not give
+  coverage, and a requested full GC is not a portable guarantee of complete reclamation.
 - **Inject faults, not just load.** A dependency that is slow, that fails, and that fails
   intermittently exercises the timeout, the limit and the fallback — the three paths that
   matter under overload and that a happy-path integration test never reaches.
-- Tests exercising `StructuredTaskScope` need `--enable-preview` in the IDE, in the build
-  (`<argLine>--enable-preview</argLine>` for Surefire) and in CI. A test that "does not
-  compile on the build agent" is usually this.
+- The Java 25 `StructuredTaskScope` example needs compilation with JDK 25
+  `--enable-preview --release 25` and execution with that JDK and `--enable-preview`.
+  Surefire's runtime `argLine` alone does not enable compilation; preserve existing agents
+  and flags when configuring the project's compiler and test runner.
 - Give the test JVM a deliberately small scheduler
   (`-Djdk.virtualThreadScheduler.parallelism=1 -Djdk.virtualThreadScheduler.maxPoolSize=1`) in
   one dedicated test to expose work that captures or pins a carrier: with no compensation
   available, it serialises visibly.
+
+Report the defect/invariant, controlled ordering, observed worker outcomes, cleanup bounds and
+commands actually run. State remaining untested schedules/providers rather than claiming proof.
 
 ## References
 

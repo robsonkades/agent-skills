@@ -82,9 +82,9 @@ telling the truth. A special case that absorbs operations turns a loud failure i
 wrong data, discovered later and further from the cause.
 
 **Prefer `Optional` at method-return boundaries**; a special-case type pays when the value
-flows through many collaborators that would each otherwise unwrap it. Never put an
-`Optional` in a record component or an entity field to model this — java-optional owns that
-boundary.
+flows through many collaborators that would each otherwise unwrap it. Optional fields/components
+have representation and tooling costs, not a language prohibition; `java-optional` owns that
+decision. Preserve distinct failure/unknown/not-loaded states rather than flattening them.
 
 ## Introduce Assertion
 

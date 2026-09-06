@@ -3,7 +3,8 @@
 ## Root order statistics
 
 For all-of-N, the root waits for the slowest required leaf. For first-success it observes the
-minimum; k-of-N observes the kth completion, plus coordinator/merge time. The familiar closed
+minimum acceptable success; k-of-N observes the kth acceptable distinct success, plus
+coordinator/merge time. Failed, stale or duplicate answers do not count toward that order. The familiar closed
 forms require independent identically distributed leaves; shared hosts, queues and dependencies
 make joint traces/load tests essential.
 
@@ -11,7 +12,7 @@ make joint traces/load tests essential.
   root p99 is `0.99^(1/N)`; at N=20 this is about 99.9498%, often called p99.95. Derive it in
   `tail-latency-analysis`; do not copy the root SLO down to the leaves.
 - **A rare independent leaf event becomes common at the root.** Probability of at least one is
-  `1-(1-p)^N`, approximately `Np` only for small `p`; do not state `1000/N` as exact.
+  `1-(1-p)^N`, approximately `Np` only when `Np` is also small; do not state `1000/N` as exact.
 
 Correlation can increase or decrease the iid amplification relative to the product model.
 Common pauses make leaves move together; contention created by the fan-out can also make later
@@ -35,13 +36,13 @@ distribution and keeps buying tail exposure and fan-out cost.
 
 That crossover is the decision, and it is only visible at the root:
 
-| Symptom                                                       | Reading            |
-| ------------------------------------------------------------- | ------------------ |
-| Leaf p50 falls with N, root p50 flat                          | Past the crossover |
-| Leaf p99 flat or improving, root p99 rising with N            | Past the crossover |
-| Root p50 still tracking `1/N`                                 | N is below optimum |
-| Root p99 ≫ root p50 while every leaf p99 ≈ leaf p50           | Tail amplification |
-| Root p99 and leaf p99 move together across all leaves at once | Correlated cause   |
+| Symptom                                                       | Reading                                                       |
+| ------------------------------------------------------------- | ------------------------------------------------------------- |
+| Leaf p50 falls with N, root p50 flat                          | Past the crossover                                            |
+| Leaf p99 flat or improving, root p99 rising with N            | Past the crossover                                            |
+| Root p50 still tracking `1/N`                                 | Median still benefits; optimum also depends on tails and cost |
+| Root p99 ≫ root p50 while every leaf p99 ≈ leaf p50           | Tail amplification or root queue/merge cost; inspect traces   |
+| Root p99 and leaf p99 move together across all leaves at once | Correlated cause                                              |
 
 **"One leaf per shard" is a default, not a decision.** It comes from the data layout, and it
 is right only while shard count is also a sensible N. When the owners are fewer than the
@@ -52,8 +53,8 @@ for the remainder.
 ## Hedging
 
 A hedge (backup request) is a duplicate of a leaf call, issued once the original has already
-spent a chosen percentile of its expected time; the first answer wins and the other is
-cancelled. It converts leaf-local, uncorrelated slowness into an extra request. It does not
+spent a chosen percentile of its expected time; the first semantically acceptable success wins and the other is
+signalled for cancellation. An early error or stale answer need not end the race. It converts leaf-local, uncorrelated slowness into an extra request. It does not
 fix a slow system.
 
 All conditions must hold before a hedge is enabled:
@@ -70,37 +71,39 @@ All conditions must hold before a hedge is enabled:
 4. **One deadline and cancellation contract apply.** The hedge receives only remaining time;
    residual loser work is included in capacity even if cancellation is advisory.
 
-Implement the cap by role, not by hope: a rolling counter of hedges issued over requests
-issued in a short window, checked before each hedge, with hedging suppressed while the ratio
-is over the cap. The window must be short enough to react within one incident.
+Use atomic admission for hedge issuance, not a racy ratio-check followed by issue. Combine a
+ratio of hedges to original eligible requests with absolute rate, burst and in-flight limits;
+a short window alone permits startup bursts or concurrent overshoot. Coordinate across roots
+and instances at the scope of the protected resource. Include retries and loser residual work.
 
 **Placement rules**
 
-- Issue the hedge from the **root**, not inside the leaf client — the root is the only place
-  that knows the remaining budget and the completion rule.
+- Assign one hedge owner: root or a client explicitly given the same deadline, completion
+  policy and shared admission budget. Avoid independent layered hedging.
 - Send it to a **different replica**. A hedge to the same instance queues behind the same
   saturated pool or pause; a different replica sharing a database may still be correlated.
 - The hedge inherits the _remaining_ budget, not a fresh one. It is a second attempt inside
   one deadline, never an extension of it.
-- Cancel the loser as soon as either answer arrives, on the same path that cancels leaves at
+- Signal cancellation once an acceptable answer satisfies the contract, on the same path that cancels leaves at
   the deadline.
 - The trigger percentile decides the load cost; that table, and the rule that hedging
   backfires on a saturated shared resource, are `tail-latency-analysis`.
 
 ## Knowing whether hedging is helping
 
-Four series, published together with the change:
+Publish these series together with the change:
 
-| Series                                         | What it tells you                                                              |
-| ---------------------------------------------- | ------------------------------------------------------------------------------ |
-| hedges issued ÷ requests issued                | Whether the cap is holding; if it is pinned at the cap, hedging is not the fix |
-| responses won by the hedge ÷ hedges issued     | Near zero means the trigger is too late — pure added load                      |
-| downstream request rate and utilisation delta  | The load actually added, measured at the callee rather than inferred           |
-| root p99 and p99.9 before/after                | Whether the point of the change happened at all                                |
-| loser residual duration / cancellation success | Whether returned latency hides continuing downstream work                      |
+| Series                                         | What it tells you                                                                    |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------ |
+| hedges issued ÷ original eligible requests     | Whether the ratio cap holds; saturation alone does not establish benefit or harm     |
+| responses won by the hedge ÷ hedges issued     | Near zero may mean late trigger, correlated delay or ineligible answers; investigate |
+| downstream request rate and utilisation delta  | The load actually added, measured at the callee rather than inferred                 |
+| root p99 and p99.9 before/after                | Whether the point of the change happened at all                                      |
+| loser residual duration / cancellation success | Whether returned latency hides continuing downstream work                            |
 
 Disable hedging when the hedge win rate collapses while the hedge rate is at the cap: that
-combination says leaf slowness is correlated, and duplication is making it worse. Wire the
+combination shows little measured benefit for the extra work, but does not by itself prove
+correlation. Check placement, trigger timing and answer eligibility before assigning cause. Wire the
 cap and the disable as configuration you can change without a deploy — the moment you need
 them is an incident.
 

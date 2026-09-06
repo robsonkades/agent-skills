@@ -1,7 +1,10 @@
 # Composition Styles
 
 One search screen: orders filtered by optional status, optional customer, optional date
-range and optional minimum total. Four mechanisms, same requirement.
+range and optional minimum total. Four mechanisms, same requirement. Examples are partial
+application code: records need Java 16+, `JdbcClient` Spring 6.1+, and JPA metamodel/DSL
+examples need their configured generators. Inspect the deployed Java, Spring Data, provider
+and database versions; new Specification APIs are not available on every older release.
 
 ## 1. Derived methods — where it breaks
 
@@ -15,9 +18,9 @@ public interface OrderRepository extends Repository<Order, Long> {
 }
 ```
 
-Derived methods are the right answer for a small fixed set — they are free, self-documenting
-and refactor-safe. They stop being the right answer at exactly this point: when optionality
-multiplies.
+Derived methods suit a small readable set, but names are not compiler-checked property
+paths. Verify startup/query parsing after entity changes. Optionality warrants comparing
+composition with explicit statements, not an automatic numerical cutoff.
 
 ## 2. Query Object — usually the best answer for one screen
 
@@ -36,29 +39,47 @@ public record OrderSearch(
 }
 ```
 
+The SQL sketch assumes validated non-null Optional components, an ordered date range,
+an inclusive `placedTo` that can be advanced by one day, and a documented business time zone.
+`AccessScope` comes from trusted authorization, not request filters; its allowed-customer list
+must already be bounded and validated. Larger scopes may need an authorization join/EXISTS
+or database policy. The example uses PostgreSQL `timestamptz` columns and JDBC 4.2
+`OffsetDateTime` parameters; adapt and test the actual column/driver semantics. `Money.currency()` below
+is assumed to return the stored currency code.
+
 ```java
 @Repository
 class OrderSearchQuery {
 
     private final JdbcClient db;
 
-    List<OrderSummary> run(OrderSearch search, Pageable page) {
+    List<OrderSummary> run(OrderSearch search, Pageable page, AccessScope access, ZoneId zone) {
+        if (page.isUnpaged() || page.getPageSize() > 200) throw new IllegalArgumentException("page bound");
+        if (access.allowedCustomerIds().isEmpty()) return List.of();
         var sql = new StringBuilder("""
-            SELECT o.id, o.status, o.placed_at, o.total_amount, c.name AS customer_name
+            SELECT o.id, o.status, o.placed_at, o.total_amount AS total, c.name AS customer_name
               FROM customer_order o
-              JOIN customer c ON c.id = o.customer_id
-             WHERE 1 = 1
+              JOIN customer c ON c.id = o.customer_id AND c.tenant_id = o.tenant_id
+             WHERE o.tenant_id = :tenant AND o.customer_id IN (:allowedCustomers)
             """);
         var params = new HashMap<String, Object>();
+        params.put("tenant", access.tenantId());
+        params.put("allowedCustomers", access.allowedCustomerIds());
+        params.put("offset", page.getOffset());
+        params.put("size", page.getPageSize());
 
         search.status().ifPresent(s -> {
             sql.append(" AND o.status = :status");  params.put("status", s.name()); });
         search.customerId().ifPresent(id -> {
             sql.append(" AND o.customer_id = :customerId"); params.put("customerId", id.value()); });
         search.placedFrom().ifPresent(from -> {
-            sql.append(" AND o.placed_at >= :from"); params.put("from", from.atStartOfDay()); });
+            sql.append(" AND o.placed_at >= :from"); params.put("from", from.atStartOfDay(zone).toOffsetDateTime()); });
+        search.placedTo().ifPresent(to -> {
+            sql.append(" AND o.placed_at < :toExclusive");
+            params.put("toExclusive", to.plusDays(1).atStartOfDay(zone).toOffsetDateTime()); });
         search.minimumTotal().ifPresent(min -> {
-            sql.append(" AND o.total_amount >= :min"); params.put("min", min.amount()); });
+            sql.append(" AND o.total_currency = :currency AND o.total_amount >= :min");
+            params.put("currency", min.currency()); params.put("min", min.amount()); });
 
         sql.append(" ORDER BY ").append(sortColumn(page.getSort()))   // allowlisted
            .append(" OFFSET :offset ROWS FETCH NEXT :size ROWS ONLY");
@@ -67,24 +88,31 @@ class OrderSearchQuery {
     }
 
     private static String sortColumn(Sort sort) {
-        // Never interpolate a user-supplied field name.
-        return switch (sort.iterator().next().getProperty()) {
+        if (sort.stream().count() > 1) throw new IllegalArgumentException("one sort key");
+        var order = sort.isUnsorted() ? Sort.Order.desc("placedAt") : sort.iterator().next();
+        if (order.isIgnoreCase() || order.getNullHandling() != Sort.NullHandling.NATIVE)
+            throw new IllegalArgumentException("unsupported sort options");
+        String column = switch (order.getProperty()) {
             case "placedAt" -> "o.placed_at";
-            case "total"    -> "o.total_amount";
-            default         -> "o.id";
+            case "total" -> "o.total_amount";
+            case "id" -> "o.id";
+            default -> throw new IllegalArgumentException("unsupported sort");
         };
+        String direction = order.isAscending() ? " ASC" : " DESC";
+        return column + direction + (column.equals("o.id") ? "" : ", o.id" + direction);
     }
 }
 ```
 
-Every parameter is bound, the SQL is one readable statement, the projection is exactly what
-the screen needs, and the whole thing is one class that can be unit tested against a real
-database. For a single search screen this beats a specification framework on every axis
-except cross-query reuse.
+The sort helper chooses fixed SQL fragments, preserves direction, supplies an unsorted default
+and appends a unique tiebreaker. Define null ordering for nullable sort keys; reject unsupported
+case/null-order options rather than silently promising to honor them. Bind values, including
+pagination, and validate empty-filter cost. A query object does not automatically enforce
+authorization: keep the mandatory scope outside user-controlled AND/OR/NOT groups.
 
-The allowlisted sort is not optional: any mechanism that accepts a property name from the
-client and puts it into a query is an injection surface, including `Sort.by(userInput)`
-against a repository.
+An allowlist controls exposed fields and query cost. A validated Spring Data property name is
+not automatically raw SQL injection, but concatenated identifiers or unsafe sort expressions
+can be; never insert untrusted SQL fragments.
 
 ## 3. Specifications — for criteria reused across queries
 
@@ -94,9 +122,9 @@ The justification is a business criterion used in several places that must stay 
 public final class OrderSpecs {
 
     /** "Overdue" is defined once, here. Every query that needs it uses this. */
-    public static Specification<Order> overdue(Clock clock) {
+    public static Specification<Order> overdue(LocalDate asOf) {
         return (root, query, cb) -> cb.and(
-            cb.lessThan(root.get(Order_.dueDate), LocalDate.now(clock)),
+            cb.lessThan(root.get(Order_.dueDate), asOf),
             cb.notEqual(root.get(Order_.status), OrderStatus.SETTLED));
     }
 
@@ -106,60 +134,54 @@ public final class OrderSpecs {
 
     public static Specification<Order> premiumCustomer() {
         return (root, query, cb) -> {
-            // Reuse an existing join rather than adding a second one.
-            Join<Order, Customer> customer = joinOnce(root, Order_.customer);
+            // This standalone predicate owns an INNER join; compose joins deliberately.
+            Join<Order, Customer> customer = root.join(Order_.customer, JoinType.INNER);
             return cb.equal(customer.get(Customer_.tier), CustomerTier.PREMIUM);
         };
     }
 }
 
 // Usage reads as the business criterion, and the definition lives in one place.
-var overduePremium = OrderSpecs.overdue(clock).and(OrderSpecs.premiumCustomer());
+var overduePremium = OrderSpecs.overdue(asOf).and(OrderSpecs.premiumCustomer());
 ```
 
 ### The three composition traps
 
-**Duplicated joins.** Two specifications that each call `root.join(...)` on the same
-association produce two joins, duplicated rows and an inflated count. Look up an existing
-join first:
+**Join semantics.** Repeated to-one joins may be redundant without multiplying rows;
+to-many joins can multiply rows. Reusing a join by attribute name alone is unsafe when join
+type, ON predicates or quantifiers differ. "A red line AND a large line" may allow two
+different children; "one line that is red AND large" requires one shared match. Choose aliases
+or correlated EXISTS from that meaning, then verify both data and count queries.
 
-```java
-static <X, Y> Join<X, Y> joinOnce(From<?, X> from, Attribute<X, Y> attribute) {
-    return from.getJoins().stream()
-        .filter(j -> j.getAttribute().equals(attribute))
-        .findFirst().map(j -> (Join<X, Y>) j)
-        .orElseGet(() -> from.join((SingularAttribute<X, Y>) attribute));
-}
-```
+**Fetches and paging.** A specification may be invoked for data and count; fetch joins usually
+do not belong in the count query. A result-type guard alone does not make a to-many fetch
+join safely pageable: Hibernate may paginate in memory or reject it. Prefer projection
+paging, page root ids then fetch with order restored, or an appropriate separate fetch plan.
+Keep mandatory scope identical in both phases/counts. Null-query contexts and separate-count
+APIs differ across Spring Data versions; inspect the executor being used.
 
-**Fetch joins in a count query.** Spring Data reuses the specification for the `count`
-query; a `root.fetch(...)` there is invalid. Guard it:
-
-```java
-if (Long.class != query.getResultType() && query.getResultType() != long.class) {
-    root.fetch(Order_.lines, JoinType.LEFT);
-    query.distinct(true);
-}
-```
-
-**`distinct` masking a cartesian product.** Adding `distinct` to fix duplicated rows removes
-the symptom and keeps the cost — the database still built the multiplied result set. Fix the
-join instead.
+**Distinct and SQL nulls.** Distinct-root semantics may be required for a legitimate to-many
+join, although they do not remove intermediate row cost. EXISTS can avoid row multiplication
+when only existence matters. SQL `NOT (status = 'SETTLED')` does not include NULL status;
+`notEqual` has the same three-valued-logic issue. Require non-null status or explicitly
+define the null branch. Capture `asOf = LocalDate.now(clock)` once for data and count so a
+midnight boundary cannot change the criterion between invocations.
 
 ### The naming discipline
 
 ```java
 // Good: names a business criterion. Readable at the call site; one definition.
-OrderSpecs.overdue(clock)
+OrderSpecs.overdue(asOf)
 OrderSpecs.awaitingApprovalOlderThan(Duration.ofDays(3))
 
-// Bad: a query builder rebuilt badly. No reuse value, worse than SQL.
+// Infrastructure-level expression; it does not name a reused business concept.
 GenericSpecs.field("status").eq("OPEN").and(GenericSpecs.field("dueDate").lt(today))
 ```
 
-The second form appears whenever specifications are adopted as a style rather than for
-reuse. It is strictly worse than the query object above: less readable, less predictable,
-and it still cannot express an aggregation (`enterprise-architecture-smells`).
+Generic predicates can be useful infrastructure for a constrained search DSL, but do not
+replace a named domain criterion. Whitelist fields/operators, bound nesting and joins, and
+keep access predicates outside the user expression. Aggregation support depends on the
+underlying API and executor (`enterprise-architecture-smells`).
 
 ## 4. Type-safe DSL
 
@@ -176,16 +198,21 @@ var orders = dsl.select(ORDER.ID, ORDER.PLACED_AT, ORDER.TOTAL_AMOUNT, CUSTOMER.
 ```
 
 The cost is a build-time generation step and a second query technology in the codebase; the
-gain is that a schema change breaks the build (`metadata-mapping`). Worth it when queries
+gain is compile-time checks against the generated model; only regenerated, synchronized
+metadata can expose a schema change, and not every semantic change becomes a compiler error (`metadata-mapping`). Worth it when queries
 are numerous and complex, or when the schema is owned elsewhere.
 
 ## Choosing
 
 | Condition                                                      | Mechanism                                 |
 | -------------------------------------------------------------- | ----------------------------------------- |
-| Fewer than ~8 fixed queries per aggregate                      | Derived methods                           |
+| A small readable set of fixed queries                          | Derived methods                           |
 | One screen, several optional filters                           | Query object with one statement           |
 | A business criterion reused across several queries             | Named specification                       |
 | Arbitrary user-composed filtering (admin search, saved search) | Specifications or a type-safe DSL         |
 | Aggregation, window function, recursion, bulk                  | SQL in a gateway                          |
 | Anything returning data for display                            | Projection, whichever mechanism builds it |
+
+Sources: [Spring Data JPA Specifications](https://docs.spring.io/spring-data/jpa/reference/jpa/specifications.html)
+and [Jakarta Persistence query semantics](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
+The rolling Spring documentation must be matched to the project's release.

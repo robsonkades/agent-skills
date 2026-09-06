@@ -1,7 +1,10 @@
 # Smells modern Java dissolved — and the ones it created
 
 The classic catalogue predates records, sealed types and pattern matching. Applying it
-unadjusted produces false positives on idiomatic Java 25 and misses the new failure modes.
+unadjusted produces false positives and misses the new failure modes. The partial snippets
+below target Java 21 without preview; supply imports, enclosing classes and named constants.
+Records are final since Java 16, sealed types since 17, and pattern switches since 21. Inspect
+the target project's release before recommending them.
 
 ## Dissolved or transformed
 
@@ -19,9 +22,9 @@ record Pix(String key) implements PaymentMethod {}
 
 BigDecimal feeFor(PaymentMethod method, BigDecimal amount) {
     return switch (method) {
-        case Card _   -> amount.multiply(CARD_RATE);
-        case Boleto _ -> BOLETO_FLAT_FEE;
-        case Pix _    -> BigDecimal.ZERO;
+        case Card card     -> amount.multiply(CARD_RATE);
+        case Boleto boleto -> BOLETO_FLAT_FEE;
+        case Pix pix       -> BigDecimal.ZERO;
     };
 }
 ```

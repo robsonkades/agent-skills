@@ -6,30 +6,34 @@ The plan will be wrong somewhere. That is not a failure of planning — it is wh
 is for. The failure is deviating without recording it, because then the plan, the decisions and
 the code all describe different systems and nobody knows which is current.
 
-When implementation contradicts the plan, stop before writing more code and classify it:
+When implementation contradicts the plan, pause the affected decision-dependent action and
+classify it. Continue independent authorized work; fix an implementation bug rather than
+rewriting the decision to excuse it.
 
-| What happened                                          | Do this                                                   |
-| ------------------------------------------------------ | --------------------------------------------------------- |
-| A resource needs another resource that was not planned | Add it with its dependency; re-derive the order           |
-| A resource turns out to be unnecessary                 | Mark CANCELLED with the reason; do not delete it          |
-| A file needs changing that no resource names           | Amend the impact map, or recognise it as scope and decide |
-| The planned approach does not work                     | This is a superseded decision, not a plan edit            |
-| The validation cannot be run as planned                | Change the validation explicitly, and say what it loses   |
-| A risk that was rated LOW turns out not to be          | Re-rate it; if it is now HIGH it needs a mitigation       |
+| What happened                                          | Do this                                                                                                                       |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| A resource needs another resource that was not planned | Add it with its dependency; re-derive the order                                                                               |
+| A resource turns out to be unnecessary                 | Mark CANCELLED with the reason; do not delete it                                                                              |
+| A file needs changing that no resource names           | Amend the impact map, or recognise it as scope and decide                                                                     |
+| The planned approach appears not to work               | Distinguish an implementation bug from evidence invalidating a decision; supersede only the latter with appropriate authority |
+| The validation cannot be run as planned                | Record the gap; use a justified equivalent or leave required validation pending                                               |
+| A risk that was rated LOW turns out not to be          | Re-rate it; if it is now HIGH it needs a mitigation                                                                           |
 
-The distinction that matters most is the fourth row. A plan amendment says "the same decision,
-implemented differently". A superseded decision says "the choice was wrong". Recording the
-second as the first is how a project loses the reason it does things.
+An implementation correction preserves the accepted decision and contract. A plan amendment
+changes how that contract is implemented. A supersession changes the decision because its
+premise or consequences no longer hold; record evidence and reopen affected acceptance checks.
 
 ```text
 Amendment (plan)
-2026-09-05  RES-04 now returns 202 with a Location header rather than 200 with the
-            body. Same decision (ED-04, asynchronous dispatch); the original plan
-            described the response shape incorrectly.
+2026-09-05  CT-04 already requires 202 with Location; the plan incorrectly transcribed
+            it as 200 with a body. Correct RES-04 to match CT-04 and run its contract tests.
+            If CT-04 instead promised 200, this would require a contract revision and
+            consumer-impact analysis, not merely a plan amendment.
 
 Supersession (decision)
-ED-04 superseded by ED-09. Implementing RES-02 showed the broker cannot give per-customer
-ordering on the existing topic, which ED-04 assumed. See ADR-004.
+ED-04 superseded by accepted ED-09. A traced customer-region change moves events between
+partitions; the old design had no cross-partition ordering mechanism for CT-02. See the
+reproduction and revised publication/consumer migration in ADR-004.
 ```
 
 ## Blockers
@@ -38,8 +42,9 @@ A resource is BLOCKED when it cannot proceed and the reason is outside the work 
 unanswered question, a missing credential, a dependency on someone else, an environment that
 does not exist.
 
-It is **not** blocked because it is hard, because a test fails, or because a decision is
-agent-owned and has not been taken. Those are work.
+A fixable implementation failure, hard task or authorized local choice is work, not an
+external blocker. A failing test can reveal an unavailable environment or upstream dependency;
+classify the actual impediment instead of classifying every red test alike.
 
 Record it where it will be seen, with everything the next person needs:
 
@@ -65,11 +70,13 @@ continues is named.
 
 ```text
 IF a resource is blocked
-THEN record it, ask the question, and move to the next unblocked resource —
-     do not implement a placeholder on a guessed answer.
+THEN inspect existing answers, authorization and available evidence first. Record the
+     remaining impediment and a focused question only if needed; continue the next ready
+     independent resource. Do not guess a contract or insert a placeholder as accepted behavior.
 
 IF every remaining resource is blocked by the same question
-THEN stop and say so plainly. That is the report; there is no partial progress to make.
+THEN finish any independent investigation, test preparation or review that can clarify the
+     choice, and report the concrete blocked actions. Do not claim elapsed time is approval.
 
 IF a blocker is resolved
 THEN record the answer and its source before resuming, so the resumed work is
@@ -79,7 +86,8 @@ IF a blocker has been open across two sessions
 THEN raise it as the headline of the report, not as a line in a status table.
 
 IF work continues around a blocker
-THEN say in every report which resources are complete but unvalidated because of it.
+THEN distinguish implemented-but-unvalidated resources from DONE ones, with the missing
+     evidence and next action; do not create a qualified-DONE state for material test gaps.
 ```
 
 ## Stopping mid-resource

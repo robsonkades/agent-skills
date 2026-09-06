@@ -25,6 +25,11 @@ retention policy.
 
 ## Workflow
 
+Inspect the project's Java release, resolved SLF4J API/provider/encoder versions and effective
+configuration first. Examples are partial Java 17 snippets using SLF4J 2.x fluent APIs;
+adapt to the existing stack without assuming an upgrade is authorized. Missing configuration
+means delivery and JSON shape remain unverified, even when the application compiles.
+
 ### 1. Define event classes and consumers
 
 For each event specify:
@@ -39,6 +44,10 @@ For each event specify:
 
 Security/audit records often need a separate durable, access-controlled path. Application
 debug logs must not be treated as an authoritative audit ledger.
+Durable delivery alone does not make an audit event atomic with a business commit. If that
+invariant is required, define the transaction boundary (for example, a transactional outbox),
+event identity and replay/deduplication behavior; distinguish an attempted action from a
+committed result.
 
 ### 2. Define a common envelope
 
@@ -96,7 +105,8 @@ events independently.
 Prefer a log when a discrete occurrence needs durable/searchable context: state transition,
 security decision, administrative action, unexpected failure or diagnostic checkpoint.
 
-Prefer a metric for exact aggregate rates/SLIs and a trace for causal latency topology.
+Prefer a metric for aggregate rates/SLIs and a trace for causal latency topology. Define the
+counted population and collection coverage; scraped/extrapolated rates are not exact ledgers.
 Prefer neither when the event repeats information with no consumer, narrates every method,
 or retains data whose risk exceeds its use.
 
@@ -165,13 +175,17 @@ and costly cardinality in backend indexes.
 
 ## Cross-skill routing
 
-- [fields and levels](references/fields-and-levels.md)
-- [Java logging mechanics](references/java-logging-mechanics.md)
-- [appenders and cost](references/appenders-and-cost.md)
+- Read [fields and levels](references/fields-and-levels.md) when defining or migrating schemas.
+- Read [Java logging mechanics](references/java-logging-mechanics.md) for API, context or encoder changes.
+- Read [appenders and cost](references/appenders-and-cost.md) for delivery, overload or cost decisions.
 - distributed-tracing-design/opentelemetry-performance for trace context.
 - metrics-and-cardinality for aggregates.
 - java-exception-design for exception contracts.
 - slo-and-alerting for paging.
+
+Return the affected event/consumer contract, evidence from the pinned configuration or
+encoded fixture, the proposed change and its loss/privacy trade-off, and checks run versus
+still pending. For a small fix, one concrete finding and its validation are enough.
 
 ## Authoritative references
 

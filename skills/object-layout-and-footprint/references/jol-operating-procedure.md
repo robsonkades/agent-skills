@@ -52,6 +52,13 @@ GraphLayout.parseInstance(obj).totalSize();      // deep — everything reachabl
 GraphLayout.parseInstance(obj).toFootprint();    // deep — broken down by class
 ```
 
+These are API snippets. For an object-reference array, use
+`GraphLayout.parseInstance((Object) array)`: the API takes `Object... roots`, so an uncast
+`Object[]`/`Record[]` supplies its elements as roots, omits the array, and rejects null roots.
+The cast counts the array and safely traverses its non-null elements. Primitive arrays do
+not have this varargs ambiguity. Traverse a bounded, stable graph; a concurrent mutation is
+not an atomic snapshot. Use multiple explicit roots in one walk to count shared objects once.
+
 ## 2. The four ways it fails
 
 ### 2.1 `parseClass` on a record throws — the single most likely first move
@@ -72,9 +79,9 @@ Caused by: java.lang.UnsupportedOperationException: can't get field offset on a 
 `parseClass` cannot lay a record out. **Fix:** `-Djol.magicFieldOffset=true`. With it, the
 listing is produced correctly and matches `Instrumentation.getObjectSize` exactly `[executed]`.
 
-Note the asymmetry that makes this confusing to debug: `parseInstance` on a record _instance_
-works without the property, so the same class succeeds or fails depending on which API you
-reached for. Set the property always.
+Do not use `parseInstance` as a workaround: with JOL 0.17 on Temurin 25.0.3+9 without
+Instrumentation, it also failed on a record instance in both header modes in the local
+review check. Set the property for these record-layout runs and cross-check the result.
 
 ### 2.2 `-javaagent:jol-core.jar` refuses to start the JVM
 
@@ -120,13 +127,15 @@ java.lang.IllegalArgumentException: Class is not found: Layout$AllTypes.
 names, and a source-launched class has no file on the classpath. `instanceSize()` still works;
 only the printable listing fails. **Fix:** `javac -d classes` first and run from `classes`.
 
-### 2.4 A boxed population inside the `Integer` cache measures nothing
+### 2.4 A boxed population can model the wrong sharing
 
-Not an exception — a silently wrong answer, and the most dangerous of the four. `Integer[1000]`
-filled from `-128..127` measures the array plus almost nothing, because `Integer.valueOf`
-returns shared instances and `GraphLayout` counts each object once. Every boxed figure in this
-skill uses values above 100,000 for that reason. Populate with values outside the cache or the
-footprint answer is meaningless.
+`Integer[1000]` filled by repeatedly boxing `-128..127` reaches at most 256 distinct boxes.
+JOL counts those boxes once plus the array when passed as one root. This is a valid reachable
+size for that graph, but not a model of 1000 distinct boxes, incremental allocation or retention:
+the cache may keep the boxes alive after the array is discarded. For a distinct-box comparison,
+verify the configured cache range and identities; for production sizing, preserve real sharing.
+Values above 100,000 used in the historical tables avoid the default cache, not every possible
+configured cache.
 
 ## 3. A listing without its command line is unusable
 
@@ -137,7 +146,7 @@ without a single flag being touched. Always capture the heap size alongside the 
 
 ```text
 java -version                                        -> the build, verbatim
-java -XX:+PrintFlagsFinal -version | grep -E \
+java <same flags> -XX:+PrintFlagsFinal -version | grep -E \
   'UseCompactObjectHeaders|UseCompressedOops|UseCompressedClassPointers|ObjectAlignmentInBytes|MaxHeapSize'
 java <same flags> -Xlog:gc+init -version | grep 'Compressed Oops'   -> Enabled (32-bit) / Disabled
 ```
@@ -217,3 +226,5 @@ inherits the shallow layouter's assumptions.
 - **A JVM you cannot attach to.** For a population already running in production,
   `jcmd <pid> GC.class_histogram` gives the JVM's own shallow sizes in the JVM's own header
   mode, and `production-footprint-checks.md` §1 covers it and what a heap dump cannot say.
+
+Source for root semantics: [JOL 0.17 GraphLayout](https://github.com/openjdk/jol/blob/0.17/jol-core/src/main/java/org/openjdk/jol/info/GraphLayout.java).

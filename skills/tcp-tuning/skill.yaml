@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: tcp-tuning
-version: 1.2.0
+version: 1.2.1
 description: >-
   The network stack under a JVM service: listen backlog and accept queues, Nagle and delayed
   ACK, socket buffer sizing against bandwidth-delay product, congestion control choice,
@@ -44,6 +44,9 @@ files:
 dependencies:
   - name: linux-for-jvm
     version: ^1.0.0
+
+suggests:
+  - timeouts-and-deadlines
 
 capabilities:
   - reads-source

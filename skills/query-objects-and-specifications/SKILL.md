@@ -10,7 +10,7 @@ description: >
   is needed across several entities, when a criteria query is being written for something a
   single SQL statement would express, when reads are being forced through the aggregate, or
   when a query object is being proposed as an abstraction over the database. Does not cover
-  the collection abstraction over aggregates (repository-pattern), fetch strategies and N+1
+  the collection abstraction over domain objects (repository-pattern), fetch strategies and N+1
   (orm-behavioral-patterns), where mapping metadata lives (metadata-mapping), or index
   design and pagination at the database level.
 ---
@@ -21,8 +21,9 @@ description: >
 
 Give queries a first-class representation when composition, reuse or dynamic filtering
 justifies it — and keep them as plain statements when they do not. The Query Object pattern
-exists because building SQL by string concatenation is unsafe and unreusable, and because a
-business criterion ("orders overdue for a premium customer") deserves a name.
+can support safe reusable composition. Concatenating trusted fixed SQL fragments with bound
+values is valid; interpolating untrusted values or identifiers is not. A
+business criterion ("orders overdue for a premium customer") also deserves a name.
 
 Two failures bracket the topic. The **method explosion**: a repository with 40 derived
 finders, each a slight variation, none composable. The **specification maze**: a composable
@@ -65,9 +66,10 @@ Type-safe query DSL        a generated fluent API over the schema or the
    an entity — that decision usually matters more than the composition mechanism
    (`architecture-and-performance`).
 5. **Read the generated SQL** for anything composed. Composition hides joins, and a
-   specification that adds a join per predicate produces duplicated joins and wrong counts.
-6. **Test the composition, not just the parts.** `and(a, b)` can be correct while both parts
-   are, and still produce a cartesian product.
+   specification that adds a join per predicate can change row multiplicity or existential
+   meaning. Join reuse must preserve type, ON clauses and same-child versus different-child intent.
+6. **Test the composition, not just the parts.** Individually correct predicates can combine
+   into wrong joins, NULL behavior or counts. Test content, count, existence and access scope.
 
 ## Decision rules
 
@@ -91,16 +93,16 @@ a rules engine, a saved-search feature)
           this is the case that earns it.
 
 A report, an aggregation, a window function, a recursive query
-        → SQL. Do not express it as objects; it will be longer, slower
-          and less reviewable.
+        → compare explicit SQL with a capable DSL/provider API. Choose the
+          clearest supported expression and verify the generated plan.
 
 A count or an existence check
         → a dedicated query. Loading entities to count them is the most
           common needless cost in this area.
 
 The query returns entities that are only read
-        → a projection. The write model is not the read model
-          (repository-pattern).
+        → consider a projection; bounded entity reads can also be appropriate.
+          Choose result shape from required data and behavior (repository-pattern).
 ```
 
 ## Rules
@@ -112,31 +114,43 @@ The query returns entities that are only read
 - Derived query methods stop paying when names obscure intent, criteria repeat, optional parameters
   cause combinatorial methods, or generated SQL becomes hard to predict. There is no meaningful
   universal condition-count threshold; use reviewability and change frequency.
-- **Composition hides joins.** Two specifications that each join the same association can
-  produce two joins, duplicated rows and a wrong count. Where the API allows, check whether
-  the join already exists before adding one, and always verify with a count assertion in a
-  test.
-- Specifications must be named after business criteria, not after SQL fragments.
-  `OrderSpecs.overdue(clock)` is a domain concept; `OrderSpecs.dateLessThan(field, value)`
-  is a query builder rebuilt badly, and it gives up every benefit of the pattern.
-- Keep pagination and sorting out of the criteria object. They are presentation concerns
-  that vary per caller; mixing them in makes the criteria non-reusable.
-- **Sorting by a user-supplied field is an injection surface** in every mechanism that takes
-  a property name as a string. Allowlist the sortable fields; never interpolate.
+- **Composition hides joins.** Repeated to-many joins can multiply roots, while reused joins
+  can accidentally require predicates to match the same child. Choose join aliases or EXISTS
+  from the intended quantifiers; verify result rows, count and SQL. Reuse by attribute name
+  alone is insufficient.
+- Name reusable business criteria explicitly. Generic field predicates can support a
+  constrained query builder but are not a substitute for domain names; validate their
+  fields, operators and complexity.
+- Keep reusable predicates separable from pagination and sorting. A use-case query request
+  may contain both; cursors must bind their ordering and filters consistently.
+- Allowlist sortable fields, directions and supported null semantics. Validated ORM property
+  paths are not inherently raw SQL injection, but interpolated identifiers and unsafe sort
+  expressions can be. Bind values and choose SQL fragments from trusted constants.
 - Dynamic queries with wildly different shapes make the optimiser's job harder — parameter
   sniffing and plan reuse can produce a plan good for one filter combination and terrible
   for another. When one combination dominates, a dedicated statement for it is a legitimate
   optimisation.
-- A criteria API is a poor way to express set operations, aggregations, window functions and
-  recursion. Reach for SQL, owned by a gateway, and stop apologising for it
+- Criteria, HQL and generated DSL support varies by version. Prefer explicit SQL when it
+  expresses complex operations more clearly; do not infer performance from syntax alone
   (`data-source-patterns`).
 - Execute every materially distinct query shape in CI where feasible, prioritizing dynamic,
   privileged and high-traffic paths. Combinatorial searches may require pairwise/property-based
   coverage plus production telemetry rather than pretending every value combination was run
   (`metadata-mapping`).
-- Read paths do not need the aggregate, the transaction or the repository. Routing them
-  through the write model to preserve symmetry is the leading cause of slow list screens
+- Read paths need not hydrate aggregates or use their write repository, but may still need
+  transactions for consistency or cursor lifecycle. Choose deliberately rather than routing
+  through the write model only for symmetry
   (`architecture-and-performance`).
+
+Mandatory tenant/authorization predicates are not optional user filters. Obtain their scope
+from trusted context and AND it outside any user-controlled OR/NOT expression; apply the same
+scope to content, count, existence, export and subsequent fetch phases. An empty allowed scope
+must deny results, not omit the restriction. Bound page size and query complexity.
+
+Inspect the Java toolchain, Spring/Data/provider versions, generated metamodel and schema
+before choosing APIs. Return the chosen representation, result/NULL/date/currency semantics,
+mandatory scope, predicted SQL and a test covering the material composition risk. Missing
+schema or version evidence leaves those choices conditional; no dependency upgrade is implied.
 
 ## References
 

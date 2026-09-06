@@ -58,11 +58,15 @@ extra operations — not just one class
 - **The axes are mostly coupled.** A sparse matrix can still use a bridge, but construction must
   encode capabilities or legal combinations. If most pairs are invalid, model named variants
   instead of exposing a misleading Cartesian product.
-- **You are adapting something that already exists.** Bridge is designed in from the start with
-  both sides under your control; Adapter is retrofitted around a type you did not design
-  (`gof-adapter`).
+- **Only interface compatibility is the problem.** Adapter fits an existing type to a target
+  interface. Bridge separates evolving roles; it can be introduced during refactoring and use
+  adapters as implementors (`gof-adapter`). Timing or authorship alone does not decide the pattern.
 
 ## Modern Java expression
+
+Examples target Java 17 without preview: sealed types and records are available. Exhaustive
+pattern switches over sealed types require Java 21 for non-preview use. Inspect project compiler
+release and dependencies; ordinary interfaces/classes can express Bridge on older baselines.
 
 ```text
 Classical                            Modern
@@ -92,7 +96,8 @@ gives exhaustiveness the classical version does not.
 
 ```text
 IF class names combine two adjectives (EncryptedS3, PlainFile)
-THEN there are two axes. One of them becomes a field.
+THEN investigate whether two independent responsibilities actually vary. Names alone do not
+     justify an extra abstraction; compare composition and named legal variants.
 
 IF only one axis actually varies today
 THEN Strategy or a field. Do not build the second hierarchy on spec.

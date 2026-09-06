@@ -28,6 +28,11 @@ signature so wildcard-heavy that callers cannot call it and nobody can read it.
 
 ## Workflow
 
+Examples target Java 21 without preview. Inspect compiler release/toolchains and resolved
+framework versions before changing signatures or type-token APIs; do not upgrade the project
+or add a serialization library to make an illustration work. References contain partial snippets
+unless explicitly presented as complete classes; supply imports and the enclosing declarations.
+
 1. **Compile with relevant warnings on and govern them.** `-Xlint:unchecked`, `rawtypes`, and a
    deliberately maintained warning policy are often safer than blanket `-Werror` across JDK/tool
    upgrades. Every unchecked warning is a place where the
@@ -41,18 +46,18 @@ signature so wildcard-heavy that callers cannot call it and nobody can read it.
    often `? super T`; a parameter requiring exact read/write correlation may be `T`. Return types
    usually avoid wildcards for usability, but public families such as `Class<? extends X>` show
    legitimate exceptions.
-5. **Check the runtime boundary.** Anything crossing deserialisation, reflection, a cache, or
-   a framework callback loses its type arguments. Validate or use a type token there — the
-   compiler stops at the boundary and the failure appears wherever the value is finally used.
+5. **Check the runtime boundary.** Deserialisation, reflection, raw aliases or untyped caches can
+   bypass the static contract; a typed cache/callback does not inherently lose it. Check the
+   producer and token/validation behavior, including nested element types, before trusting values.
 6. **Verify.** No unchecked warnings; every remaining `@SuppressWarnings` is one declaration
    wide and justified; and callers can pass the collections they already have without copying.
 
 ## Rules
 
-- Never use a raw type in new code. A raw `List` disables generic checking for _every_ member
-  of that type, not just the element type, and it silently makes the compiler accept
-  assignments that a parameterised type would reject. `List<Object>` says "any object";
-  `List<?>` says "some unknown element type, read-only"; `List` says "turn the checks off".
+- Avoid raw types except where required by class literals or legacy interoperation. Raw instance
+  member types are erased under JLS rules; static members are not erased merely through a raw
+  qualifier. `List<Object>` says "any object"; `List<?>` says "unknown element type";
+  a raw `List` bypasses element-type checks and can introduce unchecked conversions.
 - Use `List<?>` when element type is irrelevant. No non-null element can be safely added, but this
   is not a read-only view: `clear`, iterator removal, and some `null` mutations remain possible.
   Use unmodifiable types/wrappers for immutability.
@@ -70,8 +75,8 @@ signature so wildcard-heavy that callers cannot call it and nobody can read it.
   array a truthful `T[]`. Controlled unchecked array creation requires confinement and proof.
 - Bound wildcards by direction, and usually avoid them in return types. `Collection<? extends T>` for
   a producer, `Collection<? super T>` for a consumer, plain `Collection<T>` when the method
-  both reads and writes. A wildcard in a return type forces every caller to deal with
-  wildcards too, for no gain.
+  needs exact read/write correlation. Wildcard capture can also support safe mutations such as
+  swapping existing elements; return wildcards need the deliberate reason described in step 4.
 - If a type parameter appears exactly once in a method signature, it should probably be a
   wildcard instead — and if a wildcard appears where the body needs to name the type, extract
   a private generic helper method to capture it. `swap(List<?>)` delegating to
@@ -83,15 +88,16 @@ signature so wildcard-heavy that callers cannot call it and nobody can read it.
   all implementations are safe.
 - Use recursive bounds where the type must be comparable with itself:
   `<T extends Comparable<? super T>>`, not `<T extends Comparable<T>>` — the `super` form
-  accepts a subtype whose comparison is inherited, which is common with enums and hierarchies.
-- At any runtime boundary, type arguments are gone. `instanceof List<String>` does not compile;
-  `(List<String>) json` compiles with a warning and checks nothing; a Jackson
-  `readValue(json, List.class)` produces a `List` of `LinkedHashMap`s that only fails when an
-  element is used. Pass an explicit type token (`Class<T>`, `TypeReference<List<String>>`,
+  accepts a subtype whose comparison is inherited from a base class.
+- With an `Object` operand, `instanceof List<String>` is illegal and `(List<String>) value`
+  checks only that the object is a `List`, not its elements. Untyped JSON object elements may
+  become maps while JSON strings remain strings. Pass an explicit type token (`Class<T>` for
+  reifiable types, `TypeReference<List<String>>`,
   `ParameterizedTypeReference`) or validate the elements at the boundary.
 - Represent "a container of many types" with a class token as key (`Map<Class<?>, Object>`
   behind an API that casts with `type.cast(value)`), not with `Object` values that callers
-  cast themselves. This moves the single unchecked point into one reviewed place.
+  cast themselves. For reifiable keys, `Class.cast` performs a checked cast with no unchecked
+  suppression; `List.class` cannot distinguish lists by their element type.
 - Generifying an existing API is often binary compatible because erasures remain, and raw source
   uses may still compile with warnings, but it is not automatically compatible: erasure clashes,
   changed bounds/return inference, overload resolution and generated bridge methods can affect

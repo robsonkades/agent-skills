@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: skill-engineering
-version: 1.0.0
+version: 1.0.1
 description: >-
   Designing and reviewing agent skills: scope boundaries, the SKILL.md frontmatter
   contract, progressive disclosure across references and scripts, explicit decision rules,

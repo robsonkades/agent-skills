@@ -2,14 +2,15 @@
 
 ## First: the ways not to elect
 
-An election is a capacity ceiling of one and a failover window on every deploy. Three designs
-remove it entirely; check them before choosing a mechanism.
+One active worker can impose a capacity ceiling and failover gaps. These alternatives remove
+the application-wide singleton or delegate coordination; they do not eliminate all ownership
+changes or the need to protect concurrent effects.
 
-| Alternative                                              | Selecting condition                                                                              | What you give up                                                                        |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| Partition the work by key                                | The job is a sweep over entities and can be assigned in durable ranges/buckets                   | A rebalance protocol with fencing when membership changes (`sharding-and-partitioning`) |
-| Make the job idempotent and run everywhere               | Each run converges to the same state; N concurrent runs cost only work (`idempotency`)           | Wasted duplicate work proportional to N                                                 |
-| Move the singleton into a component that already has one | A broker with one consumer per partition, or a database job scheduler, already elects internally | A dependency on that component's semantics, which must be read                          |
+| Alternative                                              | Selecting condition                                                                                       | What you give up                                                                        |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Partition the work by key                                | The job is a sweep over entities and can be assigned in durable ranges/buckets                            | A rebalance protocol with fencing when membership changes (`sharding-and-partitioning`) |
+| Make the job idempotent and run everywhere               | Repeated and concurrent runs preserve the invariant and their combined load is acceptable (`idempotency`) | Wasted duplicate work proportional to N                                                 |
+| Move the singleton into a component that already has one | A broker with one consumer per partition, or a database job scheduler, already elects internally          | A dependency on that component's semantics, which must be read                          |
 
 The first is often skipped. A large reconciliation can use stable buckets or claimed ranges,
 but throughput is not automatically N times higher: database contention, skew and downstream
@@ -29,6 +30,8 @@ Three things the table is saying:
 
 - A monotonic revision is only a candidate token. The election library must return it, every
   command must carry it, and each sink must atomically reject terms older than its current one.
+  Activate the successor's term at the sink before useful work: a highest-seen-term check
+  alone cannot reject an old term that arrives before that transition.
 - Mechanisms establish who _should_ lead; none automatically fences arbitrary databases,
   object stores or external APIs.
 - Failover depends on remaining lease/session detection, coordination, state recovery, warm-up
@@ -41,6 +44,10 @@ distributed scheduler and does not promise a task runs only once. What it is: a 
 execution**, stored as a row with a name, a holder and a `lock_until` timestamp, with
 `lockAtMostFor` as the expiry that stops a crashed node blocking the job forever.
 
+That row describes the JDBC provider; ShedLock also has other providers with different time
+and storage semantics. Pin the actual provider/version. With supported JDBC providers,
+`usingDbTime()` uses database time and avoids relying on synchronized application clocks.
+
 That expiry is a lease, and it has the lease defect: a node still executing when `lockAtMostFor`
 elapses is not stopped, so a second node can start the same job while the first is still inside
 it. There is no token, so nothing downstream can reject the slow one.
@@ -51,15 +58,17 @@ Consequences for configuration and design:
   overruns. No finite value proves a hung/paused job has ended; too low creates overlap, too
   high delays recovery. For unbounded work, redesign into bounded resumable units or add
   renewal plus a separately enforced fence.
-- `lockAtLeastFor` exists for a different problem — clock skew between instances making a fast
-  job runnable twice in one window — and is not a safety mechanism against overlap.
+- `lockAtLeastFor` keeps the lock for a minimum interval measured from acquisition, even
+  after a fast task finishes, and can prevent
+  closely spaced sequential runs caused by schedule/clock differences. It does not establish
+  exactly-once execution or protect work that outlives the maximum lease.
 - It is adequate when a duplicate or skipped run is survivable: idempotent aggregation, a sweep
   that reconciles to the same state, a notification with its own dedup key. It is not adequate
   when a second concurrent run corrupts data — then fence at the resource, and the lock becomes
   an optimisation rather than the control.
-- It does not make a `@Scheduled` method a singleton _role_. Anything long-lived — a poller
-  holding a connection, a consumer, a warm cache — wants a lease-based election with renewal,
-  not a per-execution lock.
+- It does not make a `@Scheduled` method a singleton _role_. A long-lived poller or connection
+  needs a lifecycle/ownership protocol if exclusivity is required; an ordinary consumer group
+  or local cache may need no additional election.
 
 ## Decision block
 
@@ -77,8 +86,8 @@ Use a ShedLock-style row when:
 - a skipped or duplicated run is recoverable, and you can state what a duplicate costs
 - you want no new infrastructure: the database you already have is the whole mechanism
 Elect nothing when:
-- the work partitions by key (sharding-and-partitioning), or is idempotent everywhere
-  (idempotency) — both scale, where a leader does not
+- the work partitions safely by key (sharding-and-partitioning), or concurrent repeated runs
+  preserve the invariant at acceptable cost (idempotency)
 ```
 
 ## Reviewing an existing election
@@ -87,13 +96,22 @@ Elect nothing when:
       outlive the remaining safe budget.
 - [ ] A failed renewal never extends the conservative deadline; admission stops early enough
       to quiesce before it.
-- [ ] Every externally visible write carries a fence, or the work is idempotent and re-runnable.
-- [ ] `is_leader` is exported per instance, with an alert on `sum != 1` sustained.
+- [ ] Every externally visible write is protected by effective sink-side authority/fence
+      enforcement, or repeated and concurrent effects preserve the required invariant.
+- [ ] Local role/term metrics are correlated with useful progress and resource-side fence
+      evidence; a sampled `sum(is_leader)` is not proof of exclusivity.
 - [ ] The lease exceeds the worst measured pause; the failover budget is written down.
 - [ ] Shutdown stops admission, checkpoints/quiesces, then releases or safely expires authority.
 - [ ] There is a test in which the leader is partitioned or stopped, asserting at the resource.
 
 ## Version and provider questions
+
+Kubernetes `Lease` is a persisted coordination record, not an etcd TTL key automatically
+deleted when `leaseDurationSeconds` passes. The election client interprets the record and
+renewal timing. For example, client-go uses locally observed changes and explicit
+LeaseDuration/RenewDeadline assumptions; its documentation explicitly disclaims fencing.
+Inspect the Java client's corresponding algorithm rather than treating API persistence as
+proof of exclusive execution.
 
 - Does the API use a TTL lease, session liveness, database transaction or controller-specific
   renew deadline, and whose clock decides expiry?
@@ -111,3 +129,4 @@ Elect nothing when:
 - [etcd concurrency election API](https://pkg.go.dev/go.etcd.io/etcd/client/v3/concurrency)
 - [Apache ZooKeeper recipes: leader election](https://zookeeper.apache.org/doc/current/recipes.html#sc_leaderElection)
 - [ShedLock README and behavioral guarantees](https://github.com/lukas-krecan/ShedLock)
+- [client-go election timing and fencing limitations](https://pkg.go.dev/k8s.io/client-go/tools/leaderelection)

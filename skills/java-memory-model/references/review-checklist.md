@@ -45,15 +45,20 @@ race detectors and sanitizers have coverage/runtime limitations in managed/nativ
 Before writing annotations, enumerate:
 
 ```text
-acceptable: required by correct executions
-acceptable-interesting: legal but exposes mechanism/performance concern
-forbidden: impossible under the claimed protocol
+acceptable: permitted by the required application contract
+acceptable-interesting: permitted but merits attention
+forbidden: prohibited by the intended application/protocol contract
 unknown/unmodeled: requires expanding actors/arbiter/state
 ```
 
 Use enough actors to represent the minimal relation, an arbiter for final state when appropriate,
 and avoid adding synchronization through test infrastructure. A result not observed is not proven
 forbidden; jcstress evidence complements the JMM proof.
+
+Track JMM legality separately from application acceptability: a broken racy implementation can
+legally produce an outcome marked forbidden by the intended contract. Conversely, marking an
+outcome forbidden in a test does not establish that the specification forbids it. Record initial
+state, writer count, one-shot/repeated operation, and access modes alongside each classification.
 
 ## Fix validation
 

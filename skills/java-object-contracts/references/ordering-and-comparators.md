@@ -44,6 +44,12 @@ public record Invoice(Instant issuedAt, Money total, UUID id) implements Compara
 
 Rules encoded there:
 
+This is a partial Java 16+ sketch with omitted domain types/imports. Require non-null components
+or define nullable-key ordering. A unique id orders distinct rows, but does not by itself make
+comparison consistent with record equality: two representations of one id can have amounts
+that `Money.byAmount()` treats equal while `Money.equals` distinguishes scale/currency. Test
+`compareTo == 0` against `equals`, or document a separate presentation comparator instead.
+
 - **Never subtract.** `(int)(a.millis - b.millis)`, `a.count - b.count` and
   `(int) (a.amount - b.amount)` all overflow and return a wrong _sign_ — the bug appears only
   for operands far apart, so it survives testing and corrupts a sort in production. Use
@@ -90,9 +96,8 @@ The usual causes, in order of frequency:
 4. A comparator that special-cases some elements ("nulls last, but errors first, but
    pinned items always first") without those rules forming a single ordering.
 
-The repair is always to reduce the rules to one lexicographic chain of total orders —
-`thenComparing` composed from comparisons that are individually total — rather than a series
-of `if` branches.
+One useful repair is a lexicographic chain of valid component orders. A branch-based comparator
+is also valid when its relation satisfies the laws; syntax alone neither fixes nor diagnoses it.
 
 ## Total order is a distributed requirement, not a nicety
 
@@ -107,6 +112,8 @@ ORDER BY issued_at DESC, id DESC      -- id is the tiebreaker; without it, rows 
 - **Paging.** Two pages fetched by separate queries with ties broken arbitrarily can both
   return the same row, or skip one, because the database is free to order equal keys
   differently per execution. The client sees duplicates or gaps with no error anywhere.
+  A unique tiebreaker resolves ties, not concurrent inserts/updates/deletes: match cursor
+  predicates to sort directions and define snapshot/consistency semantics separately.
 - **Cross-service comparison.** If two services sort the same collection to compute a hash, a
   digest, a canonical form or a diff, an unstable tiebreak makes their results differ for
   identical data. Canonical encodings (for signatures, idempotency keys, cache keys) must
@@ -132,8 +139,8 @@ single composed comparator expresses more clearly anyway.
 ## Locale and text
 
 `String.compareTo` compares UTF-16 code units. It is a reproducible total order, and it is
-**not** alphabetical for any human language: it places `Z` before `a`, and it misorders every
-accented character. For anything a user reads, use `Collator.getInstance(locale)`; for
+not a locale-sensitive alphabetical order: for example, it places `Z` before `a`. For
+human-language sorting, consider `Collator.getInstance(locale)` and specify strength/rules; for
 anything a machine reads (keys, ids, canonical forms) keep the code-unit order precisely
 because it is locale-independent and reproducible. Mixing the two — sorting in the database
 under one collation and in Java under another — produces pages that disagree with themselves;

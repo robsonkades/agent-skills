@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: gof-abstract-factory
-version: 1.2.0
+version: 1.2.1
 description: >-
   Abstract Factory in modern Java: the pattern exists to keep a _family_ of related objects
   mutually consistent when the family varies, not to centralise construction. Covers the family
   invariant that justifies it, why dependency injection already resolves the deployment-time case,
-  when per-request or per-tenant selection makes the factory unavoidable, and how to express it as
+  when per-request or per-tenant selection benefits from a family provider, and how to express it as
   a record of suppliers or a sealed provider rather than a four-level interface hierarchy. Use
   when a factory interface is proposed, when profile-specific object graphs are being built by
   hand, when a family of parser/renderer/validator types must never be mixed across formats, when

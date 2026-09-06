@@ -3,8 +3,8 @@ name: feature-context-analysis
 description: >
   Reading the repository for one specific feature: which technologies and patterns are actually
   present, which components the feature can reuse, which questions the code has already
-  answered, and — stated as findings rather than silence — which it has not. Use before asking
-  the user anything, before proposing a technology, when a feature is about to be built in a
+  answered, and — stated as findings rather than silence — which it has not. Use when a scoped
+  feature needs repository evidence before clarification or technology selection, when it is about to be built in a
   style the codebase does not use, when "the project uses X" is being asserted without a path,
   when an abstraction is about to be created that already exists, or when picking up a codebase
   you have not read. Does not decide whether a found technology may be used for this feature
@@ -26,17 +26,20 @@ the codebase does not use — a second HTTP client, a third validation approach,
 that already exists two packages away — and the review is about the shape of the code rather
 than about whether the feature is right.
 
-The output is a **context report**: every line either cites evidence or says the evidence is
-absent. Absence is a finding, not a gap in the report.
+The output is a **context report**: findings cite evidence and distinguish observation, inference
+and unresolved questions. "Not found in this sweep" is bounded search evidence, not proof of
+absence throughout the system.
 
 ## Workflow
 
 1. **Scope the sweep to the feature.** Read what the feature will plausibly touch and one ring
    around it. A whole-repository survey costs more than it returns and produces a report nobody
    uses.
+   If the feature is too ambiguous to select relevant paths, ask the smallest scope question;
+   repository investigation does not require delaying a question only the user can answer.
 2. **Work the checklist** in `references/investigation-checklist.md` — build, dependencies,
    layering, persistence, messaging, configuration, security, observability, testing, delivery.
-   Each concern gets a finding or an explicit "not found".
+   Relevant concerns get a finding, bounded "not found", "not examined" or "unavailable".
 3. **Cite everything.** `path:line`, a dependency coordinate with its version, or the command
    and what it printed. A finding with no citation goes in as an assumption or not at all.
 4. **Close the unknowns it can close.** Walk the discovery ledger and mark each unknown this
@@ -48,32 +51,38 @@ absent. Absence is a finding, not a gap in the report.
    whole reason the report is trustworthy.
 8. **Preserve traceability.** Assign or reuse `F-*` for evidence and resolve `U-*` by appending the
    fact/source; name the input feature revision so later baseline changes can invalidate findings.
+   Reuse the existing ledger when present; otherwise concise inline IDs/unknowns are enough.
+   Record repository revision and relevant working-tree changes as well as the feature input.
 
 ## Decision rules
 
 ```text
-IF a pattern appears in three or more places with no counter-example
-THEN it is an established project pattern. Follow it, and say that you are.
-
-IF a pattern appears twice with a counter-example
-THEN it is a practice, not a pattern. Name both forms and let the decision phase pick.
+IF a pattern appears repeatedly
+THEN report instances, independent contexts, counter-examples and declared/enforced policy.
+     Repetition alone does not establish authority or decide this feature's design.
 
 IF a pattern appears once
-THEN it is an instance. It is evidence of nothing; do not generalise from it.
+THEN it is evidence of that instance, possibly the closest relevant precedent;
+     explain its scope without generalising it to the whole project.
 
-IF a technology is present in the build but unused in code
-THEN report it as available-but-unused. It is not a precedent for using it.
+IF a technology is declared but no direct source use was found
+THEN distinguish declared, resolved for the target configuration and observed active use.
+     Check configuration, auto-configuration, generated code and reflective loading when relevant;
+     absence of imports does not prove it unused or available on the target runtime.
 
-IF the concern is absent entirely — no caching, no retries, no audit trail
-THEN that is a finding. Report "not found", not "the project does not need it".
+IF no implementation was found in the inspected scope
+THEN state paths, search terms and limits; deployment/platform behavior may live elsewhere.
+     Report "not found here", not "the project does not need it".
 
 IF the feature needs a capability and something close already exists
 THEN name it, say precisely what it lacks, and let the decision phase choose between
      extending it and adding a second one.
 
 IF version-specific API behaviour matters
-THEN read the version the project actually depends on, from the build file, before
-     asserting anything about that API.
+THEN inspect compiler release/toolchain and resolved dependency evidence for the relevant
+     module/profile/configuration, including parents/BOMs/constraints and runtime image.
+     If resolution is unavailable, label the declared version and leave behavior conditional.
+     Preserve target versions rather than upgrading them to fit an API.
 ```
 
 ## Constraints
@@ -99,10 +108,11 @@ Existing patterns          <pattern, count, counter-examples>
 Existing technologies      <name, version, where used, observed>
 Reusable components        <name -> what it would need>
 Potential conflicts        <request item vs what the code makes hard, with evidence>
-Constraints from the code  <what cannot change, and why>
+Constraints from the code  <enforced/documented requirement vs change cost, with evidence>
 Questions answered         <U-* -> F-*, evidence>
-Still unknown              <U-nn, and why the repository cannot answer it>
+Still unknown              <U-nn, search limits/access gaps, smallest next evidence or question>
 ```
 
-The last two rows are what the next phase consumes. A report that produces neither has surveyed
-the codebase without advancing the feature.
+Scale the report to the feature: omit irrelevant rows and reuse existing artifacts. Before handing
+off, verify cited paths match the current revision and each resolved unknown is actually supported.
+Do not mark a product decision answered merely because one implementation was found.

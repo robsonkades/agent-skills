@@ -24,10 +24,16 @@ response sizes, unary/streaming shape, channel and connection counts, concurrent
 control windows, TLS connection age, retries/hedges, offered and completed work, and per-hop
 latency/CPU/memory. Preserve a direct-path control where possible.
 
+Inspect the project's Java toolchain, resolved grpc-java/Netty artifacts (including shaded versus
+unshaded transport), native TLS provider and deployed proxy version before naming knobs or defaults.
+This skill has no executable Java baseline; protocol contracts do not authorize dependency/JDK
+upgrades, and generic gRPC guidance does not establish a Java transport's exact behavior.
+
 ## Workflow
 
 1. Draw `call -> channel -> transport connection -> HTTP/2 stream -> proxy hops -> backend`.
-   Count each object; never use the terms interchangeably.
+   Count each object; never use the terms interchangeably. A retry creates another attempt/stream;
+   a terminating proxy has separate downstream/upstream connections, settings and flow control.
 2. Locate the limit: application admission, executor/event loop, stream concurrency, connection
    or stream window, socket/network, proxy, or backend.
 3. Compare aligned per-hop evidence. A smaller Protobuf payload can reduce encoding and bytes but
@@ -42,8 +48,9 @@ latency/CPU/memory. Preserve a direct-path control where possible.
   shown to bottleneck or routing requires more independent connections; size it from evidence.
 - Increasing maximum concurrent streams does not create connection flow-control credit, event-loop
   CPU or backend capacity. Identify which limit is binding first.
-- Flow-control tuning follows bandwidth-delay product and observed stalls. Larger windows consume
-  memory per active stream/connection and can worsen overload.
+- Flow-control tuning follows bandwidth-delay product and observed stalls. Larger windows permit
+  more outstanding DATA and can worsen overload; credit is not a measurement of allocated
+  memory. Identify receiver, direction and hop before changing a window.
 - A long-lived HTTP/2 connection through an L4 balancer can pin many calls to one backend. Route
   connection distribution to `load-balancing-and-routing`; adding streams to that connection does
   not rebalance it.
@@ -59,6 +66,10 @@ latency/CPU/memory. Preserve a direct-path control where possible.
 For a material recommendation report evidence, direct observation, inference, alternative
 hypotheses, the predicted metric change and a rollback trigger. Missing direct-path or effective-
 configuration evidence makes the verdict inconclusive, not favourable.
+Scope that uncertainty: missing a direct control prevents causal mesh-overhead attribution, but
+does not invalidate a directly observed exhausted window or executor queue. Continue independent
+diagnosis. Compare end-to-end distributions; adding/subtracting per-hop p99 values does not
+produce a request's critical-path latency.
 
 ## References
 

@@ -1,7 +1,8 @@
 # Choosing a double
 
-Every listing here was compiled and executed on JDK 25 with Jupiter 6.1.3, Mockito 5.23 and
-AssertJ 3.27; the three tests shown pass.
+The examples describe JDK 25, Jupiter 6.1.3, Mockito 5.23 and AssertJ 3.27 APIs. They are partial
+snippets requiring imports, domain/port definitions and test setup; no reproducible harness is
+bundled here. Compile and execute adapted examples against the project's pinned dependencies.
 
 ## The taxonomy, in terms of what each proves
 
@@ -15,9 +16,9 @@ AssertJ 3.27; the three tests shown pass.
 
 The distinction that matters in practice is narrower than the taxonomy: **a stub or fake lets
 you assert on a result; a mock makes you assert on a call.** Assertions on results survive
-refactoring. Assertions on calls do not.
+refactoring more readily. Call assertions remain useful when they express a stable contract.
 
-## The default: the real thing
+## A stateful fake
 
 ```java
 private final InMemoryOrderRepository orders = new InMemoryOrderRepository();
@@ -39,6 +40,11 @@ memory that a save happened.
 
 Keep the fake in test sources next to the port. When the port gains a method, the compiler
 finds the fake; a mock just returns `null` and the test fails somewhere else.
+
+This fake stores object references and overwrites duplicate ids. It models neither database
+copy/isolation semantics nor constraints, transactions or query behavior. Prefer immutable
+values and encode only required port semantics; test duplicate ids, missing values and mutation
+where those matter against both implementations. Do not grow a miniature database in the fake.
 
 ## Mock only what the fake cannot be
 
@@ -102,9 +108,9 @@ another test's subject. Using real values in the assertion (`"ord-1"`, `"ref-9"`
     }
 ```
 
-`verifyNoInteractions` earns its place: "we did not charge the card" is a real requirement with
-no observable value. This is the one `verify` family that is not a change detector, because it
-asserts an absence the design must maintain.
+`verifyNoInteractions` is appropriate if no gateway use at all is allowed. If the requirement
+only forbids charging, prefer `verify(gateway, never()).charge(any(), any())` so a harmless
+gateway query does not break the test. Neither assertion proves the external provider's behavior.
 
 ## Keeping a fake honest
 

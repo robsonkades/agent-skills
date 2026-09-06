@@ -7,7 +7,7 @@
 | Request coalescing      | Many semantically identical concurrent reads                                    | Shared failure/latency/cancellation; auth and consistency must be keyed  |
 | Cache in front of key   | Read-hot, value tolerates a TTL's staleness                                     | Staleness, invalidation, memory — `caching-strategies` owns the decision |
 | Read replica of a shard | Read-hot and replica consistency/lag satisfies the read contract                | Lag and stale routing become observable — `consistency-models`           |
-| Key salting             | Write-hot single key, reads rare or aggregate                                   | Every read of that key fans out to S partitions, permanently             |
+| Key salting             | Write-hot single key, reads rare or aggregate                                   | Full-key reads fan out; known-item reads may route directly              |
 | Dedicated shard         | One named, persistently large or hot tenant; the set is small and slow-changing | An operational special case in routing, capacity and runbooks            |
 | Composite shard key     | One tenant is too large for any shard and its data subdivides naturally         | A migration — `sharding-and-partitioning`                                |
 | Partition split         | Store supports online split and the hot region is a contiguous range            | A move while serving; see below                                          |
@@ -20,7 +20,10 @@ waiter's cancellation cancels shared work; bound waiter count and execution time
 
 ## Salting, written out
 
-Split one logical key into S physical keys:
+Split one logical key into S physical keys only if its operations can be partitioned without
+breaking required invariants. These are partial Java 17-compatible snippets: `stableHash`,
+`store`, `Entry` and key encoding are application-defined; S must be positive and the layout
+and hash stable across writers, readers and retries.
 
 ```java
 // Write: a stable entity/event id gives deterministic retry routing. Random selection needs
@@ -28,7 +31,8 @@ Split one logical key into S physical keys:
 int bucket = Math.floorMod(stableHash(eventId), SPLIT_FACTOR);
 String writeKey = key + '#' + bucket;
 
-// Read: every sub-key must be consulted and the results merged.
+// Full-key read: sequential, bounded example; store.get returns a non-null bounded list.
+// A known entity id can instead route directly to its calculated bucket.
 List<Entry> merged = IntStream.range(0, SPLIT_FACTOR)
         .mapToObj(i -> store.get(key + '#' + i))
         .flatMap(List::stream)
@@ -37,12 +41,14 @@ List<Entry> merged = IntStream.range(0, SPLIT_FACTOR)
 
 Consequences to accept before shipping it:
 
-- **Read cost multiplies by S**, and read latency becomes the maximum over S partitions
-  rather than one — the tail amplification of `tail-latency-analysis` applies to a fan-out
-  of S exactly as it does to a fan-out over shards.
-- **S is baked into the data.** Changing S later means rewriting the key's rows; treat it
-  like a shard key and choose the smallest S that carries the write rate.
-- **Only append-style workloads salt cleanly.** Counters, event streams and append-only lists
+- **Full-key reads require S bucket queries**, including pagination where needed. The
+  sequential snippet accumulates service times; concurrent fan-out approaches the slowest
+  branch plus coordination only with enough concurrency. Bound concurrency, result bytes,
+  deadlines and partial-failure behavior. Known-item reads may calculate one bucket.
+- **S is part of the layout.** Changing it requires migration or explicit versioned layouts
+  that readers and retries understand; do not silently recompute old retries under a new S.
+  Old/new layouts increase read and operational costs until retired.
+- **Independent entries or mergeable updates are required.** Counters, event streams and append-only lists
   can have defined merges, but global ordering, uniqueness and atomic aggregate checks no
   longer come for free. A single mutable value does not: S copies can disagree.
 - **Retries must return to the same bucket.** Randomly choosing again can duplicate an event
@@ -55,8 +61,11 @@ Consequences to accept before shipping it:
 ## Moving a partition while it serves
 
 The correctness problem in a live migration is the **double-ownership window**: an interval
-during which both the old and the new owner believe they own the partition. Any write that
-lands on the old owner after the new one is authoritative is lost, and nothing logs it.
+during which both the old and the new owner believe they own the partition. A write committed only at the old owner after target activation may be absent from the
+serving state even if retained in the source log. Durable logging alone is not reconciliation.
+
+Illustrative single-authority protocol; use the store's supported migration mechanism and
+verify equivalent guarantees rather than layering an incompatible custom epoch scheme.
 
 Sequence:
 
@@ -109,11 +118,11 @@ restartable, idempotent transition.
 
 - Replay the incident's traffic shape — the recorded per-key distribution, not a uniform
   load — against the repaired system, and assert the max/mean skew ratio stays under
-  tolerance. A uniform synthetic load cannot reproduce a hot partition and will pass
-  regardless of whether the repair works.
+  tolerance. Uniform traffic alone misses intrinsic popularity skew and cannot establish that its
+  repair works, though it can still reveal placement or capacity imbalance.
 - For the migration path, inject the failure that matters: pause a client between reading the
-  shard map and issuing its write, complete the cut-over, then release it. Assert the write is
-  rejected. A migration test that does not include a stale writer has not tested the fencing.
+  shard map and issuing its write, complete the cut-over, then release it. Assert it cannot commit under stale authority: reject it or safely reroute with epoch and
+  idempotency checks. A migration test that does not include a stale writer has not tested the fencing.
 - Crash and restart the controller after every state transition. Resume from a durable
   migration record without repeating destructive steps; verify that source and target
   checksums use a stable snapshot/cut position rather than racing live writes.
@@ -126,3 +135,6 @@ restartable, idempotent transition.
 - [Apache Kafka operations: partition reassignment throttling](https://kafka.apache.org/documentation/#basic_ops_cluster_expansion)
 - [Amazon DynamoDB adaptive capacity and split-for-heat behavior](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
 - [Google Cloud Spanner: schema design and hotspot avoidance](https://cloud.google.com/spanner/docs/schema-design)
+- [DynamoDB random and calculated write sharding](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-sharding.html)
+  — distinguishes full-key queries from directly routed item reads; apply the semantic
+  distinction without assuming DynamoDB mechanisms exist in another store.

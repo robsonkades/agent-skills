@@ -39,23 +39,23 @@ Deep/Dossier. Persistence changes where state lives, not how risky the feature i
 
 ## Which phases each depth runs
 
-| Phase                  | Light                       | Standard                                | Deep                                           |
-| ---------------------- | --------------------------- | --------------------------------------- | ---------------------------------------------- |
-| Definition intake      | baseline or concise input   | versioned baseline                      | versioned Product/Engineering or Tech baseline |
-| Discovery              | inline                      | written                                 | written                                        |
-| Repository context     | touched files               | targeted report                         | targeted report plus authority sources         |
-| Clarification          | only consequential gaps     | adaptive rounds                         | adaptive rounds plus challenge                 |
-| Scope                  | one boundary statement      | scope items                             | scope items and revision impact                |
-| Architecture impact    | only if boundary appears    | impact map                              | impact map and independent parties             |
-| Solution analysis      | only if real choice         | real choices only                       | every material choice                          |
-| Feasibility experiment | no                          | only for a blocking uncertainty         | whenever evidence cannot decide                |
-| Decision/ADR           | local line if needed        | material choices                        | material choices and cross-boundary ADRs       |
-| Contract definition    | no boundary, so none        | each changed boundary                   | each changed boundary and coexistence          |
-| Decomposition          | none or RES-* only          | RES-*; child features only if valuable  | valuable child features plus RES-*             |
-| Risk                   | specific discovered risk    | risks above LOW and boundary candidates | full derived register                          |
-| Implementation plan    | inline                      | concise dossier plan                    | full dossier plan                              |
-| Readiness              | concise intake/finish check | selected applicable gates               | full applicable gates                          |
-| Execution/progress     | ordinary execution          | tracked RES-*                           | tracked RES-*                                  |
+| Phase                  | Light                       | Standard                                        | Deep                                                       |
+| ---------------------- | --------------------------- | ----------------------------------------------- | ---------------------------------------------------------- |
+| Definition intake      | baseline or concise input   | versioned baseline                              | versioned Product/Engineering or Tech baseline             |
+| Discovery              | inline                      | written                                         | written                                                    |
+| Repository context     | touched files               | targeted report                                 | targeted report plus authority sources                     |
+| Clarification          | only consequential gaps     | adaptive rounds                                 | adaptive rounds plus challenge                             |
+| Scope                  | one boundary statement      | scope items                                     | scope items and revision impact                            |
+| Architecture impact    | only if boundary appears    | impact map                                      | impact map and independent parties                         |
+| Solution analysis      | only if real choice         | real choices only                               | every material choice                                      |
+| Feasibility experiment | no                          | reclassify if a decision-relevant PoC is needed | bounded experiment only when its result changes a decision |
+| Decision/ADR           | local line if needed        | material choices                                | material choices and cross-boundary ADRs                   |
+| Contract definition    | no boundary, so none        | each changed boundary                           | each changed boundary and coexistence                      |
+| Decomposition          | none or RES-* only          | RES-*; child features only if valuable          | RES-*; child features only if independently valuable       |
+| Risk                   | specific discovered risk    | risks above LOW and boundary candidates         | full derived register                                      |
+| Implementation plan    | inline                      | concise dossier plan                            | full dossier plan                                          |
+| Readiness              | concise intake/finish check | selected applicable gates                       | full applicable gates                                      |
+| Execution/progress     | ordinary execution          | tracked RES-*                                   | tracked RES-*                                              |
 
 Applicability still wins: a Deep feature with no persisted data marks migration concerns N/A with
 evidence; it does not invent a migration section.

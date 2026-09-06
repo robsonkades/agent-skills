@@ -69,14 +69,19 @@ and JDK combinations must be tested.
 
 ### 5. Choose sampling as an estimator and capacity policy
 
-Head sampling decides early with limited information and bounds application/export volume.
+Head sampling decides early with limited information and reduces expected recording/export
+volume. A probability is not a hard spans/bytes-per-second cap: traffic, trace size and
+expensive attribute construction can still grow. Use separate resource bounds.
 Parent-based policies preserve the upstream decision, but trust-boundary and remote-parent
 semantics need review.
 
 Tail sampling buffers spans and decides from later trace properties. It can retain errors
-or high latency but costs memory/CPU, delays export, loses late spans, and requires spans of
+or high latency but costs memory/CPU, delays export, can miss late evidence, and requires spans of
 a trace to be routed consistently enough for the policy. Size decision wait, expected
 traces, policies and collector shards from measured arrival/completion distributions.
+Tail policy cannot recover spans dropped or not exported upstream. Retaining all errors
+requires those candidate traces to reach it; combining low-rate head sampling with tail
+error rules only retains errors in the surviving population.
 
 Sampling policies change the dataset. Preserve decision metadata and use unbiased
 probabilistic coverage when population estimation matters.
@@ -88,6 +93,8 @@ buffering if used, and drop behavior. Under backend/network failure, telemetry m
 unboundedly consume application or Collector resources. Monitor the telemetry pipeline with
 independent signals: accepted/exported/dropped items, queue utilization, export failures,
 collector CPU/memory and decision latency.
+Queue counts are not necessarily byte bounds. Include in-flight spans, payload sizes,
+retry retention and exporter buffers, and verify each component's units and failure behavior.
 
 ### 7. Measure overhead experimentally
 
@@ -106,14 +113,14 @@ under normal and failure scenarios. Report confidence and environment, not one p
 
 ## Sampling decision table
 
-| Need                          | Prefer                                | Main limitation                         |
-| ----------------------------- | ------------------------------------- | --------------------------------------- |
-| bounded representative sample | probabilistic head sampling           | rare late outcomes may be missed        |
-| preserve upstream decision    | parent-based policy                   | remote trust and biased upstream sample |
-| retain errors/slow traces     | tail sampling plus consistent routing | buffering, late/incomplete traces       |
-| low-volume critical journey   | always-on or targeted head rule       | cost/cardinality/privacy                |
-| fleet rates/SLO quantiles     | metrics with exemplars                | less per-request detail                 |
-| exploratory incident capture  | time-bounded increased sampling       | pipeline overload/data exposure         |
+| Need                         | Prefer                                | Main limitation                                   |
+| ---------------------------- | ------------------------------------- | ------------------------------------------------- |
+| representative trace sample  | probabilistic head sampling           | no hard volume bound; rare outcomes may be missed |
+| preserve upstream decision   | parent-based policy                   | remote trust and biased upstream sample           |
+| retain errors/slow traces    | tail sampling plus consistent routing | buffering, late/incomplete traces                 |
+| low-volume critical journey  | always-on or targeted head rule       | cost/cardinality/privacy                          |
+| fleet rates/SLO quantiles    | metrics with exemplars                | less per-request detail                           |
+| exploratory incident capture | time-bounded increased sampling       | pipeline overload/data exposure                   |
 
 ## Attributes and baggage
 
@@ -128,7 +135,9 @@ under normal and failure scenarios. Report confidence and environment, not one p
 
 ## Span lifecycle rules
 
-- End spans in a finally path and close Scope in lexical order.
+- End synchronous spans in a finally path and close Scope in lexical order on the thread
+  where it was opened. For asynchronous work, close the caller's Scope before returning
+  and end the operation span at its actual terminal completion; scope and span lifetimes differ.
 - Record exception details and status according to semantic conventions; exception text can
   contain sensitive/high-cardinality data.
 - Prefer library/agent spans at protocol boundaries; add manual spans where they represent
@@ -170,12 +179,18 @@ coverage; do not claim premain is the only possible mechanism.
 
 ## Cross-skill routing
 
-- [instrumentation patterns](references/instrumentation-patterns.md)
-- [sampling, configuration and overhead](references/sampling-and-config.md)
+- [instrumentation patterns](references/instrumentation-patterns.md) — read when adding spans,
+  fixing context propagation or connecting exemplars to traces.
+- [sampling, configuration and overhead](references/sampling-and-config.md) — read when sizing
+  the sampling/export pipeline or designing an overhead/failure experiment.
 - distributed-tracing-design for span topology and semantic boundaries.
 - metrics-and-cardinality for metric dimensions.
 - tail-latency-analysis for causal interpretation.
 - continuous-profiling/JFR for runtime attribution.
+
+For a review, return the affected boundary, observed evidence, proposed change and focused
+validation results or gaps. Missing deployment/version evidence makes configuration claims
+conditional; inspect it before prescribing options or upgrades.
 
 ## Authoritative references
 

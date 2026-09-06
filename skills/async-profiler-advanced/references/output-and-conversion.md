@@ -24,8 +24,16 @@ asprof list <pid>
 asprof --help
 ```
 
-Use the help and documentation from that exact release. Examples below express intent; test
-them against the installed binary before production use.
+Use the help and documentation from that exact release. The command templates below use the
+v4.5 interface. Replace `<pid>` before execution (angle brackets are shell syntax), run from
+the intended namespace with target-compatible credentials, and replace output names with
+unique absolute paths writable by the target. Verify platform/JDK support, free disk, session
+ownership, and overhead in a representative trial; these are not validated production defaults.
+
+When a profiler is already loaded, compare `asprof -v <pid>` with local `asprof -v` under the
+agreed attach permissions. v4.5 documents the PID form as querying the loaded agent. A new
+launcher on disk does not establish which agent produced the recording. Coordinate any
+mismatch with the session owner; do not replace or stop their session to align versions.
 
 ## Bounded sessions
 
@@ -47,7 +55,7 @@ Allocation source with an explicit sampling interval:
 asprof -e alloc --alloc 2m -d 60 -f alloc.jfr <pid>
 ```
 
-Contended waits above a declared threshold:
+Contended waits sampled at a cumulative wait-time interval (not an individual wait cutoff):
 
 ```bash
 asprof -e lock --lock 2ms -d 60 -f lock.jfr <pid>
@@ -56,7 +64,8 @@ asprof -e lock --lock 2ms -d 60 -f lock.jfr <pid>
 The values are examples, not safe defaults. Choose them from minimum useful observations,
 thread/allocation/event rate, acceptable perturbation, incident duration, and storage budget.
 
-For an externally aligned experiment, use explicit lifecycle:
+For an externally aligned experiment, use explicit lifecycle only after coordinating exclusive
+session ownership and arranging a maximum duration/cleanup path:
 
 ```bash
 asprof start -e cpu -f profile.jfr <pid>
@@ -66,8 +75,15 @@ asprof stop <pid>
 ```
 
 Only one compatible profiler session may control a JVM at a time in typical deployments.
-Check status and coordinate with continuous profilers/JFR agents before starting. A failed
-`start` must not be followed by an assumed-valid `stop` artifact.
+Check status and coordinate with continuous profilers/JFR agents before starting. Status is
+not an ownership lock: serialize controllers. If `start` fails or a session already exists,
+do not issue `stop`, `resume`, or replacement commands against it. A cleanup handler may stop
+only the session this controller successfully started while it still owns that session.
+
+`-d` is a client-side start/wait/stop sequence, not a guarantee that the target stops when the
+client is killed. Use the pinned release's documented agent-side timeout (v4.5 supports
+`--timeout`) or an independently supervised stop path, and test controller loss in staging.
+Keep recording duration separate from loop rotation: `--loop 1h` below repeats indefinitely.
 
 ## Event combinations
 
@@ -127,6 +143,13 @@ Use a timestamp or sequence token so iterations cannot overwrite each other. Als
 A file pattern prevents overwrite; it does not provide retention or backpressure. Continuous
 profiling ownership belongs to `continuous-profiling`.
 
+In v4.5, `--memlimit` bounds call-trace storage, not total profiler memory, JVM RSS or file size.
+Once exhausted, new stack traces are no longer recorded; an apparently stable profile can omit
+new workload paths. `--chunksize` and `--chunktime` rotate JFR chunks within a recording, not
+enforce a total disk quota. Define an independent disk/retention limit and stop condition;
+record any trace-storage exhaustion as incomplete coverage. See the tagged
+[option scopes](https://github.com/async-profiler/async-profiler/blob/v4.5/docs/ProfilerOptions.md).
+
 ## Native and instrumentation sessions
 
 Method tracing and native-allocation/lock interception are instrumentation, not ordinary
@@ -134,9 +157,23 @@ fixed-rate sampling. Scope them by exact method/library/process, threshold, dura
 and memory limit. First reproduce in staging or canary. Measure overhead and failure behavior
 at peak event rate, not only average traffic.
 
-Live native/Java allocation views are censored by recording end and collection/free timing.
-Keep the window and GC/load context. A surviving allocation is a candidate for ownership
-analysis, not proof of a leak.
+For v4.5 method latency, use `--trace 'com.example.Service.handle:10ms'`, replacing the
+method with an actual instrumentable target; do not invent `-e trace`. This filters recorded
+calls by duration, but every instrumented invocation still incurs work. Runtime
+retransformation may deoptimize code; compare warmed controls and compilation behavior.
+
+For native leak candidates, retain frees and convert explicitly:
+
+```bash
+jfrconv --nativemem --leak --total native.jfr native-unmatched-bytes.html
+```
+
+This requires a readable native-allocation JFR with free events and the matching converter.
+Do not use `--nofree` for this question. `--total` selects bytes; without it the view counts
+tracked allocations. The default leak tail exclusion (10%) and missing pre-window allocations
+limit the inference. Producer `--live` is Java live-object profiling, not native leak mode.
+Keep the window, GC/free timing, and workload context; unmatched allocations are candidates,
+not proof of a leak. See [v4.5 profiling modes](https://github.com/async-profiler/async-profiler/blob/v4.5/docs/ProfilingModes.md).
 
 ## Conversion
 
@@ -147,8 +184,20 @@ bulk conversion:
 2. record producer/converter versions and command;
 3. enumerate input event classes/counts;
 4. convert without overwriting the original or prior derived artifact;
-5. compare output totals and rejected/unknown event diagnostics;
+5. compare selected-event weights and rejected/unknown event diagnostics (mark unavailable
+   diagnostics as unknown);
 6. test one known stack/thread/state/time slice.
+
+For a v4.5 multi-event JFR, select the intended view rather than accepting a default:
+
+```bash
+jfrconv --wall --threads recording.jfr wall.html
+jfrconv --lock --total recording.jfr lock-duration.html
+```
+
+Inputs must actually contain the selected events. Batched wall record counts need not equal
+expanded sample totals. A lock duration view is accumulated sampled wait time, not the
+number of requests delayed. Verify a known thread/stack and weight before interpreting.
 
 Converter upgrades can legitimately change names, stack reconstruction, batching expansion,
 colors, filters, and supported events. Treat a changed graph after converter upgrade as a
@@ -160,13 +209,24 @@ Capture repeated A/B trials with comparable event selection, workload mix, warm-
 filters, symbols, and tool/JDK versions. Prefer original time-bearing recordings; export
 collapsed stacks only as a derived aggregate.
 
-If using folded stacks, first test argument order and sign with synthetic files:
+If using folded stacks, first test argument order with synthetic files. Create
+`baseline.collapsed` containing `root;old 100` and `candidate.collapsed` containing two
+lines: `root;old 80` and `root;new 20`. With the v4.5 converter:
 
-```text
-baseline: root;old 100
-candidate: root;old 80
-candidate: root;new 20
+```bash
+jfrconv --diff baseline.collapsed candidate.collapsed diff.collapsed
+jfrconv --diff baseline.collapsed candidate.collapsed diff.html
 ```
+
+The collapsed result must contain `root;old 100 80` and `root;new 0 20` (order irrelevant):
+baseline first, candidate second. Reverse the inputs: v4.5 emits `root;old 80 100` but
+omits `new`, because it exists only in the baseline of that reversed comparison. The
+[differential implementation](https://github.com/async-profiler/async-profiler/blob/v4.5/src/converter/one/convert/FlameGraph.java)
+walks the candidate tree. Compare both original aggregates (and, when useful, both directions)
+to account for disappeared stacks; do not infer completeness from one differential view.
+Inspect the HTML tooltip/legend before assigning a color meaning. In v4.5 `--norm`
+normalizes hidden-class/lambda **names**, not sample totals; do not use it as exposure
+normalization. See the [converter entrypoint](https://github.com/async-profiler/async-profiler/blob/v4.5/src/converter/one/convert/Main.java).
 
 Verify that the converter labels `old` as decreased and `new` as increased. Normalize unequal
 sample totals only if event exposure is intended to be compared proportionally. Do not
@@ -223,8 +283,8 @@ commands that appear in process listings/logs.
 
 ## Authoritative references
 
-- [Profiler options](https://github.com/async-profiler/async-profiler/blob/master/docs/ProfilerOptions.md)
-- [async-profiler troubleshooting](https://github.com/async-profiler/async-profiler/blob/master/docs/Troubleshooting.md)
+- [Profiler options](https://github.com/async-profiler/async-profiler/blob/v4.5/docs/ProfilerOptions.md)
+- [async-profiler troubleshooting](https://github.com/async-profiler/async-profiler/blob/v4.5/docs/Troubleshooting.md)
 - [async-profiler releases](https://github.com/async-profiler/async-profiler/releases)
 - [JDK `jfr` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html) —
   inspect/print/assemble/disassemble behavior for JDK 25; use the target JDK documentation.

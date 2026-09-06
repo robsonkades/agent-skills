@@ -29,6 +29,10 @@ DDL/cutover window, reversibility, data sovereignty, and exit cost:
 ```
 
 If these are missing, produce the evidence plan rather than selecting a winner.
+Inspect build/toolchain, resolved dependencies and runtime images for the actual JVM stack;
+this skill declares no universal JDK/driver baseline. A recommendation does not authorize an
+upgrade. Scope the evidence plan to missing decisive inputs, preserving conclusions already
+supported by the available evidence.
 
 ## Greenfield workflow
 
@@ -47,17 +51,21 @@ If these are missing, produce the evidence plan rather than selecting a winner.
 ## Migration workflow
 
 1. Inventory five surfaces separately: schema; SQL; concurrency; JVM integration; operations.
-   Converting `CREATE TABLE` covers the least dangerous surface.
+   Schema conversion alone does not establish compatibility; schema and constraint mistakes
+   can be as consequential as SQL, concurrency or operational differences.
 2. Turn every source-specific behavior into an explicit destination invariant or an accepted change.
    Do not transliterate hints, types, index syntax, isolation names, or driver properties.
 3. Compare source and destination using an anonymized edge-case corpus and production-shaped load.
    Check result set, order, JDBC types, errors, plans, and work.
 4. Force concurrent interleavings for critical invariants and failure cases for DDL, partial loads,
    restart, failover, lag, timeout, and generated keys.
-5. Shadow reads and reconcile. Dual-write only with explicit idempotency, ordering, failure handling,
+5. Shadow side-effect-free reads at comparable data boundaries and reconcile without erasing
+   duplicates or other contract differences. Dual-write only with explicit idempotency, ordering, failure handling,
    and reconciliation; otherwise it creates two sources of truth.
 6. Cut over with measurable abort criteria, a bounded reconciliation window, rehearsed rollback, and
-   one owner authorized to decide.
+   one owner authorized to decide. Fence old writers and verify destination application through
+   the final source commit boundary before admitting destination writes. Reversibility after
+   that point requires a proven path for every accepted destination write.
 
 ## Non-portability rules
 

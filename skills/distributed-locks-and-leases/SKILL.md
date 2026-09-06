@@ -41,20 +41,30 @@ transaction-scoped lock in that same resource, or a repeat-safe invariant.
 2. **Name the protected resource and ask whether it can reject a stale writer.** Fencing is a
    property of the _resource_: a table with a fence column can enforce it, a third-party HTTP API
    generally cannot. This decides everything below — `references/fencing-tokens.md`.
-3. **If it cannot be fenced, change the requirement**: make the operation idempotent
-   (`idempotency`), make concurrent writers converge, or accept the lock as an _efficiency_
-   measure whose violation must be survivable.
+3. **If it cannot be fenced, preserve the invariant through another mechanism**: operation-scoped
+   idempotency (`idempotency`), invariant-preserving convergence or serialization at the resource.
+   Treat the lock as an efficiency measure only if duplicate/concurrent effects are explicitly
+   acceptable; do not silently weaken a correctness requirement.
 4. **Choose the implementation from the failure mode you can tolerate**, not from what is already
    deployed: TTL leases (Redis), quorum/session-backed locks (etcd/ZooKeeper), and
    connection/transaction-scoped database locks have different expiry and availability modes.
 5. **Write acquire and release with an owner token.** The lock value is a unique token; release
    compares it and deletes only on a match, atomically. A bare `DEL` releases whoever holds it
    now — a lock-stealing bug that appears only after the first expiry.
+   Renewal must also atomically compare the owner token before extending expiry. A timeout is
+   an unknown outcome, not a grant; stop starting work until ownership is established.
 6. **Size the lease as a liveness trade-off, not a proof.** Use measured duration and pause
    distributions plus headroom; choose the crash-recovery delay you can tolerate. No observed
    percentile bounds future pauses, so correctness must survive expiry.
-7. **Test with a stalled holder, not two threads.** `kill -STOP` the holder past the TTL, let a
-   second process acquire, resume the first, and assert the _resource_ rejected its write.
+7. **Test a stalled holder and successor claim.** In an isolated test, pause the holder past the
+   TTL, let a second process acquire and commit its resource claim, resume the first, and assert
+   the resource rejected its write.
+
+Record the target JDK/client-library versions, lock-store topology/persistence and exact resource
+transaction/conditional-write semantics. Java/SQL examples are partial protocol sketches, not a
+declared runnable Java baseline. Inspect project dependencies before adapting APIs; do not upgrade
+to fit them. Deliver the invariant, grant/claim/effect boundaries, failure assumptions, evidence
+and remaining validation. Missing resource semantics means the safety claim remains unproven.
 
 ## Decision block
 
@@ -106,13 +116,16 @@ Prefer instead when:
   objection applies to every lock service equally. The criterion is not who is right: **ask what
   breaks if the assumption fails.** "Duplicate work" makes it affordable; "corrupted data" means
   the protected invariant needs enforcement independent of lease timing.
-- A database row lock (`SELECT … FOR UPDATE`) fails more honestly: held by a transaction and
-  released by commit, rollback or connection loss, so there is no TTL to guess. The prices are an
+- A database row lock (`SELECT … FOR UPDATE`) is held by a transaction and released when the
+  server ends that transaction, including after it detects connection loss; client disconnection
+  need not release it immediately. It protects same-resource transactional work, not a later
+  HTTP effect from a stale client. The prices are an
   open transaction plus a pooled connection held for the whole critical section
   (`connection-pool-sizing`), and the lock's availability is the database's.
 - A **session-scoped** advisory lock (`pg_advisory_lock`, `sp_getapplock` with a session owner)
-  taken on a pooled connection leaks: the connection returns to the pool still holding it and
-  the next borrower inherits it. Use the transaction-scoped form (`pg_advisory_xact_lock`).
+  can leak when a connection returns to its pool without explicit unlock. Prefer the transaction
+  form when its scope fits (`pg_advisory_xact_lock`), or own the session and cleanup explicitly.
+  Verify acquisition success and keep protected work on the required session/transaction.
 - Lock the narrowest key that expresses the invariant (`order:{id}`, not `orders`), assume no
   reentrancy, and decide what happens when the lock store is unreachable — fail closed or fail
   open. "Log and continue" is fail-open chosen by accident.

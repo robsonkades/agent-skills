@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: varhandles-and-memory-ordering
-version: 1.2.0
+version: 1.2.1
 description: >-
   Designing and proving low-level Java variable access with VarHandle plain, opaque,
   acquire/release and volatile modes; compare-and-set/exchange, weak CAS, read-modify-write,

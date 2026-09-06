@@ -61,16 +61,21 @@ Split heap committed/used/live-after-collection, metaspace/class loaders, code c
 stacks, direct buffers, native allocations, mappings/page cache/shared memory, and cgroup RSS/
 working set.
 
-| Evidence                                                                 | Candidate/route                                               |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------- |
-| live heap floor/retained set grows under comparable work/cycles          | `heap-dump-analysis`, `java-reference-types-and-leaks`        |
-| allocation rate rises but live floor stable                              | `allocation-profiling`, GC/capacity cost—not necessarily leak |
-| class loader/metaspace grows with redeploy/dynamic generation            | `metaspace-internals`, `jvm-class-loading`                    |
-| direct/native category grows with heap flat                              | `off-heap-memory`, `jni-and-ffm` where calls own it           |
-| RSS differs due to committed/touched pages, code, stacks, mappings/cache | `jvm-memory-regions`, `linux-for-jvm`                         |
-| cgroup OOM/exit 137                                                      | verify reason/events/limits before heap conclusion            | `container-awareness`, `linux-for-jvm`, memory owner |
+| Evidence                                                                 | Candidate/route                                                                  |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| live heap floor/retained set grows under comparable work/cycles          | `heap-dump-analysis`, `java-reference-types-and-leaks`                           |
+| allocation rate rises but live floor stable                              | `allocation-profiling`, GC/capacity cost—not necessarily leak                    |
+| class loader/metaspace grows with redeploy/dynamic generation            | `metaspace-internals`, `jvm-class-loading`                                       |
+| direct/native category grows with heap flat                              | `off-heap-memory`, `jni-and-ffm` where calls own it                              |
+| RSS differs due to committed/touched pages, code, stacks, mappings/cache | `jvm-memory-regions`, `linux-for-jvm`                                            |
+| cgroup OOM/exit 137                                                      | verify events/limits first; `container-awareness`, `linux-for-jvm`, memory owner |
 
-NMT must be enabled at startup at an appropriate level; absence does not prove no native growth.
+HotSpot NMT must be enabled at startup; it cannot be started on the already running JVM.
+Do not restart a failing process merely to enable it before preserving existing evidence.
+Even enabled NMT is not a complete process/RSS ledger: third-party native allocations and
+some library/CDS memory are outside its coverage. Flat NMT therefore does not rule out native
+growth; compare OS mappings/residency and library ownership with the memory specialist.
+See [JDK 25 NMT scope and lifecycle](https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html).
 
 ## “Throughput does not scale with concurrency”
 

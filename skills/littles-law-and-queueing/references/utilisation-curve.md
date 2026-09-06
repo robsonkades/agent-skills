@@ -29,7 +29,8 @@ downstream contention; a CPU with SMT/NUMA does not supply identical independent
 
 ## Variability is a first-class capacity input
 
-For an M/G/1 FCFS queue with Poisson arrivals and general service time:
+For a stable M/G/1 FCFS queue (`ρ<1`), independent identically distributed service times
+independent of Poisson arrivals, and finite first and second service moments:
 
 ```text
 E[Wq] = λ E[S²] / (2(1−ρ))
@@ -39,6 +40,8 @@ E[Wq] = λ E[S²] / (2(1−ρ))
 `C_s` is the coefficient of variation of service time. At the same mean demand and utilisation,
 larger variance raises queue wait. Deterministic service (`C_s=0`) has half the M/M/1 mean queue
 wait (`C_s=1`); a rare slow path can dominate `E[S²]` even when its request fraction is small.
+With an infinite second moment the mean wait can be infinite even below unit utilisation;
+the finite formula is not a justification for discarding rare slow observations.
 
 Example for one shared server:
 

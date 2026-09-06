@@ -33,6 +33,11 @@ that dominate a real heap.
 
 **No size without three things attached: the JDK build, the tool, and the header mode.**
 
+Inspect the project's toolchain, deployed JVM, collector, heap size and effective alignment/
+compression flags before applying these HotSpot measurements. They do not authorize a Java
+upgrade, dependency addition or flag change. Historical `[executed]` tables below record the
+stated experiments; they are not a claim that every applying agent reran those experiments.
+
 A pasted `ClassLayout` listing with no command line is unusable, not merely incomplete. The
 same class measures 32 or 24 bytes and the same array measures 24 or 16, on one JVM, decided
 by one flag. On JDK 27 that flag's default flips `[source-only: JEP 534]`, so an unlabelled
@@ -53,7 +58,7 @@ array       = alignUp( arrayBase + n × elementSize , ObjectAlignmentInBytes )
 ```
 
 For the ordinary, non-`@Contended` HotSpot layouts tested here, `Σ field sizes` is the plain
-sum of declared and inherited fields. Do not promote this measured model to a JVM
+sum of declared and inherited non-static fields. Do not promote this measured model to a JVM
 specification: VM-injected fields, special classes, value-class experiments, alignment flags
 and future layout algorithms require a target-build measurement. Holes are an output of the
 layout, not a portable input. The model matched 650 generated classes in both tested header
@@ -70,11 +75,11 @@ modes `[executed]` — 0–20 random fields, 2–4-deep inheritance chains, zero
 Other field sizes, executed, all modes: `boolean` 1, `byte` 1, `char` 2, `short` 2, `int` 4,
 `float` 4, `long` 8, `double` 8.
 
-**Every table in this skill is measured with compressed oops on** — the second precondition,
+**The base tables use compressed oops; explicit wide-reference tables are exceptions** — the second precondition,
 and the one that changes without a flag. Ergonomics commonly turns them off near **32 GB** at
 8-byte alignment, and
-the boundary is off-by-one from how it is usually quoted, exactly like the 8191 GB bound
-above: measured on 25.0.3, `-Xmx32736m` still gives `UseCompressedOops = true {ergonomic}` and
+the boundary is below how it is usually quoted: measured on 25.0.3,
+`-Xmx32736m` still gives `UseCompressedOops = true {ergonomic}` and
 `-Xmx32740m` already gives `false {default}` — so `-Xmx32g` is **off**, not the last value on.
 `-Xmx31g` on / `-Xmx32g` off reproduces on 26.0.2 `[executed]`. The margin is the heap
 alignment, so it moves with collector and page size; the boundary itself scales with
@@ -111,11 +116,11 @@ Three things the arithmetic gets wrong if you stop before the `alignUp`:
 1. **Pin the header mode before anything else**, on the target build — never assumed from the
    release number, and never read off the command line. The flag can read `true` where it was
    passed and `false` where it runs: two conditions cause that on 25.0.3 — disabled compressed
-   class pointers, and a heap larger than 8191 GB on a collector that **moves** objects — each
+   class pointers, and a heap larger than 8191 GB with header-based forwarding — each
    announced only by a one-line `warning` on stderr that nobody reads.
 
    ```bash
-   java -XX:+PrintFlagsFinal -version | grep UseCompactObjectHeaders   # before starting
+   java <same target flags> -XX:+PrintFlagsFinal -version | grep UseCompactObjectHeaders
    jcmd <pid> VM.flags -all | grep UseCompactObjectHeaders             # already running
    ```
 
@@ -138,7 +143,8 @@ Three things the arithmetic gets wrong if you stop before the `alignUp`:
 4. **Only now compare shapes.** Record versus final class versus primitive array versus
    parallel arrays versus a boxed collection, at the stated population size, in measured
    bytes per element. Read `references/shape-decision.md`. Emit bytes per element and the
-   total at N, in both header modes, never a percentage alone.
+   total at N, in both header modes when supported; otherwise label the alternate model
+   hypothetical rather than changing the project baseline. Never report a percentage alone.
 5. **Measure to confirm the prediction.** Read `references/jol-operating-procedure.md` for
    the invocation that works on JDK 25/26, the four ways JOL fails — one of which throws on
    the first record you try — and the `Instrumentation.getObjectSize` cross-check. Read it
@@ -181,17 +187,18 @@ it is the point of that reference.
 - **Treat compact object headers as a measured deployment decision.** Answer
   only the footprint half: the saving is workload-specific and frequently zero, so quote it
   from the class mix, and say what would prove it — the same live-set measurement in both
-  modes on the same build (heap after a full GC, or `GraphLayout.totalSize()` over the actual
+  modes on the same build (heap after a verified collection, or `GraphLayout.totalSize()` over the actual
   population), never an object count times eight. **What the flag costs, its prerequisites,
   its lifecycle and its per-release defaults are `jvm-performance-review`'s; route there
   rather than summarising.**
-- **Say plainly that boxed collections gain almost nothing, and name the heap you assumed.**
+- **Distinguish the boxed type, collection structure and reference width.**
   Under compressed oops `Integer`, `Boolean`, `ArrayList` and the `String` object are all
   unchanged, and `ArrayList<Integer>` of 1000 distinct values measured **20,976 bytes in both
   modes** on 25.0.3 and 26.0.2. At 32 GB and above the same population measures 25,920 → 25,912 — the
   `ArrayList` itself now saves 8 bytes and nothing else does, so the conclusion survives but
   the equality does not. A boxed-collection-heavy heap is the case where an "8 bytes per
-  object" plan overstates the JDK 27 saving the most, at either oop size.
+  object" plan overstates the saving. This is not a rule for all boxed collections:
+  `Long`/`Double` boxes and, with compressed oops, map nodes do shrink in the tables.
 - **State the encoding — and the oop size — before making any claim about a string.** Under
   compressed oops the `String` object is 24 bytes in both modes at every length, so only its
   `byte[]` payload can shrink and the rule runs over **payload bytes**: 8 when
@@ -210,24 +217,27 @@ it is the point of that reference.
   default header mode is read from JEP 534 (`Closed / Delivered`, Release 27, confirmed at
   `openjdk.org/jeps/534`), not observed. `-XX:+UseCompactObjectHeaders` does not exist at all
   on JDK 21 — the JVM refuses to start with `Unrecognized VM option` (executed, 21.0.12+8).
-- **Populate a benchmark population with values outside the `Integer` cache.** `Integer[1000]`
-  filled from −128..127 measures the array and almost nothing else, because the boxes are
-  shared. Every boxed figure here uses values above 100,000.
+- **Match sharing to the question.** To model distinct boxes, verify values are outside the
+  configured `Integer` cache (which can exceed 127). To model a real cached population,
+  retain its sharing: JOL counts each reachable box once, not once per reference. Reachable
+  bytes are not incremental allocation or retained bytes. See the JOL procedure's array-root trap.
 - **A per-object saving is not a heap saving until it is multiplied by the live population.**
-  Eight bytes off `HashMap$Node` is worth nothing if the map holds a thousand entries and
-  everything if it holds forty million. Ask for N before answering.
-- **Do not reach for `-XX:+PrintFieldLayout`.** It is a `develop` flag: on every shipping
+  Eight bytes off `HashMap$Node` saves about 8 KB at a thousand entries and 320 MB at forty
+  million. Compare with the required headroom; ask for N before estimating a total.
+- **Do not reach for `-XX:+PrintFieldLayout`.** It is a `develop` flag: on the tested production
   JDK the JVM refuses to start with it (executed, 25.0.3), there is no `-Xlog` equivalent,
-  and JOL is the only way to read a field layout on a production build.
+  and JOL is the tool used here on production builds. Direct VM/offset tooling is another
+  option; consult the JOL reference for the source-only change on JDK 28 development builds.
 - **Compact object headers buy heap bytes with class-space bytes.** The 22-bit class
-  pointer puts every `Klass` on a 1 KB boundary: **537 → 1,024 bytes per class** of
+  pointer used a shift of 10 in the measured configuration: **537 → 1,024 bytes per class** of
   compressed class space (executed, 25.0.3, 100,000 strong hidden classes), so the 1 GB
   default holds ~1.06 M classes instead of ~2 M. On a proxy- or lambda-heavy service read
   `jcmd <pid> VM.metaspace` before switching, and quote both sides.
   `references/production-footprint-checks.md` §3.
-- **Under G1, an array at or above half a region costs whole regions.** `byte[600000]`
-  occupies 1,046,076 bytes in a 2 GB G1 heap (1 MB regions), 74% over its payload;
-  `byte[1100000]` occupies two regions; Parallel charges the payload (executed, 25.0.3).
+- **Under G1, an object whose aligned size exceeds half a region reserves whole regions.**
+  `byte[600000]` requires one 1,048,576-byte region with 1 MB regions;
+  `byte[1100000]` requires two. The historical aggregate heap deltas in the production
+  reference are estimates, not exact object sizes or histogram charges.
   The per-object arithmetic is exact and the heap cost is still wrong by up to a region per
   array — size chunks against `G1HeapRegionSize`.
   `references/production-footprint-checks.md` §4.

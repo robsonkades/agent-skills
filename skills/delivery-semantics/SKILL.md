@@ -24,21 +24,29 @@ produces no error anywhere and is discovered by reconciliation months later.
 
 ## Workflow
 
+Java snippets are partial illustrations using Java 17 syntax, Kafka client 4.1 API and
+Jakarta Messaging 3.1 contracts, not complete consumers. Inspect resolved clients/provider,
+broker version, framework acknowledgement mode, transaction manager and durability/retention
+configuration. Existing project versions govern implementation; do not upgrade to fit a snippet.
+
 1. **Name the side effect and where it lands.** Inside the same broker cluster, in a
    database, or across the network at a third party. That single fact decides everything
    below; a transaction cannot span a boundary it does not control.
-2. **Locate the acknowledgement in the code.** Ack-then-process is at-most-once.
-   Process-then-ack is at-least-once. A timer-driven auto-commit is neither by design — it
-   is at-most-once for whatever the timer commits ahead of the work.
+2. **Locate confirmed progress relative to durable completion.** Acknowledging first opens
+   a loss window; completing first opens a duplicate window. Starting async work is not
+   completion. Auto-commit safety depends on the client/framework lifecycle, not a timer
+   label: inspect the Kafka coupling below.
 3. **Choose the loss/duplication trade explicitly.** Ask what the business does with a lost
-   record versus a duplicated one. Losing a metric sample is free; losing a payment is not.
+   record versus a duplicated one. Even telemetry can require completeness; use the actual
+   acceptance/reconciliation contract rather than assuming its loss is free.
 4. **Usually prefer at-least-once plus an outcome invariant.** Define which durable effect
    may happen once, how duplicates collapse, how long dedup state lives, and what happens
    after retention expires. Call this _effectively-once_ only with that scope stated. The
    handler mechanics are `idempotency`.
-5. **Reach for a transaction only when the whole read-process-write stays inside one
-   system.** For Kafka that means consuming and producing within one cluster with offsets
+5. **Name the transaction's actual participants.** For a Kafka transaction that means consuming and producing within one cluster with offsets
    committed inside the transaction. See `references/exactly-once-boundary.md`.
+   A database transaction or an explicitly supported distributed transaction has a different
+   boundary; an annotation alone does not enlist an HTTP service or another store.
 6. **Enumerate the duplicate sources that are not retries** — rebalance after a slow poll,
    redelivery after a visibility timeout expires, a duplicate already present upstream —
    and confirm the handler survives each.
@@ -56,8 +64,9 @@ produces no error anywhere and is discovered by reconciliation months later.
   possible only under named assumptions, such as durable unique IDs plus deduplication, or
   one atomic transaction containing both effect and progress. Do not turn this into the
   broader claim that useful exactly-once processing is mathematically impossible.
-- Ack before the side effect and you have chosen at-most-once. Say so in the code review,
-  or move the ack.
+- Confirmed ack before the effect chooses possible loss for that input position. It does
+  not eliminate upstream duplicate records or a provider's duplicate-delivery behavior.
+  If ack confirmation is ambiguous, do not perform the effect under an at-most-once claim.
 - Kafka auto-commit advances offsets for records returned by `poll`, not application
   completion. It can still provide at-least-once only when every returned record finishes
   before the next `poll` or close, as the Kafka client documentation requires. Asynchronous
@@ -65,14 +74,15 @@ produces no error anywhere and is discovered by reconciliation months later.
   partition offsets are committed.
 - A consumer rebalance redelivers records that were processed but not committed. Duplicates
   therefore exist even in a system with zero retries and zero broker failures.
-- A visibility-timeout queue redelivers whenever the handler outlives the timeout. Slow
+- A visibility-timeout queue makes work eligible for redelivery when the handler outlives the timeout. Slow
   handler plus fixed timeout is a duplicate generator with no failure anywhere.
 - Kafka producer idempotence deduplicates protocol retries from one producer session using
   producer identity and per-partition sequence numbers. It does not recognize the same
   business event reconstructed and sent again by application code, and it does not make an
   external consumer effect idempotent.
 - `isolation.level=read_committed` is a **consumer** setting. A transactional producer with
-  `read_uncommitted` consumers downstream buys nothing — the aborted records are read.
+  `read_uncommitted` consumers downstream does not give them committed-only visibility —
+  they may read aborted records even though the producer's atomic commit still exists.
 - The moment the handler performs a side effect outside the transactional system — an HTTP
   call, a JDBC write to another store, a file — the transaction no longer covers the
   outcome. The design needs an idempotency key, effect ledger/query-and-reconcile protocol,
@@ -88,6 +98,10 @@ produces no error anywhere and is discovered by reconciliation months later.
 - Do not test the guarantee with a happy-path integration test. Use a disposable consumer
   process/container or a deterministic fault seam to kill it between effect and commit, and
   assert both recovered state and externally visible outcome.
+
+Deliver the input identity, durable effect and progress store, named guarantee/assumptions,
+each loss/duplicate/unknown window, and a bounded disposable-fixture recovery test. Distinguish
+documented behavior from executed tests; missing provider or lifecycle evidence keeps the claim conditional.
 
 ## References
 

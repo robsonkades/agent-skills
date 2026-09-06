@@ -1,6 +1,6 @@
 # Template View and Transform View
 
-## Template View, and its one weakness
+## Template View and domain policy
 
 ```html
 <!-- Good: the template renders decisions someone else made. -->
@@ -15,16 +15,15 @@
 ```
 
 ```html
-<!-- Bad: the template decides. Untestable, uncompiled, invisible to review. -->
+<!-- Bad: the template duplicates pricing and eligibility policy. -->
 <td th:text="${line.quantity * line.unitPrice * (customer.tier == 'PREMIUM' ? 0.9 : 1.0)}"></td>
 <p th:if="${order.total > 1000 and customer.country != 'BR' and order.status != 'DRAFT'}">…</p>
 ```
 
-The second version contains a pricing rule and an eligibility rule. Neither is unit tested,
-neither is found by a search for "discount" in the Java sources, and both will diverge from
-the same rules elsewhere.
+The second version hides pricing and eligibility policy in rendering. Templates can be
+tested and reviewed, but duplicated policy can diverge from the authoritative use case.
 
-**The discipline:** everything the template needs is already decided.
+**The discipline:** business decisions are resolved before rendering; presentation choices remain.
 
 ```java
 public record OrderView(
@@ -36,28 +35,32 @@ public record OrderView(
 }
 ```
 
-A template may loop, may check for null or empty, and may choose between two labels. It may
-not compute, compare domain values, or reach through an object graph.
+A template may loop, compare presentation values and select labels. Avoid recalculating
+business policy or traversing managed lazy data. Record components are shallowly final:
+copy mutable collections when ownership requires a stable snapshot. `canBeCancelled` is a
+UI hint; recheck authorization and current business state when cancellation is requested.
 
 ## Rendering must not query
 
 ```html
-<!-- order is a JPA entity; lines is lazy. One query per render, plus N for the lines. -->
+<!-- Lazy lines may trigger SQL; nested access can add queries depending on fetch state. -->
 <tr th:each="line : ${order.lines}"></tr>
 ```
 
-If this works at all, it is because the persistence context is still open during rendering
-(Open Session In View), which means the transaction spans serialisation and a connection is
-held for the whole request (`architecture-and-performance`). If it is off, it fails with a
-lazy initialisation error.
+Access may work because data is already initialized or because a persistence context is
+open. Open Session In View does not itself keep the original service transaction or a JDBC
+connection open for the whole request. Uninitialized detached access can fail; an open
+context may issue additional SQL outside that transaction. Measure full-request query count
+and connection occupancy instead of inferring either from the annotation or template.
 
-Either way the fix is the same: build the view model inside the application layer, from a
-projection, and hand the template data with no behaviour
+When rendering performs unintended data access, materialize the required view data before
+rendering, using a projection or an explicit mapper within its resource scope
 (`query-objects-and-specifications`).
 
 ## Escaping is a security boundary
 
-Template engines escape by default. The failures come from turning it off:
+Verify the engine, template mode and output context. Thymeleaf `th:text` escapes text;
+`th:utext` deliberately emits markup:
 
 ```html
 <div th:utext="${userSuppliedHtml}">
@@ -65,12 +68,14 @@ Template engines escape by default. The failures come from turning it off:
 </div>
 ```
 
-- Use unescaped output only for content that has been sanitised by an allowlist sanitiser,
-  and do the sanitising when the content is **stored**, not when it is rendered.
-- Never build a URL or a script literal by string concatenation in a template; the escaping
-  rules differ per context (HTML body, attribute, URL, JavaScript) and an HTML escape is
-  wrong in the other three.
-- JSON embedded into a page needs JavaScript-context escaping, not HTML escaping.
+- Emit rich HTML only after a maintained allowlist sanitizer suitable for that sink. Stored
+  sanitization requires provenance and reprocessing when policy changes; render-time
+  sanitization is also valid. Do not mutate sanitized markup with unsafe content afterwards.
+- Use context-aware encoders/builders: quoted ordinary HTML attributes need attribute
+  encoding; URLs additionally need scheme validation and component encoding. HTML encoding
+  alone does not make JavaScript, event-handler attributes or dangerous URLs safe.
+- Prefer separate JSON responses. Embedded JSON needs a serializer safe for its exact HTML/
+  script context, including `</script>` breakout; ordinary JSON validity is insufficient.
 
 ## Transform View
 
@@ -104,15 +109,17 @@ void order_detail_json_shape() throws Exception {
 }
 ```
 
-The last assertion is the valuable one: it fails when someone adds a field to the view type
-that should not be public (`rpc-and-api-contracts`).
+The negative assertion protects only that named field. Validate an explicit allowed field
+set (including nested objects) or a reviewed complete schema/snapshot, plus tenant and role
+variants, to detect other unintended exposure (`rpc-and-api-contracts`). These assertions
+are a focused integration-test fragment, not a complete snapshot test.
 
 ## One model, several formats
 
 The reason to prefer Transform View when output must vary:
 
 ```java
-// One presentation model, built once, in the application layer.
+// Shared construction logic, invoked per request; not a cached cross-user instance.
 OrderDetailView view = orderQueries.detail(id).orElseThrow();
 
 // Three transforms.
@@ -126,8 +133,9 @@ void csv(@PathVariable UUID id, HttpServletResponse response) { csvWriter.write(
 byte[] pdf(@PathVariable UUID id) { return pdfRenderer.render(view(id)); }
 ```
 
-The failure to avoid is a separate query and a separate model per format, which diverge:
-the PDF shows a total the JSON does not, because two pieces of code computed it.
+Separate queries/models can be correct when format needs, authorization or data volumes
+vary. Share authoritative calculations, and define whether independently requested outputs
+must refer to the same version/snapshot. Reusing a Java type does not give snapshot consistency.
 
 ## Choosing between them
 
@@ -137,18 +145,19 @@ the PDF shows a total the JSON does not, because two pieces of code computed it.
 | JSON/XML for a program                           | Transform View                                 |
 | Several formats from the same data               | Transform View over one model                  |
 | Output structure changes frequently by designers | Template View — a designer can edit a template |
-| Output must be diffable and reviewable           | Template View — the shape is in one file       |
-| Output is assembled conditionally from parts     | Transform View — conditionals belong in code   |
+| Output must be diffable and reviewable           | Either; test the rendered contract             |
+| Output is assembled conditionally from parts     | Either; keep domain policy outside rendering   |
 
 ## Presentation model construction
 
-The presentation model is built in the application layer, from a projection, inside the
-transaction:
+When projection materialization needs a transaction, construct the model within its actual
+scope. This partial example assumes an effective transaction interceptor and projection
+implementation; `readOnly` is not an authorization or universal write-prevention boundary:
 
 ```java
 @Transactional(readOnly = true)
 public Optional<OrderDetailView> detail(OrderId id) {
-    return orderProjections.detail(id.value())        // one query, flat rows
+    return orderProjections.detail(id.value())        // verify fetch plan and query budget
         .map(row -> new OrderDetailView(
             row.id(),
             statusLabel(row.status()),                 // presentation decision
@@ -158,6 +167,10 @@ public Optional<OrderDetailView> detail(OrderId id) {
 }
 ```
 
-Nothing lazy escapes, nothing managed escapes, the shape is explicit, and the query count is
-one. This is the pattern that removes most of the failure modes above at the same time
-(`repository-pattern`).
+Verify that `row.lines()` is materialized, all required fields are detached, and the actual
+projection meets the query/row/byte budget. Neither a projection return type nor this
+annotation proves one query or a consistent snapshot (`repository-pattern`).
+
+Sources: [Thymeleaf 3.1 text, layouts and inlining](https://www.thymeleaf.org/doc/tutorials/3.1/usingthymeleaf.html),
+[OWASP context encoding and HTML sanitization](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html),
+[Spring Open EntityManager in View](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/orm/jpa/support/OpenEntityManagerInViewFilter.html).

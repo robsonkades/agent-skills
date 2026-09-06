@@ -17,6 +17,15 @@ malformed_truncated_oversized_bomb_cases: []
 
 Keep object construction outside an encode benchmark only when production also receives the object
 already built. For decode, use immutable source bytes and ensure buffer position/state is reset.
+Keep corpus size bounded and report its working set: a tiny repeatedly reused object can fit caches
+while production's variable strings, numbers and schemas do not. State whether setup/schema lookup
+is amortized or cold. Include the deployed implementation/configuration as the baseline.
+
+Define the semantic oracle before measuring: absent versus null/default, integer range, decimal
+precision/scale as required by the contract, timestamps/time zones, enum values and unknown-field
+survival through intermediaries. Use independently specified expected values and old/new golden
+fixtures; Java `equals` or a same-codec round trip may omit wire-visible distinctions. Only require
+byte equality when the protocol requires canonical bytes; otherwise compare the required semantics.
 
 ## Benchmark cells
 
@@ -46,6 +55,11 @@ Follow `jmh-microbenchmarks` and `jmh-advanced`:
 - run profiler diagnostics separately when profiler changes the decision path;
 - use normalized allocation only with its exact profiler/denominator semantics.
 
+Validate completed forks, processed corpus counts and oracle results before comparing costs.
+A fast rejection/drop or empty run is not faster successful serialization. Report failed runs as
+inconclusive, retain comparable raw runs and uncertainty, and do not claim a gain below the chosen
+practical threshold. Measure the deployed baseline with the same operation boundary and cohorts.
+
 Fixed heap and pre-touch are not universal validity requirements. They may isolate heap expansion or
 page faults while changing startup, NUMA, RSS, and GC ergonomics. Use controlled and representative
 runs when those factors matter.
@@ -68,6 +82,11 @@ For each invocation verify:
 
 A benchmark that returns a view into a buffer immediately reused by the next invocation may be fast
 and semantically invalid.
+For an asynchronous component test, deliberately delay consumption, encode another message, and
+verify the first message's bytes stay unchanged until actual consumption finishes. Exercise timeout
+and cancellation while that consumer still owns the bytes; releasing a lease at caller completion
+can be too early. After mid-write failure, reject partial output and discard or reset the codec
+according to its contract before it re-enters the pool.
 
 ## Production evidence map
 
@@ -94,7 +113,8 @@ Use realistic concurrency, arrival rate and backpressure. Include:
 - buffer-pool size, miss/fallback and direct-memory limit;
 - consumer processing and acknowledgement/retry behavior;
 - CPU quota, memory limit, network bandwidth and downstream bottlenecks;
-- open-loop or corrected workload generation for latency claims.
+- an arrival model representing production; closed-loop generators suppress offered work during
+  stalls, and histogram correction does not recreate omitted requests or overload behavior.
 
 Measure successful useful messages/s, end-to-end percentile distribution, CPU/message, allocated
 and retained memory, GC, wire bytes, errors/retries/drops, queue depth, and pool pressure.

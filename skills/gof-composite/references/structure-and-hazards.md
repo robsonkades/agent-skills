@@ -37,8 +37,8 @@ compiles everywhere and is silently unhandled by every traversal written before 
 one the compiler enumerates the sites.
 
 Use transparent only when node types are contributed by code you do not compile — then the open
-interface is the point, and leaves must implement structural operations as documented no-ops
-rather than throwing.
+interface may matter, but plugin extensibility does not require structural mutation on leaves.
+Prefer a separate mutable-branch capability; silently ignoring add/remove can lose requested work.
 
 ## Depth: the failure that reaches production
 
@@ -47,7 +47,7 @@ handles a few thousand frames; a nested-JSON payload, a pathological directory s
 generated expression tree reaches that easily.
 
 ```java
-// iterative: depth-independent
+// iterative: no recursive call stack; pending nodes still consume memory
 static long size(Node root) {
     long total = 0;
     Deque<Node> stack = new ArrayDeque<>();
@@ -78,6 +78,10 @@ standard denial-of-service technique against recursive parsers, and the JVM's re
 `StackOverflowError` — can leave a request thread in an indeterminate state, since it may be
 thrown anywhere, including inside a `finally`.
 
+The `JsonNode` sketch checks domain construction only after JSON parsing. Configure limits in the
+actual parser before building that tree, and bound bytes, node count and fan-out as well as depth.
+An explicit deque avoids call-stack overflow but does not bound total work or pending-node memory.
+
 ## Cycles, identity and parent pointers
 
 A parent pointer turns a tree into a cyclic graph, and three methods then recurse forever:
@@ -93,7 +97,8 @@ Rules:
   with a parent component is a stack overflow waiting for its first log statement. Either do not
   use a record, or exclude the parent by writing the three methods by hand.
 - **Prefer not to store the parent.** Pass it down during traversal, or keep an external
-  `Map<Node, Node>` for the rare operation that needs it. Most parent pointers exist for one
+  identity-keyed `IdentityHashMap<Node, Node>` or stable-ID map for operations that need it;
+  a structural HashMap key can recursively hash the same tree. Most parent pointers exist for one
   method that could have taken a path instead.
 - **If the parent must be stored**, define equality by identity (`==`) or by a stable id, and
   document that structural equality is not available.
@@ -106,18 +111,11 @@ Even without cycles, structural equality on a tree is O(n) and recursive, and `h
 because it is called on every map insertion. A large tree used as a `HashMap` key computes its
 hash over the whole structure each time unless it is cached.
 
-```java
-record Branch(String name, List<Node> children) implements Node {
-    // cache is safe only because Branch is deeply immutable
-    private static final ClassValue<?> ignored = null;
-    ...
-}
-```
-
 The practical guidance: give tree nodes an identity (an id) and key maps by that; reserve
 structural equality for tests and for small trees. If structural equality is genuinely needed on
 a large immutable tree, cache the hash in a field computed once at construction — which is only
-safe if the tree is deeply immutable, including its `List`.
+safe if the tree is deeply immutable, including its `List`. A record cannot declare an extra
+instance cache field: use an ordinary immutable class or an external identity-based cache.
 
 ## Mutation and traversal
 
@@ -137,8 +135,8 @@ Options, best first:
 1. **Immutable nodes, copy-on-write root.** Mutation produces a new tree sharing unchanged
    subtrees; readers hold a consistent snapshot with no locking, and aggregates can be cached on
    each node at construction.
-2. **Copy the children list before iterating.** Cheap and correct for small branches; still
-   yields a stale view.
+2. **Copy under the same synchronization used by writers.** This gives a branch snapshot,
+   not automatically a coherent whole-tree snapshot; independently copied branches can mix versions.
 3. **A lock around the whole tree.** Correct, and it serialises every reader — acceptable for
    configuration trees, not for hot data.
 
@@ -150,7 +148,8 @@ invariant is over the whole structure, not over one node, so per-node atomicity 
 If the same node instance may appear under two parents, the structure is a DAG. Then:
 
 - Aggregations double-count. `size()` over a DAG is not the size of the distinct content.
-- Identity-based caches and visited sets are mandatory, not optional.
+- For distinct-node aggregation, use an identity visited set. For per-path aggregation, a global
+  visited set would suppress legitimate repeated contributions; use a path-active set for cycles.
 - "Remove this node" becomes ambiguous — from which parent?
 
 Decide explicitly. If sharing is not intended, enforce it at insertion (a node may have at most

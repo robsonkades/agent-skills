@@ -23,7 +23,7 @@ Always boundaries:
 - **Callbacks and SPI implementations supplied by others**: what they return to you is
   input.
 
-Not boundaries:
+Usually not new value-validation boundaries, once caller/ownership evidence establishes trust:
 
 - Private and package-private methods called only by code in the same module.
 - Data already carried by a validated type (`CustomerId`, `Money`) — the constructor was
@@ -43,10 +43,13 @@ Order matters: **bound raw representation → decode strictly → canonicalize i
 ```java
 public static AccountId parse(String raw) {
     Objects.requireNonNull(raw, "raw");
+    if (raw.length() > 128) throw new IllegalArgumentException("raw too long");
     return new AccountId(raw.strip().toUpperCase(Locale.ROOT)); // ctor validates format
 }
 ```
 
+This partial Java 16+ sketch assumes the validated `AccountId` constructor and imports
+`Objects`/`Locale`; 128 is the illustrative contract bound, not a universal identifier limit.
 An inexpensive raw size/structure check prevents work amplification before normalization. A
 canonicalization policy can then produce one stored form, but it must be specific to the field:
 whitespace/case/Unicode changes are wrong for passwords, signatures and many opaque identifiers.
@@ -109,8 +112,9 @@ Set limits from downstream capacity and protocol needs, not arbitrary “reasona
   boundary that makes it redundant; the list above is exactly the set people delete
   wrongly. Delete in the same change that hardens the boundary, never speculatively.
 - In safety-critical or long-lived-state systems (ledgers, stock levels), belt-and-braces
-  re-verification before an irreversible write (an `assert` or an explicit invariant
-  check before persisting) is a legitimate, deliberate redundancy — document it as such.
+  re-verification before an irreversible write is legitimate deliberate redundancy. Use
+  an explicit runtime check if it must prevent corruption; `assert` may supplement
+  diagnostics but cannot be the required protection because it can be disabled.
 - Generated code and DTOs that exist only to be mapped: leave them dumb; validate in the
   mapper that produces the domain type, not by decorating the DTO.
 
@@ -118,5 +122,6 @@ Set limits from downstream capacity and protocol needs, not arbitrary “reasona
 
 - [Objects.requireNonNull API, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Objects.html#requireNonNull(T,java.lang.String)>)
 - [JLS §14.10: The assert Statement](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.10)
+- [Record invariants and shallow immutability, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html)
 - [CharsetDecoder malformed-input actions](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/charset/CharsetDecoder.html)
 - [OWASP Input Validation Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html)

@@ -39,14 +39,14 @@ Foreign Key Mapping    an object reference becomes a foreign key column.
 Association Table      a many-to-many becomes a third table. The moment
 Mapping                that table needs an attribute, it is an entity.
 
-Dependent Mapping      a child has no identity of its own and is loaded,
-                       saved and deleted only through its parent.
+Dependent Mapping      a child's write lifecycle belongs to its parent;
+                       an entity child still has an identifier.
 
-Embedded Value         a value object becomes columns of the owner's table.
-                       No identity, no lifecycle, no separate table.
+Embedded Value         a value object typically becomes owner-table columns.
+                       No independent persistent identity or lifecycle.
 
 Serialized LOB         a graph is stored as one JSON/XML/binary column.
-                       Cheap to write, opaque to query and to migrate.
+                       Opaque binary and native queryable JSON have different costs.
 ```
 
 ## Workflow
@@ -54,15 +54,16 @@ Serialized LOB         a graph is stored as one JSON/XML/binary column.
 1. **Choose identity with lifecycle and storage topology**, because generation constrains batching,
    sharding and when equality can be stable. It need not precede every domain decision.
 2. **For each association, name the owner** — the side that writes the foreign key — and
-   make the other side consistent in memory.
+   make both sides consistent in memory; mapping ownership differs from domain ownership.
 3. **Decide identity per concept, not per table.** Whether something is a dependent child,
    an embedded value or an entity in its own right is a domain question with a schema
    consequence.
 4. **Ask of every value-shaped type whether it will ever be queried, indexed or reported
-   on.** That single question decides embedded columns versus a serialized LOB.
-5. **Predict the write statements** for a typical save. Collections that are cleared and
-   re-added generate delete-all-then-insert-all; this is a mapping choice, not a database
-   quirk.
+   on.** Compare portability, constraints, update granularity and database JSON support;
+   querying alone does not decide embedded columns versus JSON.
+5. **Predict and inspect the write statements** for a scalar edit, collection addition and
+   removal. Distinguish child-row deletes, link-table recreation and order-column updates;
+   a Java `List` alone does not predict the SQL.
 6. **Check nullability and constraints follow the model.** A mapping that requires
    nullable columns for values the domain says are mandatory has moved an invariant out of
    the database and into hope.
@@ -88,9 +89,9 @@ Natural key that is stable, small and never changes
           unique constraint on the natural one.
 
 Two entities, one reference
-        → foreign key mapping. Owner is the side with the column.
+        → foreign key mapping. Identify the owning mapping attribute.
           Bidirectional is a convenience; keep both sides in sync in a
-          single method on the owner.
+          relationship helper, usually on the aggregate root.
 
 Many-to-many with nothing else to say
         → association table mapping, no entity class.
@@ -101,8 +102,8 @@ role) or independent lifecycle
           starting with it includes identity, lifecycle and repository/query cost.
 
 A child that is never referenced from outside its parent and dies with it
-        → dependent mapping: cascade all, orphan removal, no repository
-          of its own (repository-pattern).
+        → dependent mapping: choose cascades and orphan removal to enforce
+          the write lifecycle. Read projections need not create a child write repository.
 
 A value with no identity: Money, Address, DateRange, Coordinates
         → embedded value, columns in the owner's table. Prefer this to
@@ -114,17 +115,17 @@ document, an audit snapshot, a third-party payload, a variable form
           support, coarse update semantics and harder relational constraints/migrations.
 
 The same structure is later needed in a WHERE clause or a report
-        → it was never a LOB. Promote it to columns or a table; a
-          generated/functional index on JSON is a stopgap, not a design.
+        → compare relational promotion with supported JSON query/index options.
+          Choose from constraints, query plans and migration costs.
 ```
 
 ## Rules
 
 - **The owning side is the mapping attribute that controls the foreign key/join table**, which is
   not always the object residing in the table that physically stores the FK. Only changes to the
-  owning mapping are persisted. Adding to the inverse (`mappedBy`) collection and saving
-  writes nothing — a silent no-op that is the most common association bug in JPA. Keep both
-  sides consistent through one method on the owner.
+  owning mapping update that relationship. Inverse collection changes can still cascade
+  persistence or orphan removal, so an inconsistent graph may cause missing links or
+  constraint failures, not simply a no-op. Keep both sides consistent through one helper.
 - Bidirectional associations are a cost: two references to keep in step, two ways to load,
   and a serialisation cycle. Map an association bidirectionally only when both traversal
   directions are actually used.
@@ -132,29 +133,37 @@ The same structure is later needed in a WHERE clause or a report
   becomes an entity with its own identity, and code that treated it as a set must change.
   Do not introduce it solely because an attribute might someday appear; use actual lifecycle,
   querying and evolution requirements.
-- A collection mapped without a stable child identity is deleted and reinserted wholesale on
-  change. With a `List` and no order column, or with a `Set` whose elements have unstable
-  `equals`, this happens on every save and is invisible until the statement log is read.
-- Embedded values are the cheapest way to remove primitive obsession: `Money`,
-  `DateRange`, `Address` as `@Embeddable` records map to columns with no extra table and no
-  join, and the domain gets a real type. Prefer them to loose primitives everywhere the
-  value has rules.
+- Collection SQL depends on ownership, entity versus value elements, row identifiers and
+  order semantics. Inspect SQL before replacing a `List` with a `Set`; preserve required
+  duplicates and ordering. Mutate managed collections through an identity-based diff,
+  not an automatic clear-and-repopulate operation.
+- Embedded values remove loose primitives without introducing independent entity identity.
+  Record embeddables require a supporting ORM/API version; Java record syntax alone is
+  insufficient. A basic single-valued embed typically uses owner columns; collection or
+  secondary-table mappings have different storage shapes.
 - Nullability of embedded values is subtle: if every column is null, the ORM may hand back
   an object with null fields or a null object depending on version and configuration. If
   the value is optional, decide and test which.
-- **Serialized LOB trades relational query/constraint simplicity for convenience until migrated.** It is right for
-  genuinely opaque data and wrong for anything a report will later need. It also breaks
-  schema-level constraints, migrations by SQL, and partial updates — the whole column is
-  rewritten on any change.
-- Dependent mapping means the child has no independent lifecycle: no repository, no direct
-  loading, cascade from the parent and orphan removal on. If code needs to load the child
-  independently, it is not dependent and the mapping is wrong
+- **Distinguish opaque LOBs from native JSON.** JSON can have database queries, indexes,
+  validation and SQL migrations. Compare those capabilities with relational constraints,
+  portability and actual plans. Whole-value ORM writes need concurrency protection;
+  logical JSON path updates do not imply physically independent writes.
+- Dependent mapping concerns write lifecycle. A child entity can have an id and appear in
+  read-only reports while mutations remain governed by its parent. Independent mutation
+  commands or reassignment requirements warrant revisiting the boundary
   (`repository-pattern`).
 - Constraints belong in the schema. A mapping that produces nullable columns for mandatory
   values, or that omits a unique constraint the domain relies on, has moved enforcement to
   application code, where a bulk import will bypass it (`domain-logic-organization`).
 - Every one of these decisions is a migration once data exists. Spend proportionate analysis now
   (`architecture-decision-making`).
+
+Before choosing version-sensitive mappings, inspect the Java toolchain, persistence API,
+provider, enhancement settings, dialect and schema migrations. Examples are partial mappings,
+not standalone applications. Return the selected ownership/lifecycle, expected SQL and
+constraints, plus a flush-clear-reload test that would expose the specific defect. Missing
+provider or schema evidence means the recommendation remains conditional; do not upgrade
+the project to make an example work.
 
 ## References
 

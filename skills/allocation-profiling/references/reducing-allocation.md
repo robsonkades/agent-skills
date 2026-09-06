@@ -1,125 +1,121 @@
 # Reducing allocation and validating the fix
 
-## Triage: is high GC overhead the collector or the application?
+Read once evidence names a site, or when reviewing a proposed pool, TLAB flag or unmeasured
+“allocation-free” rewrite. A regression against comparable work or a breached service
+budget is the trigger; there is no universal GC CPU threshold that justifies optimization.
 
-```
-GC overhead > 10-15% of CPU time
-│
-├── 1. Allocation rate: GC log (Eden allocated / interval between Young GCs),
-│      or jdk.ThreadAllocationStatistics / ThreadMXBean for the exact figure.
-│
-├── 2. Is that rate high for this workload? There is no universal number —
-│      compare against a documented baseline for the SAME service.
-│
-├── 3. asprof -e alloc for 30-60s in production (low overhead, safe),
-│      or jcmd <pid> JFR.view allocation-by-site → where are the bytes concentrated?
-│
-├── 4. Are the named sites avoidable application code
-│      (concatenation in a loop, a discarded collect(), avoidable boxing)?
-│      ├── YES → fix the code, reprofile, and only then consider collector
-│      │         tuning if the residual overhead still breaks the SLO.
-│      └── NO (allocation is inherent — e.g. deserialising genuinely large
-│                payloads) → heap sizing and collector choice are the right lever;
-│                on G1 check first whether the payloads are humongous.
-│
-└── 5. Never expect TLAB flags to fix aggregate overhead.
-```
+## From site to intervention
 
-## Allocation shapes worth looking for
+Prefer removing repeated or discarded work before adding a lifecycle-managed cache or
+pool. If the bytes are inherent to the contract, consider streaming/batching only where
+semantics permit; otherwise pass measured rate, lifetime and headroom to collector sizing.
+Do not force a code change solely because a site tops the profile.
 
-These are what the profile usually names in a hot path, and each has a mechanical fix:
+| Measured shape                             | Candidate change                                | Condition to check                                                                            |
+| ------------------------------------------ | ----------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Repeated `report += ...` in a loop         | Appropriately sized `StringBuilder`             | Same output; avoid retaining oversized builders                                               |
+| `Formatter` / `MessageFormat` per item     | Format once or simpler construction             | Preserve locale, precision, escaping and formatting semantics                                 |
+| Charset encode/decode round trips          | Keep one representation or stream into a buffer | Same encoding and malformed-input handling; encoder ownership is explicit                     |
+| Finite computed names rebuilt per item     | Precompute the bounded set                      | Cardinality and configuration lifetime are known                                              |
+| `ArrayList.grow` / `HashMap.resize` arrays | Pre-size from expected result cardinality       | Map capacity must account for load factor; oversizing increases retention                     |
+| `groupingBy` / numeric collectors          | Primitive sums/counts or a primitive pipeline   | Preserve grouping, empty-input and numerical behavior; accumulation order can change rounding |
+| Boxing, capturing lambdas, iterators       | Primitive/noncapturing or indexed alternative   | Confirm real heap allocation on a warmed hot site; indexed traversal must suit the collection |
+| Varargs array at a call site               | Fixed-arity API or level-appropriate log guard  | Inspect the resolved overload and eager argument evaluation                                   |
+| Megabyte buffers per request               | Chunked streaming or bounded reuse              | Protocol, ownership, lifetime and backpressure permit it                                      |
 
-| Shape                                                       | What the profile shows                           | Fix                                                                   |
-| ----------------------------------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------- |
-| String concatenation in a loop (`report += ...`)            | `byte[]` under `StringConcatHelper`              | Pre-sized `StringBuilder`                                             |
-| `String.format` / `MessageFormat` per call                  | `Formatter`, `char[]`, regex objects             | `StringBuilder`, or format once outside the loop                      |
-| Charset round trips (`getBytes`, `new String(bytes)`)       | `byte[]` under `String.encode` / `decode`        | Keep one representation; write through `CharsetEncoder` into a buffer |
-| A finite set of computed names rebuilt per item             | `String` at one site, high count                 | Precompute the set once into an array or map                          |
-| `new ArrayList<>()` / `HashMap` for a known-size result     | `Object[]` under `grow`, `Node[]` under `resize` | Pre-size the capacity so the backing array is not reallocated         |
-| `groupingBy` + `averagingDouble` in a hot path              | `HashMap$Node`, `double[]`, boxed `Double`       | Accumulate sum and count into a small array per key                   |
-| Boxing in a numeric pipeline                                | `Integer` / `Long` / `Double`                    | Primitive accumulators, or a primitive stream                         |
-| Capturing lambdas and iterators per call                    | `$$Lambda`, `ArrayList$Itr`                      | Non-capturing lambda, indexed loop; only if the site is hot           |
-| Varargs helpers (`log.info("x {}", a, b)`, `List.of(a, b)`) | `Object[]` at the call site                      | Fixed-arity overloads, guard with `isDebugEnabled`                    |
-| Per-request byte buffer of megabytes                        | `byte[]` outside TLAB, `(G1 Humongous …)`        | Chunked streaming, or a reused buffer sized once                      |
+[`List.of(a, b)`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#of(E,E)>)
+already has a fixed-arity overload; it is not evidence of a varargs array.
+Logging APIs may also have fixed-arity overloads. An `isDebugEnabled()` guard is appropriate
+for debug work, not an info log. Even with a fixed-arity overload, expressions such as
+`expensiveToString()` run before the call unless guarded or a suitable lazy API is used.
+Confirm the library/version and actual allocating stack before changing either.
 
-None of these is worth doing on a site the profile did not name.
+Static source constructs do not tell whether C2 eliminated their allocations. Measure
+under representative compilation and call-site types. Do not rewrite all streams or claim
+elimination from a missing sample; detailed mechanism belongs to
+`jit-inlining-and-escape-analysis`.
 
-## Pooling decision matrix
+## Pooling is a tradeoff to demonstrate
 
-| Condition                                                                     | Pool?                                                                                                                                                                                                                |
-| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Small object (< 200 bytes), short-lived, no initialisation cost               | No — the TLAB fast path is cheaper than any pool                                                                                                                                                                     |
-| Expensive to construct (connection, socket, native I/O buffer)                | Yes — the avoided cost is initialisation, not allocation                                                                                                                                                             |
-| Mutable object that would hold references to fresh young objects              | No — a pooled object ages into Old Gen, and each such store pays a write barrier and a remembered-set entry (G1 card / region set); the young objects it points at are then kept alive until the slot is overwritten |
-| Large array (≥ 1 KB) allocated at sustained high frequency, no external state | Case by case — measure before and after with `asprof -e alloc`; on G1 a pool is the standard fix for humongous buffers                                                                                               |
-| Expected pool hit rate below 90%                                              | No — the miss fraction pays the pool cost without the benefit                                                                                                                                                        |
+Default against pooling small, cheap, short-lived objects: reuse adds ownership, cleanup
+and retention complexity and can defeat allocation elimination. This is a default, not a
+claim that every pool uses atomics or must be slower. A thread-confined free list differs
+from a shared concurrent pool.
 
-A pool also costs what allocation does not: an atomic operation per borrow and return, state
-cleanup, and the risk of stale state leaking between uses. A slot never returned is a leak of
-its own kind.
+For expensive resources or repeatedly allocated large buffers, compare bounded reuse
+with ordinary allocation and streaming. Before implementing reuse, specify:
 
-## Levers that are not code changes
+- Maximum retained bytes and how oversized/idle entries are discarded.
+- Exclusive ownership, return on exceptions/cancellation, and behavior at exhaustion.
+- State reset and clearing of references or sensitive contents before another borrower.
+- Measured construction/reset cost, hit/miss rate, contention and concurrency.
 
-Measure each with the allocation rate before and after; none is a substitute for removing an
-avoidable site, and none changes _where_ the bytes come from.
+There is no universal 200-byte, 1-KB or 90%-hit-rate boundary. A miss adds bookkeeping,
+and reset/queueing can outweigh saved allocation even at a high hit rate. A long-lived
+mutable pool can retain young objects and add collector-specific barrier/card-scanning
+work; not every store creates a distinct remembered-set entry.
 
-| Lever                            | What it changes                                                                                                                                                                                          | What it does not change                                                                    |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `-XX:+UseCompactObjectHeaders`   | JEP 519, product on JDK 25, off by default: 8-byte header instead of 12, so objects whose size sat just above an 8-byte boundary shrink by one alignment step. Fewer bytes per object, same object count | Arrays of primitives at scale, or anything whose body dominates                            |
-| `-XX:+UseStringDeduplication`    | Long-lived duplicate `String` values share one `byte[]` after `StringDeduplicationAgeThreshold` (3) GCs; retention only, all collectors since JDK 18 (JDK-8254598)                                       | The allocation of the string and its array, which happen first                             |
-| `-XX:PretenureSizeThreshold=<n>` | Serial's DefNew allocates objects above `n` directly in Old ("Maximum size in bytes of objects allocated in DefNew generation", `gc_globals.hpp`)                                                        | Anything on G1, Parallel or ZGC — the flag is accepted and ignored                         |
-| `-XX:G1HeapRegionSize=<n>`       | The humongous threshold (half a region); raising it turns humongous buffers back into ordinary young allocations                                                                                         | The allocation rate itself; fewer, larger regions also coarsen G1's collection-set choices |
+Validate total bytes/op **and** retained heap, CPU, throughput and tail latency at expected
+and burst concurrency. If reuse is implemented, tests must cover state isolation,
+exception/cancellation return paths, capacity limits and oversized objects. Reject reuse
+when ownership cannot be made correct or a repeatable benefit is absent.
 
-Compact headers are the one lever that lowers the rate of the same code. The JEP's stated
-expectation is a reduction in heap footprint for small-object-heavy workloads, not a fixed
-percentage; the measured allocation rate of the service is the only figure to quote.
+## Flags and representation changes
 
-## TLAB flags: real defaults, OpenJDK 25
+| Candidate                                          | When it may help                                       | What to validate                                                                                |
+| -------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `UseCompactObjectHeaders` on a supporting JVM      | Small-object-heavy layout                              | Actual aligned sizes and total bytes/op; benefit depends on baseline headers/alignment          |
+| `UseStringDeduplication` on a supporting collector | Retained duplicate string backing arrays               | Retained heap and deduplication cost; the strings/arrays were allocated first                   |
+| `PretenureSizeThreshold` with Serial DefNew        | Large outside-TLAB objects needing different placement | Placement and GC consequences; this does not reduce allocation or provide G1 pretenuring        |
+| `G1HeapRegionSize`                                 | Measured sizes just crossing the humongous threshold   | Aligned sizes, region occupancy, tail waste and pause/stall impact; bytes requested do not fall |
 
-Verified with `java -XX:+PrintFlagsFinal -version` on Temurin 25.0.3 with G1 and a default
-heap; descriptions are the flag strings from `gc/shared/tlab_globals.hpp`. Reproduce in your
-own environment before trusting absolute values; the relationships are the durable part.
+Use actual runtime flags and supported combinations. Compact headers are an optional
+experiment, not a mandatory step before code work; header reduction does not make every
+object smaller after alignment. Layout analysis belongs to `object-layout-and-footprint`.
+Do not use `String.intern()` as an unbounded domain cache: canonicalization needs measured
+duplication, cardinality and ownership. String deduplication is a retention mechanism;
+its availability and benefit must be checked for the target collector.
 
-| Flag                      | Default      | Controls                                                                                                                        |
-| ------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `UseTLAB`                 | `true`       | "Use thread-local object allocation"                                                                                            |
-| `ResizeTLAB`              | `true`       | "Dynamically resize TLAB size for threads" — adaptive recomputation of `desired_size`                                           |
-| `TLABSize`                | `0` (auto)   | "Starting TLAB size (in bytes); zero means set ergonomically"                                                                   |
-| `MinTLABSize`             | `2048` bytes | "Minimum allowed TLAB size (in bytes)"                                                                                          |
-| `TLABRefillWasteFraction` | `64`         | "Maximum TLAB waste at a refill (internal fragmentation)" — divisor of `desired_size` for the waste tolerance                   |
-| `TLABWasteIncrement`      | `4`          | "Increment allowed waste at slow allocation" — added to the waste limit in **heap words** per slow allocation, not a percentage |
-| `TLABWasteTargetPercent`  | `1`          | "Percentage of Eden that can be wasted (half-full TLABs at GC)" — of **Eden**, not of the heap                                  |
-| `TLABAllocationWeight`    | `35`         | "Allocation averaging weight" — of the moving average estimating each thread's allocation share                                 |
-| `ZeroTLAB`                | `false`      | "Zero out the newly created TLAB"; diagnostic use, high cost                                                                    |
+For Serial, the relevant decision is
+[DefNewGeneration::should_allocate](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/serial/defNewGeneration.hpp);
+TLAB allocations bypass its object-size pretenuring test. An accepted JVM option is not
+proof that the chosen collector uses it.
 
-`TLABWasteTargetPercent` also fixes the sizing target: `target_refills = 100 / (2 ×
-TLABWasteTargetPercent)` = 50 refills per thread per GC epoch (`threadLocalAllocBuffer.cpp`),
-which is why `desired_size` scales with Eden divided by the number of allocating threads.
+## TLAB controls: mechanics before experiments
 
-## When touching TLAB flags is (rarely) justified
+OpenJDK 25 source defaults below are starting points, not measured values on the target.
+Inspect effective flags and use the logging interpretation in `allocation-tools.md`.
 
-| Specific symptom                                                                       | Candidate                                | Validation                                                  |
-| -------------------------------------------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------- |
-| Fixed-size large objects near `desired_size`, with high `slow allocs` in the trace log | Raise `TLABWasteTargetPercent`           | `-Xlog:gc+tlab=trace` before and after; `refills` must fall |
-| Thousands of short-lived threads, each paying for a TLAB it barely uses                | Rethink the thread pooling, not the flag | This is a concurrency-design problem                        |
-| Suspected bug in the allocation subsystem itself                                       | `ZeroTLAB=true`, diagnostic only         | Never in continuous production                              |
+| Flag                       | Source default             | Meaning                                                                                 |
+| -------------------------- | -------------------------- | --------------------------------------------------------------------------------------- |
+| `UseTLAB` / `ResizeTLAB`   | true / true                | Enable buffers / adapt size                                                             |
+| `TLABSize` / `MinTLABSize` | 0 (ergonomic) / 2048 bytes | Initial target / lower bound                                                            |
+| `TLABWasteTargetPercent`   | 1                          | Sizing target based on estimated unused Eden space at GC, not a hard bound on all waste |
+| `TLABRefillWasteFraction`  | 64                         | Divisor: initial refill-waste limit = desired size / fraction                           |
+| `TLABWasteIncrement`       | 4 heap words               | Increase allowed waste after a slow allocation                                          |
+| `TLABAllocationWeight`     | 35                         | Allocation-history weighting for adaptive sizing                                        |
+| `ZeroTLAB`                 | false                      | Eager zeroing; not an application allocation-reduction lever                            |
 
-Two independent judgements happen on the slow path — "is this object too large for any TLAB?"
-(via `max_size()`) and "is it worth discarding the current TLAB?" (via `refill_waste_limit`).
-Only the second depends on `TLABRefillWasteFraction`. `max_size()` is the collector's: on G1
-it is the humongous threshold, `align_down(_humongous_object_threshold_in_words,
-MinObjAlignment)` in `g1CollectedHeap.cpp`, so nothing a flag in this table sets. The
-mechanism is adaptive in both directions: it starts conservative and relaxes the waste limit
-by `TLABWasteIncrement` words each time an allocation lands outside the TLAB.
+Source: [TLAB flags](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/shared/tlab_globals.hpp).
 
-## Checklist before calling the fix done
+The refill-waste decision governs whether to retire remaining buffer space or allocate
+outside the current TLAB. It does not define the collector's maximum TLAB size. For G1,
+that maximum is capped at its humongous threshold. Do not propose a general
+`MaxTLABSize` option or treat `TLABRefillWasteFraction` as an object-size cutoff.
 
-- [ ] The hypothesis was written down as "allocation at X is Y% of total because Z"
-- [ ] Churn and promotion were distinguished by comparing against the GC log promotion rate
-      or an `asprof -e alloc --live` profile
-- [ ] Any latency spike attributed to allocation was matched to `Pause Young`,
-      `(G1 Humongous Allocation)` or `jdk.ZAllocationStall`, not to TLAB refill
-- [ ] The fix was reprofiled with `asprof -e alloc` and the site measurably shrank
-- [ ] If pooling was introduced, the object has real initialisation cost per the matrix above
-- [ ] If a flag was changed, the allocation rate was measured before and after under the same
-      load, and the flag is one the running collector honours
+Adaptive target refills use approximately `100 / (2 * TLABWasteTargetPercent)`:
+raising the waste target reduces target refills and can increase desired buffer size,
+but actual sizes remain bounded and workload-dependent. It may trade fewer refills for
+more waste; it is not a prescribed fix for large objects. Investigate flags only after
+measured refill/slow-path cost is material and simpler code changes do not answer it.
+Compare slow-path time, refills, actual waste, bytes/op and the service outcome. A lower
+refill count alone cannot validate a change.
+See [TLAB sizing](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/shared/threadLocalAllocBuffer.cpp).
+
+## Completion check
+
+A successful allocation reduction requires matched before/after total bytes/op and
+site-level evidence, with no semantic regression. If the original goal was latency or
+GC cost, report that outcome independently: lower bytes may be real while the service
+benefit remains unproven. For isolated-method experiments, use `jmh-microbenchmarks`;
+for changes in heap/collector policy, retain the relevant GC timeline and occupancy data.

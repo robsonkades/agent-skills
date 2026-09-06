@@ -92,23 +92,23 @@ capacity model.
 
 ## Incubation history
 
-| JEP | Round    | JDK                            |
-| --- | -------- | ------------------------------ |
-| 338 | first    | 16                             |
-| 414 | second   | 17                             |
-| 417 | third    | 18                             |
-| 426 | fourth   | 19                             |
-| 438 | fifth    | 20                             |
-| 448 | sixth    | 21                             |
-| 460 | seventh  | 22                             |
-| 469 | eighth   | 23                             |
-| 489 | ninth    | 24                             |
-| 508 | tenth    | 25                             |
-| 529 | eleventh | 26                             |
-| 537 | twelfth  | 27, targeted as of August 2026 |
+| JEP | Round    | JDK                                          |
+| --- | -------- | -------------------------------------------- |
+| 338 | first    | 16                                           |
+| 414 | second   | 17                                           |
+| 417 | third    | 18                                           |
+| 426 | fourth   | 19                                           |
+| 438 | fifth    | 20                                           |
+| 448 | sixth    | 21                                           |
+| 460 | seventh  | 22                                           |
+| 469 | eighth   | 23                                           |
+| 489 | ninth    | 24                                           |
+| 508 | tenth    | 25                                           |
+| 529 | eleventh | 26                                           |
+| 537 | twelfth  | 27, Closed/Delivered; checked September 2026 |
 
 JEP 508 is the baseline reference for JDK 25. For later releases, read the matching JEP and
-the actual distribution's module docs. Do not describe a targeted release as deployed GA.
+the actual distribution's module docs. Delivered JEP integration is distinct from deployed GA.
 The JEPs tie finalization to future Valhalla work but promise no final version or date.
 
 ## Adoption gate
@@ -117,7 +117,8 @@ Adopt explicit Vector API code only when all are true:
 
 - a production-shaped profile shows material CPU time in the kernel;
 - scalar/vector semantics, including FP/reduction behavior, are specified;
-- generated code and benchmarks improve relevant sizes on every supported CPU/JDK class;
+- generated code and benchmarks improve the selected path on its supported CPU/JDK classes;
+  other classes retain a validated scalar/dispatch path and meet the deployment contract;
 - the service-level gain survives bandwidth, contention and tail-latency tests;
 - the team accepts incubator-module packaging and migration on JDK upgrades;
 - a readable scalar oracle, differential tests, observability and rollback path remain.
@@ -131,5 +132,5 @@ laptop, one-size/one-distribution benchmarks, or ISA claims inferred only from A
 - [JEP 529: Vector API (Eleventh Incubator)](https://openjdk.org/jeps/529)
 - [JEP 537: Vector API (Twelfth Incubator)](https://openjdk.org/jeps/537)
 - [JDK 25 VectorSpecies](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.incubator.vector/jdk/incubator/vector/VectorSpecies.html)
-- [SuperWord source](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/opto/superword.cpp)
+- [JDK 25 SuperWord source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/superword.cpp)
 - [Larsen and Amarasinghe, Exploiting Superword Level Parallelism](https://groups.csail.mit.edu/cag/slp/SLP-PLDI-2000.pdf)

@@ -2,7 +2,7 @@
 name: engineering-communication
 description: >
   Communicating engineering facts to people who will act on them: stating what is true, what
-  follows from it, what is still uncertain, the options and a recommendation — in that order.
+  follows from it, what is still uncertain, and the options and recommendation when needed.
   Covers raising a risk early, saying no to a request in a way that leaves a
   yes on the table, resolving technical disagreement by making the checkable claim checkable,
   escalating without going around someone, and status updates during an incident. Use when
@@ -31,18 +31,26 @@ do not know. That last part is what makes the rest of it trustworthy.
 
 1. **Decide what the reader must do** with this message: approve something, choose between
    options, be aware, or act now. If nothing, consider not sending it.
-2. **Lead with the fact**, not the story of how you found it. "The backfill will take six hours
-   against production volume" before the account of the afternoon.
+2. **Lead with the decision, action or supported conclusion**, not the investigation story.
+   "The production-volume rehearsal took six hours" preserves what was actually measured;
+   a forecast for production needs its assumptions.
 3. **Say what follows** in their terms — money, users, dates, risk — not in yours. "Six hours"
-   means nothing; "the export is unavailable for a working day, or we run it overnight on
-   Saturday" is a decision.
+   needs context: establish whether the backfill blocks exports before claiming unavailability.
 4. **Separate what you know from what you believe.** Mark the boundary explicitly: measured,
    inferred, assumed. A reader who cannot tell which is which will either over-trust or
    discard the whole message.
-5. **Give options with their trade-offs**, then **recommend one and say why**. Options without a
-   recommendation push the engineering judgement onto someone with less information.
+5. **For a decision, give viable options and recommend one with a reason.** An awareness-only
+   update does not need invented alternatives. Preserve required controls and distinguish
+   the proposed option from an approved commitment.
 6. **Send it early.** Every one of these is worth more the sooner it arrives, and a risk raised
    after it materialises is not a warning, it is an explanation.
+7. **Check the draft against the inputs.** Preserve dates, scope, uncertainty and ownership;
+   do not invent measurements, confidence percentages, approval, recipients or delivery promises.
+   Use a visible placeholder or one focused question for missing decision-critical facts.
+
+Deliver the message at the requested length and register, plus only material unresolved
+facts needed to finalize it. Drafting a message does not authorize sending it to others;
+use an external communication tool only within explicit authorization for that action.
 
 ## Rules
 
@@ -51,7 +59,7 @@ do not know. That last part is what makes the rest of it trustworthy.
 - Never hedge a fact you have verified. "The query does a full scan of 4 million rows, measured
   on the replica" is a fact; writing "it seems like it might be slow" throws away the work you
   did and the reader's ability to act on it.
-- Never assert something you have not verified. Say which it is: "measured", "inferred from the
+- Do not present an unverified claim as verified. Say which it is: "reported by the owner", "inferred from the
   logs", "I am assuming". Confidence claimed and then withdrawn costs more credibility than
   uncertainty stated up front.
 - "I don't know" is a complete and professional answer when followed by how you would find out

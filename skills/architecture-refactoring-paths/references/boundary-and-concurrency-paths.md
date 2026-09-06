@@ -24,19 +24,26 @@ scaling, fault isolation, team ownership. Not "microservices".
                      evidence that the boundary may be misplaced or its
                      contract too fine-grained; investigate before extraction.
 
-5. Remote adapter    Same interface, remote implementation. Route a small
-                     percentage of traffic; compare.
+5. Remote adapter    Preserve the business contract but define deadlines,
+                     unknown outcomes, retries and idempotency explicitly.
+                     Route stable resource/tenant cohorts; prevent old and
+                     new paths becoming competing authorities.
 
-6. Move the data     Last. Until now, rollback is a configuration change.
+6. Move the data     When ownership and catch-up are proven. Use the data
+                     coexistence protocol in the persistence reference.
 ```
 
 **Rollback story:** through step 5, switching back can be a flag if writes remain compatible and
 the old implementation is still deployable. After step 6 it is a data migration, which is why the
 observation period must cover the risks that actually drive the extraction.
 
-**Verification that it is real:** can each side be deployed alone, today? If a release still
-requires an order, the extraction produced a distributed monolith
-(`enterprise-architecture-smells`).
+Before step 5, identify local transactions that cross the proposed boundary. Preserve their
+invariants with an explicit distributed protocol or retain the local boundary. A matching
+method signature does not make network failures equivalent to local calls.
+
+**Verification:** test supported overlapping versions, failure isolation and independent normal
+releases. An occasional ordered compatibility migration does not prove a distributed monolith;
+routine lockstep feature changes are evidence to investigate (`enterprise-architecture-smells`).
 
 ## Server session → stateless
 
@@ -44,9 +51,9 @@ requires an order, the extraction produced a distributed monolith
 replica breaks a flow (`session-state-strategies`).
 
 ```text
-1. Inventory         Log the session key set in PRODUCTION for a week.
-                     The code will not tell you what an old feature left
-                     behind.
+1. Inventory         Inspect code and privacy-safe key/type/size telemetry
+                     over representative flows and session lifetimes.
+                     Do not log tokens, values or personal data.
 
 2. Delete derived    Anything recomputable. Usually the largest share and
                      it needs no replacement. SHIP.
@@ -66,29 +73,43 @@ replica breaks a flow (`session-state-strategies`).
                      no conversation breaks.
 ```
 
-**Do not start at step 5.** Moving the whole session to Redis first appears to solve the
-problem and preserves everything that should have been deleted — including the entity graphs
-that will now break on the next deploy that changes a class.
+Externalizing sessions can be a useful containment step when continuity is urgent, but does
+not make session content suitable for long-term storage. Prove serialization compatibility,
+TTL, concurrent updates and store-failure behavior. Define how active old sessions are drained,
+expired or migrated before new nodes require the new format. Stateless application instances
+can still depend on server-side identity or workflow state.
 
 ## Pessimistic → optimistic locking
 
-**Trigger:** lock contention, stranded locks from crashed sessions, or a pool exhausted by
-held transactions (`offline-concurrency-control`).
+**Trigger:** measured contention or long-held work (`offline-concurrency-control`). First
+distinguish transaction-scoped database locks from application lock-table leases. Crashed-client
+leases may require expiry; database lock release follows transaction/session termination.
+The lock-table cleanup steps below apply only when such a table exists.
+
+Inventory what the lock protects before replacing it: stale writes to one row, or an invariant
+over several rows or a predicate (including concurrent inserts/deletes). Independent row versions
+do not prevent write skew: two transactions may change different rows after reading the same
+invariant and both pass their version checks. Retain the lock, or establish a protocol every
+relevant writer participates in: for example, an atomically checked shared guard version, or
+engine-verified serializable transactions with whole-transaction retry. A guard works only if
+all mutations affecting the predicate participate, including new rows. Force the conflicting
+interleaving before removing protection. PostgreSQL 17's [isolation documentation](https://www.postgresql.org/docs/17/transaction-iso.html)
+illustrates serialization anomalies and retry requirements; verify the actual engine's semantics.
 
 ```text
-1. Measure           The actual conflict rate. If conflicts are frequent
-                     AND the lost work is expensive, pessimistic is the
-                     right pattern and the fix is elsewhere (its expiry,
-                     its granularity). Stop here.
+1. Measure           Contention, critical-section duration and cost of lost
+                     work. A lock suppresses conflicts, so near-zero
+                     detections cannot predict unlocked behavior. Compare
+                     options before assuming optimism improves throughput.
 
 2. Add versioning    In parallel with the existing lock. Nothing changes
-                     behaviourally; conflicts cannot occur while the lock
-                     still serialises. DEPLOY.
+                     until every writer advances/checks versions and the
+                     protected read/write interval is understood. DEPLOY.
 
-3. Observe           Meter conflict detections. Because the lock is still
-                     held, this should be near zero — a non-zero count
-                     means the pessimistic lock has holes, which is
-                     useful to know.
+3. Observe           Meter conflict detections while the lock is still
+                     held. Investigate stale pre-lock reads, bypassing
+                     writers and lock scope rather than inferring a single
+                     cause from the count. Force a stale-writer test.
 
 4. Conflict UX       Build the conflict experience: what the user sees,
                      what they can do, whether a merge is possible.
@@ -100,8 +121,9 @@ held transactions (`offline-concurrency-control`).
 6. Clean up          Drop the lock table and its sweeper.
 ```
 
-**Rollback:** through step 5, re-enabling the pessimistic lock is a flag. Keep it for a
-release.
+**Rollback:** re-enabling a lock is safe only after all writers honor it and in-flight optimistic
+operations drain or participate in the same version protocol. Test overlap, not just either
+mode alone. Retain required lock infrastructure until that recovery window closes.
 
 ## Synchronous call → event
 
@@ -110,37 +132,44 @@ is slow; a boundary that does not need the answer
 (`distribution-boundaries`).
 
 ```text
-1. Establish         Does the caller need the result to complete its own
-                     work? If yes, this migration is wrong; coarsen or
-                     cache instead.
+1. Establish         Can the business accept delayed completion? If the
+                     result must be immediate, retain synchronous semantics.
+                     Otherwise define pending, completed and failed states,
+                     allowed actions and user/API behavior BEFORE cutover.
 
-2. Publish too       Emit the event alongside the existing synchronous
-                     call, via an outbox in the same transaction. Nobody
-                     consumes it yet. DEPLOY.
+2. Publish too       Write event intent to an outbox in the transaction
+                     containing the local state change. Keep the existing
+                     synchronous path authoritative; no production consumer
+                     executes these events yet. DEPLOY.
 
-3. Consume           The consumer processes the event and writes to a
-                     shadow/idempotent path. Compare its outcome with the
-                     synchronous one.
+3. Consume           Compare using an isolated shadow sink with external
+                     effects suppressed. If real effects are unavoidable,
+                     prove shared operation identity and deduplication across
+                     BOTH paths before execution.
                      ← Decide NOW which wins on disagreement, and who
                        investigates. Without that, the comparison
                        produces alerts nobody actions.
 
-4. Switch            The consumer's path becomes authoritative; the
-                     synchronous call is removed from the caller.
+4. Rehearse          Lag/failure alerts, retries, duplicate and out-of-order
+                     delivery, dead-letter ownership and replay. Decide which
+                     pre-cutover events were already handled synchronously;
+                     do not replay them as fresh business operations.
 
-5. Intermediate      Make the now-visible intermediate state a real
-                     business state with a name and a UI
-                     ("payment pending"), not an absence.
+5. Switch            Transfer authority by operation/cohort and drain or
+                     reconcile in-flight sync work. Activate the consumer
+                     and pending-state contract together.
 
-6. Operate           Consumer lag alerting, dead-letter handling, and a
-                     replay procedure. This is not optional afterwork; a
-                     stuck consumer is now a silent failure
-                     (delivery-semantics).
+6. Recover/retire    A flag does not undo events or external effects. Before
+                     reverting, fence competing execution and reconcile/drain
+                     the backlog. Remove sync scaffolding after the tested
+                     recovery window (delivery-semantics).
 ```
 
-**The step most often skipped is 5.** Removing the synchronous call makes a state visible
-that previously did not exist for users. Deciding what it is called and what users may do in
-it is part of the migration, not a follow-up.
+An outbox atomically couples a local state change and event intent; it does not atomically
+include the old remote call. Its partial failures still require shared operation identity,
+reconciliation or compensation. See [AWS transactional outbox guidance](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html)
+for the local transaction and duplicate-delivery constraints. The cutover protocol above is
+a design recommendation, not a verified implementation.
 
 ## Chatty remote interface → coarse facade
 
@@ -161,25 +190,27 @@ it is part of the migration, not a follow-up.
                      date; monitor their usage to know when it is safe
                      (rpc-and-api-contracts).
 
-6. Remove            When usage is zero for a defined period.
+6. Remove            After inventory and consumer migration evidence agree
+                     with usage over a justified period, including dormant
+                     clients, batch jobs and supported offline versions.
 ```
 
-Additive throughout, so no consumer is ever broken — which is what makes step 6 possible at
-all.
+Addition reduces compatibility risk; endpoint removal is still breaking for any remaining
+consumer. Validate authorization, payload size, consistency and query cost as well as call count.
 
 ## Verifying any of these is finished
 
-| Path                        | The question that proves completion                              |
-| --------------------------- | ---------------------------------------------------------------- |
-| Script → domain model       | Can a rule be violated by any code path? Search for the setters. |
-| Active Record → Data Mapper | Is the entity reachable outside the persistence package?         |
-| Entity → boundary contract  | Does an architecture test forbid entities in the web layer?      |
-| Module → service            | Can each side be deployed alone, today?                          |
-| Session → stateless         | Does killing an instance under load break any conversation?      |
-| Pessimistic → optimistic    | Is the lock table dropped, and is the conflict metric non-zero?  |
-| Sync → event                | Is the intermediate state named, and is consumer lag alerted?    |
-| Chatty → coarse             | Is the fine-grained endpoint's usage zero, and is it removed?    |
+| Path                        | Evidence to assess completion                                      |
+| --------------------------- | ------------------------------------------------------------------ |
+| Script → domain model       | Do invariant tests cover all known writers and bypass paths?       |
+| Active Record → Data Mapper | Do load/save round trips and intended dependency rules pass?       |
+| Entity → boundary contract  | Do compatibility and sensitive-field exclusion checks pass?        |
+| Module → service            | Do overlapping versions and remote failure scenarios work?         |
+| Session → stateless         | Do active flows survive instance loss and mixed-version rollout?   |
+| Pessimistic → optimistic    | Do forced stale writers fail, including mixed/bulk writers?        |
+| Sync → event                | Do pending, replay, duplicate and partial-failure cases work?      |
+| Chatty → coarse             | Is latency improved and retirement supported by consumer evidence? |
 
-A migration with no answer to its question is at step 5 of the general shape, which is where
-migrations stall. Two mechanisms with no removal plan is worse than either alone
-(`enterprise-architecture-smells`).
+These checks supply evidence, not universal proof. Zero production conflicts can be legitimate;
+dropping a lock table is cleanup, not validation. Intentional coexistence needs ownership and
+an accepted maintenance cost; unplanned coexistence warrants investigation.

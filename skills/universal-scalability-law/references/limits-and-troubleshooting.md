@@ -5,15 +5,15 @@
 USL represents useful throughput versus one declared load/resource axis under a stable workload and
 homogeneous regime.
 
-| Question                            | USL contribution                                             | Additional model/evidence                                           |
-| ----------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------- |
-| Marginal capacity from another unit | `X(N+1)−X(N)` with prediction uncertainty                    | unit cost, failure domain and deployment feasibility                |
-| Continuous/integer throughput peak  | only when `β>0`, `α<1` and identified                        | feasible discrete N, guardrails and direct high-N evidence          |
-| Latency at open arrival rate        | capacity scenario only                                       | queue topology/arrival/service model (`queueing-models`)            |
-| Closed-user mean response           | `R=N/X−Z` if N is the closed population and clocks reconcile | response distribution/SLO needs measurement or closed network model |
-| Queue/pool size                     | none directly                                                | Little/demand/admission analysis (`littles-law-and-queueing`)       |
-| Cost/reliability/autoscaling        | capacity curve as one input                                  | failure/failover load, lag, SLO and budget (`capacity-planning`)    |
-| Root cause of `α`/`β`               | mechanism hypothesis                                         | profile, waits, hardware/network traffic and intervention           |
+| Question                            | USL contribution                                                  | Additional model/evidence                                           |
+| ----------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Marginal capacity from another unit | `X(N+1)−X(N)` with prediction uncertainty                         | unit cost, failure domain and deployment feasibility                |
+| Continuous/interior throughput peak | `β>0`, `α<1` and identified; otherwise check endpoints/flat cases | feasible discrete N, guardrails and direct high-N evidence          |
+| Latency at open arrival rate        | capacity scenario only                                            | queue topology/arrival/service model (`queueing-models`)            |
+| Closed-user mean response           | `R=N/X−Z` if N is the closed population and clocks reconcile      | response distribution/SLO needs measurement or closed network model |
+| Queue/pool size                     | none directly                                                     | Little/demand/admission analysis (`littles-law-and-queueing`)       |
+| Cost/reliability/autoscaling        | capacity curve as one input                                       | failure/failover load, lag, SLO and budget (`capacity-planning`)    |
+| Root cause of `α`/`β`               | mechanism hypothesis                                              | profile, waits, hardware/network traffic and intervention           |
 
 Do not mix curves where N changes meaning. “32 users on one JVM” and “32 pods at fixed users per
 pod” are different experiments even when both columns say 32.
@@ -31,6 +31,11 @@ R(N) = N/X(N) − Z
 This is a mean response for that closed loop. It does not produce a p99 and must not be reused when N
 is cores/pods or when users arrive exogenously. Verify `N≈X(R+Z)` from measurements at each point;
 in-flight work outside the clock or changing think time invalidates the conversion.
+Use the throughput of all completed cycles represented by R and Z, including unsuccessful
+cycles if they return a user to think/issue work. A useful-success-only USL cannot be inserted
+directly unless it represents that same population. For 10 users completing 100 cycles/s
+with zero think time, mean R is 0.1 s even if only 80 cycles/s succeed; using 80 invents 0.125 s.
+If fitted X gives negative R, reject the conversion/fit rather than clamping latency to zero.
 
 For an open system, measured USL capacity `μ_cap(N)` is only one queue-model parameter. Mean/tail
 latency depends on offered/admitted arrival process, variability, topology, loss/abandonment and

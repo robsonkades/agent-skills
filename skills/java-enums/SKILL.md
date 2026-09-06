@@ -27,10 +27,16 @@ switch, so adding a constant becomes a migration and a coordinated deploy.
 
 ## Workflow
 
+Inspect compiler release/toolchains, runtime, persistence provider/spec, mapper/schema versions,
+stored values and supported consumers first. No single authoring baseline is declared; Java 25
+is referenced, while switch expressions require Java 14+, records Java 16+, and collection
+copy factories Java 10+. `@EnumeratedValue` needs Persistence 3.2 support. Use the target's
+existing alternatives; do not upgrade or enable preview. If consumer/mapping evidence is
+missing, keep evolution claims conditional and state the checks needed before release.
+
 1. **Confirm the set is closed for the compatibility horizon**—statuses and error categories may
    qualify; currencies and standards can evolve. If new values arrive independently from outside
    the code (tenant-configured categories,
-   strategies. If new values arrive from outside the code (tenant-configured categories,
    plugin-provided types), an enum is the wrong shape; use a value type with validation.
 2. **Give each constant its data as instance fields**, assigned through the constructor.
    Anything derived from position — an id, a code, a weight, a display name — is a field, not
@@ -62,15 +68,15 @@ switch, so adding a constant becomes a migration and a coordinated deploy.
   mapping can use stable codes. Verify provider/spec version, constraints and unknown-value policy.
 - Prefer `EnumSet` to bit fields and to `HashSet` for enum elements: it is a bit vector
   internally, so it is compact and fast, and it prints and iterates in declaration order.
-  It is not thread-safe and it is mutable — wrap it with `Collections.unmodifiableSet`, or
-  copy it, before exposing one.
+  It is not thread-safe and it is mutable. A wrapper is a live unmodifiable view; copy then
+  wrap for a snapshot, including the empty ordinary-set case described in the patterns reference.
 - Prefer `EnumMap` to `HashMap` for enum keys and to any array indexed by `ordinal()`. It is
   array-backed with declaration-order iteration, and it removes the manual index arithmetic
   that breaks when a constant is inserted.
-- `values()` returns a **fresh clone of the array on every call**, because the array is
-  mutable and the enum cannot hand out its own. In a hot loop or a per-request path, hoist it
-  into a `private static final` array or an immutable `List`. Java 25's `values()` is still
-  this contract — do not assume a cached array.
+- `values()` exposes an array callers can modify without changing enum constants. javac
+  commonly implements it by cloning a stored array; that lowering and allocation elimination
+  are implementation details. Cache privately only when profiling shows repeated calls matter,
+  and never expose a shared mutable cached array.
 - Put intrinsic per-constant behaviour on the constant. Two forms, both valid: an abstract method with a
   body per constant, or a field holding a shared strategy (the _strategy enum_ — several
   constants delegating to the same nested strategy enum) when constants group into a few
@@ -99,6 +105,11 @@ switch, so adding a constant becomes a migration and a coordinated deploy.
   process; persisting or transmitting anything derived from it is not.
 
 ## References
+
+Deliver the chosen set/representation, compatibility and unknown-value policy, and checks
+executed against old readers and representative stored/wire values. For collection changes,
+test empty input and alias mutation. Separate compiler checks, integration tests and measured
+performance from assumptions; written deployment cases are not executed verification.
 
 - [Enum patterns](references/enum-patterns.md) — read when deciding between constant-specific
   bodies, strategy enums and an interface; when replacing a `switch` chain; or when an enum is

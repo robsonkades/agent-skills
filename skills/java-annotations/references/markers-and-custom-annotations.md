@@ -4,23 +4,27 @@
 
 Both say "this thing is special". They differ in what the compiler can do about it.
 
-| Question                                                      | Marker interface | Marker annotation                          |
-| ------------------------------------------------------------- | ---------------- | ------------------------------------------ |
-| Can it be a parameter or return type?                         | **yes**          | no                                         |
-| Is misuse caught at compile time?                             | **yes**          | no — only at runtime, by whatever reads it |
-| Can it mark a method, field, parameter, package or module?    | no               | **yes**                                    |
-| Can it be added without changing the type hierarchy?          | no               | **yes**                                    |
-| Can it carry parameters later without breaking existing uses? | n/a              | **yes** (with defaults)                    |
-| Does it affect the type's API surface / subtyping?            | yes              | no                                         |
+| Question                                                      | Marker interface   | Marker annotation                                            |
+| ------------------------------------------------------------- | ------------------ | ------------------------------------------------------------ |
+| Can it be a parameter or return type?                         | **yes**            | no                                                           |
+| Is misuse caught at compile time?                             | type assignability | target/syntax; semantic checks need a compiler/tool consumer |
+| Can it mark a method, field, parameter, package or module?    | no                 | **yes**                                                      |
+| Can it be added without changing the type hierarchy?          | no                 | **yes**                                                      |
+| Can it carry parameters later without breaking existing uses? | n/a                | **yes** (with defaults)                                      |
+| Does it affect the type's API surface / subtyping?            | yes                | no                                                           |
 
 The decision rule that follows:
 
 - **Marker interface** when the marker means "instances of this type may be passed to X" and
   you can express X's parameter as the marker type. That is the whole argument: the check moves
-  from runtime to the compiler. A method taking `Serializable` rejects non-serialisable types
-  at compile time; a method taking `Object` and checking an annotation cannot.
-- **Marker annotation** when the target is not a type, when retrofitting existing types you do
-  not own, or when the marker is likely to gain attributes.
+  from runtime to the compiler. A method taking `Serializable` rejects arguments whose static
+  types are not assignable to it; this does not prove that the reachable object graph can be
+  serialized. An annotation processor can enforce custom compile-time rules, but an annotation
+  alone does not create a subtype constraint.
+- **Marker annotation** when the target is not a type, when annotating editable declarations
+  without changing their hierarchy, or when the marker may gain attributes. Unowned classes
+  require a consumer-supported external metadata/mixin mechanism or a wrapper; an annotation
+  cannot simply be attached to somebody else's compiled class.
 
 Note that the JDK's own markers are split exactly this way: `Serializable` and `Cloneable` are
 interfaces (they mark types and change what the platform does with instances), while
@@ -30,6 +34,10 @@ interface has — it is permanent API surface. A marker that only a framework co
 as an annotation.
 
 ## Designing a custom annotation
+
+Partial design sketch: imports, `Redaction`, processor and runtime redactor are omitted.
+The Javadoc is a proposed contract, not a supplied security implementation. Test hostile
+secret values through each actual logging/serialization/response path before claiming coverage.
 
 ```java
 /**
@@ -68,6 +76,10 @@ shapes:
 
 **1. Validation constraints with no validator on the path.**
 
+Partial Spring MVC/Jakarta Validation sketches: they assume compatible dependencies, a
+configured provider and MVC validation integration. `@Valid` alone does not supply those.
+The alternatives below assume no separate validation interceptor or manual check.
+
 ```java
 public record CreateOrder(@NotBlank String sku, @Positive int quantity) { }
 
@@ -90,7 +102,7 @@ class OrderService {
     public void importAll(List<Order> orders) {
         orders.forEach(this::importOne);      // internal call: the proxy is not involved
     }
-    @Transactional public void importOne(Order order) { ... }   // no transaction here
+    @Transactional public void importOne(Order order) { ... }   // no advice from this internal call
 }
 ```
 
@@ -100,9 +112,11 @@ cannot be intercepted by ordinary instance proxies; final classes/methods preven
 proxies, while interface proxies and AspectJ weaving differ. Fix structurally (another bean), use
 an explicit API such as `TransactionTemplate`, or deliberately configure weaving; verify the
 actual proxy kind and call path rather than only asking whether a bean boundary exists.
+An outer transaction can still be active; bypassing this advice does not prove no transaction.
 
 **3. Security annotations on an unreached path.** An `@PreAuthorize` on a service method
-protects that method; it does not protect a second controller that reaches the repository
+protects intercepted calls only when method security is enabled and configured; it does not
+protect a second controller that reaches the repository
 directly. Annotation-based authorisation is only as complete as the set of entry points that
 route through it, which is why the enforcement point belongs at a boundary the design makes
 unavoidable.
@@ -117,10 +131,10 @@ unavoidable.
 - **Configuration that varies per environment.** Annotation members are compile-time constants.
   A timeout, a pool size or a feature flag in an annotation is a redeploy away from every
   change.
-- **Anything a type could express.** A `@NonNull String` parameter is weaker than a value type
-  that cannot be constructed empty; an `@Ordered(3)` is weaker than an explicit ordered list in
-  a configuration class. Types and data structures are checked; annotations are read by
-  whoever remembers to read them.
+- **An invariant better expressed in a type or data structure.** A value type can validate
+  non-empty text at construction, but its reference can still be null; nullness analysis is a
+  separate contract. Compare actual enforcement: a configured annotation checker can provide
+  compile-time guarantees, while a type name alone cannot.
 - **Cross-cutting rules you can enforce structurally.** An architecture test asserting "no
   class in the domain package imports a framework type" is stronger than an annotation saying
   the same thing, because it cannot be forgotten on a new class — see architecture-testing.

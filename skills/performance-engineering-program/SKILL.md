@@ -22,9 +22,11 @@ service.
 1. Define the decisions the program must improve: release safety, SLO protection, capacity,
    incident response or cost efficiency.
 2. Assess evidence by service and dimension: user objective, representative baseline, regression
-   gate, production observability, ownership/runbook and learning loop.
+   gate, production observability, ownership/runbook and learning loop. Reuse existing artifacts,
+   owners and accepted decisions; distinguish missing evidence from demonstrated absence.
 3. Find the weakest dependency. An advanced profiler does not compensate for an undefined SLO or a
-   gate that silently passes without data.
+   gate that silently passes without data. Limit a blocker to the adoption decision that depends
+   on it; independent evidence capture or enablement can proceed.
 4. Choose one adoption wave with named services, owners, artifacts, support and measurable exit
    criteria. Pilot before standardizing.
 5. Build enablement: maintained templates, office hours, reviewed examples and rotating champions
@@ -36,7 +38,8 @@ service.
 - Treat maturity as an evidence inventory. Never average away a missing safety-critical dimension.
 - Use ordinal levels only to communicate; retain the underlying evidence and gaps for decisions.
 - Standardize contracts and required fields, not one tool or one numeric threshold across unlike
-  workloads.
+  workloads. Inspect service criticality, runtime/tool versions and deployment constraints before
+  applying a template; the program does not authorize upgrades or new release approval gates.
 - A CI performance gate is not adopted until it has representative evidence, calibrated noise,
   explicit metric direction, `pass/regression/inconclusive`, and baseline ownership.
 - A champion program distributes judgment only when champions practice on real services, rotate at
@@ -52,6 +55,13 @@ For each metric record definition, population, source/query, owner, cadence, tar
 behavior and the decision it changes. Useful outcomes include regression escape rate, time from
 signal to useful evidence, percentage of critical services with exercised runbooks, and recovery
 of performance budgets. Report uncertainty and avoid causal claims from simple correlation.
+Version the eligible-service/release population, observation window and exclusions. Show missing
+coverage separately: fewer reported regressions after detection is disabled is not improvement.
+Do not average service percentiles into an organization-wide percentile.
+
+Deliver the current evidence gaps, a bounded next wave with capacity/owners, its applicable exit
+and pause/revision criteria, and checks actually exercised versus planned. Keep the deliverable
+proportionate; an assessment alone need not create a new central approval process.
 
 ## References
 

@@ -4,8 +4,8 @@
 
 ```text
 Request
-  └── Front Controller (DispatcherServlet / router)
-        ├── Filter chain          before routing: sees the raw request
+  └── Servlet filter chain        wraps servlet dispatch
+      └── DispatcherServlet       Front Controller for its mapped requests
         ├── Handler mapping       chooses the handler
         ├── Interceptors          after routing: knows the handler
         ├── Argument resolvers    build the handler's parameters
@@ -14,25 +14,25 @@ Request
         └── Exception resolvers   map exceptions to responses
 ```
 
-Nobody writes the front controller any more. The decisions that remain are about where each
+Framework users usually configure the front controller. The decisions here are about where each
 concern goes in that chain, and they are made wrongly often enough to be worth stating.
 
 ## Placing a concern
 
-| Concern                                 | Stage                                   | Why there                                                                 |
-| --------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------- |
-| Correlation id into the logging context | Filter, first                           | Must cover everything, including failures before routing                  |
-| Request/response logging, metrics       | Filter                                  | Needs the raw request and the final status                                |
-| Authentication                          | Filter (security chain)                 | Before any handler is selected                                            |
-| Tenant resolution from host or token    | Filter                                  | Everything downstream depends on it                                       |
-| Authorisation based on the handler      | Interceptor / method security           | Needs to know which handler was chosen and its annotations                |
-| Feature flag per route                  | Interceptor                             | Same                                                                      |
-| "Current user" as a typed parameter     | Argument resolver                       | Removes boilerplate without hiding a decision                             |
-| Parsing a custom range or filter header | Argument resolver                       | Same                                                                      |
-| Input validation (syntax)               | Bean validation on the request type     | Declarative, one place, produces a consistent error shape                 |
-| Exception → response mapping            | One controller advice                   | One error shape for the whole application                                 |
-| Response envelope / HATEOAS links       | Return value handler or advice          | Otherwise repeated per handler                                            |
-| Transaction demarcation                 | **None of these** — application service | A transaction spanning rendering holds a connection through serialisation |
+| Concern                                 | Stage                                          | Why there                                                                 |
+| --------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------- |
+| Correlation id into the logging context | Filter, first                                  | Must cover everything, including failures before routing                  |
+| Request/response logging, metrics       | Filter                                         | Needs the raw request and the final status                                |
+| Authentication                          | Filter (security chain)                        | Before any handler is selected                                            |
+| Tenant resolution from host or token    | Filter                                         | Everything downstream depends on it                                       |
+| Authorisation based on the operation    | Enabled method security, plus request security | Protect the operation; MVC interceptors can have path-matching gaps       |
+| Feature flag per route                  | Interceptor                                    | Sees handler metadata; do not substitute a flag for authorization         |
+| "Current user" as a typed parameter     | Argument resolver                              | Removes boilerplate without hiding a decision                             |
+| Parsing a custom range or filter header | Argument resolver                              | Same                                                                      |
+| Input validation (syntax)               | Bean validation on the request type            | Declarative, one place, produces a consistent error shape                 |
+| Exception → response mapping            | MVC advice plus filter/security handlers       | Advice does not automatically catch failures outside MVC                  |
+| Response envelope / HATEOAS links       | Return value handler or advice                 | Otherwise repeated per handler                                            |
+| Transaction demarcation                 | **None of these** — application service        | A transaction spanning rendering holds a connection through serialisation |
 
 **Ordering matters and is a frequent source of confusion.** The correlation-id filter must
 run before the logging filter, or the first log lines have no id. The security filter chain
@@ -41,7 +41,16 @@ seen by a controller advice — it needs its own handling, which is why an authe
 failure often has a different error shape from every other error unless it is deliberately
 aligned.
 
+For async requests, a filter returning does not mean the response is complete. Configure
+REQUEST/ASYNC/ERROR dispatch coverage deliberately, restore logging context in `finally`,
+and propagate it explicitly across thread changes. Measure completion through the supported
+async lifecycle, avoiding duplicate observations on redispatch. A tenant from an untrusted
+header is a claim, not authorization to access that tenant.
+
 ## A handler doing only its job
+
+Partial Spring MVC snippets: imports, request/application types and configured resolvers
+are omitted. The error example uses Spring 6+ `ProblemDetail`.
 
 ```java
 @RestController
@@ -121,16 +130,16 @@ client is both a leak and useless to the caller (`rpc-and-api-contracts`).
 
 ## Where controllers accumulate defects
 
-| Smell in a handler                                 | What it means                                                  |
-| -------------------------------------------------- | -------------------------------------------------------------- |
-| `if` on domain state                               | A business rule in the web layer                               |
-| `@Transactional`                                   | The transaction now spans binding and serialisation            |
-| A repository call on a write path                  | The use case boundary is missing                               |
-| A `try/catch` mapping to a status code             | Duplicates the advice; the next handler will do it differently |
-| An entity in the response                          | Schema is now the public contract (`remote-facade-and-dto`)    |
-| More than about five parameters                    | The request is a type waiting to be extracted                  |
-| A second call to the same service to "get it back" | The use case should return what the caller needs               |
-| Building a URL by string concatenation             | Use the framework's URI building; this breaks behind a proxy   |
+| Smell in a handler                                 | What it means                                                                                                                            |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `if` on domain state                               | Trace whether it enforces business legality or merely chooses a presentation response                                                    |
+| `@Transactional`                                   | Inspect the proxy boundary: normally the handler invocation, not MVC binding or later serialization; move use-case ownership when needed |
+| A repository call on a write path                  | The use case boundary is missing                                                                                                         |
+| A `try/catch` mapping to a status code             | Check for duplicated generic mapping; operation-specific recovery may belong locally                                                     |
+| An entity in the response                          | Serialized entity properties may become public contract; column names are not automatically JSON names (`remote-facade-and-dto`)         |
+| More than about five parameters                    | The request is a type waiting to be extracted                                                                                            |
+| A second call to the same service to "get it back" | The use case should return what the caller needs                                                                                         |
+| Building a URL by string concatenation             | Check escaping, context path and external prefix; URI builders still require trusted proxy configuration                                 |
 
 ## The same reasoning off the web
 
@@ -150,8 +159,16 @@ class OrderPlacedConsumer {
 }
 ```
 
-The shared concerns — correlation id from the message headers, idempotency by message key,
-error handling and retry policy, dead-lettering — belong in the container's configuration or
-an interceptor, not in each listener. Teams that get this right for HTTP frequently
+Shared transport concerns — correlation, error handling, retry policy and dead-lettering —
+often belong in the container or an interceptor. Business idempotency still needs a stable
+operation identity (not necessarily the partition key) and an atomic relation to its effects;
+container retries alone cannot provide it. Teams that get this right for HTTP frequently
 re-implement it badly per listener, and the result is a consumer that is retried without
 being idempotent (`idempotency`, `delivery-semantics`).
+
+## Primary contracts
+
+- [Spring MVC interception](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-servlet/handlermapping-interceptor.html): interceptor security limitations.
+- [Spring declarative transactions](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-decl-explained.html): advice around method invocation; an outer transaction can extend that scope.
+- [Spring MVC asynchronous requests](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-ann-async.html): dispatch and completion lifecycle.
+- [ProblemDetail 6.2 API](https://docs.spring.io/spring-framework/docs/6.2.18/javadoc-api/org/springframework/http/ProblemDetail.html): available since 6.0.

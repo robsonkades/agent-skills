@@ -2,25 +2,30 @@
 
 ## Propagation, by what it actually does
 
-| Mode            | If a transaction exists       | If none exists | Connections | Notes                                                                |
-| --------------- | ----------------------------- | -------------- | ----------- | -------------------------------------------------------------------- |
-| `REQUIRED`      | joins it                      | starts one     | 1           | The default and almost always correct                                |
-| `REQUIRES_NEW`  | suspends it, starts a new one | starts one     | 2           | Two connections held at once; can deadlock against the suspended one |
-| `SUPPORTS`      | joins it                      | runs without   | 0 or 1      | Behaviour changes with the caller — hard to reason about; avoid      |
-| `NOT_SUPPORTED` | suspends it, runs without     | runs without   | 1 held idle | Useful to keep a long read out of a write transaction                |
-| `MANDATORY`     | joins it                      | throws         | 1           | Good on internal helpers that must never demarcate                   |
-| `NEVER`         | throws                        | runs without   | 0           | Guards code that must not be transactional                           |
-| `NESTED`        | savepoint inside the current  | starts one     | 1           | JDBC savepoints; not supported by every manager or driver            |
+| Mode            | If a transaction exists       | If none exists | Resource considerations                                                            |
+| --------------- | ----------------------------- | -------------- | ---------------------------------------------------------------------------------- |
+| `REQUIRED`      | joins it                      | starts one     | Shares physical transaction and rollback-only state                                |
+| `REQUIRES_NEW`  | suspends it, starts a new one | starts one     | Outer resources retained; inner JDBC work can need another connection              |
+| `SUPPORTS`      | joins it                      | runs without   | Resource synchronization depends on manager/configuration                          |
+| `NOT_SUPPORTED` | suspends it, runs without     | runs without   | Does not release outer locks/connections; inner JDBC work still needs a connection |
+| `MANDATORY`     | joins it                      | throws         | Enforces an existing transaction on an intercepted call                            |
+| `NEVER`         | throws                        | runs without   | Absence of transaction does not mean absence of a JDBC connection                  |
+| `NESTED`        | savepoint inside the current  | starts one     | Typically JDBC savepoints; manager/driver support required                         |
 
-The two worth deliberate use are `REQUIRED` (everywhere) and `REQUIRES_NEW` (for work that
-must survive the caller's rollback — audit records, failure logging, an idempotency marker).
-`REQUIRES_NEW` costs a second pool connection for the inner duration: a pool of 10 with a
-use case that nests one is effectively a pool of 5, and under load that is a deadlock
-against your own pool.
+Choose propagation from commit semantics. An audit attempt may commit independently with
+`REQUIRES_NEW`; a completed idempotency marker normally must commit with its business effect.
+For one datasource, ten outer transactions holding ten connections can all wait for an inner
+connection from a pool of ten. Bound concurrent outer work and model nesting, pool-acquisition
+timeouts and lock dependencies; there is no universal "effective pool of five" rule.
+
+An inner `REQUIRED` normally joins the outer isolation/timeout/read-only settings rather
+than upgrading them. Inspect manager validation options when mismatches must be rejected.
+Suspension and savepoints are manager-dependent. JDBC savepoint rollback does not necessarily
+restore a JPA persistence context's in-memory state.
 
 ## The silent no-ops
 
-Each of these compiles, looks demarcated, and is not:
+Partial Java illustration (omitted domain methods/imports), assuming Spring proxy mode:
 
 ```java
 @Service
@@ -43,10 +48,15 @@ public class Orders {
 ```
 
 Also silent: `@Transactional` on a class instantiated with `new` rather than injected; on a
-method invoked from a lambda that the framework did not proxy; and — most commonly — on a
-method reached from a `@PostConstruct` or from a constructor, before the proxy exists.
+method reached through a direct target/self call, including inside a lambda; and on a
+method reached from a `@PostConstruct` or from a constructor, before interception is available.
+A lambda calling an injected proxy can be intercepted. Thread-bound imperative transactions
+do not automatically follow newly started threads or asynchronously scheduled work.
 
 **Verification at runtime**, worth having in a test rather than reasoning about:
+
+Partial AssertJ/Spring imperative assertions; the transaction name is diagnostic, not a
+physical transaction identity or evidence of which datasource was enlisted:
 
 ```java
 assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isTrue();
@@ -57,9 +67,9 @@ assertThat(TransactionSynchronizationManager.getCurrentTransactionName())
 ## Rollback rules
 
 ```java
-// Default: rolls back on RuntimeException and Error, commits on checked exceptions.
+// Ordinary default, with no overriding rules or pre-existing rollback-only state.
 @Transactional
-public void settle() throws InsufficientFunds { ... }   // ← commits the partial work
+public void settle() throws InsufficientFunds { ... }   // checked failure may commit
 
 @Transactional(rollbackFor = InsufficientFunds.class)
 public void settleCorrectly() throws InsufficientFunds { ... }
@@ -67,13 +77,18 @@ public void settleCorrectly() throws InsufficientFunds { ... }
 
 Two further traps:
 
-- **Catching inside the boundary.** If an inner `REQUIRED` method threw and the outer
-  catches it and continues, the transaction is already marked rollback-only; the commit at
-  the end fails with `UnexpectedRollbackException` and the original cause is long gone. If
-  the inner failure must be survivable, the inner work needs `REQUIRES_NEW`.
+- **Catching inside the boundary.** If the intercepted inner failure triggers rollback
+  rules or the resource marks rollback-only, catching it does not repair the transaction.
+  The outer commit attempt can fail with `UnexpectedRollbackException`. Consider independent
+  work, a supported savepoint, or aborting the whole unit according to business semantics.
 - **Swallowing to "make it resilient".** A `catch (Exception e) { log.error(...); }` around
-  a write inside a transaction produces a commit of whatever happened to succeed. Failing
-  fast is the transactional behaviour; resilience belongs outside the boundary.
+  a write can commit partial work if no rollback-only state was set, or still fail at
+  commit if it was. Do not infer the final outcome from the caught exception alone.
+
+Run a proxied entrypoint without an enclosing test transaction, inject failure between
+writes, then inspect committed rows in a fresh transaction. Test the configured checked
+exception rule and caught inner rollback separately. Activity/name assertions alone cannot
+prove rollback or atomic enlistment.
 
 ## Keeping the boundary small
 
@@ -86,17 +101,18 @@ public void placeOrder(PlaceOrderCommand command) {
 }
 ```
 
-The remote call's latency is now lock duration and connection-hold duration. Under a
-provider slowdown, the pool empties and every unrelated endpoint fails — an availability
-incident caused by a transaction boundary.
+Once the database work acquires resources, remote latency extends their occupancy. Under
+slowdown this can exhaust a shared pool or block competitors; measure the actual scope.
 
-The corrected shapes, in order of preference:
+Candidate shapes, selected by business semantics rather than a universal ranking:
 
 1. **Do the remote work outside the transaction**, before or after, and make the write
-   idempotent so a retry is safe (`idempotency`).
+   idempotent so repetition is safe (`idempotency`). Moving the call alone does not close
+   the crash gap: persist intent/outcome and define reconciliation for remote success followed
+   by local failure, and local success followed by remote failure.
 2. **Outbox**: write the order and a `pending_charge` row in the same transaction; a relay
    reads the outbox after commit and calls the gateway with retries. Atomic locally, at
-   least once remotely.
+   least once remotely with durable retry/recovery. Relay crashes can duplicate publication.
 3. **Compensate**: charge first, then write; if the write fails, refund. Only where the
    remote system supports a reliable reversal.
 
@@ -113,41 +129,57 @@ public void reindexAll() {
     for (var row : repository.findAll()) { ... }
 }
 
-// Right: a transaction per chunk, restartable, bounded lock scope.
+// Partial Java 17+ template: imperative Spring TransactionTemplate, domain types omitted.
+// No enclosing transaction; template starts and commits one transaction per execute.
+// Repository and checkpoint use the same enlisted database transaction.
 public void reindexAll() {
-    Long cursor = 0L;
-    List<Row> chunk;
-    while (!(chunk = repository.findNextChunk(cursor, 500)).isEmpty()) {
-        cursor = transactionTemplate.execute(status -> processChunk(chunk));
+    while (Boolean.TRUE.equals(transactionTemplate.execute(status -> {
+        long cursor = checkpoint.load();
+        List<Row> chunk = repository.findNextChunk(cursor, 500);
+        if (chunk.isEmpty()) return false;
+        processChunk(chunk);
+        checkpoint.save(chunk.get(chunk.size() - 1).id());
+        return true;
+    }))) {
+        // Start the next chunk only after this chunk commits.
     }
 }
 ```
 
-Chunked batches need three properties the single transaction gets for free and must now be
-designed: restartability (a durable cursor), idempotency of a chunk (a chunk may be applied
-twice after a crash), and a defined intermediate state — other readers will see the batch
-half-applied, and someone must decide that is acceptable.
+Chunking replaces one all-or-nothing batch with committed partial progress. Design
+restartability (a durable cursor), safe repetition (including a crash with an unknown
+commit outcome), and a defined intermediate state — other readers will see the batch
+half-applied, and someone must decide that is acceptable. Use stable key ordering and a
+defined input snapshot/high-water mark. Serialize ownership of each checkpoint or partition
+the job; external effects still require duplicate handling. The template alone does not
+implement concurrent-worker claiming, cancellation or changing-input semantics.
 
 ## Reads
 
-- `@Transactional(readOnly = true)` lets Hibernate set `FlushMode.MANUAL` and skip dirty
-  checking, which is a real saving on large result sets, and may route to a replica if
-  routing is configured. It does not prevent writes at the database level in every engine.
-- A read with no transaction is fine and is one connection per statement. A read _inside_
-  a write transaction extends that transaction — move long reads out with `NOT_SUPPORTED`
-  when they are incidental to the write.
-- Repeatable reads within one request come from the transaction, not from the ORM. A
-  request that reads the same row twice outside a transaction may legitimately see two
-  values (`consistency-models`).
+- `readOnly` effects depend on Spring, provider and driver configuration; inspect flush
+  mode and entity read-only state. It is neither automatic replica routing nor portable
+  write prevention, and performance benefit must be measured.
+- Autocommit reads still use connections and database statement transactions. Connection
+  reuse depends on the integration. Move incidental long reads before/after the write
+  boundary when safe; `NOT_SUPPORTED` alone retains suspended outer resources.
+- Repeatability depends on engine isolation, statement semantics and persistence-context
+  caching. `READ COMMITTED` can observe changes even inside one transaction; an ORM cache
+  can mask them without guaranteeing a consistent multi-query snapshot.
 
 ## Checklist for a use case
 
-- [ ] Exactly one demarcation, at the application service
-- [ ] No network call, message publish, file write or user wait inside it
+- [ ] Actual business atomic unit and intercepted entrypoint identified
+- [ ] External effects moved out or deliberately bounded with failure recovery documented
 - [ ] Rollback rule matches the exceptions actually thrown
-- [ ] No self-invocation on the transactional path
+- [ ] No reliance on self-invoked transaction attributes
 - [ ] Batch work chunked, with a restart cursor
 - [ ] `REQUIRES_NEW` used only where the inner work must survive an outer rollback, and the
       pool is sized for the extra connection
 - [ ] The non-atomic edge (message, remote call) has a named strategy: outbox, retry or
       compensation
+
+## Sources
+
+- [Spring propagation](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html): physical versus logical scope, joining attributes and retained resources.
+- [Spring rollback rules](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html): default rules and overrides.
+- [Spring transaction annotation settings](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html): proxy interception and the 6.2+ global rollback default. Consult the project's version.

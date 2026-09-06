@@ -13,15 +13,18 @@ nothing entered without a decision.
 
 ## 2. Scope
 
-Compare the touched files against the plan's file list. Mechanical, and the most reliable creep
-detector there is.
+Compare feature-attributable changes against the plan's impact map. Establish the initial working
+tree and distinguish pre-existing or concurrent work before attributing a diff. File lists locate
+missed impact but do not prove intent; unrelated changes can share a planned file. Never revert
+someone else's work to make the feature's scope check pass.
 
 ```text
 Touched but unplanned   src/main/java/.../ShippingClient.java
                         -> necessary: the dispatch call reuses it and needed a
                            timeout parameter. Impact map missed it; amended.
 Touched but unplanned   src/main/java/.../OrderMapper.java
-                        -> not necessary: tidied while passing through. Reverted.
+                        -> not necessary: this feature's own incidental cleanup.
+                           Reverted only those hunks; preserved concurrent edits.
 ```
 
 Both outcomes are acceptable; the unacceptable one is not noticing.
@@ -29,7 +32,10 @@ Both outcomes are acceptable; the unacceptable one is not noticing.
 ## 3. Acceptance criteria
 
 Each criterion, and the observed `EV-*` that checked it — a test identifier, command output, or manual step
-someone performed. A criterion checked by "the implementation does this" is unchecked.
+someone performed. Record the outcome, covered assertion, implementation/contract revision and
+relevant environment. Executed-but-failed or merely planned evidence does not satisfy a criterion;
+results for an older revision require a justified applicability check or rerun. A criterion checked
+by "the implementation does this" is unchecked.
 
 ## 4. Decisions
 
@@ -54,11 +60,14 @@ either an improvement worth stating or an inconsistency worth fixing; both need 
 
 ## 7. Validation
 
-Every DONE resource names what ran. Read the list for the three failures that look like success:
-a suite that selected nothing, a test that would have passed before the implementation existed,
-and a build with a skipped module.
+Every DONE resource names relevant passing evidence, not just what ran. Check for a suite that
+selected nothing, a test that does not exercise its claimed new behavior, and a build that skipped
+an affected module. Existing regression tests may legitimately pass before and after; they support
+preservation of covered behavior, not proof that the new behavior exists.
 
-Anything that could not be validated is listed with what it does not cover.
+Anything that could not be validated is listed with what it does not cover. A valid accepted gap
+records authority and residual consequence; it does not turn unavailable evidence into a pass.
+When acceptance depends on that evidence, report the feature incomplete under the current baseline.
 
 ## 8. Security
 
@@ -96,7 +105,7 @@ Complete     no — one Required item has no resource
 
 Requirements
   BAC-01 dispatch is asynchronous          RES-01, RES-03, RES-04   satisfied
-  BAC-02 caller can observe completion     RES-06                   satisfied
+  BAC-02 caller can observe completion     RES-06                   UNVERIFIED
   BAC-03 duplicate dispatch is suppressed  -                        NOT COVERED
 Scope
   2 unplanned files; 1 kept with the impact map amended, 1 reverted
@@ -104,7 +113,7 @@ Validation
   9 resources validated; RES-06 qualified — no database harness, generated SQL
   unverified against the real engine
 Acceptance
-  4 of 5 checked; BAC-05 depends on BAC-03
+  BAC-01 satisfied; BAC-02 unverified; BAC-03 not covered; BAC-05 depends on BAC-03
 Decisions
   11 recorded; ED-09 and ED-11 recorded retrospectively during implementation
 Risks

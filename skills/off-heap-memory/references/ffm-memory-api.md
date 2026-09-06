@@ -23,7 +23,9 @@ Need native memory
   |
   +-- Is there a clear ownership scope (try-with-resources)?
         |
-        +-- No  -> Arena.ofAuto()   (accept GC timing; the exception, not the rule)
+        +-- No  -> Explicit lifecycle owner across callbacks/operations?
+        |           Yes -> owned confined/shared arena, closed on actual completion
+        |           No  -> ofAuto() only if bounded GC-managed timing is acceptable
         |
         +-- Yes -> Does more than one thread access OR close the segment?
                      |
@@ -37,9 +39,12 @@ lifetime is acceptable and bounded by another resource policy.
 
 ## Allocation and typed access
 
+Partial Java 22+ snippets: imports and surrounding methods are omitted. Specify alignment
+for typed access; `allocate(byteSize)` requests only alignment 1.
+
 ```java
 try (Arena arena = Arena.ofConfined()) {
-    MemorySegment segment = arena.allocate(1024 * 1024);
+    MemorySegment segment = arena.allocate(1024 * 1024, ValueLayout.JAVA_LONG.byteAlignment());
 
     segment.set(ValueLayout.JAVA_LONG, 0, 0x1234567890ABCDEFL);  // bounds-checked
     long value = segment.get(ValueLayout.JAVA_LONG, 0);
@@ -72,10 +77,15 @@ try (Arena arena = Arena.ofConfined();
     MemorySegment mapped = channel.map(
         FileChannel.MapMode.READ_ONLY, 0, channel.size(), arena
     );
-    long value = mapped.get(ValueLayout.JAVA_LONG, 0);
+    if (mapped.byteSize() < Long.BYTES) throw new IOException("Truncated header");
+    long value = mapped.get(ValueLayout.JAVA_LONG_UNALIGNED
+        .withOrder(ByteOrder.BIG_ENDIAN), 0); // example file format uses big endian
 }
 // unmapped on exit, deterministically
 ```
+
+The file must remain stable while mapped: concurrent truncation can invalidate access.
+Closing the channel alone does not unmap the segment; the arena owns that lifetime.
 
 The legacy `MappedByteBuffer` form still common in existing code reads out of the page cache
 with no copy into the Java heap, but its unmapping follows the same Cleaner mechanics as a
@@ -95,28 +105,30 @@ the pool must first prevent acquisition and coordinate all leases.
 
 1. Identify the ownership pattern and pick the `Arena` from the selection rule above — one
    thread start to finish (`ofConfined`), several threads accessing or closing (`ofShared`),
-   no natural try-with-resources scope (`ofAuto`, last resort), truly permanent (`global`).
+   explicit asynchronous owner (close on completion), acceptable GC-managed lifetime
+   (`ofAuto`, last resort), truly permanent (`global`).
 2. Translate size/alignment with checked arithmetic; `arena.allocate(n, alignment)` is not a
    safe mechanical replacement until ownership and maximum allocation are enforced.
 3. Replace raw address access (`unsafe.getLong(address)`) with typed segment access
    (`segment.get(ValueLayout.JAVA_LONG, offset)`) — bounds checking comes with it.
-4. Replace manual release (`unsafe.freeMemory(address)` in a `finally`) or implicit release
-   (waiting for the Cleaner) with `arena.close()` — deterministic, and use-after-free throws
-   `IllegalStateException` instead of silently corrupting memory.
+4. Replace manual/implicit release with the chosen arena's lifecycle; confined/shared arenas
+   close explicitly, automatic/global ones do not. Checked Java segment access after close
+   throws `IllegalStateException`; raw pointers retained by native code bypass those checks.
+   Wait for actual native completion before releasing their storage.
 5. Reconcile endianness, alignment, atomic access modes and native struct padding; test
    malformed sizes, use-after-close, wrong-thread access and close/access races.
-6. If the legacy code used object-plus-offset CAS (`compareAndSetLong`), **do not migrate it
-   here**. It is not a target of JEP 471 or JEP 498. Moving it to `VarHandle` is a separate,
-   independent decision.
+6. For object-plus-offset CAS (`sun.misc.Unsafe.compareAndSwapLong`) or volatile access,
+   use a `VarHandle` migration with equivalent atomicity and memory ordering. These methods
+   are affected by JEP 471/498 too; native allocation migration alone does not address them.
 
 ## Verifying the JEP 498 phase behaviour early
 
 ```bash
 --sun-misc-unsafe-memory-access=warn    # default on JDK 24/25: warning on first use
 --sun-misc-unsafe-memory-access=allow   # suppresses the warning
---sun-misc-unsafe-memory-access=deny    # rejects targeted calls; not the default on verified JDK 27 EA
+--sun-misc-unsafe-memory-access=deny    # rejects targeted calls; not the JDK 25 GA default
 ```
 
 Running with `deny` in CI is how you find out, before the baseline moves, which code paths
-will stop working. The object-plus-offset CAS methods produce no warning in any of these
-modes.
+will stop working, including object-plus-offset CAS/volatile operations. `warn` reports
+the first affected use; absence of another warning does not mean subsequent methods are exempt.

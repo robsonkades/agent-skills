@@ -9,7 +9,7 @@ capacity, replication role and offered work. A ratio is useful; no single ratio 
 | Series       | Per-shard measure                        | Elevated max/mean means                                     |
 | ------------ | ---------------------------------------- | ----------------------------------------------------------- |
 | Request rate | offered, accepted and rejected ops/s     | Traffic skew or saturation-induced admission                |
-| p99 latency  | per-shard response-time percentile       | One shard is saturated or queueing                          |
+| p99 latency  | per-shard response-time percentile       | Latency differs; inspect queueing and request mix           |
 | Storage      | bytes or row count held                  | Data skew — a large tenant or an unbounded key              |
 | CPU / IOPS   | demand and utilization per capacity unit | Work skew, which need not track request count               |
 | Queue / lag  | queue age/depth and replica/change lag   | Service rate is below arrivals or migration cannot converge |
@@ -17,11 +17,17 @@ capacity, replication role and offered work. A ratio is useful; no single ratio 
 The derived series to alert on:
 
 ```promql
-# Screening ratio for equal-capacity primary shards; guard an empty denominator.
-max(rate(shard_requests_total[5m])) by (cluster)
-  /
-avg(rate(shard_requests_total[5m])) by (cluster)
+# Equal-capacity primaries; adapt selectors to the metric schema.
+# Recording rule shard:requests:rate5m =
+#   sum by (cluster, shard) (rate(shard_requests_total{role="primary"}[5m]))
+max by (cluster) (shard:requests:rate5m)
+  / on (cluster)
+(avg by (cluster) (shard:requests:rate5m) > 0)
 ```
+
+Sum only disjoint counters for the same request population; deduplicate replicated scrapes
+and separate offered/accepted and read/write populations. Missing shard series are not zero:
+check inventory and missing telemetry. The positive-denominator filter omits idle clusters.
 
 With N equal shards and one saturated, excess in the fleet average is diluted. Pair the
 ratio with maximum utilization, top-1/top-5 traffic share, median or p90 shard, rejection
@@ -32,10 +38,10 @@ empirically measured capacity weight before comparing shards.
 Two supporting views:
 
 - A per-shard heat map or stacked series over time: skew that appeared at a deploy, at a
-  marketing send, or at the top of the hour has a cause you can name from the shape.
+  marketing send, or at the top of the hour suggests a correlation to investigate, not a proven cause.
 - Per-shard rate divided by per-shard key count. A shard with the mean number of keys and
-  several times the mean request rate is carrying a hot key; a shard with several times the
-  keys is carrying a large tenant. Different repairs.
+  several times the mean request rate may carry hot keys or costlier requests; extra keys may indicate placement or tenant
+  skew. Confirm with key/tenant samples before selecting a repair.
 
 ## Signatures
 
@@ -59,18 +65,18 @@ A shard metric proves skew exists. The repair needs the key.
 
 - **Use the store's own facility first.** Many stores expose per-key or per-partition
   statistics, a slow-log carrying the key, or a top-keys command. Check before building
-  anything; the cost of the built-in is usually far below a sampler.
+  anything; inspect its overhead and sampling semantics before enabling it under load.
 - **Sample the request stream, do not count every key.** Counting every key on the hot path
   adds a map update per request and a cardinality explosion in metrics. Sample at a fixed low
-  rate and count only the sample: a key taking a large share of traffic dominates a sample of
-  a few thousand requests, which is the only case you are looking for. Rare keys are
-  invisible in the sample, and that is correct — they are not the problem.
+  rate and count only the sample: a frequent key may emerge from a modest sample. Record sampling rate and observation
+  window; absence cannot exclude rare, expensive work.
 - **Sample by work as well as count.** One rare key may consume most bytes, CPU or lock time.
   Weight or maintain separate sketches for requests, bytes and service time; correct for
   head/tail sampling bias when extrapolating.
 - **Bound the counter.** A hot-key detector must have a fixed memory footprint or it becomes
-  the outage. A count-min sketch, or a Space-Saving / "top-K with eviction" structure of
-  fixed capacity, gives approximate top-K in constant space. A `ConcurrentHashMap<String,
+  the outage. A fixed-capacity Space-Saving structure tracks heavy-hitter candidates. A count-min
+  sketch estimates counts for supplied keys but does not enumerate top-K itself; pair it
+  with bounded candidate tracking and account for estimation error. A `ConcurrentHashMap<String,
 LongAdder>` keyed by user input is an unbounded-growth bug with a plausible-looking
   implementation.
 - **Never make the key a metric label.** Per-key labels multiply the time-series count by the
@@ -81,7 +87,8 @@ LongAdder>` keyed by user input is an unbounded-growth bug with a plausible-look
   retention and access to top-K output.
 
 ```java
-// Conceptual: sampled top-K, fixed capacity, off the hot path except for one branch.
+// Partial sketch: SAMPLE_RATE > 0; bounded, concurrency-safe offer with measured overhead.
+// Random selection still executes on every request.
 if (ThreadLocalRandom.current().nextInt(SAMPLE_RATE) == 0) {
     topK.offer(key);              // bounded structure; drops the long tail by design
 }
@@ -90,11 +97,12 @@ if (ThreadLocalRandom.current().nextInt(SAMPLE_RATE) == 0) {
 ## Before concluding
 
 - **Confirm the hot key is not an artefact of a retry storm.** A key that started failing
-  gets retried, which raises its rate, which keeps it failing. The signature is rate rising
-  _after_ latency, not before — and the fix is `retries-and-backoff`, not a key split.
-- **Check whether the shard was hot before the last membership change.** A shard that is hot
-  in every configuration is carrying an intrinsically hot key; one that is hot only in this
-  configuration may genuinely be a placement imbalance, which is `consistent-hashing`.
+  gets retried, which raises its rate, which keeps it failing. Rate rising after latency is a clue; compare logical operations with attempts and retry
+  timing. Mitigate proven retry amplification (`retries-and-backoff`) while investigating
+  the original failure; retries and intrinsic skew can coexist.
+- **Check whether the shard was hot before the last membership change.** Track logical keys separately from physical owners. Persistent heat on one physical node
+  can reflect hardware or a local fault; intrinsic heat should follow the same logical key.
+  Configuration-dependent heat suggests testing placement imbalance (`consistent-hashing`).
 - **Record the numbers you used.** The max/mean ratio at the time of the incident is the
   baseline against which the repair is judged, and it is unrecoverable afterwards if nobody
   wrote it down.
@@ -117,3 +125,12 @@ One shard differs?
 
 Do not average per-shard percentiles to obtain a fleet percentile. Aggregate compatible
 histogram buckets or raw distributions with request weighting; see `latency-statistics`.
+
+## Source
+
+[Prometheus operators](https://prometheus.io/docs/prometheus/latest/querying/operators/)
+define grouping and filtering; validate the illustrative rule against the deployed metric
+schema and Prometheus version.
+
+[Redis count-min sketch](https://redis.io/docs/latest/develop/data-types/probabilistic/count-min-sketch/)
+illustrates estimated-frequency queries for supplied items, rather than key enumeration.

@@ -25,6 +25,11 @@ delegating wrappers.
 
 ## Workflow
 
+0. **Inspect the compatibility and ownership boundary.** Check compiler release/toolchains,
+   CI runtime, external subclasses and separately deployed clients before changing `extends`
+   or `permits`. The worked example uses Java 21 without preview; sealed types require
+   Java 17+, and pattern switches require Java 21+ without preview. On an older target, use
+   ordinary composition/polymorphism rather than upgrading or enabling preview implicitly.
 1. **Name what is being inherited.** A contract (the subtype _is_ usable wherever the base
    is), implementation (code reuse only), or both. Reuse without substitutability is the
    case to eliminate: hold the other object in a field and forward.
@@ -37,7 +42,7 @@ delegating wrappers.
    and compose the others as policies. Correlated axes with a tiny closed product may still be
    clearer as named subtypes.
 4. **If genuine substitutability remains**, inheritance is right — see the rule below for
-   the three legitimate shapes. Design and document for it: specify self-use, keep
+   common legitimate shapes. Design and document for it: specify self-use, keep
    overridable surface minimal.
 5. **Decide with evidence.** Read
    [references/decision-model.md](references/decision-model.md) for the fragile-base risk
@@ -56,17 +61,25 @@ delegating wrappers.
   contract is too broad. Restructure code you own; for a platform contract that explicitly
   permits optional operations, document and test the chosen partial behavior instead of
   pretending the exception cannot occur.
-- Records compose but never extend: a record is implicitly final and cannot extend a
-  class. A family of record variants is expressed as a sealed interface they implement.
+- Records are implicitly final and cannot declare a superclass: they extend `java.lang.Record`.
+  They can implement open or sealed interfaces; seal only when the family should be closed.
 - Inheritance is justified when substitutability holds under a stable documented contract and
   shared implementation/state is worth its evolution coupling. Common sound shapes include a
   framework template explicitly designed for extension and a shallow sealed abstract base for a
   closed same-module family; exception classification and compatibility adapters can also be
   contract hierarchies without sharing algorithms.
-- Composition has costs — forwarding boilerplate, lost identity (`wrapper != wrapped`, so
-  `equals` and listener registration break across the boundary), no self-type for chained
-  returns. Count them before dismantling a working hierarchy; do not present delegation
+- Composition has costs — forwarding boilerplate, distinct identity (`wrapper != wrapped`),
+  possible equality/listener mismatches and fluent returns that may expose the delegate.
+  Inspect and test those contracts before dismantling a working hierarchy; do not present delegation
   as free.
+
+## Deliverable
+
+Name the observed coupling or contract defect, ownership/compatibility constraints, chosen
+relationship and the trade-off that rules out the closest alternative. For a migration,
+map old entry points to new ones and distinguish preserved behavior from policy changes;
+report characterization checks actually run. If callers or subclass contracts are unavailable,
+state the missing evidence and keep claims of safe replacement conditional.
 
 ## References
 

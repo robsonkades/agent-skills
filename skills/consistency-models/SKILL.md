@@ -26,9 +26,9 @@ but the cost depends on topology, implementation and workload.
 
 The failure this prevents is the requirement expressed as a model name. "We need strong
 consistency" cannot be verified, priced, or tested. "A user must never see their own
-comment disappear after posting it" names an observation, rules out eventual consistency,
-and — importantly — does **not** require linearizability: read-your-writes is enough, and it
-is available for a fraction of the cost.
+comment disappear after posting it because a replica has not applied the write" names an
+observation. Eventual convergence alone is insufficient; it can coexist with read-your-writes
+for that session. No global linearizability requirement follows from this observation alone.
 
 ## Workflow
 
@@ -36,8 +36,8 @@ is available for a fraction of the cost.
    assigned seat 14C." "A user must never see their own write disappear." "A balance may lag
    by up to five seconds but must never go backwards." No model names yet.
 2. **Ask who observes it.** Requirements that hold only for the session that performed the
-   write are session guarantees and are cheap. Requirements that hold across independent
-   observers are expensive.
+   write may need session guarantees. Compare their routing and metadata costs with the
+   coordination required by the actual cross-client contract.
 3. **Map each requirement to guarantees and scope**, using
    `references/requirement-to-model.md`: object/key range, session versus all clients, normal
    operation versus partition, and any time bound. Record the cost and fallback.
@@ -45,29 +45,37 @@ is available for a fraction of the cost.
    read-replica router, a CDN, or a cache delivers the weakest link in the chain. The path
    has a consistency model; the store only has one of its components.
 5. **Separate but connect isolation from consistency explicitly.** Decide the transaction isolation
-   level for anomalies _within_ a transaction, and the distributed model for recency
-   _across_ nodes, as distinct axes; a product may bundle them as strict serializability.
+   level for interactions among concurrent transactions, and the distributed model for ordering
+   and recency across nodes; a product may bundle these as strict serializability.
 6. **Write a test that fails under the model you rejected.** Stale-read detection with a
    deliberately lagged replica, or a partition injected with a network fault. Techniques are
    in `references/read-your-writes-in-java.md`.
+
+Inspect the project's JDK, resolved Spring/driver versions, transaction manager, replication mode,
+commit acknowledgement policy and read routing before proposing implementation details. The Java
+reference contains partial Spring sketches, not a declared runnable Java baseline. When evidence
+is absent, state the candidate guarantee and the missing configuration or experiment; do not infer
+semantics from annotations or topology names. Deliver the observable contract, affected path,
+supporting evidence, failure behavior and one test that distinguishes it from a rejected design.
 
 ## Rules
 
 - Do not stop at a model name. Name the observation, scope, failure condition and time bound, then map
   it. A model name in a requirements document is an unpriced, untestable assertion.
 - **CAP is about behaviour during a partition, not a general "pick two".** With no
-  partition, a system provides both consistency and availability; the theorem says that
+  partition, the theorem does not force a choice between consistency and availability; it says that
   while a partition is in progress, a system cannot both stay linearizable and satisfy CAP's
   availability definition for every request to a non-failing node. That theorem-level availability
   is not an SLO percentage, and real systems may reject only affected keys/operations.
 - **PACELC is a useful design heuristic, not a replacement theorem.** If Partitioned, choose
-  Availability or Consistency; Else, choose Latency or Consistency. Partitions are rare; the
-  else-branch is every request, and it is where the tuning knobs actually are — replica
+  Availability or Consistency; Else, choose Latency or Consistency. The else-branch concerns
+  operation without a partition, including choices such as replica
   routing, quorum sizes, cache TTLs.
 - Linearizability gives each operation an instantaneous point between invocation and response and
   respects real-time precedence. It is compositional across independently linearizable objects,
   but two separate operations still do not become one atomic multi-key transaction. Cross-object
-  invariants require an atomic protocol or compensation.
+  invariants need an invariant-preserving protocol. Compensation is an option only when the
+  business contract permits temporary violations and subsequent repair.
 - **Serializable isolation is not a recency guarantee.** Serializability says the outcome
   equals _some_ serial order of transactions; linearizability constrains that order to
   respect real time. A serializable transaction may legally read a stale snapshot. Strict
@@ -105,8 +113,8 @@ is available for a fraction of the cost.
 ## References
 
 - [Requirement to model](references/requirement-to-model.md) — a decision table from an
-  observable business requirement to the weakest model that satisfies it, with the cost and
-  the failure of choosing one rung lower. Read when a requirement is being written, or when
+  observable business requirement to sufficient guarantees, with costs and
+  counterexamples when a needed guarantee is absent. Read when a requirement is being written, or when
   a chosen model needs justifying.
 - [Read-your-writes in Java and Spring](references/read-your-writes-in-java.md) — routing a
   session's reads to the primary for a bounded window after a write, why

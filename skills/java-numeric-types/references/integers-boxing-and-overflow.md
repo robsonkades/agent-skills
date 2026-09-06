@@ -1,5 +1,8 @@
 # Integers, boxing and overflow
 
+Expression-only blocks are REPL illustrations rather than complete Java statements; snippets
+omit domain variables/imports. Guidance uses Java 17 as the reference baseline unless stated.
+
 ## Overflow is silent
 
 ```java
@@ -24,7 +27,10 @@ and the widening to `long` happens **after** the overflow. Fixes, in order of pr
 Places to check by habit: id and sequence arithmetic, byte counts and file sizes, durations in
 milliseconds or nanoseconds, accumulators in long-running loops, `hashCode` combinations
 (overflow there is harmless and intended), and array index arithmetic such as `(low + high) / 2`
-— which should be `low + ((high - low) >>> 1)`.
+— for ordered nonnegative array bounds use `low + ((high - low) >>> 1)`.
+Integer division of `MIN_VALUE` by `-1` is another silent overflow, even though division by
+zero throws. Explicitly reject that pair for exact division. A narrowing cast can also discard
+bits; `Math.toIntExact` checks a long-to-int conversion.
 
 ## Negative operands: `%` and `/`
 
@@ -109,8 +115,9 @@ claims performance-methodology exists to discipline.
 
 ## Ids, and what happens to them at the edges
 
-- **`long` ids above 2^53 lose precision in JavaScript** and in any consumer that parses JSON
-  numbers as doubles. Snowflake-style ids are exactly in this range. Serialise them as strings.
+- **Large `long` ids are unsafe as JavaScript Numbers.** Every integer within
+  `[-(2^53-1), 2^53-1]` is safely distinguishable; beyond that some adjacent integers collapse
+  even though some larger values are exact. Use a string/lossless contract end-to-end.
 - **`int` ids can run out.** A signed 32-bit positive sequence reaches its limit near 2.1 billion,
   but exhaustion time depends on allocation gaps, retries and sequence caching—not just live rows.
   The failure mode is an insert error in production at a time nobody chose. Start with `long`/
@@ -126,16 +133,18 @@ claims performance-methodology exists to discipline.
 
 - [ ] No `int` arithmetic whose product or sum can exceed `Integer.MAX_VALUE`; exact methods
       used where overflow would be a defect.
-- [ ] `Math.floorMod` wherever an operand can be negative.
+- [ ] For bucket indices with positive bucket count, `Math.floorMod` handles negative hashes;
+      retain truncating remainder where that is the intended arithmetic contract.
 - [ ] No `==`/`!=` between boxed values.
 - [ ] Every unboxing site has a proven non-null source, or the value stays boxed.
-- [ ] No boxed accumulators or loop variables.
+- [ ] Boxed accumulators or loop variables on a measured material path have been evaluated.
 - [ ] Primitive specialisations on paths that process values in bulk — with a profile, not a
       hunch, when the change costs readability.
 - [ ] Large ids serialised as strings at any boundary a JavaScript client can reach.
 
 ## Authoritative references
 
+- [JLS 17 integer division](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.17.2)
 - [JLS §5.1.7: Boxing Conversion](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.7)
 - [JLS §5.6: Numeric Contexts and Promotions](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.6)
 - [Math exact-arithmetic API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Math.html)

@@ -2,16 +2,16 @@
 
 ## Measured defaults (OpenJDK 25, via `PrintFlagsFinal`)
 
-| Flag                              | Default                           | What it actually is                                                                                           |
-| --------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `-XX:MetaspaceSize`               | 22020096 bytes (≈ 21.0 MB)        | Threshold that triggers the first metaspace-driven collection — **not** a size cap                            |
-| `-XX:MaxMetaspaceSize`            | 18446744073709551615 (`SIZE_MAX`) | Overall commitment limit on this build; effectively unbounded by default                                      |
-| `-XX:MinMetaspaceFreeRatio`       | 40                                | Minimum % free after a metaspace collection, below which metaspace expands                                    |
-| `-XX:MaxMetaspaceFreeRatio`       | 70                                | Maximum % free above which metaspace may shrink                                                               |
-| `-XX:MinMetaspaceExpansion`       | 327680 bytes (320 KB)             | Minimum increment per expansion                                                                               |
-| `-XX:MaxMetaspaceExpansion`       | 5439488 bytes (≈ 5.19 MB)         | Maximum increment per expansion                                                                               |
-| `-XX:CompressedClassSpaceSize`    | 1073741824 bytes (1024 MB)        | Requested reservation/limit for compressed class metadata; verify the effective value                         |
-| `-XX:+UseCompressedClassPointers` | `true` (`lp64_product`)           | Independent of `UseCompressedOops`; stays `true` above a 32 GB heap. Deprecated in JDK 25, obsolete in JDK 27 |
+| Flag                              | Default                           | What it actually is                                                                             |
+| --------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `-XX:MetaspaceSize`               | 22020096 bytes (≈ 21.0 MB)        | Threshold that triggers the first metaspace-driven collection — **not** a size cap              |
+| `-XX:MaxMetaspaceSize`            | 18446744073709551615 (`SIZE_MAX`) | Overall commitment limit on this build; effectively unbounded by default                        |
+| `-XX:MinMetaspaceFreeRatio`       | 40                                | Minimum % free after a metaspace collection, below which metaspace expands                      |
+| `-XX:MaxMetaspaceFreeRatio`       | 70                                | Maximum % free above which metaspace may shrink                                                 |
+| `-XX:MinMetaspaceExpansion`       | 327680 bytes (320 KB)             | Lower increment used in GC high-water-mark adjustment, not every arena/OS allocation            |
+| `-XX:MaxMetaspaceExpansion`       | 5439488 bytes (≈ 5.19 MB)         | GC high-water-mark expansion-policy parameter, not a hard cap on each allocation                |
+| `-XX:CompressedClassSpaceSize`    | 1073741824 bytes (1024 MB)        | Requested reservation/limit for compressed class metadata; verify the effective value           |
+| `-XX:+UseCompressedClassPointers` | `true` (`lp64_product`)           | Independent of UseCompressedOops on this build; verify support and effective mode on the target |
 
 **`-XX:MetaspaceExpansionSize` does not exist.** `java -XX:MetaspaceExpansionSize=5m -version`
 answers `Unrecognized VM option 'MetaspaceExpansionSize=5m'. Did you mean
@@ -25,7 +25,7 @@ in `VM.metaspace basic`), which is the unit `committed` moves in.
 
 **`CompressedClassSpaceSize` has a floor.** `-XX:CompressedClassSpaceSize=1m` starts with
 `CompressedClassSpaceSize adjusted from user input 1048576 bytes to 16777216 bytes`, so a
-value under 16 MB is silently raised — a "tiny class space" experiment is not testing what it
+value under 16 MB is raised with an adjustment warning on this build — a "tiny class space" experiment is not testing what it
 claims.
 
 ## Which ceiling does the error name?
@@ -36,7 +36,11 @@ claims.
 | `OutOfMemoryError: Compressed class space` | compressed class metadata reservation                        | `CompressedClassSpaceSize` and class cardinality/lifetime        |
 | exit 137 / Kubernetes `OOMKilled`          | cgroup or node kill; inspect `memory.events` and all domains | container budget; a metaspace cap is only one possible guardrail |
 
-Raising `MaxMetaspaceSize` against a `Compressed class space` error has no effect whatsoever.
+Raising only MaxMetaspaceSize is not a general repair for class-space exhaustion. At startup,
+HotSpot can reduce CompressedClassSpaceSize based on MaxMetaspaceSize and alignment, so changing
+the overall cap can also change the effective class reservation. On Temurin 25.0.3+9 Windows,
+`-XX:MaxMetaspaceSize=64m` changed effective CompressedClassSpaceSize from 1 GiB to 64 MiB.
+Inspect both values after restart; neither can be inferred solely from exception wording.
 The class space holds Klass metadata; applications that mint many dynamic
 proxies (CGLIB, ByteBuddy, Hibernate) or many reflective classes exhaust it while the
 metaspace total still looks comfortable.
@@ -75,7 +79,7 @@ not itself a metaspace-contents dump.
 
 Before investigating:
 
-- [ ] Heap confirmed healthy — otherwise the hypothesis is not metaspace
+- [ ] Heap, metadata and other native domains compared; multiple failures can coexist
 - [ ] Symptom classified: `OutOfMemoryError` with a message, or a silent `OOMKilled`
 - [ ] Effective `MaxMetaspaceSize`, `CompressedClassSpaceSize` and compressed-pointer mode recorded
 
@@ -93,3 +97,7 @@ When validating the fix:
 - [ ] If the fix was raising a ceiling against runtime class generation, that is recorded
       explicitly as mitigation — structural fixes may bound/cache generation, shorten loader
       lifetime, interpret rather than compile, reject excessive cardinality, or isolate tenants
+
+[HotSpot JDK 25 metaspace ergonomics](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/memory/metaspace.cpp)
+shows class reservation adjustment and GC high-water-mark policy. Defaults above are build
+observations, not portable Java guarantees.

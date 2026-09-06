@@ -3,7 +3,7 @@
 ## What a barrier costs
 
 A barrier is a point every participant must reach before any may pass. Its cost is not the
-average task duration; it is the **maximum over participants**, so the stage inherits the
+average task duration; it waits for the **latest required arrival**, so the stage inherits the
 whole right tail of the task-duration distribution. `scatter-gather` owns this arithmetic
 for a fan-out inside one request; the batch version differs only in scale and in the fact
 that a batch stage usually has far more participants.
@@ -11,13 +11,20 @@ that a batch stage usually has far more participants.
 Two consequences that decide job design:
 
 - **Adding workers stops helping once one task dominates.** Splitting 10,000 tasks across
-  200 workers instead of 100 halves the mean but does nothing to the slowest task, so the
-  stage time converges to that task's duration. Measure the per-task duration distribution;
-  if p99 is many times p50, the fix is in the partitioning, not the worker count.
+  200 workers instead of 100 can reduce queue waves, but need not halve task duration or stage
+  time. The longest task and total work divided by usable parallel capacity are lower bounds
+  under ideal scheduling; startup, exchange, retries and contention add costs. Measure queued
+  versus running time and actual completions before selecting partitioning or capacity changes.
 - **Barrier tails compose.** A pipeline of five barriered stages pays a maximum-of-tasks at
   each stage, though their costs add rather than literally multiply. For each barrier, ask
   what correctness property would break if the next stage consumed committed results
   incrementally.
+
+Define barrier identity by job/stage epoch and the expected logical participant set. Count one
+committed arrival per participant, reject old-epoch/duplicate arrivals, and persist enough state
+for coordinator recovery. A failed worker must trigger a bounded retry, abort or explicitly
+partial release policy; silence is not completion. Membership changes require an explicit new
+epoch or engine protocol. Test a late completion from an old attempt after recovery.
 
 ## Straggler mitigation, in order of cost
 
@@ -84,10 +91,11 @@ Fail the whole job when:
   input to a downstream job that cannot express incompleteness
 - the job is short enough that a full rerun is cheaper than the machinery of resumption
 Retry the failed tasks when:
-- outputs are staged per logical partition and exactly one successful attempt is selected,
-  or every external effect is independently idempotent; an append to shared output is not
-- the failures are independent rather than a signal about the whole input — three failures
-  on three hosts is a retry, 3,000 failures is a bug
+- outputs are staged per logical partition with one selected contribution (or equivalent
+  aggregate deduplication), AND external effects are absent or independently retry-safe;
+  effect idempotency alone does not prevent duplicate aggregate contributions
+- error classification and bounded retry policy justify it; a few failures may be deterministic
+  poison data, while thousands can share a recoverable infrastructure cause
 - partition outputs commit individually, so a retried task replaces its own output only
 Emit a partial result when:
 - the consumer's contract can carry an explicit completeness record naming the missing
@@ -118,7 +126,8 @@ void oneFailedTaskLeavesTheJobResumableAndTheOutputMarked() {
 }
 ```
 
-Three assertions carry the test: the partial run is **labelled** partial, the missing work
+This is a partial JUnit/AssertJ sketch with application-specific runner/checkpoint fixtures;
+it assumes the job contract permits partial results. Three assertions carry the test: the partial run is **labelled** partial, the missing work
 is **named**, and the resumed total equals the clean-run total **exactly**. The last one is
 what catches a task whose retry double-counted, which no status field would reveal. Add a
 second case that fails the same task on every attempt and assert the job stops with the

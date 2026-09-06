@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-implementation-plan
-version: 1.1.0
+version: 1.1.1
 description: >-
   Assembling everything established about a feature into one document another engineer could
   execute without re-deriving the architecture: the resources in dependency order, the schema,
@@ -11,8 +11,8 @@ description: >-
   of file names, when the plan and the code have drifted apart, when a feature is being handed to
   someone else or resumed after a break, or when the rollback story is discovered during the
   rollback. Does not produce the breakdown it orders (feature-decomposition), does not execute it
-  (feature-execution), does not track status against it (feature-progress-tracking), and contains
-  no dates or sizes (estimation-under-uncertainty).
+  (feature-execution), does not track status against it (feature-progress-tracking), and
+  does not invent dates or effort estimates (estimation-under-uncertainty).
 license: Apache-2.0
 
 authors:

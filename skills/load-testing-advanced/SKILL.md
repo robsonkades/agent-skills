@@ -48,8 +48,10 @@ contaminate the next phase. Randomize or use fresh environments when order effec
 2. Establish a clearly passing load and a reproducibly failing load with an arrival model
    matching production.
 3. Search between them using discrete steps or adaptive bracketing. Keep workload/state
-   constant and use independent repetitions near the decision boundary.
-4. Report an interval: highest tested reproducible pass to lowest tested reproducible fail.
+   constant and use independent repetitions near the decision boundary. Use a bracket only
+   where pass/fail is consistent with monotonicity; otherwise publish the tested points and
+   investigate state changes or multiple operating regimes.
+4. When that ordering holds, report highest tested reproducible pass to lowest tested fail.
    The “last passing step” is not an exact breakpoint.
 5. Classify why the upper point failed and verify the generator still produced its intended
    process.
@@ -71,12 +73,16 @@ Specify the arrival trajectory, duration, synchronized tenant/key composition an
 connections/caches arrive cold. A spike's integral deficit matters:
 
 \[
-B(t)=\max\left(0,B(0)+\int_0^t[\lambda_a(u)-\mu(u)]du\right)
+X(t)=B(0)+\int_0^t[\lambda_a(u)-\mu(u)]du,\qquad
+B(t)=X(t)-\min\left(0,\inf_{0\le s\le t}X(s)\right)
 \]
 
-This fluid estimate can bound expected backlog only under its assumptions; validate
-partition skew, priorities, abandonment and variable service cost with observation or
-simulation.
+Here arrival and potential service rates use the same work unit, initial backlog is
+nonnegative, and the queue is work-conserving with no abandonment or overflow. Reflection
+at zero prevents unused service before a burst from cancelling later backlog. For example,
+ten idle seconds at service rate 10 followed by one second at arrival rate 20 leaves 10
+units queued, not zero. This is a deterministic fluid approximation, not a general bound on
+expected stochastic backlog; validate skew, priorities, loss and variable service cost.
 
 For autoscaling, correlate metric windows, controller reconciliation, scheduling, startup,
 readiness, routing and useful warmup. “Pod ready” is not necessarily “full capacity.”
@@ -94,8 +100,8 @@ safety limits. Record:
 - time and intervention required to return to baseline.
 
 A high attempted throughput with collapsing useful throughput is failure, not capacity.
-Use a separately authorized abort criterion for data corruption, uncontrolled external
-impact or unsafe resource exhaustion.
+Define abort criteria for data corruption, uncontrolled external impact or unsafe resource
+exhaustion within the existing authorized test scope; stop when those criteria are met.
 
 ## Soak and retention design
 
@@ -131,7 +137,12 @@ retention across cycles, failure to plateau, ownership paths, time-to-limit and 
 - Separate scenario acceptance thresholds from run-validity and safety-abort thresholds.
 
 Tool-specific commands and current caveats belong in
-[generator configuration](references/generator-configuration.md).
+[generator configuration](references/generator-configuration.md); read it when configuring
+a generator or output parser. Read [test profiles](references/test-profiles.md) when selecting
+phase duration, refining a boundary, or designing spike, soak and recovery acceptance.
+Inspect the project's actual JDK, collector, framework, build and deployed topology before
+choosing diagnostic commands. The k6 options are partial JavaScript configuration, not a
+Java baseline or authorization to upgrade the service or its tooling.
 
 ## Failure modes
 
@@ -189,3 +200,4 @@ Correctness and generator fidelity determine validity; the SLO determines accept
 - [Gatling: injection](https://docs.gatling.io/concepts/injection/)
 - [Apache JMeter component reference](https://jmeter.apache.org/usermanual/component_reference.html)
 - [Google SRE: Addressing cascading failures](https://sre.google/sre-book/addressing-cascading-failures/)
+- [Honnappa, Jain and Ward: fluid net-input reflection](https://arxiv.org/abs/1206.0720) — reflection at zero; application workload assumptions still require validation.

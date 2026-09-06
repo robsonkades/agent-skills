@@ -20,22 +20,29 @@ description: >
 ## Purpose
 
 Make a Java service correct at the two moments the orchestrator controls: when it is
-declared ready, and when it is told to stop. Almost every "mystery 502 during deploy" and
-every "database blip took down the whole service" is a lifecycle misconfiguration, not an
-application bug — the code was fine and was killed, or was sent traffic before it could
-serve it.
+declared ready, and when it is told to stop. Deploy-time 502s can come from lifecycle,
+routing, resource pressure or application failures. Correlate request failures with pod,
+probe, endpoint and shutdown events before attributing the cause.
 
 The failure this prevents is the probe that answers the wrong question. A liveness probe
 that checks a downstream dependency converts a partial degradation into a total outage:
 the database wobbles, every replica fails liveness, the kubelet restarts all of them at
 once, and now nothing is serving even after the database recovers.
 
+## Compatibility and evidence
+
+Inspect the deployed JDK, resolved Boot/Framework/Kafka versions, image entrypoint and
+signal forwarding, cluster version/feature gates, and effective Deployment/Service settings.
+The references use partial Java 17-compatible sketches; virtual-thread APIs require Java 21.
+Do not upgrade the project to apply them. Missing runtime evidence permits a conditional
+configuration finding, not a confirmed incident diagnosis.
+
 ## Workflow
 
 1. **Assign each probe its own question.** Liveness = "restart me, I am unrecoverable in
    process". Readiness = "send me traffic now". Startup = "I am still booting, do not judge
-   me yet". Three endpoints, three answers; a single `/health` wired to all three is the
-   root of most incidents here.
+   me yet". Distinct semantics need not mean three endpoints: startup may reuse liveness
+   with a different budget. Verify what each check actually observes.
 2. **Strip dependencies out of liveness.** Liveness must depend on nothing outside the
    process. If restarting the process cannot fix the condition, it does not belong in
    liveness.
@@ -52,8 +59,8 @@ once, and now nothing is serving even after the database recovers.
 6. **Enumerate the in-flight work that is not an HTTP request** — Kafka consumers,
    `@Scheduled` jobs, executors, queue leases — and give each an explicit stop. See
    `references/draining-non-http-work.md`. Then check the disruption path: a
-   PodDisruptionBudget plus `replicas: 1` is zero availability during any voluntary
-   disruption _and_ a drain that never completes.
+   `minAvailable: 1` budget with one healthy replica blocks compliant eviction; allowing
+   eviction instead can create an availability gap until a replacement is ready.
 
 ## Probe decision block
 
@@ -79,8 +86,10 @@ Prefer a startup probe instead when:
 
 ## Rules
 
-- A failing readiness probe removes the pod from Service endpoints and never restarts the
-  container; a failing liveness probe restarts it. Choosing the wrong one turns a routing
+- Readiness failure makes the pod unready and excludes it from normal ready-endpoint routing;
+  it does not itself restart the container. Check `publishNotReadyAddresses`, custom consumers
+  and existing connections before assuming traffic stops. Liveness failure at its threshold
+  triggers container restart handling. Choosing the wrong probe turns a routing
   decision into a restart storm.
 - The probe endpoint must do no business work and have **no side effect**. It runs on every
   pod every `periodSeconds` forever: a query inside it is permanent background load, and a
@@ -90,7 +99,8 @@ Prefer a startup probe instead when:
   action; "greater than worst case" is unusable when the worst case is unbounded.
   `successThreshold` must be 1 for liveness and startup probes.
 - **Local termination and data-plane convergence are concurrent.** Terminating EndpointSlice
-  endpoints are marked not ready, but proxies, ingresses, clients and persistent connections
+  endpoints normally become not ready (check `publishNotReadyAddresses`), but proxies,
+  ingresses, clients and persistent connections
   converge on their own timelines. A measured `preStop` sleep can bridge legacy data planes;
   explicit readiness refusal, connection draining and load-balancer behavior are preferable
   when supported. Sleeping is a workaround, not a universal protocol.
@@ -100,10 +110,10 @@ Prefer a startup probe instead when:
   continues, so alerting must not rely on application logs.
 - `preStop` runs **inside** `terminationGracePeriodSeconds`, not before it. A 30 s grace
   period with a 20 s preStop leaves the application 10 s, then SIGKILL.
-- Spring Boot defaults changed across major lines: current Boot 4 documentation enables
-  graceful shutdown by default, while older lines required `server.shutdown=graceful`.
+- Spring Boot enables graceful web shutdown by default from 3.4; earlier supported lines
+  require `server.shutdown=graceful`.
   Pin the service's Boot version and verify effective behavior; the window is governed by
-  `spring.lifecycle.timeout-per-shutdown-phase`.
+  `spring.lifecycle.timeout-per-shutdown-phase`, which is not a total shutdown deadline.
 - A container killed after grace expiry and one killed for memory can both surface as 137.
   Correlate terminated reason/signal, events, cgroup counters and timestamps; `OOMKilled` is
   strong orchestrator evidence, not the only possible record. Heap sizing belongs to
@@ -119,7 +129,15 @@ Prefer a startup probe instead when:
   it during rollout. `minAvailable: 1` with one healthy replica blocks compliant eviction;
   operators can still bypass it or time out, so call it unavailable by policy, not immortal.
 - Never claim a rolling update is zero-downtime because the manifest has a readiness probe.
-  Prove it: run a continuous open-loop client through a deploy and count non-2xx responses.
+  Validate the stated SLO with an open-loop client through repeated deploys: record offered
+  and completed requests, timeouts, resets, unexpected status codes and latency. Zero errors
+  in a finite run is evidence for those conditions, not a universal guarantee.
+
+## Output
+
+Return the observed failure timeline or configuration risk, the smallest justified change,
+the total shutdown budget including sequential phases, and a validation with explicit pass
+criteria. Separate executed checks from rollout or fault tests still needed.
 
 ## References
 

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: latency-statistics
-version: 1.4.0
+version: 1.4.1
 description: >-
   The statistics of latency measurement: estimands, means and quantiles, histogram aggregation,
   uncertainty, censoring, dependence, and coordinated omission. Use when an SLO or

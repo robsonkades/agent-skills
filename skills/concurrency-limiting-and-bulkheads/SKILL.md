@@ -16,12 +16,18 @@ Bound the work simultaneously holding or competing for a scarce resource inside 
 correct only when it names the protected resource, admission location, waiting budget, ownership,
 rejection behavior and scope.
 
-This Category D skill owns process-local mechanisms. Cluster-wide allocation, rate limiting and
-distributed leases cross process boundaries and belong to Category F; this skill detects that
+This skill owns process-local mechanisms. Cluster-wide allocation, rate limiting and
+distributed leases cross process boundaries; this skill detects that
 handoff and links to `rate-limiting-and-load-shedding` and `distributed-locks-and-leases` rather than
 duplicating their protocols.
 
 ## Design workflow
+
+Inspect the target's Maven/Gradle release/toolchain, deployed JDK, client versions and completion/
+cancellation contract first. The semaphore example uses Java 11 source compatibility; virtual
+threads require Java 21+ without preview. API references were reviewed against Java 25, not an
+authorization to upgrade the target. With missing capacity or ownership evidence, provide a
+conditional design and the measurement/contract needed before choosing a production limit.
 
 1. Name the constrained unit: calls, connections, bytes, file handles, CPU tasks, tenant share, or a
    provider quota.
@@ -74,7 +80,9 @@ global ordering/cycle analysis.
 ## Permit ownership
 
 - Acquire interruptibly or with a remaining monotonic deadline on cancellable paths.
-- Enter `try/finally` only after acquisition succeeds; release exactly once in `finally`.
+- For synchronous work, enter `try/finally` only after acquisition succeeds and release exactly
+  once when protected resource use ends. For async work, transfer the lease to the real operation's
+  completion/cleanup path; returning a future or timing out its observer must not release early.
 - A semaphore has no owner: any thread can release and over-release silently raises capacity. Wrap it
   behind an API that makes the permit a scoped capability.
 - `Semaphore(1)` is not a reentrant/owned mutex. Use a lock when mutual exclusion and ownership are
@@ -82,7 +90,8 @@ global ordering/cycle analysis.
 - Bulk `acquire(n)` can create head-of-line blocking; large weighted requests can starve or starve
   small requests depending on fairness and arrival pattern.
 - Cancellation while waiting must not release an unacquired permit; cancellation after acquisition
-  must still execute cleanup.
+  must still execute cleanup. Refresh the remaining deadline after admission before starting the
+  resource operation; admission wait is part of the same end-to-end budget.
 
 Fair semaphores order acquisition at documented internal points, not by wall-clock method arrival;
 untimed `tryAcquire` can barge even on a fair semaphore. Fairness can reduce starvation/variance at a
@@ -166,7 +175,13 @@ risk using wait/queue age, rejection and downstream health; no one signal is uni
 
 ## References
 
-- [Limit selection and implementation](references/limit-selection.md)
-- [Process-to-cluster boundary](references/distributed-limits.md)
+Return the protected unit and ownership interval, measured ceiling versus assumptions, admission/
+deadline/rejection policy, aggregate exposure, and the tests establishing conservation and overload
+behavior. Distinguish source review, runtime validation and unmeasured performance expectations.
+
+- [Limit selection and implementation](references/limit-selection.md) — read when implementing
+  scoped permits, selecting weights/partitions, or testing acquisition and release.
+- [Process-to-cluster boundary](references/distributed-limits.md) — read when replicas, rollout
+  overlap or shared provider quotas make a local limit insufficient.
 - [Java 25 `Semaphore`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html)
 - [Java 25 virtual-thread adoption guide](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)

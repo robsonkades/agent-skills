@@ -1,14 +1,12 @@
 ---
 name: async-profiler-advanced
 description: >
-  Operating async-profiler as an evidence instrument: choosing CPU, ctimer, itimer,
-  wall-clock, allocation, lock, native-memory, trace, and PMU events; proving attach and
-  perf-event access; bounding sampling and instrumentation bias; preserving virtual-thread,
-  native, kernel, and time context; and validating conversions and differentials. Use when
-  profiles are empty, idle-heavy, truncated, permission-blocked, containerized, multi-event,
-  or sensitive to async-profiler/JDK version. Does not own initial profiler selection
+  Configure and validate async-profiler when recordings are empty, idle-heavy,
+  truncated, permission-blocked, containerized, multi-event, or version-sensitive.
+  Choose event weights and engines, bound collection overhead, diagnose missing stacks,
+  and verify conversions and differentials. Does not own initial profiler selection
   (jfr-and-async-profiler), visual interpretation (flame-graph-analysis), or JDK Flight
-  Recorder configuration (jfr-advanced).
+  Recorder configuration.
 ---
 
 # Async-Profiler Advanced
@@ -24,6 +22,13 @@ Async-profiler evolves quickly. Pin its release, keep the matching binary and co
 `asprof -v`, `asprof list <pid>`, and `asprof --help`, and consult that tag's documentation.
 Never make a runbook depend on `master`, a historical option name, or an assumed fallback.
 
+The command reference is authored against async-profiler v4.5 for supported HotSpot targets
+on Linux/macOS; it is not a promise of support for native Windows, other JVM implementations,
+or every JDK update. Inspect the actual runtime build, container image, architecture and JVM
+flags; build toolchains alone may describe a different JVM. Keep profiler build requirements,
+target-JVM support and the converter's Java runtime separate. Do not upgrade the application,
+profiler or dependencies merely to make an example fit.
+
 ## Ownership boundary
 
 - Use `jfr-and-async-profiler` to choose the least-privileged first instrument.
@@ -36,18 +41,23 @@ Never make a runbook depend on `master`, a historical option name, or an assumed
 
 ## Start with a question contract
 
-| Question                              | Primary event                     | Weight means                     | Major blind spot                                    |
-| ------------------------------------- | --------------------------------- | -------------------------------- | --------------------------------------------------- |
-| Where is on-CPU work?                 | `cpu` or supported CPU timer      | samples/CPU-event weight         | off-CPU delay                                       |
-| Where is elapsed waiting?             | `wall` with thread identity/state | sampled elapsed residency        | causality and queue ownership                       |
-| Who allocates Java heap?              | `alloc`                           | samples or estimated bytes       | retention/liveness unless explicitly selected       |
-| Where is contended waiting?           | `lock`                            | sampled/thresholded wait         | uncontended synchronization and broader queue delay |
-| What native allocation remains?       | `nativemem`/live mode             | tracked native allocation        | unhooked allocators and semantic ownership          |
-| Which selected calls exceed a bound?  | `trace`                           | instrumented calls/latency       | instrumentation perturbation                        |
-| Which PMU event co-locates with code? | named perf event                  | sampled hardware/software events | counter multiplexing/skid/model dependence          |
+| Question                              | Primary event                        | Weight means                                 | Major blind spot                                          |
+| ------------------------------------- | ------------------------------------ | -------------------------------------------- | --------------------------------------------------------- |
+| Where is on-CPU work?                 | `cpu` or supported CPU timer         | samples/CPU-event weight                     | off-CPU delay                                             |
+| Where is elapsed waiting?             | `wall` with thread identity/state    | sampled elapsed residency                    | causality and queue ownership                             |
+| Who allocates Java heap?              | `alloc`                              | samples or estimated bytes                   | retention/liveness unless explicitly selected             |
+| Where is contended waiting?           | `lock`                               | sampled completed wait count or duration     | ongoing waits, unsupported synchronizers, non-lock queues |
+| What native allocation remains?       | `nativemem`, then converter `--leak` | tracked count or bytes without matching free | pre-window allocations, unhooked allocators, ownership    |
+| Which selected calls exceed a bound?  | `--trace METHOD[:T]`                 | recorded calls or duration                   | instrumentation of calls below the threshold also costs   |
+| Which PMU event co-locates with code? | named perf event                     | sampled hardware/software events             | counter multiplexing/skid/model dependence                |
 
 Write the target process, load window, event, interval/threshold, stack mode, filters, output,
 rate/memory limit, expected sample volume, and validation metric before collection.
+
+If versions, command/logs, event weight, workload window, or session ownership are missing,
+request the smallest missing evidence and provide a conditional plan. Do not invent an engine,
+zero-loss result, safe interval, or diagnosis from an HTML filename. Separate observations
+from hypotheses; for each proposed adjustment name evidence that would confirm or refute it.
 
 ## Engine selection
 
@@ -62,40 +72,15 @@ eligible threads regardless of whether they are running, parked, sleeping, or bl
 `--threads` changes output grouping for non-JFR output; `--filter` changes eligible thread IDs
 where supported. They are different controls.
 
-Do not assert that a requested event ran. Inspect start diagnostics, `status`/`metrics`, output
-event types, sample counts, lost/dropped counters, and kernel/native frame presence. Current
+Do not assert that a requested event ran. Inspect start diagnostics, available `status`/`metrics`,
+output event types, weights, and kernel/native frame presence. Status and JFR event class alone
+may not identify the CPU engine. Mark unavailable loss counters or engine evidence as unknown. Current
 versions may choose a fallback for a generic CPU request; explicit event requests, platforms,
 and releases differ.
 
-See [Sampling engines, events, and access](references/engines-and-events.md).
-
-## Stack fidelity
-
-Stack collection has three layers:
-
-1. **Trigger/selection:** perf overflow, CPU timer, wall sweep, JVMTI event, or instrumentation.
-2. **Java/JIT walking:** HotSpot-specific VM metadata or another supported mechanism.
-3. **Native/kernel unwinding and symbols:** frame pointers, VM metadata, unwind information,
-   perf call chains, build IDs/debug symbols, and kernel symbol policy.
-
-Current releases can prefer the VMStructs stack walker on supported HotSpot combinations;
-older releases and unsupported combinations behave differently. Options such as `vm`, `vmx`,
-`fp`, `dwarf`, or aliases have changed meaning across releases. Discover them from the pinned
-binary. Do not carry forward blanket advice such as always enabling `DebugNonSafepoints` or
-always using one `--cstack` mode without reproducing the missing-frame symptom on that stack.
-
-Classify broken output rather than guessing:
-
-- unknown Java frames: unsupported/redefined code, walker limitation, truncated/corrupt sample;
-- missing native prefix/suffix: unwinder boundary, omitted call chain, absent unwind metadata;
-- raw native/kernel addresses: symbol visibility/build-ID/kernel policy issue;
-- shallow stacks: stack-depth or memory limit, recursion truncation, rate/drop pressure;
-- missing virtual-thread logical ancestry: carrier-centric sampling or incomplete continuation
-  reconstruction in that profiler/JDK combination.
-
-Virtual-thread coverage is version- and mode-dependent. A platform-thread sample can show a
-carrier without the complete mounted/unmounted logical task history. Validate with a known
-workload and complement with JFR events or application context before attributing ownership.
+Read [Sampling engines, events, and access](references/engines-and-events.md) when choosing
+an engine, interpreting lock/live/native events, diagnosing access or missing stacks, or
+checking PMU and virtual-thread coverage.
 
 ## Access model and least privilege
 
@@ -127,8 +112,9 @@ trace events      ~= selected invocations passing threshold
 These are planning estimates, not guaranteed counts. Wall-clock cost can grow with eligible
 thread count; this matters acutely with large platform-thread populations. Batching, filters,
 rate limits, stack depth, memory limits, and longer intervals trade fidelity for overhead and
-file size. Instrumentation modes (`trace`, native-allocation interception) scale with call or
-allocation frequency and require shorter, narrower trials than statistical sampling.
+file size. Instrumentation modes (`--trace`, native-allocation interception) incur work on intercepted
+calls, including calls rejected by duration/output filters. Bound a trial using total invocation
+rate, not just emitted events; method retransformation can also perturb compilation.
 
 Calibrate overhead against the same workload using an unprofiled control and at least two
 collection intensities. Compare throughput, latency distribution, CPU, allocation/GC, and
@@ -165,7 +151,7 @@ argument order—verify with a synthetic folded-stack pair rather than memorizin
 | Profile unexpectedly lacks kernel frames                         | selected engine, user-only mode, symbol restrictions          | Inspect diagnostics/event type; do not infer successful perf collection from filename |
 | Wall profile is huge/perturbing                                  | eligible threads × interval, batching, depth                  | Filter justified roles, increase interval, bound file/rate/memory, remeasure overhead |
 | Mostly idle frames                                               | expected thread population versus incident cohort             | Group/filter by role/state; correlate with requests and queues                        |
-| Unknown/truncated stacks                                         | walker support, depth/memory limits, redefinition, symbols    | Reproduce with pinned newer release/alternate supported walker; retain raw evidence   |
+| Unknown/truncated stacks                                         | walker support, depth/memory limits, redefinition, symbols    | Reproduce with a supported alternate walker; test any version change separately       |
 | Allocation profile finds hot allocators but heap grows elsewhere | allocation versus retention question                          | Switch to live/heap-dump evidence; follow `allocation-profiling`                      |
 | Differential is one-sided everywhere                             | sample totals, argument order, workload mismatch              | Test converter on synthetic input; normalize only after comparability is proven       |
 | No virtual-thread application frames                             | mounted state and tool/JDK capability                         | Use JFR task/context evidence; avoid carrier-as-request conclusions                   |
@@ -188,27 +174,30 @@ confidence limits where appropriate, and corroborating system metric.
 and event schemas evolve. Keep original file, producer version, converter version, command,
 and checksum; investigate differences before replacing prior output.
 
-## Production checklist
+## Minimum result
 
-- [ ] Profiler/JDK/OS/architecture combination and event list were discovered at runtime.
-- [ ] Question, event weight, eligible threads, interval/threshold, duration, and stop trigger
-      are explicit.
-- [ ] Attach and event access were tested independently with least privilege.
-- [ ] Stack walker, native/kernel symbol policy, virtual-thread limitations, and filters are
-      recorded.
-- [ ] Expected volume, rate/memory/chunk limits, disk path, rotation, and upload failure are
-      bounded.
-- [ ] Overhead was calibrated under representative load and lost/dropped events checked.
-- [ ] Original output, exact command, versions, logs, checksums, and business metrics survive.
-- [ ] Differential claims use comparable repeated trials and a separate outcome measurement.
+For a command request, return the bounded command, prerequisites, event/weight interpretation,
+ownership/stop rule, and success check. For a diagnostic review, add:
+
+- observed evidence with artifact/window/versions and missing information;
+- the leading hypothesis, competing explanation, and consequence;
+- a proposed adjustment and a check that could confirm or refute it;
+- what actually ran, artifact location, and remaining limits on the conclusion.
+
+A proposed experiment is not a measured result. A successful conversion is not proof that
+collection captured the intended population.
+
+Read [Session, output, and conversion protocol](references/output-and-conversion.md) before
+providing capture/lifecycle commands, multi-event settings, native/trace instrumentation,
+conversion, or a differential comparison. Read
+[Validation cases](references/validation-cases.md) when evaluating changes to this skill;
+these cases are not a required incident report.
 
 ## References
 
-- [Sampling engines, events, and access](references/engines-and-events.md)
-- [Session, output, and conversion protocol](references/output-and-conversion.md)
 - [async-profiler repository](https://github.com/async-profiler/async-profiler) — release,
   source, supported platforms, and matching documentation.
-- [Profiler options](https://github.com/async-profiler/async-profiler/blob/master/docs/ProfilerOptions.md) — use the document from the pinned release tag.
-- [Troubleshooting](https://github.com/async-profiler/async-profiler/blob/master/docs/Troubleshooting.md) — official failure guidance; correlate with the installed release.
+- [Profiler options](https://github.com/async-profiler/async-profiler/blob/v4.5/docs/ProfilerOptions.md) — use the document from the pinned release tag.
+- [Troubleshooting](https://github.com/async-profiler/async-profiler/blob/v4.5/docs/Troubleshooting.md) — official failure guidance; correlate with the installed release.
 - [Linux perf security](https://docs.kernel.org/admin-guide/perf-security.html) — authoritative
   capability and `perf_event_paranoid` model.

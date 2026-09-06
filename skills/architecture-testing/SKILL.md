@@ -1,148 +1,103 @@
 ---
 name: architecture-testing
 description: >
-  Testing what an enterprise architecture actually promises: that boundaries hold, that a
-  use case is atomic, that persistence mapping matches the schema, that concurrent edits are
-  detected, that a query budget is not exceeded, and that a contract stays compatible. Use
-  when every test needs the whole application context, when a test suite is slow enough that
-  people skip it, when an N+1 or a lost update reached production despite green tests, when
-  a mapping change broke a client, when concurrency is "tested" with a mocked repository,
-  when a layering rule exists only in a wiki, when an integration test uses an in-memory
-  database that behaves differently from production, or when deciding what belongs at which
-  test level. Does not cover general unit-testing practice, the architecture decisions
-  themselves (layering-and-boundaries, architecture-decision-making), load and performance
-  testing (load-testing), or contract versioning policy (rpc-and-api-contracts).
+  Write or review tests for architectural promises: dependency boundaries, transaction
+  atomicity, persistence mappings, stale-write detection, query budgets and API/event
+  compatibility. Use when green tests missed a lost update or N+1, a boundary exists only
+  in documentation, or an integration test may hide the behavior it claims to verify.
+  Does not choose the architecture or governance thresholds (architecture-fitness-functions),
+  replace general unit-test design, or establish production capacity (load-testing).
 ---
 
 # Architecture Testing
 
-## Purpose
+## Purpose and scope
 
-Test the properties an architecture claims, which ordinary functional tests do not cover.
-A green suite routinely coexists with an N+1, a lost update, a broken layering rule, a
-mapping that does not match the schema, and a contract change that breaks a client — because
-all of those are functionally correct in a single-threaded test against ten rows.
+Turn an agreed architectural promise into a test that exercises its actual mechanism and
+fails for the intended violation. A green functional test does not establish transaction,
+dependency, concurrency or compatibility properties it never observes. This skill owns
+test design and implementation, not architecture selection or governance policy.
 
-## The levels, and what each is for
-
-```text
-Domain unit test        pure rules and invariants. No framework or database;
-                        usually milliseconds. Its share follows domain risk.
-
-Use case test           orchestration, with fakes for ports. Fast; asserts
-                        the collaboration, not the SQL.
-
-Adapter/persistence     mapping, queries, constraints — against the REAL
-integration test        engine. Where the ORM's behaviour actually exists.
-
-Boundary test           binding, validation, status codes, error shape,
-                        payload contract. Web layer only.
-
-Architecture test       dependency rules, package boundaries, conventions.
-                        Usually static and fast; measure large classpaths.
-
-Concurrency test        two threads, real transactions, asserting one wins.
-
-Budget test             query and remote-call counts per operation.
-
-Contract test           the shape both sides agreed, verified from both
-                        sides independently.
-```
+Before choosing version-sensitive test APIs, inspect compiler release/toolchains, resolved
+framework/test-library versions, runner configuration and the JDKs used by tests and deployment.
+The structural example uses release 17 source compilation; its recorded run used JDK 25, not
+a Java 17 runtime. Match the target project rather than upgrading it to fit an example. New
+dependencies, preview features and toolchain upgrades require their own justification and scope.
 
 ## Workflow
 
-1. **Put each assertion at the cheapest level that can make it.** A rule tested through HTTP
-   and a database is slow, fragile, and does not localise the failure.
-2. **Test the adapter against the real engine.** An in-memory database has different
-   constraints, different SQL and different locking; a passing test proves little about
-   production.
-3. **Automate boundaries that can be represented faithfully.** Keep semantic ownership and runtime
-   boundaries in review, contract, or operational checks rather than encoding a misleading proxy.
-4. **Add a budget test where query or call-count regressions are material.** Pair it with production
-   latency and plan evidence: counts catch multiplicative access, not expensive individual calls.
-5. **Test the failure paths of every gateway** — timeout, 500, malformed response — with a
-   stub that can produce them.
-6. **Test concurrency with concurrency**, at least for the aggregates where a lost update
-   would matter.
+1. **Name the promise and failure.** Obtain the relevant implementation, existing tests,
+   package/contract or transaction boundary, dependency versions and build command. For data
+   tests, also obtain engine/version, migrations, isolation and cache settings. For a budget,
+   identify the operation and what is counted. If the promise or threshold is unknown, propose
+   a conditional test design and request the missing contract; do not invent the architecture.
+2. **Choose the smallest setup that retains the mechanism.** Use the table below. Fakes and
+   mocks can isolate behavior but do not establish database or network semantics. A full context
+   is justified when proxying, wiring or cross-layer behavior is the assertion; inspect slow-suite
+   timing before assuming that a large context is the cause.
+3. **Control the observation.** Define fixture state, transaction ownership, caches, execution
+   scope, cleanup and time bounds. Count selected classes/tests or observed operations where
+   an empty selection or disabled instrument could produce a false green.
+4. **Prove the test detects the defect.** Use a small violating fixture or a temporary mutation:
+   forbidden dependency, missing transaction, lazy fetch regression or stale write. Observe the
+   intended assertion fail, then restore the valid state and rerun. A compile/setup error is not
+   that proof. Keep mutations isolated and preserve unrelated work.
+5. **Report evidence and limits.** Name the command, actual tests run and result, plus what
+   remains untested. A configuration inspection is evidence of intent; a runtime result proves
+   only the tested state/interleaving/version. For diagnosis, separate the suspected blind spot
+   from a reproduced defect and name the experiment that would distinguish them.
+
+## Match the assertion to the mechanism
+
+| Promise                                        | Smallest credible test setup                                                                                     |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Pure business invariant                        | Domain test; add persistence coverage if truth depends on durable state                                          |
+| Use-case orchestration                         | Owned ports with a suitable fake, stub or focused mock                                                           |
+| Dependency prohibition                         | Imported production classes/build graph plus a known violating fixture                                           |
+| HTTP binding, validation, error/response shape | Web slice with actual relevant advice, serialization and security configuration                                  |
+| Gateway protocol and error translation         | Real adapter/client against a controlled server, including applicable failure classes                            |
+| Mapping, constraint, migration or isolation    | Isolated production-family engine with representative configuration and production migrations                    |
+| Local use-case atomicity                       | Actual transaction entry point, no outer test transaction masking it, durable-state observation                  |
+| Stale version rejection                        | Separate committed transactions using stale state; overlap only if the claim requires it                         |
+| Concurrent interleaving/locking                | Independent transactions/connections, controlled schedule and bounded failure/cleanup                            |
+| Query or remote-call budget                    | Enabled scoped counters around full result consumption, representative cardinality                               |
+| Consumer compatibility                         | Actual consumer interaction and provider verification, or policy-specific schema checks plus runtime conformance |
+
+Read [Boundary and contract tests](references/boundary-and-contract-tests.md) for structural,
+web, gateway or compatibility checks. Read
+[Persistence and concurrency tests](references/persistence-and-concurrency-tests.md) for
+data, rollback, budget, migration or concurrency checks. Neither reference is required for
+a pure domain assertion.
 
 ## Decision rules
 
-```text
-The assertion is about a pure business rule
-        → domain unit test. Rules whose truth depends on durable uniqueness,
-          isolation or current persisted state also need an integration test;
-          do not simulate database semantics in a unit test.
+- Choose doubles by the assertion. A fake can model useful state but can also drift; a mock
+  can verify a meaningful interaction without freezing every call order. Neither proves the
+  real adapter works. Avoid simulating vendor internals when a controlled boundary is available.
+- An alternative in-memory engine can catch some defects; it cannot establish fidelity to the
+  production engine's dialect, locking or constraints. Testcontainers is one provisioning option,
+  not a substitute for matching versions/configuration or ensuring isolation.
+- Do not replace semantic properties with convenient syntax. A suffix rule tests names, not
+  aggregate ownership; an annotation-location rule does not prove a transaction executes.
+- Test application/framework integration where it is your responsibility: constraints actually
+  applied to the request, converters preserving precision, and advice mapping errors. Do not
+  delete these checks merely because a framework implements part of the mechanism.
+- Budget tests catch access growth, not acceptable latency or plans. Performance/plan checks may
+  run in dedicated CI when representative resources exist; hand capacity claims to `load-testing`
+  and diagnosis to `architecture-and-performance`.
+- An overlap test covers a chosen schedule, not all races. A single-threaded sequence using stale
+  detached state can verify optimistic version checks; it cannot establish concurrent lock behavior.
+- Keep accepted exemptions narrow, named and explained. Do not widen imports, disable empty-rule
+  failures, reset a baseline or weaken an assertion simply to make the build green.
 
-The assertion is about mapping, a query, a constraint, or ORM behaviour
-        → integration test against the real engine (Testcontainers).
-          An in-memory database will pass and production will not.
+## Minimum deliverable
 
-The assertion is about orchestration across collaborators
-        → use case test with hand-written fakes. Prefer fakes to mocks:
-          a fake enforces the interface's semantics; a mock asserts a
-          call sequence you will then be unable to refactor.
+For a review: evidence, defect or coverage gap, consequence, adjustment and validation.
+For implementation: the focused test/change, its prerequisites, how the violating case fails,
+the passing run and any remaining coverage gap. Scale this to the task; no suite-wide report
+is needed for one guard.
 
-The assertion is about status codes, validation or the response shape
-        → boundary test with the web layer only, service mocked.
-
-The assertion is "layer A must not depend on B"
-        → architecture test in the build. Nothing else enforces it.
-
-The assertion is "this endpoint costs at most N queries"
-        → budget test asserting the statement count.
-
-The assertion is "two users cannot overwrite each other"
-        → two threads, real transactions, real database.
-
-The assertion is "our API still satisfies its consumers"
-        → contract test, verified independently on both sides
-          (rpc-and-api-contracts).
-```
-
-## Rules
-
-- **Test the architecture's promises, not the framework's.** Asserting that Spring Data
-  returns a saved entity tests Spring Data. Asserting that a use case with two writes is
-  atomic tests your design.
-- The suite's shape should follow the risk, not a ratio. Rules that change often need fast
-  tests; a mapping that never changes needs one integration test; a boundary that many teams
-  cross needs an enforced rule.
-- **An in-memory database is not the database.** Different constraint enforcement, different
-  SQL dialect, no real locking, different isolation behaviour. Every defect this skill exists
-  to catch — deadlock, lock contention, constraint violation, plan behaviour — is invisible
-  there. Use a container running the real engine.
-- Prefer hand-written fakes to mocking frameworks at the port boundary. A fake repository
-  that actually stores and retrieves catches "saved but never read back"; a mock returns
-  whatever the test said and passes regardless.
-- **Do not mock what you do not own.** A mocked HTTP client asserts your belief about the
-  vendor. Test the gateway against a stub server that can also fail
-  (`enterprise-base-patterns`).
-- Query-budget tests are a high-value guard in JPA paths where multiplicative access is a known
-  risk. Scope counters to the operation/test and control background activity; global Hibernate
-  statistics can be contaminated by parallel tests. A bounded count does not prove a good plan or
-  acceptable latency (`architecture-and-performance`).
-- Concurrency assertions require concurrency. A single-threaded test cannot observe a lost
-  update, a deadlock or a race; the test that can is two threads, a latch, and a real
-  transaction each (`offline-concurrency-control`).
-- Test transaction boundaries by asserting the **outcome of a failure**: force the second
-  write to fail and assert the first was rolled back. Asserting the annotation's presence
-  asserts nothing — self-invocation and proxy limits make it routinely inert
-  (`enterprise-transactions`).
-- Run migrations in tests, from empty, exactly as production will. A schema created by
-  `ddl-auto` in tests and by migrations in production means the tests validate a schema that
-  does not exist anywhere (`metadata-mapping`).
-- A test that requires the whole application context to assert a rule is a signal about the
-  code, not about the test. Take it as evidence before adding another one.
-
-## References
-
-- [Boundary and contract tests](references/boundary-and-contract-tests.md) — architecture
-  tests that enforce layering and conventions, web boundary tests, gateway tests against a
-  stub server including failure paths, consumer and provider contract tests, and the
-  negative assertions that catch accidental exposure. Read when setting up the guardrails or
-  testing an edge.
-- [Persistence and concurrency tests](references/persistence-and-concurrency-tests.md) —
-  container-based persistence testing, migration verification, mapping round trips, query
-  budgets, the two-thread optimistic-lock test, transaction rollback tests, deadlock
-  reproduction, and the test data volume that makes a plan realistic. Read when testing the
-  data layer or a concurrency mechanism.
+Choosing thresholds and consequences belongs to `architecture-fitness-functions`; transaction
+design to `enterprise-transactions`; contract policy to `rpc-and-api-contracts`.
+Use [Validation cases](references/validation-cases.md) when evaluating this skill or rehearsing
+a difficult review. Those cases evaluate agent decisions, not the application under test.

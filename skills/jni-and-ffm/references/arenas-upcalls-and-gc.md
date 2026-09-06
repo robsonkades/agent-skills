@@ -50,7 +50,10 @@ MethodHandle open = linker.downcallHandle(sym,
 Linker.Option va = Linker.Option.firstVariadicArg(1);
 ```
 
-Reading `errno` through a separate downcall afterwards reads whatever the JVM did last.
+Reading `errno` through a separate downcall afterwards can observe a clobbered value.
+Read captured state only when the native function's documented failure result makes it
+meaningful; a successful call need not clear `errno`. This is a partial, non-variadic
+signature example: the real C declaration and available captured-state names are platform-specific.
 
 ## What a critical region does to the collector
 
@@ -81,7 +84,7 @@ No fixed nanosecond threshold is portable.
 | `-Xcheck:jni`                                                         | Wrong `JNIEnv` usage, missing exception checks, bad references and local-reference leaks, at a speed cost — test environments only | starts             |
 | `--illegal-native-access=deny`                                        | Any module doing JNI or FFM without `--enable-native-access` fails with `IllegalCallerException` instead of warning                | yes                |
 | Explicit `jdk.VirtualThreadPinned` threshold in the chosen JFC/stream | Java blocking attempts below a broader configured threshold                                                                        | —                  |
-| JMH: JNI, plain downcall, `critical`, with `-prof gc`                 | The copy the API does or does not perform                                                                                          | —                  |
+| JMH: JNI, plain downcall, `critical`, with `-prof gc`                 | Java allocation differences; native copying requires separate byte/copy instrumentation or implementation evidence                 | —                  |
 | Confined-arena handoff test: allocate on one thread, call on another  | `WrongThreadException` in CI rather than on the first production request                                                           | yes                |
 
 ## Primary references

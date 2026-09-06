@@ -29,6 +29,10 @@ utilisation as "10% of headroom left".
 
 ## Workflow
 
+Inspect the Java toolchain, executor implementation and deployment resource limits before
+applying API-specific advice. References use JDK 25 documentation; the executor example uses
+long-established APIs and does not require upgrading the project.
+
 1. **Draw the boundary.** Define admission and departure events, population/outcomes, time window
    and whether `L` includes queued plus executing work. Use effective departure flow (including
    whichever terminal outcomes the cohort defines) for `λ` and mean residence `W` for that cohort.
@@ -70,7 +74,9 @@ utilisation as "10% of headroom left".
   non-core growth and the maximum is ineffective.
 - `CallerRunsPolicy` creates synchronous feedback by executing on the submitter; it does not wait
   for queue capacity. Test submitter-role safety, reentrancy, ordering relative to queued work and
-  event-loop/acceptor blockage. Rejection status and retry semantics depend on the protocol and
+  event-loop/acceptor blockage. Inline tasks run outside the executor's worker-count bound;
+  many submitters can still overload a downstream resource. After shutdown this policy silently
+  discards tasks, so submitted futures can remain incomplete. Rejection status and retry semantics depend on the protocol and
   whether the condition is rate limiting (`429`) or temporary capacity loss (`503`).
 - Little's relation can sanity-check object counts/bytes only with consistent units and lifetime-
   weighted cohorts; it is not a GC sizing formula. Allocation, reachability and live-set ownership

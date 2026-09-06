@@ -4,8 +4,8 @@
 //   Parameterize Constructor (p. 379) -- the object seam, whose enabling point is the
 //     constructor call.
 // The old no-arg constructor is kept and delegates, so no caller of RenewalCheck changes
-// either. Both halves are Preserve Signatures (ch. 23, pp. 310-317), and that is what makes
-// the step safe with no test in place.
+// either. Preserving signatures narrows the review; initialization, dispatch and timing still
+// need a preservation argument. This example assumes the process default zone is stable.
 // Run: java After.java
 import java.time.Clock;
 import java.time.Instant;
@@ -77,6 +77,17 @@ public class After {
         System.out.println("due = " + due);
         if (!due.equals(List.of("P1"))) {
             throw new AssertionError("expected [P1] but got " + due);
+        }
+        var today = LocalDate.now(clock);
+        var boundary = service.due(List.of(
+                new Policy("CUT", today.plusDays(30)),
+                new Policy("LATE", today.plusDays(31))));
+        if (!boundary.equals(List.of("CUT"))) {
+            throw new AssertionError("expected inclusive 30-day cutoff but got " + boundary);
+        }
+        if (!new RenewalCheck(id -> 0.0, clock)
+                .due(List.of(new Policy("ZERO", today))).isEmpty()) {
+            throw new AssertionError("zero-rate policy must not be due");
         }
         System.out.println("same answer on every machine, on every date");
     }

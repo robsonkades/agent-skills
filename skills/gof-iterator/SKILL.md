@@ -23,12 +23,17 @@ out its internals. The pattern is so thoroughly absorbed into Java — `Iterable
 `for`, `Stream` — that the design question is almost never "should we have an iterator" but
 "which of the three abstractions should this type expose, and what does each promise".
 
+Inspect compiler release/toolchains, source ownership, mutation policy and resource lifetime
+before choosing. Examples use Java 17 (partial domain types/imports omitted); Gatherers are
+standard in Java 24 ([JEP 485](https://openjdk.org/jeps/485)) and are optional, not a reason
+to upgrade a target project.
+
 ## Iterator, Stream, Spliterator
 
 ```text
 Iterator<T>       external, pull. The caller controls the pace and may
                   stop, resume, or interleave two traversals. Stateful,
-                  single-use, supports remove(). No parallelism.
+                  single-use, remove() is optional. No splitting API.
 
 Stream<T>         internal, lazy, single-use pipeline. Operations fuse;
                   short-circuiting works; parallelism is available.
@@ -50,10 +55,12 @@ follow a universal rule.
 
 ```text
 A type owns a collection and must not hand out a mutable reference
-        → expose Iterable, Stream, or an unmodifiable view.
+        → expose a read-only traversal or unmodifiable view;
+          an Iterable alone may still allow iterator.remove().
 
 The sequence is computed, unbounded, or arrives in pages
-        → implement Spliterator; expose a Stream.
+        → choose Iterator for pull control or Spliterator for stream adaptation;
+          bound remote work separately from the number of emitted elements.
 
 Traversal must be resumable, interleaved or two-handed (merge, diff)
         → Iterator. Streams cannot be paused and resumed by the caller.
@@ -64,8 +71,9 @@ Traversal must be parallel
 
 ## When it is not
 
-- **The collection is already a `List` you are willing to expose immutably.** `List.copyOf` or
-  `Collections.unmodifiableList` is simpler than a custom traversal.
+- **The collection is already a `List` you can expose.** `List.copyOf` gives an unmodifiable
+  structural snapshot; `Collections.unmodifiableList` gives a live unmodifiable view. Neither
+  freezes mutable elements. Obtain a snapshot under the source's synchronization policy.
 - **The caller needs random access, size or repeated traversal.** A `Stream` is single-use and a
   custom `Iterator` gives none of these; return a collection.
 - **You are writing an `Iterator` for an existing collection with an adequate iterator.** Delegate
@@ -84,17 +92,17 @@ THEN the Stream is AutoCloseable and MUST be closed; wrap it in
 
 IF a collection is mutated during traversal
 THEN fail-fast is best effort, not a guarantee: ConcurrentModification-
-     Exception may not be thrown, and a missed detection means silently
-     skipped elements. Never rely on it for correctness.
+     Exception may not be thrown, and traversal may be incorrect.
+     Never rely on it for correctness.
 
-IF the collection is concurrent (ConcurrentHashMap and friends)
-THEN its iterator is weakly consistent: no exception, and it may or may
-     not reflect changes made after it was created. Size and content are
-     not a snapshot.
+IF the collection is concurrent
+THEN inspect its iterator contract: ConcurrentHashMap is weakly consistent,
+     CopyOnWriteArrayList is a structural snapshot. Neither implies deep
+     immutability of elements or safe concurrent driving of one iterator.
 
 IF elements must be removed while traversing
-THEN Iterator.remove() or removeIf(), never a structural change through
-     the collection reference inside a for-each.
+THEN use Iterator.remove() when supported, or a supported removeIf() outside
+     the traversal; concurrent collections may explicitly permit other mutation.
 
 IF a custom Spliterator is written
 THEN its characteristics must be true. Claiming SIZED or DISTINCT when
@@ -124,14 +132,14 @@ Adapt a legacy Iterator to a Stream  StreamSupport.stream(
                                        Spliterators.spliteratorUnknownSize(
                                          it, ORDERED), false)
 
-Stateful or windowed traversal       Gatherers (Java 24+), rather than a
-                                     hand-written Iterator with a buffer
+Stateful pipeline transformation     Consider Gatherers (Java 24+); a pull
+                                     cursor may still need an Iterator
 
 Infinite or generated sequences      Stream.iterate / Stream.generate,
                                      with a limit at the source
 
-Two-handed traversal (merge, diff)   Iterator, explicitly — this is the
-                                     case Streams genuinely cannot express
+Two-handed traversal (merge, diff)   Iterator for explicit control; Stream.iterator()
+                                     is an escape hatch with source closing retained
 ```
 
 ## Cross-cutting checks
@@ -150,7 +158,7 @@ Two-handed traversal (merge, diff)   Iterator, explicitly — this is the
 - **Performance.** An `Iterator<Integer>` exposes boxed values; whether boxing allocates during
   traversal depends on the source. `IntStream` and primitive spliterators preserve primitive
   representation. Correct `Spliterator` characteristics matter: `SIZED` can let the
-  pipeline pre-allocate, `SUBSIZED` enables balanced splitting, `SORTED` and `DISTINCT` let
+  pipeline pre-allocate, `SUBSIZED` promises sized descendant splits, `SORTED` and `DISTINCT` let
   operations be optimized. Treat iterator-allocation elimination as a compilation hypothesis and
   verify it only on a measured hot path (`jit-inlining-and-escape-analysis`).
 - **Testing.** The cases that break: empty sequence, single element, exhaustion (`next()` after
@@ -161,14 +169,18 @@ Two-handed traversal (merge, diff)   Iterator, explicitly — this is the
 
 ## Review checklist
 
-- [ ] The type exposes `Iterable`/`Stream`, not its internal collection
+Return the chosen traversal contract, ownership/closing obligation, observed failure or
+compatibility constraint, and executed versus pending checks. When remote consistency or
+resource ownership is unknown, inspect the provider contract before promising complete traversal.
+
+- [ ] The exposure prevents unauthorized structural mutation, including Iterator.remove()
 - [ ] A resource-backed stream is closed by every caller, and this is documented
 - [ ] Snapshot versus live semantics is stated for any returned traversal
 - [ ] No code depends on `ConcurrentModificationException` being thrown
 - [ ] Custom `Spliterator` characteristics are accurate
 - [ ] Parallel use is justified by a measurement, not by the source being large
 - [ ] Remote paging strategy is justified, bounded, cancellable, and defines mid-walk consistency
-- [ ] `hasNext()` is side-effect-free and repeatable
+- [ ] Repeated `hasNext()` does not skip elements; documented prefetch may perform I/O
 - [ ] Primitive streams are used where boxing would otherwise dominate
 
 ## References

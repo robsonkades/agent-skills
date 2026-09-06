@@ -48,7 +48,8 @@ as three. Naming the class turns each of those into a visible, arguable claim.
    answering at ten times its normal latency. If the design has no answer for that node, it
    has no answer in production either.
 4. **Draw the failure domains.** For a process, a host, a rack, an AZ, a dependency and a
-   deploy, write what each one takes down. Anything sharing a domain is one unit, not N.
+   deploy, write what each one takes down. Replicas sharing a domain fail together for that
+   cause; they may still tolerate independent process faults.
 5. **Do conditional availability arithmetic** on the request path before promising a
    number. Required dependencies in series multiply availability only when their events are
    independent and their SLI windows and success definitions align; genuinely independent
@@ -60,6 +61,13 @@ as three. Naming the class turns each of those into a visible, arguable claim.
    homogeneous network. Each is checkable in code, not just prose: a client with no read
    timeout has asserted the first, an unbounded in-memory queue the third, a hostname
    resolved once at startup the fifth.
+
+Inspect the actual client/driver, retry, durability and deployment configuration before assigning
+outcomes. The conceptual Java type uses sealed classes/records (Java 17); exhaustive pattern
+switch without preview requires Java 21. Preserve the target. Deliver the boundary's card,
+evidence versus assumptions, unresolved outcome policy and one fault-injection case with an
+observable invariant. Missing protocol or topology evidence means a conditional claim, not a
+replica count or availability promise.
 
 ## Fault classes
 
@@ -113,9 +121,10 @@ response was eventually correct.
 
 ## Rules
 
-- **Partial failure is the defining property.** A local call returns or throws. A remote call
-  returns, throws, or leaves you not knowing — and the third outcome is where almost every
-  distributed bug lives. Code that maps a timeout onto "it failed" has erased it: a timeout
+- **Partial failure creates outcome uncertainty.** A local exception does not imply rollback
+  either; remote calls additionally decouple caller observation from peer execution. A remote
+  call can leave you not knowing — and that third outcome is where many
+  distributed bugs arise. Code that maps a timeout onto "it failed" has erased it: a timeout
   states the _caller's_ patience, never the callee's state, and the callee may complete the
   work after the caller gave up.
 - Crash-recovery makes the recovery path a correctness surface. For each recovery step,
@@ -129,15 +138,16 @@ response was eventually correct.
   asynchronous network a detector cannot distinguish crash from unbounded delay; practical
   systems assume some eventual timing bound and trade false suspicion against detection
   delay. Record that trade-off for readiness checks, leases and failover.
-- **Redundancy inside one failure domain is not redundancy.** Three replicas on one host is
-  one replica with extra memory cost. Ask what they share: host, rack, AZ, control plane,
+- **Redundancy must name the fault it tolerates.** Three replicas on one host cannot survive
+  losing that host, but may tolerate an individual process crash. Ask what they share: host, rack, AZ, control plane,
   image, config, deploy, certificate, downstream dependency. A shared deploy is the one most
-  often missed — rolling one bad artefact to every replica correlates them perfectly, which
+  often missed — rolling one bad artefact to every replica introduces a common cause, which
   makes deploy strategy an availability control rather than a release convenience.
 - **Adding a required dependency multiplies availability under an independence model and
   therefore increases total unavailability.** Ten independent dependencies at 99.9% in
-  series produce about 99.0% path availability — roughly 87 hours a year unavailable, not
-  8.8. Real incidents are often correlated, so use this as a comparison model, not a
+  series produce about 99.0% path availability. For a time-based SLI on a 365-day year,
+  that corresponds to roughly 87 unavailable hours, not 8.8; request failure fractions do
+  not directly convert to outage hours. Real incidents are often correlated, so use this as a comparison model, not a
   forecast. Either define a tested degraded mode that removes the dependency from the
   required path, or stop quoting the higher number. Redundant alternatives multiply
   unavailability only under independence; common causes set an unavailability floor.

@@ -26,43 +26,54 @@ situation you are in is the skill; performing the loop is mechanics.
 
 ## Workflow
 
+First decide whether test-first is useful for this change using `references/when-tdd-pays.md`.
+Inspect the project's Java release, test runner, resolved dependencies and focused test command.
+Do not upgrade them to match the worked example. Report missing tools or an unreproduced fault
+as a limitation; do not invent a red run. The following loop applies when test-first is selected.
+
 1. **Write one failing test for the next behaviour**, small enough to implement in a few
    minutes. Name it after the behaviour (java-test-design).
 2. **Run it and read the failure.** This is the step that is skipped and the one that carries
-   the value: a test that has never failed proves nothing, and a test that fails for the
-   _wrong reason_ — a typo, a missing bean, a `NullPointerException` in setup — is not yet
-   red, it is broken.
+   the value: a passing test whose sensitivity was never checked gives weaker evidence.
+   A failure from unrelated setup or a typo is not the intended red. A missing API or bean
+   can be the intended failure when creating that API or wiring is the behavior under test.
 3. **Make it pass with the simplest change that could work.** Simplest means smallest, not
    dishonest; hardcoding a return value is a legitimate step only if the next test is already
    queued to break it.
 4. **Refactor while green** — both the code and the test. Skipping this converts TDD into
-   "writing tests first and accumulating mess", which is worse than test-after because it also
-   costs the loop overhead.
-5. **Run everything, then commit.** A green suite is the unit of progress; leaving red at the
-   end of a session is how a morning is spent bisecting.
+   "writing tests first and accumulating mess". Refactor when there is a concrete improvement;
+   the step can legitimately end with no edit.
+5. **Run affected checks and the repository's required gates.** Inspect discovery counts,
+   failures and skips; report pre-existing failures separately. Commit only if authorized.
+   If interrupted while red, leave an explicit handoff of the failing case and current state.
 
 ## Rules
 
-- Watch every test fail before you make it pass. An agent that reports "test added, suite
-  green" without ever having observed red has proven only that the code compiles
-  (coding-agent-discipline).
-- A bug fix starts with a failing test that reproduces the bug at the narrowest level that can
-  (java-testing-strategy). Under a live incident the mitigation may ship first — but the
-  reproduction is then owed before the follow-up fix, not waived, because a fix with no
-  reproduction is a guess that has never been contradicted.
+- Observe the intended red for each test-first change. A test-after or invariant case may
+  pass immediately and still provide coverage; it does not establish a red-green history.
+  Where useful, check sensitivity against the old implementation or a controlled defect,
+  without editing shared work or claiming this proves all assertions effective.
+- For a bug fix, seek a safe reproducer at the narrowest useful level. Incident mitigation
+  may precede it; production-only, destructive or nondeterministic faults may need captured
+  evidence and a controlled model before a stable regression test is possible. State what
+  the evidence does and does not establish (java-testing-strategy).
 - Step size is set by how long you are willing to spend debugging when the step goes wrong. If
-  a failing test leaves you guessing, the step was too big; back it out and take a smaller one.
+  a failing test leaves you guessing, inspect whether setup, environment or step size caused
+  it. Revert only your isolated change when appropriate; preserve others' work.
 - The design feedback is the point. When a test needs six mocks and a container to set up, the
-  message is about the class's dependencies, not about the test. Fix the design
-  (java-cohesion-coupling); do not reach for a heavier test.
+  setup may reveal excess coupling, an unsuitable test boundary or behavior that genuinely
+  needs integration. Inspect which dependency owns the risk before changing the design or level.
 - Do not write a test whose assertion restates the implementation. `verify(repo).save(any())`
-  after a method that calls `save` is a tautology; it fails only when the code changes, never
-  when it is wrong.
+  alone often misses wrong data or timing. Interaction assertions are useful when the call,
+  payload, ordering or absence of a side effect is itself the observable contract.
 - TDD does not produce a test strategy. Driving every behaviour from a unit test still leaves
   the schema, the wiring and the contract untested — those need their own tests chosen
   deliberately.
 - Do not TDD toward a coverage number. Coverage is an output of having tested the behaviours
   that matter; used as a target it produces tests written for lines rather than for risk.
+
+Return the chosen approach and reason, observed red/green results with command and test
+counts, and remaining checks or evidence gaps. Do not call a single successful run TDD.
 
 ## References
 
@@ -71,6 +82,6 @@ situation you are in is the skill; performing the loop is mechanics.
   second red, where a test written to state an invariant exposed an `ArithmeticException` the
   first implementation shipped with. Read when the mechanics or step size are in question.
 - **Where TDD pays, and where it does not** — `references/when-tdd-pays.md`. The conditions
-  that make the loop cheap or expensive, the five situations where test-after or
-  characterisation is the correct choice, and how to answer "is TDD mandatory here?" with a
+  that make the loop cheap or expensive, situations where test-after or
+  characterisation may be a better choice, and how to answer "is TDD mandatory here?" with a
   reason. Read before deciding how to approach a piece of work.

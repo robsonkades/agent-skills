@@ -13,22 +13,26 @@ discount and VAT.
 **Narrowest real scope:** a pure unit test on the pricing type. No database is involved in
 being wrong about 500.00 versus 500.01.
 
-**Chosen:** parameterised unit tests over the boundary values (499.99, 500.00, 500.01), one
-per rounding direction, one asserting discount-then-VAT rather than VAT-then-discount.
+**Chosen:** parameterised unit tests over the boundary values (499.99, 500.00, 500.01),
+region eligibility, and rounding including a half-cent tie. This is a fictional business
+rule, not tax guidance. Specify the intermediate rounding policy before testing operation
+order: exact percentage multiplications commute, so final totals alone may not distinguish
+discount-then-VAT from VAT-then-discount.
 
 **Not written:** a `@SpringBootTest` that places an order and checks the total. It would run
-200× slower, and when a rounding rule breaks it would report "expected 1234, got 1235" from
+incur context setup (measure the actual cost), and a rounding failure would be reported from
 six layers away.
 
-**Gap accepted:** nothing proves the rule is reachable from the controller. Covered already
-by the one end-to-end journey for checkout.
+**Gap:** inspect the existing checkout test before claiming reachability is covered. It must
+exercise an eligible order and an observable discounted result; otherwise add a focused
+wiring case or explicitly accept the gap.
 
 ## 2. A new repository query
 
 > "Find all active subscriptions renewing in the next 7 days, newest first, paginated."
 
 **Risk:** the SQL. Derived-query naming, the date boundary in the engine's own semantics,
-sort stability under pagination, and whether an index exists.
+sort stability under pagination, and whether the migration creates the intended index.
 
 **Narrowest real scope:** integration, against the real engine. A mocked repository proves
 only that you can stub a method; H2 proves a dialect nobody deploys.
@@ -36,7 +40,9 @@ only that you can stub a method; H2 proves a dialect nobody deploys.
 **Chosen:** one Testcontainers test with the real engine and the real migrations, seeding
 rows either side of the 7-day boundary and asserting the returned ids in order. A second
 assertion that page 2 does not repeat a row from page 1 — the classic unstable-sort defect
-when the sort key is not unique.
+when the sort key is not unique. Seed equal sort keys and require an explicit unique
+tie-breaker in the query; one nonrepeating run cannot prove unspecified order is stable.
+Check index existence separately. This small fixture cannot establish production query cost.
 
 **Not written:** unit tests of the service that calls it, beyond one proving it passes the
 caller's page size through. That logic is one line.
@@ -60,9 +66,10 @@ publishes one.
 **Not written:** any test that calls the real provider in CI. It makes the build depend on
 someone else's uptime and rate limit, and it cannot produce the timeout case on demand.
 
-**Gap accepted:** if the provider changes its response shape without telling us, only
-production will notice. That is a monitoring problem (slo-and-alerting), not a test problem —
-say so rather than pretending a test covers it.
+**Gap:** a recorded response cannot detect provider drift. Use provider verification if
+available, or consider a scheduled sandbox compatibility check outside the fast CI gate.
+Record its freshness and limitations; without either, accept the gap explicitly and monitor
+production failures (slo-and-alerting). Sanitize captured customer data and credentials.
 
 ## 4. A schema migration
 
@@ -72,11 +79,15 @@ say so rather than pretending a test covers it.
 reversible, does the application still start against both the old and the new schema during
 the rolling deploy.
 
-**Narrowest real scope:** integration. There is no unit-testable content here at all.
+**Narrowest real scope:** real-engine integration for DDL and data effects. Any extracted
+name-splitting policy can also have unit cases, especially ambiguous or single-part names.
 
 **Chosen:** one test that applies the full migration history from empty to head against the
-real engine (this catches a migration that only works on a fresh database), and one that
-seeds pre-migration rows, applies the migration, and asserts the backfill.
+real engine (fresh installation), and one that seeds the previous schema, applies the
+migration, and asserts the backfill (upgrade). For the stated rolling-deploy risk, exercise
+old and new application versions against each schema they actually overlap with, following
+the expand/contract plan. Decide whether recovery uses rollback or forward repair; a
+successful forward migration proves neither recovery nor rolling compatibility.
 
 **Not written:** assertions about column types via reflection over the entity. They test the
 annotations, not the schema.
@@ -88,10 +99,10 @@ annotations, not the schema.
 **Order matters.** Reproduce before diagnosing, and write the reproduction as a test.
 
 1. Reproduce at the level where it actually happens. Start end-to-end only if narrower
-   attempts fail — and if only end-to-end reproduces it, the cause is in wiring or state, and
-   that is itself the finding.
+   attempts fail. If only end-to-end reproduces it, wiring or shared state are hypotheses;
+   retain the reproduction until narrower evidence identifies the cause.
 2. Shrink the reproduction until removing anything makes it pass. Usually it collapses to a
-   unit test over one method with one input.
+   smaller test; do not remove essential transactions, concurrency or environmental triggers.
 3. Watch it fail, and read the failure message. A reproduction that fails for a different
    reason than the report describes is not a reproduction.
 4. Fix. The same test now passes, and it is the regression test — no second one is needed.

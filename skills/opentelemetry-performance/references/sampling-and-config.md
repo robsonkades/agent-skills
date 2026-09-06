@@ -2,17 +2,21 @@
 
 ## Sampling model
 
-| Property          | Head sampling                           | Tail sampling                                 |
-| ----------------- | --------------------------------------- | --------------------------------------------- |
-| decision          | near trace start                        | after buffering spans until a decision        |
-| information       | trace ID, parent and early attributes   | received duration/error/span attributes       |
-| app export volume | bounded early for unsampled traces      | upstream generally records/exports candidates |
-| main bias         | misses outcomes learned later           | policy-biased retained population             |
-| capacity risk     | sampling CPU/export for retained traces | memory, decision wait, late spans, sharding   |
+| Property          | Head sampling                                   | Tail sampling                                 |
+| ----------------- | ----------------------------------------------- | --------------------------------------------- |
+| decision          | near trace start                                | after buffering spans until a decision        |
+| information       | trace ID, parent and early attributes           | received duration/error/span attributes       |
+| app export volume | reduced for non-exported traces; not a rate cap | upstream generally records/exports candidates |
+| main bias         | misses outcomes learned later                   | policy-biased retained population             |
+| capacity risk     | sampling CPU/export for retained traces         | memory, decision wait, late spans, sharding   |
 
 Parent-based behavior is configurable: sampled/unsampled remote and local parents can have
 different delegate samplers. Review trust boundaries; blindly honoring external sampled
 flags can enable telemetry amplification.
+SDK sampling distinguishes DROP, RECORD_ONLY and RECORD_AND_SAMPLE. Recording and export
+are different decisions: standard exporting processors normally export sampled spans.
+Do not assume RECORD_ONLY supplies candidates to a downstream tail sampler. Head samplers
+see attributes supplied at span creation, not status or attributes added later.
 
 ## Tail-sampling topology
 
@@ -39,6 +43,16 @@ Size with measured:
 
 Tail sampling cannot know spans arriving after its decision. Long-running traces and
 asynchronous messaging need explicit policy or separate routing.
+Late spans can inherit a retained/cached decision depending on processor version and cache
+configuration; they are not universally dropped, but cannot retroactively provide evidence
+for the original decision. Verify first-arrival timing, decision eviction and shard changes
+during scaling/restarts with long traces. Consistent hashing still remaps some active traces.
+
+For a first sizing estimate, new traces/second times buffering seconds estimates concurrent
+trace entries under steady arrivals. It is not a byte bound: include span-size distributions,
+exception payloads, decision caches and exporter/retry queues. `expected_new_traces_per_sec`
+is an allocation hint, not admission control in the referenced tail processor; inspect the
+pinned component's actual limits and eviction metrics.
 
 ## Configuration governance
 
@@ -61,6 +75,11 @@ Treatments should isolate:
 3. production instrumentation and sampler;
 4. production exporter/Collector;
 5. degraded telemetry backend or blocked network.
+
+A no-op SDK and a recording SDK with export disabled remove different work. State exactly
+which sampler/processors/exporters remain enabled; their timing differences do not isolate
+instrumentation cost automatically. Guard expensive post-start enrichment with `isRecording()`
+when appropriate; attributes required by the sampler must instead be available at creation.
 
 Use repeated randomized/blocked runs and the same workload/state. Measure:
 
@@ -94,6 +113,10 @@ backend access/retention. The collector is a security boundary and DoS target.
 ## References
 
 - [OpenTelemetry sampling](https://opentelemetry.io/docs/concepts/sampling/)
+- [Tracing SDK contract](https://opentelemetry.io/docs/specs/otel/trace/sdk/) — recording,
+  sampling and processor behavior.
+- [Tail sampling processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md)
+  — evolving component documentation; use the deployed release tag for configuration.
 - [OpenTelemetry Collector scaling](https://opentelemetry.io/docs/collector/scaling/)
 - [OpenTelemetry Java configuration](https://opentelemetry.io/docs/languages/java/configuration/)
 - [OpenTelemetry baggage](https://opentelemetry.io/docs/concepts/signals/baggage/)

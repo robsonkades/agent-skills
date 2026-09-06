@@ -14,12 +14,13 @@ description: >
 
 Decide how a business operation spanning several owners ends in a consistent state when no
 transaction covers it, then implement that mechanism so it survives a crash mid-flight. The
-choice is between removing the distribution, one transaction manager over resources it
-controls, and a saga — and only one of the three is usually available.
+choice includes removing the distribution, a transaction manager over enlisted resources,
+durable message intent and sagas; compare their invariant and recovery models.
 
 The failure this prevents is the **dual write**: a method that saves a row and then
 publishes a message or calls another service. On a crash between the two lines the database
-has the order and the rest of the world does not, with no error anywhere, and
+may have a committed order without publication if the save committed separately; publishing
+inside an open local transaction instead risks a message for a later rolled-back row. A local
 `@Transactional` does not fix it — the broker and the remote service are not enrolled in
 that transaction, so the annotation only makes the defect look handled. The second is the
 saga presented as a transaction: compensations exist, the happy path works, and nobody
@@ -46,6 +47,12 @@ accounts for the window in which a half-applied state is readable by everyone el
    transient failure and permanent/manual-repair states separately.
 7. **Give every step a timeout and every instance a query.** Define "stuck" numerically, and
    make "which step is saga X on" answerable from a datastore, not from logs.
+
+Inspect the deployed JDK, Spring/JTA manager, client versions, enlistment, rollback policy and
+participant status/idempotency semantics. Reference Java types require JDK 17+; orchestration and
+test blocks are partial sketches with application-specific contracts. Do not upgrade the target
+to fit them. Deliver the selected atomic boundary, persisted transition/recovery plan, terminal
+invariants, tested evidence and unresolved outcomes or assumptions.
 
 ## Decision block
 
@@ -78,14 +85,16 @@ Prefer the transactional outbox when the only non-database write is "publish a m
   completed operation produces, and a compensation can land after someone acted on the
   intermediate value. The countermeasures are design obligations, not optimisations: a
   **semantic lock** (an explicit `PENDING`/`RESERVED` status other operations are written to
-  respect), **commutative updates** (`credit`/`debit`, not absolute `SET balance`), and
+  respect), **commutative updates** where the domain permits them (deltas do not alone enforce
+  non-negative balances, reservations or deduplication), and
   **re-reading and re-validating inside the step** rather than trusting a value read at saga
   start. What readers observe is `consistency-models`. State terminal business invariants for
   completed, compensated and manual-repair outcomes; convergence is not guaranteed when a
   compensation is impossible or permanently fails.
 - The reviewable dual-write shape is one `@Transactional` method holding both
   `repository.save(..)` and `broker.send(..)`/`restClient.post(..)`. Its reduction is the
-  outbox, whose mechanics are `delivery-semantics`.
+  outbox for reliable message intent, whose mechanics are `delivery-semantics`. An outbox can
+  request a remote step durably; it does not make that step atomic with the local row.
 - **2PC's defining failure cost is the in-doubt blocking window;** protocol latency, resource
   support and operational coupling matter too. Having voted yes, a participant is _in
   doubt_: it holds its locks and may not decide unilaterally without risking atomicity, so a
@@ -102,6 +111,8 @@ Prefer the transactional outbox when the only non-database write is "publish a m
   precisely where outcomes are unknown. A step timeout is an _unknown_ outcome, not a
   failure (`failure-models`): query the participant for that step's status by saga id before
   compensating, and make the compensation harmless against a step that never took effect.
+  `NOT_FOUND` is not final if an earlier request can still arrive: participant cancellation state
+  or an ordered execute/compensate protocol must prevent late execution from resurrecting work.
 - **The pivot defines recovery direction.** Before pivot commit, terminal rejection triggers
   backward compensation of completed compensatable steps. After pivot commit, continue
   forward; do not compensate earlier steps merely because a later forward-only step is
@@ -126,7 +137,7 @@ Prefer the transactional outbox when the only non-database write is "publish a m
 
 - [Garcia-Molina and Salem, “Sagas”](https://www.cs.princeton.edu/techreports/1987/070.pdf)
 - [Jakarta Transactions 2.0 specification](https://jakarta.ee/specifications/transactions/2.0/jakarta-transactions-spec-2.0.html)
-- [MicroProfile Long Running Actions 2.0](https://download.eclipse.org/microprofile/microprofile-lra-2.0-RC1/microprofile-lra-spec-2.0-RC1.html)
+- [MicroProfile Long Running Actions 2.0](https://download.eclipse.org/microprofile/microprofile-lra-2.0/microprofile-lra-spec-2.0.html)
 
 - [Choosing the pattern](references/pattern-selection.md) — the dual-write defect in code,
   then one local transaction, XA/2PC, orchestrated saga and choreographed saga compared on

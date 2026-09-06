@@ -1,20 +1,29 @@
 # Worked example: a vendor payment SDK behind a domain port
 
+All SDK names and builder methods below are fictional Stripe-like teaching types, not a recipe
+for any published Stripe SDK. These are partial Java 17 snippets with domain types/imports omitted.
+For real integration inspect the resolved SDK, API version and authorization-versus-capture contract;
+do not map a successful charge to an authorization without establishing those semantics.
+
 ## The port the application wants
 
 ```java
 public interface PaymentGateway {
     /**
      * @throws PaymentDeclined                  the instrument was refused; do not retry
-     * @throws PaymentTemporarilyUnavailable    transient; safe to retry with the same key
+     * @throws PaymentTemporarilyUnavailable    unavailable/unknown outcome; see retry contract
      * @throws PaymentGatewayFailure            unclassified
+     * @throws UnknownGatewayStatus             protocol/mapping failure; outcome may be unknown
      */
     Authorisation authorise(Payment payment, IdempotencyKey key);
 }
 ```
 
-The port is written from the caller's needs: three outcomes the domain can act on, an
+The port is written from the caller's needs: failure categories the domain can act on, an
 idempotency key because retries are expected, and no mention of HTTP, JSON or the vendor.
+Retry requires the same canonical request/key within provider scope and retention, an allowed error
+and remaining deadline. A timeout does not prove no authorization happened; reconcile ambiguous
+outcomes. Changed parameters with a reused key are a conflict, not a replay of the original request.
 
 ## What the SDK offers
 
@@ -39,6 +48,12 @@ public final class StripePaymentGateway implements PaymentGateway {
     private final StripeClient stripe;
     private final Duration timeout;
 
+    public StripePaymentGateway(StripeClient stripe, Duration timeout) {
+        this.stripe = java.util.Objects.requireNonNull(stripe);
+        this.timeout = java.util.Objects.requireNonNull(timeout);
+        if (timeout.isZero() || timeout.isNegative()) throw new IllegalArgumentException("timeout");
+    }
+
     @Override
     public Authorisation authorise(Payment payment, IdempotencyKey key) {
         var request = ChargeRequest.builder()
@@ -46,7 +61,7 @@ public final class StripePaymentGateway implements PaymentGateway {
                 .currency(payment.amount().currency().getCurrencyCode())
                 .source(payment.instrument().token())
                 .idempotencyKey(key.value())
-                .timeout(timeout)                       // the port cannot express "may hang"
+                .timeout(timeout)                       // fictional request-timeout setting
                 .build();
         try {
             return toAuthorisation(stripe.charges().create(request));
@@ -68,11 +83,12 @@ public final class StripePaymentGateway implements PaymentGateway {
     }
 
     private AuthorisationStatus status(String raw) {
+        if (raw == null) throw new UnknownGatewayStatus("missing status");
         return switch (raw) {
-            case "succeeded" -> AuthorisationStatus.AUTHORISED;
+            case "authorised" -> AuthorisationStatus.AUTHORISED;
             case "pending" -> AuthorisationStatus.PENDING;
             case "failed" -> AuthorisationStatus.FAILED;
-            default -> throw new UnknownGatewayStatus(raw);   // never invent a status
+            default -> throw new UnknownGatewayStatus("unrecognized status");
         };
     }
 }
@@ -80,17 +96,18 @@ public final class StripePaymentGateway implements PaymentGateway {
 
 Four things this adapter does that a naive wrapper does not.
 
-**It owns the timeout.** `PaymentGateway` cannot express "this may block indefinitely", so the
-adapter must bound it. A missing timeout here is the failure that takes down the caller's thread
-pool during a provider incident (`timeouts-and-deadlines`).
+**It names timeout ownership.** This fictional client accepts a request timeout; a real SDK may
+configure transport timeouts elsewhere. Bound the call by the caller's remaining deadline and
+account for client retries; one socket timeout is not necessarily a total-call bound.
 
 **It classifies failures.** `PaymentDeclined` and `PaymentTemporarilyUnavailable` differ in
-whether a retry is correct. That classification exists only here, because only here is the
-vendor's taxonomy known (`retries-and-backoff`).
+the available evidence, not unconditional retry permission. Apply the port's retry contract and
+preserve unknown outcome; mapping failure after remote success also requires reconciliation.
 
 **It refuses to guess.** An unrecognised status throws rather than defaulting to `PENDING`. A
-default would let a failed payment be recorded as in-flight, and the reconciliation job would
-never resolve it.
+default invents state and may misdirect reconciliation. Keep safe diagnostic context and define
+how to reconcile null responses, missing identifiers, invalid currencies or timestamps too;
+those mapping failures do not undo a successful remote side effect.
 
 **It converts money once.** `Money.ofMinorUnits` is the only place minor-unit arithmetic happens;
 above the adapter, amounts are `Money` with a currency attached, and minor-unit arithmetic never
@@ -118,9 +135,17 @@ it cannot be tested, observed or changed without touching the mapping
 ```java
 // 1. For the application: a fake port. No vendor, no HTTP, no mocking framework.
 final class InMemoryPaymentGateway implements PaymentGateway {
+    // Thread-confined fake; Payment equality must cover the canonical request fields.
     private final Map<IdempotencyKey, Authorisation> issued = new HashMap<>();
+    private final Map<IdempotencyKey, Payment> requests = new HashMap<>();
 
     @Override public Authorisation authorise(Payment payment, IdempotencyKey key) {
+        java.util.Objects.requireNonNull(payment);
+        java.util.Objects.requireNonNull(key);
+        Payment previous = requests.putIfAbsent(key, payment);
+        if (previous != null && !previous.equals(payment)) {
+            throw new IllegalArgumentException("idempotency key reused with different request");
+        }
         return issued.computeIfAbsent(key, k ->
             new Authorisation(AuthorisationId.newId(), payment.amount(),
                               AuthorisationStatus.AUTHORISED, Instant.EPOCH));
@@ -128,8 +153,9 @@ final class InMemoryPaymentGateway implements PaymentGateway {
 }
 ```
 
-The fake honours the port's contract, including idempotency — a fake that ignores the key lets
-the application ship a bug the real gateway would have caught.
+The fake models replay and changed-request rejection for thread-confined application tests. It does
+not model provider retention, concurrent requests, failures or uncertain outcomes; test those
+separately. Production domain types should expose the port's named conflict exception if required.
 
 ```java
 // 2. For the adapter: exercise the real SDK against a recorded or sandbox endpoint.
@@ -152,13 +178,16 @@ contract test the provider publishes.
 
 ```text
 Above the adapter:  Payment, Money, Authorisation, PaymentDeclined
-Below the adapter:  ChargeRequest, long minor units, "succeeded", StripeException
+Below the adapter:  ChargeRequest, long minor units, "authorised", StripeException
 
-Replacing the provider:   one class, one test file
-Adding a second provider: a second adapter; the domain does not change
+Replacing the provider:   bounded when the new provider can satisfy the same contract
+Adding a second provider: validate semantics, not just matching signatures
 Provider adds a status:   one switch fails loudly, in one place
 ```
 
-That is the payoff, and it is why a port with one implementation is still justified when the
-implementation is somebody else's code — which is the exception to the usual rule against
-single-implementation interfaces (`gof-pattern-thinking`).
+That is the payoff when the port preserves an actual contract boundary. Implementation count
+alone neither justifies nor invalidates that boundary (`gof-pattern-thinking`).
+
+Real-provider contrast: [Stripe idempotency](https://docs.stripe.com/api/idempotent_requests)
+requires matching parameters and documents retention limits; a same-key retry is not a universal
+forever guarantee. No real provider interaction was performed for this illustrative example.

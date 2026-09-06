@@ -20,14 +20,16 @@ session the holder still believes is alive, because a renewal was lost or the pr
 
 - **Traffic-proportional business data.** Working sets and revision history replicate across voters, and
   families cap what you can store — a znode is capped around a megabyte (`jute.maxbuffer`) and
-  etcd enforces a backend quota (`--quota-backend-bytes`) after which the cluster goes
-  read-only until it is defragmented and the alarm is cleared. Discovering this limit in
-  production means the store stops accepting writes, including the ones your leases need.
+  etcd enforces a backend quota (`--quota-backend-bytes`); a NOSPACE alarm restricts writes
+  while allowing recovery operations such as reads/deletes. Follow the product's
+  compaction, defragmentation and alarm-disarm procedure; defragmentation alone does not
+  remove live data or old logical revisions.
 - **A queue.** Every enqueue and dequeue is a consensus decision, the whole queue lives in the
   replicated state machine, and the degenerate form — one key per item, everyone watching the
   parent — is a herd on every change. Use a broker (`task-queues-and-competing-consumers`).
-- **A job table or a lock per request.** Write rate then scales with traffic, which is exactly
-  what a consensus store cannot do.
+- **A job table or a lock per request without a capacity argument.** This couples business
+  traffic to coordination writes; justify rate, latency, retention and outage behavior instead
+  of assuming the metadata cluster has unlimited spare capacity.
 - **High-cardinality/churn state without a measured envelope.** Storage, revision history and
   watch cost grow with keys, updates, watchers and retention; benchmark the actual product and
   compaction policy.
@@ -47,24 +49,33 @@ session the holder still believes is alive, because a renewal was lost or the pr
 - Reads split into two classes and you must pick per call site: **linearizable** (confirmed
   against the leader, costs a round trip) or **local/serializable** (served by the contacted
   member, may be arbitrarily stale — a partitioned member can serve an old value indefinitely).
-  ZooKeeper reads are served by the connected member and are stale unless the client issues a
-  sync first; etcd's v3 read path is linearizable unless a serializable read is requested.
+  etcd's v3 read path is linearizable unless a serializable read is requested. ZooKeeper
+  member-local reads are not generally linearizable; `sync` can improve freshness but its
+  implementation does not provide a blanket linearizable-read guarantee (see its internals).
+
+Consul exposes `default`, `consistent` and `stale` read modes where supported by the endpoint.
+Default leader-lease checks can admit stale reads in a leader transition; `consistent`
+requires leader/quorum confirmation, while `stale` allows follower reads. Check SDK/query
+options and response metadata, rather than equating a successful HTTP response with freshness.
 
 ## A watch is not a delivery guarantee
 
 Four properties that catch people:
 
 1. **Product semantics differ.** etcd watches provide ordered, unique, resumable events within the
-   retained revision window. ZooKeeper's one-shot watch may miss intermediate states during the
-   re-registration gap. Do not apply the weaker contract to every product—or assume the stronger
+   retained revision window. ZooKeeper's standard one-shot watch may miss intermediate states
+   during re-registration; persistent and persistent-recursive modes exist since 3.6 and
+   avoid that re-registration lifecycle. Do not apply the weaker contract to every product—or assume the stronger
    one without revision checkpoints.
 2. **Gaps after disconnection.** History is compacted; a client reconnecting at a revision
-   already compacted away must re-read from scratch. ZooKeeper watches are one-shot — after
+   already compacted away must re-read from scratch. ZooKeeper standard watches are one-shot — after
    firing they must be re-registered, and changes in the gap appear only in the re-read.
 3. **Herd on a shared key.** Every watcher of one key wakes on every change to it. With N
    instances watching the leader key, a failover wakes N clients simultaneously.
-4. **No ordering against your own writes** unless you compare revisions. The event you receive
-   may predate the write you just made.
+4. **Read/write/watch ordering differs by product.** ZooKeeper orders watch events and
+   asynchronous replies within its client contract; etcd watch delivery is not a linearizable
+   read barrier. Use the documented session/revision rules when updating a local snapshot,
+   especially across reconnects or separate channels, and reject stale snapshot replacement.
 
 For current-state consumers, a watch invalidates or reconciles a versioned local snapshot; resync
 on compaction/gap and consider periodic reconciliation. Event-history consumers may process
@@ -73,26 +84,21 @@ message broker.
 
 ## Compare-and-set has three outcomes, not two
 
-```java
-// Conceptual: claim a role by CAS on a versioned key. Omits retry budget and metrics.
-record Claim(long revision, String holder) {}
-
-boolean tryClaim(String key, String me, Claim seen) {
-    try {
-        // Succeeds only if the key is still at seen.revision().
-        return store.compareAndSet(key, seen.revision(), me);   // false = someone else won
-    } catch (TimeoutException e) {
-        // UNKNOWN: the CAS may have been applied and only the response lost.
-        // Never treat this as "I lost". Re-read the key and compare the holder.
-        Claim now = store.read(key);
-        return me.equals(now.holder());
-    }
-}
+```text
+Create a unique attempt ID and write it atomically with the holder/grant under the CAS.
+Acknowledged success -> APPLIED with the returned grant/version evidence.
+Acknowledged failed comparison -> REJECTED under the store's comparison contract.
+Timeout/disconnection -> UNKNOWN, not false.
+Reconcile using a supported strong read and the exact attempt ID or durable operation record.
+If reconciliation is unavailable or ambiguous -> remain UNKNOWN; do not authorize side effects.
 ```
 
-The `false` path and the `TimeoutException` path mean different things and the mistake is
-collapsing them: a lost response after a _successful_ CAS, treated as a loss, produces a
-process that has the role and does not know it. The general classification is `failure-models`.
+A reread showing the same holder name can refer to an earlier/later grant or stale state.
+Even a strong reread showing another holder does not prove this attempt never committed:
+it may have succeeded and then expired or been replaced. Distinguish historical application
+from currently valid authority, preserve the unique grant token and enforce it at the external
+resource. If the store cannot reconcile history, retain UNKNOWN and use the operation's
+idempotency/recovery policy. The general classification is `failure-models`.
 
 ## When the store is unreachable
 
@@ -123,3 +129,10 @@ chosen by accident.
 - [ ] Every CAS call site distinguishes rejection from timeout.
 - [ ] Every consumer has a documented behaviour for "store unreachable", tested by blocking the
       client's network path rather than by mocking the client.
+
+## Sources
+
+- [ZooKeeper 3.8.4 consistency and sync limitations](https://zookeeper.apache.org/doc/r3.8.4/zookeeperInternals.html)
+- [ZooKeeper 3.8.4 watch modes](https://zookeeper.apache.org/doc/r3.8.4/zookeeperProgrammers.html)
+- [Consul consistency modes](https://developer.hashicorp.com/consul/api-docs/features/consistency)
+- [etcd 3.6 space-quota recovery](https://etcd.io/docs/v3.6/op-guide/maintenance/)

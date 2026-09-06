@@ -51,7 +51,7 @@ bottleneck.
    the JVM's stdout. Global `PrintAssembly` prints stubs, the interpreter and every C1
    method; `-version` alone is hundreds of lines.
 4. **Confirm the compiler, compilation kind, and build.** `Compiled method (c2)` identifies
-   C2 output; level 4 is the usual fully profiled tier under the default tiered policy, not a
+   C2 output; level 4 is the usual full-optimization tier under the default tiered policy, not a
    promise that the nmethod will remain current. A `%` marks OSR, whose entry state and loop
    shape can differ from a normal compilation. Graal/JVMCI, C1, debug builds, architecture,
    collector, compact headers, compressed pointers, and CPU feature flags all change the
@@ -89,12 +89,13 @@ bottleneck.
 - State the syntax convention of every excerpt you quote or read. In AT&T the destination
   is the **last** operand: `mov 0x8(%rbx),%eax` writes into `eax`.
 - Absence of `cmp`/`test` before a load is **not** proof the JIT proved non-nullity. Three
-  cases share that appearance; the `; implicit exception` comment is the discriminator, and
-  the implicit path (`ImplicitNullChecks`, `pd diagnostic`, default `true`) is the common one
+  cases share that appearance; an `; implicit exception` mapping identifies an implicit site,
+  but missing comments do not prove elimination. Check the full control flow and metadata. The
+  implicit path (`ImplicitNullChecks`, `pd diagnostic`, default `true`) is the common one
   for references arriving from outside the method.
 - Attribute comments correctly: hsdis produces mnemonics only. Every annotation
   (`; implicit exception`, `; {poll}`, `;*iaload`, `{runtime_call …}`) comes from HotSpot's
-  own printer walking the nmethod's relocations, not from the decoder — which is why they
+  own printer using relocations, PC/scope mappings and exception metadata, not the decoder — which is why they
   survive when hsdis is absent.
 - Classify an "unexplained" call by HotSpot's relocation comment and control-flow position.
   Entry barriers, uncommon traps, safepoint blobs, allocation/locking slow paths and GC
@@ -109,9 +110,10 @@ bottleneck.
   conventions, not Java or x86 ABI guarantees. Read header comments and generated-code
   sources before transferring the mapping to another compiler, port, or pointer mode.
 - Object layout in operands: default header 12 bytes (klass at `0x8`, array length at `0xc`,
-  `int[]` data at `0x10`); with `-XX:+UseCompactObjectHeaders` (JEP 519, product in JDK 25,
-  default `false`) the header is 8 bytes, those become `0x8`/`0xc`, and the header is one
-  64-bit store. Check the flag before reading a displacement as a field.
+  `int[]` data at `0x10`) in the illustrated compressed-klass configuration. With
+  `-XX:+UseCompactObjectHeaders` (JEP 519, product in JDK 25, default `false`) the instance
+  header is 8 bytes; array length/data become `0x8`/`0xc`. Klass information is packed into
+  the mark word, not a separate klass at `0x8`. Check pointer/layout flags and element alignment.
 - `PrintAssembly` may enable `DebugNonSafepoints` and report that side effect. A
   `{post_call_nop}` is metadata-supporting code, not application logic; it still occupies
   code-cache and front-end bandwidth, so call it negligible only after measurement.
@@ -139,9 +141,11 @@ For every assembly-backed recommendation, record:
 - sampled event, event count, kernel permissions and multiplexing status;
 - alternative explanation considered, source change proposed, and before/after workload result.
 
-Reject the conclusion when the capture comes from another JDK/CPU configuration, the method
-was deoptimised or replaced during sampling, only a cold stub was inspected, the listing is
-truncated, or the benchmark changed compilation shape relative to production.
+Keep conclusions scoped to the captured build and workload. If a method is replaced during
+sampling, partition samples by nmethod lifetime and address range; reject attribution when
+reuse/timestamps cannot be resolved. A historical nmethod can explain its own execution period.
+Do not extrapolate from a cropped cold stub, different ISA or altered benchmark compilation
+shape to production. Missing evidence remains inconclusive, not proof of absent optimization.
 
 ## Troubleshooting
 

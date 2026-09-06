@@ -34,6 +34,11 @@ and scope.
 
 ## Executor/resource saturation
 
+- **First exclude task-starvation deadlock:** every worker may be a parent waiting on a Future
+  whose child is queued to that same bounded executor. Correlate parent-to-child task IDs,
+  queued work and worker stacks; lock deadlock detectors need not report this resource cycle.
+  Use nonblocking composition or an execution/ownership design that lets children progress.
+  Adding workers may only postpone the same failure under a larger nested fan-out.
 - **Symptoms:** arrivals exceed completions, queue age/depth grows, rejection/timeouts follow.
 - **Distinguish:** correlate worker utilization with the actual protected bottleneck: CPU, connection
   pool, dependency quota, lock, memory or I/O. A pool can look saturated because every worker waits.
@@ -44,6 +49,11 @@ and scope.
 
 No universal utilization threshold such as 80% proves queueing collapse; service-time distribution,
 burstiness, parallel servers and SLO determine the curve.
+
+For a bounded reproduction, use a single worker whose parent submits a child to itself and waits
+with a timed `get`. Verify the child cannot start until the parent exits/releases the worker,
+and that there is no monitor-lock cycle. Always bound the parent wait, cancel retained Futures
+and terminate the executor in teardown; an intentionally permanent deadlock needs process isolation.
 
 ## Queue/in-flight memory growth
 

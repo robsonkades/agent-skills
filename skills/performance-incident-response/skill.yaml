@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: performance-incident-response
-version: 1.0.0
+version: 1.0.1
 description: >-
   Coordinating a production performance incident from impact declaration through evidence-preserving
   triage, one-change mitigation, recovery validation and a blameless causal postmortem. Use when a

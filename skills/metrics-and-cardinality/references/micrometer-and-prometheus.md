@@ -6,6 +6,10 @@ Micrometer registries and Prometheus versions evolve, particularly native-histog
 bucket generation and naming conventions. Pin versions and inspect one real scrape. Do not
 hardcode remembered counts such as “66 default buckets” into a durable design rule.
 
+Inspect the project's Java baseline and resolved registry/client dependencies; a reference to
+native histograms is not authorization to upgrade. Validate producer, exposition negotiation,
+scraper, remote storage and query engine together, including any simultaneous classic export.
+
 ## Micrometer distribution options
 
 - A Timer records completed durations and count/total time; pair it with active/age metrics
@@ -52,6 +56,12 @@ Install filters before affected meters register. Verify:
 A cap is a containment layer, not the cardinality design. Denial can make SLI denominators
 incorrect.
 
+`maximumAllowableTags` limits distinct values of a particular tag among matching meter names,
+not the Cartesian product across all tags or fleet-wide series. Choose `onMaxReached`
+deliberately (for example denial), test first-seen-value behavior, and record overflow through
+a separate bounded meter outside the rejected family. Normalize before registration where
+preserving totals is required; do not retain every raw input in an unbounded normalization cache.
+
 ## Prometheus distributions
 
 Classic histogram query:
@@ -78,6 +88,13 @@ sum(rate(http_request_duration_seconds_count[5m]))
 
 Selectors/populations must match. Missing bucket series usually yields an empty expression,
 label mismatch or schema issue—not universally NaN.
+
+This ratio estimates the fraction of **recorded observations at or below 0.3 seconds** over
+the rate window; it is not an exact event count at arbitrary window edges. The bucket avoids
+quantile interpolation, not scrape/rate estimation. Confirm every selected target exports
+that boundary: a bucket missing from only some targets can silently bias the aggregate.
+Define zero-traffic/zero-denominator behavior, and account for required rejected, timed-out
+or unfinished operations absent from the histogram rather than declaring a healthy SLI.
 
 ## Schema migration
 

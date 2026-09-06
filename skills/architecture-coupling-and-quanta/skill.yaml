@@ -1,20 +1,14 @@
 schemaVersion: 1
 
 name: architecture-coupling-and-quanta
-version: 1.1.0
+version: 1.1.1
 description: >-
-  Naming the unit that actually ships and the coupling crossing its edge: static and synchronous
-  dynamic coupling, connascence, and the architecture quantum as the maximal region closed under
-  both. Use when a team calls the system decoupled because the services communicate by events,
-  when twelve services always release together and nobody can say which one forces it, when a
-  synchronous call was removed and the two parts still cannot ship separately, when nobody can
-  say what would break if one component were deployed alone, when a diagram box maps to nothing
-  that ships, when a schema is shared by several services with no compatibility policy, or when
-  two people argue about whether something is "coupled". Does not cover whether to distribute
-  (distribution-boundaries), package coupling (java-cohesion-coupling), the coordinated release
-  shared jars force (component-and-release-boundaries), the trade-off method
-  (architecture-trade-off-analysis), or publishing a fact versus making a call
-  (event-driven-architecture).
+  Map release and runtime coupling when services ship together, event-driven components still
+  require coordinated changes, shared data obscures ownership, or a proposed architecture
+  quantum boundary cannot be justified. Distinguish structural dependencies, workflow completion
+  and connascence using contracts, deployment evidence and failure behavior. Does not choose
+  service extractions (distribution-boundaries), diagnose architecture smells
+  (enterprise-architecture-smells), or refactor package dependencies (java-cohesion-coupling).
 license: Apache-2.0
 
 authors:

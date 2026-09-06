@@ -20,6 +20,11 @@ handles harness mechanics; it cannot decide whether the operation, data, compile
 sharing, or statistical unit represents production. A precise answer to the wrong estimand is
 still wrong.
 
+Inspect the project's Java release/toolchain, JMH version, annotation processor and benchmark
+packaging before supplying commands. The source contracts referenced here were checked against
+JMH 1.37, not a required upgrade. Verify generated harness/benchmark discovery with the resolved
+version; missing benchmarks or an IDE run are not evidence of a measured operation.
+
 ## Ownership boundary
 
 - This skill owns the benchmark question, observable work, boundary, lifecycle, basic state, and
@@ -74,6 +79,9 @@ benchmark artifact.
 
 - Return the semantic result or consume it with `Blackhole` when the caller must observe it.
 - Create inputs through `@State`/`@Setup` when compile-time constants are not representative.
+- `@Param` fixes values for a trial configuration; running several values separately does not
+  model a mixed input/receiver distribution within one hot call site. Build a representative
+  sequence when that mix matters, including predictable cycling/cache effects in the design.
 - Vary inputs enough to model the decision, but do not add randomness inside the measured region
   unless random generation is part of the operation.
 - Check generated/compiled code or profiler evidence when elimination/specialization could decide
@@ -83,6 +91,11 @@ benchmark artifact.
 
 Returning a value prevents some complete elimination; it does not guarantee the desired call
 shape, allocation, type profile, or memory effects.
+
+Returning a `Future` or submitting asynchronous work usually observes dispatch, not completion.
+If completion is the operation, explicitly await and consume its result within the intended
+boundary, bound outstanding work, and handle failures/cleanup. Waiting also changes concurrency:
+use a system/load experiment for an arrival-rate or queueing claim.
 
 ## Boundary and fixture lifecycle
 
@@ -107,7 +120,9 @@ operation when the difference itself is the stated estimand and both paths share
 
 ## Forks, warm-up, and lifecycle
 
-A fork is a fresh JVM and normally the meaningful independent replication unit. Iterations within
+A fork is a fresh JVM and a useful replication unit; it does not reset host caches, thermals,
+external dependencies or data. Randomized/blocked runs still need those shared factors tracked.
+Iterations within
 one fork share compilation, heap, OS, and thermal history. `@Fork(0)` runs in the harness JVM and
 is useful for debugging only; it invalidates ordinary isolation assumptions.
 
@@ -129,6 +144,10 @@ For cold/startup questions, discarded warm-up is often conceptually wrong. Defin
 code, filesystem, page-cache, CDS, data-cache, and dependency state and reset the required layer
 between observations.
 
+`SingleShotTime` times the benchmark invocation/batch, not JVM launch, harness initialization or
+setup by default. Use an external launch-to-readiness measurement when process startup itself is
+the outcome; a fresh fork alone does not include startup in the JMH score.
+
 ## Mode and units
 
 | Mode             | Measures                                  | Principal caveat                                      |
@@ -144,7 +163,8 @@ element, one batch, or one transaction and verify the arithmetic with a known ca
 
 ## State and concurrency basics
 
-- `Scope.Thread`: one state per worker; no sharing through that state.
+- `Scope.Thread`: one state instance per worker; referenced objects, static fields or external
+  resources may still be shared. Inspect the reachable mutable graph and aliases.
 - `Scope.Benchmark`: one state shared by all benchmark workers.
 - `Scope.Group`: state shared by a configured group; use with advanced asymmetric layouts.
 
@@ -155,8 +175,9 @@ placement, correctness/invariants, and whether failed/retried operations count. 
 
 ## Read results without statistical shortcuts
 
-The standard `Score Error` is computed at JMH's configured confidence level (commonly displayed as
-99.9% in current JMH output), over the data supplied to its result aggregation. It is not a generic
+For average-aggregated results, JMH 1.37's standard `Score Error` uses a hard-coded 99.9%
+confidence level in `Result`, over the data supplied to its aggregation; other result policies
+may report no error estimate. It is not a generic
 proof of reproducibility, effect significance, or equivalence; iterations within a fork are not
 fresh JVM experiments.
 
@@ -181,6 +202,10 @@ operation) in this compiled context. Treat `0 B/op`, nonzero TLAB activity, and 
 according to the profiler/version implementation. Escape analysis may remove an object here but
 not at a non-inlined production caller. Allocation rate is not retained size, live set, native
 memory, or pause time.
+
+The profiler's observation window can include fixture/harness activity excluded from primary
+operation timing. In particular, moving allocation into invocation setup need not remove it
+from B/op. Check the secondary metric's actual counter window and normalization separately.
 
 Use allocation as a high-signal regression dimension when it represents the outcome, but do not
 call it universally deterministic or JMH's most reliable number. Validate with compiler evidence
@@ -224,9 +249,10 @@ Validate the change at the next realistic layer and explain divergence.
 
 ## References
 
-- [Validating a benchmark](references/validating-a-benchmark.md)
+- [Validating a benchmark](references/validating-a-benchmark.md) — read when auditing boundaries,
+  controls, comparison design or an implausible score, and before publishing a result.
 - [OpenJDK JMH project and samples](https://github.com/openjdk/jmh)
 - [JMH sample: dead-code elimination](https://github.com/openjdk/jmh/blob/master/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_08_DeadCode.java)
 - [JMH sample: constant folding](https://github.com/openjdk/jmh/blob/master/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_10_ConstantFold.java)
 - [JMH `Level.Invocation` API contract](https://javadoc.io/doc/org.openjdk.jmh/jmh-core/latest/org/openjdk/jmh/annotations/Level.html)
-- [JMH result statistics source](https://github.com/openjdk/jmh/tree/master/jmh-core/src/main/java/org/openjdk/jmh/results)
+- [JMH 1.37 result statistics source](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/results/Result.java)

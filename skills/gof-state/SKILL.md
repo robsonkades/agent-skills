@@ -25,9 +25,11 @@ events are legal in which state and what the result is, so an illegal transition
 rather than a corrupted object.
 
 The classical structure — a state object per state, with behaviour — is one way to express it. In
-modern Java the more useful expression is usually a sealed set of states plus one exhaustive
+Java a useful expression for small owned machines is a sealed set of states plus one exhaustive
 `switch` over `(state, event)`, because that puts the whole machine in one readable place and
-makes the compiler enumerate the cases when a state is added.
+checks state-type coverage when recompiled. It does not prove guards, payload validity or effects.
+Pattern-switch snippets require Java 21 without preview; inspect target compiler/framework/database
+versions before applying them. Older targets can use enums or state methods without an upgrade.
 
 ## State against Strategy
 
@@ -46,8 +48,9 @@ each other           State: transitions relate them, whether the states
                      know each other or a table does.
 ```
 
-If nothing ever transitions, it is Strategy. If the "strategies" reference each other, it is a
-state machine that has not admitted it (`gof-strategy`).
+Choose by intent: domain lifecycle rules suggest State; interchangeable algorithms suggest Strategy.
+A terminal state need not transition, and policies can compose/reference one another without
+becoming a lifecycle (`gof-strategy`).
 
 ## When it is the answer
 
@@ -58,7 +61,8 @@ statuses are a real domain rule
 
 Boolean flags have multiplied — paid, shipped, cancelled, refunded —
 and their legal combinations are fewer than 2^n
-        → State. The flags encode a machine badly.
+        → inspect whether one lifecycle or several independent dimensions are present;
+          use State or composed machines when transition rules justify it.
 
 A long-running process must be resumable and its position queryable
         → a persistent state machine (a workflow), which is this
@@ -70,11 +74,12 @@ A long-running process must be resumable and its position queryable
 - **A binary property with no transition-specific behavior or history.** A well-named boolean may
   be clearer. Two states can still deserve explicit types when transitions, data or vocabulary
   matter.
-- **The "states" never transition.** Strategy, or a sealed type used for dispatch.
+- **There is no lifecycle or transition behavior at all.** Consider Strategy or plain type dispatch;
+  this does not exclude terminal states within a real lifecycle.
 - **The status is derived, not stored.** If `isOverdue` is a function of a date and the clock, it
   is a query, not a state; storing it creates a second source of truth that goes stale.
-- **The transitions differ per caller.** Then the rules are policy, not state; keep the state
-  machine minimal and put the policy above it.
+- **Only caller policy varies.** Separate authorization/policy from lifecycle mechanics, but apply
+  its guards at the authoritative transition boundary; State and policy can coexist.
 
 ## Modern Java expression
 
@@ -96,7 +101,7 @@ each state knows its successors      one transition function:
 illegal transition → no-op or a      an explicit exception naming the
 silent ignore                        state and the event
 
-state stored as an ordinal           stored as its name, with an explicit
+state stored as an ordinal           stored as a stable code, with an explicit
                                      mapping and a rejected-unknown case
 ```
 
@@ -113,8 +118,8 @@ THEN define rejection explicitly. Repeated commands may intentionally be idempot
      a genuinely illegal event.
 
 IF a new state is added
-THEN every exhaustive switch must fail to compile. If a default branch
-     absorbs it, the compiler cannot help and the machine has holes.
+THEN recompile dispatch over the closed state set without a catch-all to expose omissions.
+     Rejected unknown events may use a default, but event coverage then needs explicit tests.
 
 IF the state is persisted
 THEN use an explicit stable storage code, not enum ordinal and not an enum name you
@@ -137,9 +142,9 @@ THEN it is an event like any other and needs something to deliver it.
      Durable due-time records and catch-up semantics must survive scheduler outages;
      an in-memory timer alone loses progress (distributed-locks-and-leases).
 
-IF the state machine spans services
-THEN it is a saga: each step can fail independently, transitions must
-     be durable, and rollback is compensation
+IF the state machine coordinates multiple services with local transactions
+THEN evaluate saga semantics when compensation is appropriate; not every distributed
+     state machine is a saga. Define recovery, durability and irreversible steps
      (distributed-transactions-and-sagas).
 
 IF states hold references to each other
@@ -150,8 +155,8 @@ THEN adding a state edits several classes. Prefer a transition function
 ## Cross-cutting checks
 
 - **Concurrency.** A transition is read-decide-write and is not atomic. Two concurrent
-  `cancel()` and `ship()` calls can both read `Paid` and both succeed. The three correct
-  mechanisms: an immutable state behind one reference updated with compare-and-set; a database
+  `cancel()` and `ship()` calls can both read `Paid` and both succeed. Options include
+  an immutable state behind one reference updated with compare-and-set; a database
   update whose `WHERE` includes the expected state, checking the affected row count; or optimistic
   locking on a version column. Which one depends on where the state lives — but "the transition
   method is `synchronized`" only helps if every path to the state goes through one instance in one
@@ -168,20 +173,24 @@ THEN adding a state edits several classes. Prefer a transition function
   frequently polled due-state query often needs a composite/partial index, not every state column.
 - **Testing.** The transition table is the specification, so test it as one: a parameterised test
   over every `(state, event)` pair asserting either the resulting state or the rejection. That
-  single test replaces dozens of scenario tests and fails the moment a state is added without
-  being considered. Add a property that no sequence of events reaches an illegal state.
+  coverage must include guarded payloads and assert the case inventory grows with states/events.
+  It complements scenario, persistence, concurrency and effect tests; a hand-written list does not
+  automatically detect missing pairs. Add bounded sequence tests for domain invariants.
 
 ## Review checklist
 
-- [ ] The set of states is explicit and closed, not a combination of booleans
-- [ ] The transition function is in one place and is exhaustive with no `default`
+- [ ] States and independent dimensions are explicit; closure or extension policy is justified
+- [ ] Transition rules have an authoritative home; closed-state dispatch exposes missing cases
 - [ ] Invalid transitions have explicit rejection/idempotent-repeat semantics
 - [ ] Persisted states use stable codes and define unknown-value behavior during upgrades
 - [ ] Transitions are atomic under concurrency by a named mechanism
 - [ ] Side effects use a local transaction or durable outbox/idempotent delivery protocol
 - [ ] Time-driven transitions have a real delivery mechanism
 - [ ] Every `(state, event)` pair is covered by a test
-- [ ] Adding a state produces compile errors at every dispatch site
+- [ ] State/event evolution triggers compiler coverage or an explicit case-inventory check
+
+Deliver the transition/guard and repeat policy, persisted representation, concurrency/effect
+protocol, and executed checks or identified gaps. Keep the decision proportional to the machine.
 
 ## References
 

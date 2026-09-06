@@ -2,7 +2,9 @@
 
 The questions to ask of any component that crosses a process boundary, in an order that makes
 each one answerable by the time it is asked. Each routes to the skill that owns the decision.
-Answers are recorded, not assumed — an unanswered question here is a defect scheduled for later.
+Select the sections relevant to this component and record answers, unknowns and justified
+non-applicability. A missing answer limits the associated guarantee; it need not block
+independent review or incident mitigation.
 
 ## 1. The boundary and the fault model
 
@@ -25,7 +27,8 @@ Answers are recorded, not assumed — an unanswered question here is a defect sc
   → `timeouts-and-deadlines`
 - Does every remote call have a bound? Does cancellation actually reach the callee, or does the
   caller just stop waiting?
-- Does the retry policy's worst case fit inside the caller's budget? Compute it; do not estimate.
+- Does a configured upper bound on attempts, waits and cleanup fit the caller's deadline?
+  Compute known bounds and mark unbounded/unknown work; a latency percentile is not a worst-case guarantee.
 
 ## 4. The contract
 
@@ -60,7 +63,8 @@ Answers are recorded, not assumed — an unanswered question here is a defect sc
 
 ## 7. Lifecycle
 
-- What do the three probes check, and does liveness depend on anything outside the pod?
+- If deployed on Kubernetes, which startup/readiness/liveness probes are configured, what
+  does each test, and does liveness depend on anything outside the pod?
   → `kubernetes-service-lifecycle`
 - On SIGTERM: what drains, in what order, and does the grace period cover it? Include the
   non-HTTP work — consumers, schedulers, executors, leases.
@@ -92,12 +96,13 @@ Answers are recorded, not assumed — an unanswered question here is a defect sc
 ## 10. Proof
 
 - Which of these answers has a test? → `distributed-systems-testing`
-- At minimum: duplicate delivery, out-of-order delivery, dependency slow, dependency down, crash
+- Select applicable cases from: duplicate delivery, out-of-order delivery, dependency slow, dependency down, crash
   mid-operation, asymmetric network failure, restore/recovery, overload, and a rolling deploy
   with two versions live.
 - For each failure test, what invariant is asserted? "No exception" is not an invariant.
+- State fixture isolation, stop conditions and recovery checks; mark unexecuted cases explicitly.
 
-## Red flags that end a review early
+## Red flags requiring an owner and evidence before accepting the affected design
 
 - No fault model written down.
 - "Exactly-once" claimed with no boundary named.

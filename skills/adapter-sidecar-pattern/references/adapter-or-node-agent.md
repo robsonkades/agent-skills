@@ -1,74 +1,70 @@
 # Adapter sidecar, node agent, in-process, or change the app
 
-## The four options
+## Select by access and ownership
 
-| Option                         | Selected by                                                                                 | Cost                                                                                                         |
-| ------------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **In-process instrumentation** | You own the code and a library emits the platform's format directly                         | A dependency and a release; nothing at runtime beyond the exporter itself                                    |
-| **Adapter sidecar (per pod)**  | Vendor or legacy binary; per-workload parsing rules; translation needs pod-local identity   | Memory and CPU per replica, a second image to patch, and a parsing contract that nobody versions             |
-| **Node agent (DaemonSet)**     | The signal is already at the node boundary (stdout, cgroup, host) and the rules are uniform | One agent's failure affects every pod on the node; usually needs host access; per-workload rules get awkward |
-| **Change the application**     | You own the code and the format will keep changing                                          | One release now, nothing recurring — the only option whose cost does not compound                            |
+| Option                                  | Selecting evidence                                                                                                                          | Recurring cost or failure surface                                              |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Change producer / instrument in-process | Code can change and the required semantics are available there                                                                              | Library, schema and release maintenance; instrumentation still costs resources |
+| Node agent                              | Existing collector can access the stream and route its formats with acceptable permissions and isolation                                    | Shared capacity/failure domain; node access and configuration ownership        |
+| Adapter sidecar                         | Pod-only files, local endpoint/credentials, independent release needs or measured isolation requirements prevent adequate shared collection | CPU/memory per replica, another image and a compatibility contract             |
 
-There is no universal order. For code you own, changing the producer or using in-process
-instrumentation usually minimizes recurring translation cost. A node agent wins for uniform
-node-boundary signals; a sidecar wins when isolation, per-workload rules or pod identity justify
-the per-replica cost. Record the selecting constraint.
+A vendor binary justifies translation, not necessarily per-pod placement. Different log formats
+can be routed through workload-specific parsers in a capable collector. Pod identity can also
+be attached by a node collector when its metadata association is reliable. Inspect the actual
+collector configuration, permissions and version before claiming either capability is available.
+Reject enrichment if it can associate a record with the wrong workload after a restart.
 
-## Metrics: the honest counterexample
+For ordinary stdout/stderr logs, first assess the existing runtime-to-node-agent path. A peer
+container does not automatically receive another container's stdout. File-only output may
+justify a shared-volume sidecar that translates to its own stdout for node collection, or one
+that ships directly. Choose a single intended ingestion path; collecting both duplicates data.
+Compare measured memory/CPU per replica versus per node at representative volume, including
+noisy workloads, buffer requirements and permissible data loss. See
+[Kubernetes logging architecture](https://kubernetes.io/docs/concepts/cluster-administration/logging/).
 
-A JVM service with Micrometer and the Prometheus registry already exposes an exposition
-endpoint. Putting an exporter sidecar in front of it converts a working scrape into a
-two-process scrape with a new failure mode and no new information.
+## Metrics: translation or redundant re-exposure?
 
-```java
-// Conceptual: in-process, with a bounded tag set. No adapter can produce this,
-// because no adapter can see the two dimensions that matter.
-Counter.builder("orders.submitted")
-       .tag("channel", channel.name())       // enum: bounded
-       .tag("outcome", outcome.name())       // enum: bounded
-       .register(registry)
-       .increment();
-```
+This skill specifies deployment and translation contracts, with no Java API baseline or
+executable Java example. Before proposing JVM instrumentation, inspect the project's Java
+release/toolchain, runtime image and resolved framework/Micrometer versions. Verify endpoint
+integration against those versions; adopting this skill does not authorize upgrades or new
+dependencies.
 
-The adapter earns its place for a process that has no instrumentation hook at all — a
-database, a broker, an appliance, a vendor JAR you cannot modify — where the exporter reads
-that system's own status interface and translates it. That is a different job from re-exposing
-metrics an application already publishes correctly.
+If an application already serves the required exposition, another exporter normally adds no
+translation value. Micrometer's Prometheus registry still needs an HTTP endpoint, supplied by
+application wiring or framework integration; adding the registry dependency alone is insufficient.
+Verify the actual endpoint and content negotiation before proposing a sidecar. See
+[Micrometer's endpoint prerequisites](https://docs.micrometer.io/micrometer/reference/implementations/prometheus.html).
 
-An exporter sidecar also inherits a scrape-interval problem: the platform scrapes the adapter,
-the adapter polls the app on its own schedule, and the reported value is up to the sum of both
-intervals old. Counters survive this; gauges and anything used for alerting do not, unless the
-age of the sample is exported alongside it.
+An exporter can instead translate a vendor's status API, even when the binary cannot be changed.
+Determine whether it collects on each scrape or polls into a cache. Prefer collection on scrape
+for Prometheus; justify caching expensive sources and document it in HELP. Specify source failure
+behavior (failed scrape or a separate source-success signal). A successful HTTP scrape does not
+prove successful source collection. See
+[Prometheus exporter guidance](https://prometheus.io/docs/instrumenting/writing_exporters/).
 
-## Logs: the topology comparison
+For caching, set a freshness budget and expiry policy; expose last successful collection time
+or age and ensure alerts use it. Age depends on polling, scrape timing, delays and failures;
+there is no finite interval-only bound during an outage. Repeated cached counters can distort
+rates, and resets between polls can be missed; gauges can hide short peaks. Test source restart,
+collection failure and expiry. A freshness metric reveals stale data but cannot recover missed
+observations. Do not attach old sample timestamps as a substitute for a defined cache policy.
 
-| Topology                                               | How it works                                                       | Choose it when                                                                            | Fails by                                                                               |
-| ------------------------------------------------------ | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| **App writes structured JSON to stdout; node agent**   | Runtime captures the stream; one agent per node reads and forwards | You can change the app's log layout — this is the default                                 | One agent per node is a shared dependency; a single loud pod can starve its neighbours |
-| **App writes plain text to stdout; node agent parses** | Same, plus regex or grok in the agent                              | The app cannot be changed and the format is stable across the fleet                       | Parsing rules diverge per workload and end up unmaintainable in one config             |
-| **App writes a file to `emptyDir`; sidecar tails**     | Sidecar reads the shared volume, parses, ships                     | The app can only log to files, or one pod's volume is large enough to hurt a shared agent | The volume fills; ephemeral-storage eviction of the pod; a shipper per replica         |
-| **App ships logs itself**                              | An appender writes straight to the log backend                     | Rarely — an in-app network dependency on the log backend                                  | Log backend outage becomes application latency, and buffering becomes heap             |
+## Health: name the condition before adapting it
 
-The default answer for ordinary container logs is usually the first row, and the reason is
-arithmetic: measured shipper memory per pod times every replica, against measured agent memory
-per node. Do not substitute a generic memory range for profiling your configuration. The sidecar form is
-justified by a specific inability — no stdout, per-pod rules, or a pod whose volume genuinely
-would degrade the shared agent — and that justification should be written in the manifest as a
-comment, because the next person will otherwise copy it.
+No HTTP health endpoint is not sufficient justification for a sidecar. A native TCP probe may
+be adequate if the required condition is connection acceptance; an existing exec or protocol
+check may suffice. TCP success does not establish business progress. See
+[Kubernetes probe behavior](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
 
-## Health: adapting a process that has none
+Use an adapter when a necessary, observable predicate needs translation that existing checks
+cannot provide. A query can show database responsiveness; a broker metadata call shows broker
+access, not progress of the local consumer. A progress marker needs workload cadence and idle
+behavior defined before choosing an expiry threshold. If no observation distinguishes a wedged
+process from a healthy idle one, state that gap instead of manufacturing a health contract.
 
-A legacy process with no health endpoint is the one case where an adapter is unambiguously
-right: no code change is possible, and a TCP-connect probe is not a health check — a wedged
-process still accepts connections.
-
-The adapter should perform the smallest operation a real client performs and report the
-result. A database gets a trivial query on a connection it opened itself; a queue consumer
-gets a broker metadata call; a batch process gets a check that its progress marker advanced
-within an expected interval. It should report _unhealthy_ only for conditions that the correct
-Kubernetes action (restart, or removal from endpoints) would actually address — which probe,
-and how it is configured, is `kubernetes-service-lifecycle`.
-
-Two adapter-specific traps: the check runs on every probe period forever, so it must be cheap
-and must not accumulate state; and its result must be computed fresh or explicitly labelled
-with its age, or a probe reads a cached "healthy" from before the process wedged.
+Bound check duration, concurrency and resource use; require a fresh result or reject it after
+a specified age. Distinguish adapter failure, target failure and shared dependency failure.
+Delegate readiness/liveness configuration to `kubernetes-service-lifecycle`: restarting a
+container because a shared broker is down need not repair anything. A liveness probe attached
+to the adapter restarts that container, not automatically the application it observes.

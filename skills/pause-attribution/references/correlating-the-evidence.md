@@ -3,20 +3,22 @@
 ## The decomposition
 
 ```
-Safepoint Total         = Reaching safepoint (sync) + At safepoint (operation) + Leaving safepoint
+Safepoint Total         = Reaching safepoint (sync) + At safepoint (VM work) + Leaving safepoint
                           \___________________/       \__________________/       \_______________/
                            thread-side problem          collector or VM-op        disarm + wake-up,
                            (TTSP)                       problem                   small, real
 ```
 
-The GC log publishes the middle term only. Whatever remains after all three are accounted for
-is not a safepoint: a per-thread stall or a host effect — `layer-decision-table.md`.
+This is the tested JDK 25 log layout, not a cross-version parser schema. `At` spans the
+synchronized interval, including VM work/cleanup; a GC log may time only a nested collector
+phase. Host descheduling can inflate any term, so host time is not an independent additive
+bucket to sum again. Match request intervals before reasoning about a remainder.
 
 | Log field            | What it measures                                            | Answers "how long did the application stop"?              |
 | -------------------- | ----------------------------------------------------------- | --------------------------------------------------------- |
 | `Time since last`    | Interval since the previous safepoint — frequency, not cost | No                                                        |
 | `Reaching safepoint` | Sync time; the slowest thread's TTSP                        | Partly                                                    |
-| `At safepoint`       | Duration of the operation (GC, dump, …)                     | Partly — this is what the GC log already shows            |
+| `At safepoint`       | Synchronized interval: VM work and cleanup                  | Partly; not necessarily equal to a GC event               |
 | `Leaving safepoint`  | Disarming the polls and waking the threads                  | Partly — the term a two-field sum drops                   |
 | `Total`              | Sync + operation + leaving                                  | JVM safepoint interval; correlate to application evidence |
 | `Threads`            | `N runnable, M total` — how many had to be stopped          | No, but it scales the sync term                           |
@@ -83,18 +85,35 @@ event count against a manual `grep -c Safepoint`.
 
 ## The JFR safepoint events
 
-| Event                               | Scope                           | Useful fields                                                           | When to use                                                                                      |
-| ----------------------------------- | ------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `jdk.SafepointBegin`                | Start of the cycle              | `safepointId`                                                           | Marks the start; correlate with `SafepointEnd` on the same id                                    |
-| `jdk.SafepointEnd`                  | End of the cycle                | `safepointId`                                                           | `SafepointEnd.startTime − SafepointBegin.startTime` is the cycle's Total                         |
-| `jdk.SafepointStateSynchronization` | Each wait iteration during sync | `safepointId`, `initialThreadCount`, `runningThreadCount`, `iterations` | Watch sync progress and how many threads are still outstanding                                   |
-| `jdk.ExecuteVMOperation`            | The operation itself            | `operation`, `safepoint`, `blocking`, `caller`, `safepointId`, duration | Says **what** ran at that safepoint, and joins to Begin/End on `safepointId`                     |
-| `jdk.SafepointLatency`              | One profiling sample (JEP 518)  | `stackTrace`, `threadState`, duration                                   | Interrupt-to-poll delay of a sampled thread — residual sampling bias, **not** a safepoint's TTSP |
+These are duration events. In the checked JDK 25 source, SafepointBegin covers begin/sync,
+SafepointEnd covers leaving, and StateSynchronization aggregates the synchronization pass
+with an iteration count. They are not instantaneous markers or one event per waiting iteration.
+
+| Event                               | Scope                          | Useful fields                                                           | When to use                                                                     |
+| ----------------------------------- | ------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `jdk.SafepointBegin`                | Start of the cycle             | `safepointId`                                                           | Marks the start; correlate with `SafepointEnd` on the same id                   |
+| `jdk.SafepointEnd`                  | End of the cycle               | `safepointId`                                                           | `SafepointEnd.endTime − SafepointBegin.startTime` approximates the cycle        |
+| `jdk.SafepointStateSynchronization` | Whole synchronization pass     | `safepointId`, `initialThreadCount`, `runningThreadCount`, `iterations` | Aggregated counts/iterations, not a per-iteration timeline                      |
+| `jdk.ExecuteVMOperation`            | The operation itself           | `operation`, `safepoint`, `blocking`, `caller`, `safepointId`, duration | Says **what** ran at that safepoint, and joins to Begin/End on `safepointId`    |
+| `jdk.SafepointLatency`              | One profiling sample (JEP 518) | `stackTrace`, `threadState`, duration                                   | Sample-request-to-poll delay; neither global TTSP nor a quantitative bias score |
 
 ```bash
-jcmd <pid> JFR.start duration=60s filename=safepoints.jfr settings=profile
+jfr configure --input profile.jfc --output safepoints.jfc \
+    jdk.SafepointBegin#enabled=true jdk.SafepointBegin#threshold=0ms \
+    jdk.SafepointEnd#enabled=true jdk.SafepointEnd#threshold=0ms \
+    jdk.SafepointStateSynchronization#enabled=true \
+    jdk.SafepointStateSynchronization#threshold=0ms \
+    jdk.ExecuteVMOperation#enabled=true jdk.ExecuteVMOperation#threshold=0ms
+jcmd <pid> JFR.start name=pause-attribution duration=60s filename=safepoints.jfr settings=safepoints.jfc
 jfr metadata --events jdk.SafepointBegin,jdk.SafepointEnd,jdk.SafepointLatency
 ```
+
+Run commands with the target JDK tools and target-visible paths, within the diagnostic budget.
+On tested 25.0.3, `profile.jfc` disables SafepointEnd and StateSynchronization; plain
+`settings=profile` cannot supply the advertised join. `JFR.start` returns before duration
+expires and the final file is written. Confirm completion/readability or take a deliberate
+`JFR.dump name=pause-attribution filename=snapshot.jfr` snapshot before analysis. A snapshot
+is not the final duration window. Verify event settings and recording loss alongside metadata.
 
 `jdk.SafepointLatency` has no `safepointId` (verified against
 `src/hotspot/share/jfr/metadata/metadata.xml`, tag `jdk-25-ga`) and its only field is
@@ -116,13 +135,14 @@ try (RecordingFile rf = new RecordingFile(Path.of(args[0]))) {
         RecordedEvent e = rf.readEvent();
         switch (e.getEventType().getName()) {
             case "jdk.SafepointBegin" -> begin.put(e.getLong("safepointId"), e.getStartTime());
-            case "jdk.SafepointEnd"   -> end.put(e.getLong("safepointId"), e.getStartTime());
+            case "jdk.SafepointEnd"   -> end.put(e.getLong("safepointId"), e.getEndTime());
             case "jdk.ExecuteVMOperation" -> {
-                // confirm on your build whether this event carries safepointId; when it
-                // does not, labelling falls back to temporal ordering
-                try {
-                    operation.put(e.getLong("safepointId"), e.getString("operation"));
-                } catch (Exception ignored) { }
+                // Version-check fields first; retain all operations at a shared safepoint.
+                if (e.hasField("safepointId") && e.hasField("safepoint")
+                        && e.getBoolean("safepoint")) {
+                    operation.merge(e.getLong("safepointId"), e.getString("operation"),
+                            (a, b) -> a + ", " + b);
+                }
             }
             default -> { }   // includes jdk.SafepointLatency, a different quantity
         }
@@ -132,34 +152,44 @@ try (RecordingFile rf = new RecordingFile(Path.of(args[0]))) {
 begin.forEach((id, start) -> {
     Instant finish = end.get(id);
     if (finish != null) {
-        System.out.printf("safepoint %d: %dms total (%s)%n",
-            id, Duration.between(start, finish).toMillis(),
+        if (finish.isBefore(start)) throw new IllegalStateException("reversed interval " + id);
+        System.out.printf("safepoint %d: %dns JFR interval (%s)%n",
+            id, Duration.between(start, finish).toNanos(),
             operation.getOrDefault(id, "unknown operation"));
-    }
+    } else System.err.println("unmatched begin: " + id);
 });
+end.keySet().stream().filter(id -> !begin.containsKey(id))
+        .forEach(id -> System.err.println("unmatched end: " + id));
 ```
 
-A `SafepointBegin` with no matching `SafepointEnd` in the window is a truncated recording, not
-an anomaly — skip it rather than treating the missing end as zero.
+This is a Java 17+ method-body snippet using `java.util`, `java.time`, `java.nio.file` and
+`jdk.jfr.consumer` imports, for one JVM lifetime and a bounded file. Report unmatched events;
+do not count them as zero. Window boundaries, disabled/thresholded events, loss or an unfinished
+duration event can explain them. A currently stuck operation may not yet have emitted its event.
+If an older schema lacks correlation fields, report unavailable labels; temporal attribution
+is a separate hypothesis, not a silent fallback. Do not merge safepoint IDs across JVM restarts.
 
 ## The cross-check, and why it is the acceptance criterion
 
-Run the JFR reconstruction against a recording taken over the same interval as the text log,
-and compare the ten largest `Total` values from each. The two expose the same JVM cycle through
+Run the JFR reconstruction against a recording taken over the same interval as the text log.
+Match individual cycles by interval/operation before comparing the largest durations; do not
+pair independently sorted tails as if they identified the same events. The two expose the same JVM cycle through
 different encodings — unified logging text and JFR. Agreement is a strong parser/window
 consistency check, not independent proof of application impact.
 
-- **They converge (small rounding differences, ns versus ms, buffer flush timing):** the number
-  is a property of the JVM, not an artefact of one parser.
-- **They diverge systematically:** one of the two captures is wrong. Find out which before
-  either is used for a production decision.
+- **They approximately converge:** that supports parser/window consistency. JFR event
+  construction/commit and log tracing use nearby but different boundaries; log emission work
+  may also fall inside the JFR interval. Do not require exact equality or explain duration
+  differences as buffer-flush delay, which affects availability rather than recorded timing.
+- **They diverge systematically:** inspect boundaries, configuration, missing events and clock
+  conversion before accusing a parser or using the result for a production decision.
 
 ## Attributing the remainder
 
 Once `Total` is trusted, compare it with request/thread progress over the same timestamp:
 
-1. `Total` accounts for the whole gap → the pause is a JVM pause. Split it at
-   `Reaching` vs `At` and hand it to the owning layer.
+1. The aligned safepoint interval covers the progress gap → investigate that cycle, splitting
+   `Reaching` vs `At`. Coverage alone does not exclude host scheduling as the underlying cause.
 2. `At safepoint` dominates → the operation. `jdk.ExecuteVMOperation` names it; if it is a GC
    phase, the GC log for the same `GC(n)` is the continuation of the trail.
 3. `Reaching safepoint` dominates → identify non-arrived thread(s) with timeout diagnostics,
@@ -169,15 +199,18 @@ Once `Total` is trusted, compare it with request/thread progress over the same t
    application queueing/blocking or a dependency, not automatically host-side. Follow the
    per-thread/request evidence and OS signals.
 
-Alignment across sources is by absolute timestamp, which is why `time` belongs in the decorator
-set of every log involved. Uptime alone cannot be aligned with an external dashboard.
+Align absolute timestamps with recorded timezone, clock drift/steps and uncertainty. Uptime
+can also be aligned through a verified process-start anchor. A log timestamp usually marks
+emission near the interval's end, not its start; reconstruct bounds from the target log semantics.
+Compare actual overlaps and avoid double-counting nested GC/safepoint/JFR intervals.
 
 ## Cadence and the apparent gap
 
 With `-XX:GuaranteedSafepointInterval=0` (default since JDK 23), the safepoint log contains
 only safepoints with a real cause. Correlating against infrastructure metrics sampled at a
 fixed interval, the missing background beat can read as an instrumentation gap when it is the
-correct behaviour: no safepoint happened in that interval.
+correct behavior, but only after excluding configuration/loss and an in-progress cycle whose
+completion line has not yet been emitted.
 
 | Context                                                                          | Value                 | Why                                                           |
 | -------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------- |
@@ -185,10 +218,13 @@ correct behaviour: no safepoint happened in that interval.
 | Short diagnostic experiment, only if a forced cadence answers a defined question | `1000`, temporarily   | Introduces safepoints; compare against an unmodified baseline |
 
 ```bash
-java -XX:GuaranteedSafepointInterval=1000 \
+java -XX:+UnlockDiagnosticVMOptions -XX:GuaranteedSafepointInterval=1000 \
      -Xlog:safepoint=info:file=safepoint.log:time,uptime,level,tags \
      -jar app.jar
 ```
 
 Do not leave the diagnostic change in production without measuring its effect and documenting
 why induced safepoints are required.
+
+Source for JFR duration boundaries and synchronization aggregation:
+[OpenJDK 25 safepoint implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/safepoint.cpp).

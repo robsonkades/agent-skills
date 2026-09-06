@@ -4,6 +4,9 @@ Every output fragment below is from Temurin 25.0.3 (`javac 25.0.3`, class file 6
 
 ## Invocations
 
+Inspect the preserved deployed class/JAR first. Recompile only a separate reproducer with
+the intended compiler and target; adding debug attributes does not recover the original bytes.
+
 ```bash
 javac -g -parameters MyClass.java           # -g: LocalVariableTable; -parameters: MethodParameters
 javap MyClass                               # signatures only
@@ -81,8 +84,9 @@ major_version = JDK version + 44
 | 24     | 68            |
 | **25** | **69**        |
 
-JVMS SE 25 §4.1 supports class files with major versions 45 through 69 — full backward
-compatibility, no forward compatibility. Running a patched version-70 file on 25 gives the
+JVMS SE 25 §4.1 supports major versions 45 through 69, subject to minor-version rules.
+That is class-file format support, not a guarantee of API, linkage or behavioural compatibility;
+older preview class files are not accepted. Running a patched version-70 file on 25 gives the
 exact message:
 
 ```
@@ -91,8 +95,9 @@ Runtime (class file version 70.0), this version of the Java Runtime only recogni
 file versions up to 69.0
 ```
 
-Both numbers are in the message, which is already the diagnosis. Below 45 is a different
-message (`was compiled with an invalid major version`) and means a corrupt file.
+Both numbers identify the version mismatch; locate the producer (compiler, dependency or
+transformer) before choosing a fix. Below 45 gives a different message
+(`was compiled with an invalid major version`): inspect the header and producer.
 
 `minor_version` is 0 for almost every class file. The exception is `0xFFFF` (65535), reserved
 to mean "this file depends on preview features of the feature release named by
@@ -190,8 +195,9 @@ Ljava/lang/String;   String            [I   int[]
 | Location                 | Part of `method_info` / `field_info`      | Separate attribute (JVMS 4.7.9)     |
 
 `List<String> getNames()` has descriptor `()Ljava/util/List;` — the element type survives only
-in `Signature`. Two methods that differ only in a generic parameter have the same descriptor,
-which is why javac refuses them as a name clash: the class file could not hold both.
+in `Signature`. Overloads such as `m(List<String>)` and `m(List<Integer>)` have the same
+erasure and descriptor, so javac rejects the name clash. Different erased parameter types
+can still distinguish generic overloads.
 
 ## What the verifier checks
 
@@ -207,11 +213,13 @@ For class-file instructions it checks, among other things:
    point where control paths converge.
 4. **Branch validity** — jumps land on an instruction boundary, never inside a multi-byte one.
 5. **Return consistency** — every returning path yields the declared type.
-6. **Initialisation before use** — an object cannot be used before its constructor completes.
+6. **Uninitialised references** — special verification types restrict uses of a newly
+   allocated reference until the required constructor invocation initialises it; this is
+   not a prohibition on all instance use from within a constructor.
 7. **`protected` access** — subclasses in another package cannot reach `protected` members of
    instances that are not of their own type or a subtype.
 
-Type merging at a branch join is a lattice join, climbing superclasses to the common ancestor:
+Types at a branch join must satisfy the verifier's merge/frame rules. For example:
 
 ```
 if (c) { /* stack: [String]  */ } else { /* stack: [Integer] */ }
@@ -307,11 +315,13 @@ visible as `Lab$$Lambda/0x0000000012040438 source: Lab` in `-Xlog:class+load`.
 ## Reading and rewriting class files: the Class-File API and ASM
 
 Since JDK 24 the JDK ships its own class-file library, `java.lang.classfile` (JEP 484, final
-in 24; previewed in 22 and 23 under JEPs 457 and 466). javac, jlink and `jdk.jshell` use it,
-so it reads and writes every class file version the running JDK does — the coupling that
-breaks every third-party library on each release does not exist for it. Verified on 25:
+in 24; previewed in 22 and 23 under JEPs 457 and 466). Its supported format evolves with the
+JDK, avoiding a separately versioned parser dependency. Transformation semantics, target
+compatibility and hierarchy resolution still require validation. Example for JDK 25:
 
 ```java
+// Partial snippet: path is the preserved class-file Path.
+import java.nio.file.Files;
 import java.lang.classfile.*;
 import java.lang.classfile.attribute.*;
 import java.lang.classfile.instruction.*;
@@ -336,8 +346,8 @@ byte[] out = ClassFile.of().transformClass(cm,
 Two behaviours matter for diagnosis. A method body the transform does not touch is copied
 verbatim, original `StackMapTable` included; only rebuilt bodies get regenerated frames.
 `ClassFile.StackMapsOption.DROP_STACK_MAPS` on a rebuilt body is how the
-`Expecting a stackmap frame` error above was produced — the option exists for generators that
-target class file 49 and below, and is wrong for anything javac emits today. Frame generation
+`Expecting a stackmap frame` error above was produced. Dropping required frames is invalid
+on current targets; a straight-line method may need none. Frame generation
 needs the class hierarchy to merge reference types; supply
 `ClassFile.ClassHierarchyResolverOption` when the classes are not loadable from the system
 loader.
@@ -356,22 +366,34 @@ ClassVisitor cv = new ClassVisitor(Opcodes.ASM9, cw) { /* visitMethod, ... */ };
 cr.accept(cv, ClassReader.EXPAND_FRAMES);
 ```
 
-With `COMPUTE_FRAMES` the frames the reader visits are ignored and recomputed from the final
-code, which is the point; `EXPAND_FRAMES` makes the reader deliver them uncompressed for any
-visitor that reads them on the way. A writer built **without** `COMPUTE_FRAMES` copies the
-original frames through — correct only if no instruction moved. Inserting code under that
-configuration is the stale-frame `VerifyError`.
+For methods rebuilt through visitors, `COMPUTE_FRAMES` recomputes frames from final code;
+`EXPAND_FRAMES` delivers uncompressed frames to intermediate visitors. The reader-backed
+writer can directly copy unmodified methods, bypassing recomputation even with that flag.
+Wrap the method visitor when editing its instructions. Without `COMPUTE_FRAMES`, existing
+frames can remain valid when types are unchanged and labels/offsets are correctly remapped
+(for example, inserting a stack-neutral `nop`); moving instructions alone does not prove
+stale frames. Changes to stack types, joins or handlers require corresponding frame updates.
+
+Parsing is lazy and is not full verification. Run `ClassFile.of().verify(out)` on transformed
+bytes, then load and exercise them with verification enabled on supported target runtimes
+and loaders. A successful parse or frame computation does not prove linkage or behaviour.
 
 ## Transformer production invariants
 
 - Never mutate the input buffer; return a new array or `null`.
-- Preserve unknown attributes unless the transformation intentionally owns them.
+- Preserve attributes only when their invariants survive the edit. Unknown attributes may
+  contain constant-pool indices or code offsets: use a supported mapper/remapper, retain
+  them when independent of the change, or reject a transformation that cannot preserve a
+  required attribute. Blind copying and indiscriminate dropping can both break consumers.
 - Make transformation idempotent or distinguish initial load, retransformation and
   redefinition; retransformation-incapable outputs are reapplied by the instrumentation API.
 - Avoid loading the class being transformed or dependencies through the wrong loader while
   computing hierarchy; this can create circularity or permanently failed resolutions.
-- Test bootstrap, platform and application loaders, named modules, hidden classes, records,
-  sealed attributes, exceptions and every supported class-file version.
+- Test bootstrap, platform and application loaders, named modules, records, sealed
+  attributes, exceptions and supported class-file versions. Hidden classes are not
+  modifiable through `Instrumentation`; ordinary transformers do not observe their
+  definition. Test that limitation explicitly; inspect a generator's pre-definition dump
+  when hidden-class bytes are required.
 - If a transformer throws, later transformers and definition are still attempted as if it
   returned `null`; emit telemetry and fail the deployment gate when instrumentation is required.
 
@@ -383,3 +405,5 @@ configuration is the stale-frame `VerifyError`.
 - [Java 25 `ClassFileTransformer`](https://docs.oracle.com/en/java/javase/25/docs/api/java.instrument/java/lang/instrument/ClassFileTransformer.html)
 - [Java 25 Class-File API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/classfile/package-summary.html)
 - [JEP 484: Class-File API](https://openjdk.org/jeps/484)
+- [ASM ClassWriter: frame computation and direct-copy optimisation](https://asm.ow2.io/javadoc/org/objectweb/asm/ClassWriter.html)
+- [Java 25 Instrumentation: modifiable classes](<https://docs.oracle.com/en/java/javase/25/docs/api/java.instrument/java/lang/instrument/Instrumentation.html#isModifiableClass(java.lang.Class)>)

@@ -34,11 +34,11 @@ void slowGatewayFailsWithinTheReadTimeout() {
     stub.stubFor(get("/payments/42")
             .willReturn(aResponse().withFixedDelay(30_000)));   // hangs, does not fail
 
-    Instant start = Instant.now();
+    long start = System.nanoTime();
     assertThatThrownBy(() -> gateway.fetch("42"))
             .isInstanceOf(GatewayTimeoutException.class);
 
-    assertThat(Duration.between(start, Instant.now()))
+    assertThat(Duration.ofNanos(System.nanoTime() - start))
             .isLessThan(Duration.ofSeconds(3));                 // the assertion that matters
 }
 ```
@@ -47,10 +47,11 @@ Without the duration assertion the test passes with a 60-second timeout, which i
 configuration that causes the outage.
 
 **Test both timeouts.** A connect timeout governs reaching the host; a read timeout governs
-waiting for the response. A blackholed address (a routable IP that never answers, e.g. in a
-`TEST-NET` range) exercises the connect timeout; the delayed stub above exercises the read
-timeout. Systems commonly configure one and leave the other at the library's default, which
-is frequently infinite (`timeouts-and-deadlines`).
+waiting for response data according to the client contract. Use a controlled DROP rule or
+network fixture for a connection blackhole; TEST-NET addresses may be rejected immediately
+or routed differently and are not a reliable test. Also distinguish DNS, TLS, pool acquisition,
+read-idle and end-to-end deadlines. Verify the delayed request actually reached the stub,
+reset its journal between tests, and bound the test process independently of the client timeout.
 
 ## Retries and the budget
 
@@ -100,6 +101,7 @@ void retriesReuseTheIdempotencyKey() {
     List<LoggedRequest> sent = stub.findAll(postRequestedFor(urlEqualTo("/payments")));
     assertThat(sent).hasSize(2);
     assertThat(sent.get(0).getHeader("Idempotency-Key"))
+            .isNotBlank()
             .isEqualTo(sent.get(1).getHeader("Idempotency-Key"));
 }
 ```
@@ -120,17 +122,18 @@ below that layer configures a retry policy (`retries-and-backoff`, `cascading-fa
 
 ## Circuit breakers
 
-Before testing behaviour, check the arithmetic — a large share of configured breakers cannot
-open:
+Before testing behavior, identify whether the breaker persists across logical calls, which
+outcomes count, and its window/minimum-call rules. For example:
 
 ```text
 Breaker opens after:      10 consecutive failures
 Each failure takes:       the read timeout, 5 s
-Time to open:             50 s
+Serial failure time:      about 50 s for ten recorded failures
 Caller's own timeout:     10 s
 
-→ the caller gives up at 10 s, every time. The breaker never opens,
-  and its metrics show it as permanently closed and healthy.
+→ one request may finish before the threshold, while a shared breaker
+  still accumulates failures from later requests. Ten concurrent 5 s
+  failures can reach the threshold in about 5 s, not 50 s.
 ```
 
 Then test the transitions, using time you control rather than sleeps. A breaker whose state
@@ -206,20 +209,34 @@ void duplicateMessageAppliesOnce() {
 void concurrentDuplicatesApplyOnce() throws Exception {
     Envelope message = orderPlaced("order-2", "msg-2");
 
-    try (var scope = Executors.newVirtualThreadPerTaskExecutor()) {
+    var scope = Executors.newVirtualThreadPerTaskExecutor();
+    List<Future<?>> deliveries = new ArrayList<>();
+    try {
         var barrier = new CyclicBarrier(2);
-        Runnable deliver = () -> { await(barrier); consumer.handle(message); };
-        scope.submit(deliver);
-        scope.submit(deliver);
+        Callable<Void> deliver = () -> {
+            barrier.await(5, TimeUnit.SECONDS);
+            consumer.handle(message);
+            return null;
+        };
+        deliveries.add(scope.submit(deliver));
+        deliveries.add(scope.submit(deliver));
+        for (Future<?> delivery : deliveries) delivery.get(5, TimeUnit.SECONDS);
+    } finally {
+        for (Future<?> delivery : deliveries) delivery.cancel(true);
+        scope.shutdownNow();
+        assertThat(scope.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
     }
 
     assertThat(orders.findAll()).hasSize(1);
 }
 ```
 
-The sequential test passes with a `SELECT`-then-`INSERT` check. The concurrent one fails
-unless a unique constraint or an upsert enforces it — and the concurrent case is what a
-consumer group rebalance produces in production (`idempotency`, `delivery-semantics`).
+The sequential test can pass with a racy `SELECT`-then-`INSERT`; simultaneous starts increase
+exposure but do not force both reads before either write. Use a controlled seam at that race
+when needed and verify a deliberately broken implementation is detected. Observe every Future:
+one successful insert and one hidden task exception must not count as two successful deliveries.
+Validate the expected duplicate response/ack contract and business effects, not just row count.
+Bound client I/O as well; a forked test watchdog contains code that ignores interruption.
 
 Run these against the real database. An in-memory one may not enforce the constraint the same
 way, which is the entire subject of the test (`architecture-testing`).
@@ -238,8 +255,9 @@ acknowledgement._
 ```
 
 This cannot be simulated with a mock, because the point is that the JVM does not run its
-shutdown hooks. Use a real container and stop it without grace. This is the test that proves
-an outbox works, and the test that finds an "idempotent" consumer that only deduplicates
+shutdown hooks. Use an explicit hard-kill in an isolated container. This tests consumer crash
+recovery; an outbox additionally needs producer commit and relay publish/mark crash tests.
+It can find an "idempotent" consumer that only deduplicates
 in-memory (`distributed-transactions-and-sagas`).
 
 A related pair worth running on the same harness:
@@ -267,10 +285,14 @@ real instances. What to assert:
 
 ## A note on determinism
 
-Everything above is deterministic: a fixed fault, at a fixed point, with a fixed assertion.
-That is what makes it a regression test rather than an experiment, and it is why these belong
-in CI while randomised chaos does not.
+Fixed injection points reduce variation, but real threads and networks still have scheduling
+nondeterminism. Use bounded waits, observable synchronization and reproducible traces. Seeded
+random tests can belong in CI when cost and cleanup are bounded.
 
 Randomised and exploratory fault injection has its place — it finds the combination nobody
 thought to write down — but its output is a _finding_, and the finding's value is realised by
 turning it into one of the deterministic tests above (`references/chaos-experiments.md`).
+
+## Source
+
+- [Resilience4j circuit breaker](https://resilience4j.readme.io/docs/circuitbreaker) — shared sliding-window history, minimum recorded calls and concurrent execution; verify the installed library.

@@ -36,12 +36,14 @@ used for each value. Counts are necessary evidence, but they do not identify the
    Whatever it is, it must be a decision, not the tool's default.
 2. **Write the stage and clock model.** Count scheduled/offered, generator-admitted, started,
    server-accepted and every terminal outcome. Preserve scheduled time, actual start, response
-   completion and deadline so generator lag and service latency are separable.
+   completion and deadline so generator lag and send-to-completion response time are separable.
 3. **Check response coupling.** In a closed population at equilibrium, the interactive response
    law is `X = N/(R+Z)` for population `N`, response time `R` and think time `Z`. It explains why
    throughput falls as responses slow; `N ≥ λR` is a concurrency sizing estimate, not proof that
    a finite generator realised an open arrival process.
-4. **Reconcile the schedule.** A planned/start deficit proves missed starts; it can come from
+4. **Reconcile the schedule.** Match due schedule IDs to starts within the same cohort and
+   observation cutoff, separating retries and future slots. A deficit identifies outstanding
+   due starts (late, dropped or unresolved); it can come from
    response coupling, generator CPU/event-loop lag, connections, admission or an explicit drop
    policy. Use timestamps and generator telemetry to distinguish them. See
    `references/detection-and-generator-configuration.md`.
@@ -64,10 +66,11 @@ used for each value. Counts are necessary evidence, but they do not identify the
   excluded outcomes may never enter a success-latency histogram. Reconcile independent counters.
 - Closed-loop is correct for genuinely closed populations and serial workflows. The defect is a
   workload-model mismatch or a latency-at-fixed-arrival claim, not closed loops themselves.
-- **Never apply `recordValueWithExpectedInterval` to data from a true open-loop generator.**
-  Those queue waits are real; synthesising fill-in values on top of them counts the same
-  omission twice, inflates the sample count and now _overestimates_ tail density. Plain
-  `recordValue()` is the only correct path for independently-arriving samples.
+- **Do not apply expected-interval correction to complete independently arriving observations
+  or already compensated data.** It adds synthetic samples to waits already represented.
+  Verify actual starts, the recorded clock and any recorder-side sampling before calling data
+  complete; an open-arrival configuration alone does not prove this. Use plain recording for
+  those observed values and report losses separately.
 - Preserve both `actualStart−scheduledStart` and `completion−actualStart`; use
   `completion−scheduledStart` only when the end-to-end estimand treats generator/client queueing
   as user wait. A scheduled item that is dropped is an outcome, not a fabricated latency.
@@ -84,9 +87,10 @@ used for each value. Counts are necessary evidence, but they do not identify the
 - A global pause is a clear demonstration, but is not required. Any slowdown or capacity loss
   can build a queue under exogenous arrivals while a finite closed loop reduces offered load.
   A sleep can reproduce the effect when it occupies a bounded worker/resource; state the model.
-- JMH is not subject to this, but not because it is single-threaded. It measures invocation
-  cost directly; there is no simulated arrival process to violate. `@Threads(N)` measures
-  behaviour under saturation, which is a different question from latency at a production rate.
+- Ordinary JMH invocation-cost measurements do not promise an external arrival schedule.
+  They are not evidence of service latency at a production rate. A benchmark wrapping remote
+  calls or asynchronous submissions can still omit waits or measure enqueue time only;
+  inspect its operation/completion boundary before making a latency claim.
 - Completed-call-only timers that exclude rejects/timeouts exhibit outcome-selection or censoring,
   not necessarily coordinated omission. They create the same optimistic dashboard and require
   terminal-outcome denominators, but name the mechanism correctly.
@@ -95,6 +99,12 @@ used for each value. Counts are necessary evidence, but they do not identify the
   admission queues violate that approximation; measure production arrivals.
 
 ## Required audit artifact
+
+For Java instrumentation, inspect the project's compiler/runtime and resolved HdrHistogram
+version before editing. The APIs shown are partial snippets, verified here with HdrHistogram
+2.2.2 on JDK 25; no Java baseline is otherwise imposed. Preserve the target toolchain and
+dependencies unless a change is authorized. If raw timing or generation evidence is absent,
+report the diagnosis as unresolved and identify the trace/counter needed to distinguish causes.
 
 ```text
 Target workload: open / closed / semi-open / replay; production evidence
@@ -117,5 +127,5 @@ Decision:        representative / descriptive-only / rerun required
   `recordValueWithExpectedInterval` algorithm with a worked example, HdrHistogram's own
   post-hoc API (`copyCorrectedForCoordinatedOmission`) and the double-correction rule, the
   decision table for when closed-loop is legitimately fine, sensitivity reporting,
-  and where the regular-spacing counterfactual breaks. Read only when the data is
-  genuinely closed-loop and the test cannot be re-run.
+  and where the regular-spacing counterfactual breaks. Read when assessing a proposed
+  correction or legacy omission-prone data that cannot be re-run.

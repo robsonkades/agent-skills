@@ -3,7 +3,10 @@
 Everything marked "measured" below was run on Temurin 25.0.3 (`25.0.3+9-LTS`, product build,
 x86_64, G1, default tiered compilation) with a small harness that reads
 `ThreadMXBean.getThreadAllocatedBytes` around a hot loop after warm-up. Source names are from
-the `jdk-25-ga` tag of `openjdk/jdk`.
+the `jdk-25-ga` tag of `openjdk/jdk`. These are historical observations retained from the
+original skill; its complete harness, input distribution and raw results are not shipped here.
+They are illustrative, not independently reproducible performance evidence or portable thresholds.
+Reproduce a relevant case on the target before using its number to choose a change.
 
 ## Procedure
 
@@ -15,23 +18,26 @@ Suspicion: this object should be eliminated and is not
      +-- full size .. continue at 2
   |
   1b. Control: rerun with -XX:-DoEscapeAnalysis.
-     |-- still ~0 ... the allocation had no surviving use and was yanked without EA
-     |                (macro.cpp "NotUsed" path). The test says nothing about EA. Fix the
-     |                harness: keep the object live across a call or return it.
-     +-- full size .. EA is doing the work. Stop, or continue only to attribute cost.
+     |-- still ~0 ... EA dependence not demonstrated. Inspect unused removal, caching,
+     |                execution frequency and measurement coverage; do not force escape
+     |                just to make the number nonzero.
+     +-- full size .. EA-dependent optimization is implicated; use compiler evidence
+                      to distinguish scalar replacement from related transformations.
   |
   2. Ask the compiler: -XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation -XX:LogFile=c2.xml
      Inside the method's tier-4 <task>: is there an <eliminate_allocation> for the class?
-     |-- yes ........ eliminated. Whatever is allocating is a different site (or tier 3
-     |                code still running - check PrintCompilation).
+     |-- yes ........ removed in this compilation. Confirm it was installed and active;
+     |                other versions, tiers and deoptimization can still allocate here.
      +-- no ......... continue at 3
   |
   3. -XX:+PrintInlining, tier-4 tree: a refusal on the chain that carries the object?
      |-- yes -> 3a. Callee bytecode size (javap -c -p) against MaxBCEAEstimateSize (150)
      |          |-- fits, reads but never stores the argument
-     |          |     -> ArgEscape via BCEA: still allocates, a lock on it elides
-     |          +-- does not fit, stores it, or passes it on
-     |                -> GlobalEscape: allocates AND keeps real synchronisation
+     |          |     -> ArgEscape via BCEA if the summary succeeds: allocation stays;
+     |          |        lock elision remains subject to graph shape and compiler policy
+     |          +-- no usable summary, or reaches an escaping sink
+     |                -> GlobalEscape; EA cannot eliminate this object's monitor
+     |                   (other lock transformations remain a separate question)
      +-- no, everything inlined
                 -> 3b. Match the shape against the "why did this allocation survive"
                        table below, then trace the edge (connection-graph.md).
@@ -119,7 +125,8 @@ when that improves the design independently of one HotSpot release.
 
 `PrintEscapeAnalysis` is not a `CompileCommand` option — the option list is closed
 (`-XX:CompileCommand=help` prints it) and it is not there in any form. Both spellings are
-rejected at startup on 25.0.3, and the JVM does not start:
+rejected at startup on Temurin 25.0.3: each returned exit status 1 and printed no version,
+with `Could not create the Java Virtual Machine` on stderr:
 
 ```
 $ java -XX:CompileCommand=option,Lab::foo,PrintEscapeAnalysis -version
@@ -134,7 +141,8 @@ Error: Unrecognized option 'PrintEscapeAnalysis'
 There is no per-method form even on a debug build: the flag is global. Narrow the output there
 with `-XX:CompileCommand=compileonly,Class::method` instead. On the examined product build, either
 invalid command prevents startup; confirm option availability with `CompileCommand=help` on the
-target runtime.
+target runtime. Inspect the child process exit status and whether `-version` or the application's
+main actually ran; parser error text alone does not establish startup failure on another build.
 
 `CompileCommand` options inherit the class of the flag they scope. `PrintInlining` needs
 `-XX:+UnlockDiagnosticVMOptions` before it (`is diagnostic and must be enabled via ...`), and
@@ -178,10 +186,13 @@ Reading it:
 - A reducible merge logs one `<eliminate_allocation>` per input allocation, so a
   `a ? new P() : new P()` that worked shows two entries with different `bci`.
 - `<connectionGraph_bailout reason='reached time limit'>` (or `iterations limit`) means EA
-  gave up on the whole method; expect every allocation in it to survive.
-- An absent element is a verdict too, **provided the task is tier 4** (`level='4'` on the
-  `<task>` line) and the allocation was still in the graph. An allocation yanked as unused never
-  reaches this code and logs nothing.
+  gave up on that analysis; EA-dependent elimination can be lost, while dead-code cleanup remains.
+- `<task>` can omit `level` for the highest compilation tier. Match its `compile_id` to an
+  `<nmethod compiler='c2' ...>` (and OSR identity where relevant), rather than requiring
+  `level='4'` on the task. An elimination entry records a compiler transformation, not proof
+  that this nmethod was installed or active throughout the measurement window.
+- An absent element alone does not establish allocation survival: unused removal, incomplete
+  logs, another compilation or an allocation absent from that graph can explain it.
 
 The same file feeds JITWatch; the format is the subject of `compilation-and-inlining-logs`.
 
@@ -192,9 +203,9 @@ The same file feeds JITWatch; the format is the subject of `compilation-and-inli
   Measured: 29 lines of output for a whole run, none of them C2's.
 - `-XX:+PrintAssembly` without hsdis prints `Loading hsdis library failed`, then hex dumps with
   unnamed `{runtime_call}` relocations — the allocation stub is not identifiable. With hsdis
-  the slow path is the call to `OptoRuntime`'s `_new_instance_Java` / `_new_array_Java`
-  (`opto/runtime.cpp`); its absence in the method body is the removal (not verified here —
-  no hsdis on the test machine).
+  inspect both inline allocation paths and runtime stubs in the correct installed nmethod.
+  Absence of a named stub alone is not proof of elimination (assembly not verified here —
+  no hsdis on the original test machine).
 - Neither is needed. `<eliminate_allocation>` is the compiler's own statement, and the
   allocation profile is the runtime's.
 
@@ -222,8 +233,8 @@ does **not** turn the TLAB events on; to have them:
 
 Two readings that go wrong:
 
-- A few samples of the type from early in the recording are the interpreter and C1 running
-  before tier 4, not an EA failure. Measured: 120 `Point` samples for the escaping variant
+- A few samples of the type from early in the recording can come from interpreter/C1 execution
+  before tier 4; correlate rather than assuming that cause. Historical observation: 120 `Point` samples for the escaping variant
   against 1 for the eliminated one over the same 20 M calls. Judge the steady-state rate, or
   filter by start time.
 - `jdk.ObjectAllocationSample` is throttled sampling weighted by bytes. It cannot prove absence
@@ -267,16 +278,17 @@ unstable_if reinterpret`) without the object list. In production correlate the J
 
 **Baseline**
 
-- [ ] `DoEscapeAnalysis`, `EliminateAllocations`, `EliminateLocks`, `ReduceAllocationMerges`
-      confirmed `true` on the exact runtime
-- [ ] No `CompileCommand` naming `PrintEscapeAnalysis` anywhere — the JVM would not have started
+- [ ] Compiler/version and available EA flags recorded; `ReduceAllocationMerges` only checked
+      on supporting releases, without requiring a project upgrade
+- [ ] Unsupported `CompileCommand` diagnostics removed; actual exit status and version/main
+      execution checked on the target (both examined forms failed before startup on 25.0.3)
 - [ ] For JFR: the event actually used is `jdk.ObjectAllocationSample`, or the TLAB event was
       enabled by name; a zero from a disabled event is not evidence
 
 **A "0 bytes/op" result**
 
-- [ ] Reproduced with `-XX:-DoEscapeAnalysis`? Then the object was unused, not eliminated, and
-      the benchmark must keep it live across a call or return it
+- [ ] Reproduced with `-XX:-DoEscapeAnalysis`? Then EA dependence is unproven; check other
+      elimination/caching and measurement explanations without forcing the object to escape
 - [ ] `<eliminate_allocation>` present in the tier-4 task for that class and `bci`
 
 **An ArgEscape that BCEA should have classified**
@@ -297,8 +309,8 @@ unstable_if reinterpret`) without the object list. In production correlate the J
 **Deoptimisation in a method with aggressive scalar replacement**
 
 - [ ] Correlated with `jdk.Deoptimization` or `-Xlog:deoptimization`, not with JMH
-- [ ] Number of objects per `REALLOC OBJECTS` block read from `-XX:+TraceDeoptimization` on a
-      test run, or from `<eliminate_allocation>` counts in the log
+- [ ] Number of materialized objects read from actual `REALLOC OBJECTS` blocks on a controlled
+      run; static `<eliminate_allocation>` counts do not tell how many are live at a given trap
 - [ ] Rematerialisation counted as an additional cost per event, not dismissed as recompilation
 
 **Before publishing any number**
@@ -308,7 +320,8 @@ unstable_if reinterpret`) without the object list. In production correlate the J
 
 ## Primary references
 
-- [HotSpot escape analysis source](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/opto/escape.cpp)
-- [HotSpot macro expansion source](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/opto/macro.cpp)
+- [JDK 25 compile-task logging](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compileTask.cpp): highest-tier task level omission.
+- [HotSpot escape analysis source, JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/escape.cpp)
+- [HotSpot macro expansion source, JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/macro.cpp)
 - [JDK-8257602: allocation sampling events](https://bugs.openjdk.org/browse/JDK-8257602)
 - [JDK Flight Recorder command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)

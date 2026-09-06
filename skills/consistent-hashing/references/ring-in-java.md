@@ -6,6 +6,12 @@ The canonical shape is an ordered map from a collision-safe ring point to physic
 to overwrite the other, and removing either cannot reconstruct the lost point.
 
 ```java
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.stream.Stream;
+
 public final class HashRing {
     // Fixed, specified algorithm. Never Object.hashCode(), a record's hashCode, or any
     // hash documented as unstable across versions (Guava's Hashing.goodFastHash says so).
@@ -38,8 +44,13 @@ public final class HashRing {
     public synchronized void add(String node, int weight) {
         if (node == null || node.isBlank()) throw new IllegalArgumentException("node");
         if (weight <= 0) throw new IllegalArgumentException("weight");
-        if (weights.putIfAbsent(node, weight) != null) return;
         int count = Math.multiplyExact(vnodesPerWeight, weight);
+        Integer existing = weights.get(node);
+        if (existing != null) {
+            if (existing != weight) throw new IllegalArgumentException("weight change requires reconfiguration");
+            return;
+        }
+        weights.put(node, weight);
         for (int i = 0; i < count; i++) {
             String token = point(node, i);
             ring.put(new RingPoint(position(token), token), node);
@@ -65,7 +76,6 @@ public final class HashRing {
 
     /** Primary first, then successors, skipping further vnodes of a node already chosen. */
     public synchronized List<String> owners(String key, int replicas) {
-        if (ring.isEmpty()) return List.of();
         if (replicas <= 0 || replicas > weights.size()) {
             throw new IllegalArgumentException("replicas");
         }
@@ -79,7 +89,12 @@ public final class HashRing {
 }
 ```
 
-Four details that are wrong in most copies of this code:
+This complete class uses Java 16+ records and `Stream.toList()` plus Guava on the classpath.
+Pin the project's Guava version and hash contract; compilation for this review uses Java 25
+with `--release 16` and Guava 33.4.8-jre. The snippets below are partial test/measurement
+fragments: the test uses JUnit Jupiter and AssertJ, with `ringOf` and V supplied by the fixture.
+
+Details that affect correctness:
 
 - **The wrap-around.** `ceilingEntry` returns `null` for any key hashing past the last point;
   omitting the `firstEntry()` fallback throws `NullPointerException` for exactly those keys —
@@ -91,7 +106,11 @@ Four details that are wrong in most copies of this code:
   positions coexist. `asLong()` truncation is acceptable only as part of a pinned library,
   version and byte-order contract. A collision should affect ordering, never delete topology.
 - **Input and overflow validation.** Zero/negative weights, blank node IDs, multiplication
-  overflow and impossible replica counts are configuration errors, not partial rings.
+  overflow and impossible replica counts are rejected before mutation. Re-adding the same
+  weight is idempotent; a different weight is rejected instead of silently ignored.
+  An empty ring has no valid positive replica count. Arithmetic validation is not a memory
+  budget: enforce a topology-size limit before accepting untrusted configuration, and build
+  replacement snapshots off-path for all-or-nothing publication on allocation failures.
 - **`synchronized` on the whole class** is adequate only because membership changes are rare
   and `owner` is short. For placement on the hot path, publish an immutable snapshot behind a
   `volatile` field so readers never block; the visibility rules are `java-memory-model`.
@@ -114,7 +133,7 @@ ratios are inside tolerance, then stop — the ring costs `V × N` entries and
 hardware can be approximated with `weight`, but twice the memory does not necessarily mean
 twice the CPU, I/O or safe request rate. Validate weights under load.
 
-## The test that proves the property
+## Testing monotonicity and sampled balance
 
 ```java
 @Test
@@ -127,17 +146,21 @@ void addingANodeOnlyStealsKeys() {
     List<String> moved =
             keys.stream().filter(k -> !after.owner(k).equals(was.get(k))).toList();
 
-    // 1. Bounded disruption: about K/(N+1) keys change owner.
+    // 1. Sampled balance: choose V and justify this tolerance for this fixture.
     assertThat(moved.size() / (double) keys.size()).isCloseTo(1.0 / 5, within(0.02));
 
-    // 2. The stronger property, and the one a broken hash actually violates: a join may
+    // 2. Deterministic monotonicity with unchanged existing points: a join may
     //    only take keys FOR the new node. No key may move between two pre-existing nodes.
     assertThat(moved).allSatisfy(k -> assertThat(after.owner(k)).isEqualTo("n5"));
 }
 ```
 
-Assertion 2 is the one that catches a real bug. `hash(key) % N` passes neither; a ring with a
-mis-ordered comparison or an `int` position passes assertion 1 by luck and fails assertion 2.
+Assertion 2 detects movement between existing owners on a join. It does not establish hash
+quality: a consistently signed ordering or even a low-width hash can preserve monotonicity.
+The 2% tolerance is a fixture-specific statistical check, not a universal bound; specify V,
+keys and hash parameters before running it. Test removal separately: only keys previously
+owned by the removed node may move. Add deterministic collision, wrap-around, replica
+distinctness, rejected-overflow-then-valid-retry and conflicting-weight cases.
 
 Two more worth having. **Balance:** with the chosen V, count/byte/rate/cost ratios stay under
 the recorded tolerance across several node counts and key sets. **Cross-process agreement:**

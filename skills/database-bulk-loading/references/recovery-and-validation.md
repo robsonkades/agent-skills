@@ -9,9 +9,18 @@ A restartable chunk commits these together:
 3. source checkpoint or high-water mark;
 4. accepted/rejected counts needed for reconciliation.
 
-Advancing progress outside the data transaction creates either silent loss or duplicates after a
-crash. An offset alone is unsafe if source order can change; prefer stable source identity and a
-versioned input snapshot.
+When the checkpoint shares the destination transaction, advancing it separately creates a crash
+gap. External broker/file checkpoints often cannot join that commit: persist a destination-side
+chunk/source identity with the data, then acknowledge externally. A crash in between causes replay,
+which must be deduplicated. Fence concurrent workers or use disjoint checkpoint ownership; a
+high-water mark must not advance past uncommitted lower ranges. An offset alone is unsafe if source
+order can change; use stable source identity and a versioned input snapshot.
+
+Connection loss during commit means the outcome may be unknown, not necessarily rolled back.
+Reconnect and reconcile the durable chunk identity before resuming. Capture rollback/cleanup
+failures without replacing the original error; close streams/statements and return pooled
+connections only after transaction state is resolved or the connection is discarded. Do not
+commit or reset autocommit behind a framework transaction manager.
 
 ## Partial errors
 
@@ -26,6 +35,13 @@ Inject one bad row in the middle of a chunk and observe:
 
 Do this with the exact driver and engine configuration. Driver continuation behavior and engine
 transaction state are independent layers.
+
+JDBC counts describe statement execution, not committed source rows. A nonnegative value is an
+update count, `SUCCESS_NO_INFO` means success with an unknown count, and `EXECUTE_FAILED` denotes
+failure when the driver continues. A shorter array can describe only the successful prefix.
+Never sum sentinel values or treat an unreported suffix as committed. With `executeLargeBatch`,
+read `getLargeUpdateCounts`; correlate results with the submitted batch and retain the exception
+chain. Rewrites and upserts can prevent exact source-row accounting from JDBC counts alone.
 
 ## Upsert and deduplication
 
@@ -47,5 +63,15 @@ At minimum reconcile:
 - replica/CDC convergence and lag recovery;
 - final configuration, triggers, constraints, indexes, and durability settings.
 
+Define mutually exclusive row dispositions (for example inserted/updated/unchanged/rejected)
+and count warnings separately: one row may produce multiple warnings and still be accepted.
+Document upsert affected-row semantics and deduplication before writing a reconciliation equation.
+Include a lost commit acknowledgment and overlapping-worker replay in interruption scenarios.
+
 Run an interruption test at chunk boundaries and inside a chunk, then restart twice. The second
 restart should be a no-op with the same final state.
+
+## Source
+
+- [JDBC BatchUpdateException contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/BatchUpdateException.html)
+  — continuation, sentinel counts and large-batch counts; verify the actual driver's behavior.

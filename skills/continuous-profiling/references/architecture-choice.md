@@ -92,12 +92,17 @@ For each channel estimate opportunities and measure accepted/dropped events:
 ```text
 opportunities/s
   * selection probability or threshold pass rate
-  * average stack frames/event
   * measured collection CPU/event
   = collection CPU demand
 ```
 
-CPU sampling is bounded by consumed CPU time rather than nominal thread count. Wall sampling
+Measured CPU/event already includes the measured stack-depth distribution; do not multiply it
+by frames/event again. If estimating from per-frame cost instead, add fixed per-event cost to
+frames/event times CPU/frame. Keep opportunity-processing costs for rejected events separate
+when the collector still incurs them.
+
+CPU-clock sampling opportunities track consumed CPU time; traditional JFR `ExecutionSample`
+periodic thread sampling is a different mechanism and does not directly measure CPU time. Wall sampling
 can scale with eligible thread count, though implementations may batch/subsample. Allocation
 events scale with allocation bytes and mechanism/interval; lock events with qualifying
 contention; instrumentation with selected invocation rate.

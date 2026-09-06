@@ -24,7 +24,7 @@ defended rather than tested.
 
 The second half matters as much: patterns interact. Some pairs reinforce each other (Domain
 Model with Unit of Work and Identity Map); some fight (Domain Model with a repository that
-returns rows; Remote Facade over a fine-grained service). A design of individually
+returns rows on its invariant-enforcing write path; a facade that leaves remote calls chatty). A design of individually
 defensible choices can still be incoherent.
 
 ## The selection inputs
@@ -49,19 +49,25 @@ it has no justification yet.
 
 ## Workflow
 
-1. **Answer the nine inputs** for the module — not for the system. Different modules
-   legitimately reach different answers.
+1. **Inspect evidence for the relevant inputs** for the module — not just the system.
+   Reuse accepted constraints and existing code. Record consequential unknowns and investigate
+   the smallest missing basis; do not require nine new answers for a small decision.
 2. **Start with logic organisation, then iterate with fixed schema, transaction, concurrency and
    delivery constraints.** It constrains many downstream choices but is not a one-way dependency
    (`domain-logic-organization`).
 3. **Choose the data-source pattern** consistent with it (`data-source-patterns`).
 4. **Add only the patterns a named force requires.** Each addition must trace to an input.
 5. **Check the composition** against the conflicts list in the references. Fix the friction
-   by removing a pattern, not by adding an adapter between them.
+   by removing unjustified machinery or correcting boundaries. An adapter is justified when
+   independently owned contracts must coexist; measure its cost instead of forbidding it.
 6. **Write down the choices with their forces**, so the next person can re-open a decision
    on evidence (`architecture-decision-making`).
 
 ## Selection rules
+
+These are candidates to compare with the existing design, not mandatory stacks. Schema
+ownership does not alone require duplicate object models; use explicit mapping when the
+semantic/API independence gained justifies conversion and synchronization costs.
 
 ```text
 Rules do not interact; work is per-transaction
@@ -78,8 +84,9 @@ Rules interact; schema is owned elsewhere or must diverge
           Pay the mapping; you are buying independence.
 
 Mostly CRUD; entity ≈ table; you own the schema
-        → Active Record. No repository abstraction, no service layer,
-          no DTO for internal use. Say it is deliberate.
+        → consider Active Record where the record owns persistence, or a
+          simple mapper/repository-backed CRUD design already supported by the stack.
+          Add service/DTO boundaries only for a named contract or policy.
 
 Work is set-shaped (bulk recalculation, indexation, reporting)
         → SQL in a gateway, beside whatever the write side uses.
@@ -109,21 +116,24 @@ Multi-request conversation state
 
 ## Composition rules
 
-- **Domain Model implies a Unit of Work and an Identity Map**, whether you write them or the
-  ORM provides them. Design as if they are there, because they are
+- **ORM-backed Domain Models commonly use Unit of Work and Identity Map.** A domain model
+  alone implies neither; explicit SQL, immutable models and event persistence can differ.
+  Inspect actual persistence semantics rather than inventing ORM behavior
   (`orm-behavioral-patterns`).
-- **Repository implies an aggregate.** A repository without one is a per-table DAO with a
-  fashionable name (`repository-pattern`).
+- **Repository provides collection-like access to domain objects.** When adopting DDD
+  aggregates, organize domain repositories around aggregate roots and protect their mutation
+  boundaries; absence of aggregates alone does not make a Repository a DAO (`repository-pattern`).
 - **Remote Facade implies DTOs.** A coarse operation returning domain objects re-couples the
   caller to the model, and the facade's whole purpose was one round trip with a stable
   payload.
 - **Optimistic Offline Lock implies an identity field, a version and a conflict experience.**
   The first two are mechanical; the third is where implementations fail.
-- **Service Layer implies a transaction boundary.** Without one it is a forwarding
-  convention, and forwarding conventions become god services
+- **Service Layer defines an application operation boundary.** Transaction ownership,
+  authorization, orchestration and multiple callers can justify it; read-only or remote
+  operations need not start a database transaction
   (`service-layer-design`).
-- **Table Module implies set-based operations** that bypass the domain model's invariants —
-  legitimate, and it must be named and bounded, not accidental.
+- **Set-based operations need explicit invariant and concurrency handling.** Table Module
+  can own business rules over tabular data; it does not inherently bypass every invariant.
 - Reads and writes may use different patterns when query and invariant forces diverge.
   This is the most under-applied composition in enterprise architecture and the one that
   resolves most performance–purity arguments (`architecture-and-performance`).
@@ -132,11 +142,11 @@ Multi-request conversation state
 
 ```text
 Domain Model + repositories returning rows/DTOs
-        → the model is never loaded, so its invariants never run.
+        → check write paths for bypassed invariants; separate read projections are compatible.
 
-Domain Model + a repository per table
-        → the aggregate boundary does not exist; any part can be
-          written without the whole's rules.
+DDD aggregate + independent write repositories for its child tables
+        → inspect whether child writes bypass root invariants; table-oriented
+          infrastructure alone does not prove the aggregate boundary is broken.
 
 Active Record + a Repository abstraction + DTOs everywhere
         → paying a Data Mapper's price for Active Record's coupling.
@@ -146,8 +156,8 @@ Transaction Script + a rich domain model half-built
         → two homes for every rule; the rule will be in the wrong one.
 
 Remote Facade + fine-grained service methods behind it
-        → the facade forwards call-for-call and the chattiness moved
-          inside; latency is unchanged.
+        → compatible for local calls: aggregating them is the facade's purpose.
+          If calls remain remote, inspect the remaining network hops and latency.
 
 Aggregate + bulk updates that skip the version
         → optimistic locking is silently defeated
@@ -158,7 +168,8 @@ Lazy Load + entities crossing a boundary
           costs.
 
 Coarse-Grained Lock + a large aggregate
-        → contention. Resize the aggregate; do not weaken the lock.
+        → measure contention and invariant scope before resizing; splitting an
+          atomic invariant introduces a coordination problem, not a free optimization.
 
 Distribution + a shared database
         → coupled schema, availability and ownership. This may be a deliberate
@@ -167,6 +178,10 @@ Distribution + a shared database
 ```
 
 ## References
+
+Return the selected/rejected composition, the relevant evidence and constraints, its main
+trade-off, and a concrete validation or reconsideration condition. Do not infer a performance
+improvement from pattern names; inspect versions and measure the target implementation.
 
 - [Selection criteria](references/selection-criteria.md) — the nine inputs turned into
   questions with observable answers, worked selections for four common system shapes, and

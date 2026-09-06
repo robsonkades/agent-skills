@@ -1,7 +1,8 @@
 # From an inlining verdict to a code change
 
-Every default and verdict string below was read off Temurin 25.0.3 (`-XX:+PrintFlagsFinal`,
-`-XX:+PrintInlining`) and cross-checked against the JDK 25 sources named in each section.
+The reference baseline is Temurin 25.0.3 (`-XX:+PrintFlagsFinal`, `-XX:+PrintInlining`)
+and the JDK 25 sources named below. Historical experiment anecdotes without retained harnesses
+are illustrative, not reproduction evidence.
 Confirm numbers, flag classes and verdict interpretation on the runtime you are reasoning
 about; neither values nor policy structure are public contracts.
 
@@ -13,7 +14,7 @@ about; neither values nor policy structure are public contracts.
 | `FreqInlineSize`                  | 325           | product    | Bytecode bytes; ceiling at a **hot** call site                        |
 | `MaxTrivialSize`                  | 6             | product    | Bytecode-size threshold used by trivial-callee policy paths           |
 | `InlineSmallCode`                 | 2500          | product    | **Machine-code** bytes of a callee that already has an nmethod        |
-| `MaxInlineLevel`                  | 15            | product    | Nesting depth of the inline tree (9 on older releases, not verified)  |
+| `MaxInlineLevel`                  | 15            | product    | Nesting depth of the inline tree                                      |
 | `MaxRecursiveInlineLevel`         | 1             | product    | How many times a method may be inlined into itself                    |
 | `InlineFrequencyRatio`            | 0.25          | diagnostic | Call-site count / caller invocations at or above which a site is hot  |
 | `MinInlineFrequencyRatio`         | 0.0085        | diagnostic | Below this ratio the site is refused outright                         |
@@ -28,7 +29,7 @@ about; neither values nor policy structure are public contracts.
 
 `develop` flags are compiled out of a product build: they do not appear in `PrintFlagsFinal`
 and passing one is `Unrecognized VM option`. So `DesiredMethodLimit` and `HugeMethodLimit`
-cannot be raised in production; the code has to change. Declarations: `opto/c2_globals.hpp`,
+cannot be set in a product JVM; refactoring or a supported policy experiment may be needed. Declarations: `opto/c2_globals.hpp`,
 `runtime/globals.hpp`, `compiler/compiler_globals.hpp`.
 
 **One input to "hot" in this build.** C2 computes a call-site/caller frequency in
@@ -61,7 +62,7 @@ policy` in particular only means C1 declined to inline a callee that already has
 | `call site not reached`                 | Current profile/graph treats the site as unreachable             | Exercise representative paths; later execution may trap and recompile                                                                       |
 | `size > DesiredMethodLimit`             | Compilation unit already holds 8000 inlined bytes                | Something upstream is too big to be inlined at all; shrink the caller's inline tree rather than the refused callee                          |
 | `NodeCountInliningCutoff`               | Live nodes above `LiveNodeCountInliningCutoff`                   | Same: the compilation unit is enormous. Split the caller                                                                                    |
-| `not inlineable` after `(not loaded)`   | Callee class not loaded when the caller compiled                 | Warm the path before it matters, or accept: the recompilation after loading fixes it                                                        |
+| `not inlineable` after `(not loaded)`   | Callee class not loaded when the caller compiled                 | Warm the path before it matters, or accept: loading may permit later compilation; verify the result rather than assuming a fix              |
 | `unloaded signature classes`            | A parameter or return type not yet loaded                        | Same                                                                                                                                        |
 | `exception method`                      | Callee on a `Throwable` subclass called from normal code         | Nothing; exception construction is meant to stay out of line                                                                                |
 | `native method`                         | JNI callee                                                       | Nothing; only intrinsics cross this boundary                                                                                                |
@@ -91,15 +92,15 @@ alters guarding and code size across the process; use it only to test a hypothes
 prefer a source/design fix supported by the profile.
 
 The site is the **bytecode**, not the method. A helper called from ten places with ten
-receiver types has one profile, and every caller sees a megamorphic site even when each
-caller alone is monomorphic. The fix is a separate call site per hot caller — duplicate the
-small helper, or move the loop into type-specific code—only if the design supports it.
+receiver types has one profile, and can share a mixed profile even when each caller alone is monomorphic. A caller with
+statically known types may still specialize after inlining; contamination is not inevitable.
+Separate hot call sites only when actual compilation evidence and maintainability justify it.
 `final`/sealed hierarchy information can aid static binding or class-hierarchy speculation,
 but the result still depends on the caller graph, loaded classes and current assumptions.
 
-A sealed hierarchy switched over with pattern matching turns one `invokeinterface` into
-`instanceof` chains with direct calls, which sidesteps the profile entirely; it is a design
-change and worth it only when the profile shows the site.
+A Java 21 pattern-switch can expose narrower types in each branch, but its bytecode may use
+an invokedynamic type-switch and later calls can remain virtual. It does not bypass profiling
+or guarantee direct calls; inspect javap and compiled output before proposing the redesign.
 
 ## Internal inlining annotations are not an application contract
 
@@ -113,13 +114,18 @@ not become an application dependency.
 
 The application-level equivalents, all verified on 25.0.3:
 
-| Need                                 | Mechanism                                                                                        |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| Force one call to inline (lab)       | `-XX:CompileCommand=inline,pkg.Class::method` → `force inline by CompileCommand`                 |
-| Keep one method out of line          | `-XX:CompileCommand=dontinline,pkg.Class::method` → `disallowed by CompileCommand`               |
-| Raise the node budget for one method | `-XX:CompileCommand=MaxNodeLimit,pkg.Class::method,160000` (listed by `-XX:CompileCommand=help`) |
-| Same, in a running JVM               | `jcmd <pid> Compiler.directives_add file.json` with `"inline": ["+pkg.Class::method"]`           |
-| Same, in a benchmark                 | JMH `@CompilerControl` with `INLINE`, `DONT_INLINE`, or `EXCLUDE`                                |
+| Need                                           | Mechanism                                                                                        |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Request inlining of a matching method (lab)    | `-XX:CompileCommand=inline,pkg.Class::method` → `force inline by CompileCommand`                 |
+| Keep one method out of line                    | `-XX:CompileCommand=dontinline,pkg.Class::method` → `disallowed by CompileCommand`               |
+| Raise the node budget for one method           | `-XX:CompileCommand=MaxNodeLimit,pkg.Class::method,160000` (listed by `-XX:CompileCommand=help`) |
+| Influence future compilations in a running JVM | `jcmd <pid> Compiler.directives_add file.json` with `"inline": ["+pkg.Class::method"]`           |
+| Control benchmark method compilation           | JMH `@CompilerControl` with `INLINE`, `DONT_INLINE`, or `EXCLUDE`                                |
+
+CompileCommand matching normally targets methods, not one arbitrary bytecode call site.
+Directives can narrow the compilation roots in which an inline rule applies. Adding a
+runtime directive affects subsequent compilations; it does not rewrite existing nmethods.
+Confirm recompilation and the effective rule before attributing a result to it.
 
 `inline` and `dontinline` are product options: no diagnostic unlock is needed for them, only
 for `PrintInlining` to see the result. None of these is a production fix — they pin a
@@ -149,14 +155,14 @@ last.
 
 ## Changing a limit: the trade
 
-| Change                              | Scope                         | What it costs                                                                                                        |
-| ----------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Refactor so the hot part fits       | One source area               | Engineering/semantic risk; may improve or worsen runtime and must be measured                                        |
-| `CompileCommand=inline` / directive | One call site                 | A decision pinned outside the code; must ship with the launch config and be re-validated on every JDK upgrade        |
-| `-XX:FreqInlineSize=<n>` globally   | Every hot site in the process | Larger nmethods, more code cache, longer C2 compiles, more `MaxNodeLimit` bailouts, worse I-cache locality elsewhere |
-| `-XX:MaxInlineSize=<n>` globally    | Every cold site too           | The same, for code that was not hot enough to justify it                                                             |
-| `-XX:MaxInlineLevel=<n>`            | Every deep chain              | Rarely the real cause; deep trees are usually a `DesiredMethodLimit` problem in waiting                              |
-| `-XX:InlineSmallCode=<n>`           | Every already-compiled callee | Duplicates large machine code into every caller                                                                      |
+| Change                              | Scope                          | What it costs                                                                                                        |
+| ----------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| Refactor so the hot part fits       | One source area                | Engineering/semantic risk; may improve or worsen runtime and must be measured                                        |
+| `CompileCommand=inline` / directive | Matching methods/compile roots | A decision pinned outside the code; must ship with the launch config and be re-validated on every JDK upgrade        |
+| `-XX:FreqInlineSize=<n>` globally   | Every hot site in the process  | Larger nmethods, more code cache, longer C2 compiles, more `MaxNodeLimit` bailouts, worse I-cache locality elsewhere |
+| `-XX:MaxInlineSize=<n>` globally    | Every cold site too            | The same, for code that was not hot enough to justify it                                                             |
+| `-XX:MaxInlineLevel=<n>`            | Every deep chain               | Rarely the real cause; deep trees are usually a `DesiredMethodLimit` problem in waiting                              |
+| `-XX:InlineSmallCode=<n>`           | Every already-compiled callee  | Duplicates large machine code into every caller                                                                      |
 
 A global limit is a process-wide bet that the gain at one site outweighs bloat elsewhere. It
 needs whole-process throughput/tails, compilation CPU/time, code-cache and instruction-cache
@@ -176,12 +182,12 @@ better than reshaping a clear API for one compiler heuristic.
   where clear, construct the object only on the path that needs it.
 - **Profile pollution comes from start-up and tests.** A helper exercised with many types
   by an initialiser, a warm-up routine or a test suite in the same JVM carries that profile
-  into production. Per-caller call sites are the durable fix.
+  into production. Caller-specific type information can sometimes specialize it; separate call sites are a
+  measured design option, not a mandatory or permanent cure.
 - **Escape analysis has a clock.** `EscapeAnalysisTimeout` (20 s, product) aborts the
   analysis of a compilation unit that takes too long; an enormous inline tree can lose EA
   entirely without any per-object verdict. Another reason to keep compilation units small.
-- **Nothing here survives a JDK upgrade unmeasured.** `MaxInlineLevel` moved from 9 to 15
-  (not verified here); `ReduceAllocationMerges` arrived in 22 (JDK-8287061); verdict strings
+- **Recheck after a JDK upgrade.** `ReduceAllocationMerges` arrived in 22 (JDK-8287061); verdict strings
   are compiler-internal text. Re-run the measurement on the new runtime rather than the old
   conclusion.
 

@@ -1,28 +1,25 @@
 # Copying in Java
 
-## Why `Cloneable` is a broken contract
+Java 17 partial snippets: imports, domain types and persistence infrastructure are omitted.
+Verify the target copy API and provider rather than assuming the illustrative policies fit all types.
 
-- **`Cloneable` declares no `clone()` method.** It is a marker that changes the behaviour of a
-  `protected` method on `Object` — an interface used to alter a superclass's behaviour, which is
-  not what interfaces mean anywhere else in the language.
-- **`Object.clone()` is `protected`.** A caller holding a `Cloneable` reference still cannot
-  invoke `clone()`. Every type must re-declare it public, so the "polymorphic copy" the pattern
-  wants does not exist unless each class opts in.
-- **It bypasses constructors.** No constructor runs, so invariants that live in constructors are
-  not enforced, and `final` fields cannot be reassigned — which means a class with a `final`
-  mutable field can never deep-copy correctly through `clone()`.
-- **The default is shallow.** Every reference field is aliased. A "clone" of an object holding a
-  `List` shares that list, so a mutation through either reference is visible through both.
-- **It is unenforceable across a hierarchy.** A correct `clone()` must call `super.clone()`, and
-  a subclass that forgets, or that adds a mutable field without extending the copy, breaks the
-  contract silently for everyone above it.
-- **It interacts badly with `final` classes and records.** Records are implicitly final and do
-  not generate `withX` methods; use an explicit/generated wither, canonical-copy construction, or
-  a named factory when a distinct instance is semantically needed.
+## Cloneable limitations
 
-Effective Java's conclusion — provide a copy constructor or copy factory instead — is the
-position to take in review. The only common exception is arrays, where `array.clone()` is the
-idiomatic and correct shallow copy.
+- Cloneable is a marker, not a public copy interface. Object.clone is protected; a public override
+  may be inherited, but a Cloneable reference itself exposes no clone method.
+- Object.clone copies fields without running constructors. A valid source may still yield a valid
+  clone; constructor bypass does not by itself violate invariants. Audit identity, ownership and
+  any mutable state changed since construction.
+- The default copy aliases reference fields. Repairing independently owned final mutable fields
+  in a super.clone result is awkward because normal Java code cannot reassign them. Explicit
+  construction can apply a deep/selective policy; being a final class is not itself a clone defect.
+- Calling super.clone is the conventional way to preserve runtime subtype. An extensible hierarchy
+  must maintain its contract in subclasses; compatible existing implementations may be retained.
+- Arrays support a useful shallow clone (nested arrays/elements are still shared). Records do not
+  generate withers, and their components are not necessarily deeply immutable.
+
+Prefer explicit construction for new APIs when it exposes the policy more clearly. Do not break an
+inherited public clone contract just because another spelling is preferred.
 
 ## Copy constructor, copy factory, wither
 
@@ -31,7 +28,7 @@ idiomatic and correct shallow copy.
 public Config(Config other) {
     this.name = other.name;                       // immutable: share
     this.limits = new EnumMap<>(other.limits);    // mutable: copy
-    this.listeners = List.copyOf(other.listeners);
+    this.listeners = new ArrayList<>();          // subscriptions do not transfer
 }
 
 // copy factory — best when the return type should be an interface,
@@ -51,27 +48,28 @@ public interface Template {
 }
 ```
 
-The polymorphic `copy()` is Prototype proper. Declare in its Javadoc **which fields are shared
+The polymorphic copy interface is useful when runtime type preservation is required; copy
+constructors/factories may express Prototype intent for known types too. Declare in its Javadoc **which fields are shared
 and which are duplicated** — that sentence is the contract, and its absence is the reason most
 `clone()`-style methods are wrong.
 
 ## Deep or shallow, per field
 
-| Field kind                                                 | Copy?                        | Reasoning                                                                      |
-| ---------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------ |
-| Primitive, `String`, `Instant`, record of these            | Share                        | Immutable; copying wastes allocation                                           |
-| `List`/`Map`/`Set` of immutables                           | Copy the container           | Container is mutable even when elements are not                                |
-| Array                                                      | `clone()` or `Arrays.copyOf` | Always mutable                                                                 |
-| Mutable domain object owned by this one                    | Copy                         | Otherwise two owners mutate one object                                         |
-| Mutable object shared by design (a cache, a pool, a clock) | Share                        | Copying it would create a second cache, which is a bug                         |
-| Back-reference to a parent                                 | Rewire, not copy             | Copying follows the graph upward and duplicates the world                      |
-| Identity (`@Id`, version, created-at)                      | Reset                        | The copy is a different object                                                 |
-| Listener/observer registration                             | Usually drop                 | A copy silently subscribed to the original's events is a leak (`gof-observer`) |
-| Open resource (stream, connection, lock)                   | Do not copy — refuse         | Two owners, one resource, undefined close semantics                            |
+| Field kind                                                 | Copy?                                                                    | Reasoning                                                                            |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| Primitive, `String`, `Instant`, record of these            | Share                                                                    | Immutable; copying wastes allocation                                                 |
+| List/Map/Set of immutable values                           | Copy mutable container if independently owned; share immutable container | Unmodifiable views can still reflect mutable backing data                            |
+| Array                                                      | `clone()` or `Arrays.copyOf`                                             | Always mutable                                                                       |
+| Mutable domain object owned by this one                    | Copy                                                                     | Otherwise two owners mutate one object                                               |
+| Mutable object shared by design (a cache, a pool, a clock) | Share                                                                    | Copying it would create a second cache, which is a bug                               |
+| Back-reference to a parent                                 | Rewire, not copy                                                         | Copying follows the graph upward and duplicates the world                            |
+| Identity (@Id, version, created-at)                        | Reset for new entity; preserve where snapshot contract requires          | JVM object identity and persistent identity are different                            |
+| Listener/observer registration                             | Usually drop or explicitly recreate                                      | Copying a subject list and copying an external subscription are different operations |
+| Open resource (stream, connection, lock)                   | Do not copy — refuse                                                     | Two owners, one resource, undefined close semantics                                  |
 
-The last two are the ones reviewers miss. A copied object that inherited the original's
-listeners will receive events nobody registered it for; a copied object holding the same
-`InputStream` will have it closed underneath it.
+A copied subject listener list may notify the original subscribers from another subject; it does
+not automatically register the new object with external publishers. A copied closeable may share
+one underlying resource. Reopen or share only with an explicit lifecycle/ownership protocol.
 
 ## Cycles and identity
 
@@ -80,18 +78,24 @@ duplicates them — so `a.child == b.child` in the original becomes two distinct
 copy, and any logic depending on that identity changes behaviour.
 
 ```java
-Node copy(Node n, IdentityHashMap<Node, Node> seen) {
+Node copy(Node n, IdentityHashMap<Node, Node> seen, int depth) {
+    if (n == null) return null;
+    if (depth > 64) throw new IllegalArgumentException("copy depth exceeded");
     Node existing = seen.get(n);
     if (existing != null) return existing;
-    Node copy = new Node(n.value());
+    if (seen.size() >= 10_000) throw new IllegalArgumentException("copy node budget exceeded");
+    Node copy = new Node(n.value()); // value must be immutable or copied by its own policy
     seen.put(n, copy);                    // register BEFORE recursing
-    n.children().forEach(c -> copy.add(copy(c, seen)));
+    n.children().forEach(c -> copy.add(copy(c, seen, depth + 1)));
     return copy;
 }
 ```
 
 `IdentityHashMap`, not `HashMap`: `equals`-equal nodes that are distinct objects must stay
-distinct. Registering before recursing is what terminates on a cycle.
+distinct. Start each operation with a fresh map and depth 0. Registering before recursing handles
+cycles; illustrative depth/node limits reject large graphs instead of claiming arbitrary graph
+support. Also bound edges, payload sizes and total work for untrusted graphs; these two counters
+alone do not bound a node with huge fan-out. On failure discard the partial result/map.
 
 If this code is needed, ask first whether the graph should be copied at all. A structure with
 cycles and meaningful identity is usually better rebuilt from a description than duplicated.
@@ -106,19 +110,19 @@ var copy = (Config) new ObjectInputStream(
 
 Four problems:
 
-1. **Cost.** Orders of magnitude slower than a field copy, and it allocates the whole graph plus
-   the byte buffer.
-2. **Silently deep.** It copies everything reachable, including the shared cache and the parent
-   back-reference you did not want duplicated.
-3. **`transient` is overloaded.** Fields marked transient for wire economy vanish from the copy,
-   which is a different intent from "not part of the copy".
-4. **Security.** Java deserialisation of anything not produced by your own process in this
-   moment is a remote-code-execution surface. Even for self-produced bytes, it keeps a gadget
-   path alive in the codebase; JDK deserialisation filters are a mitigation, not a reason to add
-   the code.
+1. **Cost.** Encoding, decoding and buffers can dominate a selective copy; measure representative
+   graphs before claiming a multiplier.
+2. **Graph policy.** Java serialization preserves references/cycles for serialized objects by
+   handles, but transient/static fields, custom hooks, readResolve and non-serializable references
+   alter the result or fail. It does not blindly copy every reachable object.
+3. **Transient state.** Default serialization omits transient fields; custom hooks can handle them
+   differently. Wire representation and copy policy are separate concerns.
+4. **Security.** Native deserialization invokes class-defined behavior; untrusted or tampered
+   streams can exploit reachable gadget classes and resource exhaustion. Inspect provenance,
+   allowed types and limits; self-produced bytes do not replace a copy contract.
 
-A JSON round-trip is safer but still deep-by-default, still slow, and loses any state the
-serialiser does not model.
+JSON graph, polymorphic-type and constructor behavior depends on the mapper/configuration. It can
+lose aliases/cycles or unmapped state; it is not a universal safe or deep-copy guarantee.
 
 ## Copying JPA entities
 
@@ -126,23 +130,25 @@ serialiser does not model.
 public static Order copyAsDraft(Order source, Clock clock) {
     var copy = new Order(OrderId.newId(), source.customerId(), clock.instant());
     source.lines().forEach(l -> copy.addLine(l.sku(), l.quantity(), l.unitPrice()));
-    return copy;   // no @Id, no @Version, no createdAt carried over
+    return copy;   // illustrative application-assigned ID; source version/audit not inherited
 }
 ```
 
-Rules that are not optional:
+For clone-as-new, inspect mappings and entity-state detection:
 
-- **The id must be new.** A managed copy with the source's id updates the source; a detached one
-  with the source's id fails on flush, or overwrites it via `merge`.
-- **`@Version` must be reset**, or the copy carries an optimistic-lock version that belongs to a
-  different row (`offline-concurrency-control`).
-- **Child collections must be recreated, not shared.** Adding the source's `OrderLine` instances
-  to the copy re-parents them; with orphan removal, the source's lines are then deleted.
-- **Do not copy inside a transaction and then rely on dirty checking of the source.** Reading
-  every field of a managed entity to copy it also touches lazy associations and can trigger a
-  storm of selects (`orm-behavioral-patterns`).
-- **Audit fields are re-stamped, not copied**, or the copy claims to have been created by
-  someone else at another time.
+- Generated IDs are normally left unset; application-assigned IDs must be distinct. Natural keys
+  may also require changes. A new Java object with an old ID does not automatically become managed;
+  persist may reject detached identity, while merge copies state onto a managed identity and can
+  update an existing row. Use the returned managed object when merging intentionally.
+- Do not carry an old optimistic-lock version into a new entity. Let the provider initialize it
+  according to mapping; null versus zero can affect repository new-entity detection.
+- Recreate owned children and set both sides as required; share only intended referenced entities.
+  Reparenting/orphan removal consequences depend on owning side, mapping and actual mutations,
+  not merely placing a reference in another Java collection.
+- Fetch required associations within a defined persistence context/transaction before constructing
+  the draft. Lazy traversal can issue queries or fail after detachment; check SQL shape and count.
+- Apply new-entity audit rules. A snapshot/export may intentionally retain source identity/audit;
+  do not conflate that with inserting a new row.
 
 Prefer a named domain factory (`Order.draftFrom(other)`) over a generic `copy()` here: the
 domain, not a copying utility, decides which parts of an order a duplicate inherits.
@@ -166,3 +172,8 @@ The second form is preferable because it puts the atomicity requirement in the t
 the state, rather than in every caller that copies it. A `volatile` reference to an immutable
 config, replaced wholesale on change, removes the problem altogether — which is once again the
 observation that immutability is the real alternative to this pattern.
+
+Primary sources: [Object.clone](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()>),
+[Java serialization architecture](https://docs.oracle.com/en/java/javase/17/docs/specs/serialization/serial-arch.html),
+and [Jakarta Persistence 3.2 entity lifecycle](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
+Check the deployed provider/version and mappings for concrete persistence behavior.

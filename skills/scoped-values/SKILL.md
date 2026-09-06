@@ -3,7 +3,7 @@ name: scoped-values
 description: >
   ScopedValue as one-way, immutable, lexically bounded context: where/run/call, rebinding in
   a nested scope, inheritance by StructuredTaskScope subtasks and by nothing else, and the
-  cases where ThreadLocal is still the right answer. Final in JDK 25 (JEP 506) after five
+  cases where ThreadLocal is still the right answer. Final in JDK 25 (JEP 506) after four
   preview rounds, with callWhere and runWhere removed along the way. Use when a ThreadLocal
   carries per-request context under virtual threads, when context is empty inside a forked
   subtask or a pool thread, when a ThreadLocal is never removed and leaks across pooled
@@ -32,20 +32,25 @@ exists for the duration of one `run`/`call` and cannot be changed from underneat
 
 ## Workflow
 
+Inspect the project's Java/runtime and framework versions before applying the Java 25
+examples. Preserve the target and preview policy; this skill does not authorize upgrades.
+Report the binding owner, value ownership, execution boundaries and validation gaps.
+
 1. **Classify the `ThreadLocal` first.** Context flowing one way from caller to callee is
    what `ScopedValue` replaces. A per-thread **cache** of an expensive object is a
    different problem and stays a pool or a cache, not a `ScopedValue`.
 2. **Establish the binding at the outermost boundary that owns it** — the request filter,
    the message-consumer loop, the job runner — never inside the code that reads it.
-3. **Keep the value immutable.** A `ScopedValue` holding a mutable object restores exactly
-   the defect it was designed to remove; the binding is immutable, the referent is not.
-4. **Check the read path is inside the dynamic scope.** Anything invoked from `run`/`call`
-   sees the binding; anything scheduled to run later does not.
-5. **Fork with `StructuredTaskScope`** if subtasks must see the context. That is the only
-   inheritance mechanism.
+3. **Prefer immutable values.** A binding does not freeze its referent; mutable values need
+   explicit confinement or synchronization for all concurrent access.
+4. **Check the thread and dynamic scope.** Same-thread synchronous calls see the binding;
+   registration inside a scope alone does not propagate it to deferred work.
+5. **Use structured inheritance when appropriate.** Bind before creating StructuredTaskScope:
+   it captures bindings at creation. Existing executors can use explicit capture/rebinding.
 6. **Bridge, do not replace, framework context.** MDC, `SecurityContextHolder` and the
    OpenTelemetry `Context` are the framework's; set them from the scoped value at the
-   boundary rather than rewriting the framework's plumbing.
+   boundary where needed, restoring previous context. The framework may remain the
+   authoritative source; do not invent competing authentication or transaction state.
 
 ## Rules
 
@@ -59,17 +64,18 @@ exists for the duration of one `run`/`call` and cannot be changed from underneat
   declared exception type without wrapping. `Carrier.run` takes a plain `Runnable`.
 - **There is no `set`.** A callee cannot change what its caller sees. It can _rebind_ for its
   own callees with a nested `where(...).run(...)`, and the outer binding reappears when that
-  returns. This is the entire safety argument; a design that needs mutation needs a
-  different mechanism.
+  returns, including exceptional return. This protects the binding, not object fields or
+  authorization policy.
 - `get()` on an unbound value throws `NoSuchElementException` — deliberately, rather than
   returning null. Use `orElse(default)` where absence is legitimate, `isBound()` to branch,
   and `orElseThrow(...)` for a domain-specific failure. Both `where(KEY, null)` and
   `orElse(null)` are legal in Java 25, so `get() == null` does **not** imply "unbound"; avoid
   null bindings when absence must stay distinguishable.
-- **Inheritance happens only through `StructuredTaskScope.fork`.** A thread started with
-  `Thread.ofVirtual().start(...)`, a task submitted to an `ExecutorService`, a
-  `CompletableFuture` stage and a `@Async` method all see **nothing**. There is no
-  `InheritableScopedValue`.
+- **Automatic cross-thread inheritance uses StructuredTaskScope**, captured when the scope
+  is created. Plain threads do not inherit; executor/CompletableFuture/@Async submission
+  does not itself propagate bindings. Inline execution or synchronous stages can see the
+  executing thread's current binding, and wrappers can explicitly bind a captured value.
+  Do not rely on this timing accident. There is no `InheritableScopedValue`.
 - The bound value is shared by reference. The reference implementation inherits the binding
   set essentially by copying a pointer rather than copying an inheritable-thread-local map.
   This is why immutable values are the default; a mutable referent still requires ordinary
@@ -83,7 +89,7 @@ exists for the duration of one `run`/`call` and cannot be changed from underneat
   is an implementation property, not a specification. Do not design around it; do not
   measure a micro-benchmark of `get()` and conclude anything about the application.
 - Under virtual threads, reason from retained state rather than slogans: a 1 KB object set
-  in each of one million live virtual threads retains roughly 1 GB of payload before map and
+  as a distinct object in each of one million live virtual threads retains roughly 1 GB of payload before map and
   object overhead, while one immutable object bound through a structured subtree is shared.
   Measure live-thread count and retained heap; not every `ThreadLocal` is set on every thread.
 

@@ -11,17 +11,16 @@
 | A rules engine (Drools et al.)       | Many interacting rules with conflict resolution                  | Substantial; its own runtime and operational model     |
 | Your own interpreter                 | A small, stable, domain-specific grammar you must control        | Design, parser, docs, versioning, security — all yours |
 
-The honest comparison is not "language versus no language" but "your language versus CEL". CEL
-was designed for exactly the case most applications have — user-supplied boolean expressions over
-a fixed context, evaluated safely, with bounded cost — and building an equivalent takes longer
-than it appears. Write your own when the grammar is genuinely domain-shaped, when the AST must be
+Compare fixed configuration, relevant existing languages and the cost of owning your grammar.
+CEL is a useful candidate for restricted expressions; actual cost bounds depend on input sizes,
+runtime configuration and registered functions. Write your own when the grammar is domain-shaped, when the AST must be
 translated (to SQL, to a UI, to another service's dialect), or when the dependency is
 unacceptable.
 
 ## The expression-language RCE class
 
-Handing a user-influenced string to a general-purpose evaluator is arbitrary code execution. The
-shapes to look for:
+User-influenced text evaluated with powerful host capabilities can permit code execution. These
+partial call shapes require an audit of context, capabilities, input provenance and limits:
 
 ```java
 // SpEL
@@ -33,18 +32,16 @@ MVEL.eval(userSupplied, context);
 // Template engines that permit expressions
 templateEngine.process(userSuppliedTemplate, ctx);
 
-// Indirect: a value that reaches an EL context
-@Value("#{" + fromRequest + "}")
+// Also trace indirect construction of expression text from untrusted values.
+// Java annotation attributes themselves cannot contain request-time variables.
 ```
 
-These evaluators can reach `java.lang.Runtime`, class loaders and reflection by design; sandboxing
-them after the fact has a poor track record and a long CVE history across Spring, Struts and
-several template engines. The rule is categorical: **an expression whose text a request can
-influence must be evaluated by an interpreter you wrote, over an AST you can enumerate, with no
-access to the host environment.**
-
-That is the strongest argument for this pattern. A sealed AST cannot express "load a class"
-because there is no node for it.
+Do not expose unrestricted evaluation contexts to untrusted expressions. Restricted engines can
+be viable, but neither a home-grown sealed AST nor a named restricted mode proves safety. Audit
+all reachable values, resolvers and functions. Spring explicitly warns that read-only property
+access can invoke side-effecting accessor-shaped methods: SimpleEvaluationContext excludes some
+syntax but provides no safety guarantee. A closed AST is useful only if its evaluator and context
+also have bounded, allowlisted capabilities.
 
 ## Parsing is a separate problem
 
@@ -70,8 +67,8 @@ messages degrade to "invalid expression", and the grammar exists only as the cod
 
 ## Resource limits for untrusted expressions
 
-An interpreter over input you do not control is a denial-of-service surface. Four bounds, all
-cheap:
+An interpreter over input you do not control is a denial-of-service surface. These illustrative
+limits require enforcement, not just constants; choose values from workload and capacity tests:
 
 ```java
 static final int MAX_DEPTH = 32;
@@ -84,18 +81,20 @@ if (++nodes > MAX_NODES) throw new ExpressionTooLarge(MAX_NODES);
 ```
 
 - **Depth**, checked while parsing, so recursive descent cannot overflow the stack. A
-  `StackOverflowError` can be thrown anywhere, including inside a `finally`, and leaves a request
-  thread in an indeterminate state.
+  limit must be checked before descending. Include externally deserialized or programmatically
+  constructed ASTs; a post-parse recursive validator can itself overflow on malformed input.
 - **Node count**, so a wide expression cannot allocate unboundedly.
 - **Evaluation time or step count**, for grammars where one node can be expensive — a regex match,
-  a collection scan. A step counter checked in the evaluator is more reliable than a wall-clock
-  deadline and does not need another thread.
+  a collection scan. Count work inside expensive primitives and bound operand/result sizes;
+  one step per node cannot bound a catastrophic regex or huge numeric operation. Deadlines are
+  cooperative checks, not preemption of non-cooperative host calls.
 - **No side effects and no host access.** Nodes evaluate over a supplied context and nothing else:
   no I/O, no reflection, no clock unless it is passed in.
 
 Add one more if expressions can contain regular expressions: those have their own catastrophic
 backtracking behaviour, and passing a user pattern to `Pattern.compile` reintroduces the DoS the
 node limit just removed.
+Also bound decoding/token size, numeric precision, diagnostic output and compilation/cache work.
 
 ## Closure compilation
 
@@ -124,15 +123,17 @@ Predicate<Ctx> compile(Expr e) {
 }
 ```
 
-The compiled form removes the per-node `switch`, resolves field lookups once, and gives the JIT
-monomorphic call sites inside each closure. A single-figure multiple of throughput is typical;
-treat that as a hypothesis to measure rather than a promise (`jmh-microbenchmarks`).
+The compiled form specializes tree dispatch, but this example still calls c.get(field) on every
+evaluation. Lambda targets can remain polymorphic; allocation elimination/inlining are not promised.
+Measure construction, repeated evaluation and retained closures on representative expressions,
+preserving null, errors and short-circuit order (`jmh-microbenchmarks`).
 
 Bytecode generation goes further and is rarely worth its complexity, its class-loading cost and
 its debugging difficulty outside a genuine hot loop.
 
-Cache the compiled form keyed by the expression text, with a bounded cache — an unbounded map
-keyed by user-supplied strings is the leak described in `gof-flyweight`.
+Cache only context-free compiled forms under bounded weight/cardinality. Include grammar/schema
+and semantic configuration in the key and revalidate caller authorization on use; never capture a
+request context in a shared closure. An unbounded map is the retention risk in `gof-flyweight`.
 
 ## Evaluate, and the other folds
 
@@ -155,3 +156,7 @@ that trade reverses and Visitor or per-node methods become the right shape
 `toSql` deserves emphasis: it is often the reason to have a typed AST at all, because it lets the
 same user expression filter in the database rather than in memory
 (`query-objects-and-specifications`).
+
+Primary sources: [Spring evaluation security](https://docs.spring.io/spring-framework/reference/core/expressions/evaluation.html),
+[CEL Java](https://github.com/cel-expr/cel-java), and [PostgreSQL 18 comparisons](https://www.postgresql.org/docs/18/functions-comparison.html).
+Verify the deployed engine/dialect rather than projecting these examples onto every implementation.

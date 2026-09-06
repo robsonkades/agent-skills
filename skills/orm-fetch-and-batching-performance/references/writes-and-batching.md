@@ -2,8 +2,8 @@
 
 ## Why batching silently does nothing
 
-Two settings must both be right. Configuring only the first is the common case, and it produces
-no error and no batching.
+Inspect batching eligibility as well as configuration. These are Spring Boot property names;
+direct Hibernate configuration uses the `hibernate.*` keys without the Spring prefix.
 
 ```properties
 spring.jpa.properties.hibernate.jdbc.batch_size=50
@@ -12,9 +12,9 @@ spring.jpa.properties.hibernate.order_updates=true
 ```
 
 **The second half is the id generation strategy.** With `GenerationType.IDENTITY` the database
-assigns the id on insert, and Hibernate needs the id to put the entity in the persistence
-context — so it executes each insert immediately to read the generated key back. There is
-nothing left to batch. The setting is honoured and does nothing.
+assigns the id on insert. Hibernate 6.6 disables JDBC insert batching for those entities;
+exact insert timing can depend on persistence/transaction context. This does not disable
+batching of their later updates/deletes or inserts for other eligible entity types.
 
 What batches:
 
@@ -25,63 +25,88 @@ What batches:
 private Long id;
 ```
 
-The allocation size is how many ids the application takes per round trip to the sequence. It must
-match the sequence's own increment in the database, or ids collide or are wasted — this is a
-two-sided contract, and the schema half of it belongs in a migration.
+This mapping fragment assumes sequence support and a compatible database sequence. With
+Hibernate's pooled/pooled-lo optimizers, allocation size describes the identifier pool and
+must agree with the sequence increment; other optimizers have different contracts. Inspect
+the effective generator, DDL and other writers before changing either side. Mismatch may fail
+validation or risk overlapping ranges; sequence gaps alone do not demonstrate a defect.
+Identifier pooling and JDBC batch size are independent. Assigned IDs/UUIDs also permit batching;
+even unpooled sequences can batch inserts while paying extra identifier round trips.
 
 `order_inserts` and `order_updates` matter because a batch is per statement shape: interleaved
-inserts into two tables produce batches of one until they are sorted.
+inserts into two tables can fragment batches. Ordering has a cost and does not overcome
+incompatible SQL shapes, generated-value retrieval, cascades or driver limitations.
 
-**Verify rather than assume.** Turn on statistics, write 1,000 rows, and read the executed
-statement count. If it is 1,000, batching is off whatever the properties say.
+**Verify the correct layer.** For 1,000 rows, observe JDBC `addBatch`/`executeBatch`, batch
+sizes, generated-ID queries and database/driver round trips using suitable instrumentation.
+SQL log lines and logical DML/entity-insert counts may still be 1,000 with working batching;
+prepared-statement counts are not batch counts either. Check driver rewrite behavior separately.
 
 ## Flush cost scales with the context
 
-Dirty checking visits every managed entity at flush. A loop that loads and modifies 100,000
-entities in one persistence context pays that repeatedly, and the cost grows as the loop runs —
-the classic profile where the first 1,000 rows are fast and the last 1,000 are not.
+Large contexts can increase flush traversal and snapshot/collection costs. Enhancement,
+read-only entities and immutable mappings change the work, so profile rather than assuming
+every flush compares every field. Use a context owned by the batch job: `clear()` detaches
+all its entities, including unrelated work if the context was shared.
 
 ```java
+// Partial transaction body: active transaction, job-owned EntityManager, bounded input.
 int i = 0;
 for (var row : rows) {
     em.persist(toEntity(row));
-    if (++i % 50 == 0) {   // match the batch size
+    if (++i % 50 == 0) {   // choose the flush window; need not equal JDBC batch size
         em.flush();
         em.clear();        // the half people omit
     }
 }
+em.flush();                // include the final partial window; flush is not commit
+em.clear();
 ```
 
 `flush()` sends the batch; `clear()` detaches what was sent so the context stops growing.
-Omitting `clear()` keeps the flush cost climbing and eventually exhausts the heap — a
-`heap-dump-analysis` case whose dominator tree is the persistence context.
+Omitting `clear()` can retain the growing managed graph. Clearing does not release objects
+still held by `rows` or application buffers, commit the transaction, or release its locks.
+Bound the input too; for chunk commits, define restart/idempotency and partial-success semantics.
+After a persistence failure, roll back and discard the failed context instead of continuing
+the loop. The transaction owner commits/rolls back and closes its resources outside this snippet.
 
 For genuinely large jobs, consider not using the ORM for the write at all. A bulk `INSERT … SELECT`
 or a `COPY`-style load is one statement and no object graph.
 
 ## Bulk operations bypass the context
 
+The following is a partial operation inside an active transaction. Prefer a fresh context;
+otherwise flush pending changes that must survive before executing it, and clear/refresh stale
+state afterward without discarding unrelated unsent changes.
+
 ```java
 em.createQuery("update Order o set o.status = :s where o.createdAt < :cut")
   .setParameter("s", ARCHIVED).setParameter("cut", cutoff).executeUpdate();
 ```
 
-One statement, no entities loaded — and **the entities already in the persistence context still
-hold the old values**, because the update went straight to the database. The same applies to the
-second-level cache, which the statement does not invalidate for the affected rows.
+One bulk operation, possibly multiple SQL statements for an inheritance/table strategy — and
+**managed entities can retain old values**, because bulk DML does not synchronize their state.
+Second-level/query-cache behavior differs: Hibernate HQL/JPQL bulk operations arrange cache
+cleanup for affected spaces; native or external writes need their own synchronization policy.
+Do not assume either universal invalidation or no invalidation.
 
 The rules that follow:
 
-- Run bulk operations before loading the affected entities, or `em.clear()` afterwards.
+- Prefer a fresh context for bulk DML. If pending managed changes must be preserved, explicitly
+  flush them before the bulk operation, then clear/refresh affected state afterward. Do not
+  clear away unsent changes; AUTO flush depends on query spaces and flush mode.
 - Do not mix a bulk update with entity modifications of the same rows in one transaction.
 - Bulk operations do not cascade and do not fire entity lifecycle callbacks. Anything your
   `@PreUpdate` did, they do not do.
+- Bulk JPQL does not automatically perform per-entity optimistic version checks. Add the
+  required version predicate/update and check affected counts when concurrency requires it;
+  database constraints/triggers still apply.
 
 ## Reads that should not be entities
 
-Every entity loaded for a read is: columns you did not need, a persistence-context entry, a
-dirty-check at flush, and a candidate for `LazyInitializationException` later. For a read path
-that never writes, all four are waste.
+Read-only paths may benefit from scalar projections when managed identity/behavior is not
+needed. Entities are not automatically waste: required data, cache hits, domain behavior and
+read-only/enhanced tracking change the trade-off.
 
 Prefer a projection (`n-plus-one-remedies.md`). Where an entity really is needed for a read that
 will not be modified, a read-only marker lets Hibernate skip taking the dirty-checking snapshot:
@@ -92,15 +117,24 @@ em.createQuery("select o from Order o where …", Order.class)
   .getResultList();
 ```
 
+This is Hibernate-specific and not database enforcement of read-only access. Already managed
+instances, collection changes and cascades require separate checks; keep transactional write
+rules intact rather than treating this hint as protection against every mutation.
+
 ## What to measure, and what the numbers mean
 
-| Number                              | Where it comes from       | What a bad value means                          |
-| ----------------------------------- | ------------------------- | ----------------------------------------------- |
-| Statements executed per request     | Hibernate statistics      | N+1, or missing batching                        |
-| Statements executed per row written | same, divided by rows     | Batching is off — check id generation           |
-| Flush count per transaction         | `getFlushCount()`         | Queries interleaved with writes forcing flushes |
-| Entities loaded per request         | `getEntityLoadCount()`    | Loading entities for a read-only path           |
-| Time in a single statement          | the database, not the ORM | A plan problem — `sql-query-performance`        |
+| Number                                       | Where it comes from                         | What a bad value means                                      |
+| -------------------------------------------- | ------------------------------------------- | ----------------------------------------------------------- |
+| Selects/prepares per isolated read operation | Scoped instrumentation / factory statistics | Repeated fetching or other work; inspect SQL and population |
+| JDBC batch executions and occupancy          | JDBC instrumentation / session metrics      | Fragmentation, eligibility or flush-window issue            |
+| Flush count per transaction                  | `getFlushCount()`                           | Queries interleaved with writes forcing flushes             |
+| Entities loaded per request                  | `getEntityLoadCount()`                      | Compare loaded graph with required state/cache reuse        |
+| Time in a single statement                   | the database, not the ORM                   | Plan, waits or transfer — `sql-query-performance`           |
 
-The last row is the handoff. The ORM's job is the count and the shape; once those are right and
-one statement is still slow, the ORM has nothing further to say about it.
+For a slow individual statement, hand off SQL, bindings, rows and database timing to
+`sql-query-performance`; distinguish a bad plan from lock waits, I/O and result transfer.
+
+Sources: [Hibernate 6.6 batching](https://docs.hibernate.org/orm/6.6/userguide/html_single/#batch),
+[identifier optimizers](https://docs.hibernate.org/orm/6.6/userguide/html_single/#identifiers-optimizers),
+[bulk cache cleanup](https://github.com/hibernate/hibernate-orm/blob/6.6/hibernate-core/src/main/java/org/hibernate/action/internal/BulkOperationCleanupAction.java)
+and [Jakarta Persistence bulk update/delete contracts](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).

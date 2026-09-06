@@ -11,21 +11,24 @@ it feels justified, and the test that settles it.
 | A configuration switch               | Flexibility is cheap            | Is there a second value anyone will set? Who, and when?                                  |
 | An interface with one implementation | Decoupling is good              | Is there a second implementation, a test double that needs it, or a boundary it crosses? |
 | A generic version of the thing       | It will be needed again         | Is there a named second caller today?                                                    |
-| A retry or a cache                   | Reliability and speed are good  | Is there a measured failure or latency requiring it?                                     |
+| A retry or a cache                   | Reliability and speed are good  | Is there an evidenced requirement or failure model, and is this mechanism safe for it?   |
 | Refactoring code the feature reads   | It is right there and it is bad | Does the feature need the change to be correct?                                          |
-| Upgrading a dependency               | It is out of date               | Does the feature need the new version?                                                   |
+| Upgrading a dependency               | It is out of date               | Is an upgrade necessary after considering supported alternatives, and authorized?        |
 | Extra test levels                    | Coverage is good                | Does the risk of this change justify this level?                                         |
 | A migration to the newer pattern     | Consistency is good             | Does this feature's correctness depend on it?                                            |
-| Renaming for clarity                 | The name is wrong               | Does the rename fit in a separate commit? Then it is one.                                |
-| Backfilling missing tests            | The gap is real                 | Is it in the code this feature changes? Then Required. Otherwise separate.               |
-| Handling a case nobody asked for     | It could happen                 | Can anyone say when it has happened, or will?                                            |
+| Renaming for clarity                 | The name is wrong               | Does agreed behavior or safe implementation require it, or is it incidental cleanup?     |
+| Backfilling missing tests            | The gap is real                 | Is this evidence needed to establish changed behavior or a material regression risk?     |
+| Handling a case nobody asked for     | It could happen                 | Does the contract, trust boundary or credible failure model require handling it?         |
 
-Two of these flip to **Required** in a specific circumstance, and it is worth being precise:
+Two cases need particular care when assessing prerequisites:
 
-- **Tests** for the behaviour this feature adds or changes are Required. Tests for behaviour it
-  merely touches are Recommended. Tests for unrelated gaps are Out of scope.
-- **A dependency upgrade** is Required when the feature cannot be implemented on the current
-  version, and the plan says which API forces it.
+- **Validation** sufficient for changed behavior and material regression risks is Required;
+  existing checks may suffice. File proximity alone neither requires every missing test nor makes
+  a necessary regression check optional. Unrelated coverage gaps remain Out of scope.
+- **A dependency upgrade** is a proposed prerequisite only when the target's actual resolved
+  version cannot support the requirement and viable supported alternatives have been assessed.
+  Record compatibility costs and authority; a preferred API does not authorize upgrading Java,
+  a framework or a library. Resolve a prohibited upgrade against scope before dependent work.
 
 ## The "while we are in there" rule
 
@@ -33,19 +36,21 @@ The instinct is correct — the cost of coming back is real. The answer is not t
 in, because it makes the change harder to review and harder to revert, and it hides the feature
 inside a diff of unrelated edits.
 
-Instead: record it as a finding with its location, put it in Future work, and if it is genuinely
-small and genuinely safe, do it as a **separate commit before or after** the feature, never
-mixed into the feature's commits.
+Instead record its location and consequence as Out of scope, or Future work when it depends on
+this feature. A separate commit does not authorize incidental work. Execute only within existing
+authorization; do not create commits merely because this catalogue suggests separation.
 
 ## Detecting creep after the plan exists
 
-Three signals, in order of reliability:
+Three prompts for investigation, none of which alone proves creep:
 
-1. **A file in the diff that no resource names.** The strongest signal, and it is mechanical:
-   compare the touched files against the plan's file list.
-2. **A resource whose description contains "and".** Usually two resources, one of which was not
-   requested.
-3. **The estimate moved but the requirement did not.** Something entered scope. Find it.
+1. **Unmapped changes.** Attribute changes against the initial working tree and other contributors'
+   work before comparing with the impact map. Necessary missed impact is not automatically added
+   scope; unrelated changes can also hide inside a planned file. Preserve others' edits.
+2. **A resource whose description contains "and".** Check whether it combines independent outcomes
+   or names inseparable parts of one obligation; grammar alone does not decide decomposition.
+3. **The estimate moved but the requirement did not.** Check new scope, revised assumptions,
+   discovered complexity and dependency delays separately. An estimate change is not scope proof.
 
 ## Recording a reclassification
 
@@ -53,9 +58,9 @@ Three signals, in order of reliability:
 C-04  Structured logging for the new consumer
       Was: Required
       Now: Recommended
-      Reason: no requirement or risk names it; the project logs unstructured
-              everywhere else (context report, 14 occurrences, no counter-example),
-              so this feature would be the only structured logger in the system.
+      Reason: required correlation and failure diagnosis are covered by existing
+              logging and validated queries; no mandatory standard requires a new format.
+              Structured fields improve query convenience but are not needed for acceptance.
       Consequence if dropped: the consumer is diagnosed the same way as the rest
               of the system, which is worse than the alternative but not new.
 ```

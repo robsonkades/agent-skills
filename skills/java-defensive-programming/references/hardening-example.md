@@ -3,6 +3,11 @@
 A refund endpoint: JSON in, refund executed against a ledger. The team, burnt by an NPE,
 has been adding checks wherever the stack trace pointed.
 
+These are partial Java 16+ sketches with omitted DTOs, ledger implementation, imports and
+Spring MVC wiring. Import the used `java.math`, `java.util` and `java.util.regex` types;
+put each public type in its own file. Inspect the project's actual Spring/JSON mapper
+versions instead of assuming constructor failures reach an HTTP handler unwrapped.
+
 ## Before
 
 ```java
@@ -88,6 +93,11 @@ The regex is illustrative shape-checking only — a real IBAN validator adds per
 lengths and the ISO 7064 mod-97 check digits. The point here is where the check lives,
 not its completeness.
 
+The example explicitly assumes account IDs accept outer whitespace and case normalization,
+and refund reasons accept outer whitespace removal. Verify this policy against the actual
+contract before copying it; `Locale.ROOT` uppercasing is not an ASCII-only validation step.
+Do not apply these transformations to opaque or signed identifiers.
+
 ```java
 
 public record Money(BigDecimal amount, Currency currency) {
@@ -122,8 +132,14 @@ The controller converts DTO → `RefundRequest`; its boundary handler maps only
 Unexpected `IllegalArgumentException`/`NullPointerException` elsewhere remain defects (500), and
 raw values/stack traces stay internal. Then the interior sheds its armour:
 
+Perform this conversion explicitly after DTO binding, or handle the configured mapper's
+documented wrapping exceptions narrowly. Verify malformed JSON and constructor failures with
+an HTTP integration test. Enforce body/nesting/numeric token limits before DTO allocation;
+the shown `Money` check enforces positivity only, not currency scale, precision or maximum
+refund amount. Those domain bounds require an explicit contract before adding them.
+
 ```java
-// service — no null checks, no repairs
+// internal service — caller has established a non-null request; no repairs
 public Receipt refund(RefundRequest request) {
     return ledger.post(request);
 }
@@ -137,9 +153,10 @@ public Receipt post(RefundRequest request) {
 }
 ```
 
-The deleted lines are the point of the exercise: seven null/repair checks removed, one
-new check added (`reason` blank) that the noise had hidden, and two silent corrections
-replaced by rejections.
+The interior sketch assumes controlled callers always pass a non-null `RefundRequest`.
+A published entry point still needs its documented null failure contract; a validated
+record's components do not prevent `refund(null)`. Keep authorization and enforce the
+charge-limit check atomically with posting under the ledger's concurrency protocol.
 
 ## Trade-offs
 
@@ -167,5 +184,9 @@ replaced by rejections.
   passes; `"###"`, missing/zero/negative amount, blank/oversized/control-bearing reason each yield
   the documented field/code without echoing input—and _no_ ledger write. The negative-amount test asserts rejection, where
   the old suite asserted the sign-flip.
-- The interior tests construct `RefundRequest` directly and no longer test null
-  permutations — deleted tests are evidence of deleted noise, not lost coverage.
+- Construct domain records directly to verify constructor invariants, and keep public
+  null-entry tests or move equivalent coverage to the owning boundary. Delete a duplicate
+  test only after tracing the same invariant and failure contract to retained coverage.
+
+These are acceptance checks to execute on the concrete endpoint, not recorded HTTP or
+ledger test results from the sketches.

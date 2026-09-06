@@ -21,9 +21,12 @@ state while the build converges.
 
 The closed-world assumption means code that may execute must be available for analysis at build
 time. It does not mean all supplied classes are included, nor that an included class automatically
-permits every reflective operation on it. Dynamic loading of previously unknown bytecode remains
-incompatible with an ordinary native executable; some runtime class definition is possible only
-where Native Image can precompute and register the resulting classes.
+permits every reflective operation on it. In the default closed-world mode, runtime class definition
+requires precomputed/registered classes. GraalVM 25.1 introduced early run-time class loading via
+`-H:+RuntimeClassLoading`, a separate experimental compatibility choice. It does not restore every
+JVM capability or regenerate members that analysis removed from already included classes. Validate
+the target release's restrictions, preservation/metadata requirements, runtime dependencies, and
+performance before choosing it for plugins or bytecode generators; do not enable it implicitly.
 
 ## What static analysis can and cannot prove
 
@@ -120,7 +123,8 @@ final class DataSourceFactory {
 }
 ```
 
-If internal substitution is unavoidable, pin the GraalVM release and regression-test it:
+If internal substitution is unavoidable, pin the GraalVM release and regression-test it. This
+partial example demonstrates field reset only, not a complete configuration repair:
 
 ```java
 @TargetClass(className = "com.example.LegacyConfig")
@@ -133,6 +137,15 @@ final class Target_LegacyConfig {
 
 `com.oracle.svm.core.annotate` is an implementation API, not a portable Java or stable Native Image
 contract. There is no general public `@Reinitialize` annotation.
+For field transformation, the source identifies `BeforeAnalysisAccess.registerFieldValueTransformer`
+as the supported alternative; it still transforms image-heap state and does not itself supply a
+runtime configuration lifecycle.
+
+`Reset` makes this reference null; it does not rerun the original static initializer or reload
+deployment properties. The target library must already support lazy reconstruction or receive a
+tested runtime initialization path before any reader. Verify deployment-specific values, first
+access, concurrent readers, and initialization failure. Otherwise this substitution merely trades
+captured build-host state for a runtime null/failure.
 
 ## Runtime and distribution choices
 
@@ -151,7 +164,9 @@ Collector choice is a workload decision:
 | Epsilon   | bounded process lifetime and allocation budget make reclamation unnecessary | any request/load growth can outlive the allocation budget                                       |
 
 The Serial heap's default maximum can be 80% of detected physical memory. That is an upper bound,
-not an RSS prediction. A copying collector can need transient headroom, and the process also has
+not an RSS prediction. Serial collection policy also changes by release: 25.1 introduced Adaptive2
+with old-generation compaction by default, so do not assume whole-heap copying for every version.
+Collection still needs measured transient headroom, and the process also has
 image heap, stacks, native allocations, code, mappings, and libraries. Always validate the
 container-visible memory calculation and set an operational ceiling.
 
@@ -180,4 +195,6 @@ platform being deployed:
 - [Memory Management](https://docs.oracle.com/en/graalvm/jdk/25/docs/reference-manual/native-image/optimizations-and-performance/MemoryManagement/)
 - [Debugging and Diagnostics](https://www.graalvm.org/latest/reference-manual/native-image/debugging-and-diagnostics/)
 - [GraalVM 25.1 release notes](https://www.graalvm.org/release-notes/25.1/)
+- [Run-time class loading constraints, GraalVM 25.1 source branch](https://github.com/oracle/graal/blob/release/graal-vm/25.1/substratevm/docs/runtime-class-loading.md)
+- [Field reset semantics and supported alternative](https://github.com/oracle/graal/blob/release/graal-vm/25.1/sdk/src/com.oracle.svm.core.annotate/src/com/oracle/svm/core/annotate/RecomputeFieldValue.java)
 - [Initialize Once, Start Fast (OOPSLA 2019)](https://doi.org/10.1145/3360610)

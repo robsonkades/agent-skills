@@ -28,34 +28,42 @@ nothing, and the operation the eye lands on is usually not the one spending the 
 
 ## Workflow
 
+Identify the engine/version, schema, indexes, statistics, parameter types, isolation and driver
+prepare mode. Engine-neutral concepts do not make syntax or runtime counters portable. Commands
+such as EXPLAIN ANALYZE run the statement: use existing evidence or an authorized bounded environment first,
+especially for writes, locking reads or functions with side effects. Rollback does not undo every
+sequence/external effect. An estimated plan can support hypotheses when execution is unavailable.
+
 1. **Get a plan for the statement that actually runs**, with the parameters that actually
    arrive, against data of production shape. A plan for a hand-substituted literal is a
    different query; a plan against an empty test schema is a different optimiser problem.
 2. **Read estimated rows against actual rows before anything else.** A plan is the optimiser's
-   prediction. If prediction and reality diverge by orders of magnitude, the plan shape is a
-   consequence and not the cause — the cause is stale statistics, a predicate the optimiser
-   cannot estimate, or one parameter's plan being reused for another.
-3. **Find the operation that costs**, by actual time or actual rows, not by position in the
-   tree and not by the optimiser's own cost number.
+   prediction. Large divergence suggests checking statistics, correlation, parameter visibility
+   and reuse, but accurate estimates do not guarantee a good plan. Respect per-loop and
+   early-termination semantics before calling an estimate wrong.
+3. **Find the operation that costs**, using timed work, executions, reads, spills and waits.
+   Rows emitted are not rows examined or a substitute for elapsed cost.
 4. **Classify the access path** on that operation: full scan, index range, or a lookup back to
-   the table per row. The third is the one that quietly dominates.
+   the table. Lookups may dominate, but bitmap/batched access and cache locality change their cost.
 5. **Decide from selectivity, not from the operator name.** Ask what fraction of the table the
-   predicate keeps. A scan reading 60% of the rows is right; a per-row lookup returning 40% of
-   the table is not.
+   predicate keeps, then account for ordering, covering, locality, row width and startup/limit
+   behavior. No fixed 60%/40% boundary establishes the right plan.
 6. **Predict the effect, then apply, then re-measure the same way.** A change that does not move
-   the number it was chosen to move gets reverted, including an index.
+   the number it was chosen to move is reconsidered; index removal/rebuild requires its own
+   dependency and rollout checks, not an automatic destructive rollback.
 
 ## Rules
 
-- **A full scan is not a defect.** Below a selectivity threshold the optimiser is correct to
+- **A full scan is not a defect.** When a predicate retains enough rows, it can be cheaper to
   read everything sequentially rather than pay a random lookup per row. "Scan appears in the
   plan" is not a finding; "a scan reads 4 M rows to return 12" is.
 - **The optimiser's cost is a unitless internal currency, not milliseconds.** It is comparable
   between candidate plans for the same statement and between nothing else. Never quote it as a
   measure of how slow a query is.
-- **Estimated versus actual is the first signal, and it is the one people skip.** Everything the
-  optimiser did downstream of a bad estimate follows from that estimate.
-- **An index on a low-cardinality column rarely helps a predicate.** It may still earn its place
+- **Estimated versus actual helps locate a planning hypothesis.** Validate the counter semantics
+  and the downstream cost consequence rather than assuming every estimate error causes slowness.
+- **Low cardinality does not imply low selectivity.** A rare boolean value can benefit from an
+  index even when there are only two distinct values. An index may also earn its place
   by supplying ordering or by covering the query — decide which of the three jobs you are
   buying, because they are not the same index.
 - **In a composite index the column order is a contract with a particular engine and workload.**
@@ -67,19 +75,24 @@ nothing, and the operation the eye lands on is usually not the one spending the 
   functional indexes may restore an access path. With mismatched parameter types, which operand is
   converted follows the database's type-precedence and coercion rules; inspect the plan rather than
   assuming the column is always converted.
-- **`SELECT *` defeats covering.** An index that could have answered the query alone now needs a
-  lookup per row for the columns nobody asked for.
+- **`SELECT *` can defeat covering** and increases transferred/materialized data when it adds
+  columns. A covering or clustered index may already contain all columns; visibility checks
+  can still require table access in some engines.
 - **Large `OFFSET n` usually performs work proportional to skipped rows**, even when an index avoids
-  a sort. Keyset pagination bounds work by page size when its ordering is unique and supported by an
-  index, but changes navigation and concurrent-update semantics. Deep pagination is a query and
+  a sort. Keyset pagination avoids rescanning prior offsets with a suitable access path, but
+  residual filters, invisible rows and joins can require more work than page size. It changes
+  navigation and concurrent-update semantics. Deep pagination is a query and
   product-contract decision, not merely an index decision.
-- **Every index is paid for on every write** to its table, and in space. An index proposal
+- **Indexes add storage and relevant write maintenance**, depending on changed columns,
+  predicates and engine optimizations. An index proposal
   without the write cost is half a proposal.
-- **The same statement can have two plans.** Fast for one parameter and slow for another means
-  the plan was chosen for a value with different selectivity than the one being run. That is a
-  plan-stability problem, not a missing index.
+- **Parameter sensitivity has several causes.** Compare actual plans, volumes and waits; skew,
+  plan reuse, cache state, locks or a missing useful access path can produce the same symptom.
 - **Measure with the cache state you actually have.** A second run reading from the buffer pool
   answers a different question than the first. State which one you measured.
+- Preserve null handling, duplicates, ordering, pagination and authorization predicates in
+  rewrites. Return evidence, hypothesis, expected change, semantic checks and before/after metrics;
+  missing actuals or failed runs remain explicit gaps.
 
 ## References
 

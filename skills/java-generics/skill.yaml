@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-generics
-version: 1.2.0
+version: 1.2.1
 description: >-
   Generics as a compile-time contract over an erased runtime: raw types and what they
   disable, eliminating unchecked warnings rather than suppressing them, why arrays and
@@ -45,6 +45,7 @@ dependencies: []
 
 suggests:
   - java-api-design
+  - java-serialization-hardening
 
 capabilities:
   - reads-source

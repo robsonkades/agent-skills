@@ -1,6 +1,6 @@
 # Worked example: tail regression after a deploy
 
-This example demonstrates uncertainty and branching rather than a prewritten GC conclusion.
+This hypothetical example demonstrates uncertainty and branching; it is not a measured result.
 
 ## Symptom contract
 
@@ -13,6 +13,9 @@ After release `B`, client p50 is unchanged while p99 rises. First verify:
 - no load-generator or dashboard query change.
 
 Suppose the regression is isolated to warmed `B` pods under matched successful-work mix.
+Also match offered load and failed/retried/background work. Dividing all process allocation
+by successful requests can rise solely because failures increased or successes fell; it does
+not by itself measure allocation inside a successful operation.
 
 ## Competing hypotheses
 
@@ -33,9 +36,10 @@ Assume repeated matched windows show:
   p99 uncertain;
 - synchronous log/export backpressure also appears in wall/JFR evidence.
 
-The correct classification is “new logging path increases allocation and synchronous work,”
-not automatically “GC is the root cause.” Both direct CPU/I/O and GC amplification remain in
-the causal chain.
+The observed classification is “higher allocation per defined work, with logging stacks and
+backpressure present.” A changed logging path is the leading causal hypothesis, not yet proof
+of its contribution to the regression. Both direct CPU/I/O and GC amplification remain candidates;
+the intervention must distinguish them from workload and instrumentation changes.
 
 ## Intervention and validation
 

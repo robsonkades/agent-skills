@@ -38,9 +38,10 @@ pattern-matches it, and which java-refactoring technique addresses it (named, no
   this value be passed to a parameter expecting a different concept of the same primitive
   (`String customerId` into a `String orderId` slot)? — or _rule_: does it carry validation,
   arithmetic constraints or formatting? Neither, and the type is a rename with allocation.
-  Each wrapper costs a file, a serialiser or `@JsonValue`, an `AttributeConverter` and a
-  mapper entry, and its call sites drift towards `getValue()` at every use, which is the
-  wrapper undone. Wrappers can add allocation/serialization/mapping cost, although HotSpot may
+  A wrapper crossing JSON or persistence boundaries may require serializer or converter
+  support; a local or nested identifier type need not incur all those costs. Inspect actual
+  integration points. Unwrapping at every internal call can undo the distinction, whereas
+  conversion at an external boundary is expected. Wrappers can add allocation/mapping cost, although HotSpot may
   eliminate short-lived allocations; measure performance-sensitive paths rather than assuming
   either outcome. Forty one-line wrappers that satisfy neither test prevent nothing (Lazy
   Element, below).
@@ -54,9 +55,9 @@ pattern-matches it, and which java-refactoring technique addresses it (named, no
 
 - **Looks like:** `LocalDate start, LocalDate end` or `String street, String city, String
 zip` recurring together across signatures.
-- **Detect:** delete one of the group — if every use site breaks, they are one concept.
-  Repeated co-travel, ordering/confusion risk and a shared invariant are stronger evidence than
-  any fixed parameter or occurrence count.
+- **Detect:** repeated co-travel, ordering/confusion risk and a shared invariant. Removing a
+  required parameter breaks callers even when the parameters are unrelated, so signature
+  breakage alone does not establish a concept; neither does a fixed occurrence count.
 - **Not it when:** the values co-occur once, or only inside one private method chain.
 - **Fix:** Introduce Parameter Object with a record; the invariant between them (end not
   before start) moves into the compact constructor.
@@ -152,9 +153,10 @@ zip` recurring together across signatures.
 - **Detect:** the call site is unreadable without opening the signature; two adjacent
   parameters share a type, so a swapped pair still compiles; a parameter the body never
   reads on its own. Count is a locator, not the definition.
-- **Not it when:** a record's canonical constructor with eight components — that is the
-  data, not a parameter list. Nor a DI constructor with five collaborators: that is Large
-  Class, and counting parameters points at the wrong fix.
+- **Not it when:** a cohesive record constructor or DI constructor merely has many parameters.
+  Either can still have confusion risk or mixed responsibilities; inspect those directly.
+  Five injected collaborators alone do not prove Large Class, and a parameter object that
+  merely hides the dependencies does not improve cohesion.
 - **Fix:** Introduce Parameter Object for the co-travelling group; Preserve Whole Object
   where the caller already holds one; Remove Flag Argument for the booleans; Replace
   Parameter with Query for the derivable ones.

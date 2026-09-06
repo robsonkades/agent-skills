@@ -35,20 +35,31 @@ the current JDK implementation, and is written in a
 **synchronous** model. All four at once. Any sentence that treats them as the same axis is
 wrong somewhere.
 
+## Compatibility and evidence
+
+Virtual-thread APIs require Java 21 (standard, no preview flags). Implementation guidance
+here targets HotSpot JDK 21–25; the monitor behavior changes at JDK 24. Before applying it,
+inspect compiler/toolchain settings, the deployed JDK vendor and version, OS, resolved
+client/framework versions, transport and scheduler configuration. These can differ from
+the development JDK. Recheck implementation claims for other releases; do not upgrade the
+project or add instrumentation dependencies merely to apply this skill.
+
 ## Workflow
 
 1. **Ask which property the claim is about.** "Is this blocking?" is four questions;
    answer the one that determines the decision at hand.
 2. **Classify each I/O call on the path**: does it unmount, capture the carrier with
    compensation, or pin? The three have different costs and different fixes.
-3. **Check for file system I/O.** It is the category that does not unmount, and the one most
-   often assumed to.
+3. **Check for file system I/O.** Identify the concrete synchronous path and whether the
+   JDK marks it for compensation; a package name alone does not establish this.
 4. **Check for foreign code**: JNI, FFM, a driver with a native transport. A native frame
    pins, and pinning is not compensated.
 5. **If an event loop is involved, find every blocking call inside it** — one is enough to
    stall every connection that loop serves.
 6. **Measure before concluding.** Carrier count over time, `jdk.VirtualThreadPinned`, and a
    wall-clock profile answer this; reasoning about the library's name does not.
+   Missing events do not rule out native blocking. Without runtime evidence, return a
+   conditional classification and the measurement that would confirm or refute it.
 
 ## Rules
 
@@ -60,10 +71,10 @@ wrong somewhere.
   number of dedicated poller threads (`epoll`/`kqueue`) unpark virtual threads when a file
   descriptor becomes ready. That is an implementation detail, not a specification — do not
   build a design on it, but do use it to explain observations.
-- **File system I/O does not unmount** on any released JDK: it is an OS limitation, not a
-  Loom oversight. The blocking syscall captures the carrier, and the scheduler
-  **compensates** by temporarily expanding its parallelism up to
-  `jdk.virtualThreadScheduler.maxPoolSize`.
+- **Many synchronous filesystem paths retain the carrier** in the target HotSpot releases.
+  Recognized blocking regions can trigger **compensation**, temporarily expanding the
+  scheduler up to `jdk.virtualThreadScheduler.maxPoolSize`. Do not generalize this to every
+  provider, native call or memory-mapped access; inspect the path and measure.
 - **Capture with compensation is not pinning.** Compensation adds a carrier so throughput
   survives, at the cost of memory and OS threads. Pinning — a native frame or a blocking
   class initialiser — gets no compensation, so it removes a carrier outright. Raising
@@ -74,13 +85,13 @@ wrong somewhere.
   specifically **not** compensated. Sustained saturation says the compensated-blocking
   workload reached this implementation ceiling, not that raising it is automatically safe.
 - **`synchronized` no longer pins** on JDK 24 and later (JEP 491), and `Object.wait` unmounts
-  too. Advice to replace `synchronized` with `ReentrantLock` for pinning reasons is obsolete;
+  too. On these releases, replacing `synchronized` solely for pinning is unnecessary;
   `-Djdk.tracePinnedThreads` was removed and silently does nothing.
 - **Non-blocking I/O is not the reactive model.** A `SocketChannel` in non-blocking mode with
-  a `Selector` is non-blocking I/O written imperatively. Reactor and RxJava are a programming
-  model that happens to sit on non-blocking I/O. Netty is the non-blocking I/O layer under
-  both.
-- **Both models ultimately use the same kernel facilities on a given transport**, but their
+  a `Selector` is non-blocking I/O written imperatively. Reactor and RxJava can compose
+  blocking, non-blocking or in-memory work; neither requires Netty. Identify the actual
+  transport and execution thread before classifying a pipeline.
+- **Both models can use the same kernel facilities on a given transport**, but their
   batching, buffer ownership, syscall cadence and wakeups can differ. Do not infer equal
   performance from a shared `epoll`/`read` foundation; measure CPU, allocation, throughput
   and tail latency. The architectural difference is where suspended logical state lives and
@@ -95,9 +106,16 @@ wrong somewhere.
 - Virtual threads make blocking calls **cheap**, not **free**: each in-flight call still
   holds a stack on the heap, a connection, a buffer and any lock it took. The scarce
   resource moved; it did not disappear.
-- `java.nio` does not use io_uring on any released JDK, so "non-blocking" here means
-  readiness-based (`epoll`), not completion-based. See `io-uring-and-zero-copy` before
-  claiming otherwise.
+- Readiness-based socket polling does not characterize every `java.nio` API or provider.
+  Verify the target implementation before claiming io_uring or completion-based I/O;
+  use `io-uring-and-zero-copy` for that investigation.
+
+## Minimum result
+
+For each consequential finding, identify the call and execution thread, API/model versus
+carrier behavior, supporting evidence and remaining uncertainty. Propose the smallest
+change with a resource bound and a before/after check (loop lag, carrier/native memory,
+throughput and tail latency as relevant). Do not label an unmeasured optimization a fix.
 
 ## References
 

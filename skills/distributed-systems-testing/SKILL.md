@@ -29,8 +29,8 @@ condition that actually causes outages: **a dependency that is slow rather than 
 duplicate delivered after a broker reconnect, a node that vanishes mid-transaction.
 
 The two failures this exists to prevent: resilience settings that provably do nothing —
-a retry that never fires because the timeout is longer than the client's, a breaker whose
-threshold cannot be reached before the caller gives up; and chaos experiments run without a
+a retry budget exhausted by its first attempt, a breaker that never records the failures it
+was meant to count; and chaos experiments run without a
 hypothesis or a blast-radius limit, which produce an incident rather than a finding.
 
 ## Workflow
@@ -39,8 +39,9 @@ hypothesis or a blast-radius limit, which produce an incident rather than a find
    does not double-charge." An untestable claim is a configuration you do not understand yet.
 2. **Pick the cheapest level that can falsify it.** Most claims fall at the component level
    with one faulty dependency; very few need a whole environment.
-3. **Inject the failure that actually happens.** Slow, not down. Duplicated, not lost.
-   Partial, not total. Down is the easy case and the rare one.
+3. **Select faults from the dependency contract and incident evidence.** Include slow,
+   unavailable, duplicated, lost and partial outcomes where relevant; do not assume a
+   universal frequency ranking or that connection refusal covers a blackhole.
 4. **Assert the observable outcome**, not the mechanism: the status code, the elapsed time,
    the number of times the downstream was called, the number of rows written. Asserting that
    a breaker library was invoked tests the library.
@@ -51,15 +52,13 @@ hypothesis or a blast-radius limit, which produce an incident rather than a find
 
 ## The failure taxonomy to test against
 
-Ordered by how often each causes a real incident, which is roughly the inverse of how often
-it is tested:
+Use this coverage menu according to the workload and failure model, not as a frequency ranking:
 
 ```text
 SLOW              Dependency responds, eventually. Threads/connections
                   pile up behind it. Tests: does the timeout fire, is the
                   pool bounded, does the caller shed rather than queue?
-                  ── the most common cause of cascading failure, and the
-                     least tested (cascading-failures).
+                  (cascading-failures).
 
 DUPLICATED        The same message or request arrives twice. Tests: is
                   the effect applied once (idempotency, delivery-semantics)?
@@ -75,8 +74,8 @@ REORDERED         Messages arrive out of order across partitions.
 ERRORING          5xx, connection reset, malformed body. Tests: is the
                   classification right — retryable vs permanent?
 
-DOWN              Dependency refuses connections. The easy case: fails
-                  fast, and every design handles it.
+DOWN              Connection refusal, unavailable endpoints or silent drops.
+                  Distinguish fast errors from timeout-driven detection.
 
 PARTITIONED       Both sides alive, cannot see each other. Tests: split
                   brain, duplicate leaders, lock expiry
@@ -140,12 +139,13 @@ The system has no monitoring for the failure being injected
   socket timeouts. Use a stub server that can genuinely hang and reset
   (`architecture-testing`).
 - **Retry and timeout budgets compose across hops and must be tested end to end.** Three
-  services each retrying three times is twenty-seven downstream calls. This multiplication is
+  layers making three total attempts each permit up to twenty-seven deepest calls; three
+  retries plus the initial attempt at each layer permit sixty-four. This multiplication is
   the mechanism of most retry storms, and it is invisible in any single service's tests
   (`retries-and-backoff`, `cascading-failures`).
-- A circuit breaker's configuration is testable as arithmetic before it is testable as
-  behaviour: if the caller's timeout is shorter than the time needed to accumulate the
-  breaker's failure threshold, the breaker can never open. Check that first
+- A circuit breaker's history usually spans multiple logical calls. Check its scope, window,
+  minimum sample count, recorded outcomes and timeout/retry ordering. A caller's shorter
+  deadline does not imply that the shared breaker can never open
   (`circuit-breakers`).
 - **Idempotency is a claim about duplicates, so test with duplicates.** Send the same request
   or message twice, concurrently as well as sequentially, and assert one effect. Concurrent
@@ -157,10 +157,9 @@ The system has no monitoring for the failure being injected
   can be made to fail; a static call buried in business logic cannot. Testability of failure
   is an argument for the adapter boundary, independent of portability
   (`framework-coupling-and-independence`).
-- **Determinism beats realism for regression tests.** A test that injects a fixed fault at a
-  fixed point and asserts a fixed outcome belongs in CI. Randomised experiments belong in a
-  scheduled run against a real environment, where a failure is investigated rather than
-  retried.
+- Use controlled fault points and bounded execution for regression tests. Seeded property
+  tests and deterministic simulations can run in CI; retain seeds, traces and failing inputs.
+  A seed alone does not reproduce uncontrolled network or thread scheduling.
 - Run experiments in production only with a hypothesis, a steady-state metric, a bounded blast
   radius and an abort condition — and only where the failure is already observable. Anything
   else is not an experiment.
@@ -168,6 +167,16 @@ The system has no monitoring for the failure being injected
   value of an experiment is the test it leaves behind, not the incident it simulated.
 
 ## References
+
+Before implementing Java tests, inspect compiler/runtime and resolved test, client and resilience
+libraries. The virtual-thread example requires Java 21; preserve lower targets using their
+existing executors. No upgrade or dependency change is implied. Examples are partial fixture
+shapes, not standalone suites. A passing run establishes only the exercised fault/interleaving.
+
+- [Failure scenario audit](references/failure-scenarios.md) — read when checking missing coverage
+  or defining the invariant and an assertion that would otherwise hide failure.
+- [Techniques and controlled time](references/techniques.md) — read when selecting infrastructure,
+  implementing concurrent duplicate tests, or controlling local time.
 
 - [Injecting failure in a Java system](references/fault-injection.md) — the tooling ladder
   from a stub server through a TCP-level proxy to mesh and node-level faults; what each can

@@ -21,7 +21,13 @@ The terms are not equivalent:
   lock requirement so the server fails instead of silently choosing a costlier path. Metadata-lock
   waits can stall even instant DDL.
 - PostgreSQL `CREATE INDEX CONCURRENTLY` uses multiple phases, can leave an invalid index after
-  failure, and cannot run inside an ordinary transaction block. Verify `indisvalid`.
+  failure, and cannot run inside an ordinary transaction block. Check the migration runner's
+  transaction mode. Verify the definition and `indisvalid`; an invalid index may still incur
+  maintenance, and a failed concurrent UNIQUE build can continue enforcing uniqueness.
+  Inspect the failure phase and choose supported drop/rebuild or reindex recovery. Retrying
+  with `IF NOT EXISTS` only checks the name, not validity or equivalent definition.
+  PostgreSQL 18 cannot build the partitioned parent index concurrently: plan per-partition
+  concurrent builds followed by supported parent creation/attachment and verify every partition.
 
 Canary the change where possible and stop on lock-wait, log/disk, replica-lag, or latency guardrails.
 
@@ -29,10 +35,23 @@ Canary the change where possible and stop on lock-wait, log/disk, replica-lag, o
 
 Collect longer than the longest business cycle and across all roles. A zero usage count can mean a
 counter reset, seasonal job, use only on a replica, or a non-query role such as uniqueness or FK
-support. Prefer reversible invisibility/hypothetical-plan mechanisms where the engine genuinely
-supports them; SQL Server `DISABLE` discards index pages and is not equivalent to MySQL invisible
-indexes.
+support. Distinguish three experiments: hypothetical indexes estimate plans without runtime
+evidence; invisibility excludes an eligible index from normal optimizer use; dropping removes
+its physical/write cost. MySQL invisible indexes remain maintained and retain uniqueness
+enforcement, so they test read-plan dependence but not write savings. Primary keys cannot be
+made invisible, and FK requirements can block invisibility/removal. SQL Server `DISABLE`
+is not a reversible visibility switch: disabling a nonclustered index removes its pages;
+disabling a clustered index can make table data inaccessible.
+
+Do not declare `(a)` redundant merely because `(a,b)` exists: compare uniqueness, predicates,
+sort direction/collation, includes, width, constraints and measured read/write behavior.
 
 After removal, monitor the plans and invariants the index served and retain a tested recreation
 path. Do not drop several overlapping indexes at once unless the rollback can identify which one
 was needed.
+
+## Sources
+
+- [PostgreSQL concurrent index failure and recovery](https://www.postgresql.org/docs/18/sql-createindex.html)
+- [MySQL 8.4 invisible index restrictions and maintenance](https://dev.mysql.com/doc/refman/8.4/en/invisible-indexes.html)
+- [SQL Server disabling indexes and consequences](https://learn.microsoft.com/en-us/sql/relational-databases/indexes/disable-indexes-and-constraints?view=sql-server-ver17)

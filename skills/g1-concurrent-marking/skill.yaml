@@ -1,9 +1,9 @@
 schemaVersion: 1
 
 name: g1-concurrent-marking
-version: 1.3.0
+version: 1.3.1
 description: >-
-  G1's concurrent marking cycle: SATB and the pre-write barrier, the five phases and the
+  G1's concurrent marking cycle: SATB and the pre-write barrier, the cycle phases and the
   single mark bitmap with TAMS, adaptive IHOP triggering, mark stack overflow and its
   consequences, humongous allocation and eager reclaim, and mixed-collection candidate
   selection. Use when the log shows "Concurrent Mark Restart for Mark Stack Overflow", when

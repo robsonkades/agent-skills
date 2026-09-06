@@ -2,40 +2,39 @@
 
 ## The comparison
 
-| Dimension           | Client (cookie/token)                    | Server, in-process               | Server, external store         | Database                          |
-| ------------------- | ---------------------------------------- | -------------------------------- | ------------------------------ | --------------------------------- |
-| Instance disposable | yes                                      | no (needs sticky or replication) | yes                            | yes                               |
-| Survives restart    | yes                                      | no                               | yes (store's durability)       | yes                               |
-| Survives store loss | yes                                      | n/a                              | no                             | no (but it is your database)      |
-| Cost per request    | bandwidth, every request, every hop      | none                             | one network round trip         | one query, sometimes a write      |
-| Size limit          | ~4 KB cookie; headers limited by proxies | heap                             | practical: tens of KB          | none in practice                  |
-| Confidentiality     | visible unless encrypted                 | private                          | private                        | private                           |
-| Tamper resistance   | needs a signature                        | inherent                         | inherent                       | inherent                          |
-| Revocation          | hard; needs expiry or a list             | immediate                        | immediate                      | immediate                         |
-| Auditability        | none                                     | none                             | limited                        | full — it is a table              |
-| Cleanup             | expiry in the cookie                     | container timeout                | TTL in the store               | your job: TTL column plus sweeper |
-| Typical failure     | token too large; cannot revoke           | lost on deploy or scale-in       | store down on the request path | table growth; write amplification |
+| Dimension           | Client (cookie/token)                | Server, in-process                 | Server, external store         | Database                           |
+| ------------------- | ------------------------------------ | ---------------------------------- | ------------------------------ | ---------------------------------- |
+| Instance disposable | yes                                  | only with acceptable loss/recovery | yes                            | yes                                |
+| Survives restart    | while client retains valid data      | no without recovery                | depends on store durability    | depends on commit/recovery         |
+| Survives store loss | yes                                  | n/a                                | no                             | no (but it is your database)       |
+| Cost per request    | transmitted bytes plus verification  | lookup/locking/heap                | network and save/TTL policy    | queries, writes and contention     |
+| Size limit          | cookie and aggregate header limits   | bound bytes/session and count      | bound bytes/session and count  | bound row/payload and total growth |
+| Confidentiality     | requires suitable encryption         | access controls required           | access controls required       | access controls required           |
+| Tamper resistance   | validated MAC/signature or AEAD      | authorize every mutation           | authorize every mutation       | authorize every mutation           |
+| Revocation          | expiry or current revocation state   | invalidation plus in-flight rules  | propagation/cache-dependent    | transaction/cache-dependent        |
+| Auditability        | requires server-side audit events    | requires audit events              | requires audit events          | history/audit not automatic        |
+| Cleanup             | client expiry plus server validation | container timeout                  | TTL and repository policy      | TTL column plus sweeper            |
+| Typical failure     | token too large; cannot revoke       | lost on deploy or scale-in         | store down on the request path | table growth; write amplification  |
 
 ## Per-item placement, in practice
 
 A typical "session" holds four different things. Placing them together is what makes
 session design hard; placing them separately makes it straightforward.
 
-| Item                                    | Placement                         | Why                                                                  |
-| --------------------------------------- | --------------------------------- | -------------------------------------------------------------------- |
-| User id, roles, tenant                  | Signed token, short expiry        | Small, stable, needed on every request, needed by every service      |
-| Locale, theme, last-used filter         | Cookie                            | Trivially recomputable; nobody minds losing it                       |
-| Multi-step application form             | Database row keyed by a draft id  | Losing it costs the user real work; must survive deploys             |
-| Shopping basket (must survive days)     | Database, with the id in a cookie | Business value; auditable; also serves recovery e-mails              |
-| Shopping basket (session-scoped only)   | External store, TTL of hours      | Cheap, expected to be transient                                      |
-| CSRF token                              | Cookie plus per-form value        | Must be per-session; small                                           |
-| Wizard step counter for a 2-minute flow | Client, in the form               | Trivial; no server state at all                                      |
-| Permissions computed from roles         | Nowhere — recompute or cache      | Derived state in a session goes stale silently                       |
-| The `User` entity                       | Nowhere — store the id            | Serialised entities break across deploys (`orm-behavioral-patterns`) |
+| Item                                    | Placement                          | Why                                                                          |
+| --------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------- |
+| User id, roles, tenant                  | Opaque session or validated token  | Choose revocation/freshness contract; roles and membership change            |
+| Locale, theme, last-used filter         | Cookie                             | Trivially recomputable; nobody minds losing it                               |
+| Multi-step application form             | Database row keyed by a draft id   | Losing it costs the user real work; must survive deploys                     |
+| Shopping basket (must survive days)     | Durable store plus access control  | Recovery/audit are explicit; a client id alone is not authorization          |
+| Shopping basket (session-scoped only)   | External store, TTL of hours       | Cheap, expected to be transient                                              |
+| CSRF token                              | Framework-supported CSRF scheme    | Synchronizer token or properly bound signed double-submit, not bare equality |
+| Wizard step counter for a 2-minute flow | Client hint or authoritative state | Server must validate allowed transitions; do not trust hidden fields         |
+| Permissions computed from roles         | Nowhere — recompute or cache       | Derived state in a session goes stale silently                               |
+| The `User` entity                       | Nowhere — store the id             | Serialised entities break across deploys (`orm-behavioral-patterns`)         |
 
-The most valuable line is the last-but-one. Sessions rot by accumulating derived data that
-was expensive once; the fix is a cache with a TTL, not a session field that no invalidation
-path knows about (`caching-strategies`).
+Derived state needs a freshness contract. A TTL alone can be too stale for revoked permissions;
+choose recomputation or invalidation from the allowed delay (`caching-strategies`).
 
 ## Token design
 
@@ -43,52 +42,53 @@ For identity carried in a signed token:
 
 - **Keep claims minimal.** User id, tenant, a small role set, expiry, issuer. Not the
   user's profile, not their permissions matrix, not their last order.
-- **Size discipline.** Every claim is paid on every request, in every hop of a service
-  chain, and in every access log. Past roughly 2 KB, proxy header limits become a live
-  concern, and the failure (a 431, or a truncated header) does not resemble its cause.
-- **Short expiry plus refresh.** 5–15 minutes for the access token means a revoked user is
-  locked out within that window without a per-request lookup. This is the standard
-  compromise and it is a compromise: state the revocation latency explicitly.
-- **Immediate revocation requires a lookup.** A denylist keyed by token id, checked per
-  request, with the store's availability now on the critical path. Adopt it only where the
-  requirement is real, and cache the negative answer.
-- **Signature, not encryption, by default.** Signing prevents tampering; it does not hide
-  the contents. Anything the user must not read requires encryption, which requires key
-  distribution to every verifier — a significant operational step, so avoid needing it.
-- **Rotate keys**, and support two valid keys during rotation, or every rotation is an
-  outage.
+- **Size discipline.** Test encoded tokens together with other headers/cookies against each
+  deployed hop's limits. Redact credentials from logs; no universal 2 KB threshold applies.
+- **Validate the token contract.** Allowlist algorithms and trusted keys; verify signature,
+  issuer, intended audience, token purpose and required claims. Enforce `exp`/`nbf` using JWT
+  NumericDate seconds and bounded clock skew; decoding is not validation. Recheck resource/tenant
+  authorization, including the allowed staleness of embedded roles.
+- **Expiry and revocation.** Choose lifetime from the required delay. Refresh must reject a
+  revoked account/session; otherwise short access lifetimes just issue more tokens. A denylist,
+  introspection or pushed revocation policy must include propagation, negative-cache TTL and
+  outage behavior. Cached “not revoked” answers delay enforcement; do not call that immediate.
+- **Confidentiality and transport.** A signature does not encrypt claims or prevent replay of
+  a stolen bearer token. Prefer minimal claims; use a reviewed authenticated-encryption protocol
+  only if needed, with decryption keys limited to intended recipients and TLS on transport.
+- **Rotate keys** with an overlap based on accepted token lifetime and verifier caches. A
+  compromised key may require immediate retirement; keeping it valid for overlap is not recovery.
+- **Browser security.** Cookie-carried credentials still need CSRF protection. Use framework
+  synchronizer tokens or session-bound signed double-submit as appropriate, plus cookie policy;
+  `HttpOnly` and `SameSite` alone do not solve all CSRF/XSS risks.
 
 ## External store configuration
 
 Moving server session state to Redis or similar is the common modernisation. The decisions
 that matter:
 
-```yaml
-spring:
-  session:
-    store-type: redis
-    timeout: 30m # TTL — abandoned sessions must expire
-  data:
-    redis:
-      timeout: 200ms # request-path timeout: never unbounded
-      lettuce:
-        pool:
-          max-active: 16 # bounded, sized against the connection budget
-```
+For Spring Boot 3.3 servlet auto-configuration, the available Spring Session modules select the
+repository; inspect the actual bean and configuration overrides. Do not assume an old
+`spring.session.store-type` property selects it. `spring.session.timeout` configures session
+inactivity, not the entire request deadline. Inspect connection/command/pool-acquisition limits,
+save/flush mode, TTL refresh, eviction and persistence/replication behavior for the installed
+client/repository. A pool's maximum size alone does not bound waiting, and Lettuce may share
+connections instead of borrowing one for every request.
 
-- **Serialisation format is a compatibility contract.** Java serialisation couples every
-  replica to the exact class shape and makes a rolling deploy a version conflict. Use JSON
-  with an explicit, versioned representation.
-- **Store identifiers, not graphs.** A session with three ids re-reads cheaply; a session
-  with a serialised object graph is slow to write, slow to read, and breaks on the deploy
-  that renames a field.
-- **Write only when something changed.** Frameworks that persist the session on every
-  request turn a read-only page into a write to the store.
+- **Serialisation format is a compatibility contract.** Java serialization has defined evolution
+  rules; incompatible graphs can still break rolling readers. JSON also needs a versioned schema,
+  safe type handling and old/new fixtures. A format switch alone does not prove compatibility.
+- **Store identifiers, not managed graphs.** Measure reload cost and authorization checks;
+  serialized graphs can retain excess data and couple deployed readers to class/schema evolution.
+- **Inspect writes and refresh.** Even a read can refresh inactivity TTL. Understand attribute
+  mutation detection and concurrent save semantics before changing write policy; skipping saves
+  can lose in-place mutations or expire active sessions.
 - **Decide the down behaviour.** Fail the request, or continue as anonymous with reduced
-  functionality? Both are defensible; the default (an exception from a filter, producing a
-  500 on every page) is not a decision.
+  functionality on public paths? Protected operations must reject unavailable authority rather
+  than silently authorize an anonymous substitute. Test bypasses against the security filter chain.
 
 ## Database session state, done properly
+
+Partial PostgreSQL 17 schema; it does not implement authentication, audit or concurrency by itself:
 
 ```sql
 CREATE TABLE application_draft (
@@ -103,28 +103,48 @@ CREATE TABLE application_draft (
 CREATE INDEX ON application_draft (expires_at);
 ```
 
-Four things this gets right and hand-rolled versions usually miss: an explicit expiry with
-an index to sweep it; a version column, because two browser tabs are genuine concurrent
-editors (`offline-concurrency-control`); a payload shape that can evolve; and an identity
-that works before the user has one.
+Enforce expiry and owner/tenant on reads and writes. Anonymous drafts need an independently
+protected access capability and a secure binding to the authenticated owner. Apply an atomic
+`WHERE id = ... AND version = expected` update that increments `version`, checking affected rows;
+a version column alone does not prevent lost updates. JSONB still needs a versioned payload schema.
 
 The cleanup job is part of the design, not an operational afterthought:
 
 ```sql
-DELETE FROM application_draft WHERE expires_at < now() LIMIT 10000;   -- chunked, repeated
+WITH batch AS (
+    SELECT id FROM application_draft
+    WHERE expires_at < now()
+    ORDER BY expires_at, id
+    FOR UPDATE SKIP LOCKED
+    LIMIT 10000
+)
+DELETE FROM application_draft AS draft
+USING batch
+WHERE draft.id = batch.id;
 ```
 
-Unbounded deletes on a large table are their own outage (`enterprise-transactions`).
+PostgreSQL has no `DELETE ... LIMIT`. Run the batch only within an authorized retention cleanup,
+with bounded transaction time and commits between batches. `SKIP LOCKED` requires later passes for
+locked rows; inspect indexes/plan and foreign-key effects on the target (`enterprise-transactions`).
 
 ## Migrating server sessions out
 
-1. **Inventory** what is in the session today — log the keys in production for a week
-   rather than reading the code, because the code will not mention what an old feature left
-   behind.
-2. **Delete the derived data.** Usually the largest share, and it needs no replacement.
-3. **Move identity to a token.** Independent, and it delivers most of the disposability.
+1. **Inventory** source paths plus bounded, approved telemetry of attribute names/types/sizes;
+   avoid raw credentials, values or uncontrolled production logging.
+2. **Remove unnecessary derived data**, preserving required recomputation/cache paths and freshness.
+3. **Preserve or deliberately migrate identity.** An opaque session in a shared repository can
+   make instances disposable without replacing the authentication protocol with JWT.
 4. **Move valuable workflow state to the database**, with its own table and expiry.
 5. **Whatever remains** — small and transient — goes to an external store or stays with
    sticky routing consciously.
-6. **Then remove sticky routing**, and verify by killing an instance under load and
-   confirming that no conversation breaks.
+6. **Remove sticky routing if no longer needed**, then test replacement under load against the
+   agreed conversation survival and recovery contract.
+
+Run failure injection in an authorized isolated/canary environment and assert the agreed loss
+budget, protected-route behavior and old/new compatibility rather than promising universal survival.
+
+Sources: [PostgreSQL 17 DELETE](https://www.postgresql.org/docs/17/sql-delete.html),
+[Spring Boot 3.3 Session](https://docs.spring.io/spring-boot/3.3/reference/web/spring-session.html),
+[JWT BCP RFC 8725](https://datatracker.ietf.org/doc/html/rfc8725),
+[JWT time claims RFC 7519](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4),
+[OWASP CSRF guidance](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html).

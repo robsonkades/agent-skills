@@ -38,7 +38,7 @@ inline oop ShenandoahBarrierSet::load_reference_barrier(oop obj) {
 //   if (load_addr != nullptr && fwd != obj) atomic_update_oop(fwd, load_addr, obj);
 ```
 
-The compiled form C2 emits after every reference load has the same shape
+Where C2 retains a barrier (redundant barriers can be eliminated), it has this shape
 [`c2/shenandoahSupport.cpp`, `pin_and_expand`]: load the thread-local `gc_state` byte and
 test `HAS_FORWARDED` (or `HAS_FORWARDED | WEAK_ROOTS` for weak and phantom loads); only if
 set, for strong loads, load the byte for the object's region from
@@ -47,7 +47,8 @@ the stub — `ShenandoahRuntime::load_reference_barrier_strong` / `_strong_narro
 `_weak_narrow` / `_phantom` / `_phantom_narrow` [`shenandoahRuntime.hpp`]. Outside a cycle
 the barrier is a byte load and a predicted branch; between Final Mark and Final Update Refs
 it also costs a byte load per reference; only references into the collection set take the
-slow path, and those are taken **once** per slot because the CAS heals the slot.
+slow path. Healing reduces repeat work, but races, failed CAS and slot rewrites prevent a
+once-per-slot guarantee.
 
 Three things follow for diagnosis:
 
@@ -105,14 +106,12 @@ are compile-time predicates the JIT consults when deciding whether to emit a bar
 [`shenandoahBarrierSet.hpp`]; they never appear on a mutator stack, and searching a flame graph
 for them finds nothing.
 
-The fast path never has a frame: it is inlined into the compiled method and its cost is
-attributed to the Java frame that did the load. So the barrier's cost has two components with
-two measurements. Slow-path cost is the sum of the frames above, and is mostly evacuation
-while a cycle is between Final Mark and Final Update Refs. Fast-path cost is a diff: the same
-workload under `-XX:+UseParallelGC` or Epsilon versus Shenandoah, with the GC threads' CPU
-subtracted (`-Xlog:gc+stats` gives per-phase wall time and parallelism). Attributing the
-fast-path cost from a profile alone is not possible on a release build. Symbols do change
-between releases — confirm against the build in use before the incident write-up.
+The compiled fast path is attributed to the containing Java method. Count slow-path samples
+once: summing nested barrier and evacuation frames double-counts them. Compare mutator and
+GC-worker CPU separately. Parallel/Epsilon versus Shenandoah changes more than barriers;
+subtracting GC phase wall time (even with parallelism) does not isolate fast-path CPU. Use
+annotated assembly and controlled experiments for inlined instructions and report remaining
+confounders. Confirm symbols against the target build.
 
 ## The phase sequence
 
@@ -150,19 +149,18 @@ Two shapes that are not errors:
   (`ShenandoahImmediateThreshold` description; verified — 567 of 569 cycles in a
   short-lived-garbage run took the shortcut). A log with few `Concurrent evacuation` lines is
   a workload whose garbage dies by region, not a broken collector.
-- **Pauses that are all synchronisation.** Verified pause lengths on a 256 MB heap were
-  0.03–0.11 ms; on production heaps they stay in low milliseconds because none of them scans
-  the heap. When a Shenandoah pause is long, the cause is almost always the safepoint —
-  time-to-safepoint, a thread spinning in a counted loop, a JNI critical section — which is
-  the domain of `pause-attribution`, not of Shenandoah's thresholds.
+- **Short normal-cycle pauses.** The reported 0.03–0.11 ms sample is not a production bound.
+  Separate safepoint synchronization from work after threads stop; phase work, scheduling
+  and fallback collection can matter. A long GC pause line does not prove slow
+  time-to-safepoint; correlate `-Xlog:safepoint` (`pause-attribution`).
 
 ## Generational mode
 
-| Milestone                              | JEP           | Status                                                                                                 | JDK         |
-| -------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------ | ----------- |
-| Generational Shenandoah (experimental) | JEP 404       | Delivered; required `-XX:+UnlockExperimentalVMOptions` (per JEP)                                       | 24          |
-| Generational Shenandoah                | JEP 521       | Delivered; **product**, no unlock (verified on 25.0.3)                                                 | 25          |
-| Generational mode by default           | draft 8379682 | **Draft**, unnumbered and untargeted as of 2026-09-03; also proposes deprecating non-generational mode | Unscheduled |
+| Milestone                              | JEP     | Status                                                                                 | JDK         |
+| -------------------------------------- | ------- | -------------------------------------------------------------------------------------- | ----------- |
+| Generational Shenandoah (experimental) | JEP 404 | Delivered; required `-XX:+UnlockExperimentalVMOptions` (per JEP)                       | 24          |
+| Generational Shenandoah                | JEP 521 | Delivered; **product**, no unlock (verified on 25.0.3)                                 | 25          |
+| Generational mode by default           | JEP 535 | Targeted to JDK 28, not delivered; also proposes deprecating satb (checked 2026-09-05) | 28 (target) |
 
 ```bash
 # generational, product on JDK 25 — explicit opt-in
@@ -176,8 +174,9 @@ java ... -Xlog:gc+init | grep -E "Mode:|Heuristics:"      # Mode: Generational /
 jcmd <pid> VM.flags -all | grep -E "ShenandoahGCMode|ShenandoahGCHeuristics"
 ```
 
-Product describes maturity and official support; default describes what runs when nothing is
-specified. They remain independent axes unless and until that draft is targeted and delivered.
+Product means experimental unlocking is no longer needed; vendor support is build-specific.
+Default describes what runs when nothing is
+specified. JEP 535 does not change the effective default of a JDK 25 installation.
 
 The heap is partitioned by region into young and old; the split is adaptive between
 `ShenandoahMinYoungPercentage` (20) and `ShenandoahMaxYoungPercentage` (100), and the log
@@ -202,13 +201,13 @@ piecemeal inside young cycles (`Chosen CSet evacuates young: …, old: …`, bou
 (`ShenandoahGenerationalAdaptiveTenuring`, ages 1–15). All verified as log lines and flags on
 25.0.3.
 
-| Aspect                               | `satb` (default single-generation)  | `generational` (opt-in, JEP 521)                                    |
-| ------------------------------------ | ----------------------------------- | ------------------------------------------------------------------- |
-| Treats young and old alike           | Yes                                 | No — frequent young cycles, separate old marking                    |
-| Barriers                             | LRB, SATB pre-write during marking  | LRB, SATB pre-write, card-mark post-write on every reference store  |
-| Extra memory                         | None per object                     | Card table plus remembered-set bookkeeping                          |
-| Work per cycle under high allocation | Marks every live object every cycle | Young cycles mark young plus dirty cards                            |
-| Maturity on JDK 25                   | Product since JDK 15 (JEP 379)      | Product since JDK 25; a draft proposes making it the future default |
+| Aspect                               | `satb` (default single-generation)  | `generational` (opt-in, JEP 521)                                   |
+| ------------------------------------ | ----------------------------------- | ------------------------------------------------------------------ |
+| Treats young and old alike           | Yes                                 | No — frequent young cycles, separate old marking                   |
+| Barriers                             | LRB, SATB pre-write during marking  | LRB, SATB pre-write, card-mark post-write on every reference store |
+| Extra memory                         | None per object                     | Card table plus remembered-set bookkeeping                         |
+| Work per cycle under high allocation | Marks every live object every cycle | Young cycles mark young plus dirty cards                           |
+| Maturity on JDK 25                   | Product since JDK 15 (JEP 379)      | Product since JDK 25; JEP 535 targets default mode in JDK 28       |
 
 Among the three generational region-based collectors, Shenandoah's remembered set is
 structurally the closest to G1's: a card table with fixed card size, scanned during young
@@ -226,17 +225,18 @@ below minimum threshold (…)`. Always, in every phase.
    degenerated or full GC** (flag description) — `available < ShenandoahInitFreeThreshold% ×
 capacity` (70) → `Trigger: Learning 1 of 5. Free (176M) is below initial threshold (179M)`
    (verified line).
-3. After learning, from the sampled allocation rate and the history of cycle times:
+3. If prior checks did not trigger (including during learning), from sampled rate and history:
    `avg_cycle_time × avg_alloc_rate > allocation_headroom`, where headroom is `available`
    minus `ShenandoahAllocSpikeFactor`% (5) of capacity minus a penalty accumulated from past
    degenerated cycles; `avg_cycle_time` carries a margin of `_margin_of_error_sd` standard
    deviations. A separate spike detector fires when the current rate is an outlier. Every
-   degenerated cycle raises both the margin and the spike threshold by 0.1 SD, so the
+   degenerated cycle raises the margin and lowers the spike threshold by 0.1 SD (bounded), so the
    heuristic triggers earlier after failing.
 4. `ShenandoahGuaranteedGCInterval` (5 min) forces a cycle in idle periods.
 
-The learning-phase arithmetic is the one worth doing by hand, because it is the budget the
-collector has before it knows anything:
+This rough learning headroom model assumes starting near IFT, constant consumption and no
+intervening reclamation/pacing. It is not the implemented trigger equation or a hard
+degeneration deadline: MFT is a trigger floor, not zero free space.
 
 ```
 H   = Xmx (soft max if set)
@@ -250,9 +250,9 @@ C   = real duration of the concurrent cycle
 
 Worked: `H = 8192 MB`, defaults give a budget of `60% × 8192 MB = 4915 MB`. At
 `A = 500 MB/s`, `C_max ≈ 9.8 s` — comfortable if the measured concurrent cycle runs 1–3 s.
-At a peak of `A = 3 GB/s`, `C_max ≈ 1.6 s`, and a cycle still taking 2–3 s **will** end in a
-degenerated pause. Cycle duration depends on live set, heap size and GC thread count, not on
-the allocation rate, so it does not shrink to meet the shrinking budget. After learning, the
+At a peak of `A = 3 GB/s`, the estimate is about 1.6 s: a 2–3 s cycle warrants investigation,
+not a guaranteed fallback. Reclamation, pacing and actual starting headroom matter;
+allocation/SATB work and CPU contention also affect cycle duration. After learning, the
 adaptive trigger sizes the budget to the observed `C` with margin, so the steady-state
 question is whether `C × A` plus the spike allowance fits in the heap at all.
 
@@ -260,14 +260,15 @@ This is a **time** constraint. The **capacity** constraint is separate: at Final
 collection set is bounded so that its live data fits into the free set with
 `ShenandoahEvacWaste` (1.2) slack, and `ShenandoahEvacReserve` (5% of heap) is withheld for
 evacuation (flag descriptions). A heap too small for its live set shows up as small
-collection sets (`Adaptive CSet Selection. … Max Evacuation: …` shrinking), rising `humongous
-waste` in `At end of GC:`, and full GCs — and no threshold fixes it. Do not quote a fixed
+collection sets, low actual free space and repeated failures. In single-generation adaptive
+mode, `Max Evacuation = soft capacity × EvacReserve% / EvacWaste`; it is not a live free-space
+gauge. No threshold creates space for an oversized live set. Do not quote a fixed
 multiplier of the live set as "the" requirement; read `At end of GC: … available:` and the
 CSet lines instead.
 
-A legacy `-XX:ShenandoahInitFreeThreshold=35` halves the learning budget against the default
-(`25%` of the heap against `60%`). For a spiky workload that is backwards — spikes are when
-more budget is needed. Raise it instead. Both threshold flags are **experimental**: verified,
+A legacy `-XX:ShenandoahInitFreeThreshold=35` reduces this model's headroom to about 42%
+of its default (`25%` of the heap against `60%`). Raise it only when learning-cycle evidence
+supports earlier starts, not as a universal spike remedy. Both flags are experimental: verified,
 `-XX:ShenandoahInitFreeThreshold=80` without `-XX:+UnlockExperimentalVMOptions` aborts the
 launch.
 
@@ -277,7 +278,8 @@ launch.
 falling behind" and "degenerate". While a cycle runs, each phase publishes a tax rate
 (`Pacer for Mark. Expected Live: 26214K, Free: 176M, Non-Taxable: 18022K, Alloc Tax Rate:
 0.2x`, verified in `gc+ergo`), and an allocating thread that gets ahead of GC progress is
-stalled in the allocation path for up to `ShenandoahPacingMaxDelay` (10 ms) per episode. The
+stalled against a `ShenandoahPacingMaxDelay` (10 ms) deadline per episode. Scheduling can
+overshoot it and requests can encounter many episodes; it is not a request-latency bound. The
 stall is invisible in the pause lines. It is reported only in `-Xlog:gc+stats`, per cycle:
 
 ```
@@ -303,21 +305,22 @@ permanent.
 | `compact`                | none (verified)                             | Runs GC more frequently with deeper targets to free more memory; also shortens uncommit    | Constrained heap where footprint dominates throughput                        |
 | `aggressive`             | `-XX:+UnlockDiagnosticVMOptions` (verified) | Runs GC continuously and evacuates everything                                              | Stress-testing the collector and correctness diagnosis only — not production |
 
-| `ShenandoahGCMode` | Unlock needed                               | What it is                                                                                                                                                                             |
-| ------------------ | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `satb` (default)   | none                                        | Single-generation concurrent mark–evacuate–update-refs                                                                                                                                 |
-| `generational`     | none on 25 (verified); experimental on 24   | Young and old generations, card-table remembered set                                                                                                                                   |
-| `passive`          | `-XX:+UnlockDiagnosticVMOptions` (verified) | No concurrent cycles and **no barriers** (`ShenandoahLoadRefBarrier`, `SATBBarrier`, `CASBarrier`, `CloneBarrier`, `CardBarrier` all `false`, verified); GC only on allocation failure |
-| `iu`               | —                                           | Removed; `Unknown -XX:ShenandoahGCMode option` on 25 (verified)                                                                                                                        |
+| `ShenandoahGCMode` | Unlock needed                               | What it is                                                                                                                                                                                                |
+| ------------------ | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `satb` (default)   | none                                        | Single-generation concurrent mark–evacuate–update-refs                                                                                                                                                    |
+| `generational`     | none on 25 (verified); experimental on 24   | Young and old generations, card-table remembered set                                                                                                                                                      |
+| `passive`          | `-XX:+UnlockDiagnosticVMOptions` (verified) | No concurrent cycles and **no barriers** (`ShenandoahLoadRefBarrier`, `SATBBarrier`, `CASBarrier`, `CloneBarrier`, `CardBarrier` all `false`, verified); STW GC on allocation failure or explicit request |
+| `iu`               | —                                           | Removed; `Unknown -XX:ShenandoahGCMode option` on 25 (verified)                                                                                                                                           |
 
-`passive` is not "the same cycle, world stopped": no heuristic ever triggers, so the log
-contains only `Pause Degenerated GC (Outside of Cycle)` and `Pause Full` lines (verified —
-640 and 23 of them in a short run), each started by an allocation failure and each doing a
+`passive` has no concurrent heuristic cycles. An allocation-pressure sample contained
+`Pause Degenerated GC (Outside of Cycle)` and `Pause Full` lines (640 and 23), doing a
 whole mark–evacuate–update cycle STW. It does evacuate and compact. `ShenandoahDegeneratedGC`
 (diagnostic, true) picks which of the two: set it `false` to measure full-GC cost in
-isolation. Two uses follow: a problem that disappears under `passive` is in the concurrency
-mechanism (LRB, SATB, card barrier) rather than in marking or evacuation; and a heap measured
-under `passive` is the live set without floating garbage from overlapping cycles.
+isolation. Explicit GC can also trigger collection: passive defaults
+`ExplicitGCInvokesConcurrent=false`. A problem disappearing under passive suggests a timing
+or collector interaction but does not identify a barrier bug; scheduling and collection
+timing changed too. Occupancy can include uncollected garbage; use a defined post-collection
+point to estimate live set.
 
 ## Flags, with kinds
 
@@ -362,7 +365,7 @@ command line or the JVM refuses to start.
   -XX:ShenandoahInitFreeThreshold=70 -XX:ShenandoahMinFreeThreshold=10 \
   -XX:ShenandoahLearningSteps=5
 
-# allocation-spiky workload: raise the initial threshold, do not lower it
+# candidate only when logs show insufficient learning-phase headroom
 -XX:+UnlockExperimentalVMOptions -XX:ShenandoahInitFreeThreshold=80 -XX:ShenandoahMinFreeThreshold=15
 
 # generational — product, no unlock
@@ -373,11 +376,11 @@ command line or the JVM refuses to start.
 ```
 
 Region size is derived from the heap (verified: 256 KB regions on a 256 MB heap, 4 MB on
-8 GB — 2048 regions either way). Two things scale with it: an allocation larger than a region
+8 GB — 1024 and 2048 regions respectively). Two things scale with it: an allocation larger than a region
 is humongous and needs contiguous regions (`humongous waste` in `At end of GC:` is the cost),
 and the maximum TLAB is one region (`TLAB Size Max: 256K`, verified) — a thread-per-request
-service with many threads on a small heap refills TLABs far more often under Shenandoah than
-under G1.
+service may incur refill/waste costs; compare actual allocation and TLAB behavior before
+claiming a difference from G1.
 
 The adaptive heuristic self-calibrates after learning. Tuning the thresholds by hand is
 justified mainly when the allocation profile changes faster than the heuristic can relearn —
@@ -395,13 +398,13 @@ seasonal peaks, traffic regime changes. Tuning without first measuring `A` is gu
 [0.168s][gc     ] GC(10) Pause Degenerated GC (Outside of Cycle) 120M->120M(160M) 3.689ms
 ```
 
-| Fallback                                                 | What happens [`shenandoahDegeneratedGC.cpp`]                                                                                                                                                                               | What it means                                                                                                                                          |
-| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Degenerated GC (Mark)`, `(Evacuation)`, `(Update Refs)` | An allocation failed while that concurrent phase was running (after pacing gave up). The cycle **resumes in STW from that phase**: finish marking, or finish evacuation, or finish updating references, then clean up      | The time constraint was violated: `C` exceeded the budget. Heuristic, thresholds, heap, GC threads, or allocation rate                                 |
-| `Degenerated GC (Roots)`                                 | Failure during concurrent root marking; marking state is reset and marking **restarts** STW                                                                                                                                | Same as above, earliest point                                                                                                                          |
-| `Degenerated GC (Outside of Cycle)`                      | Allocation failed between cycles — "heavy humongous fragmentation, or very low on free space". A **whole** mark–evacuate–update cycle runs STW                                                                             | Capacity or fragmentation, or the trigger fired too late; the only shape `passive` ever produces                                                       |
-| `Degenerated GC upgrading to Full GC`                    | After a degenerated cycle, free space is still below `ShenandoahCriticalFreeThreshold` (`Bad progress …`). In `satb` mode one bad-progress degeneration upgrades immediately; in generational mode two consecutive ones do | Floating garbage or fragmentation the partial cycle cannot clear                                                                                       |
-| `Pause Full`                                             | Also reached after `ShenandoahFullGCThreshold` (3) back-to-back degenerated cycles, or directly when `ShenandoahDegeneratedGC=false`. Sliding compaction of the whole heap, STW, from scratch                              | Structural capacity or fragmentation. No threshold fixes it; `ShenandoahNoProgressThreshold` (5) such cycles without progress is an `OutOfMemoryError` |
+| Fallback                                                 | What happens [`shenandoahDegeneratedGC.cpp`]                                                                                                                                                                               | What it means                                                                                                                                                 |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Degenerated GC (Mark)`, `(Evacuation)`, `(Update Refs)` | An allocation failed while that concurrent phase was running (after pacing gave up). The cycle **resumes in STW from that phase**: finish marking, or finish evacuation, or finish updating references, then clean up      | Investigate actual headroom, allocation/evacuation failure and cycle progress; the rough time model alone is not proof                                        |
+| `Degenerated GC (Roots)`                                 | Failure during concurrent root marking; marking state is reset and marking **restarts** STW                                                                                                                                | Same as above, earliest point                                                                                                                                 |
+| `Degenerated GC (Outside of Cycle)`                      | Allocation failed between cycles — "heavy humongous fragmentation, or very low on free space". A **whole** mark–evacuate–update cycle runs STW                                                                             | Capacity or fragmentation, or the trigger fired too late; the degeneration point used by passive mode                                                         |
+| `Degenerated GC upgrading to Full GC`                    | After a degenerated cycle, free space is still below `ShenandoahCriticalFreeThreshold` (`Bad progress …`). In `satb` mode one bad-progress degeneration upgrades immediately; in generational mode two consecutive ones do | Floating garbage or fragmentation the partial cycle cannot clear                                                                                              |
+| `Pause Full`                                             | Also reached after `ShenandoahFullGCThreshold` (3) back-to-back degenerated cycles, or directly when `ShenandoahDegeneratedGC=false`. Sliding compaction of the whole heap, STW, from scratch                              | Check explicit causes, capacity, fragmentation and failed recovery; `ShenandoahNoProgressThreshold` (5) such cycles without progress is an `OutOfMemoryError` |
 
 Every degenerated or full GC also restarts the learning phase (flag description), so the
 next `ShenandoahLearningSteps` cycles trigger on `InitFreeThreshold` again — a burst of
@@ -413,21 +416,20 @@ different fixes. The symptom table in `shenandoah-log-and-troubleshooting.md` wa
 
 ## Comparing Shenandoah with ZGC
 
-Any comparison that does not state `ShenandoahGCMode` compares Shenandoah at a structural
-disadvantage — without the generational hypothesis — against ZGC, which has had it as its only
-mode since JEP 490 (JDK 24). The gap is widest exactly where such benchmarks tend to run: high
-young allocation.
+A comparison omitting `ShenandoahGCMode` is underspecified; omission from a report does not
+prove which mode ran. JDK 25 defaults to `satb`; ZGC is generational-only since JDK 24.
+High short-lived allocation is a reason to test generational Shenandoah, not proof it wins.
 
-| Aspect                                   | ZGC (generational, only mode)               | Shenandoah `satb` (default)                                                              | Shenandoah `generational` (opt-in)                          |
-| ---------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Barrier                                  | Conditional load barrier plus store barrier | Conditional LRB plus SATB pre-write                                                      | LRB, SATB pre-write, card-mark post-write                   |
-| Per-object memory                        | None; colour bits in the pointer            | None; forwarding in the mark word                                                        | None; card table on the side                                |
-| Compressed oops                          | No — 64-bit references always               | Yes below 32 GB                                                                          | Yes below 32 GB                                             |
-| Sensitive to the generational hypothesis | Yes, since JEP 439/474/490                  | No — every object treated alike                                                          | Yes — JEP 404/521                                           |
-| Mutator stall mechanism before STW       | Allocation stalls when GC falls behind      | Pacer (`ShenandoahPacing`)                                                               | Pacer                                                       |
-| Fallback                                 | Allocation stall, then OOM — no full GC     | Degenerated, then full                                                                   | Degenerated, then full                                      |
-| Maturity on JDK 25                       | Product                                     | Product since JDK 15, longest tested                                                     | Product since JDK 25; future-default proposal remains Draft |
-| Availability (JDK 25 builds)             | Every OpenJDK build, Oracle's included      | OpenJDK vendor builds (verified: Temurin Windows x64); **absent from Oracle JDK builds** | Same                                                        |
+| Aspect                                   | ZGC (generational, only mode)                 | Shenandoah `satb` (default)                                                              | Shenandoah `generational` (opt-in)                           |
+| ---------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Barrier                                  | Conditional load barrier plus store barrier   | Conditional LRB plus SATB pre-write                                                      | LRB, SATB pre-write, card-mark post-write                    |
+| Per-object memory                        | None; colour bits in the pointer              | None; forwarding in the mark word                                                        | None; card table on the side                                 |
+| Compressed oops                          | No — 64-bit references always                 | Yes below 32 GB                                                                          | Yes below 32 GB                                              |
+| Sensitive to the generational hypothesis | Yes, since JEP 439/474/490                    | No — every object treated alike                                                          | Yes — JEP 404/521                                            |
+| Mutator stall mechanism before STW       | Allocation stalls when GC falls behind        | Pacer (`ShenandoahPacing`)                                                               | Pacer                                                        |
+| Fallback                                 | Allocation stall, then OOM — no full GC       | Degenerated, then full                                                                   | Degenerated, then full                                       |
+| Maturity on JDK 25                       | Product                                       | Product since JDK 15, longest tested                                                     | Product since JDK 25; JEP 535 targets default mode in JDK 28 |
+| Availability (JDK 25 builds)             | Build/platform-dependent; test the target JVM | OpenJDK vendor builds (verified: Temurin Windows x64); **absent from Oracle JDK builds** | Same                                                         |
 
 When a published benchmark concludes Shenandoah loses on throughput under high allocation, the
 first question is which mode it ran. If it ran the default — which is what happens when no
@@ -435,3 +437,11 @@ extra flag is passed — the result may reflect the missing mode rather than a l
 collector. Re-run with `-XX:ShenandoahGCMode=generational` before generalising; and re-run
 with `-Xlog:gc+stats`, because a run whose mutators were paced 30% of the time and a run
 that degenerated twice are different results with the same throughput number.
+
+## Primary implementation references
+
+- [JDK 25 adaptive heuristics](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/gc/shenandoah/heuristics/shenandoahAdaptiveHeuristics.cpp) — trigger ordering, spike adjustment and evacuation budget.
+- [JDK 25 pacer](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/gc/shenandoah/shenandoahPacer.cpp) — deadline checks and forced allocation after waiting.
+- [JDK 25 passive mode](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/gc/shenandoah/mode/shenandoahPassiveMode.cpp) — barrier defaults and explicit collection policy.
+- [JEP 521](https://openjdk.org/jeps/521) — generational mode in JDK 25. Pin source to the deployed build tag before depending on implementation details.
+- [JEP 535](https://openjdk.org/jeps/535) — default change targeted to JDK 28; verify status separately from deployed behavior.

@@ -26,6 +26,11 @@ ignores), and rewriting code during what was supposed to be a diagnosis.
 
 ## Workflow
 
+Use Java 21 without preview as the example baseline. Inspect Maven/Gradle release settings,
+toolchains and CI/runtime versions before suggesting records, sealed types or pattern switches;
+do not upgrade the project or enable preview features as part of detection. The catalogue
+also applies to older Java, with recommendations conditional on its supported language level.
+
 1. **Scan for signals, not smells.** Size outliers (methods, classes, parameter lists),
    change history (`git log --follow` on files that appear in every PR), duplication,
    and dependency fan-in/fan-out. Signals say where to look; the catalogue says what
@@ -42,6 +47,10 @@ ignores), and rewriting code during what was supposed to be a diagnosis.
    `references/smell-to-refactoring.md`, which also says what decides between competing
    techniques and when the honest recommendation is no refactoring. Fixing happens in a
    separate pass under that skill's safety workflow.
+
+If history is shallow or unavailable, say which change-pressure claims cannot be established.
+Use source-level evidence for current coupling, but do not invent recurring co-change or defect
+history. Name what additional evidence would distinguish a finding from a monitor-only lead.
 
 ## Rules
 
@@ -110,3 +119,7 @@ not immediate cleanup.
 - [A worked smell pass](references/worked-pass.md) — one realistic service audited end
   to end: signals, findings, severity weighing, and the false positive that was
   deliberately not reported. Read when unsure how to weigh or phrase findings.
+- [Primitive confusion check](scripts/primitive-obsession/verify.sh) — run with a POSIX shell
+  and JDK 21+ when assessing whether distinct identifier types prevent a real argument swap.
+  It compiles with `--release 21`, runs the before/after cases and checks the intentional
+  compile failure. This demonstrates type safety, not application behavior or performance.

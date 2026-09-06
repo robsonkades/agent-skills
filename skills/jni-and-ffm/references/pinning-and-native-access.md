@@ -70,20 +70,26 @@ measured latency/concurrency, native resource capacity and explicit queue/load-s
 Little's Law alone:
 
 ```java
-// Dedicated platform pool, sized by the native call's real latency and the
-// concurrency needed -- not by the virtual thread scheduler's default.
-ExecutorService nativeCallPool = Executors.newFixedThreadPool(N);
+// Partial application example; N and queueCapacity are positive configured bounds.
+// The service owns this pool across requests and shuts it down during its lifecycle.
+ThreadPoolExecutor nativeCallPool = new ThreadPoolExecutor(
+        N, N, 0L, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(queueCapacity),
+        Executors.defaultThreadFactory(), new ThreadPoolExecutor.AbortPolicy());
 
-// The virtual thread dispatches and awaits the Future: it unmounts normally,
-// because the real blocking happens on a dedicated platform thread.
-CompletableFuture.supplyAsync(() -> nativeLib.compress(payload), nativeCallPool)
-                 .thenAccept(result -> /* ... */);
+// In the virtual request thread; propagate rejection as overload at the request boundary.
+Future<byte[]> pending = nativeCallPool.submit(() -> nativeLib.compress(payload));
+byte[] result = pending.get(remainingNanos, TimeUnit.NANOSECONDS);
 ```
 
 The native frame then remains on a platform worker while the virtual caller waits in Java and
 can normally unmount. Bound the executor queue, propagate deadlines to the native protocol
 where supported, and define late completion because cancelling the `Future` does not
-reliably cancel C code.
+reliably cancel C code. Handle rejection, timeout, interruption and execution failure in
+the application's error contract. Keep payloads immutable/owned and native arenas alive
+until the worker actually finishes, including after the caller abandons the result. Do not
+use `CallerRunsPolicy`: saturation would execute native work on the submitting virtual
+thread. `newFixedThreadPool` has an unbounded queue. Shutdown must have a bounded wait and
+an explicit policy for native calls that outlive it; interruption cannot force them to stop.
 
 ## JEP 472: the native access policy
 
@@ -108,7 +114,8 @@ WARNING: Restricted methods will be blocked in a future release unless native ac
 | generated binding invoking a restricted method | authorization belongs to the calling module; generation is no exemption |
 
 ```bash
-java --enable-native-access=com.example.nativebridge -jar app.jar
+java --enable-native-access=ALL-UNNAMED -jar app.jar
+# For a resolved named bridge module, authorize its actual module name instead.
 ```
 
 Set it per module (or `ALL-UNNAMED` for classpath code), and test the exact release with
@@ -130,7 +137,7 @@ jextract \
     /usr/include/sqlite3.h
 ```
 
-It generates bindings, not memory-ownership semantics, and not an exemption from the native
+It generates bindings, not memory-ownership semantics or an exemption from native-access policy.
 
 ## Operational checklists
 
@@ -146,8 +153,8 @@ It generates bindings, not memory-ownership semantics, and not an exemption from
       documented regeneration process — not generated once by hand and forgotten
 - [ ] Native call duration, platform-pool queue/active count, carrier saturation and selected
       JFR/wall-profile diagnostics can be collected without unbounded overhead
-- [ ] No runbook or start script references `-Djdk.tracePinnedThreads` or `--enable-preview`
-      for FFM code
+- [ ] JDK 24+ runbooks no longer depend on `-Djdk.tracePinnedThreads`; JDK 22+ FFM does
+      not request preview solely for FFM, while other features retain their required flags
 
 ### During an incident
 
@@ -171,3 +178,4 @@ It generates bindings, not memory-ownership semantics, and not an exemption from
 - [JEP 472: Prepare to Restrict the Use of JNI](https://openjdk.org/jeps/472)
 - [Java 25 native-access guide](https://docs.oracle.com/en/java/javase/25/core/restricted-methods.html)
 - [OpenJDK jextract project](https://github.com/openjdk/jextract)
+- [Java 25 `Executors`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executors.html)

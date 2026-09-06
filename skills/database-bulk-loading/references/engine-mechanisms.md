@@ -33,6 +33,12 @@ client file, so prefer a constrained input stream/path API and keep broad file a
 Always inspect `SHOW WARNINGS` and warning counts: truncation and conversion may not fail the
 command.
 
+In MySQL 8.4, `IGNORE`, or `LOCAL` without `REPLACE`, can downgrade interpretation errors even
+under restrictive SQL mode; LOCAL is not merely a file-location choice. Pin SQL mode, storage
+engine, duplicate policy, charset, escaping and null/default rules. Collect warnings promptly on
+the same connection; retained warning details may be capped, so preserve the total warning count
+and validate staged values independently. Test rollback on the actual target storage engine.
+
 Changing `innodb_flush_log_at_trx_commit` or `sync_binlog` changes crash-loss guarantees, not the
 amount of logical row/index work. Treat it as a durability incident procedure, not a tuning default.
 
@@ -42,5 +48,24 @@ Bulk Copy options for table locks, constraint checking, triggers, identity prese
 transaction participation determine semantics. Minimal logging depends on recovery model, target
 shape/state, table lock, and other prerequisites; compare transaction-log growth to verify it.
 
+For direct `SQLServerBulkCopy`, default `FireTriggers` and `CheckConstraints` are false;
+`KeepIdentity` and `KeepNulls` also change generated/default value behavior. Do not transfer
+direct-API defaults blindly to the driver's batch-insert optimization; verify that route's
+documented options for the installed driver.
+
+`UseInternalTransaction=true` commits each bulk batch on its dedicated connection; a later failure
+does not undo earlier committed batches. To commit bulk data and a checkpoint together, supply an
+existing connection with the caller's transaction and leave internal transactions disabled.
+The driver rejects internal transactions with an existing connection. `BatchSize` controls rows
+sent per batch, not a universal all-or-nothing boundary.
+
 Online traffic, Availability Groups, and indexes can turn log generation or replica redo into the
 bottleneck even when the loader is fast.
+
+## Sources
+
+- [PostgreSQL 18 COPY](https://www.postgresql.org/docs/18/sql-copy.html) — validation and conversion-error handling; check the deployed major version.
+- [MySQL 8.4 LOAD DATA](https://dev.mysql.com/doc/refman/8.4/en/load-data.html) — LOCAL, warnings and interpretation semantics.
+- [MySQL 8.4 SHOW WARNINGS](https://dev.mysql.com/doc/refman/8.4/en/show-warnings.html) — session diagnostics and retained-warning limits.
+- [Microsoft JDBC bulk copy](https://learn.microsoft.com/en-us/sql/connect/jdbc/using-bulk-copy-with-the-jdbc-driver) — options and transaction participation.
+- [Microsoft JDBC batch-insert bulk optimization](https://learn.microsoft.com/en-us/sql/connect/jdbc/use-bulk-copy-api-batch-insert-operation) — eligibility and route-specific behavior.

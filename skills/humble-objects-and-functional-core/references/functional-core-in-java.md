@@ -2,6 +2,10 @@
 
 How to write the pure half in modern Java without turning the codebase into a functional
 programming exercise. Every technique here has a cost; the cost is stated with it.
+Examples are partial Java 21 snippets; domain types/imports are omitted. Value types such as
+`Money`, `AppliedDiscount`, `Line` and `Instalment` are assumed immutable, with validated
+domain values. The loan example illustrates local accumulation, not a complete amortization
+or financial rounding/calendar policy.
 
 ## What "pure" has to mean to be useful
 
@@ -9,12 +13,13 @@ A working definition, in the order the properties matter:
 
 1. **Deterministic** — same inputs, same result. No clock, no randomness, no environment.
 2. **No observable effect** — calling it and discarding the result changes nothing.
-3. **Total over its declared inputs** — every input the type permits produces a result, rather
-   than an exception for the cases the author did not think about.
+3. **Explicit input/error contract** — totality is a separate property from purity. Define
+   valid inputs, null policy and expected rejection results; deterministic exceptions for
+   contract violations do not by themselves introduce I/O or shared-state effects.
 
 Local mutation is not a violation of any of these. A core that builds an `ArrayList`, sorts
-it, and returns `List.copyOf(...)` is pure in every sense that matters, and is usually faster
-and clearer than the same logic expressed as a fold. **The rule is about what escapes, not
+it, and returns `List.copyOf(...)` can be pure when elements and inputs are stable; copying
+the list is shallow. Prefer clear code and measure performance when relevant. **The rule is about what escapes, not
 about which keywords appear.**
 
 ## Inputs: make the ambient explicit
@@ -56,12 +61,13 @@ public final class BillingPolicy {
 
 **A class holding a `Clock` is not literally a pure function** — it reads state outside its
 arguments. It buys the property that matters (determinism under test) at far less ceremony
-than a parameter on every method. Take the trade knowingly; it is the right one in most
-enterprise code.
+than a parameter on every method. Take the trade knowingly; sample once in the shell when
+one decision must use a consistent instant/date and record the required time zone.
 
-The same treatment applies to id generation: take a `Supplier<UUID>`, or better, let the
-shell generate the id and pass it in. An id decided by the core is an id that cannot be made
-idempotent later (`idempotency`).
+The same distinction applies to id generation: a supplier may still read mutable state or
+perform effects. Pass a generated value for purity. A core can also derive a stable ID from
+explicit inputs; idempotency requires the same logical operation's key to survive retries,
+regardless of where it was generated (`idempotency`).
 
 ## Outcomes: return the decision, do not perform it
 
@@ -70,7 +76,9 @@ outcomes closed, so the shell's handling is checked by the compiler.
 
 ```java
 public sealed interface PricingOutcome {
-    record Priced(Money total, List<AppliedDiscount> discounts) implements PricingOutcome { }
+    record Priced(Money total, List<AppliedDiscount> discounts) implements PricingOutcome {
+        public Priced { discounts = List.copyOf(discounts); }
+    }
     record Rejected(String reason) implements PricingOutcome { }
     record NeedsApproval(Money total, Money overLimitBy) implements PricingOutcome { }
 }
@@ -87,9 +95,10 @@ switch (outcome) {
 ```
 
 Because `PricingOutcome` is sealed and the `switch` covers every permitted subtype, no
-`default` is needed and adding a fourth outcome fails compilation at every call site that
-must change. A `default` branch throws that guarantee away — it is the single most common way
-this benefit is lost (`java-composition-over-inheritance`).
+`default` is needed. Adding a fourth outcome exposes uncovered switches when their source
+is recompiled; it does not retroactively validate old binaries. A deliberate catch-all may
+reject unknown cases but loses this per-variant compile check. The producer must also honor
+the non-null outcome contract (`java-composition-over-inheritance`).
 
 ### Result types, and their limit
 
@@ -119,7 +128,7 @@ Two costs are worth stating plainly:
 - **A record component holding a mutable collection is not immutable.** The canonical
   constructor keeps the caller's `List`, so the caller can still change it afterwards. Copy in
   the compact constructor where the core's purity depends on it — `List.copyOf` also rejects
-  nulls, which is usually wanted.
+  nulls. This is a shallow copy: `Line` must itself be immutable or copied appropriately.
 
   ```java
   public record Basket(List<Line> lines) {
@@ -131,9 +140,10 @@ Two costs are worth stating plainly:
 
 - **Rebuilding a record per step allocates.** In a loop over a large collection this is
   usually irrelevant, because young-generation allocation is cheap. Escape analysis can
-  eliminate a record entirely, but only one that never escapes the compiled method — it will
-  not eliminate one you accumulate into a collection or return, which escapes by definition,
-  and it does nothing at all before C2 compiles the loop. The answer in a measured hot path
+  eliminate a record entirely when its uses remain within the optimized compilation graph.
+  A source-level return does not prove escape after inlining; a local collection does not
+  by itself prove materialization either. Retained/published results constrain elimination.
+  The answer in a measured hot path
   comes from a profile, not from this document (`allocation-profiling`,
   `jit-inlining-and-escape-analysis`).
 
@@ -159,7 +169,7 @@ public Schedule buildSchedule(Loan loan, LocalDate start) {
 ```
 
 The `ArrayList` and the reassigned locals are invisible to every caller. Expressing this as a
-stream reduction would be longer, slower and harder to read. **Prefer the loop when the
+stream reduction can obscure this sequential state; performance requires measurement. **Prefer the loop when the
 computation is sequential and stateful**; prefer a stream when it is a mapping or a filter.
 
 What must not happen: mutating an argument. A core that modifies the `Basket` it was handed
@@ -168,11 +178,10 @@ show.
 
 ## Concurrency: the property you get for free
 
-A pure core is safe to call from any number of threads without synchronisation, because there
-is nothing to synchronise. Under a thread-per-request model on virtual threads, where a
-request may fan out into many concurrent subtasks, this stops being an aesthetic property and
-becomes the reason the code is correct at all (`thread-sizing-and-virtual-threads`,
-`structured-concurrency`).
+A core with no shared mutable state can run concurrently when its inputs are safely
+published and stable for the entire evaluation. Reading a caller-owned list while another
+thread mutates it violates that premise even if the core performs no writes. Purity does not
+make the shell's read/decide/write sequence atomic (`java-memory-model`).
 
 The corresponding trap: a "pure" core holding a memoisation cache in a `HashMap` field. It is
 now shared mutable state, it is not thread-safe, and the impurity is invisible at the call
@@ -201,4 +210,10 @@ deliberately (`caching-strategies`, `java-memory-model`).
   core to make them pure duplicates behaviour that is already tested and already declarative
   (`patterns-and-modern-frameworks`).
 - **The code is a genuine adapter.** Mapping a DTO to a domain type has no branch worth
-  testing beyond the mapping itself.
+  extracting when it merely copies fields. Validation, authorization, defaults and lossy
+  conversions can still encode consequential decisions even in a mapper.
+
+## Sources
+
+- [Java 21 pattern switches](https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html) — exhaustiveness and null handling.
+- [Java 21 List contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html) — unmodifiable collections and mutable elements.

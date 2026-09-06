@@ -4,17 +4,23 @@
 
 | Contract element                                                     | First choice                                                                                                                                                                                       | When that is impossible                                                                                             |
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Precondition on a value's _shape_ (positive, non-empty, well-formed) | A validating type: record with compact-constructor checks — the precondition disappears from every signature that uses the type                                                                    | Explicit check at method entry, throwing `IllegalArgumentException`/`NullPointerException` with expected and actual |
+| Precondition on a value's _shape_ (positive, non-empty, well-formed) | Validating type with constructor checks, subject to non-null reference and ownership conditions below                                                                                              | Explicit entry check with a stable failure contract; actual values only when bounded and non-sensitive              |
 | Precondition on the _receiver's state_ ("must be open")              | Model states as types (sealed `Open`/`Closed` with the method only on `Open`)                                                                                                                      | `IllegalStateException` at entry, named in `@throws`                                                                |
 | Class invariant                                                      | Constructor/factory establishes it; immutable state prevents ordinary mutators from violating it. JEP 513 (Java 25) permits argument checks before `super(...)` but does not prevent `this` escape | Every mutator prepares then commits valid state; assertion or unconditional internal check according to consequence |
 | Postcondition                                                        | A test per documented guarantee; unconditional check where unsafe continuation would corrupt durable/security-critical state                                                                       | `assert` for cheap diagnostics in controlled runs                                                                   |
-| Contract of an operation with several _expected_ outcomes            | Sealed result type; each variant is one outcome's postcondition; exhaustive `switch` (no `default`) makes adding a variant a compile error at every caller                                         | —                                                                                                                   |
+| Contract of an operation with several _expected_ outcomes            | Sealed result type; each variant states an outcome. Recompile exhaustive consumers to detect newly uncovered variants                                                                              | Existing exception/result convention where a new sealed hierarchy would add needless migration cost                 |
 
 A type-carried invariant is stronger across ordinary typed construction paths: it cannot be
 forgotten at a second call site and documents itself in signatures. It is not absolute proof
 across unsafe reflection, custom deserialization, ORM hydration or corrupted persisted data.
 Its costs: one more type and mapping/versioning surface; wrapping may allocate, though escape
 analysis can eliminate some short-lived objects, so measure a performance-sensitive path.
+
+The wrapper reference can still be null, and mutable components can invalidate a previously
+checked condition. State types alone cannot invalidate an old `Open` alias after a resource
+closes: use ownership/lifecycle enforcement and runtime state checks when aliases can survive.
+Likewise, adding a sealed variant affects recompiled switches whose existing cases no longer
+cover the hierarchy, not every caller; old binaries need separate compatibility review.
 
 ## The Javadoc contract
 
@@ -80,9 +86,9 @@ Violations that compile cleanly:
 
 ## False positives
 
-- **A stricter requirement in a _new_ method** on the subtype (not an override) breaks
-  nothing: nobody calls it through the supertype. The subtyping rules bind inherited
-  contracts only.
+- **A stricter input requirement in a _new_ method** need not strengthen an inherited
+  precondition. Its effects must nevertheless preserve inherited invariants and allowed
+  state histories; a new mutator can violate the supertype contract without overriding anything.
 - **An override that throws more precisely** — same condition, more specific type whose
   supertype the contract already declared — is not a strengthened precondition; the set
   of rejected inputs is unchanged.
@@ -108,8 +114,10 @@ Violations that compile cleanly:
 - Postcondition `assert`s in hot paths are usually free when disabled, but their
   _expressions_ must be side-effect-free and cheap to keep enabled in CI — an assert
   that sorts a list to check sortedness changes timing under `-ea` and hides races.
-- Private helpers inside a class share the class's invariant; contracting them
-  individually is paperwork. The contract surface is the public API.
+- Private helpers do not need duplicate public Javadoc, but may temporarily see a broken
+  representation invariant during a controlled transition. State any additional assumptions
+  that affect correctness, especially around callbacks/reentrancy; visibility is not proof
+  that the invariant holds on entry.
 
 ## Runtime and language references
 

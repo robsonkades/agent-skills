@@ -3,7 +3,7 @@ name: clean-delivery-workflow
 description: >
   The order of work for a change, and how much of that order a given change actually warrants:
   understanding before editing, clarifying what is ambiguous, deciding the test approach,
-  implementing in reversible steps, keeping refactoring in separate commits from behaviour,
+  implementing in reversible steps, separating refactoring from behaviour where independently valid,
   running the gates the risk deserves, and verifying before declaring done. Also the entry
   point that routes a situation to the skill that owns it. Use when starting a change and the
   order is not obvious, when a change has sprawled and needs re-sequencing, when refactoring
@@ -24,16 +24,22 @@ in review that it solves the wrong problem. The second is ceremony applied unifo
 one-line configuration fix carrying a design discussion, an acceptance-criteria table and the
 full pipeline, until the process becomes something people route around.
 
-The order below is fixed; how much of each step a change deserves is a judgement, and making
-that judgement well is the skill.
+The workflow establishes prerequisites, not a one-way pass. New evidence can send work
+back to clarification, risk assessment or test design; how much each step deserves depends
+on the change.
 
 ## Workflow
 
 1. **Understand.** Read the code that exists before proposing a change to it. Find relevant callers,
    tests, ownership and history. Inspect commits when intent is unclear; “the last three” is not a
    meaningful boundary when the change history has a different shape.
-2. **Clarify.** Ambiguities that change the work get asked; the rest get recorded as
-   assumptions (requirements-and-acceptance). Batch the questions.
+   Read applicable repository instructions and build/CI configuration. Inspect staged,
+   unstaged and untracked changes before editing; preserve work outside your ownership.
+   For Java, use the project's compiler/toolchain, runtime and dependency evidence; this
+   workflow sets no Java baseline and does not authorize upgrades or preview features.
+2. **Clarify.** Resolve ambiguity from available evidence first. Ask only for missing decisions
+   that materially change correctness or scope; record safe assumptions and continue
+   independent work (requirements-and-acceptance). Do not invent product constraints.
 3. **Establish the risk.** What breaks if this is wrong, how soon would anyone notice, how hard
    is it to undo? This one answer sets the test level, the gate set and the review depth for
    everything that follows.
@@ -44,7 +50,8 @@ that judgement well is the skill.
    preparatory refactoring from behaviour when each is independently valid and testable. When a
    safe refactoring exists only to enable the behaviour, preserve the distinction in the diff or
    commit sequence without manufacturing invalid intermediate states (java-refactoring).
-6. **Verify.** Run the gates the risk warrants (quality-gates) and read the output. Not "the
+6. **Verify.** Run repository-required gates plus checks the risk warrants (quality-gates),
+   and read the output. Risk-based selection does not waive a mandatory gate. Not "the
    build should pass" — what it printed.
 7. **Review** at a depth set by the risk, not by the diff size (code-review).
 8. **Record what the code cannot say**: assumptions, the trade you took, the decision and its
@@ -53,8 +60,8 @@ that judgement well is the skill.
 
 ## Rules
 
-- The order is fixed; the depth is not. Skipping step 1 is never justified by urgency — under
-  urgency it is the step that saves the most time.
+- Understand the affected path before editing it, including under urgency. Revisit earlier
+  decisions when implementation or verification exposes a false assumption.
 - Ceremony scales with risk, and risk is not proportional to diff size. A 900-line rename
   verified by the compiler is a lighter change than a one-character timeout default
   (`references/workflow-by-risk.md`).
@@ -64,8 +71,11 @@ that judgement well is the skill.
   stands on its own; otherwise optimise for a buildable, reviewable history and make the mechanical
   and semantic portions explicit. Commit structure is evidence for review and bisection, not a
   substitute for tests or a universal revert boundary (debugging).
-- Keep the tree green between steps. A sequence of green commits localises a regression to one
-  step; a single large commit localises it to an afternoon.
+  Advice about history does not authorize commits, staging unrelated files, rewriting
+  existing history or publication; follow the user's requested delivery boundary.
+- Prefer passing checkpoints between reviewable changes; a deliberate failing test during
+  reproduction/TDD is expected. Record pre-existing failures and distinguish them from
+  regressions. Do not weaken tests or discard another contributor's work to obtain green.
 - Do not expand the change. Adjacent problems are reported, not fixed, unless the change makes
   them materially worse or leaving them makes your change wrong.
 - "Done" means verified, not written. If a gate could not be run, that is part of the report,

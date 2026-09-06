@@ -59,6 +59,10 @@ rules and specifications, UI component trees.
 
 ## Transparent, safe, or sealed
 
+The examples with record/sealed types and exhaustive type-pattern switches target Java 21 without
+preview. Inspect the project's compiler release; records/sealed types alone are available on
+Java 17, and ordinary classes can express Composite on earlier baselines without an upgrade.
+
 ```text
 Transparent (GoF's preference)
   Component declares add/remove/getChild; Leaf throws
@@ -112,8 +116,9 @@ THEN it is a Visitor or a pattern-matched fold, not a method on
      Component (gof-visitor).
 
 IF children are fetched lazily from a database
-THEN a walk is an N+1 query. Load the subtree in one query, or do not
-     model it as a composite (orm-behavioral-patterns).
+THEN inspect query counts and required subtree size. Batch, prefetch, page or query the needed
+     aggregate; neither a query per node nor loading an unbounded whole tree is inevitable
+     (orm-behavioral-patterns).
 ```
 
 ## Cross-cutting checks

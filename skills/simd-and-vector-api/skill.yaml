@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: simd-and-vector-api
-version: 1.2.0
+version: 1.2.1
 description: >-
   Vectorisation on the JVM: C2 SuperWord auto-vectorisation and the loop shapes that defeat
   it, the incubating Vector API (species, lanes, masks, loop bound and tail handling),

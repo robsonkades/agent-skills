@@ -1,5 +1,10 @@
 # Worked refactoring: a refund processor with three masters
 
+This is an illustrative scenario, including its commit counts. Java blocks are partial
+Java 21 snippets: `BigDecimal` imports, domain types, ports and adapters are omitted; public
+types need separate files. They are not a complete payment workflow or evidence of production
+validation. Use actual requirements/history in a real review.
+
 ## Before
 
 ```java
@@ -37,20 +42,26 @@ platform. Three independent change streams, three requesters — three reasons t
 change in one class. Each CX copy tweak forced re-review and redeploy of refund
 policy.
 
-A second, separate defect: the return type. `false` means "not eligible" with the
-reason discarded, while gateway failure becomes an exception — so callers cannot
-tell the customer _why_ nothing happened, and one outcome travels a different
-control path than the others.
+A separate accepted requirement in this scenario is to expose rejection reasons to callers;
+`false` cannot carry them. Returning business decisions while throwing operational failures
+is a coherent design, not inherently a defect. Do not change a public return type merely to
+make all outcomes look alike.
 
 What is **not** wrong: the class's size (modest) and its two constructor
 dependencies. Without the divergent history, this shape alone would not justify a
 finding.
 
-Replacing raw `method()` with `PaymentMethod` is a separate behavior-preserving prerequisite, not
-evidence for SRP. Land or characterize it independently when review/rollback risk matters rather
-than hiding a type migration inside the class split.
+The after sketch also replaces raw `method()` with `PaymentMethod`. Preserve known mappings,
+and explicitly decide unknown/null/case-sensitive inputs before calling that migration
+behavior-preserving. Land or characterize it independently of the SRP split.
 
 ## After
+
+The example intentionally includes three contract changes: structured rejection results,
+negative purchase-age rejection and nonpositive-amount rejection. The old code can accept some
+of those inputs. Authorize and test them separately; for a mechanical split, retain the old
+return/error behavior behind a compatibility facade until callers migrate. Rule ordering also
+matters when several rejection conditions hold.
 
 Eligibility becomes a pure policy returning a sealed decision — data in, decision
 out, no I/O:
@@ -123,7 +134,7 @@ completed refund.
 
 ## Trade-offs
 
-- Three types replace one; a reader following a refund now visits policy, then
+- Policy, decision types and notifier roles add navigation; a reader following a refund visits policy, then
   processor. The navigation cost is paid for by the three change streams landing
   in three files.
 - Sealing `RefundDecision` closes the variant set deliberately: a new variant
@@ -136,8 +147,12 @@ completed refund.
 
 ## Verification
 
-- `RefundPolicy` tests are pure: construct, call `decide`, assert on the variant —
-  no doubles at all.
+- `RefundPolicy` tests cover day 30/31 and 90/91, exact/excess charged amounts, each method,
+  overlapping rejection precedence and the deliberately new invalid-input failures.
+- Processor tests assert no gateway/notifier call on rejection, one refund then notification
+  on approval, gateway failure preventing notification, and notification failure not causing
+  an internal refund retry. This last check does not establish safe caller retries: the
+  production idempotency/reconciliation path still needs its own tests.
 - Re-run the history check after a quarter: CX commits should now touch only the
   notifier adapter, payments commits only `RefundPolicy`.
 - Delete a `case` arm and compile: the build must fail. That failure is the

@@ -9,8 +9,10 @@ offered → admitted → enqueued → service-start → service-end → terminal
 ```
 
 For each class preserve queue identity, route/partition, retry/attempt, deadline/cancellation and
-server position. Use one monotonic clock for durations. Reconcile inventory at window edges; a
-growing queue invalidates a stationary fit even when the window-average rates match.
+server position. Use one monotonic clock for local durations. Reconcile inventory at window
+edges: departures = arrivals + initial inventory − final inventory at the same boundary.
+Sustained drift challenges a steady-state fit; one growing finite-window sample can also be a
+stationary queue's fluctuation. Edge-censored residence and time averages need matching treatment.
 
 ## Arrival rate and process
 
@@ -66,8 +68,10 @@ survival/hazard, modality and serial/class dependence. Mixtures should be modele
 when classification is available, while preserving their shared-resource interaction.
 
 Timeouts and cancellations can right-censor service or abandon queue wait. Record whether work
-actually stopped; a caller timeout may leave server work running. Success-only samples make both
-`E[S]` and `E[S²]` optimistic. Survival methods require defensible censoring assumptions, and a
+actually stopped; a caller timeout may leave server work running. Success-only samples change the
+population and often omit slow work, but early failures can make the bias go the other way.
+Distinguish observed occupancy ending at actual cancellation from the latent completion time
+without cancellation. Survival methods require defensible censoring assumptions, and a
 deadline cannot reveal the distribution beyond it without a model.
 
 ## What counts as `c`
@@ -93,32 +97,36 @@ CPU admission; `ThreadMXBean`/legacy dumps do not provide a complete virtual-thr
 
 ## Measuring queue wait
 
-Instrument task lifecycle at the queue boundary:
+This partial Java 8+ snippet measures submission-to-task-start delay, including dispatch and
+thread-start overhead. It is not an exact enqueue-to-dequeue timestamp pair:
 
 ```java
-long enqueuedAt = System.nanoTime();
+long submittedAt = System.nanoTime();
 executor.execute(() -> {
-    long queueWait = System.nanoTime() - enqueuedAt;
-    queueWaitRecorder.record(queueWait);
+    long submissionDelay = System.nanoTime() - submittedAt;
+    submissionDelayRecorder.record(submissionDelay);
     runTask();
 });
 ```
 
 Production instrumentation must avoid capture/allocation/cardinality overhead, propagate
 cancellation safely and include rejected submissions separately. Framework hooks or wrapped tasks
-may be preferable; verify nested/resubmitted tasks and caller-runs execution.
+may be preferable; verify nested/resubmitted tasks and caller-runs execution. For a pure queue
+model, instrument successful queue insertion/removal directly and preserve the same task ID.
 
-JFR wait events answer different questions:
+JFR wait events answer different questions. Coverage depends on runtime and execution path;
+ordinary unmounted virtual-thread waits are not fully represented by these events in JDK 25:
 
-| Event                  | What it observes                                                   | What it does not observe                                                     |
-| ---------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| `jdk.JavaMonitorEnter` | platform-thread contended monitor entry above configured threshold | arbitrary executor task age                                                  |
-| `jdk.JavaMonitorWait`  | `Object.wait` episodes                                             | monitor-entry contention or all conditions                                   |
-| `jdk.ThreadPark`       | platform-thread park episodes from locks/conditions/permits        | time a `Runnable` object sits in an executor queue before any thread owns it |
+| Event                  | What it observes                                             | What it does not observe                                                 |
+| ---------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `jdk.JavaMonitorEnter` | completed contended monitor-entry paths recorded by this JDK | arbitrary executor task age or every unmounted virtual-thread contention |
+| `jdk.JavaMonitorWait`  | `Object.wait` episodes                                       | monitor-entry contention or all conditions                               |
+| `jdk.ThreadPark`       | recorded JVM park episodes, commonly platform/carrier waits  | every virtual-thread park or time an unowned `Runnable` sits in a queue  |
 
 Inspect the running JDK's JFC settings: enabled state, stack traces, cutoff/threshold and period are
 version/configuration-specific. Lower thresholds on a short representative recording while
-monitoring overhead; zero recorded events is not zero wait. For virtual threads use applicable
+monitoring overhead; zero recorded events is not zero wait, including duration events still
+unfinished when the recording ends. For virtual threads use applicable
 virtual-thread events plus application queue/permit timestamps; do not infer everything from
 platform-thread states.
 
@@ -140,5 +148,6 @@ platform-thread states.
 - [Oracle JDK 25 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
 - [Oracle JDK 25 `ThreadMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadMXBean.html)
 - [Oracle JDK 25 JFR troubleshooting](https://docs.oracle.com/en/java/javase/25/troubleshoot/troubleshoot-performance-issues-using-jfr.html)
+- [OpenJDK 25 monitor-entry event path](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/objectMonitor.cpp) — successful virtual-thread unmount returns before the ordinary monitor-enter event commit.
 - Harchol-Balter, [_Performance Modeling and Design of Computer Systems_](https://www.cs.cmu.edu/~harchol/PerformanceModeling/book.html)
 - Cox and Lewis, _The Statistical Analysis of Series of Events_ (1966).

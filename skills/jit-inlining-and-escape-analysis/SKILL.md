@@ -22,10 +22,14 @@ description: >
 Decide allocation and inlining questions by measurement instead of by belief. Two
 symmetric errors live here — "allocation is expensive, avoid objects" and "the JIT handles
 it, allocate freely" — and both are unverified. The defensible position is to measure, and
-the measurement costs one command. This skill is the practitioner's layer: what to do about
+a command starts the measurement but does not establish attribution or adequacy. This skill is the practitioner's layer: what to do about
 a hot call that was not inlined or an allocation that survived. The mechanism is
 `escape-analysis-internals` and `c2-sea-of-nodes`; reading the logs end to end is
 `compilation-and-inlining-logs`.
+
+Inspect the target compiler/JDK build, toolchain, flags and directives first; tier 4 denotes
+C2 here only under the stated HotSpot configuration, not when a different compiler is selected.
+JDK 25 observations do not authorize upgrading the project or changing production VM policy.
 
 ## Workflow
 
@@ -38,8 +42,9 @@ a hot call that was not inlined or an allocation that survived. The mechanism is
    owns the attribution.
 2. **Reconcile bytes with object layout and compilation.** A repeatable delta close to an
    aligned object size is a useful hypothesis, not identity proof: boxing, lambda objects,
-   arrays, harness/class-init work and different compiled paths contribute too. Compare
-   allocation profiles/types and the same compile id before attributing the bytes.
+   arrays, harness/class-init work and different compiled paths contribute too. Correlate
+   allocation profiles/types with compilation IDs within each run; IDs are not comparable
+   identities across JVM forks.
 3. **Find the boundary before theorising:** non-inlined/unknown calls; returns or stores to
    heap/global/thread-visible state; identity-sensitive uses; merges, arrays and indices C2
    cannot scalarize; or profile-dependent paths excluded from the current graph. Use the
@@ -91,7 +96,7 @@ big method` means the callee grew. Refactor first; `CompileCommand` to confirm i
   and all three are lab tools, not the fix.
 - A lambda/capture, `Optional` or stream is not intrinsically free or allocating. Its
   allocation depends on linkage, caching, inlining, escape and the exact pipeline. Use the
-  measured JDK 25 examples in the reference as observations, never as API cost guarantees.
+  reference's reproduction cases to test the actual pipeline, never as API cost guarantees.
 - C2 array scalar replacement has stricter implementation limits than object scalar
   replacement, commonly requiring constant small length and analyzable constant offsets.
   `EliminateAllocationArraySizeLimit=64` is a tested JDK 25 policy value, not a Java rule.
@@ -138,8 +143,8 @@ Bytes improve but service does not
 ## References
 
 - [Verifying escape analysis](references/verifying-escape-analysis.md) — the flags to
-  confirm, the JMH, `ThreadMXBean` and JFR measurements, the table of measured outcomes for
-  the common patterns on JDK 25, and the factor-isolation runs. Read before changing any
+  confirm, the JMH, `ThreadMXBean` and JFR measurements, the hypothesis cases for
+  common patterns, and the factor-isolation runs. Read before changing any
   allocation-related code.
 - [From an inlining verdict to a code change](references/inlining-verdicts-and-fixes.md) —
   the limits with their JDK 25 defaults and what each measures, the verdict-to-fix table,

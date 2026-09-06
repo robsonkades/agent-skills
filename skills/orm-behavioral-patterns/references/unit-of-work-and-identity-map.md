@@ -6,12 +6,15 @@
         new X()                persist()                 commit / flush
 transient ──────────────► managed ──────────────────────────► (row written)
                              │  ▲
-             detach / close  │  │ merge()  (SELECT, then copy into a NEW instance)
+             detach / close  │  │ merge()  (copy into managed target; SELECT may occur)
                              ▼  │
                           detached ── modifications here are silently discarded
-                             │
-                          remove() ──► removed ──► deleted at flush
+managed ── remove() ──► removed ──► deleted at flush
 ```
+
+`remove` requires a managed instance; passing a detached instance is not that transition.
+Flush sends changes without committing them. Examples assume a transaction-scoped context
+that ends at the shown transaction boundary.
 
 The single most common data-loss bug in enterprise Java:
 
@@ -29,7 +32,7 @@ And its sibling, which looks like a fix and is not:
 ```java
 @Transactional
 public void ship(Order detached) {
-    Order managed = orders.save(detached);   // merge: SELECT, then copy
+    Order managed = orders.save(detached);   // existing-entity merge: copy, possible SELECT
     detached.setTrackingCode(code);          // ← still the detached one. Lost.
     managed.setTrackingCode(code);           // ← this is the one that persists
 }
@@ -41,8 +44,9 @@ long-lived objects, and its return value is the only usable reference afterwards
 
 ## Dirty checking and flush
 
-At flush, the unit of work compares every managed entity against the snapshot taken when it
-was loaded, and generates the statements. Three consequences:
+Snapshot dirty checking compares eligible managed state at flush. Enhancement, immutable or
+read-only entities and collection tracking change the work; inspect configuration rather
+than assuming every entity is always compared. Three consequences:
 
 **1. Modification is persistence.** No `save()` is needed, and none prevents the write:
 
@@ -54,21 +58,27 @@ public void applyDiscount(OrderId id) {
 }
 ```
 
-**2. Cost is proportional to context size, per flush.** N entities and M flushes is O(N×M)
-comparisons. A batch that loads 100 000 entities and flushes per item is quadratic, which is
-why it is fast for 100 rows in a test and never finishes for a real file.
+**2. Context growth can amplify flush cost.** A simplified scan of N eligible entities at M
+flushes costs O(N×M); a growing context scanned after each addition can accumulate quadratic
+work. Measure actual dirty checking, cascades, SQL and allocation before attributing a slow job.
 
 ```java
 // Chunked: bounded context, bounded flush cost.
 for (int i = 0; i < rows.size(); i++) {
     em.persist(toEntity(rows.get(i)));
-    if (i % 500 == 0) { em.flush(); em.clear(); }   // clear() is the important half
+    if ((i + 1) % 500 == 0) { em.flush(); em.clear(); }
 }
+em.flush(); em.clear(); // final partial chunk; requires the enclosing transaction
 ```
 
+This chunk owns its persistence context; `clear()` detaches unrelated managed entities too.
+Do not use this loop in a shared unit of work without accounting for those references.
+
 Also set `hibernate.jdbc.batch_size`, and note that `IDENTITY` identifier generation
-disables JDBC batching for inserts — a sequence with an allocation size is required for
-batching to actually happen.
+disables Hibernate JDBC batching for those entity inserts. Sequences with suitable allocation are one
+alternative; assigned IDs can also batch. Flush/clear bounds the context, not transaction
+locks, log volume or the already-materialized `rows` list. StatelessSession changes lifecycle
+and cascade semantics; verify its target-version contract before substituting it.
 
 **3. Flush happens more often than you think.** Commit; an explicit `flush()`; and before a
 query whose result could be affected by pending changes. That last one turns a
@@ -82,8 +92,9 @@ for (var line : lines) {
 }
 ```
 
-`FlushModeType.COMMIT` avoids it and costs correctness: the query then reads pre-modification
-state. Restructure the loop instead.
+With `FlushModeType.COMMIT`, the effect of pending changes on query results is unspecified
+by JPA; do not promise either fresh or stale results. AUTO behavior and native-query
+synchronization also depend on provider/API mode. Restructure the loop or flush deliberately.
 
 ## Statement ordering
 
@@ -101,21 +112,24 @@ delete-then-insert.
 
 ## Identity map
 
-Within one unit of work, one row is one instance:
+Within one persistence context, one managed entity identity is one instance. For an
+existing row and ordinary unlocked identity lookup:
 
 ```java
-Order a = orders.byId(id).orElseThrow();
-Order b = orders.byId(id).orElseThrow();     // no SQL; same object
+Order a = em.find(Order.class, id);
+Order b = em.find(Order.class, id);           // managed identity lookup; normally no new SQL
 assert a == b;                                // guaranteed
 a.cancel(clock);
 assert b.isCancelled();                       // b is a, so of course
 ```
 
-This makes repeated loads free and makes aliasing correct rather than dangerous. Two
+This preserves managed identity, not a general query-result cache. JPQL/repository queries
+may execute SQL repeatedly and still resolve to the same managed object. Two
 practical consequences:
 
 - **A "refresh from the database" needs `em.refresh(entity)`.** Re-querying returns the
-  cached instance, so a second read cannot show you another transaction's committed change.
+  managed instance rather than refreshing its state. Refresh discards local changes and
+  remains subject to database isolation; it need not see a newer committed row in the same snapshot.
 - **`equals`/`hashCode` must be stable across the transition from transient to managed.** A
   generated identifier is null before persist; an `equals` based on it puts the entity in a
   `HashSet` under one hash and then changes it. Use a business key where one exists, or
@@ -138,28 +152,38 @@ Using it safely:
 ```java
 @Transactional
 public int expireAll(LocalDate date) {
+    em.flush();                        // preserve pending changes before bulk SQL/clear
     int updated = subscriptions.expireAll(date);
     em.clear();                        // loaded entities are now stale — discard them
     return updated;
 }
 ```
 
-And if the table is under optimistic locking, write the version increment into the
-statement (`set s.version = s.version + 1`), or accept that concurrent editors will not be
-detected for those rows (`offline-concurrency-control`).
+For versioned rows, an explicit increment (`set s.version = s.version + 1`) invalidates
+older managed copies. It does not validate the bulk writer's own expected version: add
+the relevant predicate and check affected-row counts if that precondition is required
+(`offline-concurrency-control`). Native SQL/triggers or provider-specific versioned bulk
+extensions may implement other rules; inspect them.
 
 ## Reading a persistence problem from the statement log
 
 Enable statement logging with a request identifier and read the shape:
 
-| Shape in the log                                 | Cause                                                                                              |
-| ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| One SELECT, then N similar SELECTs               | N+1 lazy load (`lazy-load.md`)                                                                     |
-| SELECT before every INSERT                       | `merge` on a transient entity, or an assigned identifier                                           |
-| UPDATE of columns the code never touched         | Dirty checking on a mutable field — a date, a collection reordered, a lazily initialised default   |
-| Repeated identical SELECT within one transaction | Not possible via the identity map — means separate contexts, i.e. `REQUIRES_NEW` or no transaction |
-| Flush in the middle of a loop                    | Query-triggered flush                                                                              |
-| Statements after the response was written        | Open Session In View                                                                               |
+| Shape in the log                                         | Cause                                                                                                                  |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| One SELECT, then N similar SELECTs                       | N+1 lazy load (`lazy-load.md`)                                                                                         |
+| SELECT before every INSERT                               | Inspect merge/newness detection, ID generation and application existence checks                                        |
+| UPDATE of columns the code never touched                 | An update may include unchanged columns by default; compare bound values, dirty state and dynamic-update configuration |
+| Repeated identical SELECT within one transaction         | Queries can execute repeatedly in one context; inspect query versus identity lookup before blaming context boundaries  |
+| Flush in the middle of a loop                            | Query-triggered flush                                                                                                  |
+| Statements during rendering or after response completion | Investigate lazy rendering, asynchronous work and transaction ownership; timing alone does not prove OSIV              |
 
-Hibernate's `Statistics` gives the same information numerically and is what a query-budget
-test should assert on (`architecture-and-performance`).
+Hibernate's `Statistics` supplies aggregate counters, not SQL text, parameter values or
+causal ownership. Use it with isolated query-budget tests and statement inspection
+(`architecture-and-performance`).
+
+Primary contracts: [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+(context lifecycle, merge, query flush mode and bulk updates) and
+[Hibernate 6.6 guide](https://docs.hibernate.org/orm/6.6/userguide/html_single/)
+(flush ordering, dirty checking and batching). Apply provider-specific details only to the
+matching runtime; these sources do not authorize a baseline upgrade.

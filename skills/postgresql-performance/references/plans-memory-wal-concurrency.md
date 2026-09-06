@@ -5,12 +5,25 @@
 Use the production statement shape and representative parameters. Read:
 
 1. first deep node where estimated and actual rows diverge;
-2. `loops`, because node timing is per loop;
+2. `loops`, because actual rows and node timing are averages per loop; multiply to estimate
+   total row work/node time, accounting for rounding and parallel worker detail;
 3. shared reads/hits and total buffers;
 4. hash `Batches > 1` and temporary I/O;
 5. external sort/disk evidence;
 6. `Heap Fetches` on index-only scans;
 7. rows removed by filter and residual work.
+
+Parent timing and buffer counters include child work: summing nodes double-counts it, and
+parallel node time is not elapsed wall time. Buffer hits/reads count accesses, not unique pages;
+a shared read can be served from the OS cache and does not prove physical device I/O. Rows removed
+are also per-loop averages where reported. LIMIT/early termination can explain partially consumed
+nodes; distinguish that from a cardinality estimate error. EXPLAIN execution time does not include
+all client transfer/materialization; correlate with application measurements.
+
+Apply the main skill's execution/scope checks before ANALYZE. Where supported, `TIMING OFF`
+reduces per-node clock overhead while retaining row counts and overall execution time; it does
+not prevent execution. Add WAL evidence when relevant, but do not treat per-statement WAL bytes
+as commit latency, fsync duration or total cluster WAL. Use interval counters and waits for those layers.
 
 Planner `cost` is dimensionless and anchored to relative cost constants. Calibrate a cost constant
 only from a representative plan population and hardware evidence; do not convert it to milliseconds
@@ -44,6 +57,13 @@ application boundary.
 REPEATABLE READ can raise serialization failures for concurrent update conditions; SERIALIZABLE uses
 SSI and may abort to prevent anomalies. Retry only operations with defined repeat safety and a bounded
 deadline/backoff policy.
+Retry the entire transaction, not only its final failed statement, and recompute decisions from
+the new snapshot. Investigating a blocker does not by itself justify terminating it; identify
+owner, transaction consequences and established operational authority.
 
 JIT trades fixed compilation for cheaper per-row work. Inspect compilation time and total execution;
 high plan cost with short OLTP execution can cross the threshold and regress latency.
+
+Sources: [Using EXPLAIN](https://www.postgresql.org/docs/18/using-explain.html),
+[EXPLAIN execution semantics](https://www.postgresql.org/docs/18/sql-explain.html), and
+[serialization failure handling](https://www.postgresql.org/docs/18/mvcc-serialization-failure-handling.html).

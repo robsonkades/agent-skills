@@ -3,8 +3,9 @@
 ## Choosing the axes
 
 Do not evaluate every option on every axis. Pick the axes on which the options **actually
-differ** and which this feature is **sensitive to**, and say why each was picked. Three or four
-axes is a normal number; twelve means the table is decoration.
+differ** and which this feature is **sensitive to**, and say why each was picked. Keep shared mandatory
+obligations as feasibility checks even when they do not distinguish options. Axis count is not a
+quality test; retain what can change feasibility or the recommendation.
 
 An axis qualifies when both are true:
 
@@ -38,10 +39,10 @@ An axis qualifies when both are true:
 adds a broker, a cache or a scheduler adds an upgrade path, a failure mode, an alert and a
 person who has to know about it. Price that, not just the API.
 
-**Reversibility.** Almost every other axis is an estimate; this one is close to a fact, and it is
-the correct tiebreak. An option contained behind one interface, with no persisted state and no
-published contract, can be undone in an afternoon. An option that changes a schema and starts
-accumulating rows cannot be undone at all — it can only be migrated away from.
+**Reversibility.** Inspect callers, data, deployments and operational commitments, and distinguish
+an estimate from a tested rollback. An interface may contain code changes but does not establish
+reversal cost. Persisted data may require migration, compensation or a forward fix; the schema
+name alone does not prove reversibility or irreversibility. State the conditions and validation.
 
 ## Writing a comparison that is not generic
 
@@ -55,11 +56,12 @@ Wrong:
 
 Right:
 
-> The named volume is 4,000 events a day, which either option absorbs without effort, so
-> throughput does not separate them. Replay does: the requirement to reprocess a day of events
-> after a downstream fix is satisfied by the log natively and by the table only if we keep
-> processed rows and add a reprocessing path — about a day of work and a second code path to
-> maintain. Against that, the broker is not currently operated by this team.
+> In this hypothetical feature, the named volume is 4,000 events a day, but peak arrival rate,
+> payload size and handler time are still unknown, so capacity is not established. The accepted
+> replay requirement needs retained input and a controlled reprocessing path for either option,
+> including duplicate-effect handling. Compare the existing table's retention/recovery facilities
+> with the log's configured retention and replay facilities, and measure the material capacity gap.
+> The broker is not currently operated by this team, so its adoption and support costs also matter.
 
 The second one can be argued with, which is the point.
 

@@ -1,7 +1,7 @@
 # Deoptimisation tooling
 
-Every invocation and every output line here was executed on Temurin 25.0.3 unless marked
-otherwise.
+Log excerpts below are prior Temurin 25.0.3 observations, not guarantees or a claim that every
+illustrative snippet was executed. Check the exact deployed build and recording configuration.
 
 ## Which tool for which need
 
@@ -17,7 +17,8 @@ otherwise.
 
 The first two see **uncommon traps only**. A CHA invalidation or a class redefinition
 produces no `jdk.Deoptimization` event and no `-Xlog:deoptimization` line; a production
-setup that collects only JFR will see the latency spike and not the cause.
+setup collecting only this JFR event misses the invalidation. Other enabled JFR event types
+may still provide class-loading, safepoint or agent context.
 
 ## Unified logging
 
@@ -43,8 +44,8 @@ Three things the levels do:
 - `info` emits nothing — the trap lines are at `debug`.
 - `trace` adds nothing over `debug` on 25.0.3; every line is tagged `[debug]`.
 - `jit+deoptimization` is not a tag set. The JVM warns and **starts anyway**, which is how
-  an empty file gets read as "nothing happened". Check the file is non-empty before
-  reasoning from it. The warning:
+  an empty file gets read as "nothing happened". Verify accepted settings and collection
+  coverage; a valid empty log can mean zero observed traps. The warning:
 
   ```
   No tag set matches selection: jit+deoptimization. Did you mean any of the following? deoptimization jit+thread jit+inlining jit+compilation
@@ -117,16 +118,17 @@ here).
 try (RecordingFile rf = new RecordingFile(Path.of("deopt.jfr"))) {
     Map<String, Map<String, Long>> byMethodAndReason = new HashMap<>();
 
-    rf.readAllEvents().stream()
-        .filter(e -> e.getEventType().getName().equals("jdk.Deoptimization"))
-        .forEach(e -> {
-            String site = e.getString("method.type.name") + "::"
-                        + e.getString("method.name") + "@" + e.getInt("bci");
-            String key = e.getString("reason") + "/" + e.getString("action");
-            byMethodAndReason
-                .computeIfAbsent(site, k -> new HashMap<>())
-                .merge(key, 1L, Long::sum);
-        });
+    while (rf.hasMoreEvents()) {
+        RecordedEvent e = rf.readEvent();
+        if (!e.getEventType().getName().equals("jdk.Deoptimization")) continue;
+        RecordedMethod method = e.getValue("method");
+        String site = method.getType().getName() + "#" + method.getType().getId() + "::"
+                    + method.getName() + method.getDescriptor() + "@" + e.getInt("bci");
+        String key = e.getString("reason") + "/" + e.getString("action");
+        byMethodAndReason
+            .computeIfAbsent(site, k -> new HashMap<>())
+            .merge(key, 1L, Long::sum);
+    }
 
     byMethodAndReason.entrySet().stream()
         .sorted((a, b) -> Long.compare(
@@ -139,6 +141,13 @@ try (RecordingFile rf = new RecordingFile(Path.of("deopt.jfr"))) {
         });
 }
 ```
+
+This partial Java 11+ consumer snippet needs `java.nio.file.Path`, `java.util.*` and
+`jdk.jfr.consumer.*` imports and an enclosing method that handles `IOException`. Streaming
+avoids retaining every event; the aggregation still grows with unique sites. Class IDs separate
+same-named classes in this recording; descriptors separate overloads. For fleet/long-window
+analysis include JVM identity, time buckets and compile ID as additional dimensions. Counts alone
+do not prove decay, and IDs are not stable identities across JVM restarts.
 
 Group by site (method **and** bci), not by method: a method that traps once at each of forty
 sites during warm-up is converging; one that traps forty times at one site with `action`
@@ -294,7 +303,7 @@ it.
 
 ## Session checklist
 
-- [ ] Tag and level confirmed as `deoptimization=debug`, and the log file is not empty
+- [ ] Tag/level, time window and collection coverage confirmed; zero events distinguished from missing data
 - [ ] `jit+compilation=debug` and `dependencies=debug` collected in the same session, or
       class-loading invalidations are invisible
 - [ ] JFR field names and reason strings confirmed with `jfr print` on this runtime —
@@ -307,11 +316,12 @@ it.
       recompilation occurred
 - [ ] If the fix narrowed a static type or made a class `final`, no other code path depended
       on subclassing it
-- [ ] No diagnostic flag left active outside the investigation session
+- [ ] Temporary diagnostics restored to the prior configuration after the investigation
 
 ## Authoritative sources
 
 - [JDK 25 HotSpot `deoptimization.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/deoptimization.cpp)
 - [JDK 25 JFR event definitions](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml)
 - [JDK 25 `jcmd` documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+- [RecordingFile API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/consumer/RecordingFile.html) — streaming traversal and static `readAllEvents(Path)`.
 - [JDK-8154011: make `TraceDeoptimization` diagnostic](https://bugs.openjdk.org/browse/JDK-8154011)

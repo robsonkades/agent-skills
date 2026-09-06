@@ -1,7 +1,7 @@
 ---
 name: caching-strategies
 description: >
-  Deciding whether to cache, then doing it safely: the h × T_source criterion, bounded size
+  Deciding whether to cache, then doing it safely: saved origin work and latency, bounded size
   or weight, TTL and jitter, stampede and its four distinct scopes, cache-aside versus
   refreshAfterWrite, immutable DTOs rather than JPA entities, invalidation across instances,
   Redis serialisation, and why hit rate alone is a misleading metric. Use when a cache is
@@ -24,6 +24,13 @@ show excellent hit rate; correctness, memory and origin protection must be measu
 
 ## Workflow
 
+Inspect the target's Maven/Gradle release/toolchain, resolved Caffeine/Spring Data/Jackson
+versions, runtime image and cache configuration before choosing APIs. No universal Java baseline
+is declared here; the configuration reference states its example baseline. Preserve project
+versions and do not enable preview features or upgrade dependencies to fit an example. If workload,
+freshness requirements or measurements are absent, identify the gap and offer a conditional
+decision and measurement plan rather than inventing a hit rate or safe TTL.
+
 1. **Measure source cost and capacity** (latency distribution, CPU/I/O and rate) before deciding.
    Even a sub-millisecond lookup may matter at very high volume; latency alone is not the case.
 2. **Measure the access distribution** and estimate `h` for the intended `maximumSize`.
@@ -34,7 +41,8 @@ show excellent hit rate; correctness, memory and origin protection must be measu
    allocator/GC headroom and concurrent load buffers; a weigher's logical bytes are not measured
    heap retention. Validate with heap/allocation evidence under representative occupancy.
 5. **Set a TTL from the business tolerance for stale data**, and add jitter if entries are
-   created in bulk.
+   created in bulk. Keep the longest jittered lifetime inside that tolerance, accounting for
+   source lag and load time. Access-based expiry does not bound the age of frequently read data.
 6. **Define the invalidation strategy and write an automated test for it** — propagation is
    the part that silently stops working.
 7. **Instrument outcomes**: request-weighted and byte-weighted hit/miss, origin rate and load
@@ -57,8 +65,9 @@ show excellent hit rate; correctness, memory and origin protection must be measu
   collaborator is often clearer than self-injection.
 - Never cache an operation with a side effect. `@Cacheable` on something that _creates_
   means that on a hit the thing is not created and the cache asserts that it was.
-  Idempotency belongs to durable storage — a keys table with a unique constraint. A cache
-  can accelerate the lookup of that table; it can never replace it.
+  For idempotency that must survive eviction, restart and retries, use a durable record with an
+  atomic relationship to the effect; a unique key alone does not supply that relationship.
+  Delegate the operation contract to `idempotency`.
 - Stampede has several scopes: jitter desynchronizes bulk expiry; singleflight/`LoadingCache`
   coalesces per key only within its process/cache instance unless backed by distributed
   coordination; `refreshAfterWrite` serves an old value while a hot-key refresh runs; staged
@@ -66,35 +75,50 @@ show excellent hit rate; correctness, memory and origin protection must be measu
   global cold cache. Probabilistic early expiration reduces the spike, it does not remove
   it — and the correct form is `P = exp(−(expiry − now) / (β · δ))`, with β in the
   denominator and `δ` representing measured recomputation duration. Validate the algorithm and
-  clock/units rather than copying the equation without its assumptions.
+  clock/units rather than copying the equation without its assumptions: require positive β and
+  δ, consistent time units, and treat already expired entries as misses rather than probabilities
+  greater than one.
 - `FLUSHALL` in a deploy pipeline is a stampede generator. If the service needs the cache to
   serve its load, the cache is an **availability** component, not a performance one. For a
-  format change, version the key prefix instead.
+  format change, version the key prefix, but stage and rate-limit warming: switching every
+  caller to an empty namespace is also a cold-cache event. Budget old/new namespaces together.
 - Spring Data Redis defaults `RedisTemplate`/`RedisCache` to JDK serialization in current
   documentation; override it explicitly. Prefer a typed schema/serializer. In Spring Data Redis
   4, Jackson 3 uses `JacksonJsonRedisSerializer<T>` or `GenericJacksonJsonRedisSerializer`;
   Jackson-2-named serializers are deprecated, and the old generic serializer enabled default
   typing by default. Do not solve lost type information by enabling payload-selected classes
   (java-serialization-hardening).
-- Redis pub/sub is fire-and-forget, so the L1 TTL is a staleness bound, not redundant delivery. An
-  instance disconnected at publish time misses the message and serves stale data until the
-  TTL; with no TTL it can survive until eviction/write. Publish only after a successful commit,
+- Redis pub/sub is fire-and-forget. An L1 TTL limits local retention, not end-to-end staleness:
+  expiry may refill from an already stale L2 or origin replica. Derive the age budget across
+  layers, propagate versions/remaining freshness, or reload from a sufficiently fresh source.
+  Publish only after a successful commit,
   but recognize that an `AFTER_COMMIT` listener can crash before publishing. Use an outbox/CDC or
   version-checked reads where bounded reliable invalidation is required.
 - Cache-aside has races: an old slow read can fill after a newer write invalidates, resurrecting
-  stale data. Use versioned values/keys, compare-and-set fills, write-through/CDC, or a tolerated
-  TTL according to the consistency requirement.
+  stale data. A version field alone does not reject the old fill. Define the check against the
+  authoritative version or invalidation watermark, including absent entries and deletes.
+  Write-through/CDC still need ordering against concurrent fills; use a tolerated stale window
+  only when the consistency requirement permits it.
 - A key is an authorization boundary. Include tenant, locale, entitlement/principal dimensions
   that affect the result; canonicalize them; never let one tenant reuse another's cached response.
   Avoid secrets/PII in keys because keys appear in metrics, logs and admin tools.
 - Negative caching protects against penetration only with a short bounded TTL and input/cardinality
   controls. Caching every attacker-chosen miss is itself an unbounded-memory attack.
 
+## Deliverable
+
+For a design/review, return the cache/no-cache decision, measured inputs and assumptions, key/value
+contract, memory/freshness bounds, invalidation race handling and origin-outage policy. State the
+targeted tests and acceptance bounds. For an incident, report evidence, competing hypotheses and
+the next discriminating measurement; do not label an untested hypothesis a confirmed fix.
+
 ## Primary sources
 
 - [Spring Data Redis object mapping and serializers](https://docs.spring.io/spring-data/redis/reference/redis/template.html)
 - [Spring Data Redis 4 migration guide](https://docs.spring.io/spring-data/redis/reference/upgrading.html)
 - [Caffeine refresh semantics](https://github.com/ben-manes/caffeine/wiki/Refresh)
+- [Caffeine 3.2.2 API](https://www.javadoc.io/static/com.github.ben-manes.caffeine/caffeine/3.2.2/com.github.benmanes.caffeine/com/github/benmanes/caffeine/cache/Caffeine.html)
+- [Redis Pub/Sub delivery](https://redis.io/docs/latest/develop/pubsub/)
 - [Redis key eviction](https://redis.io/docs/latest/develop/reference/eviction/)
 
 ## References

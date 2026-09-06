@@ -129,6 +129,19 @@ Run the exact pinned differential pipeline and record which sign/color means add
 removed. Palettes differ between classic FlameGraph, async-profiler HTML, JMC, and other
 backends. Colors in a normal graph may encode language/frame type or be decorative.
 
+Record the width basis separately from the color delta and whether that delta is self or
+inclusive. Classic FlameGraph uses the second profile's widths and colors direct/self change;
+an unchanged parent color need not mean its descendants are unchanged. In this fixture,
+`removed` has zero candidate width and can be absent, rather than visibly blue. Inspect the raw
+pair and both ordinary graphs; for the classic scripts a complementary view reverses input
+order and uses `flamegraph.pl --negate` to retain the original change-color meaning while
+drawing baseline widths. Verify these semantics against the actual pinned converter.
+
+The fixture passes only if totals remain 100/100, `stable` remains unchanged, `added` is +20,
+and `removed` is -20 in the raw comparison. A candidate-width view need not display `removed`;
+the complementary view must expose it. Check actual output rather than claiming the fixture
+was executed from these expected values alone.
+
 ### Use repeated trials
 
 One pair is descriptive. For a regression decision, collect randomized/paired independent

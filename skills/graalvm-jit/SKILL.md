@@ -34,9 +34,16 @@ compiler carried across compiler versions that changed the answer.
 
 ## Workflow
 
+Inspect the project's toolchain, runtime image, exact distribution/build, flags and CPU/
+memory limits first. The examples here target HotSpot/GraalVM JDK 25; they do not authorize
+upgrading an older project or changing its distribution. Return the observed compiler/mode,
+comparison conditions and result with uncertainty, then a conditional recommendation and
+the measurement that would confirm it. Missing profiles or compiler evidence mean the
+migration benefit remains unproven.
+
 1. **Establish which product is under discussion.** GraalVM JIT compiles at runtime with a
    JVM present, optimising peak throughput at the cost of start-up. Native image compiles at
-   build time with no JVM at runtime, optimising instant start-up at the cost of adaptive
+   build time with its own runtime rather than HotSpot, targeting faster start-up at the cost of adaptive
    optimisation. Opposite trade-offs; treating them as one thing produces migration mistakes
    in both directions.
 2. **Establish where Graal can even come from for this JDK.** In 2026 that is a GraalVM
@@ -62,7 +69,7 @@ shared library` is libgraal, `loaded from class files` is jargraal. The JFR
 6. **Read the result against the workload shape and the compiler version,** not against
    expectation. GraalVM Community 25.3 gained loop vectorisation and a new default inliner;
    a prior formed on 25.0 is stale. See `references/workload-fit-and-migration.md`.
-7. **Check the gate conditions before migrating:** long-running uptime, consistent wins across
+7. **Check the gate conditions before migrating:** measured lifetime break-even, consistent wins across
    runs, native image considered if the critical metric is start-up, the licence confirmed
    at the official source, and a support horizon for the GraalVM line now that it is
    detached from the Java SE release train.
@@ -74,8 +81,9 @@ shared library` is libgraal, `loaded from class files` is jargraal. The JFR
 
 - GraalVM JIT replaces the tier-4 compiler only. On GraalVM CE 25.0.2 `TieredCompilation`,
   `TieredStopAtLevel`, the `Tier3`/`Tier4` thresholds and the G1 default are byte-for-byte
-  HotSpot's. Any claim that it changes GC behaviour, threading or the tiering ladder is
-  wrong; the whole C2 tier-ladder diagnosis in `c2-sea-of-nodes` still applies.
+  HotSpot's in that build. Replacing the compiler does not replace those subsystems, but
+  changed allocation, generated code and compiler CPU usage can change observed GC,
+  scheduling and tier progression. Recheck target-build ergonomics and collector support.
 - JVMCI (JEP 243, JDK 9) is the interface that makes this possible, and it **survived**
   JEP 410. JEP 410 (JDK 17) removed `jdk.aot`, `jdk.internal.vm.compiler` and its
   management module from OpenJDK and kept `jdk.internal.vm.ci`. JDK 22 onwards carries an
@@ -86,8 +94,9 @@ specified by jvmci.Compiler not found`. Galahad was dissolved in March 2026. Usi
 - On a stock JDK the JVMCI flags are `{JVMCI experimental}` and need
   `-XX:+UnlockExperimentalVMOptions` first; on GraalVM they are `{JVMCI product}` and need
   nothing. The stock-JDK failure is **late** — at the first compile request, not at
-  start-up. `-XX:+BootstrapJVMCI` moves it to start-up, which is the only safe way to put
-  the flag in a launch script.
+  start-up. `-XX:+BootstrapJVMCI` can expose it in an isolated preflight; it adds compilation
+  work and is not a mandatory production launch flag. A representative hot-code smoke test
+  with compiler evidence is another validation route.
 - Graal options use the `-Djdk.graal.` prefix (GraalVM for JDK 22 onwards). `-Dgraal.`
   still works with a deprecation warning on 25.0 and without one on 25.1. An option name
   Graal does not know is **fatal at start-up** — `Error parsing Graal options: Could not
@@ -113,7 +122,9 @@ find option X` — so never carry a flag across versions unlisted: `-XX:+JVMCIPr
   ahead of time into `libjvmcicompiler`, so it pays no warm-up of its own. jargraal
   (`-XX:-UseJVMCINativeLibrary`) runs as bytecode **and is compiled by C1 only**
   (`CompileGraalWithC1Only=true`), so its penalty is per compilation for the life of the
-  process, not a warm-up that ends: a 25 ms C2 run took ~310 ms under jargraal on CE 25.0.2.
+  process while new compilations occur. That does not imply a permanent application
+  slowdown: once hot code is installed, compilation costs can be amortised. Measure
+  compilation CPU and the complete workload lifetime separately.
   The `(gc=Serial GC)` in the libgraal configuration line is the compiler isolate's own GC,
   not the application's.
 - Compiler configurations are `community` and `economy` on CE; `enterprise` exists only on
@@ -135,8 +146,9 @@ find option X` — so never carry a flag across versions unlisted: `-XX:+JVMCIPr
 - The two distributions are Oracle GraalVM (GFTC, Oracle JDK base) and GraalVM CE (GPLv2 with
   Classpath Exception, OpenJDK base). Since September 2025 GraalVM is detached from the Java
   SE release train: Oracle JDK 24 was the last Oracle JDK with a bundled Graal JIT, GraalVM
-  25.x ships monthly innovation releases on a JDK 25 base, and no OpenJDK-integrated Graal
-  is coming. Licence **and support horizon** are both gates; JDK 17 CPU releases already
+  25.x ships monthly innovation releases on a JDK 25 base. The dissolved Galahad project
+  is no delivery commitment for future OpenJDK integration. Licence **and support horizon**
+  are both gates; JDK 17 CPU releases already
   moved from GFTC to the OTN licence. Confirm at the official source before a corporate
   decision.
 - Truffle languages (GraalJS, GraalPy) need the Graal compiler for partial evaluation. On

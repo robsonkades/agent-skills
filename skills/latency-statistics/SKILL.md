@@ -29,10 +29,13 @@ Latency is a distribution. Every rule here follows from that one fact.
    treatment, quantile definition, observation window and grouping. “Endpoint p99” is
    incomplete until these are fixed.
 2. **Preserve denominator and missingness.** Report offered, admitted, completed, failed,
-   cancelled, timed-out and dropped counts. A timeout is right-censored at its deadline unless
-   the eventual completion is observed; excluding it biases the distribution toward success.
+   cancelled, timed-out, dropped and still-in-flight counts. Time to an observed timeout
+   response is a terminal duration; time to an unobserved eventual completion may instead
+   be right-censored. State which variable is being estimated; excluding timeouts selects
+   a different, success-only population.
 3. **Select statistics by decision.** Quantiles answer threshold/tail questions; the mean
-   answers expected latency and aggregate service demand; threshold fractions directly answer
+   answers expected latency for that population, not CPU/service demand unless that is
+   what the clock measures. Threshold fractions directly answer
    “what proportion met 300 ms?”. Include counts and uncertainty. Do not prescribe the same
    p50/p90/p99 set for every decision.
 4. **Inspect distribution and time.** Use histograms or empirical CDFs plus a time view. A
@@ -52,6 +55,9 @@ Latency is a distribution. Every rule here follows from that one fact.
 
 ## Rules
 
+- The statistical rules have no Java baseline. Before implementing the partial instrumentation
+  examples, inspect the project's JDK, resolved HdrHistogram/Micrometer versions and registry/
+  backend support; adopting this skill does not authorize upgrades.
 - A sample quantile exists even for small `n`, but may be almost entirely determined by the
   largest observations and have wide population-quantile uncertainty. Record `n`, the
   estimator/interpolation rule, and an interval or rank bounds; never relabel it “undefined”.
@@ -98,7 +104,7 @@ Decision:           ship, reject, collect more evidence; guardrails and rollback
   percentile is suspect.
 - [Comparing two measurements](references/comparing-two-measurements.md) — tail resolution,
   experimental units, hierarchical replication, paired contrasts, resampling and how to report the
-  difference. Read at step 6, whenever two p99s are about to be called different or equal.
+  difference. Read at step 8, whenever two p99s are about to be called different or equal.
 - [Coordinated omission](references/coordinated-omission.md) — what it is, why it
   misleads in two directions at once, and how to detect and correct it. Read when the
   number came from a load generator or a fixed-rate producer.

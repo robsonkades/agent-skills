@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-feasibility-experiment
-version: 1.0.0
+version: 1.0.1
 description: >-
   Designing and evaluating the smallest PoC or experiment that resolves one decision-relevant
   uncertainty in a Product Feature or Tech Feature. Use when feasibility, compatibility, capacity,

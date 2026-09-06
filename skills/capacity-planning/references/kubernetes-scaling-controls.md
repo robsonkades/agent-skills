@@ -18,6 +18,13 @@ input even if workload CPU is unchanged. CPU limits can add quota throttling; re
 scheduling and relative shares. QoS class concerns eviction and allocation policy, not a guarantee
 of latency or CPU headroom.
 
+Do not let VPA and HPA independently control the same CPU/memory resource metric without
+checking the installed versions' supported interaction. VPA request changes can move the
+HPA utilization denominator and create feedback unrelated to demand. Consider VPA
+recommendation-only mode or an HPA custom/external signal whose relationship to demand has
+been validated. Review the [VPA known limitations](https://github.com/kubernetes/autoscaler/blob/master/vertical-pod-autoscaler/docs/known-limitations.md)
+for the deployed version and replay both controllers together before enabling changes.
+
 The JVM may observe a changed processor count while boot-derived GC, JIT, common-pool or scheduler
 sizes remain fixed. Verify the exact JDK and effective runtime values; choose pod replacement when
 those ergonomics must be recomputed. Test controller delay, metric delay, scheduling delay, warm-up,

@@ -1,235 +1,192 @@
 # Persistence and Concurrency Tests
 
-## Against the real engine
+## Fixture and environment contract
+
+Use an isolated database of the production engine family/version with relevant extensions,
+collation, isolation, permissions and timezone. A container supplies an engine, not automatic
+production equivalence. A compatible local database can also work; an alternative in-memory
+engine is useful only for claims that do not rely on its differing semantics.
+
+Apply production migrations rather than letting ORM schema generation create a substitute.
+Check datasource wiring: a test slice can otherwise replace the intended database. Match
+Spring Boot/Testcontainers modules and connection configuration to the project's versions.
+Use container reuse only with explicit data isolation and cleanup. The Testcontainers JUnit 5
+extension documents parallel-execution limitations; do not assume a static container is safe
+for concurrently mutating tests.
+
+Read [Testcontainers JUnit 5 support](https://java.testcontainers.org/test_framework_integration/junit_5/)
+for lifecycle/parallel constraints (checked 2026-09-05). No container/database test was executed
+as part of this documentation revision.
+
+## Mapping and constraints
+
+For a mapping round trip, persist a representative object with child collections, nulls and
+value conversions as applicable, then flush and clear the persistence context before reloading.
+Clearing prevents a first-level identity-map hit, but not a second-level cache hit. For database
+read fidelity, disable/evict relevant caches or use an independent database read. Assert the
+business-relevant values, not just identity or “save returned something.”
+
+A stronger durability check commits the write and reads in a fresh transaction. A flush-only
+test does not prove commit-time constraints or successful commit. Let the assertion encompass
+the point where the engine actually enforces the constraint.
+
+For duplicate-key/constraint tests, make the conflicting state deliberate and otherwise valid.
+Assert the database failure or the translated application error at the boundary you exercise.
+A direct EntityManager flush may throw a JPA/provider exception rather than Spring's translated
+DataIntegrityViolationException. Do not assert the latter unless translation actually surrounds
+that operation. Avoid driver-message substring matching; use the owned translation contract
+and, when needed, a vendor-aware SQL-state/constraint adapter.
+
+Sources: [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+for persistence contexts, locking and bulk operations; implementation timing must still be tested.
+
+## Query budgets without false greens
+
+Write the budget contract first: endpoint or repository operation, result shape/page, count
+query included or excluded, cache state and what “query” means. Prepared-statement creation,
+SQL execution and network round trips are different counters.
+
+Hibernate Statistics is SessionFactory-wide and must be enabled with
+`hibernate.generate_statistics=true` or `setStatisticsEnabled(true)`. Assert it is enabled.
+`getPrepareStatementCount()` counts prepared statements acquired; it is not a universal
+round-trip counter and misses database access outside that factory.
+
+For a cold-path N+1 test:
+
+1. Seed and commit data before measurement. Clear the first-level context and control second-level/
+   query caches. Use several roots and related rows, plus the actual pagination shape.
+2. Isolate the factory from parallel tests/background jobs, or use an operation-attributed datasource
+   counter with demonstrated coverage. Resetting a global counter is not isolation.
+3. Prove instrumentation is live using a known query outside the measured operation.
+4. Capture the baseline; execute the operation and consume/map/serialize the fields the caller
+   actually uses, within the intended transaction/session boundary. Include lazy loads triggered
+   by response rendering if the promise is endpoint cost.
+5. Assert the result as well as the count bound. Check a larger cardinality when growth is the risk;
+   a low count because the operation returned no data is not success.
+6. Introduce a known extra fetch or lazy N+1 in an isolated verification run: it must breach the
+   chosen bound. Restore the valid path. If it does not fail, investigate scope/caches before
+   changing the threshold.
+
+A bound is appropriate for a maximum-cost contract; an exact count can be appropriate when exact
+interaction is the promise. Neither proves a good query plan or latency. Keep plan/capacity
+measurements in a suitable environment with representative data and statistics, including
+dedicated CI where available (`load-testing`, `architecture-and-performance`).
+
+Source: [Hibernate 6.6 Statistics](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/stat/Statistics.html),
+checked 2026-09-05; adapt instrumentation to the actual ORM version.
+
+## Transaction boundaries: observe durable outcomes
+
+For a local two-write atomicity promise, use the real transaction-managed application entry
+point. Do not wrap the test invocation in its own transaction: an outer test transaction can
+make a missing application transaction appear correct. Arrange fixtures in a committed transaction.
+
+Test protocol:
+
+    Given: committed baseline and a positive control where both writes persist
+    Invoke: real use case without a test-owned outer transaction
+    Fault: deterministic failure after the first write is issued, before completion
+    Observe: after the call ends, query both effects from a new independent transaction
+    Expect: no partial durable state; the documented application error is returned
+    Sensitivity: removing/bypassing the use-case transaction must make this check fail
+
+Do not inject failure before any write and call that rollback coverage. Use the real write
+path; a fake collaborator may inject the failure but cannot establish durable rollback.
+A separate success control prevents “nothing was ever persisted” from looking atomic.
+Check the relevant record identity rather than asserting an entire shared table is empty.
+
+Spring's usual declarative default rolls back unchecked exceptions, not checked ones.
+Inspect actual rollback rules and configured global defaults before asserting the behavior.
+Test a checked exception only when it belongs to the use-case contract. An annotation's
+presence/location does not prove the invocation passed through the transaction mechanism.
+
+Database rollback does not undo a remote payment, sent email or non-transactional publish.
+If the promise spans systems, identify outbox/compensation/delivery semantics and route
+transaction design to `enterprise-transactions`; do not pretend this local test proves it.
+
+Sources checked 2026-09-05:
+[Spring test transactions](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/tx.html)
+and [rollback rules](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html).
+Thread-bound tests and preemptive timeouts require particular care.
+
+## Stale writes and concurrent edits
+
+Choose the schedule the contract needs:
+
+- **Stale version rejection:** read version v, commit a real change in another transaction,
+  then attempt to persist the stale state through the actual update/merge path. This can be
+  driven sequentially; it verifies version checking, not overlapping execution.
+- **Two overlapping optimistic edits:** each worker opens its own transaction and persistence
+  context, reads the same committed version, waits at a timed barrier after the read, makes
+  a distinct actual change, then flushes/commits. Seed outside both workers and provide at
+  least two usable database connections.
+
+For the second scenario, exactly one success is appropriate only for two version-checked
+updates to the same row with automatic retries disabled and an isolation mode that permits
+this schedule. Expect the documented optimistic conflict at the real translation boundary;
+a serialization error, pool timeout or broken barrier is not interchangeable with that conflict.
+
+Assert both worker outcomes and the durable final payload/version from a fresh transaction.
+For a numeric version with ordinary single-update increments, check the expected increment;
+do not require numeric +1 for timestamp or custom version strategies. Distinct new values
+let you identify the winner and detect accidental no-op updates.
+
+Bound barrier waits, future waits, connection acquisition and database lock/statement execution.
+Propagate worker failures to the test thread. In finally, release/break barriers, cancel tasks,
+shut down the executor, and await termination with a bound. Clean the isolated fixture only
+after confirming that workers have stopped. JDBC
+cancellation is driver-dependent; use an outer process/job deadline as a last resort.
+Check the termination result: surviving workers fail the test. Do not clean or reuse their
+fixture while they can still write; terminate the isolated test process and discard its database
+scope before allowing reuse. Preserve interruption when cleanup catches InterruptedException.
+Java 21+ ExecutorService.close() waits for completion, so try-with-resources alone does not
+bound a deadlocked test. On Java 17, use platform-thread executors with explicit shutdown and
+bounded awaitTermination; ExecutorService is not AutoCloseable there. Virtual threads do not
+create more database connections.
+
+Sources: [Java 21 ExecutorService lifecycle](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html)
+and [Java 17 API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ExecutorService.html).
+For the concurrency policy itself, see `offline-concurrency-control`.
+
+## Bulk updates and deadlocks
+
+JPQL bulk updates bypass ordinary optimistic checks and do not synchronize the persistence
+context. Test the declared policy: if bulk changes must invalidate stale writers, explicitly
+advance/check versions as designed, reload in a fresh context, and verify the stale writer
+cannot overwrite the bulk result. A version increment alone is insufficient evidence of the
+whole policy. Not every bulk job has that policy; do not impose it without the contract.
+
+A start latch only starts workers together; it does not force a lock cycle. To reproduce a
+suspected deadlock, instrument the unsafe acquisition points so each transaction owns its
+first different lock before requesting the second, with engine-level diagnostics and bounds.
+Do not reuse that barrier placement for a corrected common lock order: the second worker may
+legitimately block before reaching the barrier, deadlocking the test harness itself.
+
+For remediation, test acquisition order directly where possible, then test completion, final
+invariants and bounded whole-transaction retry if that is the chosen policy. Separate controlled
+reproduction from stress sampling. Repeated success does not prove deadlocks are impossible.
+
+## Migrations: bootstrap, upgrade and validation
+
+Test both empty bootstrap and upgrades from supported prior schema/data states. Include relevant
+nulls, duplicate candidates, backfills and old/new app coexistence. Use the same migration options
+and privileges as deployment. Schema-history validation does not prove arbitrary schema fidelity,
+data preservation, lock duration or rollback safety.
+
+For Flyway 11.8.2, the API distinction is:
 
 ```java
-@SpringBootTest
-@Testcontainers
-class OrderPersistenceTest {
-
-    @Container
-    @ServiceConnection
-    static final PostgreSQLContainer<?> DB = new PostgreSQLContainer<>("postgres:16");
-
-    // Migrations run from empty, exactly as in production.
-}
+// Inside a test with a configured Flyway instance and JUnit assertions:
+flyway.migrate(); // fails by exception if migration fails
+var validation = flyway.validateWithResult();
+assertTrue(validation.validationSuccessful);
+// Only when no pending/repeatable migration or callback is expected to do more work:
+assertEquals(0, flyway.migrate().migrationsExecuted);
 ```
 
-An in-memory database differs in every dimension this file is about: constraint enforcement,
-locking, isolation, dialect and plan behaviour. A `SELECT ... FOR UPDATE` that does not block,
-a check constraint that is not applied, an `OptimisticLockException` that never fires — all
-pass in memory and fail in production.
-
-Reuse containers at a scope that preserves isolation and acceptable runtime; per-test containers
-may be justified for destructive or parallel scenarios. Use the production engine family and a
-supported version representative of production, then let migrations create the schema.
-
-## Mapping round trips
-
-```java
-@Test
-void order_round_trips_with_its_lines_and_embedded_money() {
-    var order = Order.draftFor(customer, clock);
-    order.addLine(productId, 3, Money.of(new BigDecimal("19.90"), "BRL"));
-    var saved = orders.save(order);
-
-    em.flush();
-    em.clear();                                  // force a real read, not the identity map
-
-    var loaded = orders.byId(saved.id()).orElseThrow();
-    assertThat(loaded.total()).isEqualTo(Money.of(new BigDecimal("59.70"), "BRL"));
-    assertThat(loaded.lines()).hasSize(1);
-    assertThat(loaded.version()).isEqualTo(saved.version());
-}
-```
-
-`em.clear()` is the load-bearing line. Without it the assertion reads the same instance the
-test just built and proves nothing about the mapping
-(`orm-behavioral-patterns`).
-
-## Constraints are tested, not assumed
-
-```java
-@Test
-void duplicate_email_is_rejected_by_the_database() {
-    customers.save(new Customer(new Email("ana@example.com")));
-    em.flush();
-
-    assertThatThrownBy(() -> {
-            customers.save(new Customer(new Email("ana@example.com")));
-            em.flush();
-        })
-        .isInstanceOf(DataIntegrityViolationException.class);
-}
-```
-
-If application error translation intentionally depends on a named constraint, test the translated
-domain/API outcome and inspect the vendor-specific cause or SQL state through a dedicated adapter.
-Matching a framework exception message is brittle across drivers and dialects
-(`enterprise-base-patterns`).
-
-## Query budgets
-
-```java
-abstract class QueryBudgetTest {
-
-    @Autowired EntityManagerFactory emf;
-
-    protected long statements() {
-        return emf.unwrap(SessionFactory.class).getStatistics().getPrepareStatementCount();
-    }
-
-    @BeforeEach void resetStatistics() {
-        emf.unwrap(SessionFactory.class).getStatistics().clear();
-    }
-}
-
-class OrderListBudgetTest extends QueryBudgetTest {
-
-    @Test
-    void listing_25_orders_costs_at_most_2_queries() {
-        givenOrders(25, withLines(4));                 // enough rows for an N+1 to show
-        long before = statements();
-
-        orderQueries.search(new OrderSearch(...), PageRequest.of(0, 25));
-
-        assertThat(statements() - before).isLessThanOrEqualTo(2);
-    }
-}
-```
-
-Two details decide whether this test works: **enough rows** (an N+1 with one row looks like
-one query) and asserting a **bound**, not an exact number, so an unrelated change does not
-produce a false failure (`architecture-and-performance`).
-
-## Transaction boundaries, asserted by outcome
-
-```java
-@Test
-void a_failure_in_the_second_write_rolls_back_the_first() {
-    when(inventory.reserve(any(), any())).thenThrow(new InventoryUnavailable());
-
-    assertThatThrownBy(() -> placeOrder.place(command))
-        .isInstanceOf(OrderCannotBeFulfilled.class);
-
-    // The assertion that matters: nothing was left behind.
-    assertThat(jdbc.sql("select count(*) from customer_order").query(Long.class).single())
-        .isZero();
-}
-
-@Test
-void a_checked_business_exception_still_rolls_back() {
-    // Guards the default: checked exceptions do NOT roll back unless declared.
-    assertThatThrownBy(() -> settlement.settle(invoiceId)).isInstanceOf(InsufficientFunds.class);
-    assertThat(invoiceStatusInDatabase(invoiceId)).isEqualTo("OPEN");
-}
-```
-
-The second test guards a real default that surprises people and is invisible in review
-(`enterprise-transactions`).
-
-## Optimistic locking, with two threads
-
-```java
-@Test
-void concurrent_edits_produce_exactly_one_winner() throws Exception {
-    var loaded = new Phaser(2);
-
-    Callable<Boolean> edit = () -> {
-        try {
-            transactionTemplate.executeWithoutResult(status -> {
-                var order = orders.byId(orderId).orElseThrow();
-                loaded.arriveAndAwaitAdvance(); // both transactions hold the same version before either writes
-                order.changeShippingAddress(new Address("..."));
-            });
-            return true;
-        } catch (OptimisticLockingFailureException e) {
-            return false;
-        }
-    };
-
-    try (var pool = Executors.newVirtualThreadPerTaskExecutor()) {
-        var a = pool.submit(edit);
-        var b = pool.submit(edit);
-        assertThat(List.of(a.get(), b.get())).containsExactlyInAnyOrder(true, false);
-    }
-    assertThat(orders.byId(orderId).orElseThrow().version()).isEqualTo(initialVersion + 1);
-}
-```
-
-Requirements: real transactions (not a single test transaction that would serialise them),
-a barrier after both reads so both writers hold the same version, and an assertion on the **final version**
-as well as the outcomes — a test that only checks the exception passes even if both writes
-landed (`offline-concurrency-control`).
-
-## A bulk update must not defeat versioning
-
-```java
-@Test
-void bulk_expiry_increments_the_version() {
-    var before = orders.byId(orderId).orElseThrow().version();
-    orderBulk.expireAllBefore(LocalDate.now());
-    em.clear();
-    assertThat(orders.byId(orderId).orElseThrow().version()).isGreaterThan(before);
-}
-```
-
-This is the test for the most common way optimistic locking is silently disabled: a JPQL or
-native bulk statement that does not touch the version column.
-
-## Deadlock reproduction
-
-```java
-@Test
-void transfers_in_opposite_directions_do_not_deadlock() throws Exception {
-    var start = new CountDownLatch(1);
-    Callable<Void> ab = () -> { start.await(); transfers.transfer(a, b, amount); return null; };
-    Callable<Void> ba = () -> { start.await(); transfers.transfer(b, a, amount); return null; };
-
-    try (var pool = Executors.newVirtualThreadPerTaskExecutor()) {
-        var f1 = pool.submit(ab);
-        var f2 = pool.submit(ba);
-        start.countDown();
-        f1.get(10, SECONDS);
-        f2.get(10, SECONDS);          // fails if lock ordering is not applied
-    }
-}
-```
-
-Repeated execution can increase the chance of observing a deadlock but cannot prove its absence.
-Make acquisition ordering directly testable where possible, add database lock/deadlock diagnostics,
-and keep a bounded stress test outside the deterministic unit gate. Stable key ordering is a common remediation
-(`offline-concurrency-control`).
-
-## Test data volume
-
-A plan chosen for 100 rows is not the plan for 10 million. Tests cannot use production
-volume, so split the concern:
-
-| Property                 | Where it is verified                                                   |
-| ------------------------ | ---------------------------------------------------------------------- |
-| Correctness of the query | Integration test, small data                                           |
-| Query count (N+1)        | Budget test, tens of rows — enough for the multiplier to show          |
-| Index presence           | Schema diff / migration review (`metadata-mapping`)                    |
-| Plan quality at volume   | A performance environment with production-shaped data (`load-testing`) |
-| Lock behaviour           | Concurrency test, real engine                                          |
-
-Do not attempt to test plan quality in the unit suite; do not skip the query count because
-"we cannot test performance in CI". They are different questions and only one of them
-belongs in CI.
-
-## Migration tests
-
-```java
-@Test
-void migrations_apply_cleanly_from_empty_and_validate() {
-    var flyway = Flyway.configure().dataSource(DB.getJdbcUrl(), user, password).load();
-    assertThat(flyway.migrate().success).isTrue();
-    assertThat(flyway.validate().validationSuccessful).isTrue();
-    assertThat(flyway.migrate().migrationsExecuted).isZero();       // second run is a no-op
-}
-```
-
-This proves a clean bootstrap and that Flyway records versioned migrations so a second invocation is
-a no-op; it does not prove each migration is intrinsically idempotent or that upgrades from every
-supported production schema/data state succeed. Test those starting states separately.
+`validate()` returns void; `validateWithResult()` returns the inspectable result.
+A second no-op invocation demonstrates migration bookkeeping, not intrinsic idempotence
+of every SQL file. Inspect repeatable migrations and callbacks separately.
+Source: [Flyway 11.8.2 implementation](https://raw.githubusercontent.com/flyway/flyway/flyway-11.8.2/flyway-core/src/main/java/org/flywaydb/core/Flyway.java),
+checked 2026-09-05. The API excerpt was source-checked, not run against a database.
+Migration design belongs to `metadata-mapping`.

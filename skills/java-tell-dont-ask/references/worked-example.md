@@ -2,6 +2,11 @@
 
 The invariant: an account's balance never falls below its negated overdraft limit.
 
+This is an illustrative scenario. The standalone `Account` below compiles on Java 17 with
+`java.math.BigDecimal` and `java.util.Objects` imports. Service/job snippets are partial:
+Spring annotations, repository/event APIs and receipt types are placeholders requiring the
+project's actual framework and transaction contracts. The service switch requires Java 21.
+
 ## Before
 
 ```java
@@ -24,7 +29,7 @@ And elsewhere, the monthly fee job:
 
 ```java
 // MonthlyFeeJob — written a year later
-if (acct.getBalance().compareTo(fee) >= 0) {          // forgot the overdraft limit
+if (acct.getBalance().compareTo(fee) >= 0) {          // fee policy currently excludes overdraft
     acct.setBalance(acct.getBalance().subtract(fee));
 }
 ```
@@ -32,8 +37,9 @@ if (acct.getBalance().compareTo(fee) >= 0) {          // forgot the overdraft li
 ## Analysis
 
 - **The invariant lives nowhere.** `Account` will hold any balance a caller sets. The rule
-  exists only in call sites that remember it — and the fee job remembers it differently:
-  it refuses withdrawals the overdraft should allow. Two askers, two rules.
+  exists only at guarded call sites. The fee job uses a different eligibility rule: this is
+  drift only if fees are required to share withdrawal eligibility. Establish that requirement
+  before changing fee behavior; both shown guards can preserve the balance floor.
 - **Ask–decide–mutate is a race window.** Between `getBalance()` and `setBalance(...)`
   another writer can commit; the check validates a balance that no longer exists.
 - **The setter is the loophole.** Every `setBalance` in the codebase sits behind a guard;
@@ -45,19 +51,29 @@ if (acct.getBalance().compareTo(fee) >= 0) {          // forgot the overdraft li
 
 Refusal is an expected outcome, so it is a result, not an exception; a non-positive amount
 is a broken caller contract, so it throws.
+These are deliberate API/policy choices for the revised example. The old service threw on
+insufficient funds and could accept zero/negative amounts. A mechanical refactoring should
+preserve the old public mapping until callers adopt the changed contract.
 
 ```java
 public final class Account {
     private BigDecimal balance;
     private final BigDecimal overdraftLimit;
-    // Constructor validates non-null values, scale/currency policy, overdraftLimit >= 0,
-    // and balance >= overdraftLimit.negate(); persistence must not bypass these invariants.
+
+    public Account(BigDecimal balance, BigDecimal overdraftLimit) {
+        this.balance = Objects.requireNonNull(balance, "balance");
+        this.overdraftLimit = Objects.requireNonNull(overdraftLimit, "overdraftLimit");
+        if (overdraftLimit.signum() < 0 || balance.compareTo(overdraftLimit.negate()) < 0) {
+            throw new IllegalArgumentException("invalid balance or overdraft limit");
+        }
+    }
 
     public sealed interface Withdrawal permits Withdrawn, Refused {}
     public record Withdrawn(BigDecimal newBalance) implements Withdrawal {}
     public record Refused(BigDecimal shortfall) implements Withdrawal {}
 
     public Withdrawal withdraw(BigDecimal amount) {
+        Objects.requireNonNull(amount, "amount");
         if (amount.signum() <= 0) {
             throw new IllegalArgumentException("amount must be positive: " + amount);
         }
@@ -73,6 +89,11 @@ public final class Account {
     public BigDecimal balance() { return balance; }   // query: statements, reporting
 }
 ```
+
+This mutable class is thread-confined; sharing an instance requires synchronization around all
+related reads/writes. It intentionally models only amount arithmetic; currency and scale must
+come from the enclosing contract or a money value type. It is a domain class, not a portable
+JPA entity definition: use provider-compatible mapping without bypassing invariant checks.
 
 There is no `setBalance`. Do not automatically route the fee job through `withdraw`: fees may
 have different overdraft, grace-period or regulatory rules. Share a private invariant-preserving
@@ -115,10 +136,11 @@ retry can duplicate it.
 
 ## Trade-offs
 
-- **Concurrency is narrowed, not solved.** The in-object command removes the getter/setter
-  gap in this process, but two transactions on two nodes can still both load and both
-  withdraw. The persistence layer still needs optimistic locking (`@Version`) or an
-  equivalent database guard. Moving the decision is not a licence to remove them.
+- **Concurrency needs explicit control.** An unsynchronized command can race even on one
+  shared instance. Confine it to one owner/transaction; independent transactions can still load
+  and withdraw the same version, so persistence needs optimistic locking (`@Version`) or an
+  equivalent guard. A failed save/commit does not undo an ordinary object's in-memory mutation:
+  discard/reload that state before a retry, and re-evaluate against authoritative data.
 - **Money is not just `BigDecimal`.** Production code must bind amount to currency, define scale
   and rounding, reject nulls and unsupported currency combinations, and decide whether returned
   balances are immutable snapshots or versioned representations.
@@ -132,9 +154,10 @@ retry can duplicate it.
 
 ## Verification
 
-- `grep` for `setBalance` — zero occurrences anywhere; the loophole is gone, not merely
-  unused.
-- The overdraft rule appears exactly once (search for `overdraftLimit` outside `Account`).
+- Use `rg` for raw mutation paths and inspect construction/mapping/SQL updates; zero setters
+  alone cannot prove the invariant. Keep necessary database constraints and boundary enforcement.
+- Check that external callers no longer rederive withdrawal eligibility; reporting reads of
+  the overdraft limit are legitimate and are not duplicate policy by themselves.
 - `Account` tests construct the object directly and cover: withdrawal into the overdraft,
   refusal one cent past the floor, `shortfall` arithmetic, non-positive amounts throwing —
   no mocks, no Spring context.
@@ -143,3 +166,8 @@ retry can duplicate it.
 - An integration test uses two distinct persistence contexts/transactions (or concurrent
   conditional updates) so both writers load the same version and exactly one commit succeeds.
   Two threads sharing one managed entity do not prove database optimistic locking.
+
+The concurrency distinction follows [JLS 21 happens-before](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4.5).
+For an actual JPA adapter, check its version's optimistic-lock/rollback behavior against the
+[Jakarta Persistence specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html);
+this domain-only example does not validate an ORM or event-delivery protocol.

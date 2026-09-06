@@ -4,6 +4,11 @@
 
 A payment-fee calculator grown by subclassing:
 
+The before/after blocks are compilable package-private declarations when placed together in
+`Fees.java` with `import java.math.BigDecimal;` and `import java.math.RoundingMode;`.
+Compile with `javac --release 21 Fees.java` on JDK 21+; no dependencies or preview flags.
+They have no main method and intentionally omit production input validation.
+
 ```java
 abstract class FeeCalculator {
     final BigDecimal total(BigDecimal amount) {          // template method
@@ -86,6 +91,13 @@ final class FeeSchedule {
 being a subclass and became a composed `FeeAdjustment`. The former product of axes is now
 a sum of variants plus one strategy field.
 
+Contract mapping: `CardFee` uses a domestic `Card` with `none()`, `InternationalCardFee`
+uses an international `Card` with `none()`, and `PromotionalCardFee` uses a domestic `Card`
+with `promotionalRate(new BigDecimal("0.5"))`. The new combination discounts the entire
+international fee, including surcharge: for `100.00`, it yields `2.20`, versus `2.95` if
+only the base fee were discounted. That combination needs a business decision; it is not
+preserved behavior. Boleto and Pix are also new cases with no old implementation here.
+
 The rewritten switch uses only Java 21-final language features. Unnamed patterns (`_`) became
 final in Java 22, so using them here without a version label would silently raise the example's
 minimum JDK. Production code must additionally validate non-null/non-negative amounts, factor
@@ -106,11 +118,13 @@ complete monetary contract.
 
 ## Verification
 
-- The switch has no `default` branch — adding a variant must fail compilation at every
-  dispatch site. This is checkable by inspection.
+- Add a temporary permitted variant without a matching case and compile: this switch must
+  fail exhaustiveness checking. Inspection alone is not an executed compiler check.
 - Characterisation tests written against the old hierarchy's `total` (one per concrete
-  class, including the rounding of `10.05`-style inputs) pass unchanged against
-  `FeeSchedule` before the old classes are deleted (test mechanics: java-refactoring).
-- `InternationalCardFee` behaviour equivalence includes the promotional × international
-  combination the old design could not express without a fourth class — covered by a new
-  test, marked as new behaviour, not preserved behaviour.
+  class, using the construction mapping above) retain their expected values against
+  `FeeSchedule` before deletion. For international `0.12`, rounding the final sum yields
+  `0.01`, but rounding each component first yields `0.00`; this catches the self-use change
+  described above (test mechanics: java-refactoring).
+- Test promotional × international, Boleto and Pix separately as new policy, not evidence
+  of equivalence. Retain null/invalid-input behavior only if it is part of the old contract;
+  do not silently combine stricter validation with a behavior-preserving migration.

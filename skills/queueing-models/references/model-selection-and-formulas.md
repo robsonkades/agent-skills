@@ -43,14 +43,16 @@ timescale relevant to the queue.
 
 ## M/M/1
 
-For `ρ=λ/μ<1`:
+For independent stationary Poisson arrivals, IID exponential service independent of arrivals,
+one work-conserving FCFS server, no abandonment and an unbounded waiting room, with `ρ=λ/μ<1`:
 
 ```text
 L  = ρ/(1−ρ)             Lq = ρ²/(1−ρ)
 W  = 1/(μ−λ)             Wq = ρ/(μ−λ)
 ```
 
-Stationary total response `W` is exponential with rate `μ−λ`:
+Below, `W` and `Wq` inside probabilities denote random durations; the preceding formulas give
+their means. Stationary total response is exponential with rate `μ−λ`:
 
 ```text
 P(W > t) = exp(−(μ−λ)t)
@@ -101,7 +103,7 @@ B(n,a)=aB(n−1,a)/(n+aB(n−1,a))
 C(c,a)=B(c,a)/(1−ρ+ρB(c,a))
 ```
 
-Reject invalid inputs (`c≤0`, `a<0`, or Erlang-C `ρ≥1`), use sufficient numeric precision near
+Reject non-finite inputs, non-integer `c`, `c≤0`, `a<0`, or Erlang-C `ρ≥1`; use sufficient numeric precision near
 critical load, and cross-check small cases against a direct/log-domain implementation. Property
 tests should cover `0≤B,C≤1`, monotonicity in load, and `c=1` reductions.
 
@@ -162,7 +164,14 @@ For M/M/c/c, Erlang B gives offered-call blocking probability `B(c,a)`. Carried 
 `λ_eff=λ(1−B)`. Retries break the exogenous Poisson assumption unless included in a fixed-point or
 simulation model.
 
-For M/M/c/K, construct the birth–death stationary probabilities rather than reusing Erlang C:
+Erlang B also applies to the stationary M/G/c/c loss system: Poisson arrivals, independent IID
+holding times of finite mean independent of arrivals, equivalent slots, immediate service when
+a slot is free and rejection otherwise. Occupancy/blocking is insensitive to the holding-time
+distribution beyond its mean. This does not extend Erlang C's waiting-time formulas to general
+service, or justify state-dependent holding times and retrials (Whitt, section 9.3 below).
+
+For M/M/c/K with positive finite rates and integer `K≥c≥1`, construct the birth–death stationary
+probabilities rather than reusing Erlang C (compute weights in scaled/log form when needed):
 
 ```text
 birth rate λ_n = λ for n<K, 0 at n=K
@@ -208,3 +217,4 @@ observable and its predictions falsifiable.
 - Denning and Buzen, [“The Operational Analysis of Queueing Network Models”](https://www.columbia.edu/~ww2040/8100S12/DenningBuzen1978.pdf)
 - Halfin and Whitt, [“Heavy-Traffic Limits for Queues with Many Exponential Servers”](https://doi.org/10.1287/opre.29.3.567)
 - Whitt, [“Approximations for the GI/G/m Queue”](https://doi.org/10.1080/15326349308807207)
+- Whitt, [“Continuous-Time Markov Chains,” section 9.3](https://www.columbia.edu/~ww2040/6711F13/CTMCnotes120413.pdf)

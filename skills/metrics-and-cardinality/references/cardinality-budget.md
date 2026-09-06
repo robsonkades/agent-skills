@@ -26,8 +26,10 @@ This assumes every combination is possible. Build a constraint-aware estimate fr
 and supported methods/status/outcomes as well. Multiply by simultaneously active targets
 only if target identity is not already represented in a counted label.
 
-Classic histogram float-series multiplier is configured buckets plus sum and count (with
-exporter-specific details such as +Inf). Native histograms are one time series containing
+For a classic histogram with `B` finite bucket boundaries, budget `B + 3` base float series:
+`B` finite buckets, mandatory `+Inf`, `_sum` and `_count`. If a bucket count already includes
+`+Inf`, add only two. Count exporter extras such as `_max`/`_created` from actual exposition.
+Native histograms are one time series containing
 composite samples whose bucket density/resolution drives bytes and query cost. Verify the
 actual exposition/backend.
 
@@ -75,6 +77,22 @@ Choose overflow semantics:
 - **sample/top-K:** useful for exploration, unsafe for exact SLI totals.
 
 Track overflow attempts separately with a bounded metric.
+
+OTHER preserves counts only when observations are recorded into the same aggregate before
+export, with reset/lifecycle semantics intact. Metric relabeling is not aggregation: removing
+or replacing a distinguishing label can create duplicate identities and ingestion errors or
+lost measurements. Verify resulting uniqueness. Recording rules reduce query fan-out but
+do not remove the original ingestion cost.
+
+Prometheus `sample_limit` and label limits apply after metric relabeling; exceeding them fails
+the entire scrape, not just the offending metric. A backend drop cannot contain application
+registry growth or the cost of generating/transporting the original scrape. Cap/normalize at
+the source when that resource is at risk.
+
+## Sources
+
+- [Prometheus relabeling and scrape limits](https://prometheus.io/docs/prometheus/latest/configuration/configuration/)
+- [Prometheus histogram exposition](https://prometheus.io/docs/instrumenting/exposition_formats/)
 
 ## Incident path
 

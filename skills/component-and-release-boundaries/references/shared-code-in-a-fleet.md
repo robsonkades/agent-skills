@@ -1,8 +1,8 @@
 # Shared Code Across a Service Fleet
 
-Services are independently deployable exactly to the extent that they can be released without
-coordinating with anyone. A shared library is the most common thing that quietly removes that
-property, and it does so at build time, where no architecture diagram shows it.
+Independent deployment means a supported service change need not require simultaneous peer
+deployment. Shared libraries create compatibility obligations; whether they force lockstep
+depends on version policy, runtime contracts and support windows.
 
 ## A shared library creates build-time and release coupling
 
@@ -12,7 +12,7 @@ The reasoning teams apply to runtime calls stops at the build boundary, and it s
 Runtime coupling                    Build-time coupling
 ─────────────────────────────       ─────────────────────────────
 A calls B synchronously             A compiles against lib v2
-    → A is down when B is down          → A must upgrade to fix a CVE in lib
+    → B's failure may affect A          → affected A versions may need a security update
     → visible in a trace                → invisible in a trace
     → everybody prices it               → priced at zero
 ```
@@ -20,9 +20,9 @@ A calls B synchronously             A compiles against lib v2
 Unlike a synchronous RPC, a pinned library does not make a consumer unavailable when its producer
 or publisher is down. The useful analogy is coordinated evolution, not runtime failure propagation.
 The failure mode is a **lockstep release**: a change to the shared library that everyone must
-take — a security patch, a Spring major upgrade, a serialisation change — becomes a
-coordinated release of every consumer. If that has happened even once, the fleet is coupled;
-the only question is how much.
+take on the same schedule becomes a coordinated release. Distinguish genuinely simultaneous
+compatibility requirements from rolling upgrades within a security deadline, or a voluntary
+release train. A common deadline does not by itself require atomic fleet deployment.
 
 The severity depends on whether consumers may lag:
 
@@ -38,8 +38,9 @@ Not all sharing is equal. Classify before deciding.
 
 ### 1. Generic technical utilities — usually safe, rarely worth writing
 
-String helpers, date helpers, retry wrappers. Safe to share because they are stable and have
-no domain meaning.
+String/date helpers may be stable, but locale/time-zone assumptions and retry semantics can
+encode policy. Inspect behavior and consumers before treating a helper as domain-neutral;
+retry wrappers especially need deadlines, idempotency and load-amplification review.
 
 They are also the category most likely to be redundant. Before writing one, check whether the
 JDK or an existing dependency already provides it — a hand-rolled retry helper in a shared jar
@@ -48,7 +49,7 @@ has.
 
 **Verdict:** share if genuinely stable and not already available; expect little value.
 
-### 2. Cross-cutting platform code — safe, and the strongest case for a library
+### 2. Cross-cutting platform code — useful with an explicit compatibility policy
 
 Logging setup, tracing propagation, authentication filters, metric conventions, health
 endpoints. Real value: consistency across the fleet is the whole point
@@ -56,15 +57,16 @@ endpoints. Real value: consistency across the fleet is the whole point
 
 Two conditions make it work:
 
-- It must be **additive and defaulted**, so upgrading is safe and skipping a version is safe.
+- Additions and defaults must preserve the supported observable contract; an additive API
+  or new default alone does not establish safe behavior or skipped-version compatibility.
 - It must not encode business meaning, or it silently becomes category 4.
 
-**Security-relevant platform code is the exception, and it is an important one.** An
-authentication or authorisation filter cannot be "safe to lag": a bypass defect obliges every
-consumer to upgrade at once, which is precisely the coordinated release this whole document
-exists to avoid — and no design avoids it. Ship it as its own artefact, separate from the rest
-of the platform library, publish the deployed-version inventory as a monitored metric, and set
-a bounded maximum lag. "Consumers may lag" is a property of feature changes only.
+**Security fixes can shorten the support window.** Assess affected versions and exposure,
+then set a remediation deadline with the security owner. A compatible fix or backport can
+often roll out independently; protocol changes may need staged compatibility. Track deployed
+versions and exceptions, verify the hostile case is rejected after upgrading, and consider
+separating security code when it reduces unrelated upgrade burden. Do not infer that every
+consumer must deploy at the same instant.
 
 **Verdict:** the best case for a shared library. Version it strictly and let consumers lag,
 with the security carve-out above.
@@ -73,38 +75,42 @@ with the security carve-out above.
 
 Request and response types, event payloads.
 
-Sharing the _generated_ types from a schema (OpenAPI, Protobuf, Avro) is fine: the schema is
-the contract, the code is a build artefact of it, and compatibility rules are checkable
+Generated types from a schema (OpenAPI, Protobuf, Avro) can keep the authoritative contract
+explicit, but generator/runtime versions and schema changes still affect source, binary and
+wire compatibility. Apply the format's compatibility rules and old/new peer tests
 (`rpc-and-api-contracts`).
 
-Sharing _hand-written_ DTO classes in a jar is the trap. It looks identical and behaves
-differently:
+Hand-written DTO classes need the same explicit wire contract and compatibility checks.
+Neither Java signatures nor generation alone establish them. Partial Java 16+ illustration
+(requires `java.math.BigDecimal`; not an executable program):
 
 ```java
 // producer module: shared-contracts
 public record OrderCreated(String orderId, BigDecimal total) { }
 ```
 
-Add a required component and every consumer that _constructs_ it breaks on upgrade — while
-consumers that only read it keep compiling against the new class and go on deserialising the
-old wire shape. The compile error is not even the real risk; the silent shape mismatch is. The jar creates the illusion that the wire format is enforced when the
-only thing enforced is a Java signature.
+Adding a record component changes the canonical constructor signature. Callers using the
+old constructor break unless it is retained through an explicit overload; existing accessor
+calls may remain valid. Deserialization of old/new payloads depends on the serializer,
+configuration, defaults and required-field semantics, not on successful Java compilation.
 
-Worse, the jar tempts the producer into putting behaviour on the type. The moment
-`OrderCreated` gains a `totalWithTax()` method, the consumer is executing the producer's
-business logic at a version the producer no longer supports.
+Adding `totalWithTax()` also distributes business logic to consumers at independently
+pinned versions. Treat that as a domain-rule ownership decision and state supported versions;
+it does not become unsafe merely because a DTO has a method.
 
-**Verdict:** share the schema and generate. If you must ship types, ship them generated,
-data-only, and versioned so old and new coexist.
+**Verdict:** prefer an explicit schema where the transport supports it. If shipping types,
+keep them data-focused and versioned, with supported old/new peers tested. Separately
+deployed consumers may pin different jar versions; do not assume two versions of the same
+classes coexist safely in one classloader.
 
 ### 4. Domain logic — share only for a genuinely shared invariant
 
 A tax calculation, an eligibility rule, a pricing model.
 
-Sharing this means both services must agree on the rule **forever**, at the same version, or
-diverge in production while appearing to agree. That is exactly the coupling that service
-boundaries exist to prevent, and a shared jar reintroduces it while the architecture diagram
-still shows two independent services.
+Sharing this creates a need to govern rule versions and effective dates. Independently pinned
+jars can diverge; a shared source repository does not ensure runtime agreement. Determine
+whether historical/versioned rules may coexist or whether one authoritative service/data
+contract must resolve the decision for both consumers.
 
 Legitimate cases exist and are narrow: a regulatory calculation with one correct answer, a
 canonical identifier format, a checksum algorithm. The test is whether the two services would
@@ -115,9 +121,10 @@ own the compatibility burden.
 
 ### The shared entity — almost always the boundary being wrong
 
-A shared JPA `@Entity` means two services share a schema. Everything about ownership,
-independent migration and independent deployment is gone: a column rename is a fleet-wide
-release, and the database becomes the integration point
+A shared JPA `@Entity` couples mappings and may signal shared database ownership; it does not
+prove that processes use the same database or require simultaneous deployment. Inspect actual
+schemas, writers and supported migration states before concluding that a column change
+requires fleet-wide coordination
 (`distribution-boundaries`, `metadata-mapping`).
 
 Where two independently owned services share an entity, independent schema evolution and incident
@@ -139,14 +146,14 @@ Is divergence between the two copies a DEFECT (not merely untidy)?
               and that they are deliberately independent.
         yes ↓
 
-Would a consumer be able to stay on an old version for a sprint?
-        no  → the code encodes a contract both sides must agree on.
-              Share the SCHEMA and generate, or move the logic into
-              the owning service and expose it (rpc-and-api-contracts).
+Can supported old consumers coexist for the agreed upgrade window?
+        no  → identify the compatibility or remediation constraint. A schema
+              with compatible evolution, supported backports, or one owning
+              service may help; generation alone does not permit coexistence.
         yes ↓
 
 Is there an owner who will version it, write release notes, and
-support at least one previous version?
+support the declared compatibility window?
         no  → do not create the library. An unowned shared jar
               becomes the commons module.
         yes → create it, versioned, with a compatibility policy.
@@ -163,17 +170,19 @@ The goal is not to delete it — that requires a fleet-wide release, which is th
 trying to escape. The goal is to make it stop growing and let it shrink as consumers move.
 
 1. **Freeze it.** No new classes. This alone stops the problem worsening and costs nothing.
-2. **Inventory by consumer.** For each class, which services actually use it. This is a
-   static analysis, not a survey; the result is usually that most classes have one consumer.
-3. **Push single-consumer code down.** A class used by one service moves into that service.
-   No coordination, no version bump for anyone else, and the jar shrinks. This is the bulk of
-   the work and the cheapest part of it.
+2. **Inventory by consumer and supported version.** Combine source/bytecode analysis with
+   reflection, service-loader metadata, configuration, serialization and external consumer
+   evidence. Missing search hits do not prove an unused public class.
+3. **Move single-consumer code into its owner** while keeping old published versions intact.
+   Deprecate or retain compatibility bridges in supported release lines; removing public
+   classes is a separate breaking change. Check duplicate classes, package names and JPMS
+   split packages if old and extracted artifacts coexist in a consumer.
 4. **Split the rest by reason to change**, not by layer. Platform concerns into a platform
    library; domain vocabulary into a vocabulary library; wire types into generated contracts.
    Each new component gets an owner and a version policy before it gets code.
 5. **Leave the old artefact published**, deprecated, delegating where it still must. Consumers
-   migrate on their own schedule, which is the property you wanted. Delete it when the last
-   consumer drops it — possibly never, and that is an acceptable outcome.
+   migrate within the support window. Retire maintenance only after supported consumers
+   migrate; do not delete or overwrite released artifacts needed for reproducible builds.
 
 At no point does this require every service to release at once, which is the constraint that
 makes the migration feasible at all.
@@ -183,14 +192,14 @@ makes the migration feasible at all.
 The claim "our services are independently deployable" is testable, and worth testing before
 believing:
 
-- **Release-history evidence.** Do the services' release tags cluster in time? Clustering is
-  the symptom; the shared library is usually the cause.
-- **The lag test.** Pick a service; pin every shared dependency to the version from three
-  months ago; build and run its tests. If it fails, consumers cannot lag, and the coupling is
-  lockstep. Note what this does and does not prove: it establishes **compile and test
-  compatibility**, not wire compatibility. A fleet can pass it and still be lockstep at
-  runtime because an old client cannot deserialise a new producer's payload — that is a
-  separate check, against the contract (`rpc-and-api-contracts`).
-- **The upgrade blast radius.** For the shared library, count consumers that must release when
-  it does. If the answer is "all of them", the fleet has one deployable unit with several
-  processes.
+- **Release-history evidence.** If release tags cluster, inspect why: shared campaigns or
+  tooling can batch releases without a technical constraint. Confirm the required edge.
+- **The coexistence test.** Keep an existing supported consumer artifact with its original
+  dependency set unchanged while upgrading another consumer/provider. Exercise their actual
+  shared protocol/schema and rollout/rollback combinations. Separately rebuild old consumer
+  sources against a candidate compatible library and test already-built old binaries with it
+  when that deployment mode is supported. Recompiling today's source against an arbitrarily
+  old library tests the wrong direction: using a newly added API does not imply lockstep.
+- **The upgrade blast radius.** Count consumers affected and distinguish upgrades required
+  eventually, within a deadline, or simultaneously. Only the last establishes a lockstep
+  deployment requirement for that change; record the contract that forces it.

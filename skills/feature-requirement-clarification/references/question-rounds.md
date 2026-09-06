@@ -34,11 +34,12 @@ After updating the draft and ledgers, report:
 Checkpoint  Continue | Close the stage | Blocked
 Because     <remaining consequence or reason no blocker remains>
 Next        <specific decision area another round would resolve>
-Choice      <answer next questions | close | pause>
+Missing input <specific answer/authority needed, or none>
 ```
 
 - **Continue** — another round has a named quality, scope, risk, contract, or acceptance benefit.
-- **Close the stage** — no blocking gap remains; the user may close or request named optional depth.
+- **Close the stage** — no blocking gap remains for the declared scope; close within existing
+  authorization. Optional depth is not a reason to hold ready work.
 - **Blocked** — authority, evidence, or a decision is missing; dependent work cannot advance.
 
 Do not count rounds as progress. Continue while each round earns attention; stop when gates are met,
@@ -47,5 +48,6 @@ not when a template has been exhausted.
 ## Confirmation
 
 Before a stage closes, summarize scope, decisions with accountable owners, assumptions, criteria,
-accepted GAP-* items, and anything deferred. This confirmation is a stage transition, not a mandatory
-fourth round.
+accepted GAP-* items, and anything deferred, proportionately to the task. Cite existing acceptance
+and delegation; request only genuinely missing confirmation. The summary is not a mandatory extra
+round or a fresh approval of unchanged decisions.

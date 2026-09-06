@@ -43,8 +43,10 @@ the extraction boundary; it does not automatically classify every common stateme
 - Configuration that has held the same value in every environment since it was added.
 - Abstract methods or hooks that no subclass overrides meaningfully.
 
-Confirm with history before deleting: generality exercised by tests only, or added in the
-same commit as its single use, was speculative. Generality with two real users was not.
+Confirm with history, requirements and consumers before deleting. A test-only implementation
+can justify a deterministic failure seam; a single-use hook may support external plugins or
+an approved migration. Conversely, two callers can share a wrong abstraction. Counts and
+commit timing prompt investigation; they do not settle whether the contract earns its cost.
 
 ## The cost model
 
@@ -52,7 +54,8 @@ An abstraction is a dependency arrow from every caller. Its price:
 
 - **Change amplification.** Editing shared code now requires understanding every caller;
   the cheapest change (edit one copy) is no longer available.
-- **Coupled release.** All callers get the new behaviour at once, wanted or not.
+- **Coupled release.** Callers in the same deployment receive the change together; separately
+  deployed library consumers may instead run different versions and need compatibility checks.
 - **Indirection.** Readers must leave the call site to learn what happens — acceptable
   when the name fully summarises the behaviour, costly when it does not.
 
@@ -72,7 +75,7 @@ system rather than assuming either failure is visible.
   separately. The duplication is the architectural boundary working.
 - **Similar rules with different authorities.** A promotional discount and a regulatory
   rebate may compute the same way today. They change on different triggers; merging them
-  guarantees a flag parameter later.
+  risks caller-specific branches when they diverge.
 - **Mapping layers.** A DTO, an entity and a domain type with the same five fields are
   three statements of knowledge owned by three contracts (wire, schema, model). The
   repetition is the decoupling.

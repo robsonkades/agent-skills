@@ -11,17 +11,15 @@ commit only to published compatibility/support policies, not your system's lifec
 deprecate abstractions, drop platform support, and end the maintenance window on a schedule
 set by their release train, not your roadmap.
 
-Two conclusions are commonly drawn from this, and only one survives contact with delivery:
+Distinguish two approaches:
 
-**The one that does not survive delivery** — "keep the framework at arm's length behind your
-own abstractions". This produces a second, worse framework that you now maintain, and it does
-not deliver the exit it promised, because the expensive couplings (concurrency model,
-data-access paradigm) are not the ones an interface can hide.
+**Duplicate the framework API behind wrappers.** This can add maintenance without isolating
+concurrency or data-access semantics. A narrow application-owned port is different: it can
+bound a contract or testing seam even when replacing the whole framework is not planned.
 
-**The one that does** — "choose deliberately, place the coupling where migration cost is
-proportional to code you would touch anyway, and keep upgrading". The realistic risk is not
-switching framework, which almost nobody does; it is being unable to move _within_ the one you
-chose.
+**Place coupling deliberately.** Aim for migration cost
+proportional to the affected surface and maintain a supported upgrade path. Compare a concrete
+framework replacement scenario with the more immediate cost of upgrades within the chosen one.
 
 ## Questions that predict upgrade pain
 
@@ -36,10 +34,11 @@ than any architectural principle.
 
 **Blast radius of its idioms**
 
-- Does it appear in signatures, or only in metadata? Signatures spread; annotations do not.
+- Does it appear in signatures or metadata? Both can spread; annotations may also control
+  cross-cutting behavior. Inspect their actual reach, not just syntactic occurrence counts.
 - Does it require base classes, or is it annotation- and interface-driven?
-- Does it dictate the concurrency model? This is the single most expensive coupling available
-  and it is rarely counted as one.
+- Does it dictate the concurrency model? Trace affected signatures and runtime behavior to
+  estimate its reach alongside data-model and protocol constraints.
 
 **Ecosystem gravity**
 
@@ -58,30 +57,31 @@ than any architectural principle.
 Costs cluster in places that architectural purity does not protect against. Three recurring
 shapes, each with a different lesson:
 
-**A namespace change.** Jakarta EE 9 renamed the `javax.*` packages to `jakarta.*`, and
-frameworks adopting it — Spring Boot 3 among them — required every dependency in the graph to
-have made the same move. The work in application code was largely mechanical; the schedule was
-set by the slowest third-party library. **Lesson:** exit cost is dominated by your dependency
-graph, not by your architecture. A pristine hexagonal domain does not help when a driver has
-not been republished.
+**A namespace change.** Jakarta EE 9 moved relevant enterprise APIs from `javax.*` to `jakarta.*`.
+Spring Boot 3 requires compatible versions of libraries participating in those APIs; it does
+not rename every `javax` package or require unrelated dependencies to migrate. Java SE APIs such
+as `javax.sql.DataSource` remain. Inspect the resolved graph, generated sources and runtime APIs;
+do not perform a blanket namespace replacement. **Lesson:** third-party compatibility can
+dominate the upgrade schedule even with an isolated domain.
 
 **A removed or renamed test abstraction.** `@MockBean` and `@SpyBean` were deprecated in
 Spring Boot 3.4, when `@MockitoBean` and `@MockitoSpyBean` arrived in Spring Framework 6.2,
 and removed in Boot 4.0 — the deprecation window is what determines migration timing. The work
-is mechanical, but proportional to the number of test classes, often thousands in a mature
-system, and it touches tests rather than production code, so it is invisible to
-every architecture rule the team wrote. **Lesson:** the test suite is part of the coupled
-surface, and is usually the largest part by file count (`architecture-testing`).
+includes semantic differences in supported declarations, singleton restrictions, spy targets
+and context hierarchies; check the relevant migration guide rather than only replacing imports.
+It touches tests as well as production dependencies. **Lesson:** inventory test-framework
+coupling and validate context behavior (`architecture-testing`).
 
 **A programming-model shift.** Moving between a blocking servlet stack and a reactive one
 changes signatures along every path, changes error handling, changes testing, and changes what
-"blocking" means for correctness. This is not a migration; it is a rewrite of every layer the
-types touch. **Lesson:** this rung of the ladder must be chosen once, deliberately, with a
-driver — and revisited only with the same seriousness (`reactive-and-virtual-thread-selection`,
+"blocking" means for correctness. It can require substantial redesign, but bounded paths can
+migrate in stages if their seams preserve cancellation, backpressure and context. **Lesson:**
+price the affected paths and their compatibility, rather than assuming an irreversible choice
+(`reactive-and-virtual-thread-selection`,
 `blocking-and-nonblocking-io`).
 
-Note what is absent from all three: nobody's cost was dominated by `@Service` annotations or
-by constructor injection. The cheap rung stayed cheap.
+These are migration shapes, not measured cost comparisons for the current project. Use a
+representative migration slice to estimate work and test the claimed isolation.
 
 ## Deciding: isolate, adopt, or upgrade
 
@@ -89,25 +89,25 @@ by constructor injection. The cheap rung stayed cheap.
 Is the dependency a FRAMEWORK (owns lifecycle, wiring, request flow)
 or a LIBRARY (you call it; it does not call you)?
 
-  LIBRARY  → an adapter is cheap and usually worth it. Small surface,
-             replaced far more often than frameworks, and the adapter
-             also gives you a place to put retry, timeout and error
-             translation (timeouts-and-deadlines, retries-and-backoff).
+  LIBRARY  → use an adapter for an external protocol/failure boundary or
+             application-owned contract; do not wrap stable value APIs by default.
+             A retry policy still needs idempotency and a bounded deadline
+             (timeouts-and-deadlines, retries-and-backoff).
 
   FRAMEWORK ↓
 
 Does it appear in your SIGNATURES or only in your METADATA?
 
-  METADATA  → accept it. Annotations are the cheapest coupling there is,
-              and abstracting them buys nothing.
+  METADATA  → inspect lifecycle and behavioral effects; accept simple metadata
+              where the dependency is allowed, but verify advice and hydration.
 
   SIGNATURES ↓
 
 Is the signature coupling confined to adapters?
 
-  YES → correct placement. This is the design working as intended.
+  YES → usually bounded placement; still verify the adapter's external contract.
   NO  → this is the expensive rung. Either pull it back to the adapters
-        now, while it is smaller than it will ever be again, or accept
+        where that protects a concrete boundary, or accept
         it explicitly as an architectural commitment and record it
         (architecture-decision-making).
 ```
@@ -121,14 +121,15 @@ automated dependency updates instead of assuming every minor is cheap.
 
 Stated plainly, because the literature on this topic under-weights it:
 
-- **The framework's abstraction is already neutral.** Spring's `Resource`, its cache
-  abstraction, its transaction abstraction and `DataSource` were designed as ports. Wrapping
-  them produces a port over a port (`patterns-and-modern-frameworks`).
+- **The existing abstraction fits the contract.** Spring's `Resource`, cache and transaction
+  APIs can be appropriate infrastructure ports but still depend on Spring. `javax.sql.DataSource`
+  is a Java SE interface. Wrap only when a narrower application contract adds a concrete benefit
+  (`patterns-and-modern-frameworks`).
 - **The application is short-lived or small.** A service with a two-year horizon should
   optimise for delivery speed. Isolation is insurance, and insurance on a short policy is
   usually a bad buy.
-- **The domain is thin.** CRUD over a schema has no rules to protect. The entity is the model,
-  the framework is the application, and a second model is pure overhead
+- **The domain is thin.** A separate persistence/domain model may buy little unless schema
+  ownership or independently changing contracts require separation; API DTOs are a separate choice
   (`domain-logic-organization`).
 - **The team is one team, and the framework is the team's fluency.** Idiomatic framework code
   that everyone can read beats an in-house abstraction that only its author understands.
@@ -143,6 +144,16 @@ Stated plainly, because the literature on this topic under-weights it:
   injection anyway (`distributed-systems-testing`).
 - **Regulatory or contractual portability is an actual requirement** rather than an
   aspiration — someone has written it down and will audit it.
-- **Two implementations exist right now.** Not "might exist": an interface with one
-  implementation and no second in prospect is indirection
+- **A concrete boundary benefit exists.** Multiple implementations can justify a port, but
+  so can failure isolation, contract ownership or a test seam with one implementation
   (`enterprise-architecture-smells`).
+
+## Primary migration sources
+
+- [Spring Boot 3.0 migration guide](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.0-Migration-Guide):
+  Java 17 baseline, Jakarta API changes and dependency compatibility; this is historical guidance,
+  not authorization to upgrade the target project.
+- [Spring Boot 3.5 MockBean API](https://docs.spring.io/spring-boot/3.5/api/java/org/springframework/boot/test/mock/mockito/MockBean.html)
+  and [Boot 4.0 migration guide](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide),
+  plus [MockitoBean/MockitoSpyBean](https://docs.spring.io/spring-framework/reference/testing/annotations/integration-spring/annotation-mockitobean.html):
+  deprecation and replacement semantics. Inspect the versions on both sides of the upgrade.

@@ -27,6 +27,14 @@ comment only when a future maintainer could reasonably "simplify" a still-measur
 
 ## Workflow
 
+Before changing structure, inspect the compiler release/toolchain, framework lifecycle,
+affected callers and existing tests. No single authoring baseline is declared; references
+use Java SE 25 documentation. `Clock` needs Java 8+, `List.copyOf` Java 10+, records
+Java 16+, and `RandomGenerator` Java 17+. Use the project's supported alternatives;
+this skill does not authorize upgrades, preview features or new dependencies.
+When caller contracts or tests are missing, identify the gap and characterize observable
+results, effects and failure order before claiming a behaviour-preserving change.
+
 1. State what the unit does in one sentence. Every "and", "then" or "unless" in that
    sentence is either a split point or evidence that the unit is coherent and only its
    name is wrong (naming is java-api-design's).
@@ -53,8 +61,9 @@ comment only when a future maintainer could reasonably "simplify" a still-measur
 
 ## Rules
 
-- One abstraction level per method: it either orchestrates named steps or implements
-  one step. A method that does both reads as noise even at ten lines.
+- Prefer one abstraction level per method when named extractions reduce concepts held
+  at once. Guards, resource scopes and trivial mechanics need not become helpers;
+  consult the structure reference when extraction would only add navigation.
 - Every extraction has a price — a name to trust and a hop to follow. Do not keep a
   fragment that has one caller, needs fields or three-plus parameters to share state
   with that caller, and cannot be understood without reading it. Inline it back.
@@ -68,9 +77,10 @@ comment only when a future maintainer could reasonably "simplify" a still-measur
   resource bounds and failure behavior; lazy I/O or externally visible mutation is not a
   harmless getter implementation. (Command–query separation in full is
   java-tell-dont-ask's.)
-- No unenforced call order: if `b()` is only valid after `a()`, merge them, pass what
-  `b` needs as the return of `a`, or encode the order in a type. A Javadoc line saying
-  "call a() first" is a defect scheduled for later.
+- For accidental internal call order, if `b()` is only valid after `a()`, merge them,
+  pass what `b` needs as the return of `a`, or encode the order in a type. Preserve
+  framework/protocol lifecycles and published APIs; documented state checks may be
+  appropriate there. A new phase type is not automatically safer or clearer.
 - No ambient reads in domain logic: `LocalDate.now()`, `Locale.getDefault()`, static
   configuration lookups belong at the boundary, passed in as `Clock`, `Locale`,
   values. Hidden inputs make behaviour untestable and irreproducible.
@@ -92,6 +102,10 @@ comment only when a future maintainer could reasonably "simplify" a still-measur
   count does.
 
 ## References
+
+Deliver the concrete readability problem, why a split/merge (or no change) follows from
+the code, and the checks executed for behaviour preservation. Report untested assumptions;
+passing tests alone neither proves equivalence nor measures reader comprehension.
 
 - [Worked examples](references/worked-examples.md) — an under-factored settlement
   method split by abstraction level, and an over-fragmented batch processor merged

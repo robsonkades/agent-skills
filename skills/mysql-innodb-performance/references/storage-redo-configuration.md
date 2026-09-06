@@ -2,11 +2,12 @@
 
 ## Clustered physical model
 
-Rows live in primary-key leaves. Secondary entries contain the full primary key, so estimate a key
-change as bytes times rows times `1 + secondary-index count`, plus B-tree fan-out and cache effects.
+Rows live in clustered-index leaves. Ordinary secondary B-tree entries carry clustered-key columns;
+key-width times rows times index count is only a first-order estimate, not an exact disk-size delta.
+Account for overlapping index columns, record overhead, occupancy, compression and off-page data.
 Separate width from insertion order: wide keys enlarge every tree; random order spreads write working
-set and causes splits. If no suitable PK exists, InnoDB creates an internal row id the application
-cannot use.
+set and can increase splits. Without a declared PK, InnoDB first uses the first UNIQUE index whose
+columns are all NOT NULL; only without either does it create an internal row-id clustered index.
 
 ## Write path
 
@@ -37,3 +38,6 @@ MySQL 8.4 changed important InnoDB defaults, including flush method, adaptive ha
 and I/O capacity. An old configuration file can preserve old behavior across an upgrade. Query the
 effective value and whether it was explicitly persisted; verify renamed/deprecated redo settings
 against the exact server build.
+
+[MySQL 8.4 clustered and secondary indexes](https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html)
+defines the clustered-key fallback and secondary locator.

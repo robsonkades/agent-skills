@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: framework-coupling-and-independence
-version: 1.2.1
+version: 1.2.2
 description: >-
   Deciding how much of a system may depend on its framework, and pricing that dependency
-  honestly: which couplings are cheap and correct, which are expensive and reversible, which are
-  irreversible, and what "framework-independent" actually costs in mapping code. Use when a
+  honestly: which couplings are cheap and correct, which are expensive and reversible, which
+  require staged redesign, and what "framework-independent" actually costs in mapping code. Use when a
   framework or major version upgrade is being planned or has stalled, when a domain class
   carries persistence or serialisation annotations, when someone proposes a framework-free
   domain and the price is not stated, when a base class from the framework appears in business

@@ -17,13 +17,13 @@ complements, never substitutes.
 
 ## Rate-limiting algorithms
 
-| Algorithm              | Burst behaviour                                                                                                   | Memory per key                                                       | The failure it has                                                                        |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Fixed window           | Up to **2× the rate** across a boundary — a full window at the end of one, a full window at the start of the next | One counter + window stamp                                           | The boundary. Invisible in any test that does not straddle one                            |
-| Sliding window log     | Exact over the window                                                                                             | One timestamp per request in the window — attacker-controlled growth | Memory; unusable for high rates or many keys                                              |
-| Sliding window counter | Approximate; smooths the boundary by weighting the previous window                                                | Two counters                                                         | Approximation error near the boundary, bounded and small                                  |
-| Token bucket           | Explicit burst = capacity, then the sustained refill rate                                                         | Two numbers                                                          | Capacity left equal to the rate, i.e. burst policy never actually chosen                  |
-| Leaky bucket (queue)   | No burst out; bursts are queued and smoothed                                                                      | Queue                                                                | It **adds latency by design**, and the queue is a place requests wait past their deadline |
+| Algorithm              | Burst behaviour                                                                                                   | Memory per key                                                     | The failure it has                                                                                    |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Fixed window           | Up to **2× the rate** across a boundary — a full window at the end of one, a full window at the start of the next | One counter + window stamp                                         | The boundary. Invisible in any test that does not straddle one                                        |
+| Sliding window log     | Exact accepted-count window with atomic prune/check/insert                                                        | One timestamp per retained accepted request; bound keys separately | Storage/operation cost grows with limit and active keys; logging rejected attempts can grow unbounded |
+| Sliding window counter | Approximate; smooths the boundary by weighting the previous window                                                | Two counters                                                       | Error depends on within-window clustering; not necessarily small                                      |
+| Token bucket           | Explicit burst = capacity, then the sustained refill rate                                                         | Two numbers                                                        | Capacity left equal to the rate, i.e. burst policy never actually chosen                              |
+| Leaky bucket (queue)   | No burst out; bursts are queued and smoothed                                                                      | Queue                                                              | It **adds latency by design**, and the queue is a place requests wait past their deadline             |
 
 Defaults that hold up: **token bucket** for client quotas, because bursts are legitimate and
 capacity states the policy; **sliding window counter** when you need a simple approximation
@@ -37,13 +37,17 @@ and then bound the queue and give it a deadline check.
 | Per-replica static share                            | Conservative/local under stable assumptions                                   | Underutilization under skew; aggregate changes with membership unless admission is consistently routed     | Free hot path; operational membership coupling  |
 | Atomic shared counter/reservation                   | Defined by store consistency and algorithm                                    | Store latency/outage/hot key; race-free only with one atomic script/transaction and exact expiry semantics | One shared operation per request or reservation |
 | **Local bucket from non-overlapping escrow grants** | Exact up to issued-grant semantics; temporarily underutilizes stranded grants | Sum of unspent grants is unavailable elsewhere; unsafe allocator failover can double-issue                 | Background grant protocol and lease/epoch state |
-| Limit at the edge proxy only                        | Fleet-wide, before the JVM                                                    | Cannot see per-instance saturation; coarse keys only                                                       | Cheapest rejection available                    |
+| Limit at the edge proxy only                        | Before the JVM; global only with coordinated enforcement                      | Visibility/key precision depends on configuration; edge replicas can multiply local quotas                 | Early rejection; coordination may add cost      |
 
 State the bound from the actual algorithm. In escrow, a coordinator allocates portions whose
 sum never exceeds the global budget; partitions strand allowance and reduce availability but
 need not over-admit. In eventually reconciled independent buckets, overage depends on every
 bucket's initial/refill allowance and partition duration. Prove allocator failover does not
 double-issue an epoch. Contractual limits need precise window/burst/error semantics.
+
+For example, a weighted counter at halfway through a window estimates half of the previous
+count. If all 100 previous arrivals occurred near its end, the rolling window can still contain
+all 100 while the estimate counts only 50. Do not advertise an exact rolling quota from this model.
 
 Sequencing is worth a line: an edge limit that stops obvious abuse cheaply, plus in-process
 shedding that protects against everything the edge cannot see, covers far more than either
@@ -58,12 +62,12 @@ alone.
 | In-flight concurrency vs a measured limit | Leads              | Cost varies by orders of magnitude               | The limit has to be measured, not guessed                                                            |
 | CPU utilisation                           | Workload-dependent | CPU-bound bottleneck and throttling are measured | It misses I/O saturation and can be distorted by cgroup throttling/steal; it may lead or lag latency |
 | Error rate from downstreams               | Lags               | As corroboration                                 | It is the consequence, not the cause                                                                 |
-| Heap or GC pressure                       | Lags, and noisy    | Never as the primary trigger                     | Attribution is `java-performance`, not a shedding signal                                             |
+| Heap or GC pressure                       | Workload-dependent | Memory is the measured constrained resource      | Allocation bursts and GC cycles make raw occupancy noisy; calibrate headroom and recovery            |
 
 The queue you can see is not always the one that matters. Requests also wait in the
-connector's accept queue and the OS backlog, where the application cannot measure them. Size
-the container's worker pool above your admission limit so that waiting happens where you have
-instrumentation.
+connector's accept queue and the OS backlog, requiring layer-specific instrumentation. Coordinate
+worker, connector and admission bounds to avoid hidden or unbounded waiters; increasing the
+worker pool alone neither relocates all waiting nor guarantees observability.
 
 ## Priority classes
 
@@ -107,10 +111,10 @@ remote effects change the economics. Bound every queue and expose age/slack by c
 - Count shed required traffic in its user-facing SLI. Alert from error-budget burn and class,
   while using internal shed rate to explain why the service remained stable. A brief expected
   batch rejection and one rejected payment request have different policies.
-- Alert separately on **zero** shedding paired with rising latency: that means the shedder is
-  not engaging, which is a defect in the protection rather than an absence of load.
+- Investigate **zero** shedding paired with rising latency: verify saturation and the configured
+  signal before blaming protection; latency can rise for reasons the shedder does not control.
 - Per-client 429 rate is a product signal as much as an operational one: one client at its
-  limit constantly is a conversation about tiers, not an incident.
+  limit constantly may indicate plan mismatch, abuse or a limiter regression; investigate context.
 
 ## Load-testing the rejection path
 
@@ -119,22 +123,26 @@ assert is here.
 
 1. **Drive past capacity in steps** — 0.8×, 1.0×, 1.5×, 3× measured capacity — with an
    **open-loop** generator. A closed-loop generator throttles itself against the slowdown and
-   hides the effect entirely (`coordinated-omission`).
+   can under-expose offered-load overload (`coordinated-omission`).
 2. **Assert goodput does not collapse.** Beyond capacity, successful-inside-deadline responses
-   must stay roughly flat. A curve that rises and then falls towards zero means the service has
-   no working shedder, whatever the configuration says.
+   should stay near the measured capacity envelope for a stable workload/bottleneck. A collapse
+   calls for checking rejection cost, downstream capacity, workload mix and generator validity.
 3. **Assert rejection is cheap.** At 3× load, per-rejection CPU cost should be a small fraction
-   of a success. If total CPU keeps climbing with the shed rate, rejection is happening too
-   late in the request path.
+   of a success. Total CPU can still rise because even cheap rejection has nonzero cost;
+   measure marginal rejection cost and remaining headroom before inferring rejection is too late.
 4. **Assert class isolation and fairness.** Send mixed authenticated priority traffic, confirm
    reservations and shedding order, then attack the high-priority path and prove its own bound.
 5. **Assert recovery.** Drop the load back to 0.8× and measure how long until shedding stops.
-   A service that keeps shedding after the surge has a queue it never drained, or a stuck
-   adaptive limit.
+   Continued shedding can reflect undrained queues, controller recovery or continuing downstream
+   saturation; use signal history to distinguish them.
 
 Also test membership changes and limiter-store partitions, cost-estimation abuse, a single hot
 tenant, downstream slowdown at constant arrival rate, cancellation and clock jumps. Report
 offered—not merely admitted—load or successful shedding will make traffic appear to disappear.
+Keep eligible offered traffic in the availability denominator and show admitted-only latency
+separately. For 100 eligible requests, 80 fast successes and 20 shed requests yield 80% success,
+not 100%; planned quota exclusions must precede the observation. Invalid generator/measurement
+results are inconclusive, not evidence that overload handling passed.
 
 ## Primary references
 

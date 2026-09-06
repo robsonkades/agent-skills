@@ -20,13 +20,19 @@ Older versions lack that facility. Ordinal persistence is hazardous because
 someone inserts a constant in the middle of the declaration list, the code compiles, the tests
 pass, and every existing row now means something different. There is no error at any point.
 
+The table's "safe" means existing stored identities only, subject to unchanged code values
+and constraints. Ordinal additions are safe only when appended; insertion shifts identities.
+New values in any mapping can still break older readers or database constraints. Test old
+rows with the new reader and new rows with every supported old reader separately.
+
 ```java
 @Converter(autoApply = true)
 public class OrderStatusConverter implements AttributeConverter<OrderStatus, String> {
     @Override public String convertToDatabaseColumn(OrderStatus s) { return s == null ? null : s.code(); }
     @Override public OrderStatus convertToEntityAttribute(String code) {
+        if (code == null) return null; // nullable-column policy; reject explicitly if forbidden
         return OrderStatus.byCode(code)
-            .orElseThrow(() -> new IllegalStateException("unknown status code in database: " + code));
+            .orElseThrow(() -> new IllegalStateException("unknown status code in database"));
     }
 }
 ```
@@ -36,6 +42,10 @@ question that has no good answer at the point where a row is being mapped, and m
 be decided deliberately. A database column holding `'SHIPPED'` is data with a lifetime measured
 in years; the Java constant name is source that changes weekly. Decoupling them with a code
 field is worth the ten lines.
+
+This is a partial Jakarta Persistence sketch with omitted imports and `OrderStatus` code
+lookup. Do not combine a converter with `@Enumerated` on the same attribute and assume
+portable conversion. Validate null, unknown and duplicate-code handling against the actual provider.
 
 ## JSON and HTTP contracts
 
@@ -122,3 +132,5 @@ business rule.
       artefacts handle the unknown case explicitly.
 - [ ] Removal or rename of a constant is treated as a breaking contract change, with a
       deprecation window covering message retention.
+
+Primary mapping reference: [Persistence 3.2 Enumerated](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumerated).

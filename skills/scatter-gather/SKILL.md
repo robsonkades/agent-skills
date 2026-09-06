@@ -31,19 +31,31 @@ leaf dashboard shows it, because no leaf is at fault. The second failure is the 
 costs N units of work for one answer — the gather is satisfied, the root replies, and the
 losing leaves keep running with their connections held.
 
+## Compatibility and evidence
+
+Inspect deployed Java/client versions, existing execution model and the caller's consistency
+contract before changing fan-out. The Java sketch targets Java 21+ without preview; preserve
+older supported executors/frameworks when appropriate rather than upgrading implicitly.
+Missing joint traces, ownership epochs or cancellation evidence leave the corresponding
+latency/correctness claim unverified. Report the completion rule, bounded work/bytes, deadline
+allocation, actual evidence and the validation still needed.
+
 ## Workflow
 
 1. **State the completion rule before writing any code.** All-of-N (the answer needs every
-   leaf), first-of-N (any leaf can answer, take the winner), or k-of-N-by-deadline (take what
-   arrived, declare the rest missing). Every other decision below follows from this one.
+   leaf), first-success (first acceptable equivalent answer), or k acceptable distinct owners
+   by deadline. Define insufficient-k behavior separately; an error completing first is not
+   a successful winner. Every other decision below follows from this one.
 2. **Choose N, and record why.** N is a trade between per-leaf work and tail exposure, not a
    free parameter. "One leaf per shard" is a _default inherited from the data layout_, not a
    decision — see `references/tail-amplification-and-hedging.md`.
-3. **Propagate one deadline to every leaf** with a reserve for merge/serialization/return.
+3. **Derive every leaf cutoff from one root deadline**, reserving time for cancellation
+   bookkeeping, merge/serialization/return.
    Start a leaf only when its probability/value of completing within remaining budget justifies
    the work; p50 is not a universal cutoff (`timeouts-and-deadlines`).
-4. **Bound the in-flight fan-out.** Virtual threads make N cheap in the root and change
-   nothing downstream: the limit belongs next to the scarce resource
+4. **Bound fan-out across concurrent roots as well as within each request.** Limit admission,
+   waiting tasks, response bytes and active leaf work. Virtual threads still retain memory;
+   a semaphore caps holders, not its waiter population
    (`concurrency-limiting-and-bulkheads`).
 5. **Signal cancellation to losers when the gather is satisfied**, and verify root tasks plus
    remote work release resources. Cancellation may be advisory and cannot undo a committed
@@ -71,7 +83,8 @@ Avoid scatter/gather when:
 - the request writes and requires atomic all-or-nothing visibility without a commit protocol.
   Fan-out writes can be valid for replicated/quorum or idempotent broadcast semantics, but
   scatter/gather alone is not a transaction (`distributed-transactions-and-sagas`)
-- the root budget is at or below the leaf p99: the max over N will exceed it by construction
+- the measured all-of-N tail plus dispatch/merge cost does not fit the root target;
+  a leaf p99 alone cannot prove a breach for every request or for first-success
 Prefer instead:
 - an index or denormalised view keyed by the query, so one owner answers it
   (sharding-and-partitioning) — this is the fix for a query that always fans out
@@ -96,8 +109,9 @@ Prefer instead:
 - A partial result must carry an explicit completeness field naming the missing owners. A
   list of 8 elements is indistinguishable from 8 shards that had no data, and a caller that
   cannot tell will cache the wrong answer or show it as authoritative.
-- Every leaf call takes the **remaining** budget, not a per-leaf constant. Fixed per-leaf
-  timeouts under a root deadline are unreachable configuration the first time a leaf is slow.
+- Each leaf timeout is bounded by the remaining leaf cutoff; a smaller dependency-specific
+  timeout may also apply. Include queue/admission time. An early dependency timeout is valid,
+  but a fresh timeout must not extend the root deadline.
 - Java `Future.cancel(true)` attempts interruption; `CompletableFuture.cancel` does not
   guarantee interrupting supplier execution, and remote cancellation depends on protocol/
   client. A cancelled handle proves only local state. Assert remote in-flight/resource release.
@@ -126,8 +140,8 @@ Prefer instead:
 
 - [Tail amplification and hedging](references/tail-amplification-and-hedging.md) — the
   max-of-N consequence with the N table, how to choose N and where the crossover sits, the
-  hedging rule with its two safety conditions and rate cap, backup-request placement, and the
-  four series that show whether hedging is helping or adding load. Read before changing N,
+  hedging eligibility conditions and admission caps, backup-request placement, and the
+  series that show whether hedging is helping or adding load. Read before changing N,
   and before enabling any hedge or backup request.
 - [Fan-out in Java](references/java-fan-out.md) — a virtual-thread executor fan-out under a
   propagated deadline, per-leaf timeouts derived from the remaining budget, cancellation of

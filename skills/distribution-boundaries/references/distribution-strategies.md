@@ -5,46 +5,39 @@ for different operations, and that is correct.
 
 ## The four shapes
 
-| Strategy                          | Caller needs the answer | Coupling                | Consistency       | Failure of callee                  |
-| --------------------------------- | ----------------------- | ----------------------- | ----------------- | ---------------------------------- |
-| Synchronous request/response      | yes, now                | temporal + contract     | immediate         | caller fails or degrades           |
-| Asynchronous command              | no                      | contract only           | eventual          | queued; caller unaffected          |
-| Event notification                | no; callee decides      | contract only, inverted | eventual          | consumer lags; producer unaffected |
-| Event-carried state / replication | no; reads locally       | contract only           | eventual, bounded | stale local data, still serves     |
+| Strategy                          | Caller needs the answer      | Coupling                 | Consistency          | Failure of callee                         |
+| --------------------------------- | ---------------------------- | ------------------------ | -------------------- | ----------------------------------------- |
+| Synchronous request/response      | usually now                  | temporal + contract      | API/store contract   | caller fails or degrades                  |
+| Asynchronous command              | completion may be later      | contract + broker        | application contract | backlog grows within capacity/retention   |
+| Event notification                | no immediate consumer result | contract + broker        | application contract | consumer lags; publication can still fail |
+| Event-carried state / replication | reads locally                | schema + update pipeline | lag-dependent        | stale data; enforce freshness policy      |
 
 The decision is mostly one question: **does the caller need the answer to complete its own
-work?** If not, synchronous coupling is being bought for nothing.
+work?** If not, consider asynchronous completion against its operational cost. Synchronous
+transport by itself guarantees neither freshness nor atomicity.
 
 ## Synchronous request/response
 
 Correct when the answer changes what the caller does next: an authorisation decision, a
 price quote, a validity check.
 
-```java
-@Bean
-RestClient inventoryClient(RestClient.Builder builder) {
-    return builder
-        .baseUrl(inventoryProperties.baseUrl())
-        .requestFactory(ClientHttpRequestFactoryBuilder.httpComponents()
-            .build(ClientHttpRequestFactorySettings.defaults()
-                .withConnectTimeout(Duration.ofMillis(200))
-                .withReadTimeout(Duration.ofSeconds(2))))   // never unbounded
-        .build();
-}
-```
+For the project's actual client/JDK version, configure and verify pool-acquisition,
+connect and response limits against the remaining end-to-end deadline. Include DNS/TLS
+coverage, retries and queueing; connect/read timeouts alone are not a total call bound.
+Bound concurrency and waiting queues (`concurrency-limiting-and-bulkheads`). A circuit
+breaker can reject calls during failures but is not a concurrency limit. Define safe
+failure behaviour, including failing closed when a fallback would violate correctness.
 
-Non-negotiables: a connect and read timeout shorter than the caller's own deadline; a
-bounded connection pool; a circuit breaker or bulkhead so one slow dependency cannot consume
-the caller's capacity (`concurrency-limiting-and-bulkheads`); a defined behaviour when it
-fails, which is a design decision, not a `catch` block.
-
-**Availability multiplies.** A → B → C → D at 99.9% each yields 99.6%. Reducing hops beats
-improving any single link.
+For an all-required independent-success chain, availability is the product of service
+availabilities; see the numerical example in SKILL.md. Shared failures and recovery
+policies require a different model. Measure which dependency dominates before choosing
+between fewer hops and improving a link.
 
 ## Asynchronous command
 
 The caller wants something done, not answered. Latency is decoupled and the callee's
-downtime becomes queue depth rather than caller failure.
+downtime can become queue depth after durable acceptance. Broker outages, full queues,
+expired retention and missed completion deadlines still affect the business operation.
 
 The cost is the intermediate state: the caller must return before the work completes, so
 the API returns "accepted", and the caller's user interface must represent in-progress
@@ -70,7 +63,7 @@ broker in the middle, and it couples the producer to a consumer's responsibility
 ## Event-carried state transfer / replication
 
 The consumer keeps a local copy of what it needs, updated by events, and reads it without a
-remote call. This removes the synchronous dependency completely.
+remote call on that read path. Freshness checks or cache misses may still call remotely.
 
 Correct when the data is read far more often than it changes and slight staleness is
 acceptable — a product catalogue in an order service, a customer's tier in a pricing
@@ -78,14 +71,18 @@ service.
 
 The costs are real: storage duplicated per consumer; a bootstrap path for a new consumer
 (replay, or a snapshot API); staleness that must be bounded and monitored; and a schema
-that now has as many readers as there are consumers (`consistency-models`).
+that now has as many readers as there are consumers (`consistency-models`). Eventual
+consistency provides no finite lag bound by itself; define when stale reads stop being safe.
 
 ## Losing atomicity: sagas, compensation, outbox
 
-A business transaction spanning services cannot be atomic in practice. Three mechanisms
-cover the ground.
+Independent local commits are not one atomic transaction. Choose application recovery or
+an explicitly supported distributed transaction; these mechanisms offer different guarantees.
 
-### Outbox — makes the local write and the message atomic
+### Outbox — makes the local write and publication intent atomic
+
+Partial Spring-style Java snippet: both repositories must enlist in the same database
+transaction, and invocation must actually pass through the configured transaction boundary.
 
 ```java
 @Transactional
@@ -98,11 +95,11 @@ public OrderId place(PlaceOrderCommand command) {
 }
 ```
 
-Both rows commit together, so the message cannot be lost or sent for work that rolled back.
-Delivery becomes at-least-once, which pushes the duplicate-handling requirement onto every
-consumer (`idempotency`, `delivery-semantics`). Ensure the relay is a single logical worker
-or that duplicate publication is tolerated — several replicas polling the same outbox will
-otherwise publish twice.
+Both rows commit together; this records a recoverable publication intent, not atomic broker
+delivery. A relay that retries committed rows can publish at least once subject to durable
+storage and eventual recovery. Even one relay can crash after publishing but before marking
+the row sent, then publish again. Coordinate competing relays and tolerate duplicates at the
+business effect (`idempotency`, `delivery-semantics`). Monitor backlog and retention.
 
 ### Saga — a sequence with compensations
 
@@ -114,8 +111,8 @@ reserve stock ──→ take payment ──→ schedule dispatch
 
 Rules that make sagas survivable:
 
-- Every step needs a compensation, or must be the last step. Steps with no possible
-  compensation (an email sent, a physical action) must be ordered last.
+- Identify compensable steps and the irreversible pivot. After the pivot, use retryable
+  forward recovery or explicitly owned repair; an irreversible step need not be last.
 - Compensations are semantic, not rollbacks: a refund is a new fact, not an undo.
 - Every step and every compensation must be idempotent — they will be retried.
 - The intermediate state is visible to users and to other systems, and must be a legitimate
@@ -125,31 +122,40 @@ Rules that make sagas survivable:
 
 ### Two-phase commit
 
-Real atomicity, at the price of locks held across a network, in-doubt transactions after a
-coordinator failure, availability that is the product of every participant's, and the
-practical fact that HTTP APIs and most modern brokers do not participate. Defensible for
-one database plus one XA-capable resource; not a general answer between services.
+Atomic commitment requires all resources to participate in the chosen protocol. Prepared
+participants may retain locks/resources and remain in doubt during coordinator failure.
+An ordinary HTTP API does not automatically participate. Verify coordinator recovery,
+resource support and isolation separately before choosing 2PC; do not infer availability
+from an unconditional product formula (`distributed-transactions-and-sagas`).
 
 ## Fan-out
 
 One request producing N downstream calls is where remote latency becomes visible.
 
-- **Sequential fan-out** costs the sum. Almost never right when the calls are independent.
-- **Parallel fan-out** costs the maximum — which is the p99 of the slowest, and the
-  probability of hitting some tail grows with N.
+- **Sequential fan-out** adds stage durations and orchestration overhead. Compare batching
+  or bounded parallelism against downstream capacity and rate limits.
+- **Parallel fan-out** waiting for all results takes approximately the maximum duration
+  plus overhead when calls start together. Its p99 is not the largest individual p99;
+  the joint distribution, correlations and concurrency limit matter.
 - **Bounded fan-out.** N must be bounded by design; a call per row of a result set is the
   remote N+1, and it appears in production at a list size no test used.
 - **Partial results.** Decide in advance whether the response degrades or fails when one
-  call does. With virtual threads, a structured concurrency scope makes that decision
-  explicit and cancels the losers (`structured-concurrency`).
+  call does. Choose an explicit task lifetime and cancellation policy supported by the
+  project's Java version (`structured-concurrency`). Local cancellation is cooperative and
+  does not prove a remote operation stopped.
 
 ## Choosing, in one table
 
-| Condition                                                     | Strategy                                     |
-| ------------------------------------------------------------- | -------------------------------------------- |
-| Caller cannot proceed without the answer                      | Synchronous, with timeout and fallback       |
-| Caller needs work done but not the result                     | Asynchronous command                         |
-| Other parties may care about a fact; producer should not know | Event notification                           |
-| Data is read often, changes rarely, staleness tolerable       | Event-carried state / replication            |
-| Multi-step business process across services                   | Saga with compensations, outbox at each step |
-| The two sides genuinely need one transaction                  | Do not distribute them                       |
+| Condition                                                     | Strategy                                                           |
+| ------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Caller cannot proceed without the answer                      | Synchronous, with deadline and safe failure behaviour              |
+| Caller needs work done but not the result                     | Asynchronous command                                               |
+| Other parties may care about a fact; producer should not know | Event notification                                                 |
+| Data is read often, changes rarely, staleness tolerable       | Event-carried state / replication                                  |
+| Multi-step business process across services                   | Saga recovery; outbox where local state and publication must agree |
+| The two sides genuinely need one transaction                  | Prefer one transaction boundary; assess supported 2PC if necessary |
+
+## Sources
+
+- [AWS transactional outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html): dual-write gap and duplicate publication.
+- [Azure saga pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/saga): compensable, pivot and retryable transactions; lack of global isolation.

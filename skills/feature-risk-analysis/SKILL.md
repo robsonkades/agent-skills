@@ -21,9 +21,9 @@ description: >
 A risk section is worth writing only if something changes because of it. Most do not: they list
 "performance", "data integrity" and "scope", rate everything medium, and are read once.
 
-The difference between that and a useful register is two fields. **Detection** — how anyone
-finds out it happened — and **fallback** — what is done when it does. A risk with neither is a
-worry, and worries do not belong in a plan.
+**Detection** explains how anyone discovers the event; **fallback** states what can be done
+afterward. Missing detection or recovery is itself important risk evidence. Keep the row and
+its unresolved controls visible instead of discarding it as a worry.
 
 ## Workflow
 
@@ -35,7 +35,9 @@ worry, and worries do not belong in a plan.
 2. **State each as an event**: something that happens, at a time, with a consequence. "The
    migration is slow" is not one; "the migration holds a lock on `orders` long enough to time out
    requests" is.
-3. **Rate impact and probability** HIGH, MEDIUM or LOW, and say what the rating rests on.
+3. **Rate impact and likelihood** against a stated deployment/operation window and exposure.
+   Use HIGH, MEDIUM or LOW with evidence, or UNKNOWN when evidence is insufficient; distinguish
+   inherent risk from residual risk after controls actually verified.
 4. **Write the detection.** What signal, seen by whom, how long after. If the honest answer is
    "a customer tells us", write that — it is the finding.
 5. **Write mitigation and fallback.** Mitigation reduces probability or cost before the fact;
@@ -43,8 +45,9 @@ worry, and worries do not belong in a plan.
    usually has only mitigation.
 6. **Convert what is actionable into work.** A mitigation that requires code is a resource in
    the plan, not a paragraph in a document.
-7. **Carry the register into the completion review.** A risk that was accepted must still be
-   true at the end.
+7. **Revisit controls and residual exposure at completion.** Link relevant input revisions,
+   `IMP-*`/`ED-*`, mitigating `RES-*` and observed `EV-*`; acceptance is reconsidered when
+   premises, implementation, workload or controls change.
 
 ## What to sweep
 
@@ -53,42 +56,50 @@ scalability, reliability and failure handling, security and access, compatibilit
 callers and stored data, deployment and ordering, migration and rollback, operations and
 diagnosis, maintainability.
 
-Sweep all of them and write "none identified" where there is none. The empty rows are what
-makes a short register credible.
+Use relevant concerns as a coverage check. Record "none identified in the inspected scope"
+or "not assessed" honestly; no need to create empty rows for every category. When no dossier
+exists, derive a bounded register from the request and repository evidence.
 
 ## Rating
 
-| Level      | Impact means                                    | Probability means                                   |
-| ---------- | ----------------------------------------------- | --------------------------------------------------- |
-| **HIGH**   | Data loss, a security exposure, or an outage    | It has happened here before, or nothing prevents it |
-| **MEDIUM** | Degraded behaviour, a manual repair, a rollback | Plausible under normal operation                    |
-| **LOW**    | Noticeable but recoverable without intervention | Needs an unusual combination                        |
+| Level      | Impact means                                                | Probability means                                                                |
+| ---------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| **HIGH**   | Severe loss/exposure or outage over the affected population | Expected or repeatedly observed under the stated exposure and controls           |
+| **MEDIUM** | Material degradation or bounded manual recovery             | Credible failure path under the stated operating conditions                      |
+| **LOW**    | Limited, bounded harm with demonstrated recovery            | Evidence supports infrequency in the stated window; not merely missing incidents |
 
 Rate impact by consequence, not by embarrassment. Rate probability against **this** system's
-history and controls, not against the general frequency of the failure class.
+history and controls, not against the general frequency of the failure class. One incident
+or absent prevention alone does not establish high likelihood; no incidents does not establish
+low likelihood. Record confidence, detection gaps and correlated/common-cause failures rather
+than multiplying ordinal labels into a probability.
 
 ## Decision rules
 
 ```text
 IF a risk has no detection
-THEN either find one, or record that it would be found by a user — and treat that
-     as the finding it is.
+THEN record it as undetected unless customer discovery is supported; identify a detection
+     task or state why detection is infeasible. Do not invent a signal or drop the risk.
 
 IF a risk is HIGH impact
-THEN it needs a mitigation or a fallback before implementation starts, not before
-     release. "We will monitor it" is neither.
+THEN identify the control/acceptance decision needed before the action that creates exposure.
+     Implement mitigations and investigate safely within existing authorization; block only
+     dependent exposure when required controls or authority remain unresolved.
 
 IF the mitigation is work
 THEN it is a RES-* with an identifier, and it appears in the execution order.
 
 IF a risk exists only because an assumption is unconfirmed
-THEN the mitigation is to confirm the assumption, and it is probably a question.
+THEN seek repository/runtime evidence or a discriminating experiment first; ask only for
+     material information that remains unavailable. Confirmation does not remove other failure paths.
 
 IF a risk is accepted
-THEN create or link a GAP-* with consequence, accountable owner, expiry and reopening trigger.
+THEN link existing acceptance evidence, residual consequence, scope, owner and reopening
+     trigger; use GAP-* when the feature workflow calls for a bounded accepted gap.
 
 IF the register is long and everything is MEDIUM
-THEN it was filled from a template. Delete the rows with no detection and rate again.
+THEN check specificity, duplication and rating evidence. Preserve material undetectable risks;
+     register length and rating distribution alone do not prove poor analysis.
 
 IF a risk cannot be reduced, detected or recovered from
 THEN it is a constraint on the design, and it belongs back in the solution phase.
@@ -96,10 +107,10 @@ THEN it is a constraint on the design, and it belongs back in the solution phase
 
 ## Constraints
 
-- **No risk without an owner authorised to accept it.** Impact rating alone does not establish
-  authority. An agent may accept only risks that are local, reversible, within explicit policy and
-  the user's delegated scope. Product, operational, security, privacy, legal, financial, data-loss,
-  or cross-team risks go to the accountable human owner even when probability is LOW.
+- **Record risks even when ownership is unresolved.** Separate the control implementer from
+  the authority accepting residual exposure. Reuse existing user authorization/delegation and
+  applicable policy; risk labels alone do not create a new approval gate. Material exposure
+  outside that authority remains pending, even if its likelihood is LOW.
 - **Do not restate the general failure modes of a technology.** The register is about this
   feature's use of it, in this system.
 - **Do not use the register to relitigate the design.** If the risk kills the option, that is a
@@ -110,22 +121,28 @@ THEN it is a constraint on the design, and it belongs back in the solution phase
 ```text
 RISK-02  The dispatch consumer reprocesses an event after a redeploy
       Impact        HIGH   duplicate outbound charges
-      Probability   MEDIUM at-least-once delivery, and the handler is not idempotent
-      Detection     duplicate rows in dispatch_log with the same event id; no alert
-                    exists today, so this would be found in reconciliation, next day
-      Mitigation    RES-07: idempotency key on dispatch_log with a unique constraint
-      Fallback      reconciliation job identifies duplicates; refunds are manual
-      Accepted by   -    (mitigated)
+      Probability   UNKNOWN rate per redeploy not measured; replay/lost-ack path exists
+      Detection     reconcile provider operation IDs and charge totals with intended effects;
+                    a local unique row can hide duplicate remote charges
+      Mitigation    PLANNED RES-07: local deduplication plus stable downstream operation key
+                    and recovery for charge-success/local-commit-failure; CT-02/EV-07 required
+      Fallback      reconcile unknown outcomes before retry/refund; assigned operator/runbook
+      Status        OPEN — planned mitigation is not verified protection
+      Acceptance    residual exposure/authority pending; preserve prior authorized work
 
 RISK-05  The V42 migration locks orders for longer than the deploy window
       Impact        MEDIUM  failed requests during deploy
-      Probability   LOW     the table is 40k rows (checked); the column is nullable
-                            with a default applied without a rewrite on this engine
-      Detection     migration duration is logged; deploy fails if it exceeds the window
-      Mitigation    none required at this size
-      Fallback      migration is reversible; V43 drops the column
-      Accepted by   GAP-02 — Engineering owner; expires at production-readiness review
+      Probability   UNKNOWN until target engine/version, lock contention and long transactions
+                    are checked; a no-rewrite operation can still wait for an exclusive lock
+      Detection     observe lock waits and application errors during the actual DDL;
+                    deploy timeout alone does not prove server-side cancellation
+      Mitigation    PLANNED: bounded lock acquisition, representative concurrent-load test,
+                    confirmed cancellation/transaction cleanup and compatible rollout
+      Fallback      abort before acquisition where possible; verify DB state after failure.
+                    Retain an additive column during app rollback; dropping it can lose new data
+      Acceptance    pending required evidence and applicable deployment authority
 ```
 
-Close with the count by impact level, and name every HIGH risk that has no mitigation. If that
-list is not empty, implementation does not start.
+Close with the material open risks, control evidence and exact actions blocked by missing
+controls/authority. Counts may help navigation but are not a readiness score; continue
+independent authorized work and mitigation development.

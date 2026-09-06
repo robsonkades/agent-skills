@@ -6,7 +6,7 @@
 | ------------------------- | ------------------------------------------ | ---------------------------------------------- |
 | How many handlers run     | Until one handles; then stop               | All, unless one short-circuits deliberately    |
 | Handler's answer          | "mine" / "not mine"                        | "here is the request, possibly transformed"    |
-| Unhandled                 | A real outcome needing a policy            | Cannot happen — the terminal stage is the work |
+| Unhandled                 | A real outcome needing a policy            | Terminal/short-circuit outcome must be defined |
 | Handler controls the rest | No                                         | Yes — it invokes the next, and may wrap it     |
 | Typical examples          | Tenant → product → default rule resolution | Servlet filters, interceptors, Netty pipeline  |
 
@@ -22,9 +22,17 @@ public Decision decide(Request request) {
 
 // pipeline: the handler invokes the rest, so it can wrap it
 public interface Stage {
-    Response handle(Request request, Stage next);    // next.handle(...) inside try/finally
+    Response handle(Request request, Next next);     // next.handle(request) inside try/finally
 }
+
+@FunctionalInterface
+public interface Next { Response handle(Request request); }
 ```
+
+These are partial signatures with domain types omitted. The composer supplies the continuation
+and terminal handler. Define whether `next` may be called zero or once; repeated invocation is not
+a generic retry mechanism. Async forwarding also needs explicit context, cancellation and cleanup
+ownership; lexical `finally` can run before asynchronous work completes.
 
 Choose the linked form only when a stage needs to control the invocation of the rest — timing it,
 catching around it, retrying it, running it elsewhere, or skipping it. Otherwise the iterated form
@@ -54,6 +62,8 @@ The explicit list has a property the others lack: adding a rule is a change to a
 reads, and its position is a deliberate act rather than a number chosen to be bigger than the
 last one. When handlers genuinely come from other modules, keep the list but let modules
 contribute to named positions, and fail startup on an unknown position.
+Also resolve ties deterministically or reject them, validate duplicates/required stages, and freeze
+the assembled membership before sharing it. Named positions alone do not define ordering within a slot.
 
 Two ordering hazards worth testing explicitly:
 
@@ -72,8 +82,8 @@ Explicit exception           NoHandlerFor(request) at the end. Best when
                              silence would be a defect (authorisation,
                              pricing, routing).
 
-Optional/empty result        the caller decides. Honest, and it forces
-                             every caller to handle it.
+Optional/empty result        the caller decides; explicit in the API,
+                             but tests must verify callers do not ignore it.
 
 Silent return                never. This is the pattern's classic bug and
                              it fails as "nothing happened", with no log,
@@ -95,7 +105,8 @@ If stages mutate shared state, a mid-chain failure leaves the request half-proce
 defensible designs:
 
 1. **Pure stages over an immutable context.** Each returns a new context; effects are applied once
-   at the end, after every stage has succeeded. Best default.
+   at the end per attempt, after every stage has succeeded. The final effect boundary still
+   needs atomicity/idempotency/recovery; immutable context alone supplies none of these.
 2. **A transaction spanning the chain.** Works when every effect is in one transactional
    resource, and makes the chain's duration the transaction's duration
    (`enterprise-transactions`).
@@ -107,7 +118,9 @@ turns a failed stage into a silently degraded result.
 
 In message-driven pipelines add one more consideration: with at-least-once delivery, a failure at
 stage 3 means stages 1 and 2 run again on redelivery. Either those stages are idempotent, or
-their effects must be deferred to the end (`idempotency`, `delivery-semantics`).
+their final commit must be idempotent/transactional and coordinated with acknowledgement.
+Deferring effects does not prevent duplicate execution after commit-before-ack failure
+(`idempotency`, `delivery-semantics`).
 
 ## Framework equivalents
 
@@ -119,8 +132,9 @@ their effects must be deferred to the end (`idempotency`, `delivery-semantics`).
 | Messaging                        | The broker client's interceptor or a Spring Integration flow |
 | Netty / reactive transports      | `ChannelPipeline`                                            |
 
-Prefer these for transport-level concerns: they already solve ordering, exception translation,
-context propagation and metrics, and a hand-rolled chain beside them means two mechanisms can
+Prefer these for transport-level concerns, then verify the actual framework's ordering, error,
+async-dispatch and context/metrics behavior. None of those guarantees follows from the word chain.
+A hand-rolled chain beside them means two mechanisms can
 apply to the same request with no single place showing the combined order.
 
 Hand-roll when the chain is **domain-shaped** — pricing rules, underwriting checks, approval

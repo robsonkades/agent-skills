@@ -28,6 +28,11 @@ the pod had no spare cores to pay for them in the first place.
 
 ## Workflow
 
+Use JDK 25 HotSpot as the examples' baseline, then inspect the deployed vendor/build, OS/architecture,
+container settings and effective flags. Collector inclusion is a build choice; a product JEP does
+not guarantee every distribution supplies that collector. Smoke-test the actual binary before
+planning a workload experiment. Do not upgrade the runtime merely to match this guide.
+
 1. **Separate the three cost axes before reading any number.** STW pause, concurrent work
    (CPU while the application runs), and per-access barrier overhead. Conflating them is the
    most common source of a wrong conclusion about these collectors.
@@ -35,7 +40,7 @@ the pod had no spare cores to pay for them in the first place.
    quotas increase contention, but no core-count threshold selects a collector. Compare
    throughput and tail latency under the actual quota and overload policy.
 3. **Declare the mode explicitly.** ZGC has exactly one mode since JDK 24 and needs only
-   `-XX:+UseZGC`. Shenandoah still defaults to single-generation; generational is opt-in via
+   `-XX:+UseZGC`. On the JDK 25 baseline Shenandoah defaults to single-generation; generational is opt-in via
    `-XX:ShenandoahGCMode=generational`. Confirm what is actually active with startup
    `gc+init` logs and `jcmd <pid> VM.flags -all`; plain `VM.flags` can omit defaults.
 4. **Audit every carried flag.** G1-specific flags may remain accepted yet be inert under
@@ -53,17 +58,16 @@ the pod had no spare cores to pay for them in the first place.
 
 ## Rules
 
-- Activate ZGC with `-XX:+UseZGC` alone. `-XX:+ZGenerational` is obsolete since JDK 24 —
-  accepted on the command line, no effect, because the only mode that exists is already
+- Activate ZGC with `-XX:+UseZGC` alone on JDK 24+. `-XX:+ZGenerational` is obsolete since JDK 24 —
+  accepted with a warning and no effect on the tested JDK 25 build, because the only mode is already
   generational. Prescribing it looks like configuration and changes nothing.
 - ZGC is generational **by definition** on JDK 24+. JEP 474 made it the default in JDK 23;
   JEP 490 deleted the non-generational code in JDK 24. There is no mode to turn off.
 - Shenandoah generational is _product_ in JDK 25 (JEP 521, experimental in JDK 24 under JEP 404) but is **not** the default. `-XX:+UseShenandoahGC` on its own still selects
   single-generation. "Product" is not "default".
-- Reject any ZGC-versus-Shenandoah comparison that does not state `ShenandoahGCMode`. By
-  omission it pits Shenandoah's default single-generation mode against ZGC's only mode,
-  which is generational — structurally unbalanced on any metric sensitive to the
-  generational hypothesis.
+- Require the effective Shenandoah mode for a comparison. On JDK 25, omission can compare
+  single-generation Shenandoah with generational ZGC. That can answer a defaults comparison,
+  but does not isolate collector implementation from generation policy; state the question.
 - Shenandoah's load-reference barrier resolves forwarded references; its fast/slow paths and
   barrier set depend on mode and GC state. ZGC uses colored pointers and load/store barriers.
   Avoid universal branch/cycle claims: inspect generated code/profiles on the target build.
@@ -88,11 +92,17 @@ the pod had no spare cores to pay for them in the first place.
 ## Production acceptance
 
 - Exercise steady state, burst, live-set growth, large allocation, redeploy and CPU-throttle
-  scenarios; verify no ZGC allocation stalls or Shenandoah pacing/degeneration/full fallback.
-- Compare equivalent collector modes and effective flags on the same JDK build/quota; include
+  scenarios. Set acceptable pause/stall/pacing and fallback behavior from the SLO; Shenandoah
+  pacing can be normal allocation control, not automatically a failed migration. Distinguish
+  pacing delay from degeneration/full fallback and inspect any consequential regression.
+- Compare declared collector modes and effective flags on the same JDK build/quota; include
   warm-up and confidence/repetition rather than a single run.
 - Set rollback on SLO, achieved throughput, CPU throttling and memory headroom. Preserve GC,
   safepoint and OS/cgroup evidence for every failed run.
+
+Return the exact build/mode/flags, measured pause versus concurrent wall time and CPU evidence,
+the supported bottleneck hypothesis, proposed adjustment, and validation/rollback criteria.
+If measurements are missing, propose a bounded experiment rather than presenting a tuning fix.
 
 ## References
 

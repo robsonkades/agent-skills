@@ -4,14 +4,14 @@
 
 Documentation is aspirational and memory is selective. Production is evidence.
 
-| Question                           | Where the answer is                                                                                        |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Which endpoints are used?          | Access logs over representative business cycles. Zero observed traffic is a deletion hypothesis, not proof |
-| Which tables are written, by what? | Database audit, `pg_stat_user_tables`, SQL Server Query Store, or a trace of writing statements            |
-| Which jobs run?                    | The scheduler, the crontabs, and the operations team                                                       |
-| What rules exist outside the code? | `information_schema.routines`, `triggers`, column defaults, check constraints                              |
-| What is actually slow?             | Query Store / `pg_stat_statements` by total time, not by mean                                              |
-| Which code is dead?                | Coverage from a production-shadow run, or logging on entry to suspects                                     |
+| Question                           | Where the answer is                                                                                                         |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Which endpoints are used?          | Access logs over representative business cycles. Zero observed traffic is a deletion hypothesis, not proof                  |
+| Which tables are written, by what? | Table counters show activity; audit/traces correlated with principal, application/job and time establish writer identity    |
+| Which jobs run?                    | The scheduler, the crontabs, and the operations team                                                                        |
+| What rules exist outside the code? | `information_schema.routines`, `triggers`, column defaults, check constraints                                               |
+| What is actually slow?             | Query Store / `pg_stat_statements` totals identify aggregate cost; per-call distributions and traces identify request delay |
+| Which code is dead?                | Coverage from a production-shadow run, or logging on entry to suspects                                                      |
 
 ```sql
 -- Rules living in the database. Run this before believing any module inventory.
@@ -25,6 +25,11 @@ SELECT event_object_table, trigger_name, action_timing, event_manipulation
 
 A module described as "just CRUD" with four triggers on its main table is not just CRUD, and
 the triggers will still fire when the new code writes to that table.
+
+These SQL queries are discovery fragments, not a complete inventory: catalog visibility
+depends on privileges and engine; include routines, triggers, constraints and jobs outside
+the visible schemas. PostgreSQL `pg_stat_user_tables` aggregates per-table activity and
+does not identify which application wrote it.
 
 ## Characterisation tests without a specification
 
@@ -60,8 +65,8 @@ Practices that make this work:
 
 ## Establishing table ownership
 
-This is the constraint that blocks everything else, and it is usually the largest piece of
-work.
+Shared write authority constrains independent semantic evolution and is often substantial
+work; it does not block compatible additive changes or read-only extraction.
 
 ```text
 Step 1  Inventory the writers per table. Not "who should write" — who
@@ -76,7 +81,8 @@ Step 3  Give the other writers an API from the owner. Start with the
 Step 4  Revoke write permission at the database level. This is the step
         that makes ownership real — everything before it is a convention.
 
-Step 5  Only now: schema changes, extraction, independent deploys.
+Step 5  Transfer write authority and make incompatible schema/semantic
+        changes only after every remaining writer's contract is handled.
 ```
 
 Step 4 is the one that gets skipped and the one that matters. Ownership enforced by
@@ -98,7 +104,9 @@ CREATE VIEW cliente AS
 SELECT id AS cod_cli, cgc, nome AS nome_cli, ... FROM customer;
 ```
 
-Buys a rename without touching the legacy application. Limits worth knowing before relying
+Partial SQL (`...` is an omitted column list), not a deployable migration. Verify locks,
+privileges, constraints, triggers, ORM metadata, writes and rollback on the target database.
+It can preserve selected legacy reads across a rename. Limits worth knowing before relying
 on it: updatable views have restrictions in every engine; performance can differ from the
 base table; and it is a compatibility layer that must eventually be removed, so it needs its
 own decommissioning date.
@@ -110,13 +118,16 @@ When the new model needs a different shape and both must work:
 ```text
 1. New shape exists, empty. DEPLOY.
 2. Write both, read old. Both writes in ONE transaction where possible;
-   where not, the new write goes through an outbox so it cannot be lost.
+   where not, atomically commit the old write and its outbox intent in
+   the SAME source transaction; retry relay with idempotent destination handling.
 3. Backfill history in chunks, restartable, with a cursor.
-4. Reconcile continuously: a scheduled comparison over a sample, with an
-   alert on divergence and a defined owner.
-5. Read new, keep writing both. ← rollback is still a deploy.
+4. Reconcile continuously with an owner, repair procedure and lag bound.
+   Sampling detects some defects; cutover needs coverage of required keys/invariants
+   and a known catch-up watermark, including updates and deletes.
+5. Read new, keep writing both. Test switching reads back against current data;
+   routing rollback requires compatible old state, not merely an old binary.
 6. Stop writing old. DEPLOY.
-7. Drop the old shape after the retention period.
+7. Drop only after retention, consumer, restore and rollback gates pass.
 ```
 
 Step 4 is what makes step 5 signable. Dual-write without reconciliation diverges silently,
@@ -125,7 +136,8 @@ and the divergence is discovered by a customer.
 ### Backfills
 
 ```java
-// Chunked, restartable, observable. Never one statement over a large table.
+// Partial Spring sketch with application-specific batch/checkpoint APIs.
+// Chunk size and transactions must be validated against production lock/load budgets.
 long cursor = checkpoint.load();
 int moved;
 do {
@@ -147,6 +159,15 @@ applied twice after a crash); a rate limit, so the backfill does not starve prod
 metric, so its progress and its completion are observable
 (`enterprise-transactions`).
 
+Also define a stable keyset/snapshot and change-stream handoff. A cursor alone misses
+updates/deletes behind it; idempotent insertion alone cannot prevent an older backfill row
+overwriting a newer live write. Use comparable source versions/conditional application or
+an ordered snapshot-plus-CDC protocol, including tombstones. Checkpoint and destination
+writes must share the actual transaction, or recovery must tolerate replay independently.
+An empty batch means that scan ended, not that live replication caught up. Preserve outbox/
+CDC records until acknowledged and recoverable; atomic intent is not guaranteed eventual
+delivery without relay progress, retry and retention controls.
+
 ## Rules in stored procedures and triggers
 
 Three options, in order of preference:
@@ -165,12 +186,18 @@ resulting data will look like a bug in the new code.
 
 ## Signals that the modernisation is failing
 
-| Signal                                                       | What it means                                                                            |
-| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| Nothing decommissioned across the planned first-slice window | Benefits may be deferred while coexistence cost grows; review scope and removal blockers |
-| Parallel runs with no divergence policy                      | Alerts nobody actions; the switch will not be signed                                     |
-| The new system also reads legacy tables directly             | The ACL was skipped; the legacy model is spreading                                       |
-| Feature work has moved entirely to the new system            | The legacy is now neglected, and the risk of running it grew                             |
-| Nobody can say which system served a given request           | Routing is not observable; incidents will be unresolvable                                |
-| The first slice is not finished and a second started         | Nothing has been learned about whether the approach works                                |
-| The team cannot name the next decommissioning date           | There is no plan, only construction                                                      |
+| Signal                                                       | What it means                                                                                           |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Nothing decommissioned across the planned first-slice window | Benefits may be deferred while coexistence cost grows; review scope and removal blockers                |
+| Parallel runs with no divergence policy                      | Alerts nobody actions; the switch will not be signed                                                    |
+| The new system also reads legacy tables directly             | Check whether an ACL contains the dependency or legacy concepts leak into the new model                 |
+| Feature work has moved entirely to the new system            | Verify that legacy maintenance and operational support remain funded while it still serves traffic      |
+| Nobody can say which system served a given request           | Routing is not observable; incidents will be unresolvable                                               |
+| The first slice is not finished and a second started         | Check whether independent scope justifies parallelism and whether unresolved risks are being replicated |
+| The team cannot name the next decommissioning date           | There is no plan, only construction                                                                     |
+
+## Primary references
+
+- [PostgreSQL 17 cumulative statistics](https://www.postgresql.org/docs/17/monitoring-stats.html) — per-table counters and visibility limits.
+- [AWS transactional outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html) — atomic source intent and duplicate handling.
+- [Fowler, Strangler Fig](https://martinfowler.com/bliki/StranglerFigApplication.html) — incremental replacement and coexistence.

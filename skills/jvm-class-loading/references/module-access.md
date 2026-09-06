@@ -12,13 +12,14 @@ Every message below was produced on Temurin 25.0.3.
 `--add-exports` grants named targets access to public types in a package (compile-time only when
 the compiler receives it; run-time when the launcher receives it). It does **not** satisfy deep
 reflection on non-public members. `--add-opens` grants reflective access to all types/members in
-the package to its targets; it is not a general replacement for exports in ordinary static
-linkage. First distinguish three gates: the caller module must **read** the target module, the
-target package must be **exported** for ordinary public access, and it must be **open** for deep
-reflection. Use `--add-reads`, `--add-exports`, or `--add-opens` only for the failed gate.
+the package to its targets. An open package is also treated as exported to that target at
+runtime, but opens does not supply compile-time exports. Ordinary linkage requires readability
+and accessible exported types/members. Core reflection's access checks assume readability;
+`setAccessible` deep access still needs the appropriate open package. Do not add a read edge
+merely because reflection failed, and prefer the narrower grant for the actual operation.
 
 `--illegal-access=permit` is ignored with `Ignoring option --illegal-access=permit; support
-was removed in 17.0`; strong encapsulation (JEP 403) is not optional on any supported JDK.
+was removed in 17.0`; JDK 17+ removed that blanket relaxation. Older vendor-supported JDK lines can differ.
 
 `IllegalAccessError` is a linkage/access-control failure. The JVMS permits many symbolic
 references to resolve eagerly or lazily while constraining when an error becomes observable, so
@@ -43,10 +44,10 @@ minimal targeted grant in the deployment contract, test its presence, and docume
 dependency and removal condition. `ALL-UNNAMED` broadens every classpath consumer and should not
 be the default when a named target is available.
 
-Prefer removing the need over granting the access: JDK 17+ exposes supported replacements
-for most of what `sun.*` and `jdk.internal.*` were used for (`java.lang.invoke`, FFM,
-`ProcessHandle`, `Cleaner`). A required `--add-opens` is a dependency on JDK internals that
-every upgrade can break — record which library needs it and why
+Prefer supported APIs where suitable (`java.lang.invoke`, `ProcessHandle`, `Cleaner`).
+FFM is final in Java 22, with different incubator/preview APIs in earlier releases; do not
+recommend it as a drop-in Java 17 API. An opens requirement can concern application modules
+as well as JDK internals; record the target package, consuming library and compatibility risk
 (java-reflection-and-method-handles, jdk-upgrade-impact).
 
 ## What the module system changes in delegation
@@ -95,3 +96,7 @@ TCCLs unreachable—there is no mutation or unload API for a live layer.
 - [Java 25 `ModuleLayer`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ModuleLayer.html)
 - [Java 25 launcher options](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
 - [JEP 403: Strongly Encapsulate JDK Internals](https://openjdk.org/jeps/403)
+- [Java 25 Module.isExported](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Module.html)
+  — open packages are considered exported at runtime.
+- [Java 25 AccessibleObject](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/reflect/AccessibleObject.html)
+  — reflection assumes readability, with separate access-suppression conditions.

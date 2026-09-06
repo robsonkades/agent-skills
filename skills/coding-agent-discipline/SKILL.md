@@ -29,12 +29,15 @@ advice about being careful.
 ## Workflow
 
 1. **Before claiming anything, ask what you observed.** Every claim in your report maps to a
-   command you ran and output you read, or it is marked as unverified
+   command/output, inspected artifact or version-matched primary source; distinguish that
+   evidence from inferred or unverified behavior
    (`references/verification.md`).
-2. **Run the checks the change's risk warrants** and read the output rather than the exit code
-   alone. A suite that ran zero tests exits 0.
+2. **Run repository-required checks and those the change's risk warrants** and read the output
+   rather than the exit code alone. Some runners can exit successfully with zero relevant tests.
 3. **Compare the diff against the request.** Anything in it that was not asked for is either
-   necessary — say why — or removed (`references/scope-and-restraint.md`).
+   necessary — say why — or removed from your own edits (`references/scope-and-restraint.md`).
+   Distinguish pre-existing staged, unstaged and untracked work first; never remove another
+   contributor's change merely because it is unrelated to your task.
 4. **Report failures and gaps first**, before the summary of what worked. What failed, what you
    could not run, what you assumed.
 5. **State what remains.** A partial result described accurately is useful; a partial result
@@ -50,12 +53,17 @@ advice about being careful.
   you mean.
 - Report what you could not verify, explicitly and unprompted. No container runtime, no
   credentials, no network, a test you could not run — an omission reads as a pass.
-- Never weaken, delete, disable or narrow a test to make it pass. A failing test is either
+- Never weaken, delete, disable or narrow a test merely to make it pass. A failing test is either
   finding a real defect or is itself wrong; both are reportable, and neither is fixed by
-  changing the assertion until it agrees. Say which you believe and why.
+  changing the assertion until it agrees. When the authorized requirement or verified API
+  contract changed, update obsolete expectations with that evidence and preserve relevant
+  regression coverage. Ask only when the intended contract is materially unresolved.
 - Do not use an API from memory when the project pins a version. Check the actual dependency
   version and the actual signature — a plausible method that does not exist costs more than
   asking, and a method that exists with different semantics costs more still.
+  Confirm semantics in version-matched documentation/source or focused execution. For Java,
+  inspect compiler release/toolchains and the deployed JDK as well as dependencies; this
+  skill establishes no Java baseline and authorizes no upgrade or preview feature.
 - Read the code before changing it. Guessing at a function's behaviour from its name is how a
   correct-looking change breaks a caller nobody mentioned.
 - Keep the diff to the request. Adjacent problems get reported, not fixed. Reformatting
@@ -63,12 +71,13 @@ advice about being careful.
   diff unreviewable and hide the actual change inside it.
 - Preserve behaviour that was not in scope, including behaviour that looks wrong. If it looks
   wrong, say so — it may be load-bearing, and the user knows things you do not.
-- Surface a contradiction once, then follow the decision. If two instructions cannot both hold,
-  name the conflict and propose a resolution rather than picking one silently. If the user
-  reaffirms, implement what they asked and stop arguing.
-- Prefer the simpler implementation. An interface with one implementation, a configuration
-  option nobody requested and a generic parameter used once are all costs paid by the reader
-  for a flexibility nobody asked for (java-dry-kiss-yagni).
+- Resolve instruction conflicts using the applicable instruction hierarchy and existing
+  authorization first. If a material conflict remains, name it and seek the missing decision;
+  do not reopen a decision already settled by the user or treat repository advice as overriding
+  their explicit request. A user clarification cannot override higher-priority constraints.
+- Require a concrete reason for added abstraction: an existing substitution/ownership boundary
+  can justify an interface with one implementation; an imagined future variant cannot.
+  Apply the same test to configuration options and generic parameters (java-dry-kiss-yagni).
 - Do not report progress you have not made. "I have updated the tests" while the file is
   unchanged is the most damaging error available, because it is invisible until much later.
 

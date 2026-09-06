@@ -14,6 +14,11 @@ Align, per instance and request where possible:
 Record clock offset and collection windows. An event that merely occurs somewhere in a
 dashboard window is not attributable to a request.
 
+Preserve each source's measurement scope: cgroup throttled time is not directly lost CPU
+capacity, aggregate waits are not one request's elapsed time, and process-wide events do not
+identify which request was runnable. Collect the discriminator before assigning those durations
+to a critical path.
+
 ## Cause matrix
 
 | Candidate                  | Signature                                 | Discriminator                                     | Owner                          |

@@ -66,12 +66,21 @@ Service Stub         a stand-in for an external service, so tests do not
    cost is invisible coupling and untestable code.
 6. **Give tests a Service Stub with the failure modes**, not just the happy path.
 
+Inspect the target Java, Spring/Boot and persistence versions before applying examples; do not
+upgrade the project to fit them. References contain partial sketches with omitted domain types:
+records require Java 16, sealed types 17, pattern `switch` 21; RestClient requires Spring 6.1+
+and its Java 17 baseline. For each proposed seam, name the dependency/variation it isolates,
+the simpler alternative and a focused success/failure check. With missing evidence, keep the
+choice conditional on a representative call path rather than inventing a pattern requirement.
+
 ## Decision rules
 
 ```text
 Business code calls a third-party SDK, an HTTP client, a filesystem or
 a clock directly
-        → Gateway. Wrap it, express it in your domain's terms, translate
+        → Gateway when a domain-facing seam is needed. Reuse an injected
+          Clock or suitable existing port rather than wrapping it again.
+          Express external operations in your domain's terms, translate
           its errors, and let tests replace it. This is the single most
           reliably worthwhile pattern on this list.
 
@@ -98,10 +107,14 @@ everywhere
         → Special Case (a NullCustomer, an UnknownRate). If X differs by
           caller, keep Optional and let each caller decide.
 
-Behaviour must be selected at deployment or per tenant, and there are
+Behaviour must be selected at deployment, and there are
 genuinely several implementations
         → Plugin, wired at configuration time. With one implementation
           and no second in prospect, this is speculative generality.
+
+Behaviour varies per tenant in one running process
+        → an explicit tenant-aware selector with isolation tests;
+          startup property selection alone cannot implement this.
 
 A test depends on a third-party service
         → Service Stub, plus a contract test against the real thing on a

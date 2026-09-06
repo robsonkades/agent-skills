@@ -19,8 +19,8 @@ description: >
 ## Purpose
 
 Let an inherited algorithm create an object whose concrete type it must not know. The creator
-class implements the whole workflow and leaves exactly one hole — "make the thing" — which a
-subclass fills.
+class supplies workflow behaviour and delegates product creation to an overridable method.
+Other hooks and creation arguments can coexist with this pattern.
 
 That is a narrow pattern, and most code labelled Factory Method is not it. A `static of(...)` on
 the type itself is a **static factory method**: a named constructor with the freedom to cache,
@@ -29,6 +29,11 @@ control over instantiation — and it involves no subclass and no hook. Both are
 them the same thing is how a `Supplier` turns into a class hierarchy.
 
 ## When it is the answer
+
+Inspect the project's compiler release, toolchain, framework construction path and callers
+before changing a public extension point. Examples are partial Java 17 sketches with domain
+types/imports omitted; pattern matching over a sealed kind requires Java 21 without preview.
+Keep the target baseline; do not upgrade it to adopt an alternative.
 
 ```text
 An algorithm is inherited, and its only variation point is which
@@ -49,8 +54,8 @@ DocumentReader subtype pairs with its Document subtype
 
 ## When it is not
 
-- **The creator has no inherited algorithm.** A class whose only content is `createX()` is a
-  `Supplier` with extra steps.
+- **The creator has no inherited algorithm.** Consider a `Supplier`, but keep a named domain
+  provider when checked failures, arguments, lifecycle or a published SPI justify its contract.
 - **Subclassing exists only to change the created type.** Pass the creation function in. One
   object with a field beats two types in a hierarchy (`java-composition-over-inheritance`).
 - **The selection is data-driven.** `Map<Kind, Supplier<T>>` or a sealed `Kind` with an
@@ -82,25 +87,26 @@ open extension by third parties      ServiceLoader<ProductProvider>
 
 The method reference `PdfProduct::new` is a **creation function**, not the GoF Factory Method
 pattern: it preserves deferred creation while replacing inheritance with composition. Keep the
-abstract hook when the framework instantiates your subclass and therefore cannot hand you a
-`Supplier`, or when the product type is covariant with the creator's and callers rely on that.
+abstract hook when the framework's actual extension contract requires it and offers no suitable
+injection seam, or when the product type is covariant and callers rely on that contract.
 
 ## Decision rules
 
 ```text
 IF the base class has no behaviour other than the abstract create()
-THEN delete the hierarchy; inject a Supplier.
+THEN consider a Supplier; preserve meaningful domain and public extension contracts.
 
 IF a constructor calls the overridable factory method
-THEN it runs before the subclass's fields are initialised, so the product
-     is built from nulls. Move creation to an init step, or out entirely.
+THEN subclass state may still hold default values. Prefer injected creation;
+     any deferred init must occur after construction and enforce readiness.
 
 IF subclasses exist only to select products and the extension set is application-controlled
 THEN composition through suppliers, a keyed map, or a sealed kind is usually simpler.
      Keep the hook when open framework extension or creator/product covariance is material.
 
 IF the product must vary per call, from an argument
-THEN it is not a subclass hook — it is a function of that argument.
+THEN compare an argument-taking hook with Function<Input, Product>;
+     arguments do not disqualify Factory Method.
 
 IF several related products must vary together
 THEN Abstract Factory, not N independent factory methods
@@ -118,11 +124,10 @@ THEN it is a static factory method. Judge it by naming and instance
 ## Cross-cutting checks
 
 - **Concurrency.** The classic defect is a constructor invoking the overridable factory method:
-  the subclass's `final` fields are not yet assigned, so the product is created from default
-  values, and under the memory model another thread may observe the partially constructed
-  creator. Never call an overridable method from a constructor
-  (`java-composition-over-inheritance`). A factory method that lazily caches its product needs
-  an explicit publication argument — `volatile`, a holder class, or `AtomicReference`.
+  subclass state can be read before initialization; cross-thread exposure additionally requires
+  the creator to escape. Avoid overridable constructor calls (`java-composition-over-inheritance`).
+  Lazy caching needs safe publication and an initialization policy: a volatile field alone does
+  not prevent duplicate creation. Specify failure/retry and disposal of losing instances.
 - **Distribution.** Nothing crosses a boundary here, with one exception: when the product kind
   is chosen from externally supplied data (a message type header, a content type), that key must
   be validated against a closed set before it selects a class. Reflective instantiation from an
@@ -131,12 +136,15 @@ THEN it is a static factory method. Judge it by naming and instance
   may cache products, and HotSpot can inline stable virtual calls. A highly polymorphic hot call
   site can inhibit inlining, but only profiles and compilation evidence establish that
   (`jit-inlining-and-escape-analysis`).
-- **Testing.** The good seam is an injected `Supplier` — substituted with a lambda, no
-  framework. The bad seam is a test-only subclass overriding a `protected` hook, which locks the
-  production class's inheritance shape into the test suite and breaks whenever the base class is
-  refactored.
+- **Testing.** An injected `Supplier` avoids coupling new tests to protected hooks. A test
+  subclass can still be a useful characterization seam for an existing public extension point;
+  do not remove that contract solely to simplify tests.
 
 ## Review checklist
+
+For a review, return the concrete hook/call sites, creation frequency and ownership, chosen
+alternative or reason to retain the hook, and checks performed versus pending. If framework
+construction or external subclass usage is unknown, keep removal conditional until inspected.
 
 - [ ] The creator has real inherited behaviour, not just the hook
 - [ ] No constructor calls the overridable factory method

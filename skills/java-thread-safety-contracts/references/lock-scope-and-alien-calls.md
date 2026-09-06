@@ -32,8 +32,10 @@ synchronized (lock) {
 notifyListeners(event);
 ```
 
-Specify whether another mutation may overtake callback delivery. If order matters, serialize events
-through an owned dispatcher/outbox rather than holding the state lock across arbitrary code.
+Specify whether another mutation may overtake callback delivery. If commit order matters, an owned
+dispatcher/outbox must preserve enqueue order with the mutation (or use sequence numbers and an
+explicit reorder protocol); a serial executor alone cannot fix inverted submissions after unlock.
+Define capacity/rejection and publication failures without blocking arbitrarily under the state lock.
 
 ### Callback inside lock
 
@@ -41,8 +43,8 @@ Use only when contract requires atomic callback participation and the callback s
 bounded and reviewed. Analyze reentrancy, lock ordering, blocking, exception rollback and latency.
 External/user callbacks generally make those assumptions untenable.
 
-`CopyOnWriteArrayList` gives snapshot-like traversal and is useful when mutations are rare; each
-mutation copies the array and listener bodies can still block/throw. It does not solve callback
+`CopyOnWriteArrayList` gives snapshot traversal and is useful when mutations are rare; content-changing
+mutations copy the array, and listener bodies can still block/throw. It does not solve callback
 semantics automatically.
 
 ## Wait-for graph

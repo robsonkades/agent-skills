@@ -27,17 +27,29 @@ The failures this prevents are symmetrical: rewriting a working reactive streami
 into blocking code because virtual threads arrived, and adding a blocking call to a reactive
 pipeline because the deadline was tight.
 
+## Compatibility and evidence
+
+Inspect the project's compiler/runtime, resolved framework versions, server and executor
+configuration before choosing a model. Virtual threads are final in Java 21; this does not
+authorize a runtime upgrade or a stack rewrite. `StructuredTaskScope` is version-specific
+preview API on Java 21–25, not a prerequisite for thread-per-request. JDK 24's JEP 491 removes
+monitor-related pinning in HotSpot; remaining blocking and pinning depend on the operation
+and runtime. Route their diagnosis to `blocking-and-nonblocking-io`.
+
+If workload, limits or runtime evidence are missing, keep the choice conditional and name
+the observation needed. Preserve existing streaming, ordering, cancellation and transaction
+contracts while comparing alternatives.
+
 ## Workflow
 
 1. **Describe the workload, not the framework.** Request/response or a long-lived stream?
    Bounded work per request or unbounded? I/O-bound or CPU-bound? Thousands of active
    requests or millions of mostly-idle connections?
-2. **Find where the bound already comes from.** In a reactive pipeline it is demand plus the
-   schedulers' capacities; in thread-per-request it used to be the pool. If a migration
+2. **Find where the bound already comes from.** Inspect demand, operator concurrency, scheduler queues and admission separately;
+   a platform pool bounds executing tasks but may leave an unbounded queue. If a migration
    removes one, name its replacement before the migration, not after.
 3. **Price the migration honestly.** Rewriting a working pipeline costs the rewrite, the
-   regression risk and a period of two models — against a benefit that is usually
-   diagnosability rather than throughput.
+   regression risk and a period of two models — against measured benefits in this service, including diagnosability, capacity and latency.
 4. **Decide per boundary, not per service.** A streaming endpoint and a CRUD endpoint in the
    same application can legitimately use different models; what must not vary is which one
    a given path uses.
@@ -52,15 +64,17 @@ pipeline because the deadline was tight.
 ```text
 Long-lived stream where the consumer can be slower than the producer
   (SSE, WebSocket fan-out, Kafka pipeline, database cursor to network)
-        → reactive. Demand signalling is the feature, and it has no equivalent
-          in blocking code beyond "the socket eventually pushes back".
+        → reactive is a strong candidate when demand reaches the producer.
+          Imperative bounded queues, pull iteration and explicit flow control can
+          also work. Check hot sources and transport boundaries: SSE/WebSocket
+          do not themselves guarantee application-level demand end to end.
 
 Time-shaped composition: window, debounce, sample, buffer-with-timeout,
 groupBy over a live stream
         → reactive. These operators are the reason the library exists.
 
 Request/response with blocking clients (JDBC, most SDKs, existing code)
-        → virtual threads. Thread-per-request with a real stack, ordinary
+        → consider virtual threads on a compatible stack. Thread-per-request with a real stack, ordinary
           try/catch, and a stack trace that names the request.
 
 Millions of mostly-idle connections on one process
@@ -88,11 +102,12 @@ A new service, blocking dependencies, ordinary request/response
   motivations — avoiding a thread per blocking call — and leave the others: demand-driven
   flow control, time-based operators, and composition over asynchronous event sources.
 - Reactive programming does not automatically give backpressure. It gives a **protocol** for
-  it, which several common operators break: unbounded `onBackpressureBuffer`, `publishOn`
-  with an oversized queue, `flatMap` with a large concurrency, any `Sinks` variant with an
-  unbounded buffer. See `reactive-backpressure`.
-- Thread-per-request has backpressure only where a bounded resource exists. Under a platform
-  pool that was the pool; under virtual threads it must be declared explicitly
+  it, but compliance does not imply bounded memory or request admission. Unbounded
+  `onBackpressureBuffer` can honor downstream demand while requesting unbounded upstream;
+  large `publishOn` queues and `flatMap` concurrency can exhaust a resource without violating
+  the protocol. Inspect each `Sinks` variant's actual overflow contract. See `reactive-backpressure`.
+- Thread-per-request has backpressure only where a bounded resource exists. A pool or semaphore bounds active work, not necessarily queued requests,
+  waiters or bytes. Bound admission and waiting time as well as execution
   (`concurrency-limiting-and-bulkheads`).
 - Blocking on an event-loop/non-blocking scheduler combines the models' failure modes: it
   stalls a thread serving many connections. A reactive client called from a virtual thread
@@ -104,7 +119,8 @@ A new service, blocking dependencies, ordinary request/response
   its whole lifetime.
 - Neither model changes the downstream. A connection pool of 20, a vendor quota of 600
   requests per minute, or a database that saturates at 4 000 IOPS bound both identically.
-  Migrations that report a 10× improvement usually moved the queue, not the ceiling.
+  A large measured improvement may remove a former bottleneck; distinguish useful completed
+  throughput from shifted queues, dropped work and changed latency or correctness.
 - A mixed codebase is acceptable; an _undocumented_ mixed codebase is not. Every endpoint
   should have a stated model, and the boundary between them should be one place where the
   handoff is explicit.
@@ -112,8 +128,16 @@ A new service, blocking dependencies, ordinary request/response
   `@RunOnVirtualThread` and Helidon's virtual-thread server are decisions those projects
   made; none of them is something "Java does". State which layer a claim belongs to.
 - Do not benchmark the model. Benchmark the service, with the real dependencies, at the real
-  concurrency, measuring tail latency and memory — the models differ least in throughput and
-  most in the shape of failure under overload.
+  concurrency, measuring useful throughput, tail latency, errors, retained memory and overload recovery.
+- Changing threads does not propagate a transaction, security identity or Reactor Context
+  automatically. State the context carrier and transaction owner at each asynchronous handoff;
+  avoid sharing a persistence context across concurrent tasks.
+
+## Deliverable
+
+Record the chosen boundary and retained contracts, compatible runtime/configuration, active
+and waiting limits with overflow behavior, evidence versus remaining hypotheses, and a load
+or slow-consumer check that could reopen the choice. A small change needs only a short note.
 
 ## References
 

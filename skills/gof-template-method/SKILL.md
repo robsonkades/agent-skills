@@ -28,13 +28,16 @@ already established, and whether calling `super` is required. None of that is ch
 compiler and most of it is undocumented. Prefer composition unless one of the narrow cases below
 applies.
 
+Inspect compiler release/toolchains, framework construction paths and external subclasses before
+changing hooks. Examples are partial Java 17 sketches with domain types/imports omitted; no
+preview or dependency upgrade is required. Missing caller evidence leaves API removal conditional.
+
 ## When it is the answer
 
 ```text
-A framework instantiates your class and calls into it
-        → Template Method. There is no seam at which collaborators
-          could have been injected. HttpServlet, AbstractProcessor,
-          JUnit extensions, AbstractRoutingDataSource.
+A framework exposes an inherited algorithm with overridable steps
+        → retain its required Template Method contract. Inspect injection/registration
+          options; framework construction alone does not exclude composition.
 
 A test base class specifying a contract every implementation must
 satisfy
@@ -56,8 +59,8 @@ that share substantial state
   framework use of Template Method, but hook call order and self-use become published API.
 - **The hook surface is growing across unrelated concerns.** This suggests coordination or
   optional-feature pressure; use cohesion and subclass complexity rather than a numeric cutoff.
-- **Subclasses override the template method itself.** Then there is no template; there are N
-  algorithms sharing a superclass.
+- **Subclasses override the template method itself.** Inspect whether this violates a required
+  invariant or follows a documented extension policy; overriding alone does not settle the issue.
 - **Steps are contributed by different modules.** That is a pipeline or a chain
   (`gof-chain-of-responsibility`).
 
@@ -80,10 +83,9 @@ abstract class Job {                 final class Job {
 class CsvJob extends Job { }         parameters to the constructor
 ```
 
-The composed version is `final`, constructible in a test with lambdas, free of self-use questions,
-and lets one step be reused across otherwise unrelated jobs. It costs one extra type and loses
-the ability for a variant to override several steps as a coherent unit — which is the one thing
-worth keeping the hierarchy for.
+The composed version lets steps be tested and reused independently. Multi-method Steps still
+needs an implementation; separate functional collaborators can use lambdas. A Steps implementation
+can coordinate several operations with private helpers, but call order/lifetime remain contracts.
 
 A middle position that works well: keep the template as a `final` class with a `final` method, and
 take the steps as constructor parameters. The sequence stays in one place, the variation is
@@ -97,8 +99,7 @@ THEN make the template method final. If subclasses may refine the sequence, docu
      allowed override/super-call behavior and test it as public extension API.
 
 IF the constructor calls a hook
-THEN it runs before the subclass's fields are initialised, so the hook
-     sees nulls and defaults. Never call an overridable method from a
+THEN it may read subclass state before initialization. Avoid overridable calls from a
      constructor (java-composition-over-inheritance).
 
 IF a hook is protected
@@ -135,7 +136,8 @@ THEN the template must honor the run's deadline and define partial-run semantics
 - **Concurrency.** A template instance shared across threads shares whatever state the base class
   keeps between hook calls — a field set by `read()` and used by `write()` is a race, and it is
   invisible because each method looks correct alone. Pass a per-run context object through the
-  hooks so the algorithm holds no mutable state; then one instance can serve every thread
+  hooks to isolate run data; also verify steps, audit/client collaborators and escaping callbacks
+  before sharing the template instance
   (`java-memory-model`).
 - **Distribution.** Templates commonly wrap batch and ETL runs where a step calls a remote system.
   The base class must then own the parts subclasses cannot get right individually: a deadline for
@@ -148,13 +150,16 @@ THEN the template must honor the run's deadline and define partial-run semantics
   subclass whose hook opens a connection per call converts a batch into N round trips
   (`orm-behavioral-patterns`).
 - **Testing.** With inheritance, testing the algorithm requires a subclass, and testing a subclass
-  drags in the base — so tests are written against concrete variants and the invariant sequence is
-  never tested directly. With composition, the sequence is testable with lambda steps and each step
-  is testable alone. The one place the inheritance form is clearly better for testing is the
-  contract test base class, where inheriting a specification is the point
+  drags in the base. The invariant sequence
+  can be tested directly with a purpose-built test subclass. Composition permits independent step
+  tests. Contract test bases are also useful when their fixture lifecycle and inherited assertions
+  fit the implementations
   (`java-test-design`).
 
 ## Review checklist
+
+Return the invariant sequence, hook contracts/ownership, failure and cleanup paths, proposed
+change or reason to retain inheritance, and checks executed versus pending.
 
 - [ ] The template method is final when sequence invariance is required; otherwise override policy is explicit
 - [ ] No constructor calls an overridable hook
@@ -173,6 +178,6 @@ THEN the template must honor the run's deadline and define partial-run semantics
   hierarchy genuinely wins, and a step-by-step migration to composed steps. Read before adding or
   removing a template hierarchy.
 - [Worked example](references/worked-example.md) — a nightly settlement run built as an abstract
-  base with six hooks, converted to a final template taking composed steps: what the hooks were
+  base with seven overridable methods, converted to a final template taking composed steps: what the hooks were
   hiding, the shared-field race, the remote step's timeout, and how the contract test base class
   survived the conversion because it is the case the pattern fits. Read when refactoring.

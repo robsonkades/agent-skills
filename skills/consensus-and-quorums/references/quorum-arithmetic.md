@@ -10,6 +10,12 @@ or survive Byzantine/corrupt members.
 To keep a majority available while `f` nodes are down you need `N - f > N/2`, which is
 `N > 2f`, which is `N = 2f+1` at minimum.
 
+These counts assume a fixed committed voting configuration. Two unrelated majorities of
+different configurations need not intersect. Use the product's supported membership-change
+protocol, learner catch-up and promotion checks; do not replace voters by independently editing
+peer lists. Raft joint consensus requires majorities of both old and new configurations during
+the joint phase; other supported reconfiguration protocols have their own restrictions.
+
 | N   | Majority | Tolerated failures `f` | Worth choosing?                                                 |
 | --- | -------- | ---------------------- | --------------------------------------------------------------- |
 | 1   | 1        | 0                      | Dev or explicitly non-HA                                        |
@@ -40,8 +46,9 @@ the single leader's write path and increases replication/quorum work.
 ## `R + W > N` — what it gives and what it does not
 
 In a replicated store with `N` replicas per key, a write acknowledged by `W` and a read
-answered by `R` intersect when `R + W > N`, so the read set contains at least one replica that
-holds the last acknowledged write.
+answered by `R` intersect when `R + W > N`, assuming both use the same fixed replica set.
+This proves overlap with the acknowledged write set; freshness additionally depends on durable
+retention, version comparison and the read/write protocol, especially during concurrent updates.
 
 | N   | W   | R   | Intersects? | Character                                                      |
 | --- | --- | --- | ----------- | -------------------------------------------------------------- |
@@ -53,10 +60,10 @@ holds the last acknowledged write.
 
 Three things intersection does **not** give you:
 
-- **It is not linearizability.** The read finds a replica with the newest version; the client
-  still has to identify it (a version, a timestamp, a vector clock) and something must repair
-  the stale replicas. Concurrent writes can leave different replicas holding different values,
-  both acknowledged.
+- **It is not linearizability.** The client still needs a correct version-selection and
+  concurrent-write protocol; timestamps may depend on unsafe clock assumptions and vector
+  clocks can expose incomparable versions rather than one newest value. Read repair alone
+  does not establish linearizability. Concurrent writes may leave different acknowledged values.
 - **It is not atomicity across keys.** Each key has its own quorum. Two keys written together
   are two independent decisions.
 - **It survives no sloppy quorum.** If a store accepts `W` acknowledgements from _any_ reachable
@@ -78,9 +85,10 @@ after the leader's own durability requirements are met.
 | Two AZs, asymmetric voters | topology-dependent               | Can survive loss of the smaller side, not the larger; maintenance/failover is asymmetric    |
 
 Measure your own RTTs rather than trusting the column; the shape is what matters. The rule that
-follows is the useful one: **the further apart the voters, the fewer decisions per second the
-design may make.** A cross-region cluster is a fine place for a shard-map version and a
-terrible place for a per-request lock.
+follows is to budget latency and benchmark the offered write rate separately: increased RTT
+does not imply a simple inverse throughput formula when batching/pipelining is available.
+Cross-region per-request coordination needs a measured latency/availability case, not just
+correct quorum arithmetic.
 
 ## What each side of a partition can do
 

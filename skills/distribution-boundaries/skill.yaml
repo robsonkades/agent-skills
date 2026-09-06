@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: distribution-boundaries
-version: 1.2.0
+version: 1.2.1
 description: >-
   Deciding whether a boundary should be a process boundary, and designing it when it must
   be: what distribution actually costs (latency, serialisation, partial failure, lost
@@ -55,7 +55,9 @@ suggests:
   - concurrency-limiting-and-bulkheads
   - consistency-models
   - delivery-semantics
+  - distributed-transactions-and-sagas
   - enterprise-transactions
+  - idempotency
   - legacy-enterprise-modernization
   - remote-facade-and-dto
   - retries-and-backoff

@@ -25,6 +25,13 @@ nobody knows where validation actually happened.
 
 ## Workflow
 
+Inspect the target compiler release/toolchain, framework/mapper versions and configuration,
+construction paths and published failure contracts before editing validation. No single
+authoring baseline is declared; references use Java SE 25, records require Java 16+ and
+`String.strip` Java 11+. Use ordinary validated classes or the existing compatible policy on
+older targets; do not upgrade Java/frameworks or enable preview. Missing mapper/caller evidence
+means check removal remains conditional, not proven safe.
+
 1. **Identify the trust boundaries** — where data arrives from code you do not control:
    deserialised requests, message payloads, file and database reads, configuration,
    and every public entry point of a published library. When unsure whether a seam is a
@@ -33,8 +40,9 @@ nobody knows where validation actually happened.
    expansion; decode strictly; then apply only contract-defined canonicalization and validate
    semantics. Preserve raw input separately only when audit/legal needs justify its risk.
 3. **Make the validated state a type.** Parse raw input into a record whose compact
-   constructor enforces the checks. Inside the boundary, `CustomerId` circulating means
-   the null- and format-checks are _unnecessary_, not merely skipped.
+   constructor enforces the checks. A non-null `CustomerId` can carry its component's
+   format invariant across trusted calls. The variable holding that record can still be
+   null; mutable components and unverified construction paths need separate evidence.
 4. **Delete only proven-redundant checks.** Keep constructor invariants, authorization,
    concurrency/transaction rechecks and checks protecting a different state transition.
 5. **Use assertions diagnostically, never as required enforcement.** If disabling a check could
@@ -54,9 +62,9 @@ nobody knows where validation actually happened.
 - `assert` is disabled by default (enabled with `-ea`) and must have no required side effects. Use it
   for diagnostic internal claims whose removal does not change correctness. Public/trust-boundary
   preconditions and corruption-prevention invariants require ordinary control flow/exceptions.
-- Do not null-check what cannot be null by construction. A record that
-  `requireNonNull`s its components makes every downstream reader of those components
-  null-free; a check there implies a falsehood about where nulls can occur.
+- Remove repeated component checks only after establishing a non-null validated object,
+  invariant-preserving accessors and safe ownership. Constructor validation does not make
+  the record reference non-null or mutable component contents permanently valid.
 - No catch-all "just in case" wrappers around interior calls. Exception handling
   strategy — what to catch where — belongs to java-exception-design.
 - A published library's public methods are compatibility/trust boundaries even when current callers
@@ -72,6 +80,11 @@ nobody knows where validation actually happened.
   java-application-security-basics and java-strings-and-text own those controls.
 
 ## References
+
+Deliver each added/removed check with its owning boundary or state transition, failure
+contract, and tests executed. Exercise hostile input, direct construction and bypass paths;
+verify invalid input causes no protected effect. Distinguish proposed framework/error-mapping
+checks from executed results, and keep regression coverage for every supported entry point.
 
 - [Trust boundaries](references/trust-boundaries.md) — how to find the boundaries in a
   real codebase, heuristics for ambiguous seams, and the checks that look redundant but

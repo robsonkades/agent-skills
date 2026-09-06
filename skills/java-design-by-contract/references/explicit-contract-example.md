@@ -42,8 +42,9 @@ consequences of implicitness:
 ## After
 
 Invariants move into types and constructors; input obligations become documented, enforced entry
-conditions; the postcondition is asserted and tested. The fragment targets Java 25 and elides the
-`InsufficientStockException` declaration.
+conditions; the postcondition is asserted and has acceptance tests below. These partial
+snippets target the skill's Java 25 baseline, with each public type in its own file, and
+elide an `InsufficientStockException extends RuntimeException` with a string constructor.
 
 ```java
 import java.util.Objects;
@@ -82,8 +83,10 @@ public final class StockLevel {
     /**
      * Reserves {@code quantity} units.
      *
-     * @return a new level; {@code available()} decreases by exactly
-     *         {@code quantity.units()}
+     * @param quantity positive units to reserve; must not be {@code null}
+     * @return a new level whose availability is this level's availability minus
+     *         {@code quantity.units()}; this receiver remains unchanged
+     * @throws NullPointerException if {@code quantity} is {@code null}
      * @throws InsufficientStockException if {@code quantity.units() > available()}
      */
     public StockLevel reserve(Quantity quantity) {
@@ -109,7 +112,9 @@ What each mechanism carries:
   after construction, so no method needs to re-verify it.
 - **`InsufficientStockException`** separates the expected state conflict the caller could not
   guarantee ("legitimately out of stock" — callers branch on it) from the _bug_ class
-  (`IllegalArgumentException` from `Quantity` — nobody catches it). If declines turn
+  (`IllegalArgumentException` from `Quantity` for a violated value contract). External
+  invalid input may legitimately be mapped at the boundary; the exception type alone does
+  not mean a programmer bug. If declines turn
   out to be a routine outcome the caller always branches on, promote the result to a
   sealed type — that decision belongs to java-exception-design.
 - **The `assert`** states the postcondition at its source. Disabled in production
@@ -138,11 +143,19 @@ What each mechanism carries:
 
 ## Verification
 
+Acceptance plan, not recorded execution results. Removing setters/getters and changing
+mutating operations to returned values assumes controlled callers migrated together; a
+published API needs a compatibility/migration plan through java-api-design.
+
 - Tests per contract clause, named for the clause: reserving more than available throws
   `InsufficientStockException` and leaves the level unchanged; reserving exactly
-  `available()` succeeds with `available() == 0`; `new StockLevel(5, 6)` and
+  `available()` succeeds when availability is positive, with the returned level at zero
+  and the receiver unchanged; `new StockLevel(5, 6)` and
   `new Quantity(0)` throw naming expected and actual.
 - Run the suite with `-ea` so the postcondition assert is live in CI.
+- Also run with assertions disabled: null, negative/zero quantity and insufficient stock
+  must still fail explicitly. Exercise `Integer.MAX_VALUE` stock: the availability check
+  bounds `reserved + quantity` by `onHand`, preventing overflow on accepted requests.
 - Race reservations against the real persistence mechanism and prove no oversell/lost update;
   unit tests of the value object cannot establish datastore atomicity.
 - Grep callers: the old `getOnHand() - getReserved()` arithmetic appears nowhere

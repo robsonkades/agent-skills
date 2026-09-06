@@ -1,6 +1,7 @@
 # Sagas and compensation in Java
 
-Plain Java plus a database; no saga framework assumed.
+Java 17+ sealed types plus a durable store; no saga framework assumed. Code is partial: participant,
+storage, context and test-fixture types belong to the application. SQL below uses PostgreSQL syntax.
 
 ## Model the steps so the pivot is a type, not a comment
 
@@ -15,47 +16,41 @@ public sealed interface SagaStep {
 ```
 
 A sealed interface with no `permits` clause permits the subtypes declared in the same file,
-so the three shapes are closed and a `switch` over them is exhaustive. That makes the
-ordering rule checkable: a unit test walks each plan and asserts every step before the
-`Pivot` is `Compensatable` and everything after it is `ForwardOnly`. A step that quietly
-lost its compensation shows up there rather than in an incident.
+so the direct subtype set is closed. The non-sealed roles are not disjoint: one class can implement
+both `Pivot` and `Compensatable`. Validate exactly one role per step, stable unique step IDs and
+at most one pivot. A no-pivot plan contains only compensatable steps; before a pivot all steps are
+compensatable, and after it all are forward-only. The compiler does not enforce plan order or prove
+that a participant can compensate. Pattern-switch syntax additionally depends on the JDK.
 
 ## Persist intent before the call and transition atomically
 
-```java
-// Conceptual: store transitions use optimistic versions; participant calls are remote.
-void advance(SagaInstance saga, List<SagaStep> steps) {
-    if (!store.tryClaim(saga.id(), saga.version(), workerId, claimDeadline)) return;
-    while (saga.position() < steps.size()) {
-        SagaStep step = steps.get(saga.position());
-        store.startAttempt(saga.id(), saga.version(), step.name(), attemptId());
-        try {
-            step.execute(saga.context());
-            saga = store.completeAndAdvance(saga.id(), saga.version(), step.name()); // one tx
-        } catch (BusinessRejection rejected) {            // the participant said no
-            store.mark(saga.id(), step.name(), FAILED, rejected.getMessage());
-            if (step instanceof SagaStep.ForwardOnly) {
-                store.mark(saga.id(), FORWARD_REPAIR_REQUIRED);
-            } else {
-                compensateCompletedBackwards(saga, steps);
-            }
-            return;
-        } catch (OutcomeUnknown unknown) {                // timeout, connection reset
-            store.mark(saga.id(), step.name(), UNKNOWN, unknown.getMessage());
-            return;   // a recovery worker resolves it; never compensate on a timeout alone
-        }
-    }
-    store.mark(saga.id(), COMPLETED);
-}
+```text
+Claim current saga version -> receive updated state/version and ownership epoch.
+For the current step:
+  Commit STARTED with stable (saga, step, operation) identity; receive the new version.
+  Invoke participant outside the storage transaction using that stable command key.
+  On definite success:
+    Atomically persist effect IDs, DONE and next position using expected version/epoch;
+    receive updated state. Persist pivot-committed status here.
+  On definite business rejection with no effect:
+    Persist rejection and recovery direction using expected version/epoch.
+    Before pivot commit: compensate completed steps; after commit: forward repair.
+  On timeout, transport ambiguity or lost storage-commit response:
+    Resolve durable store and participant status before retrying or changing direction.
+    Leave recoverable STARTED/UNKNOWN state; do not convert storage failure to rejection.
+On claim expiry/version conflict: stop transitions, reload under a valid claim.
+Mark COMPLETED through a checked transition only after all required outcomes.
 ```
 
-- The claim/version prevents two coordinators from advancing the same row concurrently; it is
-  a liveness optimization, not a replacement for participant idempotency.
+- Version/epoch checks prevent conflicting durable transitions, including failure/compensation
+  states; they do not stop an expired coordinator's remote request. Stable participant keys and
+  state rules remain necessary. A new transport attempt ID must not create a new business effect.
 - `STARTED` commits **before** the call, so a crash mid-call leaves evidence that the step
   may have run; the recovery worker asks the participant for that step's status by saga id
   instead of guessing.
-- Rejection and unknown take different branches. Compensating on a timeout is how a saga
-  refunds a payment that actually went through.
+- Query by stable step identity, persist effect IDs and resolve a pivot's outcome before choosing
+  backward versus forward recovery. `NOT_FOUND` does not prove an old execute cannot arrive later.
+  Participants must serialize execute/cancel or retain cancellation tombstones for the replay horizon.
 - Marking `DONE` and advancing position is one local transaction. Separate writes create a
   crash window in which recovery may misclassify the step.
 - Nothing authoritative about the saga lives only in the thread, so restart resumes from the table — with a
@@ -65,6 +60,9 @@ void advance(SagaInstance saga, List<SagaStep> steps) {
 SELECT id FROM saga_instance WHERE status IN ('RUNNING', 'COMPENSATING', 'UNKNOWN')
    AND updated_at < now() - interval '5 minutes';
 ```
+
+This is a candidate inactivity query. Calibrate the threshold and track step/attempt start time
+separately when heartbeats or retry bookkeeping refresh `updated_at` without business progress.
 
 ## A compensation that survives being run twice
 
@@ -86,6 +84,9 @@ whether the charge exists and target that identity; inventing a refund for a cha
 existed may itself violate the payment API or ledger invariant.
 
 ## When the compensation itself fails
+
+The following block illustrates control flow, not a complete store API. Every state write requires
+the current ownership/version, and durable escalation must close the failure-to-enqueue crash gap.
 
 ```java
 void compensateCompletedBackwards(SagaInstance saga, List<SagaStep> steps) {
@@ -112,6 +113,13 @@ whether exhausted work remains automatically retryable or enters manual repair. 
 and count in `COMPENSATION_FAILED`; without ownership the queue is a landfill. Compensation
 callbacks require authentication and authorization because replaying one mutates business state.
 
+The compensation block is control-flow pseudocode expressed in Java. All `store.mark*` operations
+must check current version/ownership and return refreshed state. Persist `COMPENSATION_FAILED`
+and its repair intent atomically (for example an outbox), or have a durable scanner discover the
+failure; a separate `escalation.enqueue` alone has a crash gap. Resolve a refund whose response
+was lost and skip known compensated steps. Never declare the entire saga compensated while an
+effect is unknown or its pivot has committed.
+
 ## Testing: fail every step, assert the invariant each time
 
 ```java
@@ -134,7 +142,7 @@ void failureAtAnyStepLeavesAConsistentState(int failingStep) {
 }
 ```
 
-Three cases the parameterised test does not reach:
+Additional cases the parameterised sketch does not reach:
 
 - **Duplicate application** — run the whole saga twice with the same saga id and assert one
   charge and one reservation. This fails when a step forgot its idempotency key.
@@ -149,3 +157,7 @@ Three cases the parameterised test does not reach:
   durable transition; participant requests may still duplicate and must collapse by key.
 - **Pivot outcome unknown** — return a timeout after committing the pivot, query by saga/step
   identity, then prove recovery goes forward rather than compensating pre-pivot work.
+- **Cancel before delayed execute** — status initially says not found, cancellation commits, then
+  deliver the old execute; assert no reservation or charge is resurrected.
+- **Repair notification crash** — fail after durable compensation failure but before enqueue;
+  prove the scanner/outbox still schedules repair and an expired coordinator cannot overwrite it.

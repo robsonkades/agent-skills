@@ -30,7 +30,7 @@ pairing on configuration-like types.
   application code does not replace the persistence/serialization contract.
 - **A telescoping _pair_.** Two overloaded constructors at two to three parameters is
   ordinary overloading. The telescoping anti-pattern starts where overloads multiply to
-  cover optional combinations — roughly the ≥4/≥2-optional line above.
+  cover optional combinations. Inspect ambiguity and usage instead of applying a numeric cutoff.
 - **Test-data builders.** Different economics: in tests, optionality with defaults _is_ the
   point, so a builder pays even for a three-field type. Do not let a test-data builder's
   existence argue for one in production code.
@@ -56,13 +56,19 @@ Take staging when the API is consumed widely outside the team and a missing requ
 parameter fails late or expensively. Inside one codebase, a `build()` that throws with a
 message naming the missing field is usually the better trade.
 
+Staging restricts the statically visible call sequence, not nullness or semantic validity.
+Retained stage aliases, repeated setters and casts can bypass an intended single-use sequence,
+especially when one implementation implements every interface. Keep runtime validation and
+explicit reuse/ownership rules; stages are not linear types.
+
 ## Binary compatibility of fluent evolution
 
 The JVM resolves a method by its full descriptor, return type included. Consequences:
 
 - Changing a chaining method's return type — concrete builder to interface, subtype to
   supertype — is **binary-incompatible even where it stays source-compatible**: existing
-  compiled callers fail with `NoSuchMethodError` until recompiled.
+  compiled callers can fail with `NoSuchMethodError` if the old descriptor no longer resolves.
+  Check compiler-generated bridges and inheritance rather than inferring linkage from source alone.
 - Adding a uniquely named setter to a final builder is normally binary-compatible, but overloads
   can introduce source ambiguity, erasure clashes or changed lambda resolution. Adding abstract
   methods to a published stage interface breaks implementors.
@@ -71,8 +77,12 @@ The JVM resolves a method by its full descriptor, return type included. Conseque
 
 ## Wither allocation, honestly
 
-`withX(...)` on an immutable type copies the instance per call, so a five-wither chain
-constructs five objects and keeps one. The mechanism is allocation and copying; the verdict
+`withX(...)` may allocate when a value changes, may reuse `this` for a no-op, and may share
+immutable components. A five-wither chain therefore does not imply five heap allocations.
+The possible mechanism is allocation and copying; the verdict
 requires a measurement. Escape analysis may eliminate the intermediate copies — it is never
 guaranteed to. Do not redesign an immutable API around this cost without an allocation
 profile showing it on a hot path.
+
+For return-type evolution, consult [JLS §13.4.15](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.4.15)
+and inspect the emitted descriptors/bridges of the actual artifacts.

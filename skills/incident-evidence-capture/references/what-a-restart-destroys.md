@@ -20,20 +20,26 @@ event was collected
 
 ## Evidence lifecycle matrix
 
-| Evidence                                | JVM restart                                        | Container/pod replacement | Node loss                  | Requirement to survive                                   |
-| --------------------------------------- | -------------------------------------------------- | ------------------------- | -------------------------- | -------------------------------------------------------- |
-| current threads/locks/in-flight work    | destroyed                                          | destroyed                 | destroyed                  | capture/export before action                             |
-| heap/object identities                  | destroyed                                          | destroyed                 | destroyed                  | completed heap/core dump                                 |
-| JIT profile/code-cache/runtime counters | destroyed                                          | destroyed                 | destroyed                  | JFR/JIT logs/core/profile captured before action         |
-| native mappings/NMT live state          | destroyed                                          | destroyed                 | destroyed                  | proc/NMT/core evidence before action                     |
-| JFR in-memory data                      | destroyed                                          | destroyed                 | destroyed                  | dump/destination before abrupt exit                      |
-| JFR disk repository                     | implementation/config/exit dependent               | storage dependent         | storage dependent          | tested repository preservation/dump plus complete chunks |
-| writable container-layer file           | can survive process only                           | destroyed                 | destroyed                  | verified copy/export before replacement                  |
-| `emptyDir` file                         | process/container dependent                        | destroyed with pod        | destroyed                  | copy/export before pod deletion/node loss                |
-| node/host path                          | survives pod                                       | often survives pod        | lost/unavailable with node | node recovery or remote export                           |
-| persistent volume                       | survives according to reclaim/attach/storage class | usually                   | storage-dependent          | correct PV policy, capacity, access, backup              |
-| remote logs/metrics/traces/profiles     | survives process                                   | survives pod              | survives node              | authenticated accepted ingest and retention/query health |
-| heap/core/fatal file                    | only if file complete/storage survives             | storage dependent         | storage dependent          | integrity + durable verified upload                      |
+Distinguish a container restart within the same Pod UID from deletion/replacement of the
+Pod. An `emptyDir` belongs to the pod: it survives a container crash/restart in that pod,
+but deletion of the pod removes its data. This is lifecycle persistence, not proof that a
+file was fully written or that it survives node loss. A memory-backed `emptyDir` also consumes
+memory capacity; it is not an off-memory destination for an OOM capture.
+
+| Evidence                                | JVM restart                                        | Container/pod replacement                 | Node loss                  | Requirement to survive                                   |
+| --------------------------------------- | -------------------------------------------------- | ----------------------------------------- | -------------------------- | -------------------------------------------------------- |
+| current threads/locks/in-flight work    | destroyed                                          | destroyed                                 | destroyed                  | capture/export before action                             |
+| heap/object identities                  | destroyed                                          | destroyed                                 | destroyed                  | completed heap/core dump                                 |
+| JIT profile/code-cache/runtime counters | destroyed                                          | destroyed                                 | destroyed                  | JFR/JIT logs/core/profile captured before action         |
+| native mappings/NMT live state          | destroyed                                          | destroyed                                 | destroyed                  | proc/NMT/core evidence before action                     |
+| JFR in-memory data                      | destroyed                                          | destroyed                                 | destroyed                  | dump/destination before abrupt exit                      |
+| JFR disk repository                     | implementation/config/exit dependent               | storage dependent                         | storage dependent          | tested repository preservation/dump plus complete chunks |
+| writable container-layer file           | can survive process only                           | destroyed                                 | destroyed                  | verified copy/export before replacement                  |
+| `emptyDir` file                         | survives within same pod                           | survives container restart; lost with pod | destroyed                  | copy/export before pod deletion/node loss                |
+| node/host path                          | survives pod                                       | often survives pod                        | lost/unavailable with node | node recovery or remote export                           |
+| persistent volume                       | survives according to reclaim/attach/storage class | usually                                   | storage-dependent          | correct PV policy, capacity, access, backup              |
+| remote logs/metrics/traces/profiles     | survives process                                   | survives pod                              | survives node              | authenticated accepted ingest and retention/query health |
+| heap/core/fatal file                    | only if file complete/storage survives             | storage dependent                         | storage dependent          | integrity + durable verified upload                      |
 
 Test actual runtime/orchestrator/storage behavior. Normal SIGTERM, crash, SIGKILL, kernel OOM,
 node loss, and forced deletion take different paths.
@@ -55,8 +61,11 @@ truth. Instead test the deployed design under:
 - dump during chunk rotation;
 - partial/corrupt chunk and `jfr assemble`/read behavior.
 
-Record `JFR.check`, effective settings, repository/destination paths, and JDK build. Preserve
-only complete/readable artifacts and label salvageable partial evidence accurately.
+Record `JFR.check`, effective settings, repository/destination paths, and JDK build. Separate
+validated complete artifacts from partial/corrupt chunks; preserve useful originals for
+salvage within the storage budget and label them accurately. Perform repair/assembly on a
+copy so the original evidence and its checksum remain available. `jfr summary` readability
+does not prove that the requested incident window or necessary event types were captured.
 
 ## Container storage questions
 
@@ -150,7 +159,10 @@ Use a machine-readable manifest:
     "endedUtc": "...",
     "tool": "...",
     "commandDigest": "...",
-    "exitStatus": "complete|partial|failed|timed_out"
+    "status": "partial",
+    "clientExitCode": 124,
+    "clientTimedOut": true,
+    "targetOperationStatus": "unknown"
   },
   "file": {
     "bytes": 0,
@@ -167,6 +179,14 @@ Use a machine-readable manifest:
 Avoid storing raw secret-bearing commands/environment in a broadly accessible manifest. For
 forensic/legal chain of custody, use the organization's evidence system, immutable audit logs,
 authorized handlers, signing/timestamps, and documented transfers—not an ad hoc checksum alone.
+
+This JSON is an illustrative manifest, not an existing repository schema. Record the actual
+client exit code (or null if unavailable); 124 is only an example timeout-wrapper code.
+Capture status, target-operation completion and artifact validation are different facts.
+A checksum proves byte identity with the hashed source, not capture completeness or coverage.
+Keep sanitized reproducible arguments/tool configuration or a restricted reference to them;
+`commandDigest` alone cannot reconstruct the command. Add clock/uptime markers, target JDK,
+permissions and transfer receipts required by the main contract.
 
 ## Evidence-quality drills
 

@@ -19,20 +19,26 @@ description: >
 ## Purpose
 
 Decide whether the JVM's automatic sizing inside this container is the sizing you
-actually want. `UseContainerSupport` — on by default since JDK 10 — only fixes the
-_source_ of the numbers: the JVM reads `memory.max` and `cpu.max` from the cgroup instead
-of `/proc/meminfo` and `/proc/cpuinfo`. It does not make the resulting heap, GC thread
+actually want. HotSpot's `UseContainerSupport` — on by default since JDK 10 on supported
+Linux builds — incorporates cgroup memory and CPU constraints into ergonomics, using
+version-specific detection. It does not make the resulting heap, GC thread
 count or JIT thread count right for the workload.
 
 The failure this prevents is the confidently wrong container diagnosis: a pod killed for
-native footprint while the heap sat at 70%, "fixed" by lowering `-Xmx`; or a CPU quota
-verified with `grep ActiveProcessorCount`, a command that returns `-1` on every machine
-and is structurally incapable of answering the question.
+non-heap charges while the heap sat at 70%, diagnosed without reconciling memory views;
+or a detected CPU count inferred from the default `ActiveProcessorCount=-1` sentinel.
 
 ## Workflow
 
-1. **Establish what the JVM detected, from inside the container.** `java
--XshowSettings:system` for the processor count, `-Xlog:os+container=trace` for the raw
+This is Linux HotSpot guidance, with JDK 17–25 as the main command baseline and a JDK 26
+heap-default note in the reference. Inspect the runtime image's vendor/update, launch flags,
+deployment resources and kernel/cgroup version; a build toolchain alone does not identify
+production ergonomics. Do not upgrade the runtime to match these examples.
+
+1. **Establish what the target JVM detected, from inside its container.** A fresh
+   `java -XshowSettings:system` is a probe, not proof of the live JVM's settings: match binary,
+   options and cgroup, and prefer in-process `availableProcessors()` plus live flags.
+   Use `-Xlog:os+container=trace` for the raw
    cgroup reads, `jcmd <pid> VM.flags -all` for ergonomically resolved flags. See
    `references/reading-the-container.md`.
 2. **Confirm the cgroup version before running any cgroup command.** v2 is a unified
@@ -41,9 +47,10 @@ and is structurally incapable of answering the question.
 3. **Separate the memory question from the CPU question.** They have different evidence:
    `memory.current` / `memory.events` for one, `cpu.max` / `cpu.stat` for the other.
 4. **For a kill, take deltas from the process's actual cgroup.** An `oom_kill` increment in
-   cgroup v2 `memory.events.local` proves a task in that cgroup was killed by memcg OOM; the
+   cgroup v2 `memory.events.local` records a member killed by an OOM killer, including a
+   global OOM killer; it does not prove this cgroup's limit triggered the kill. The
    hierarchical `memory.events` may include descendants. Correlate pod/container status and
-   timestamps to prove it was this JVM. Absence routes investigation to runtime, node and
+   timestamps and kernel OOM context to establish victim and cause. Absence routes investigation to runtime, node and
    signal evidence in `linux-for-jvm`.
 5. **Reconcile memory views under load**, not at boot, before changing any limit. NMT tracks
    many JVM-native reservations/commitments but not all process or cgroup charges, and
@@ -58,33 +65,34 @@ and is structurally incapable of answering the question.
 
 ## Rules
 
-- Never read `ActiveProcessorCount` from `-XX:+PrintFlagsFinal` or `jcmd VM.flags`, with
-  or without `-all`. It is a `manageable` flag whose `-1` sentinel is never rewritten with
-  the detected value. Use `java -XshowSettings:system` (Linux, JDK 19+) or
-  `Runtime.getRuntime().availableProcessors()`. Set the flag to _force_ a count, never to
-  read one.
+- Read `ActiveProcessorCount` to discover an explicit override, not an automatically
+  detected count. It is a HotSpot product flag; default `-1` requests automatic detection
+  and is not rewritten with its result. Use `Runtime.getRuntime().availableProcessors()`
+  in the target JVM; `java -XshowSettings:system` is a Linux probe available on the JDK 17 baseline.
 - In `-XshowSettings:system`, the answer is the **`Effective CPU Count`** field. The
-  `List of Effective Processors, N total` line directly under it is the host affinity mask,
-  not the quota: under `--cpus=2` on a 24-CPU host it reads `Effective CPU Count: 2` and
-  `List of Effective Processors, 24 total`. Quoting the `24` is the same mistake as reading
+  `List of Effective Processors, N total` line reports an effective processor set, not a
+  quota-derived count: with unrestricted cpuset under `--cpus=2` on a 24-CPU host it can read
+  `Effective CPU Count: 2` and `List of Effective Processors, 24 total`. Quoting the `24` is the same mistake as reading
   the flag, one line lower.
-- `jcmd <pid> VM.flags` without `-all` shows only what was passed on the command line.
-  Ergonomically resolved flags need `-all` — with `ActiveProcessorCount` as the exception
-  that `-all` still cannot reveal.
+- `jcmd <pid> VM.flags` shows selected non-default flags, including ergonomic choices.
+  Use `-all` for the full flag table and origins; neither form converts the automatic
+  `ActiveProcessorCount` sentinel into the detected count.
 - Use `grep -w` when extracting a flag from `PrintFlagsFinal`. `MaxHeapSize` without `-w`
   also matches `SoftMaxHeapSize` and returns the wrong line. The value is field `$4` of
   `<type> <name> = <value> {tags}`, in bytes.
-- On cgroups v2, the controller subdirectory does not exist: `/sys/fs/cgroup/cpu.stat`,
-  not `/sys/fs/cgroup/cpu/cpu.stat`. The field names changed too — `nr_periods`,
-  `nr_throttled`, `throttled_usec`, not `throttled_periods`.
+- On cgroups v2, controllers share a hierarchy; resolve the target's actual cgroup directory
+  before reading `cpu.stat`, rather than assuming either a `/cpu/` controller or mount root.
+  Both versions use `nr_periods` and `nr_throttled`; time is `throttled_time` (ns) in v1,
+  `throttled_usec` in v2.
 - Kubernetes CPU requests are scheduler shares and are not a cgroup CPU-capacity value the
-  JVM can use as a processor count. HotSpot derives an effective count from applicable
+  JVM should interpret as a hard capacity. Older HotSpot updates nevertheless used shares;
+  verify the deployed update's behavior. Updated HotSpot derives an effective count from applicable
   quota, cpuset/affinity and host constraints (or an explicit `ActiveProcessorCount`). A pod
   with request `500m` and limit `4` can therefore size parallel facilities near four even
-  though contention guarantees only the requested share.
-- Never ship a Deployment with `resources: {}` or a missing block. Without `limits.memory`
-  the detected memory tends towards the node's, and heap ergonomics take 25% of the whole
-  node.
+  though actual CPU service depends on contention and scheduler weights.
+- Require an explicit memory capacity policy. If the container has no memory limit, inspect
+  inherited cgroup constraints and live heap sizing; host memory may drive ergonomics. Do
+  not infer an exact 25% heap or absent effective limits from a missing manifest block alone.
 - Never set `-Xmx` numerically equal to `limits.memory`. That leaves zero headroom for
   everything that is not heap.
 - Reject any fixed multiplier over `Xmx` as a universal memory-limit rule. Native footprint
@@ -94,14 +102,19 @@ and is structurally incapable of answering the question.
   viable for a simple low-native-footprint process and disastrous for many threads, direct
   buffers or agents. Absolute headroom and kill probability decide; no 60–70% default is an
   answer either.
-- CFS throttling freezes the entire cgroup — application, GC and JIT threads alike — until
-  the next period. It never appears in the unified GC log as a pause, because the kernel
-  scheduler, not the collector, caused it.
+- CPU bandwidth exhaustion can deschedule application, GC and JIT work governed by that
+  quota. It is not a distinct GC event, but can lengthen a GC pause's recorded wall time.
+  Do not require the absence of a GC pause before investigating throttling; ancestor quotas
+  and per-CPU runtime accounting also matter.
 - Confirm the JDK version against the cluster's cgroup version before trusting detection.
-  Full cgroups v2 support arrived only in JDK 15 (JDK-8230305); JDK 11–14 on a v2 host can
-  fall back to host values in some scenarios.
+  Cgroups v2 support landed in JDK 15 and was backported, including to 11.0.16. Major version
+  alone cannot establish support or exclude later detection bugs; verify vendor/update and logs.
 - Collecting NMT only at boot proves nothing about a kill under load. Take the summary at
   peak.
+
+Deliver the target/runtime/cgroup identity, measured memory or CPU evidence, competing
+explanations, proposed change and same-load validation metric. Missing access or counters
+leave the diagnosis conditional; an empty command output is not a healthy reading.
 
 ## References
 

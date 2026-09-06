@@ -2,9 +2,9 @@
 name: gof-patterns-and-distribution
 description: >
   What happens to a Gang-of-Four pattern when the collaboration crosses a process boundary,
-  and which architectural pattern it becomes. Covers the classification into process-local,
-  boundary, interaction and algorithm patterns; the guarantees that evaporate at a boundary
-  — shared memory, a shared clock, atomic calls, ordering, exactly-once; the transformations
+  and which additional architectural contracts it may require. Covers process-local,
+  boundary, interaction and algorithm patterns; assumptions that need rechecking at a boundary
+  — shared state, clocks, atomicity, ordering and delivery; the transformations
   (Singleton to leader election, Observer to pub/sub, Iterator to pagination, Mediator to an
   orchestrator); and the level confusion that treats a design pattern as a substitute for an
   architectural one. Use when a local design is being distributed, when a pattern name is
@@ -27,6 +27,9 @@ whose names survive the crossing are the ones most likely to hide that it stoppe
 
 ## What a boundary removes
 
+This classification is conceptual; Java API references use Java 17. Inspect the target runtime,
+codec, broker and persistence versions and effective configuration before applying their guarantees.
+
 ```text
 Inside one process                  Across a boundary
 ──────────────────────────────────  ───────────────────────────────────
@@ -35,8 +38,8 @@ Latency follows local work/I/O      Adds transport queues and independent tail l
 A reference is the object           A copy; identity does not travel
 Uniqueness is per class loader      Uniqueness requires coordination
 Order follows synchronization/API   Broker/protocol/topology defines its scope
-State is shared                     State is replicated and stale
-A clock is one clock                Clocks disagree
+State can share memory              State may be remote/replicated; consistency is a contract
+Monotonic intervals are local       Clock offset and rate assumptions need explicit treatment
 One invocation; effects may partial Delivery may be at-most/at-least/effectively-once
 ```
 
@@ -55,10 +58,10 @@ BOUNDARY — the pattern manages a seam, and the seam may be a network
     Adapter      where a foreign model, vocabulary and failure stop
     Proxy        the pattern most able to hide that a call is remote
     Facade       coarse granularity is how round trips are saved
-    Bridge       one backend may be remote; design for that one
+    Bridge       supported backends must satisfy the chosen contract honestly
 
 INTERACTION — the pattern shapes who talks to whom
-    Command      becomes a message: versioned, redelivered, idempotent
+    Command      may become a message: schema, delivery and effect policies needed
     Observer     becomes pub/sub with broker-specific delivery and ordering
     Mediator     becomes an orchestrator, with its own availability
     Chain        becomes a workflow, failing at every step
@@ -66,27 +69,27 @@ INTERACTION — the pattern shapes who talks to whom
 ALGORITHM — largely unaffected; the choice may not be
     Strategy     the choice of partitioner, serialiser or retry policy
                  has system-wide effects
-    State        becomes a durable, resumable machine
-    Template     a step may be remote; the template owns its timeout
+    State        needs durability if progress must survive restart
+    Template     coordinate overall budget with each remote step's transport limits
     Visitor      the element set becomes a versioned contract
 ```
 
 ## The transformations
 
-| Local pattern | Distributed form                                          | What must be added                                                        |
-| ------------- | --------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Singleton     | Leader election / a lease                                 | Fencing tokens, or idempotency so overlap is harmless                     |
-| Flyweight     | Distributed cache/content addressing—different mechanisms | Invalidation, staleness, serialization and remote/local tiers             |
-| Iterator      | Pagination/cursor                                         | Strategy, bound, deadline, cancellation, mid-walk consistency             |
-| Memento       | Durable snapshot/checkpoint                               | Schema identity, compatibility, consistency and corruption recovery       |
-| Observer      | Publish/subscribe                                         | Transactional bridge, declared delivery/ordering, terminal failure policy |
-| Command       | A message                                                 | A stable name, a version, an idempotency key, a terminal failure path     |
-| Mediator      | An orchestrator                                           | Durable state, per-step timeouts, compensation, its availability budget   |
-| Chain         | A workflow                                                | Per-step failure and retry, redelivery semantics, partial-effect handling |
-| Facade        | Remote facade, gateway or BFF when appropriate            | Contract, deployment, authentication, scaling and outage surface          |
-| Proxy         | A service client                                          | Deadlines, a failure vocabulary, bulk operations                          |
-| State         | A durable state machine / saga                            | Persisted transitions, timeouts as real events, idempotent transitions    |
-| Composite     | Fan-out                                                   | Concurrency, an overall deadline, a defined partial-failure result        |
+| Local pattern | Distributed form                                          | What must be added                                                                            |
+| ------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Singleton     | Leader election / a lease                                 | Fencing tokens, or idempotency so overlap is harmless                                         |
+| Flyweight     | Distributed cache/content addressing—different mechanisms | Invalidation, staleness, serialization and remote/local tiers                                 |
+| Iterator      | Pagination/cursor                                         | Strategy, bound, deadline, cancellation, mid-walk consistency                                 |
+| Memento       | Durable snapshot/checkpoint                               | Schema identity, compatibility, consistency and corruption recovery                           |
+| Observer      | Publish/subscribe                                         | Declared delivery/ordering; transactional bridge when committed changes must publish reliably |
+| Command       | A message                                                 | Schema identity, delivery/effect policy, deduplication where needed, terminal outcome         |
+| Mediator      | An orchestrator                                           | Required durable progress, deadlines, applicable compensation and availability budget         |
+| Chain         | A workflow                                                | Per-step failure and retry, redelivery semantics, partial-effect handling                     |
+| Facade        | Remote facade, gateway or BFF when appropriate            | Contract, deployment, authentication, scaling and outage surface                              |
+| Proxy         | A service client                                          | Deadlines, a failure vocabulary, bulk operations                                              |
+| State         | State machine within a distributed workflow               | Required persistence, timeout outcomes and duplicate policy; not automatically a saga         |
+| Composite     | Fan-out                                                   | Concurrency, an overall deadline, a defined partial-failure result                            |
 
 ## Decision rules
 
@@ -167,6 +170,10 @@ equivalence.
 - [ ] Pattern names are not used for deployed components without saying so
 
 ## References
+
+Deliver the boundary, assumptions that changed, required guarantees and owners, then the smallest
+contract changes and failure checks. Keep unsupported guarantees conditional and route detailed
+protocol design to the specialist skills below.
 
 - [Boundary classification](references/boundary-classification.md) — all twenty-three placed in the
   four classes, with what survives a boundary crossing, what silently stops holding, and the

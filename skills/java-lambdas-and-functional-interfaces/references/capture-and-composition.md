@@ -1,5 +1,8 @@
 # Capture, composition and exceptions
 
+Examples are partial snippets with omitted domain types, imports and enclosing declarations.
+Use the target Java release; `Predicate.not` and `Files.readString` need 11+, `toList` 16+.
+
 ## What a lambda captures
 
 ```java
@@ -16,15 +19,18 @@ class ReportJob {
 
 Three distinct capture kinds, with different lifetimes:
 
-| Captured                            | How                         | Lifetime consequence                             |
-| ----------------------------------- | --------------------------- | ------------------------------------------------ |
-| A local of primitive/immutable type | by value at evaluation time | none — a copy                                    |
-| A local holding a mutable object    | the reference by value      | the object stays reachable while the lambda does |
-| Any instance member, or `this`      | the enclosing object        | the **whole enclosing graph** stays reachable    |
+| Captured                                         | How                 | Lifetime consequence                                                     |
+| ------------------------------------------------ | ------------------- | ------------------------------------------------------------------------ |
+| A primitive local                                | primitive value     | no object graph retained through that value                              |
+| A local holding any object, immutable or mutable | reference value     | the referenced graph may remain reachable while the callback is retained |
+| `this` or instance access through it             | enclosing reference | enclosing state may stay reachable                                       |
 
 The third is the one that leaks. A lambda submitted to a scheduler, stored in a listener list,
 or queued in an executor holds those references for as long as the holder lives. The fix is
 mechanical: copy what you need into locals first.
+
+Extraction can move computation from task execution to submission: preserve intended snapshot
+timing, side effects and failures, and ensure the extracted value does not retain the original graph.
 
 ```java
 Runnable task(String reportId) {
@@ -68,6 +74,12 @@ recursive callback needs a named method or a field holding the instance.
 
 Two practical notes:
 
+The table shows invocation shapes, not universal evaluation equivalence. A bound expression
+`receiver()::run` evaluates the receiver once when the reference is created and throws then
+if it is null; `() -> receiver().run()` evaluates it per invocation and fails later. Replacing
+a field-reading lambda with a bound reference also freezes the current receiver rather than
+following later field reassignment. Preserve these semantics when choosing the shorter form.
+
 - A **bound** reference captures the receiver at the point the reference is created, so
   `logger::info` pins that logger — and `this::handle` pins the enclosing object exactly as a
   lambda would.
@@ -99,10 +111,10 @@ Comparator<Order> byValueThenId =
 - `andThen` runs the receiver first, `compose` runs the argument first. Getting them the wrong
   way round type-checks whenever the types happen to line up.
 - `Predicate.not(...)` (Java 11+) reads better than `p.negate()` for a method reference.
-- Composed predicates evaluate left to right with short-circuiting, so put the cheap and
-  most-discriminating test first when the operands differ in cost.
-- Composition builds objects: a deeply composed function allocates a chain of wrappers and adds
-  a call per stage. Irrelevant at request scope; worth knowing on a per-element hot path.
+- Composed predicates evaluate left to right with short-circuiting. Reorder for cost only
+  when effects, exceptions, null guards and semantic dependencies remain equivalent.
+- Composition may introduce wrappers and calls; allocation/inlining depend on the target
+  runtime. Measure its significance rather than assuming request-scope cost is irrelevant.
 
 ## Checked exceptions
 
@@ -146,6 +158,9 @@ Two related points:
 - **A lambda that swallows an exception is worse than a method that does**, because the
   suppression is buried in an expression. `java-exception-design`'s rule applies unchanged: do
   not catch and log without either handling or rethrowing.
-- **In an executor, an exception from a lambda submitted with `submit` is captured in the
-  `Future` and never printed** if nobody calls `get()`. This is one of the quietest failure
+- **With typical ExecutorService `submit`, task failure is captured in the `Future`** and
+  need not be logged unless a caller or configured hook observes it. This is one of the quietest failure
   modes in Java; see executors-and-task-lifecycle.
+
+Primary reference for receiver evaluation and null timing:
+[JLS method-reference evaluation](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.13.3).

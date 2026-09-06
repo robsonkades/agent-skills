@@ -27,6 +27,10 @@ them.
 
 ## Workflow
 
+0. **Inspect compatibility and lifecycle.** Read compiler release/toolchains, framework/binder
+   requirements, entity ownership, transaction/version mapping and public failure contracts.
+   The domain example uses Java 17; its service pattern switch/record patterns require Java 21+
+   without preview. Adapt to the project baseline without upgrading or adding frameworks.
 1. **Find ask–decide–mutate sequences**: getters on an object, a branch on the result,
    then a setter or mutation on the same object. Each is a candidate, not a verdict.
 2. **Name the invariant.** If the branch protects a rule the object must never violate,
@@ -40,8 +44,9 @@ them.
    return `void`; pragmatic command-query separation permits a command to return its own
    outcome. Queries must be observationally side-effect-free. Private, thread-safe memoization
    may preserve that contract; touching externally visible state on read does not.
-5. **Verify**: the invariant is unenforceable to bypass through the public API, the rule
-   exists in exactly one type, and its tests target that type directly.
+5. **Verify** the supported mutation/construction paths enforce the owned rule, including
+   persistence/binders and concurrency boundaries. Test the domain decision and caller outcome
+   mapping; duplicated enforcement at independent trust boundaries may still be required.
 
 ## Rules
 
@@ -55,16 +60,22 @@ them.
   not mix unrelated answers or externally visible read effects into it.
 - A record may be a boundary DTO, a value object or an immutable domain type with behavior.
   Tell-don't-ask applies according to ownership and invariant, not the `record` keyword.
-- Moving a decision in-process does not serialise concurrent writers by itself. The
-  check-then-act race narrows but persistence still needs its own concurrency control
-  (optimistic locking, constraints). Say so in the refactoring, or someone will delete the
-  version column.
+- A method boundary supplies no atomicity: shared in-memory instances need confinement or
+  synchronization, and independent persistence contexts need optimistic locking, conditional
+  updates or other database guards. State both boundaries; moving a method cannot replace them.
 - Keep infrastructure clients and ambient mechanisms out of entities. Pass a validated policy
   input when it is merely data; use a domain policy interface/value object when the behavior has
   its own domain ownership. A long list of fetched inputs is evidence the decision may belong
   outside the entity.
 - Asking is correct at boundaries — mappers, serialisation, rendering — in queries and
   reports, and in orchestration across aggregates where no single object can own the rule.
+
+## Deliverable
+
+Name the invariant/policy authority, inputs and freshness, allowed mutation path, caller result
+mapping and synchronization/commit boundary. Distinguish a mechanical move from changed failure
+or validation behavior. Report checks executed and unresolved ownership evidence; do not infer
+a common rule merely because two callers read the same fields.
 
 ## References
 

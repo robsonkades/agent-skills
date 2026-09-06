@@ -2,7 +2,7 @@
 
 ## The JDK's poller: an event loop you already run
 
-A blocking socket read on a virtual thread does not perform a blocking syscall. The JDK puts
+A supported socket wait on an unpinned virtual thread can release the carrier. HotSpot puts
 the channel in non-blocking mode; if the operation is not immediately ready it registers the
 file descriptor with a **poller** and parks the virtual thread. A small number of dedicated
 threads run `epoll_wait` (or `kqueue`) and unpark the virtual thread when the descriptor is
@@ -28,9 +28,9 @@ connections. One loop
 thread executes: read from ready sockets, run handlers, write, repeat.
 
 ```text
-Pooled platform thread blocked   → 1 request delayed,  pool has N-1 threads left
-Virtual thread blocked           → 0 requests delayed,  the carrier is reused
-Event-loop thread blocked        → EVERY connection on that loop delayed
+Pooled platform thread blocked   → caller waits; one worker unavailable to queued tasks
+Virtual thread unmounted         → caller still waits; carrier can run other tasks
+Event-loop thread blocked        → callbacks for connections on that loop cannot progress
 ```
 
 If connections were evenly assigned across 8 loops, one blocked loop could affect roughly
@@ -40,23 +40,36 @@ turning this arithmetic into an incident estimate.
 
 The escape hatch is to move blocking work to a scheduler designed for it —
 `Schedulers.boundedElastic()` in Reactor, `executeBlocking` in Vert.x — with the reminder
-that this reintroduces a bounded pool and therefore a queue, which is the thing the reactive
-stack was chosen to avoid.
+that offloading has a concurrency limit, queue and rejection behavior. Reactive pipelines
+can already contain queues; offloading does not eliminate overload.
+
+For Reactor, defer the call with `Mono.fromCallable(() -> client.call())` and apply
+`subscribeOn(Schedulers.boundedElastic())` to that source. This is a partial expression
+using the project's Reactor dependency and client, not a standalone program.
+`Mono.just(client.call())` executes eagerly; a downstream `publishOn` cannot move that call.
+Verify the actual call's thread in a test and measure queue wait, rejection and loop lag.
+Do not assume cancellation interrupts a driver or releases its connection: configure its
+timeout and keep resource cleanup tied to completion of the underlying operation.
 
 ## Finding blocking calls inside a non-blocking stack
 
-Review does not find these; instrumentation does.
+Use source review to locate candidate calls and instrumentation to exercise those paths.
+Neither proves the absence of blocking in unexercised or uninstrumented native code.
 
 ```java
-// Test scope only. It instruments the JDK's blocking methods and fails when one is
+// Partial test setup; requires a compatible reactor-tools BlockHound dependency.
+// Test scope only. It instruments known blocking methods and fails when one is
 // called on a thread marked non-blocking.
-BlockHound.install(builder -> builder
-        .allowBlockingCallsInside("com.example.LegacyBridge", "onlyKnownOffender"));
+BlockHound.install();
 ```
 
 Run it in the integration test suite, not in production: it is a diagnostic agent with real
 overhead, and its value is in failing a build. Every entry in the allow-list is a documented
-decision, and a growing allow-list is the signal that the model no longer fits the code.
+decision, and a growing allow-list requires review rather than automatic suppression.
+Verify that the chosen BlockHound version supports the test JDK and its required JVM flags
+(the project's documentation describes `-XX:+AllowRedefinitionToAddDeleteMethods` for JDK
+13+). Include a negative control: a known blocking call on a marked non-blocking thread
+must fail, then the offloaded path must pass. Do not allowlist the defect being investigated.
 
 Complementary evidence, in order of cost:
 
@@ -69,13 +82,18 @@ asprof -e wall -d 60 -f wall.html <pid>
 jfr print --events jdk.SocketRead,jdk.FileRead recording.jfr | grep -i 'nio-\|reactor-http'
 ```
 
-A CPU profile will not find blocking, by construction. If the tooling in a runbook is
-`-e cpu` only, the runbook cannot diagnose this class of problem.
+A CPU profile cannot account for off-CPU waiting; it remains useful to distinguish CPU
+work from stalls. A runbook with only `-e cpu` lacks the evidence needed to attribute waits.
+The shell examples assume a POSIX shell, installed compatible tools, attach permissions
+and an existing JFR recording with the relevant events enabled. Replace name filters with
+observed thread names; empty filtered output is not proof that no blocking occurred.
 
 ## Reactor and virtual threads together
 
 Reactor can run `Schedulers.boundedElastic()` on virtual threads by setting
-`reactor.schedulers.defaultBoundedElasticOnVirtualThreads=true` (Java 21+). Note precisely
+`reactor.schedulers.defaultBoundedElasticOnVirtualThreads=true` (Reactor 3.6.0+, Java 21+).
+Verify the resolved Reactor release and set the property before scheduler initialization.
+Note precisely
 what that changes: the scheduler creates a **new virtual thread per task** rather than
 reusing an idle platform-thread pool. The concurrency cap and deferred-task bound remain;
 current Reactor defaults derive the cap from `10 × availableProcessors` and expose a
@@ -110,3 +128,13 @@ what the model costs in diagnosability.
 - [ ] `defaultBoundedElasticOnVirtualThreads` assessed with its retained caps and queues
 - [ ] Wall-clock, not CPU, profiling in the runbook for latency questions
 - [ ] Poller and scheduler internals used as explanation, never as configuration
+
+## Sources
+
+- [Reactor blocking-call FAQ](https://projectreactor.io/docs/core/release/reference/faq.html#faq.wrap-blocking):
+  deferred source and `subscribeOn` placement.
+- [Reactor threading and schedulers](https://projectreactor.io/docs/core/release/reference/coreFeatures/schedulers.html):
+  boundedElastic implementations and their version requirements; check the matching
+  reference for the project's release before relying on defaults.
+- [BlockHound project documentation](https://github.com/reactor/BlockHound):
+  instrumentation scope, thread marking and JVM compatibility requirements.

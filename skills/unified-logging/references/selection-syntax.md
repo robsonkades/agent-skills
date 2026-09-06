@@ -9,7 +9,7 @@ framework diagnostics.
 ## Semantics
 
 - plus: tags belong to one unordered tag set;
-- comma: union of selections;
+- comma: ordered selections; last matching selection determines the level for a tag set;
 - star: match supersets of preceding tag combination;
 - equals level: threshold;
 - off: disables matching selection;
@@ -18,6 +18,12 @@ framework diagnostics.
 Multiple -Xlog options are processed in command-line order and can override configuration
 for the same output. Build the effective selection intentionally; do not concatenate flags
 from independent deployment layers without a final audit.
+
+For example, `class*=info,class+load=off` suppresses the exact class,load set;
+`class+load=off,class*=info` enables it again. This ordering is implemented by
+[JDK 25 LogSelectionList::level_for](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/logging/logSelectionList.cpp).
+Exclusion is not permanent across later matching selections. Quote the full argument for
+the target shell when wildcard or delimiter expansion could change what reaches java.
 
 ## Selection test
 

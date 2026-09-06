@@ -86,7 +86,8 @@ Analysis: <link or embedded companion section when complete>
 
 ## Accepted gaps
 
-<None, or GAP items with reason, consequence, authorized owner, expiry and reopening trigger.>
+<None, or GAP items with reason, consequence, authorized owner, expiry, reopening trigger and blocked
+phases/resources (or none with reason).>
 
 ## Decomposition
 

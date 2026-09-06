@@ -1,7 +1,9 @@
 # Cache topologies
 
-Four layouts. They are not four flavours of one idea: they differ on who knows the
-membership, and that decides everything else.
+These dimensions can combine: sharded caches may have replicas, and a proxy may front a
+cluster. Compare routing ownership separately from the number and location of copies.
+Memory below counts value bytes with RF=1 for sharded columns; multiply by RF when replicated
+and budget metadata, buffers and recovery headroom separately.
 
 ## Comparison
 
@@ -9,7 +11,7 @@ membership, and that decides everything else.
 | -------------------------- | -------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------ |
 | Who knows the membership   | Every client                                       | The proxy                                            | The server, advertised to clients                          | Every node holds everything, so placement is trivial   |
 | Hops on the cache path     | 1                                                  | 2                                                    | Usually 1 after client discovers/caches placement          | 0 only in-process; otherwise 1                         |
-| Adding or removing a node  | Every client must agree, simultaneously            | Proxy config change; clients untouched               | Cluster reshards slots; clients follow redirects           | New node must be filled before it serves               |
+| Adding or removing a node  | Coordinate membership versions and migration       | Proxy config change; clients untouched               | Cluster reshards slots; clients follow redirects           | New node must be filled before it serves               |
 | Memory for a working set W | W                                                  | W                                                    | W                                                          | N × W                                                  |
 | Losing one node            | Its request/key share remaps and misses            | Same, unless the proxy fails over to a ready replica | Depends on replica promotion, routing and client retry     | No key loss if remaining replicas are current/routable |
 | Multi-key operations       | Client/product-specific coordination               | Proxy/product-dependent                              | Product-specific; often same-slot or coordinated at a cost | Local data placement does not imply atomic semantics   |
@@ -24,7 +26,8 @@ drift. Two clients with different node lists place the same key on different nod
 believe they have a hit rate, and both serve values the other's writes never reached. The
 symptom is "the cache sometimes has stale data" with no pattern, and it is invisible to any
 cache-side metric. Distribute the node list from one versioned source, and log the version
-the client is using so a mismatch is greppable.
+the client is using so a mismatch is greppable. Define invalidation or migration behavior
+while versions overlap; distributing a version does not eliminate the transition window.
 
 The second issue is the hash: every client must use the identical function, the identical
 virtual-node count and the identical string format for a ring point. Two client libraries in
@@ -34,15 +37,15 @@ towards a proxy.
 
 **Proxy-fronted.** The hop is real and it is on the fast path — measure it against
 `T_source`, because a cache is chosen for latency and doubling its latency is a genuine cost.
-The proxy is also a new failure domain: a proxy outage is a total cache outage, which is
-strictly worse than a node outage, so a proxy tier needs its own redundancy and its own
+The proxy is also a new failure domain: loss of the only routing path can make the whole
+cache unavailable, so a proxy tier needs its own redundancy and its own
 connection-limit sizing. It repays that with the ability to change topology, add nodes and
 fail over without touching a client.
 
 **Clustered.** Membership and resharding move into the product, which is the point. The
-constraint people meet late is multi-key: primitives spanning keys work only within one slot,
-so any operation over several keys needs those keys deliberately co-located, and the
-mechanism for that is product-specific. Check the access pattern against the constraint
+constraint people meet late is multi-key: Redis Cluster requires same-slot placement for
+many multi-key commands; other products may coordinate across shards at extra cost. Check
+the exact product/version and command, including behavior during resharding,
 before adopting the mode. Where replicas exist, be explicit about whether reads may be served
 from them — if they may, reads are subject to replication lag and read-after-write is not
 guaranteed (`consistency-models`).
@@ -54,21 +57,22 @@ capacity; a partition, stale replica or failed local process can still cause mis
 
 ## The near-cache (local L1 in front of a shared L2)
 
-An in-process cache in front of the shared tier removes the network hop for the hottest keys
-and is the standard answer to a read-hot key that the shared tier serves too slowly.
+An in-process cache removes the network hop on local hits. Consider it for a measured read-hot
+key only if bounded staleness or an explicit coherence protocol meets the access contract.
 
 The topology consequence — and this is all this skill owns, since invalidation propagation
 belongs to `caching-strategies`:
 
-- The number of copies of a value is now `instances + (shards × RF)`. Every invalidation must
-  reach all of them, and the L1s are the ones with no server-side coordination.
+- For a key belonging to one shard, copies are at most `instances caching that key + RF`,
+  excluding temporary migration copies. Shards multiply total nodes, not copies of one key.
+  Invalidation must cover all copies directly or through verified propagation.
 - An L1 makes the shared tier's hit rate look worse, because the L1 absorbed the easy hits.
   Judge the L2 on origin request rate, not on its own hit rate.
-- The L1 must be bounded and must have a TTL, because a missed invalidation message is
-  otherwise permanent on that one instance — a divergence that reproduces for some users and
-  not others, depending on which replica served them.
-- Sizing the L1 for the whole working set defeats the purpose: it should hold the head of the
-  distribution, not a second copy of the L2.
+- Bound L1 memory and define missed-invalidation recovery. TTL is a possible stale-lifetime
+  bound only when expiry reloads sufficiently fresh data; strict freshness needs a stronger
+  protocol or bypass. Delegate that protocol to `caching-strategies`.
+- Size L1 from the measured access distribution. Holding all of a small working set is a
+  legitimate full-replication choice if its memory and coherence costs are acceptable.
 
 ## Decision
 

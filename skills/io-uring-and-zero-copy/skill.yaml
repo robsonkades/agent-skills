@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: io-uring-and-zero-copy
-version: 1.2.0
+version: 1.2.1
 description: >-
   Reducing the cost of moving bytes through a JVM process: sendfile and
   FileChannel.transferTo, mmap and MappedByteBuffer, direct versus heap buffers at the
@@ -10,7 +10,7 @@ description: >-
   a service streams files or proxies bytes, when a loop reads into a ByteBuffer only to
   write it straight back out, when someone claims java.nio uses io_uring underneath, when a
   Netty io_uring bootstrap fails at runtime with NoSuchMethodError or
-  ClassNotFoundException, when SO_BACKLOG is set on IoUringChannelOption, or when JFR
+  ClassNotFoundException, when separating generic and io_uring-specific channel options, or when JFR
   reports no socket events from a service plainly doing network I/O. Does not cover owning
   and managing native memory (off-heap-memory), the host layer generally (linux-for-jvm), or
   network-stack tuning (tcp-tuning).

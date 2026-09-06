@@ -14,9 +14,9 @@ Pin or record:
 - build duration, peak builder RSS/CPU, build report, SBOM, binary hash, symbols, and signing result.
 
 The builder is a JVM and whole-program analysis is memory intensive. In constrained CI, set the
-builder heap with `-J-Xmx...` and parallelism with `--parallelism=...` from measurements. Exit 137
-usually means the container or host killed the process; it is not a Java exception and increasing
-parallelism may worsen it.
+builder heap with `-J-Xmx...` and parallelism with `--parallelism=...` from measurements. In Unix
+shell/container reporting, exit 137 commonly represents SIGKILL; it does not prove an OOM kill.
+Check cgroup/kernel events and orchestrator termination before changing memory or parallelism.
 
 ## Collect and review reachability metadata
 
@@ -56,7 +56,7 @@ to turn an unsupported build into an explicit failure.
 Use supported reports first:
 
 ```bash
-native-image --emit build-report -jar app.jar -o app
+native-image --emit build-report -jar app.jar -o app # Oracle GraalVM; not Community Edition
 native-image -H:+PrintClassInitialization -jar app.jar -o app
 native-image --verbose -jar app.jar -o app
 ```
@@ -111,9 +111,14 @@ Current JDK 25 Community Edition does not provide PGO. With a supporting Oracle 
 
 ```bash
 native-image --pgo-instrument -jar app.jar -o app-instrumented
-./app-instrumented --profile-output=training.iprof
+./app-instrumented -XX:ProfilesDumpFile=training.iprof
 native-image --pgo=training.iprof -jar app.jar -o app-pgo
 ```
+
+The instrumented process must execute the training scenarios and shut down cleanly to write the
+profile. Confirm that this run produced a nonempty, readable `training.iprof` before rebuilding;
+do not accidentally reuse a stale profile after a killed or failed run. Application arguments
+follow the runtime option as required by the application.
 
 Treat the profile as training data:
 
@@ -132,7 +137,8 @@ toward the wrong workload.
 in current releases. `-O3` is not automatically better in every distribution/workload. Measure
 binary size, startup, RSS, and performance before selecting an optimization level.
 
-Use `--strip-debug` or split debug symbols according to incident and distribution policy. Keep
+Use the target platform's supported symbol stripping or splitting workflow according to incident
+and distribution policy; `--strip-debug` is not a documented Native Image builder option. Keep
 symbols in an access-controlled artifact store keyed by the binary build ID/hash. An executable
 packer such as UPX reduces on-disk/transferred bytes, not Java heap, and may disrupt signing,
 security scanners, page sharing, startup, or crash tools; it is an optional packaging experiment,
@@ -183,5 +189,7 @@ histograms, environment metadata, errors, and uncertainty.
 - [Native Image options](https://www.graalvm.org/latest/reference-manual/native-image/overview/Options/)
 - [Native Image build output](https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildOutput/)
 - [Profile-Guided Optimization](https://www.graalvm.org/latest/reference-manual/native-image/optimizations-and-performance/PGO/)
+- [PGO command and profile output](https://www.graalvm.org/latest/reference-manual/native-image/optimizations-and-performance/PGO/basic-usage/)
+- [Debug information and symbols](https://www.graalvm.org/latest/reference-manual/native-image/debugging-and-diagnostics/DebugInfo/)
 - [Native Image Build Tools](https://graalvm.github.io/native-build-tools/latest/)
 - [GraalVM 25.1 release notes](https://www.graalvm.org/release-notes/25.1/)

@@ -22,16 +22,19 @@ once created — links into it exist in commit messages and in the log.
 
 Look before creating anything:
 
-| Found                                                      | Do this                                                              |
-| ---------------------------------------------------------- | -------------------------------------------------------------------- |
-| An existing ADR directory (`docs/adr`, `doc/arch`, `adr/`) | Put decision records there, in the numbering already in use          |
-| An existing per-feature or per-RFC directory convention    | Follow it; keep the five artefact roles, whatever the file names are |
-| A documentation site with a fixed structure                | Place the dossier where that structure puts working documents        |
-| A repository that tracks work only in an issue tracker     | Ask where the artefacts should live before writing files             |
-| Nothing                                                    | Use the default above                                                |
+| Found                                                      | Do this                                                                |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------- |
+| An existing ADR directory (`docs/adr`, `doc/arch`, `adr/`) | Put decision records there, in the numbering already in use            |
+| An existing per-feature or per-RFC directory convention    | Follow it; keep the five artefact roles, whatever the file names are   |
+| A documentation site with a fixed structure                | Place the dossier where that structure puts working documents          |
+| A repository that tracks work only in an issue tracker     | Reuse the authorized record; clarify location only if still unresolved |
+| Nothing                                                    | Use the default above                                                  |
 
 Do not create a second ADR numbering scheme next to an existing one. Do not move existing
 records to fit the default layout.
+Reuse an already authorized artifact location, including an existing issue, before asking where to
+write. The diagram shows roles, not a mandatory file count: combine small records and omit unused
+directories. External writes still follow the user's authorization and available tool access.
 
 ## What each file is for
 
@@ -43,8 +46,9 @@ records to fit the default layout.
   source of truth. Do not duplicate a contract merely to fit this layout.
 - **plan.md** — the living artefact. It changes during implementation, and every change says
   what changed and why.
-- **progress.md** — the only file that must be current at all times. An agent picking the work
-  up reads this first and needs nothing else to know where to resume.
+- **progress.md** — the entry point for resumption: current status, blockers, baseline revisions
+  and links to the active plan, decisions, contracts and evidence. Those authoritative records
+  must also be current or explicitly stale; read affected records before resuming implementation.
 - **execution-log.md** — append-only. Entries are never edited or deleted, because the value is
   the chronology; a correction is a new entry.
 - **decisions/** — one file per decision, superseded rather than rewritten.

@@ -17,15 +17,18 @@ nowhere.
 - **Inadvertent/prudent** is learning, and it is unavoidable — you could not have known before
   building it. Do not apologise for it; refactor when the better boundary is clear
   (java-refactoring).
-- **Deliberate/reckless** is not a trade, because nothing was bought. It needs a conversation
-  about how work is being planned, not a backlog ticket.
+- **Deliberate/reckless** may buy speed while underestimating consequences. Address both
+  the resulting debt and the decision conditions that produced it.
 - **Inadvertent/reckless** is a skills or review gap. The fix is upstream — pairing, review,
   gates — not a cleanup sprint that will regenerate it.
 
 The practical value: when someone says "we have a lot of technical debt", ask which quadrant.
 The answer determines whether you need a plan, a refactoring, a conversation, or a gate.
 
-## Never tradeable
+## Constraints delivery pressure does not waive
+
+Apply actual obligations and their established exception process. Existing delegated authority
+remains valid; risk acceptance cannot override a requirement that permits no exception.
 
 Each of these is on the list because the cost of the shortcut is not paid by the team that took
 it, or because it cannot be detected once taken.
@@ -49,7 +52,7 @@ Before taking a shortcut, make it cheap to undo:
 
 - [ ] It lives behind one interface or in one module, not spread across callers.
 - [ ] It has one entry point, so the future change has one place to happen.
-- [ ] It is visible in the code — a named method (`chargeWithoutIdempotency`), not an omission
+- [ ] It is visible in the code — a named limit (`MAX_EXPORT_ROWS`), not an omission
       a reader must notice.
 - [ ] It fails loudly outside its intended range, rather than silently doing the wrong thing —
       throw on the unsupported case rather than guessing.
@@ -69,18 +72,21 @@ limit is lifted.
 
 **Traded:** support for customers above ~50,000 orders.
 
-**Never-tradeable check:** passes. Nothing is lost or mis-authorised; the export simply
-does not run for large accounts.
+**Constraint check:** passes only if the pilot's accepted scope permits rejecting large
+exports and no required user journey or obligation depends on them. Do not assume acceptance
+merely because rejection preserves data and authorization.
 
-**Contained:** a hard cap at 12 months of data, with an explicit error naming the limit and
-telling the user to contact support. The limit is one constant, checked in one place, covered
-by a test.
+**Contained:** a validated cap of 50,000 exported rows plus measured payload/field-byte and
+query/runtime limits. Reject oversize requests before expensive materialization; never silently
+truncate. A 12-month range alone does not bound rows. Name the limit in the error and test
+boundary behavior.
 
-**Recorded:** trigger is "a customer complains, or we onboard a tenant above the cap". Cost of
+**Recorded:** trigger is "before onboarding a tenant needing exports above the cap, or at the
+scheduled pilot review". Cost of
 carrying is a support ticket now and then. Owner named.
 
-**Why this is prudent:** the shortcut is visible to the user, fails loudly, is one constant
-wide, and buys a real date. This is what deliberate/prudent looks like.
+**Why this can be prudent:** the accepted limitation is visible, safely bounded and testable,
+and buys a delivery benefit that exceeds its expected cost under the stated assumptions.
 
 The reckless version of the same decision: ship it uncapped, let large exports time out with a
 504, and plan to "look at performance later". Same four days saved; the failure is silent from
@@ -94,10 +100,11 @@ the code's point of view, arrives as a mystery, and there is no line to delete w
 **Order:** mitigate now — set the property, deploy, confirm the metric recovers. That is not
 debt, that is incident response.
 
-**Debt taken:** the configuration is now correct by coincidence — nothing prevents the next
-library upgrade from changing it back.
+**Debt taken:** configuration intent and failure coverage remain unverified. An explicit
+property need not change with a library default; inspect actual binding and deployment
+precedence before predicting recurrence.
 
-**Recorded the same day**, while the detail is fresh: the config test and the metric, with a
+**Recorded during handoff or follow-up**, while context remains available: the config test and the metric, with a
 trigger of "before the next dependency upgrade of this client". This is the "remaining" section
 of the post-incident summary (engineering-communication), and it is the part that stops the
 incident recurring.
@@ -108,9 +115,9 @@ incident recurring.
 
 The most dangerous of the three, because the code exists and looks finished.
 
-Spike code was written while you did not yet understand the problem — that was its purpose. It
-has no tests, no error handling, hardcoded values, and it encodes the first guess about the
-design. Shipping it directly is the classic inadvertent-reckless entry.
+Spike code answers a limited question. Inspect the production properties actually established;
+missing tests/error paths/configuration are possible, not facts implied by the label. Shipping
+without assessing those gaps can create reckless debt.
 
 If it must ship, the minimum before it does:
 
@@ -133,3 +140,7 @@ authorized owner, the honest statement is “this is not ready to ship.”
 A shortcut whose cost is bounded and whose reason is recorded is a legitimate trade. One whose
 cost grows and whose reason will be lost is not a trade at any deadline — it is a transfer of
 the cost to people who did not agree to it.
+
+## Primary reference
+
+- [Fowler's Technical Debt Quadrant](https://martinfowler.com/bliki/TechnicalDebtQuadrant.html) — deliberate/inadvertent and prudent/reckless describe how debt arises.

@@ -19,16 +19,10 @@ description: >
 
 Consensus is a set of processes agreeing on **one value** with safety despite modeled crashes,
 loss and delay; progress additionally needs a quorum and timing assumptions such as eventual
-synchrony. It is the primitive the rest of this family stands on, and the six words are
-not synonyms. A **mutex** is mutual exclusion inside one process, backed by shared memory and
-a memory model (`java-memory-model`). A **lease** is a time-bounded grant that expires without
-the holder's cooperation. A **distributed lock** is a lease over a critical section, and it
-excludes nobody unless the protected resource checks a fencing token
-(`distributed-locks-and-leases`). **Leader election** is a lease on a _role_, renewed over
-time (`leader-election`). **Ownership** is a static assignment of keys to processes that needs
-no agreement at request time (`sharding-and-partitioning`). **Consensus** is how a replicated
-store makes any one of those grants single-valued and durable — it is what the others are
-built from, and it is not itself a lock.
+synchrony. Consensus can order a replicated log used for grants and configuration, but is not
+itself a lock or lease. Leases, locks, role election and shard ownership have distinct contracts;
+not every election uses a lease, and ownership can change dynamically. Route external stale-owner
+safety to `distributed-locks-and-leases` and role lifecycle to `leader-election`.
 
 The failure this prevents is a coordination store used as a traffic-scaled database. etcd,
 ZooKeeper and Consul are replicated metadata/coordination stores with different read contracts;
@@ -39,12 +33,18 @@ with the service's, which is the arithmetic in `failure-models`.
 
 ## Workflow
 
+This skill is protocol-level and has no Java language minimum. For a Java integration inspect
+the project toolchain, resolved client version, deployed server version, read options and
+durability/failover policy. Product references here cover etcd 3.6 and ZooKeeper 3.8.4;
+verify Consul modes against the deployed version. Do not upgrade Java or the store to match
+a reference. Missing membership, durability or read-contract evidence prevents a safety claim.
+
 1. **Ask whether anything must be agreed at all.** Most designs that reach for consensus need a
    _single-key conditional write_, which the database already provides. Consensus is for
    decisions that must be single-valued fleet-wide and survive their author's death.
 2. **Size the cluster from `f`, the number of simultaneous failures you tolerate.** `2f+1`
-   nodes with majority quorums tolerate `f`. Three tolerates one, five tolerates two. Stop
-   there unless you can state why `f = 3` is required.
+   voting members with majority quorums tolerate `f`, assuming the survivors can communicate
+   and retain required durable state. Exclude learners/observers from the voter count.
 3. **Place voters and price the commit path.** Account for leader routing, network RTT,
    replication, durable-log latency, batching and the fastest quorum. Placement sets correlated
    failure tolerance and latency (`references/quorum-arithmetic.md`).
@@ -55,9 +55,11 @@ with the service's, which is the arithmetic in `failure-models`.
    reads differ; ZooKeeper member-local reads are not linearizable. Measure the actual path.
 6. **Keep traffic-proportional business data out and avoid synchronous coordination per request.** Cache the decision locally,
    with a defined behaviour for "store unreachable" (`references/coordination-stores.md`).
-7. **Prove the failure behaviour.** Kill `f` nodes and assert writes still commit; kill `f+1`
-   and assert writes _fail_ rather than succeeding locally; partition the minority and assert
-   it does what you chose.
+7. **Exercise failure behaviour in an isolated cluster.** With `2f+1` voters, remove `f` and
+   assert eventual write progress within the recovery budget. Remove `f+1` and verify newly
+   initiated writes cannot be acknowledged as committed without a quorum. In-flight writes
+   may have committed before disruption; timeouts retain unknown outcomes. Test each minority
+   read/fail-fast policy and restore the fixture afterward.
 
 ## Decision block
 
@@ -73,8 +75,9 @@ Avoid it when:
 - it would sit on the synchronous request path with no cached fallback, making its availability
   a hard multiplier on yours
 Prefer instead when:
-- the decision is a single-key compare-and-swap and you already run a database: a unique
-  constraint or a versioned conditional UPDATE is consensus you have already paid for
+- the decision is a single-key compare-and-swap and the existing database's atomicity,
+  durability and failover contract meet the need: use its conditional write rather than
+  adding another coordination system; a unique constraint alone does not prove HA consensus
 - work can be partitioned so each key has one owner by assignment (sharding-and-partitioning),
   which needs no agreement at request time at all
 - the work is idempotent and safe on every replica (idempotency) — the cheapest coordination
@@ -84,43 +87,53 @@ Prefer instead when:
 ## Rules
 
 - **FLP: no deterministic algorithm guarantees termination of consensus in a fully asynchronous system where even
-  one process may crash.** Every real system escapes it with timeouts, so every failure
-  detector is a _guess_ about a process that may merely be slow. Consensus protocols are
-  correct protocols preserve safety under their stated crash/storage assumptions and become live
+  one process may crash.** A timeout suspects failure; it does not distinguish a crash from
+  arbitrary delay or invalidate the theorem. Practical progress depends on additional timing,
+  failure-detector or randomized-progress assumptions. Correct protocols preserve safety under their stated crash/storage assumptions and become live
   under stronger timing/quorum assumptions. Byzantine behavior, disk corruption, clock misuse,
   misconfiguration and implementation bugs are outside that shorthand.
 - `2f+1` tolerates `f` crash failures because any two majorities of `2f+1` share at least one
-  node, so a later quorum always meets a member of the earlier one. Byzantine faults need
-  `3f+1` and are usually out of scope; `failure-models` states when they are not.
+  node, so a later quorum always meets a member of the earlier one under fixed membership.
+  Common partially synchronous Byzantine quorum protocols use `3f+1` with `2f+1` quorums;
+  Byzantine bounds depend on the model and protocol and are outside this skill's crash model.
 - An extra even-numbered voter does not increase majority crash-failure tolerance: four and three
   both tolerate one unavailable voter; six and five both tolerate two. It can still be a
   transitional reconfiguration or meet a placement/read requirement, so compare that purpose
   with its larger quorum and replication cost.
-- **Quorum systems get slower as they grow.** Commit latency is the round trip to the slowest
-  member of the _fastest majority_. Adding voters buys fault tolerance and costs latency; it
-  never buys write throughput.
-- `R + W > N` makes the read set intersect the write set, so a read _sees_ a replica holding
-  the latest acknowledged write. It does **not** by itself make reads linearizable: the client
-  still has to pick the newest version, concurrent writes may be partially applied, and a
+- Adding voters increases replication work and changes the required quorum. Commit latency
+  includes the fastest satisfying durable quorum, leader work, routing and queueing; topology
+  and batching matter. More voters do not shard a single log, but latency/throughput changes
+  must be measured rather than asserted universally.
+- `R + W > N` makes read and write sets intersect within the same fixed replica set.
+  Observing an acknowledged write also requires durable replicas and a valid version/conflict
+  protocol. It does **not** by itself make reads linearizable: concurrent writes may be partially applied, and a
   sloppy quorum accepting hinted replicas breaks the intersection outright. Intersection is a
   necessary condition, not a consistency model.
-- Raft at consumer level: one leader per _term_, elected by a majority of votes; clients write
-  through the leader; an entry commits once a majority holds it. Paxos is the ancestor and Zab
-  the ZooKeeper sibling — name them, do not operate on the difference.
+- Raft elects at most one leader per term. A leader can directly commit an entry from its
+  **current term** once durably replicated to a majority; committing it also commits earlier
+  entries in that prefix. An old-term entry merely appearing on a majority is not sufficient
+  (Raft section 5.4.2). A partition can leave an obsolete leader active in a different term.
 - A Raft term fences protocol messages _inside that Raft group_: followers reject stale terms and
   an isolated old leader cannot commit without a quorum. A term/revision does not automatically
   fence writes to an external database, object store or device; that resource must compare a
   monotonically increasing grant token, and the token must distinguish each ownership grant.
 - **Watch guarantees are product-specific.** etcd orders unique events by revision and supports
   resume within retained history, but watches are not linearizable and compaction forces resync.
-  ZooKeeper watches are one-shot and can miss intermediate changes between re-registration.
+  ZooKeeper standard watches are one-shot and can miss intermediate changes between re-registration;
+  its persistent watch modes have a different lifecycle, not durable broker semantics.
   Consumers checkpoint versions and rebuild state on gaps/compaction instead of assuming a
   generic notification contract.
-- A lease is expired **by the ensemble's clock, not the holder's**: the holder can believe it
-  holds a lease the cluster has already regranted. That gap is `distributed-locks-and-leases`.
-- A compare-and-swap has three outcomes. "Rejected" means someone else won; a _timeout_ means
-  unknown — it may have applied with only the response lost, so re-read before concluding you
-  lost (`failure-models`).
+- Lease/session authority follows the store's expiry protocol, not the holder's belief:
+  the holder can believe it holds a grant the cluster has already regranted. Do not assume a
+  synchronized ensemble clock. That gap is `distributed-locks-and-leases`.
+- A compare-and-swap has three outcomes. An acknowledged failed comparison is "rejected";
+  a timeout means unknown — it may have applied with only the response lost. Reconcile the
+  unique attempt with supported strong reads/history; retain unknown if evidence is ambiguous
+  (`failure-models`). A matching holder name alone does not establish current authority.
+
+Deliver the voter/failure-domain map, quorum arithmetic, commit/read assumptions, unknown-outcome
+policy and bounded failure tests. A successful kill test is evidence for that topology and run,
+not proof of consensus correctness or external fencing.
 
 ## References
 

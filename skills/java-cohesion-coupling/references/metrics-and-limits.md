@@ -4,18 +4,22 @@
 
 For a package P, over production code only:
 
+Here Ca/Ce count distinct external packages, excluding self-edges; some tools count
+classes instead. Record the tool, graph scope and counting convention before comparisons.
+
 - **Afferent coupling (Ca)** — packages that depend on P. High Ca means P's externally observed
   contract is load-bearing; a compatible internal change need not fan out.
 - **Efferent coupling (Ce)** — packages P depends on. High Ce exposes P to more upstream contract
   changes, but says nothing about edge quality, optionality or actual volatility.
 - **Instability** — `I = Ce / (Ca + Ce)`, from 0 (only depended on) to 1 (only depending).
   It is a structural responsibility indicator, not a probability of change or proof that a
-  package is safe/unsafe to edit.
+  package is safe/unsafe to edit. If Ca + Ce is zero, I is undefined (report N/A),
+  not evidence of maximal stability.
 
 The one structural rule worth checking: **depend in the direction of decreasing
-instability**. An edge from a low-I package to a high-I package means something
-stable and widely used is at the mercy of something volatile — the shape behind
-"we changed a helper and half the system recompiled". That edge is a candidate
+instability**. An edge from a low-I package to a high-I package points against this
+structural preference; the target may nevertheless be mature and rarely change. Establish
+contract exposure and actual history before predicting downstream churn. That edge is a candidate
 for the moves in `dependency-graphs.md`.
 
 Expected values, not targets: a leaf application/wiring package sits near I = 1
@@ -30,9 +34,10 @@ Cite a metric only alongside what it is blind to:
   string constant or a wire format are tightly coupled with zero graph edges.
   The graph measures compile-time knowledge, not agreement that must be kept.
 - **Runtime coupling.** Reflection, `ServiceLoader`, DI wiring and event topics
-  create dependencies `jdeps` never sees.
+  can introduce edges absent from bytecode analysis; static references to their APIs may
+  appear without revealing the dynamically selected implementation or topic contract.
 - **Edge weight.** Ce counts a package once whether one class touches one method
-  or fifty classes touch its internals. Always drop to `-verbose:class` before
+  or fifty classes touch its internals. Always drop to `-verbose:class -filter:none` before
   judging an edge.
 - **Direction of change.** Metrics are a snapshot. Low change frequency reduces expected
   migration payoff but does not erase latent security, compatibility or integrity risk. Use

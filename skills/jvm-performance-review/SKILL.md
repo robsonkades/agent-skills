@@ -252,10 +252,14 @@ startup slower after pre-touch/fixed heap
 
 ## References
 
-- [Flag lifecycle and effective-state protocol](references/flag-lifecycle.md)
-- [Flag cost and ergonomic interactions](references/flag-cost-and-defaults.md)
-- [Container and memory arithmetic](references/container-arithmetic.md)
-- [Evidence selection for common requests](references/missing-measurements.md)
+- [Flag lifecycle and effective-state protocol](references/flag-lifecycle.md) — read for
+  masking, questionable support or an upgrade comparison.
+- [Flag cost and ergonomic interactions](references/flag-cost-and-defaults.md) — read when
+  pricing an override or interpreting an explicit default.
+- [Container and memory arithmetic](references/container-arithmetic.md) — read when limits,
+  headroom, resource changes or OOM attribution affect the finding.
+- [Evidence selection for common requests](references/missing-measurements.md) — read when
+  the supplied evidence cannot separate competing explanations.
 - [JDK 25 `java` command documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
 - [JDK 25 `jcmd` command documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
 - [HotSpot VM options source](https://github.com/openjdk/jdk/tree/master/src/hotspot/share/runtime)

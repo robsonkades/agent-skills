@@ -30,11 +30,14 @@ throughput number is promised.
 
 ## Workflow
 
+The recipes target JDK 25's incubator API. Inspect the project's toolchain, runtime images and
+module/build flags first; a supported API in the authoring JDK does not authorize a target upgrade.
+
 1. **Prove the loop matters.** Profile the production-shaped workload and identify the hot
    kernel, input-size distribution, data layout and semantic constraints. Do not vectorise a
    merely conspicuous loop.
 2. **Check whether C2 already vectorised it.** Capture the scalar loop with
-   `-XX:+UnlockDiagnosticVMOptions -XX:+PrintAssembly -XX:CompileCommand=print,*Class.method`
+   `-XX:+UnlockDiagnosticVMOptions -XX:CompileCommand=print,*Class.method`
    and identify packed lane operations in the actual loop, not just `v` prefixes or vector
    registers. Existing SIMD lowers the expected upside, but explicit code may still merit an
    experiment for unsupported operations or cross-version predictability.
@@ -58,8 +61,8 @@ throughput number is promised.
 ## Rules
 
 - The Vector API is **incubating**, not stable—tenth round (JEP 508) in JDK 25, eleventh
-  (JEP 529) in JDK 26, and JEP 537 targets a twelfth round in JDK 27. Until the target release
-  is GA in the deployed distribution, describe it as targeted rather than available. Any ADR
+  (JEP 529) in JDK 26, and JEP 537 is Closed/Delivered for JDK 27 (checked September 2026).
+  Delivered integration does not establish GA availability in the deployed distribution. Any ADR
   that adopts it must state that risk explicitly rather than cite a finalisation that has
   not happened.
 - Finalisation depends on Project Valhalla, so no version can be promised. Vector values are
@@ -80,10 +83,10 @@ throughput number is promised.
   lowering on every supported architecture; never make fallback mode part of an SLO assumption.
 - The masked signatures are `fromArray(species, array, offset, mask)` — four arguments — and
   `intoArray(array, offset, mask)` — three. No extra numeric parameter.
-- Never measure SIMD with `System.nanoTime()` around a manual loop. No forks, no harness
-  warm-up, and a discarded return value lets C2 remove the computation as dead code. Use
-  JMH: a `@Benchmark` returning a value is consumed automatically; a `void` one needs
-  `Blackhole.consume(...)`.
+- Use JMH for comparative kernel timing; a one-shot manual timer cannot isolate warm-up,
+  optimization and environment noise. Return a result or make required work observable;
+  `Blackhole` is one option for a void benchmark, not a universal requirement for side effects.
+  Validate output and completed measurements before claiming a gain.
 - Test tail handling with array lengths that are not multiples of the lane count, including
   lengths shorter than one full vector.
 - Use `fma` when single-rounding fused semantics are desired; do not substitute it for
@@ -103,6 +106,9 @@ throughput number is promised.
 - Incubator adoption is a release-engineering decision: pin the JDK line, compile/test with
   the matching module, include it in `jlink`, assess API migration on every JDK upgrade, and
   canary by CPU architecture before broad rollout.
+- Return the semantic contract, exact build/CPU/species, lowering evidence and measured scope.
+  Missing decoding, failed forks or untested fleet classes remain explicit gaps, not proof of
+  absent SIMD or a deployment-ready speedup.
 
 ## References
 

@@ -44,6 +44,13 @@ Waiters and threads trying to enter are logically distinct populations even if i
 queues interact. Notification does not transfer the lock or guarantee which waiter runs first.
 Spurious wakeups require a predicate loop.
 
+Only the waited-on object's monitor is released, including its recursive acquisitions;
+other monitors held by the thread remain locked. This can deadlock a notifier that needs
+one of those other locks to make the predicate true. Timeout, notification or interruption
+does not remove the need to reacquire the waited-on monitor before the wait completes.
+The timeout therefore does not bound total method-return latency. Preserve a predicate
+loop and a remaining-time budget rather than restarting the full timeout on every wakeup.
+
 ## Identity hash and headers
 
 Identity hash, compressed/compact object headers, collector forwarding, and monitor representation
@@ -58,6 +65,9 @@ the matching JEP/source.
 - object addresses/identities in artifacts can be reused or represented differently over time;
 - thread dumps are snapshots and may omit short waits or require virtual-thread-specific commands;
 - thresholded events censor the distribution;
+- duration events for operations still in progress at capture end may not yet be committed;
+  use thread/queue state for unresolved long waits rather than treating completed events
+  as the entire contender population;
 - implementation counters/flags can be diagnostic, unstable or removed.
 
 ## Authoritative references
@@ -66,3 +76,4 @@ the matching JEP/source.
 - [OpenJDK object monitor implementation](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/runtime/objectMonitor.cpp)
 - [JEP 491](https://openjdk.org/jeps/491)
 - [JLS 17.1–17.2 monitors/wait sets](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
+- [Java 25 Object.wait](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long)>) — release, reacquisition and timeout semantics.

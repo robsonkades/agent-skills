@@ -1,5 +1,9 @@
 # Encoding, locale and Unicode
 
+Examples are partial snippets; supply `java.nio`, `java.nio.charset`, `java.text` and
+`java.util` imports as needed. State whether limits count bytes, code units, code points or
+graphemes before adapting them.
+
 ## Three different "lengths"
 
 ```java
@@ -19,10 +23,14 @@ Consequences:
 
   ```java
   static String truncate(String s, int maxCodePoints) {
+      if (maxCodePoints < 0) throw new IllegalArgumentException("negative limit");
       if (s.codePointCount(0, s.length()) <= maxCodePoints) return s;
       return s.substring(0, s.offsetByCodePoints(0, maxCodePoints));
   }
   ```
+
+  This requires non-null, well-formed UTF-16 input; code-point traversal does not repair lone
+  surrogates. Decide whether malformed text must be rejected at ingress.
 
   For user-facing truncation ("…" after N characters), use
   `BreakIterator.getCharacterInstance(locale)`. The default Java 25 implementation follows
@@ -84,8 +92,12 @@ Other places the charset is implicit and must not be: `PrintWriter`/`PrintStream
 loaded from a byte stream (ISO-8859-1 unless you use the `Reader` overload), and any HTTP
 client or server that guesses from a missing `charset` parameter.
 
-Decoding invalid bytes silently substitutes U+FFFD by default. When corrupt input must be
-rejected rather than mangled, use a `CharsetDecoder` with `CodingErrorAction.REPORT`.
+Error policy depends on the API: `new String(bytes, charset)` replaces malformed input,
+whereas a new `CharsetDecoder` defaults to `REPORT`. For an explicit strict boundary, configure
+both malformed and unmappable actions to `CodingErrorAction.REPORT`; do not assume all reader
+convenience APIs replace errors. Encoding an unpaired surrogate with `getBytes(charset)` also
+uses replacement; use a reporting `CharsetEncoder` when signatures or identifiers require
+rejection instead of lossy conversion.
 
 ## Locale
 
@@ -147,6 +159,7 @@ in bytes.
 
 ## Authoritative references
 
+- [CharsetDecoder error policy, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/charset/CharsetDecoder.html)
 - [String API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html)
 - [BreakIterator API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/text/BreakIterator.html)
 - [JEP 400: UTF-8 by Default](https://openjdk.org/jeps/400)

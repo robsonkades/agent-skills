@@ -1,7 +1,7 @@
 ---
 name: g1-concurrent-marking
 description: >
-  G1's concurrent marking cycle: SATB and the pre-write barrier, the five phases and the
+  G1's concurrent marking cycle: SATB and the pre-write barrier, the cycle phases and the
   single mark bitmap with TAMS, adaptive IHOP triggering, mark stack overflow and its
   consequences, humongous allocation and eager reclaim, and mixed-collection candidate
   selection. Use when the log shows "Concurrent Mark Restart for Mark Stack Overflow", when
@@ -21,13 +21,12 @@ Decide why a G1 marking cycle is failing to do its job — starting too late for
 old-generation allocation rate, restarting because the object-mark stack exhausted its maximum,
 or never finishing before the
 old generation fills — and which of those the evidence in the log actually supports. Marking
-is the only thing that tells the mixed collector which regions are worth evacuating; when it
-is late or aborted, the collector loses its input and falls back to a full GC.
+provides liveness for mixed-collection candidates. Late or aborted marking can reduce reclamation
+headroom, but does not inevitably cause full GC; inspect the actual allocation/fallback cause.
 
 The failure this prevents is treating the visible last event as the cause. A `Pause Full` at
-the end of a chain is the consequence; the cause is upstream, in the trigger, the barrier
-queue or an evacuation failure that invalidated the snapshot. Tuning the pause that was
-logged fixes nothing.
+the end of a chain needs its recorded cause and preceding capacity evidence. Explicit collection,
+allocation pressure and evacuation failure require different investigations.
 
 ## Workflow
 
@@ -38,7 +37,7 @@ Cleanup`. `Pause Mark Start` / `Pause Mark End` are ZGC's — a log quoting thos
    `-Xlog:gc+marking=debug` alongside the base `-Xlog:gc*`.
 3. **Check whether the trigger is adaptive before touching it.**
    `java -XX:+PrintFlagsFinal -version | grep G1UseAdaptiveIHOP`. With the default `true`,
-   `InitiatingHeapOccupancyPercent` is only the initial floor, and marking starting away from
+   `InitiatingHeapOccupancyPercent` is only the initial threshold, and marking starting away from
    45% is the predictor working, not a bug.
 4. **Track each trigger with its effective threshold, old-allocation rate, marking duration and
    post-cycle reclaim.** Rising start occupancy alone can reflect a changed old capacity/live set
@@ -82,7 +81,7 @@ Cleanup`. `Pause Mark Start` / `Pause Mark End` are ZGC's — a log quoting thos
   never at it — a worst case that just grazes it makes part of the traffic humongous and part
   of it not, under the same nominal load.
 - Since JDK 20 (JDK-8210708) there is a **single** `G1CMBitMap`, not a prev/next pair; TAMS
-  alone distinguishes pre-snapshot from post-snapshot objects, per region. Native bitmap
+  distinguishes pre-snapshot from post-snapshot allocation, per region. Native bitmap
   overhead dropped from roughly 3% to 1.5% of the heap, and a concurrent
   "Rebuild Remembered Sets and Scrub Regions" phase appeared between `Pause Remark` and
   `Pause Cleanup`.
@@ -91,8 +90,8 @@ Cleanup`. `Pause Mark Start` / `Pause Mark End` are ZGC's — a log quoting thos
 - Eager reclaim frees eligible humongous regions inside an ordinary STW pause. Eligibility is
   release-specific and considers marking/allocation timing, object kind/pointers, remembered-set
   evidence and pinning; it is not equivalent to “RSet size is zero”. Read `reclaim candidate` and
-  `remset/marked/pinned` fields on the target build. An ineligible object waits for a complete
-  liveness cycle. **There is no boolean to turn this off from JDK 20.**
+  `remset/marked/pinned` fields on the target build. An ineligible object may become eligible in a
+  later pause or require a complete liveness cycle. **There is no boolean to turn this off from JDK 20.**
   `-XX:+G1EagerReclaimHumongousObjects` — experimental, default `true` — was accepted on 11
   through 19 and is `Unrecognized VM option` from 20 onward, so the JVM refuses to start on it
   (executed on Temurin 11, 17, 18, 19, 20, 21, 24 and 25). What remains is
@@ -103,11 +102,10 @@ Cleanup`. `Pause Mark Start` / `Pause Mark End` are ZGC's — a log quoting thos
   operation the collector performs — because it processes the whole heap rather than a
   selected subset of regions, not because it is serial. Repeating "serial and therefore slow"
   leads people to read "no longer serial" as "no longer expensive".
-- The remembered set is a time cost, not only a memory cost: every phase that traverses it
-  pays, including `Concurrent Mark From Roots`.
-- Quote every write-barrier or RSet overhead figure as an estimate to be validated on the
-  workload (a JMH run with `-prof gc` inside and outside a marking window), never as a
-  constant of the collector.
+- Separate object-graph marking, remembered-set rebuilding and evacuation heap-root scanning.
+  A large RSet alone does not show that `Concurrent Mark From Roots` scans that RSet.
+- Validate barrier/RSet overhead with phase-aligned CPU evidence and controlled workload trials.
+  JMH `-prof gc` reports allocation/GC metrics; it does not isolate barrier instruction cost.
 
 ## Mark-stack overflow versus SATB pressure
 

@@ -26,14 +26,16 @@ Origin load immediately after the loss:
 
 The arithmetic assumes fail-fast remapping, uniform miss rate on survivors and identical origin
 cost per key. Heavy-tailed access can make `q_i` very different from key share or `1/N`. It also
-understates:
+omits the following possible effects:
 
 - **Second-order eviction.** The remapped keys land on the nine survivors, whose memory did
-  not grow. Eviction rises there, so the survivors' hit rate falls below 0.95 too, and the
-  origin load is higher than 7,250 and stays elevated longer than the re-warm of one node.
+  not grow. If memory headroom is insufficient, eviction can lower survivor hit rate and
+  raise origin load above 7,250 beyond the re-warm of one node.
 - **Duplicate misses.** A hot key in the lost range is requested by many callers
   concurrently, and every one of them misses until the first fill completes. Without
-  coalescing the origin sees the concurrency, not the key count.
+  coalescing the origin sees the concurrency, not the key count. The 5,000 req/s already
+  includes these requests: do not add a second duplicate multiplier to that request rate.
+  Coalescing reduces origin calls; retries or explicit hedging may add calls beyond arrivals.
 - **Retries.** If the origin starts failing or timing out, clients retry, multiplying the
   rate that caused the failure. `retries-and-backoff` owns the mechanism; here it is why the
   curve is not linear once the origin passes its knee.
@@ -57,7 +59,7 @@ Two derived numbers worth writing down next to the cache's configuration:
 | Lever                        | What it does                                                | Cost                                                                |
 | ---------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------- |
 | **Replication factor > 1**   | A ready replica can preserve hits after detection/promotion | RF × memory; lag, promotion delay, reduced remaining capacity       |
-| **More, smaller nodes**      | Reduces `R / N` proportionally                              | More connections, more membership churn, more to operate            |
+| **More, smaller nodes**      | Can reduce worst-node request share if traffic balances     | More connections, more membership churn, more to operate            |
 | **Request coalescing**       | Collapses concurrent misses of one key per coalescing scope | Cancellation/deadline/failure sharing; fleet-wide duplicates remain |
 | **Origin admission control** | Caps what reaches the origin, sheds or queues the rest      | Rejected or delayed requests — `rate-limiting-and-load-shedding`    |
 | **Gradual warming**          | Bounds the _rate_ of misses a returning node produces       | Longer period of reduced hit rate                                   |
@@ -69,27 +71,29 @@ any of the others.
 
 ## Warming a returning node
 
-A node that rejoins the ring takes back its share of the keyspace instantly and holds none of
-it. Options, in order of how much they cost to build:
+An empty node rejoining a client-side ring can immediately take ownership without cached data.
+Products that transfer slots or synchronize replicas have different rejoin behavior; inspect
+the actual readiness and routing protocol. For an empty ownership target, options include:
 
 1. **Rejoin gradually.** Bring the node back in stages so it takes a fraction of its
-   keyspace at a time; the miss rate is then bounded by the fraction rather than by 1/N.
-   Requires the mapping layer to support partial membership, which client-side sharding
-   usually does not and a proxy usually does.
+   keyspace at a time; use the measured request share of each stage, not just key count, to
+   estimate misses. Verify that this client/proxy/product supports staged ownership and keep
+   admission control in place; stages with a hot key can still exceed origin capacity.
 2. **Pre-warm before advertising.** Fill the node from the origin, or from a peer, and only
    then add it to the membership. The correctness hazard is warming with values that go
-   stale during the warm — write the warm entries with a short TTL, or accept the staleness
-   window explicitly.
+   stale during the warm. Coordinate updates with version checks or replay invalidations before
+   serving; a short TTL is only acceptable when the resulting stale window meets the contract
+   and expiry reloads fresh data. Bound warming traffic and abort on lost origin headroom.
 3. **Let it miss, behind coalescing and admission control.** Simplest, and adequate whenever
-   the arithmetic above says the origin survives `R / N`.
+   the measured request share and query mix fit remaining origin capacity.
 
 Prefer rejoin below peak with an abort threshold. Emergency capacity restoration may justify a
 peak-time rejoin, but gradual ownership and origin admission control must bound its cost.
 
 ## The test
 
-The only proof is a node loss under load, and the assertion is on the **origin**, not on the
-cache.
+Exercise node loss under representative load; assertions must include the **origin**, not only
+the cache. A passing run establishes behavior for its workload and failure scenario only.
 
 ```
 1. Drive steady load at production-shaped key distribution — replay a recorded key
@@ -97,9 +101,9 @@ cache.
 2. Wait for the hit rate to reach steady state. Record origin req/s as the baseline.
 3. Crash one node without handoff, then separately simulate a slow/partitioned node; fail-fast
    crashes and timeout failures exercise different client pool and retry behavior.
-4. Assert: origin request rate stays below the agreed bound for the whole window.
+4. Assert: origin rate, concurrency and queue depth stay below agreed bounds throughout.
 5. Assert: client-visible error rate stays within the SLO, and p99 stays within budget.
-6. Restore the node and assert the recovery has no second spike.
+6. Restore the node and assert recovery stays within the same bounds; record time to readiness.
 ```
 
 Origin/client bounds are the acceptance evidence. "The cache recovered" or a restored hit rate is

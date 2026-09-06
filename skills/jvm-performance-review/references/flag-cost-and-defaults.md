@@ -27,16 +27,21 @@ Model peak concurrent demand, not only nominal maxima:
 
 ```text
 container/process memory demand =
-  heap committed/resident
+  heap resident (including live data and resident allocation/relocation reserve)
   + metaspace/class space
   + code cache and compiler/runtime arenas
   + thread stacks
   + direct/native/library allocations
-  + GC metadata/remembered sets/marking/relocation headroom
+  + outside-heap GC metadata/remembered sets/marking structures
   + mapped/file-backed resident pages charged to cgroup
   + agents/profilers and other processes/sidecars if sharing the limit
   + fragmentation and safety margin
 ```
+
+This is a disjoint accounting model, not a sum of raw tool totals. Count resident mappings
+already attributed to heap/native categories only once, and keep heap-internal relocation
+headroom within the heap term. Do not add committed bytes to resident bytes for the same
+allocation; provision future residency separately when estimating required capacity.
 
 Reserved, committed, RSS/PSS, cgroup `memory.current`, and live data are different. NMT does not
 cover every native allocation and must be enabled at startup for its supported accounting. Reconcile

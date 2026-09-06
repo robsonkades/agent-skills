@@ -3,6 +3,12 @@
 An invoicing service accepts invoices over HTTP, stores them, and computes totals.
 Production sees intermittent NPEs in `TotalsService`, three calls away from any input.
 
+These are partial Java 16+ sketches with omitted imports (`java.math`, `java.time`,
+`java.util`, `IntStream`, JSpecify annotations), enclosing adapter/service declarations and
+store wiring. Each public type belongs in its own file. The before sketch assumes a map
+that accepts null keys; other stores may reject earlier. Domain constructors provide runtime
+checks; annotations describe the static contract, not enforcement by themselves.
+
 ## Before
 
 ```java
@@ -92,7 +98,7 @@ static <T> T required(@Nullable T value, String field) {
     return value;
 }
 
-static Invoice fromDto(InvoiceDto dto) {          // the only place wire-null exists
+static Invoice fromDto(@Nullable InvoiceDto dto) { // nullable body is rejected explicitly
     if (dto == null) throw new InvalidInvoicePayload("body", "required");
     String id = required(dto.id(), "id");
     String customerId = required(dto.customerId(), "customerId");
@@ -120,6 +126,14 @@ its caller handles `findInvoice` absence explicitly. An existing invoice with no
 totals zero, while an unknown invoice does not silently become one. Optional mechanics belong to
 java-optional.
 
+For a checker-backed implementation, place mapper methods in a null-marked adapter and
+model raw DTO fields/elements as explicitly nullable (for example
+`@Nullable List<@Nullable InvoiceLineDto>`), so `required` narrows real nullable inputs.
+Leaving DTOs unmarked instead creates an unspecified/unchecked boundary. Test the actual
+mapper's missing-field/null behavior and map `InvalidInvoicePayload` to the intended HTTP
+response; a Java exception alone does not establish a 4xx response. A non-null `Invoice`
+reference is still a separate precondition of the downstream total method.
+
 ## Trade-offs
 
 - Invalid payloads now fail loudly at ingestion with a 4xx-shaped error instead of
@@ -136,13 +150,17 @@ java-optional.
 
 ## Verification
 
+Acceptance checks to execute in the target build; no checker or HTTP result is implied by these sketches:
+
 - Tests feeding a DTO with each required field null: rejected at `fromDto` with a message
   naming the payload problem — not an NPE from deeper in.
 - A test for the unknown-invoice path asserting `Optional.empty`, distinct from an invoice whose
   line list is empty and total is zero.
-- NullAway (or the IDE checker) over the `@NullMarked` domain package: zero findings;
-  the DTO package deliberately stays unmarked — it is the one place null is legal.
-- The production NPE's stack trace path re-run as a test: green.
+- Run the configured checker over the marked domain and adapter, with compile fixtures for
+  null DTO fields, null line elements and invalid overrides. Record warnings and unchecked
+  scopes; do not report success merely because the domain is marked or DTOs are unmarked.
+- Re-run the production NPE path as a regression; assert stable field/code and no store write
+  for invalid input, plus direct constructor rejection when the adapter is bypassed.
 
 ## Authoritative references
 

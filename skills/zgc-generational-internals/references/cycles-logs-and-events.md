@@ -1,20 +1,25 @@
 # Cycles, logs and events
 
-## The cycle, with the phase diagrams omit
+## Phase families, not a universal per-generation sequence
 
 ```
 Pause Mark Start (STW)              establishes cycle/root-marking state
 Concurrent Mark                     traces the reachable graph with mutator barriers preserving invariants
 Pause Mark End (STW)                completes marking and cycle-boundary processing
-Concurrent Prepare for Relocate     selects candidate pages, most garbage first
+Concurrent Select Relocation Set    selects pages under generation-specific policy
 Pause Relocate Start (STW)          starts concurrent relocation
 Concurrent Relocate                 load barrier redirects through the forwarding table
-Concurrent Remap                    updates remaining pointers; may defer to the next cycle
+// Remapping work can be folded into other phases; no separate label is promised.
 ```
 
 The verified JDK 25 log exposes these three pause labels. `Pause Relocate Start` is often
 dropped from simplified diagrams and measurement scripts. Treat names/count as
 release-sensitive and validate them on the target build.
+
+This is a schematic, not a log fixture. In inspected JDK 25, a major cycle starts both
+generations with `Y: Pause Mark Start (Major)`; old marking does not emit its own separate
+Pause Mark Start. Mark-end attempts can repeat if marking must continue. Do not assert
+exactly three pause records for each generation or one fixed sequence for every cycle.
 
 | STW phase            | What it does                                    |
 | -------------------- | ----------------------------------------------- |
@@ -37,51 +42,51 @@ java -XX:+UseZGC \
      MyApp
 ```
 
-`gc+phases=debug` is what makes the individual phases appear. Without it the log carries
-cycle summaries only, and `Pause Relocate Start` is not in them.
+On Temurin 25.0.3, `gc*=info` already includes these pause records at `[info][gc,phases]`.
+Exact `gc=info` mostly exposes summaries; wildcard and level are independent. The additional
+debug selector above enables more detail, not the existence of all pause lines. Quote the
+full -Xlog argument for the target shell and set output/rotation for the capture contract.
 
 ## Reading the log
 
-The verified generational log labels by **generation** — `Young Generation` / `Old Generation`.
-Do not build a parser around remembered “Minor/Major” terminology. Shape (verify the exact format
-against the build in use before publishing it as a reference):
+Observed shape on Temurin 25.0.3 (durations illustrative): Y/O identify the generation;
+Minor/Major also appear in cycle context. Preserve both cycle and generation identity.
 
 ```
-[gc,heap]   GC(42) Young Generation: 512M(25%)->64M(3%)
-[gc,heap]   GC(42) Old Generation:   2048M(64%)->2048M(64%)
-[gc,phases] GC(42) Pause Mark Start                   0.234ms
-[gc,phases] GC(42) Concurrent Mark                   32.145ms
-[gc,phases] GC(42) Pause Mark End                     0.189ms
-[gc,phases] GC(42) Concurrent Prepare for Relocate    4.012ms
-[gc,phases] GC(42) Pause Relocate Start               0.201ms
-[gc,phases] GC(42) Concurrent Relocate               24.023ms
-[gc,phases] GC(42) Concurrent Remap                  18.877ms
-[gc]        GC(42) GC time: 1.2%
+[info][gc,phases] GC(42) Y: Pause Mark Start (Major) 0.011ms
+[info][gc,phases] GC(42) Y: Pause Mark End 0.008ms
+[info][gc,phases] GC(42) Y: Pause Relocate Start 0.005ms
+[info][gc,phases] GC(42) Y: Young Generation 14M(11%)->26M(20%) 0.002s
+[info][gc,phases] GC(42) O: Pause Mark End 0.005ms
+[info][gc,phases] GC(42) O: Pause Relocate Start 0.006ms
+[info][gc,phases] GC(42) O: Old Generation 28M(22%)->30M(23%) 0.001s
 ```
 
-An old generation line whose before and after are identical means that cycle did not collect
-old — normal, and the reason a young-only reading of the log looks like nothing is being
-reclaimed from the long-lived set.
+Equal old-generation occupancy before/after does not prove old collection was absent:
+promotion, allocation and reclamation can balance during concurrent execution. Read the
+generation's actual phase/cycle evidence rather than inferring collection from a byte delta.
 
 ## Extracting pauses safely
 
-The pattern must cover all three phases, and the script must refuse to report a percentile it
-has no samples for:
+Exploratory Bash extraction for the inspected completed pause-line shape, not a production
+coverage validator. Check the complete rotated input set/cycle coverage first. It reports a
+pooled per-phase nearest-rank sample percentile, not per-cycle pause time, TTSP or request p99:
 
 ```bash
-grep -E 'Pause (Mark Start|Mark End|Relocate Start)' zgc.log \
-  | grep -oE '[0-9]+\.[0-9]+ms' | tr -d 'ms' > pauses.txt
+LC_ALL=C awk '/\[gc,phases[ ]*\].*GC\([0-9]+\) [YO]: Pause (Mark Start( \(Major\))?|Mark End|Relocate Start) [0-9]+\.[0-9]+ms[[:space:]]*$/ { value=$NF; sub(/\r$/, "", value); sub(/ms$/, "", value); print value }' zgc.log > pauses.txt
 
 n=$(wc -l < pauses.txt)
 if [ "$n" -eq 0 ]; then
-  echo "no pause samples matched — check the pattern and that gc+phases=debug is on" >&2
+  echo "no pause samples matched — inspect schema, selection and input completeness" >&2
   exit 1
 fi
-sort -g pauses.txt | awk -v n="$n" 'NR == int((99*n + 99)/100) { print "p99:", $1, "ms over", n, "samples" }'
+LC_ALL=C sort -g pauses.txt | awk -v n="$n" 'NR == int((99*n + 99)/100) { print "p99:", $1, "ms over", n, "samples" }'
 ```
 
-A zero-sample run is the failure mode this guards: a mistyped pattern produces an empty set,
-and an empty set silently reports a perfect p99.
+A nonzero sample count still cannot establish coverage: unknown phase names, truncated
+lines, loss or omitted rotated files invalidate a production result. Inspect unmatched
+pause records and reconcile cycle context; retain counts by generation/phase. Enough samples
+and a representative interval are needed to interpret the chosen percentile.
 
 ## JFR
 
@@ -94,12 +99,16 @@ jfr print --events jdk.ZYoungGarbageCollection,jdk.ZOldGarbageCollection zgc.jfr
 jfr print --events jdk.ZAllocationStall zgc.jfr
 ```
 
+StartFlightRecording without duration normally writes its destination at JVM exit. For a
+running application, obtain a supported JFR.dump or wait for bounded recording completion;
+confirm a complete artifact before printing. Inspect effective event settings and metadata.
+
 | Event                         | Fires when                              | Use                                                     |
 | ----------------------------- | --------------------------------------- | ------------------------------------------------------- |
 | `jdk.ZYoungGarbageCollection` | End of each young cycle                 | Young cycle frequency and duration                      |
 | `jdk.ZOldGarbageCollection`   | End of each old cycle                   | Old cycle frequency/duration; correlate aging/live set  |
 | `jdk.ZAllocationStall`        | A thread blocks for want of a free page | Stall evidence; classify heap, rate, CPU and page cause |
-| `jdk.ZPageAllocation`         | The collector allocates a new page      | Correlate allocation rate with page creation            |
+| `jdk.ZPageAllocation`         | A ZGC heap-page allocation is reported  | Page allocator activity, not one event per Java object  |
 
 JDK 25 also exposes relocation-set, statistics, thread-phase and uncommit events. There is no
 combined `jdk.ZGCGarbageCollection` on that build. The **field names inside** events vary
@@ -129,12 +138,19 @@ cycles earlier/more often and consume CPU. Validate rather than treating either 
 
 ```bash
 jcmd <pid> Thread.print | grep -i zgc                          # state and stack, not CPU
-jcmd <pid> Thread.dump_to_file -format=json threads.json       # same data, parseable
+jcmd <pid> Thread.dump_to_file -format=json threads.json       # different coverage/fields
 
 top -H -p <pid>            # per-thread CPU
-pidstat -t -p <pid> 1      # same, tabular; match TID against "tid=" from Thread.print
+pidstat -t -p <pid> 1      # Linux native TID; compare converted hexadecimal nid, not tid
 ```
 
-`RUNNABLE` in a thread dump means "running or ready to run". It quantifies nothing. Reading
+Thread.print's `tid` is not the Linux native TID; native `nid` is commonly hexadecimal.
+Internal GC workers need not appear as ordinary Java threads in either dump. Resolve OS
+thread identities with native tooling and the exact build. A Java RUNNABLE thread can also
+be waiting inside native/OS work; the state does not quantify CPU. Reading
 "ZGC threads RUNNABLE" as "ZGC threads consuming CPU" is the error; `top -H` answers the
 question the dump cannot.
+
+Sources: [JDK 25 phase definitions](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zGeneration.cpp),
+[JFR metadata](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml),
+[JEP 490 flag lifecycle](https://openjdk.org/jeps/490).

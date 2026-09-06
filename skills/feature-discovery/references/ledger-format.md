@@ -2,16 +2,21 @@
 
 ## Entry shapes
 
+Illustrative entries, not claims about this repository. Replace sources with evidence from
+the actual feature and use its existing identifier convention. Missing approval stays missing.
+
 ```text
-FACT   F-01  The order API is synchronous and returns the created resource.
-             Source: src/main/java/com/acme/order/OrderController.java:41
+FACT   F-01  At revision abc123, the controller returns the created resource inline.
+             Source: src/main/java/com/acme/order/OrderController.java:41 at abc123.
+             Scope: code path inspected; production behaviour not observed.
 
 FACT   F-02  The user asked for "asynchronous processing", naming no technology.
              Source: request message, 2026-09-02
 
 ASSM   A-01  "Asynchronous" means the caller receives an acknowledgement and the work
-             completes later, rather than the caller polling.
-             Falsified by: the user describing a polling or streaming interface.
+             may complete after the initial response.
+             Basis: provisional reading of the request, not an accepted contract.
+             Falsified by: the required response must wait for completed processing.
 
 UNK    U-01  Whether the caller needs to observe completion, and how.
              Impact: HIGH — decides whether a callback, a status endpoint or nothing
@@ -19,22 +24,27 @@ UNK    U-01  Whether the caller needs to observe completion, and how.
 
 DEC    ED-01 Records live in docs/features/async-order-processing/.
              Owner: engineering; proposed by agent (no existing convention found under docs/).
-             Status: accepted. Source: repository convention check and engineering confirmation.
+             Status: proposed. Source: agent proposal; accountable-owner acceptance pending.
 ```
 
 Identifiers are stable for the life of the feature. Later phases cite them — a plan that says
 "RES-03 exists because of U-01" is auditable; one that repeats the prose is not.
+An unresolved unknown explains risk, not authorization to implement a chosen answer. Link
+downstream work to the accepted resolution as well. Polling is compatible with asynchronous
+processing and does not itself falsify A-01.
 
 ## Impact, defined by consequence
 
-| Impact     | Test                                                                                  |
-| ---------- | ------------------------------------------------------------------------------------- |
-| **HIGH**   | The two answers produce different contracts, storage, failure behaviour or components |
-| **MEDIUM** | The two answers produce the same components, different internals or ordering          |
-| **LOW**    | The two answers produce the same implementation                                       |
+| Impact     | Test                                                                                                                |
+| ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| **HIGH**   | Plausible answers materially change scope, acceptance, contracts, security, data, failure behaviour or architecture |
+| **MEDIUM** | Plausible answers change bounded internal work, sequencing or operational details without a high-impact consequence |
+| **LOW**    | Plausible answers do not materially change delivery, acceptance or operation                                        |
 
-Impact is about the design, not about business importance. A question that matters enormously
-to the business but has one plausible answer is not HIGH.
+Impact describes the consequence of getting the answer wrong, not its probability or how
+much code changes. A one-line authorization rule can be HIGH. When consequences are not yet
+established, state a provisional classification and the missing basis rather than inventing
+two equally likely answers. Clarification owns prioritization and gap handling.
 
 ## Resolving an entry
 
@@ -44,7 +54,8 @@ Append; never overwrite:
 UNK    U-01  Whether the caller needs to observe completion, and how.
              Impact: HIGH
              RESOLVED 2026-09-03 -> FACT F-09: a status endpoint is required.
-             Source: user answer, round 1.
+             Source: Product owner answer, round 1, accepted definition revision PD-02.
+             Authority: established Product owner for this behaviour.
 ```
 
 The resolution says where the answer came from. Three sources are not interchangeable: **the
@@ -54,18 +65,18 @@ is settled by source, role, and revision rather than conversational recency.
 
 ## Two failure shapes to check the ledger against
 
-**The confident ledger.** Many facts, no assumptions, no unknowns. Almost always means
-assumptions were written in the fact column. Re-read every fact and ask what command would
-print it; the ones with no answer are assumptions.
+**The confident ledger.** Check whether each fact is supported by its cited source and
+whether that source establishes code, observed behaviour or stated intent. A request or
+decision need not be printable by a command. Do not invent unknowns simply because a short,
+well-evidenced request has none.
 
 **The exhaustive ledger.** Forty unknowns, all MEDIUM. Impact was assigned by how uncertain the
-answer feels rather than by what the answer changes. Re-derive each one from the consequence
-table above; most collapse to LOW.
+answer feels rather than by what it changes. Re-derive consequences and merge duplicates;
+neither count nor uniform classification alone proves the ledger wrong.
 
 ## What does not belong here
 
 - Options and trade-offs — the solution phase owns those.
 - Task lists — decomposition owns those.
-- Anything about how the feature will be built. The ledger is about what is true, what is
-  guessed and what is missing; once it starts describing a design it stops being usable as a
-  check on that design.
+- Newly selected implementation designs. Existing design constraints and recorded decisions
+  may belong as sourced facts/decisions; discovery does not choose new ones.

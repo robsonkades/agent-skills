@@ -3,12 +3,17 @@
 ## End-to-end path
 
 ```text
-call site -> event creation -> formatter/encoder -> queue
+call site -> event creation -> optional async handoff + formatting/encoding
   -> appender/transport -> node collector -> network
   -> ingestion/parser/index -> storage/retention/query
 ```
 
 Each stage can block, drop, duplicate, reorder, truncate or expose data.
+Locate the queue in the actual implementation: it may retain events for later encoding,
+rather than encoded bytes. Capture bounded immutable field values at the occurrence boundary;
+do not assume an asynchronous logger deep-copies mutable arguments or nested objects.
+In Logback 1.4.11, deferred preparation materializes message/thread/MDC data, but does not
+deep-copy key-value objects. Test delayed encoding after the caller mutates an input.
 
 ## Synchronous versus buffered
 
@@ -17,8 +22,8 @@ sink backpressure on application threads. Async output moves work and absorbs bu
 uses memory, can reorder across appenders, and must choose block/drop at capacity and flush
 at shutdown.
 
-Current Logback AsyncAppender defaults include a bounded queue and discarding of lower
-levels near capacity unless configured otherwise. Other libraries/versions differ. Inspect
+Logback AsyncAppender has a bounded queue and can discard TRACE/DEBUG/INFO near capacity
+under its default policy. Other libraries/versions differ. Inspect
 the effective configuration and expose queue/drop counters.
 
 ## Cost model
@@ -48,6 +53,10 @@ Choose per event class:
 - spill to bounded local durable storage;
 - route audit/security to a separate durable channel;
 - fail the operation only when compliance/integrity contract requires it.
+
+These are design alternatives, not options every appender implements. Verify the selected
+implementation supports the required timeout/spill behavior; a bounded queue does not itself
+bound how long producers block.
 
 Make every loss/block/fallback observable without recursively logging the failure into the
 same broken path.
@@ -80,5 +89,7 @@ needs volume, rotation, ownership and crash/restart semantics.
 ## References
 
 - [Logback AsyncAppender](https://logback.qos.ch/manual/appenders-async-sift.html)
+- [Logback 1.4.11 event preparation](https://github.com/qos-ch/logback/blob/v_1.4.11/logback-classic/src/main/java/ch/qos/logback/classic/spi/LoggingEvent.java)
+- [Transactional outbox](https://microservices.io/patterns/data/transactional-outbox.html) for atomic business-state/event intent; delivery can still repeat.
 - [Log4j asynchronous loggers](https://logging.apache.org/log4j/2.x/manual/async.html)
 - [OWASP Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html)

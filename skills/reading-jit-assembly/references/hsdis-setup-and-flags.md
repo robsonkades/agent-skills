@@ -34,7 +34,9 @@ be distributable. Since JDK 18 (JDK-8275128), build it through the JDK's normal
 `configure`/`make` flow from the checkout root:
 
 ```bash
-git clone https://github.com/openjdk/jdk.git && cd jdk
+# Example source baseline: select the verified tag/update line for the target VM first.
+git clone --branch jdk-25-ga --depth 1 https://github.com/openjdk/jdk.git
+cd jdk
 bash configure --with-hsdis=capstone      # BSD-licensed backend; --with-capstone=<path>
                                           # if capstone is not where pkg-config finds it
 make build-hsdis
@@ -141,15 +143,16 @@ behavior.
 `-XX:+PrintFlagsFinal` prints the class in braces; the unlock must precede the flag on the
 command line. Verified on 25.0.3:
 
-| Flag                                                                                                                                                                                                                                                                                               | Class           | Needs                                                    |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | -------------------------------------------------------- |
-| `PrintAssembly`, `PrintAssemblyOptions`, `PrintNMethods`, `PrintNativeNMethods`, `PrintStubCode`, `PrintInterpreter`, `PrintSignatureHandlers`, `PrintAdapterHandlers`, `PrintInlining`, `CompilerDirectivesFile`, `CompilerDirectivesPrint`, `TraceDeoptimization`                                | `diagnostic`    | `-XX:+UnlockDiagnosticVMOptions`                         |
-| `PrintOptoAssembly`, `PrintIntrinsics`                                                                                                                                                                                                                                                             | `C2 diagnostic` | the unlock, and a debug build to print anything          |
-| `ImplicitNullChecks` (default `true`)                                                                                                                                                                                                                                                              | `pd diagnostic` | the unlock to turn it **off**                            |
-| `UseObjectMonitorTable` (default `false`)                                                                                                                                                                                                                                                          | `diagnostic`    | the unlock                                               |
-| `PrintCompilation`, `CompileCommandFile`, `UseSuperWord`, `LoopMaxUnroll`, `MaxVectorSize`, `UseCountedLoopSafepoints`, `ReduceInitialCardMarks`, `UseTLAB`, `LockingMode` (=`2`), `UseCompactObjectHeaders` (=`false`), `UseCompressedClassPointers`, `RangeCheckElimination`, `UseLoopPredicate` | `product`       | nothing                                                  |
-| `UseAVX` (=`2` on the test host), `UseSSE`                                                                                                                                                                                                                                                         | `ARCH product`  | nothing; value is CPU-derived                            |
-| `PrintIdeal`, `VerifyOops`, `PrintEscapeAnalysis`                                                                                                                                                                                                                                                  | `develop`       | a debug build — absent from `PrintFlagsFinal` on product |
+| Flag                                                                                                                                                                                                                                                                                               | Class           | Needs                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------- |
+| `PrintAssembly`, `PrintAssemblyOptions`, `PrintNMethods`, `PrintNativeNMethods`, `PrintStubCode`, `PrintInterpreter`, `PrintSignatureHandlers`, `PrintAdapterHandlers`, `PrintInlining`, `CompilerDirectivesFile`, `CompilerDirectivesPrint`, `TraceDeoptimization`                                | `diagnostic`    | `-XX:+UnlockDiagnosticVMOptions`                              |
+| `PrintOptoAssembly`                                                                                                                                                                                                                                                                                | `C2 diagnostic` | unlock; detailed node output needs debug build on this line   |
+| `PrintIntrinsics`                                                                                                                                                                                                                                                                                  | `C2 diagnostic` | unlock; product builds can print intrinsic inlining decisions |
+| `ImplicitNullChecks` (default `true`)                                                                                                                                                                                                                                                              | `pd diagnostic` | the unlock to turn it **off**                                 |
+| `UseObjectMonitorTable` (default `false`)                                                                                                                                                                                                                                                          | `diagnostic`    | the unlock                                                    |
+| `PrintCompilation`, `CompileCommandFile`, `UseSuperWord`, `LoopMaxUnroll`, `MaxVectorSize`, `UseCountedLoopSafepoints`, `ReduceInitialCardMarks`, `UseTLAB`, `LockingMode` (=`2`), `UseCompactObjectHeaders` (=`false`), `UseCompressedClassPointers`, `RangeCheckElimination`, `UseLoopPredicate` | `product`       | nothing                                                       |
+| `UseAVX` (=`2` on the test host), `UseSSE`                                                                                                                                                                                                                                                         | `ARCH product`  | nothing; value is CPU-derived                                 |
+| `PrintIdeal`, `VerifyOops`, `PrintEscapeAnalysis`                                                                                                                                                                                                                                                  | `develop`       | a debug build — absent from `PrintFlagsFinal` on product      |
 
 Without the unlock, verified:
 
@@ -180,7 +183,7 @@ Which mechanisms need the unlock differs, and this is verified:
 java -XX:CompileCommand=print,ClassName::methodName -jar app.jar
 # prints: CompileCommand: print ClassName.methodName bool print = true
 
-# Method in isolation (its callees are calls, not inlined bodies)
+# Prevent this method being inlined INTO callers; its own callees can still inline.
 java -XX:CompileCommand=dontinline,ClassName::methodName \
      -XX:CompileCommand=print,ClassName::methodName -jar app.jar
 
@@ -196,6 +199,10 @@ jcmd <PID> Compiler.directives_add directives.json   # "1 compiler directives ad
 jcmd <PID> Compiler.directives_print                 # shows PrintAssembly:true on the c2 block
 jcmd <PID> Compiler.directives_remove                # pops the last one; directives_clear drops all
 ```
+
+Inspect the existing directive stack and coordinate ownership before removal; a concurrent
+operator may have pushed another directive. Do not clear unrelated directives. Neither adding
+nor removing a directive retroactively rewrites existing nmethods.
 
 ```json
 [{ "match": "com/myapp/Service.process(*)", "c2": { "PrintAssembly": true } }]
@@ -250,14 +257,21 @@ benchmark's own `@Fork(jvmArgs…)`, and perfasm already adds what it needs. Fro
 `intelSyntax=true`. Useful options: `hotThreshold` (default `0.10`, share of events a region
 needs to be expanded), `top` (`20` regions), `printMargin` (`10` context lines),
 `mergeMargin` (`32`), `saveLog=true` (keeps the annotated HotSpot log for reading offline —
-the only way to read the whole method rather than the hot regions), `savePerf=true`,
+a way to inspect the whole captured method rather than only hot regions), `savePerf=true`,
 `events=cycles,instructions` on Linux, `showCounts=raw|norm|percent_total`.
 
 Output sections, in order: `Hottest code regions (>N% "cycles" events)` with one block per
 region, then `Hottest Regions`, `Hottest Methods (after inlining)`, `Distribution by Source`
 (compiled / interpreter / stubs / kernel / unknown). Read the region table before the
 listing: a region tagged `<no assembly is recorded, native region>` or `… unknown region>`
-means the time is in native code or in memory the parser could not map, not in a Java method.
+means the capture lacks a mapped assembly body there. Unknown regions can include missing or
+reused JIT code as well as native code; repair correlation before assigning a source.
+
+These are sampled event locations, not exact per-instruction elapsed time. Event choice,
+skid, multiplexing, lost samples and kernel/VM restrictions affect attribution; a hotspot can
+land after the causative instruction. Keep counts and sample period, and correlate addresses
+with compilation lifetimes from the same fork. A high percentage with very few samples is weak
+evidence. Check the installed JMH profiler's `help` and source version before copying options.
 
 Failure mode: JMH prints `ERROR: No address lines detected in assembly capture. Make sure
 your JDK is properly configured to print generated assembly. The most probable cause for
@@ -303,8 +317,10 @@ the target build.
 
 ## Primary references
 
-- [OpenJDK hsdis README](https://github.com/openjdk/jdk/blob/master/src/utils/hsdis/README.md)
-- [HotSpot disassembler implementation](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/compiler/disassembler.cpp)
+- [JDK 25 hsdis README](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/utils/hsdis/README.md)
+- [JDK 25 disassembler implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/disassembler.cpp)
+- [JDK 25 C2 flag definitions](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/c2_globals.hpp)
+- [JDK 25 CompileCommand matching](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compilerOracle.cpp)
 - [HotSpot compiler directives reference](https://docs.oracle.com/en/java/javase/25/vm/compiler-control.html)
 - [JMH perfasm implementation](https://github.com/openjdk/jmh/blob/master/jmh-core/src/main/java/org/openjdk/jmh/profile/AbstractPerfAsmProfiler.java)
 - [JDK-8275128: build hsdis using the normal build system](https://bugs.openjdk.org/browse/JDK-8275128)

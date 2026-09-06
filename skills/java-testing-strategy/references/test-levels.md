@@ -1,17 +1,18 @@
 # What each level proves, and what it is blind to
 
-Feedback latency below is order-of-magnitude for a warm JVM on a developer machine. Measure
-your own; the numbers matter only as ratios.
+Latency ranges below are illustrative, not measurements or guaranteed ratios. Measure cold
+startup, warm tests and whole-suite time separately. Levels overlap: a JPA slice using the
+real engine is also an integration test; characterisation describes a purpose, not a scope.
 
-| Level                                          | Typical latency | Proves                                               | Blind to                                              |
-| ---------------------------------------------- | --------------- | ---------------------------------------------------- | ----------------------------------------------------- |
-| Unit (no framework)                            | < 10 ms         | Logic, branches, boundary values, error paths        | Wiring, mapping, SQL, serialisation, config, ordering |
-| Sociable unit (real collaborators, fake edges) | 10–100 ms       | Logic plus the interaction between owned classes     | Anything crossing a process boundary                  |
-| Spring slice                                   | 1–5 s           | The slice's own wiring: routing, binding, mapping    | Everything outside the slice, including the real DB   |
-| Integration (real engine)                      | 2–30 s          | Schema, dialect, transactions, locking, migrations   | Cross-service contracts, production data volume       |
-| Contract                                       | < 1 s each side | That two independently deployed sides still agree    | Whether either side's logic is correct                |
-| End-to-end                                     | 30 s–minutes    | The parts are wired together and a journey completes | Which part is wrong when it goes red                  |
-| Characterisation                               | varies          | What the code does _today_, before you change it     | Whether today's behaviour is correct                  |
+| Level                                          | Typical latency | Proves                                               | Blind to                                           |
+| ---------------------------------------------- | --------------- | ---------------------------------------------------- | -------------------------------------------------- |
+| Unit (no framework)                            | < 10 ms         | Logic, branches, boundary values, error paths        | Runtime wiring, SQL and external behavior          |
+| Sociable unit (real collaborators, fake edges) | 10–100 ms       | Logic plus the interaction between owned classes     | Anything crossing a process boundary               |
+| Spring slice                                   | 1–5 s           | The slice's own wiring: routing, binding, mapping    | Excluded components; DB unless actually configured |
+| Integration (real engine)                      | 2–30 s          | Schema, dialect, transactions, locking, migrations   | Cross-service contracts, production data volume    |
+| Contract                                       | < 1 s each side | That two independently deployed sides still agree    | Whether either side's logic is correct             |
+| End-to-end                                     | 30 s–minutes    | The parts are wired together and a journey completes | Which part is wrong when it goes red               |
+| Characterisation                               | varies          | What the code does _today_, before you change it     | Whether today's behaviour is correct               |
 
 ## Unit
 
@@ -25,8 +26,10 @@ only at the edges you do not own (see java-test-doubles). Isolating every class 
 mock produces tests that pass individually and a system that does not work, because the only
 thing verified is that each class calls the mock the way the test author imagined.
 
-Blind to: Hibernate lazy loading, the SQL actually generated, JSON field names, `@Value`
+Blind to: Hibernate lazy loading, the SQL actually generated, `@Value`
 resolution, bean scoping, transaction propagation, and every default the framework applies.
+Pure tests with the real serializer can check JSON field names; they do not establish that
+the application wires the same serializer configuration.
 
 ## Spring slice
 
@@ -34,27 +37,31 @@ resolution, bean scoping, transaction propagation, and every default the framewo
 chain — not services or repositories. It proves request mapping, deserialisation, validation
 responses and status codes. It cannot prove anything below the controller.
 
-`@DataJpaTest` loads JPA and repositories, and by default **replaces the configured
-DataSource with an in-memory database and rolls back each test**. Both defaults change what
-the test proves:
+`@DataJpaTest` loads JPA and repositories and normally rolls back each test. Database
+replacement depends on the Boot version and configuration: Boot 3.4 defaults to `NON_TEST`,
+preserving recognized auto-configured test databases. Inspect the actual connection:
 
 - Replacing the DataSource means you tested H2, not your engine. H2's PostgreSQL or SQL
   Server compatibility mode reproduces neither the dialect nor the locking behaviour nor the
   index planner. Use `@AutoConfigureTestDatabase(replace = Replace.NONE)` with Testcontainers
   when the risk is in the SQL or the schema.
-- Rolling back means nothing was committed. Flush-time constraint violations, `AFTER_COMMIT`
-  listeners and anything depending on a committed state are invisible.
+- Rollback does not prevent flush-time failures: explicitly flush to expose deferred ORM SQL
+  and applicable constraints. Commit-time constraints and `AFTER_COMMIT` listeners require
+  an actual commit, followed by observation outside that transaction and deliberate cleanup.
+  A test-managed transaction can also hide missing application transaction boundaries.
 
-`@SpringBootTest` loads everything. It proves wiring; it costs a context per distinct
+`@SpringBootTest` loads the application context selected by its configuration, not necessarily
+a live server or external systems. It checks that wiring; it costs a context per distinct
 configuration, so vary configuration as little as possible — each distinct set of properties
 or mocked beans is a new context that Spring caches separately.
 
 ## Integration against the real engine
 
 Testcontainers with `@ServiceConnection` (Spring Boot 3.1+) starts the real engine and wires
-the properties automatically. This is the only level that proves migrations apply, that the
-dialect generates working SQL, that a unique constraint fires, that an isolation level
-behaves as assumed, and that a lock times out rather than deadlocks.
+connection details automatically when the required test dependencies and supported container
+are configured. Match the deployed engine/version and relevant settings. Targeted tests can
+exercise migrations, SQL, constraints and transaction behavior; merely starting a container
+establishes none of them. Locking or isolation claims need controlled multiple transactions.
 
 Keep it to the tests whose risk is genuinely in the database. It is not a substitute for unit
 tests of the logic that sits above it — a failing assertion here tells you far less about
@@ -62,9 +69,10 @@ where the fault is.
 
 ## Contract
 
-A contract test proves that a producer and a consumer, deployed independently, still agree on
-the message shape. Consumer-driven tooling (Pact, Spring Cloud Contract) generates a
-verification the producer's own build runs.
+A contract test checks specified interactions between producer and consumer: request/response
+shape, status, headers and modeled states. Consumer-driven tooling needs both consumer tests
+and provider verification of the relevant versions; a passing stub alone proves no current
+provider agreement. It does not establish general business correctness.
 
 Reach for it when the two sides are released on different schedules by different teams. When
 one team owns both sides and releases them together, an integration test is cheaper and
@@ -86,13 +94,23 @@ the point; it is a safety net, not a specification. The mechanics belong to java
 
 ## What a mocked boundary still obliges you to verify
 
-| You mocked         | Something must still prove                           | Where                             |
-| ------------------ | ---------------------------------------------------- | --------------------------------- |
-| A repository       | The query returns those rows against the real engine | One integration test              |
-| An HTTP client     | The request and response shapes match the other side | Contract test, or a recorded stub |
-| A message producer | The payload deserialises on the consumer             | Contract or round-trip test       |
-| A mapper           | Every field is mapped, including new ones            | Round-trip test over the real map |
-| The clock          | Nothing — `Clock` is designed to be substituted      | —                                 |
+| You mocked         | Something must still prove                           | Where                                               |
+| ------------------ | ---------------------------------------------------- | --------------------------------------------------- |
+| A repository       | The query returns those rows against the real engine | Targeted integration cases                          |
+| An HTTP client     | The request and response shapes match the other side | Provider-verified contract or controlled live check |
+| A message producer | The payload deserialises on the consumer             | Consumer verification with actual payload           |
+| A mapper           | Required fields and transformations are correct      | Expected wire/domain fixtures over real mapper      |
+| The clock          | Application selects intended zone/time source        | Wiring check when that selection carries risk       |
 
-The rule is _once_, not _per test_. One integration test proving the mapping lets fifty unit
-tests mock the repository honestly.
+Reuse evidence for the same assumption; do not impose one test per mock or assume one case
+covers every query. A round trip can preserve a shared encoder/decoder bug; compare against
+independently specified fields and values. Recorded stubs only reflect their capture version.
+
+## Sources
+
+- [Boot 3.4 database replacement API](https://docs.spring.io/spring-boot/3.4/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.html)
+  and [replacement modes](https://docs.spring.io/spring-boot/3.4/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.Replace.html).
+- [Spring test transactions](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/tx.html):
+  rollback, explicit flush and commit. Consult the version matching the project.
+- [Pact consumer guidance](https://docs.pact.io/consumer): contract versus functional checks
+  and matching only interactions the consumer relies on.

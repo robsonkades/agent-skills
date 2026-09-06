@@ -52,13 +52,15 @@ identifies a ring but not ownership of each operation; sample queue movement und
 ## io-wq workers
 
 ```bash
-ps -eLo pid,tid,comm | awk '$1 == 12345 || $3 ~ /iou-wrk/'
+ps -eLo pid,tid,comm | awk '$1 == 12345'
 ```
 
 io-wq workers may execute operations that would otherwise block. Their names and visibility vary
 across kernel versions, and their presence does not mean every operation is blocking. If worker
 growth or CPU is suspicious, correlate with operation types, filesystem/storage latency and
-queue pressure. There is no portable `/proc/<pid>/io_uring_workers` contract.
+queue pressure. The listing selects only the target thread group; if a kernel exposes workers
+elsewhere, establish their ring/process association separately. A global name match for
+`iou-wrk` is not proof of ownership. There is no portable `/proc/<pid>/io_uring_workers` contract.
 
 ## JFR scope
 
@@ -73,6 +75,9 @@ Observe the mechanism and the outcome separately:
 
 - A `sendfile`/`splice` trace or transport-specific zero-copy completion confirms that a
   candidate mechanism executed for those operations.
+- For `SEND_ZC`, distinguish send completion from buffer-release notification. Check documented
+  usage reporting (such as `IORING_SEND_ZC_REPORT_USAGE`) for copied fallback; observing a `_ZC`
+  opcode or notification alone does not establish that those bytes avoided copying.
 - CPU time and memory bandwidth per transferred byte test whether the path became cheaper.
 - Throughput and p50/p95/p99 under matched payload, concurrency and backpressure test user-visible
   results.

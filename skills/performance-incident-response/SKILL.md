@@ -22,14 +22,20 @@ causal chain.
 Record incident commander, technical lead, scribe, communications owner, affected user journey and
 SLO/burn, start/detection/acknowledgement/mitigation/recovery timestamps with sources, recent changes,
 evidence budget, safe actions, rollback authority and the next decision time.
+Reuse the active incident process and existing authorization. One person may cover several
+roles initially; missing role assignments or template fields must not delay an authorized
+urgent mitigation. Keep impact/start-time uncertainty explicit rather than inventing timestamps.
 
 ## Workflow
 
 1. Declare impact and scope from user-facing evidence. Separate missing telemetry from zero impact.
-2. Freeze a timestamped change and evidence ledger. Capture volatile, cheap evidence before restart,
-   heap dump or broad profiling according to `incident-evidence-capture`.
+2. Preserve an append-only timestamped change/evidence ledger. Capture volatile, cheap evidence
+   before destructive actions when feasible within the evidence budget. If ongoing impact
+   requires immediate mitigation, record what could not be captured and proceed; expensive
+   diagnostics must not become prerequisites (`incident-evidence-capture`).
 3. Build a small hypothesis table from USE/resource, request-path and recent-change evidence. Assign
-   one discriminating check per hypothesis.
+   one discriminating check per hypothesis. This can run alongside mitigation and need not
+   establish root cause before applying a supported recovery action.
 4. Choose one bounded mitigation with predicted signal, blast radius, abort condition and rollback.
 5. Validate recovery against the user SLI, goodput, backlog/drain and resource guardrails; green CPU
    or one cleared alert is insufficient.
@@ -38,16 +44,23 @@ evidence budget, safe actions, rollback authority and the next decision time.
 
 ## Rules
 
-- Do not optimize during an incident. Mitigate reversibly and label unvalidated changes as such.
+- Prioritize restoring the user objective over exploratory tuning. Prefer reversible mitigation;
+  a targeted configuration/code correction may be necessary. State evidence, risk and validation
+  instead of treating either a familiar rollback or an optimization label as proof of safety.
 - Preserve exact command output, timestamps, JDK/process/container identity and failures. An empty
   profiler result is evidence about the tool path, not proof that the mechanism is absent.
-- Make one material change at a time unless continuing impact makes a bundled rollback the safest
-  action; record when causal isolation was sacrificed.
+- Coordinate interacting changes to the same affected scope, normally one material change at a
+  time. Independent authorized work can proceed under named owners. When urgent impact requires
+  bundled actions, record their timing and the resulting limits on causal attribution.
 - Use separate clocks: detection, acknowledgement, first material mitigation and sustained recovery.
   Define each metric before comparing incidents.
 - A postmortem maps contributing conditions and failed defenses, not one linear “five whys” chain.
 - Every action item has an owner, deadline, observable acceptance criterion and the control layer it
   changes. “Be more careful” is not an action.
+
+Handoff the current impact, actions and actual outcomes, remaining uncertainty, artifact locations,
+active owners and next decision/check. A mitigation attempted, a workload temporarily quiet and
+a confirmed sustained recovery are different states.
 
 ## References
 

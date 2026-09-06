@@ -19,8 +19,9 @@ this exists to prevent are the skill that is never selected because its descript
 vague, and the skill that is selected but degrades the work because it is a wall of
 generic advice.
 
-A skill earns its place only if it changes what the agent does. Anything a capable agent
-already does correctly is context you are spending for nothing.
+A skill earns its place by improving decisions or reliability. Remove generic reminders
+that add no useful constraint, but retain critical prerequisites and boundaries even when
+they seem familiar; familiarity is not evidence that agents consistently follow them.
 
 ## Scope
 
@@ -33,25 +34,31 @@ versioning and distribution.
 
 ## Workflow
 
-1. **Clarify before writing.** If the objective, the triggering situations, or the target
-   domain are unclear, ask. Do not invent scope — a skill built on a guessed boundary is
-   rewritten, not refined.
-2. **Fix the boundary.** Write four lists before any prose: what it does, what it
-   deliberately does not do, when it should activate, when it should not. Adjacent
-   responsibilities belong to other skills.
-3. **Write the frontmatter first.** It is the only thing read at selection time, so it is
-   the highest-leverage text in the skill. See the contract below.
+1. **Establish scope from the request and repository.** Use existing authorization and
+   inspect the current skill before asking. Clarify only unresolved information that
+   materially changes the work; continue independent authorized work in the meantime.
+2. **Fix the boundary.** Identify what it does, excludes, activates for and hands off.
+   Four explicit lists can help a new design; a small review need not produce them.
+   Change only the assigned scope and report neighboring issues without editing them.
+3. **Review the frontmatter early.** It is the discovery summary, though explicit user
+   selection and client behavior also affect activation. See the contract below.
 4. **Draft the body at minimum viable size.** Purpose, workflow, decision rules,
-   constraints. Nothing that is only relevant sometimes.
+   constraints. Keep short conditional guards near the decisions they protect; route
+   substantial conditional detail to references.
 5. **Decide resources by necessity.** Each supporting file must answer "what capability
    does this provide that the body cannot?" Read `references/resource-design.md` when
    choosing between a reference, a script and an asset.
 6. **Review against the gates below**, then against `references/anti-patterns.md`.
+7. **Validate the actual change.** Check links and metadata, run relevant example/script
+   checks when applicable, and follow repository integration rules. Report checks that
+   ran separately from written cases or unexecuted plans; implement justified in-scope
+   corrections when the task requests improvement, rather than stopping at suggestions.
 
 ## The frontmatter contract
 
-Every skill is a directory with a `SKILL.md` whose YAML frontmatter carries two required
-fields. Runtimes reject or ignore a skill that lacks them.
+The Agent Skills format requires a directory with `SKILL.md` and YAML frontmatter containing
+`name` and `description`. Check the target client's supported format and repository validator;
+do not infer a universal rejection/loading behavior across implementations.
 
 ```yaml
 ---
@@ -62,13 +69,13 @@ description: >
 ---
 ```
 
-Information is disclosed in three stages, and this drives every sizing decision:
+Progressive disclosure is the intended model; actual loading depends on the client:
 
-| Stage      | What is loaded                   | Consequence                                                  |
-| ---------- | -------------------------------- | ------------------------------------------------------------ |
-| Selection  | **name + description only**      | The description alone decides whether the skill is ever used |
-| Activation | The whole Markdown body          | Every line costs context on every use                        |
-| Execution  | A reference or script, on demand | Free until actually needed                                   |
+| Stage      | What is loaded                   | Consequence                             |
+| ---------- | -------------------------------- | --------------------------------------- |
+| Selection  | **name + description**           | Describes when selection is appropriate |
+| Activation | The whole Markdown body          | Every line costs context on every use   |
+| Execution  | A reference or script, on demand | Free until actually needed              |
 
 A description that lists capabilities (`"expert in performance"`) does not discriminate. A
 description that names situations (`"use when p99 regressed after a deploy, or CPU is high
@@ -77,25 +84,26 @@ with normal GC"`) does. Write the situations.
 ## Decision rules
 
 ```text
-IF the guidance would be followed by a capable agent without the skill
-THEN delete it — it is context spent for no behaviour change.
+IF guidance adds no decision rule, prerequisite or useful reliability constraint
+THEN remove it; do not remove a critical guard based only on assumed model competence.
 
 IF a section is relevant only to some tasks the skill covers
-THEN move it to references/ and route to it by condition from the body.
+THEN consider a routed reference; keep short critical conditions at the decision point.
 
 IF the skill needs a persona ("you are an expert…") to feel authoritative
 THEN it lacks substance; replace the persona with decision rules.
 
 IF the same mechanical operation would be re-derived on every run
-THEN write a script and have the body invoke it.
+THEN reuse an existing reliable tool or add a script if its maintenance cost is justified.
 
 IF the skill's boundary overlaps another skill's
-THEN narrow both and state the exclusion in each description.
+THEN clarify this skill's boundary or intentional composition; report changes needed
+outside the authorized scope rather than editing both automatically.
 
 IF a rule cannot be checked against the produced work
 THEN restate it as something observable, or drop it.
 
-IF the domain is diagnostic — the skill reaches conclusions from evidence
+IF recommendations depend on evidence, including a generative task with risky assumptions
 THEN read references/evidence-and-confidence.md and add that discipline.
 
 IF acting on the skill's output is expensive or hard to reverse
@@ -107,29 +115,30 @@ THEN read references/evaluation.md and add proportionate evaluation cases.
 - [ ] The description names triggering situations, not capabilities
 - [ ] Name matches the directory, and the boundary excludes at least one adjacent topic,
       naming the nearest neighbouring skill when one exists
-- [ ] The body contains nothing that is only conditionally relevant
+- [ ] Substantial conditional detail is routed; critical guards remain visible
 - [ ] Every rule is specific enough to be checkable against the output
 - [ ] Every supporting file is routed from the body by an explicit condition
-- [ ] No file duplicates content that already exists elsewhere in the skill
+- [ ] Repetition has a safety or routing purpose; detailed rules have one authoritative home
 - [ ] Removing any file would lose a capability
 
 ## Output
 
 When creating a skill, produce the directory, then a short report: the boundary (does /
 does not / activates / does not activate), each file created with the one capability it
-provides, and any judgement call the author should confirm.
+provides, validation results and unresolved decisions that actually need user input.
 
 When reviewing a skill, report findings ordered by impact, each with the concrete edit
-that fixes it. Do not rewrite a skill wholesale when three edits would do.
+that fixes it. Distinguish implemented fixes from recommendations and measured outcomes
+from expected benefits. Do not rewrite a skill wholesale when three edits would do.
 
 ## References
 
 - **Choosing and structuring supporting files** — `references/resource-design.md`. Read
   when deciding whether something belongs in the body, a reference, a script or an asset,
-  and for the directory conventions runtimes actually recognise.
+  and for directory conventions versus client-specific loading behavior.
 - **Evidence and confidence discipline** — `references/evidence-and-confidence.md`. Read
-  only for skills that reach conclusions from evidence: diagnosis, review, analysis,
-  incident response. It is noise in a generative skill.
+  when diagnosis, review, analysis or implementation depends on uncertain evidence.
+  Use the reasoning discipline without imposing labels on trivial work.
 - **Evaluating a skill** — `references/evaluation.md`. Read when the skill's output is
   costly to act on, or when you need to show that a revision improved it.
 - **Anti-patterns and self-review** — `references/anti-patterns.md`. Read before

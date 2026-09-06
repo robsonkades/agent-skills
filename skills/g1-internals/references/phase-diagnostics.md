@@ -6,7 +6,7 @@
 java -Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=5,filesize=20m -jar app.jar
 ```
 
-One young pause on JDK 25, in the order the lines are written (`gc,age`, `gc,remset` and
+Illustrative young-pause excerpt in JDK 25 format (`gc,age`, `gc,remset` and
 `gc,ergo` omitted):
 
 ```
@@ -30,29 +30,31 @@ Summary: GC(N) Pause Young (<type>) (<cause>) [(Evacuation Failure: <reason>)] <
 
 `<type>` is one of `Normal`, `Concurrent Start`, `Prepare Mixed` (the last young collection
 before the mixed phase) and `Mixed`. `Old regions: 151->161` on a young collection is the
-promotion signal; `Humongous regions` dropping on a young collection is eager reclaim at
-work, and humongous regions that never drop are waiting for a marking cycle.
+promotion/region-transition signal, not an exact byte rate. `Humongous regions` dropping on a young
+collection can show eager reclaim. A stable count may instead reflect live objects or new allocation
+offsetting reclamation; correlate object/candidate logs and marking before concluding why it persists.
 
 ## The phase breakdown — the instrument that decides the action
 
-The five info-level phases above are always present under `gc*`. `-Xlog:gc+phases=debug`
+These top-level phases describe ordinary evacuation pauses; exceptional paths and releases differ.
+`-Xlog:gc+phases=debug`
 adds the sub-phases that name the mechanism:
 
-| Dominant phase / sub-phase                                                  | What it means                                             | Where to look next                                                                |
-| --------------------------------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `Evacuate Collection Set` → `Object Copy`                                   | A large volume of live data is being copied               | Promotion rate; how many old regions entered the CSet; survivor overflow          |
-| `Evacuate Collection Set` → `Scan Heap Roots`                               | Many cards to scan for the regions being collected        | `Scanned Cards`; reference fan-in into the collection set                         |
-| `Evacuate Collection Set` → `Ext Root Scanning`                             | Thread stacks, class loaders, code roots                  | Thread count and stack depth; huge static structures                              |
-| `Merge Heap Roots` → `Remembered Sets`                                      | RSets of the collection set are large or coarse           | `Merged Full` / `Merged Howl Full` above zero → coarsening (`remembered-sets.md`) |
-| `Merge Heap Roots` → `Log Buffers`                                          | Dirty cards refinement had not processed before the pause | `Dirty Cards` rising per pause → refinement behind the write rate                 |
-| `Merge Heap Roots` → `Eager Reclaim`                                        | Humongous candidates being checked and freed              | `-Xlog:gc+humongous=debug`                                                        |
-| `Post Evacuate Collection Set` → `Reference Processing` / `Weak Processing` | Many `Reference` objects or weak tables                   | Cache design; `-Xlog:gc+ref=debug`                                                |
-| `Post Evacuate Collection Set` → `Restore Evacuation Failed Regions`        | An evacuation failure occurred in this pause              | The `(Evacuation Failure: …)` suffix; the section below                           |
-| `Pre Evacuate Collection Set`, `Other`                                      | Fixed and bookkeeping work                                | Rarely the cause on its own                                                       |
+| Dominant phase / sub-phase                                                  | What it means                                         | Where to look next                                                                |
+| --------------------------------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `Evacuate Collection Set` → `Object Copy`                                   | Live-data movement and associated execution cost      | Live bytes, worker imbalance, CPU availability, bandwidth and CSet composition    |
+| `Evacuate Collection Set` → `Scan Heap Roots`                               | Many cards to scan for the regions being collected    | `Scanned Cards`; reference fan-in into the collection set                         |
+| `Evacuate Collection Set` → `Ext Root Scanning`                             | Thread stacks, class loaders, code roots              | Thread count and stack depth; huge static structures                              |
+| `Merge Heap Roots` → `Remembered Sets`                                      | RSets of the collection set are large or coarse       | `Merged Full` / `Merged Howl Full` above zero → coarsening (`remembered-sets.md`) |
+| `Merge Heap Roots` → `Log Buffers`                                          | Pending dirty-card processing                         | Dirty cards, write bursts, pause spacing and refinement progress                  |
+| `Merge Heap Roots` → `Eager Reclaim`                                        | Candidate remembered cards prepared for eager reclaim | Later reclamation evidence in `-Xlog:gc+humongous=debug`                          |
+| `Post Evacuate Collection Set` → `Reference Processing` / `Weak Processing` | Many `Reference` objects or weak tables               | Cache design; `-Xlog:gc+ref=debug`                                                |
+| `Post Evacuate Collection Set` → `Restore Evacuation Failed Regions`        | An evacuation failure occurred in this pause          | The `(Evacuation Failure: …)` suffix; the section below                           |
+| `Pre Evacuate Collection Set`, `Other`                                      | Fixed and bookkeeping work                            | Rarely the cause on its own                                                       |
 
-The distinction matters because `Object Copy` and `Merge Heap Roots` have opposite responses
-— less live data versus fewer cross-region references — and the summary line reports only
-their sum.
+Use these as hypotheses, not automatic diagnoses. Merge prepares card coverage, Scan Heap Roots
+scans heap references, and copying cost also depends on execution resources. Correlate the
+sub-phase work counts and worker times before choosing a change.
 
 ## Marking, RSet and humongous logs
 
@@ -81,9 +83,14 @@ lines and completed marking cycles.
 ## Live inspection
 
 ```bash
-jcmd <pid> GC.heap_info        # region size, young/survivor counts — fragmentation at a glance
-jcmd <pid> GC.class_histogram  # what is occupying the old generation
+jcmd <pid> GC.heap_info        # aggregate occupancy and region size, not a free-region map
+jcmd <pid> help GC.class_histogram  # inspect impact/options before capture
 ```
+
+`GC.class_histogram` covers heap classes without generation attribution and is high impact;
+the default requests a full GC. `-all` includes unreachable objects and avoids that requested
+collection, but heap inspection can still pause the application. A histogram is not an old-gen
+retention proof, and `GC.heap_info` alone cannot establish contiguous free-region availability.
 
 ```
 garbage-first heap   total reserved 131072K, committed 131072K, used 57177K [0x...)
@@ -105,6 +112,9 @@ them:
 jfr summary g1.jfr | grep -i g1
 ```
 
+The summary describes the recording, including zero-count entries; it does not prove every event
+was enabled or exercised. Inspect `jfr metadata` and recording settings when an expected event is absent.
+
 ## Evacuation failure
 
 ```
@@ -121,14 +131,14 @@ JDK 22, which replaced the GC locker for G1). Objects that could not be copied s
 they are, self-forwarded; the region is kept as an old region and remains a candidate
 (`G1RetainRegionLiveThresholdPercent`, experimental), and `gc+phases=debug` reports
 `Evacuation Failed Regions` / `Allocation Failed Regions` under `Restore Evacuation Failed
-Regions`. G1 attempts full compaction only when young collections keep failing; with `-Xmx`
-above `-Xms` it may expand instead.
+Regions`. Allocation pressure may lead to expansion or full compaction; explicit/external GC requests
+and humongous contiguous-space failure can also cause Full GC without repeated young failures.
 
 Causes, in the order worth checking:
 
 1. Heap too small for the observed allocation and promotion rate — `G1ReservePercent`
-   (default 10) is the free-region reserve evacuation draws on; raising it buys headroom at
-   the cost of that percentage of the heap.
+   (default 10) is a policy reserve intended to reduce evacuation failure, not an inaccessible
+   dedicated memory partition or guaranteed capacity; increasing it trades usable headroom.
 2. Humongous objects consuming regions that evacuation needed (`gc+humongous=debug`).
 3. Promotion rate high enough to keep the old generation near capacity — check the
    `Old regions` delta per young pause and whether marking started late
@@ -137,7 +147,7 @@ Causes, in the order worth checking:
 
 ```bash
 grep -n "Evacuation Failure" gc.log | head      # every failing pause, with its reason
-grep -c "Pause Full" gc.log                     # count, then inspect chronology and cause
+grep -E '\[gc +\].*Pause Full.*ms$' gc.log      # completion summaries only, not gc,start duplicates
 ```
 
 ## Checklist
@@ -152,14 +162,23 @@ Before investigating:
 While observing:
 
 - [ ] `-Xlog:gc+phases=debug` enabled, so the dominant sub-phase of each pause is known
-- [ ] At least ten mixed cycles sampled — one pause is not a pattern
+- [ ] Representative windows and event counts reported, with separate pause types
 - [ ] `-Xlog:gc+humongous=debug` checked when old grows without matching retained state
 
 When measuring and validating:
 
-- [ ] p50/p99/p99.9/max reported for the pauses, never the mean alone
+- [ ] Distribution/max and sample size reported; sparse tails labelled or omitted, not claimed precise
 - [ ] Rates reported with unit and period, not as a bare number
 - [ ] Every extraction command verified to produce non-empty output against a real log
 - [ ] The change tested under the same load as the original measurement
 - [ ] Throughput and CPU checked, to rule out a regression elsewhere
 - [ ] Every quoted flag default confirmed with `-XX:+PrintFlagsFinal` on the target runtime
+
+## Sources and scope
+
+- [Java 25 G1 tuning guide](https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-garbage-collector-tuning.html)
+- [Java 25 jcmd command and impact descriptions](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+
+An isolated Temurin 25.0.3 G1 process confirmed that default `GC.class_histogram` requested a
+`Heap Inspection Initiated GC`, while `-all` did not request that collection. This is a runtime
+observation, not a claim that heap inspection is pause-free or has identical cost on other builds.

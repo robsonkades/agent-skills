@@ -49,7 +49,8 @@ percentage nobody measured.
 5. **Use the JDK 25 AOT cache** when training/assembly can run against the exact deployable image.
    The JEP 514 training-output flag and the production-consumption flag are different.
 6. **Make the training run representative.** Profiles are only worth what the training
-   exercised; a run that starts and exits immediately profiles nothing an endpoint will use.
+   exercised; refresh-and-exit can train startup and shared paths but does not exercise the
+   request-specific paths or input distributions needed to establish endpoint warm-up.
 7. **Build the archive and application image as one immutable, signed unit.** Validation details
    changed in JDK 25 updates (including the JDK-8377932 fix); never use a historical weakness as
    the design. Pin the exact vendor/build and run a changed-JAR negative test in CI.
@@ -57,6 +58,11 @@ percentage nobody measured.
    phase it applies to—total startup or one phase. Use `-Xshare:on`/`AOTMode=on` as CI
    compatibility gates; in production weigh fail-fast against crash-loop availability and expose
    fallback explicitly.
+
+The working baseline here is HotSpot JDK 25; inspect compiler/toolchain, vendor update, resolved
+Spring/CRaC dependencies and final image before using a versioned recipe. Do not upgrade the
+project merely to match the examples. Return mechanism, lifecycle/artifact contract, exact build,
+training coverage, observed use/rejection and measured startup phases; label untested paths.
 
 ## Rules
 
@@ -71,11 +77,15 @@ percentage nobody measured.
   JDK 25, archived-heap support and cache compatibility depend on collector/build constraints;
   JEP 516 removes the any-GC restriction for AOT object caching in JDK 26, not every other cache
   compatibility constraint.
+- JEP status names the integration/release target, not proof that a particular vendor image,
+  platform or deployed build implements it. Check release/GA availability separately. The Leyden
+  project page still lists AOT native-code compilation as proposed work; JDK 25 profile caches
+  must not be described as containing compiled application methods.
 - `-XX:AOTCacheOutput=<file>` requests training/assembly on each invocation and replaces output
   on success. The production start command—systemd unit, Docker ENTRYPOINT—
   must use `-XX:AOTCache=<file>`. These are different flags, not aliases.
-- JDK-8377932 allowed affected AOT-cache builds to accept a changed application JAR. It has been
-  fixed/backported in JDK 25 update distributions, so behavior cannot be inferred from feature
+- JDK-8377932 allowed affected AOT-cache builds to accept a changed application JAR. The fix is
+  recorded in JDK 25 update changelogs, so behavior cannot be inferred from feature
   version alone. Verify the vendor build's release notes and negative-test replacement of a JAR;
   regardless of the result, deploy cache and application artifacts atomically and never patch a
   live image in place.
@@ -91,6 +101,8 @@ percentage nobody measured.
   command's exit status as insufficient evidence: assert a fresh non-empty output, inspect the
   assembly log and consume it once with `AOTMode=on`. Respect the exact JEP/runtime restrictions
   on classpath/module-path changes and unsupported inputs.
+  Account for both training and assembly heaps plus native overhead during the one-command flow;
+  the assembly child can inherit heap sizing and the same container resource envelope.
 - A custom `jlink` image does not automatically prove a usable generated CDS archive. Use
   `jlink --generate-cds-archive` when supported/desired, inspect `-Xlog:cds`, and measure the size
   and startup trade-off. Do not attribute a result to module stripping or CDS without a controlled

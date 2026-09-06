@@ -19,7 +19,8 @@ stating explicitly.
 
 **Timeout and Retry.** Timeout inside retry bounds each attempt: worst case is
 `attempts × timeout` plus backoff, which is the number that must fit the caller's budget. Timeout
-outside retry bounds the whole operation: attempts stop when the budget is gone, which is usually
+outside retry bounds the observer's wait only unless inner work cooperates: stop attempts and
+propagate the remaining budget/cancellation through backoff and transport, which is usually
 what a request-scoped service wants. Doing both — an outer deadline and an inner per-attempt
 timeout — is the most robust arrangement and the one to prefer when the transport supports it.
 
@@ -32,17 +33,20 @@ Caller's own deadline is 800ms
 ```
 
 That last line is the failure mode: work continuing after the caller has left. A deadline
-propagated into the stack, rather than a fixed timeout, avoids it (`timeouts-and-deadlines`).
+propagated and enforced by the stack limits it; a timeout alone does not prove remote work stopped
+(`timeouts-and-deadlines`).
 
 **Retry and Circuit breaker.** Breaker outside retry is the normal arrangement: the breaker
 observes complete operations, so its error rate reflects what callers experience, and when it is
-open no retries happen at all. Breaker inside retry means every attempt consults the breaker —
-when it is open, the retry loop simply fails fast three times in a row, which wastes nothing but
-also achieves nothing, and distorts the retry metrics.
+open no attempts reach retry below it. Breaker inside retry means every attempt consults the breaker;
+exclude open-breaker rejection from retry eligibility. Repeated rejected attempts depend on that
+policy, not on nesting alone, and may waste backoff time and distort metrics.
 
-**Cache and everything else.** Cache belongs outermost, or just under metrics. A hit then costs
-nothing and never touches breaker, retry or transport. Cache below retry means each attempt
-re-checks a cache that just missed. The one subtlety: with the cache above metrics, hits become
+**Cache and everything else.** Cache often belongs just under metrics, provided hits preserve
+required authorization, freshness and tenant/currency key scope. A hit then costs
+lookup/validation cost and need not touch breaker, retry or transport. Cache below retry means each
+attempt rechecks it; concurrent population can change a miss into a hit. Failure caching is an
+explicit cache policy, not determined by layer order. With the cache above metrics, hits become
 invisible; with it below, hit latency is counted as call latency. Prefer cache below metrics, and
 tag hits.
 
@@ -51,9 +55,10 @@ per logical call with the total duration — usually what an operator wants. Log
 every attempt, which is what a diagnostician wants. Both is fine; using one name for both is not
 (`structured-logging`).
 
-**Bulkhead / concurrency limiter.** Outermost of the resilience layers, above the breaker: it
-must bound the number of in-flight logical operations, and if it sits below retry, retries
-consume permits that the limit was meant to protect (`concurrency-limiting-and-bulkheads`).
+**Bulkhead / concurrency limiter.** Above retry it bounds logical operations, holding permits
+during backoff; below retry it bounds active attempts and releases permits between them. Choose
+the protected resource explicitly, possibly using both bounds, and test acquisition deadlines and
+release on failure/cancellation (`concurrency-limiting-and-bulkheads`).
 
 ## Retry amplification
 
@@ -71,25 +76,23 @@ A dependency degrading to 50% error rates can receive up to the product of neste
 precisely when it can least handle it—the standard amplification shape of a retry storm
 (`cascading-failures`). Rules:
 
-- **Retry at exactly one layer**, chosen deliberately, usually the one closest to the dependency
-  that knows whether the operation is idempotent.
-- **Every other layer must be able to prove it does not retry**, including the HTTP client
-  library's own defaults, the mesh's, and the SDK's.
+- **Prefer one retry owner per failure domain.** If several layers are necessary, share a bounded
+  attempt/deadline budget and demonstrate the resulting amplification limit.
+- **Inspect other layers' actual policies**, including HTTP, mesh and SDK defaults.
 - **Budget rather than count.** A retry budget (retry only if fewer than X% of recent calls were
   retries) degrades gracefully where a fixed count does not.
 
 ## Identity loss
 
-A decorator is a different object of a different class. Everything that identifies the delegate
-breaks:
+A decorator is a different object. Identify which uses actually depend on concrete identity:
 
 | Broken thing                   | Symptom                                                                             |
 | ------------------------------ | ----------------------------------------------------------------------------------- |
 | `a == b`                       | The wrapper is never `==` the target                                                |
-| `instanceof ConcreteType`      | Fails; downcasts throw `ClassCastException`                                         |
-| `equals`/`hashCode`            | Unless forwarded, the wrapper is unequal to the target and to other wrappers        |
+| `instanceof ConcreteType`      | Delegating wrappers usually fail; subclass-based forms may still match              |
+| `equals`/`hashCode`            | Equality depends on both objects' contracts; forwarding can violate symmetry        |
 | Listener deregistration        | `removeListener(this)` from inside the target does not match the wrapper registered |
-| Annotations read reflectively  | The wrapper's class has none of the target's annotations                            |
+| Annotations read reflectively  | Visibility depends on wrapper/subclass shape, inheritance and lookup rules          |
 | `getClass().getName()` in logs | Reports the wrapper, hiding what actually ran                                       |
 
 Java's own answer is an explicit unwrap contract:
@@ -101,25 +104,28 @@ public interface Wrapper {                      // java.sql.Wrapper
 }
 ```
 
-Spring's equivalent is `AopUtils.getTargetClass` / `AopProxyUtils.ultimateTargetObject`, which
-exists for exactly this reason. If your decorated type may be inspected by identity or by class,
-provide an unwrap method, and forward `equals`/`hashCode` only if the delegate's equality is
-value-based — forwarding them for an identity-based delegate makes two different wrappers equal,
-which breaks sets.
+Spring's `AopUtils.getTargetClass` and `AopProxyUtils.ultimateTargetClass` inspect classes, not a
+general target-object unwrap. `getSingletonTarget` has narrower singleton-target semantics. Avoid
+unwrapping in normal business paths where it bypasses wrapper policy. Blindly forwarding equals
+can violate reflexivity or symmetry even for a value-based delegate; use identity or an explicit
+wrapper equality policy tested in both directions and consistent with hashCode.
 
 ## When the framework already has it
 
-| Concern                        | Framework mechanism                           | Prefer the framework because                          |
-| ------------------------------ | --------------------------------------------- | ----------------------------------------------------- |
-| Request logging, auth, tenancy | Servlet `Filter`, `HandlerInterceptor`        | Ordering, exception translation, tracing already work |
-| Method-level cross-cutting     | Spring AOP advice, `@Order`                   | Declarative ordering; visible in actuator             |
-| HTTP client retry/timeouts     | `RestClient` builder, Resilience4j decorators | Metrics and tracing propagate automatically           |
-| Caching                        | `@Cacheable` / `CacheManager`                 | Key generation, TTL, eviction, stats                  |
-| Metrics                        | Micrometer instrumentation on the client      | Consistent naming and tags                            |
+| Concern                        | Framework mechanism                           | Prefer the framework because                           |
+| ------------------------------ | --------------------------------------------- | ------------------------------------------------------ |
+| Request logging, auth, tenancy | Servlet `Filter`, `HandlerInterceptor`        | Integration hooks with explicit ordering and coverage  |
+| Method-level cross-cutting     | Spring AOP advice, `@Order`                   | Advice ordering model; verify proxy interception       |
+| HTTP client retry/timeouts     | `RestClient` builder, Resilience4j decorators | Transport and resilience hooks; verify instrumentation |
+| Caching                        | `@Cacheable` / `CacheManager`                 | Key/eviction hooks; provider-dependent TTL and stats   |
+| Metrics                        | Micrometer instrumentation on the client      | Shared conventions when configured consistently        |
 
-The reason is not that hand-rolled decorators are wrong; it is that a hand-rolled chain sits
-outside the framework's ordering model and its observability, so operators cannot see it and a
-second mechanism can be applied on top without anyone noticing (`rpc-and-api-contracts`,
+These are integration capabilities to verify, not automatic guarantees. Cache TTL/eviction depends
+on the provider; HTTP pooling depends on the request factory; observations require configured
+registries and tracing bridges. Inspect effective configuration and exercise a representative call.
+
+Custom chains need explicit integration with ordering and observability. Otherwise their behavior
+may be invisible to operators and a second mechanism may duplicate it (`rpc-and-api-contracts`,
 `caching-strategies`).
 
 Hand-roll when the concern is domain-shaped — an approval step, a tenant-specific transformation,
@@ -151,8 +157,10 @@ lambdas for the rest.
 
 ## Depth
 
-Beyond four or five layers the stack becomes hard to reason about: a stack trace is dominated by
-forwarding frames, and stepping through in a debugger takes several keystrokes per real
-statement. When the composition is fixed — always the same five layers in the same order —
+Depth alone does not establish a problem. If traces, debugging or ownership obscure behavior,
+make the composition visible and test it. When the composition is fixed and its policies inseparable,
 consider one class implementing them together, with the decorators kept only for the parts that
 genuinely vary per instance.
+
+Sources: [Spring AopProxyUtils](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/aop/framework/AopProxyUtils.html)
+and [Object equality contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html).

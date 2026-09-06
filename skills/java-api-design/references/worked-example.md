@@ -1,5 +1,11 @@
 # Worked example: designing and evolving a settlement API
 
+These are partial API sketches, not one executable compilation unit. Records require
+Java 16+; use the project's supported release and ordinary classes on older targets.
+For compilation, put each public type in its own file in the same package and import
+`java.math.BigDecimal`, `java.time.Duration`, and the used `java.util` types. Ellipses
+mark omitted implementations; domain invariants beyond those shown remain to be specified.
+
 ## Before
 
 The first draft of a small library other teams will call:
@@ -124,6 +130,8 @@ compatible capability shape.
   A major release may unify the model after a measured migration.
 
 ## Verification
+
+Acceptance checks to run on a concrete implementation; these are not recorded test results:
 
 - japicmp (or Revapi) comparing v1.1 against v1.0 reports only additions—no removed or changed
   signatures.

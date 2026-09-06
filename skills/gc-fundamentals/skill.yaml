@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: gc-fundamentals
-version: 1.4.0
+version: 1.4.1
 description: >-
   How JVM garbage collectors work, as the mental model behind every GC diagnosis: the
   generational hypothesis and where it fails, mark-sweep versus mark-compact versus copying,
-  why collection cost tracks survivors rather than allocation, write barriers, safepoints
+  how survivors, allocation and roots affect collection cost, write barriers, safepoints
   and Time-To-SafePoint, and the JDK 25 collector landscape. Use when explaining why a
   collection is expensive, when the reported pause does not match the latency the client
   feels, when a young pause is long although little survived, when a cache or pool breaks

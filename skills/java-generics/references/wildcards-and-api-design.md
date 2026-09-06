@@ -61,10 +61,11 @@ Seeing `capture of ?` in a compiler error is the signal that this helper is miss
 ```
 
 - Use `Comparable<? super T>` rather than `Comparable<T>`. A type whose comparison is
-  inherited from a supertype (common with enums, and with any hierarchy where the base defines
+  inherited from a supertype (a hierarchy where the base defines
   the ordering) satisfies the first and not the second.
-- A bound is a **requirement on the caller's type**, not a hint. Adding a bound to a published
-  method is a breaking change; removing one is not.
+- A bound is a **requirement on the caller's type**, not a hint. Adding one can reject source
+  callers; removing or reordering a leftmost bound can change erasure and break old binaries.
+  Check descriptors and compile/run supported callers for either change.
 - `<T extends Enum<T>>` is the idiom for "any enum type", and is how `EnumSet.noneOf` and
   `EnumMap` are declared.
 
@@ -93,9 +94,11 @@ Inference is a solver, not a lookup, and three of its behaviours cause real bugs
 - **Target typing flows from the assignment**, so the same expression changes meaning by
   context: `Collectors.toMap(...)` inside a method call infers from the parameter; extracted
   into a local without a declared type it may infer differently, or fail to compile.
-- **Lambdas infer parameter types from the functional interface**, which means an overloaded
-  method taking both `Function<T, R>` and `BiFunction<...>` can become ambiguous the moment a
-  lambda is passed. Give overloads distinct names when a lambda is the argument.
+- **Lambda arity participates in overload selection.** A one-parameter lambda distinguishes
+  `Function` from `BiFunction`; arity alone does not resolve two compatible one-parameter
+  unrelated functional interfaces with identical parameter/result contracts. Compile the
+  concrete call before claiming ambiguity; distinct names can
+  avoid competing same-arity functional contracts.
 
 Explicit type arguments (`Collections.<String>emptyList()`) are the escape hatch when
 inference picks the wrong thing; needing them frequently is a sign the signature is doing too
@@ -131,3 +134,8 @@ implementor must otherwise change at once.
 - [ ] The signature is readable aloud. Three nested wildcards mean the design, not the
       notation, is wrong — consider a small purpose-built type instead of a deeply
       parameterised collection.
+
+## Sources
+
+- [JLS 21 §15.12.2.1: potential applicability and lambda arity](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.2.1)
+- [JLS 21 §4.6: type-variable erasure](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.6)

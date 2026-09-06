@@ -14,6 +14,11 @@ past the last stable offset. Under Kafka's durability, fencing and retention ass
 that combination gives an atomic read-process-write result within one Kafka cluster.
 Kafka Streams packages the same machinery behind `processing.guarantee=exactly_once_v2`.
 
+The partial Java 17/Kafka 4.1 sketch assumes consumer `enable.auto.commit=false`, a configured
+transactional producer and compatible broker features. Use `read_committed` on the input
+consumer when input may be transactional, as well as on downstream consumers. No separate
+consumer offset commit is allowed for the records represented by the transaction.
+
 ```java
 // Conceptual: the atomic unit is produce + offsets, nothing else.
 producer.initTransactions();
@@ -28,10 +33,24 @@ while (running) {
 }
 ```
 
+`offsetsOf(records)` is an omitted helper: return each partition's next position after its
+completed records, never its last processed offset or an offset past unfinished work. The
+production loop also needs these state transitions, not a catch-and-continue wrapper:
+
+- On an abortable failure, abort and replay the uncommitted input: aborting the producer does
+  not rewind the consumer position. Seek the still-owned partitions to the batch start or
+  rebuild assignment from authoritative committed offsets before further processing.
+- For Kafka 4.1 `commitTransaction` timeout/interruption, the commit may still complete.
+  Retry that same operation according to its API, or close the producer and recover; do not
+  switch to abort. Fatal fencing/authorization failures require stopping that producer.
+- On reassignment, discard stale work and use current group metadata. Bound poll/transaction
+  duration, and close clients under an explicit shutdown policy.
+
 ## What it does not cover
 
 - **Any side effect outside the cluster.** An HTTP call, a JDBC write to another store, an
-  email, a file. `abortTransaction()` un-produces records; it cannot un-charge a card.
+  email, a file. `abortTransaction()` marks records aborted for committed-only readers;
+  it does not physically erase them or undo a charge.
 - **A second Kafka cluster.** MirrorMaker-style replication is a separate producer.
 - **Downstream consumers reading `read_uncommitted`.** They
   observe aborted records, and the guarantee ends at their first read.
@@ -40,7 +59,7 @@ while (running) {
   does not itself violate atomic visibility, but it harms deterministic rebuilds, audit and
   comparison with external observations.
 - **Consumers of the output topic that then do their own external work.** The boundary ends
-  at the topic; their side effects are back to at-least-once.
+  at the topic; their external effect guarantee depends on their own ack/dedup protocol.
 
 `transactional.id` identifies a transactional producer lineage and enables epoch-based
 fencing. It must be unique across concurrently active logical producers; frameworks derive
@@ -56,6 +75,11 @@ Write the business row and the outbox row in **one database transaction**; a sep
 reads the outbox and publishes. The dual-write problem disappears because there is one
 commit.
 
+The `@Transactional` snippets below assume a framework-managed invocation whose transaction
+manager enlists both repositories in the same database transaction. Verify propagation,
+rollback rules and connection ownership; annotations on independently committed stores do
+not make writes atomic. Ack the consumed input only after the encompassing transaction commits.
+
 ```java
 @Transactional
 public void placeOrder(Order order) {
@@ -69,7 +93,8 @@ public void placeOrder(Order order) {
 - Multiple relays require an atomic claim/lease, partition ownership or CDC protocol. A
   naive `SELECT` followed by update races; even a correct relay remains at-least-once if it
   publishes before marking the row complete.
-- The relay's ordering is whatever its query orders by; per-key ordering is
+- SQL `ORDER BY` alone does not guarantee publication order: concurrent relays, retries and
+  partition routing can reorder messages. Per-key sequencing is
   `message-ordering-and-partitioning`, not a property the outbox grants.
 
 ## Reduction 2 — idempotent consumer with a dedup store
@@ -99,12 +124,12 @@ and the message is still transmitted more than once.
 ```text
 Use a Kafka transaction when:
 - the entire read-process-write stays within one Kafka cluster
-- the transformation is deterministic given the input record
-- every downstream consumer sets isolation.level=read_committed
+- transactional inputs and downstream outputs use isolation.level=read_committed
+- replay determinism is specified if needed for rebuild/audit; it is not required for atomic visibility
 - transactional.id is stable per logical processor and unique across instances
 
 Avoid a Kafka transaction when:
-- the handler calls an external system, writes another database, or sends anything
+- it is being proposed as the sole protection for an effect outside Kafka
 - the required effect is outside Kafka, or the transaction latency, open-transaction
   backpressure and operational fencing cost exceed the value of atomic Kafka output
 
@@ -130,3 +155,7 @@ Prefer at-least-once plus an idempotent consumer instead when:
 Test each relevant cut point with broker restarts, network ambiguity, partition revocation
 and process death. Assert the business invariant, not merely record counts: duplicate log
 records can be acceptable while duplicate charges are not.
+
+## Source
+
+- [Kafka 4.1 producer transaction configuration and recovery contracts](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html)

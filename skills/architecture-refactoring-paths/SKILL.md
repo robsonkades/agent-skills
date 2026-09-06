@@ -1,28 +1,23 @@
 ---
 name: architecture-refactoring-paths
 description: >
-  Moving an enterprise application from one architectural choice to another without a
-  rewrite: transaction script to domain model, Active Record to Data Mapper, in-process call
-  to remote boundary, server session to stateless, pessimistic to optimistic locking, and
-  entity-as-payload to a boundary contract. Use when a pattern choice has been outgrown and
-  someone proposes a rewrite, when a refactor has stalled halfway with two designs
-  coexisting badly, when a migration needs to survive being paused for a quarter, when a
-  data migration and a code change must ship in the same release, when a change would break
-  API consumers, when an intermediate state has no defined behaviour, or when nobody can say
-  how the refactor would be rolled back. Does not cover recognising that a change is needed
-  (enterprise-architecture-smells), the programme-level approach to a legacy system
-  (legacy-enterprise-modernization), the target patterns themselves, or database migration
-  tooling.
+  Sequence a chosen enterprise architecture change into compatible, testable checkpoints:
+  domain and persistence refactoring, remote boundaries, session state, locking or events.
+  Use when old and new paths must coexist, a migration has stalled, code and data changes
+  interact, consumers cannot upgrade together, or rollback and safe pause points are unclear.
+  Does not select target patterns, diagnose the need for change (enterprise-architecture-smells),
+  plan a whole modernization programme (legacy-enterprise-modernization), or implement
+  database migration tooling.
 ---
 
 # Architecture Refactoring Paths
 
 ## Purpose
 
-Change an architectural decision incrementally, in steps that each ship, each provide value,
-and each can be the last one. The alternative — a rewrite, or a long-lived branch — fails
-for reasons that are structural rather than accidental: the business does not stop, the old
-system keeps changing, and the new one is compared against a moving target.
+Sequence an agreed architectural change into compatible, testable checkpoints. Establish
+the current and target contract rather than selecting a pattern from fashion. Incremental
+delivery limits exposure when coexistence and recovery are explicit; it is not automatically
+safer than a bounded, rehearsed cutover.
 
 The useful target is that an architectural refactor can be paused at documented checkpoints without
 leaving correctness dependent on completing the next step. Some migrations have an intentionally
@@ -42,22 +37,34 @@ atomic cutover; make its recovery procedure, compatibility window and irreversib
                      coexistence.
 ```
 
-Step 2 is what distinguishes a migration from a rewrite: at every moment, the whole system
-works, and rolling back is a deploy rather than a restore.
+This is a planning shape, not a fixed release count. A deploy rollback works only while
+the old implementation can interpret current data and see every authoritative write.
 
 ## Workflow
 
-1. **State the harm that justifies the move**, with evidence. Without it, the migration will
-   be deprioritised halfway, which is the worst possible state
-   (`enterprise-architecture-smells`).
+These paths are planning pseudocode, with no executable Java baseline. Before proposing Java
+types or ORM changes, inspect Maven/Gradle release/toolchain settings, resolved framework and
+serializer versions, CI and runtime images. Preserve the target's compatibility contract;
+using this skill does not authorize upgrades, preview features or new dependencies.
+
+1. **State the harm and constraints**, with evidence (`enterprise-architecture-smells`).
+   Inspect writers, consumers, jobs, schema/ORM versions, transaction boundaries and deployment
+   topology. Obtain the target invariants, downtime and recovery/data-loss objectives. Separate
+   observed harm from its hypothesized cause; name a measurement that could refute the proposed
+   improvement. If critical evidence is absent, ask for it and provide a conditional plan,
+   not a certified cutover or invented safe lock duration.
 2. **Choose the smallest first case** — one aggregate, one endpoint, one screen. Not the
-   most painful one; the one that proves the path.
+   most painful one; the one that proves the hard seam. A read-only pilot cannot validate writes.
 3. **Write characterisation tests first**, at the use-case level. Tests written against the
-   old structure's internals will be deleted by the refactor and prove nothing.
-4. **Define the intermediate state explicitly.** Two mechanisms will coexist for months;
-   which one owns which case must be answerable by anyone, at any time.
-5. **Ship each step.** A step that is not deployed is a branch, and a branch is a rewrite
-   with extra steps.
+   old structure's internals may need adaptation; retain useful existing coverage. Separate
+   intentional corrections from preserved behavior, especially security defects or corrupt data.
+4. **Define the intermediate state explicitly.** While two mechanisms coexist,
+   which one owns reads, writes and in-flight work for each case must be explicit. Test the
+   overlapping reader/writer versions, not only old-only and new-only deployments.
+5. **Validate each checkpoint.** Define acceptance, pause/abort criteria and an owner. Exercise
+   relevant concurrent writes, partial failures and restart in isolation before rollout.
+   Distinguish routing reversal, binary rollback, resynchronization, restore and forward repair.
+   Record what was executed versus planned; rehearsals reduce risk before shipping too.
 6. **Define the abandonment point.** Which step is a good place to stop if priorities
    change? Usually there is one, and naming it makes the work fundable.
 
@@ -65,13 +72,14 @@ works, and rolling back is a deploy rather than a restore.
 
 ```text
 The change requires a data migration
-        → expand/contract: add the new shape, write both, backfill in
-          chunks, switch reads, stop writing the old, drop it. Six
-          deploys, each reversible.
+        → define authority, backfill races and catch-up first; use the
+          persistence reference. Expand/contract does not make every
+          phase reversible, especially after old writes stop.
 
 The change breaks an API consumer
         → additive first, deprecate with a date, remove after the
-          consumers have moved. Never in one release
+          consumers have moved. A coordinated replacement is possible
+          when all consumers are controlled and compatibility is tested
           (rpc-and-api-contracts).
 
 The change is internal to one module, no persisted state
@@ -97,30 +105,32 @@ Rolling back requires restoring a backup
 
 ## Rules
 
-- **Never run the old and new implementations of a rule in parallel and reconcile
-  afterwards** unless you also decide, in advance, which one wins on disagreement and who
-  investigates. Parallel-run without that policy generates alerts nobody can action.
-- **Characterisation tests come first and must be behavioural.** The point is to detect a
-  change in what the system does, including behaviour nobody intended but users depend on.
-- **A step that has not shipped has not reduced risk.** Long-lived refactor branches conflict
-  with feature work, and the conflict is resolved by whoever is under most pressure — which
-  is never the refactor.
+- **Shadow execution must suppress real side effects or share proven deduplication across
+  both paths.** Separate idempotency within each path does not prevent a double charge.
+  Decide the authoritative result, accepted differences and investigation owner in advance.
+- Deploy bounded, validated increments when feasible; tests and cutover rehearsals provide
+  evidence before deployment, while production rollout tests additional assumptions.
 - Prefer separate, compatibility-preserving schema and code deploys when independent rollback is
   valuable. A transactional metadata change or tightly controlled maintenance-window cutover may
   combine them, but then rollback, lock duration and mixed-version behavior must be proven.
-- **Backfills are chunked, restartable and observable.** A single `UPDATE` over a large table
-  locks it and cannot be resumed (`enterprise-transactions`).
-- Keep a single source of truth at every moment. Dual-write periods are the exception, must
-  be short, and need a reconciliation check — two writers with no comparison is how silent
-  divergence starts.
+- **Large backfills need bounded, restartable work and observable progress.** Determine actual
+  lock scope, duration, log volume and replica lag for the engine/version; do not assume every
+  UPDATE exclusively locks the table (`enterprise-transactions`).
+- Keep authoritative ownership explicit. Bound dual-write periods by compatibility and recovery
+  needs, with an owner and reconciliation; duration alone does not establish safety.
 - Separate refactoring from intentional behavior changes when that produces independently
   reviewable and deployable increments. If the seam cannot be introduced without changing
   behavior, state both deltas and test the old and new contracts explicitly.
-- Delete the old path as a separate, explicit step. Migrations that stall do so at step 5,
-  and a codebase with two mechanisms and no plan is worse than either.
-- Name the abandonment point. "If we stop after step 3, we have the aggregate under test and
-  the boundary in place, which is worth the effort on its own" is what keeps a migration
-  funded when priorities move.
+- Retire the old path explicitly after consumer/job inventory, in-flight work, telemetry over
+  a justified window and rollback policy agree. Intentional coexistence is a valid stopping
+  point when ownership and maintenance cost are accepted.
+
+## Minimum deliverable
+
+For a plan: current/target contract, evidence gaps, checkpoints with ownership, acceptance
+and recovery, first slice, useful stopping point and irreversible boundary. For a review:
+evidence, unsafe transition, consequence, adjustment and validation. A local stateless
+refactor may need only one tested change, not a migration programme.
 
 ## References
 
@@ -134,3 +144,5 @@ Rolling back requires restoring a backup
   optimistic locking, and synchronous call to event; each with its rollback story, its
   parallel-run policy where one applies, and the verification that the migration is
   complete. Read when changing a boundary or a concurrency mechanism.
+- [Validation cases](references/validation-cases.md) — read when evaluating the skill or
+  challenging a plan's rollback, side-effect and mixed-writer assumptions.

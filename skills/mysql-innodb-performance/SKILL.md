@@ -16,6 +16,11 @@ Distinguish access-path, concurrency, redo/flush, purge, memory, replication, an
 before changing InnoDB configuration. Defaults and folk ratios are hypotheses tied to a version and
 deployment shape, not portable sizing rules.
 
+MySQL 8.4 is the server reference, not a promise that later releases or compatible forks behave
+identically. Inspect the application's Java toolchain and resolved Connector/J artifact separately;
+no Java upgrade or driver replacement is implied. The references are diagnostic guidance, not a
+tested SQL/JDBC program. Missing instrumentation must remain an evidence gap, not a zero counter.
+
 ## Investigation contract
 
 ```text
@@ -49,7 +54,8 @@ Connector/J version and effective prepared/batch/fetch/TLS/time-zone properties:
 
 ## Rules
 
-- InnoDB stores the row in the primary-key B-tree and stores the primary key in every secondary leaf.
+- InnoDB clusters rows by the primary key, or its documented fallback when none is declared;
+  ordinary secondary B-tree records carry the clustered-key locator.
   Account for key width and insertion order across the entire index portfolio.
 - Redo, undo, binlog, and doublewrite solve different problems. Do not call all of them “the log” or
   trade their durability settings as if they were interchangeable.

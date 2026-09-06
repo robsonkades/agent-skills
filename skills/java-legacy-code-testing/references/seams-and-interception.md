@@ -71,18 +71,21 @@ set of things the change can affect is almost always much smaller than the set o
 touches, and the test you need only has to observe **that** set. Most over-testing of legacy code
 comes from testing the class rather than testing the effect.
 
-Effects propagate through exactly four routes in Java, and enumerating them is quick:
+Use these routes as a review aid, not an exhaustive language taxonomy:
 
 1. the return value;
 2. parameters the method mutates (including collections it was handed);
 3. fields of the instance or of anything it can reach;
 4. observable side effects — writes, messages published, logs a downstream consumer parses.
 
+Also trace thrown exceptions, cancellation, resource lifetime, ordering and dispatch. A seam
+can preserve the returned value while changing whether a connection opens or which failure wins.
+
 Route 4 is the one that ambushes people, and it is the reason
 `java-refactoring/references/safety-workflow.md`'s section on pinning non-return-value dimensions
 exists. Use it; do not restate it here.
 
-`UNVERIFIED:` the four-route enumeration above is this skill's framing, not Feathers's wording.
+The enumeration above is this skill's framing, not Feathers's wording.
 
 ## Interception and pinch points
 

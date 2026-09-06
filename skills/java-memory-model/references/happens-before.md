@@ -16,6 +16,11 @@ Do not infer an edge from real time, thread names, executor choice, CPU coherenc
 calls, logging, exceptions, or “the writer finished first” unless a specified lifecycle action
 communicates that fact.
 
+Instrumentation may itself acquire shared locks and introduce incidental edges; include its
+actual actions when explaining a measured execution, then prove the production protocol without
+depending on optional logging. Absence of a named JMM edge does not authorize every imagined
+value: happens-before consistency is necessary but the full execution/causality rules also apply.
+
 ## Publication patterns
 
 ### Volatile immutable snapshot
@@ -112,8 +117,12 @@ Writer: data = 1; volatileReady = true
 Reader: if (volatileReady) observe data
 ```
 
+Assume zero/false initial state, one writer performing this sequence once and no later data writes.
 With volatile access on the anchor and order as shown, observing ready true establishes the chain to
 the earlier data write. Plain anchor accesses do not.
+
+Initial false may be read before publication; true with data zero is forbidden under those
+assumptions. Reusing the flag for successive payloads invalidates this one-shot argument.
 
 ### Store buffering
 

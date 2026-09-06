@@ -27,7 +27,7 @@ release-by-release default, its throughput cost and its prerequisites belong to
 > alignment padding and the saving is exactly zero.**
 
 Written out, with `p` = **the plain sum of the declared and inherited field sizes — no
-padding term**:
+padding term, excluding static fields**:
 
 ```text
 instance saving = alignUp(12 + p, 8) − alignUp(8 + p, 8)
@@ -130,12 +130,13 @@ The nine reference-free classes — `Object`, `Integer`, `Boolean`, `Long`, `Dou
 one — are unaffected. **The rule itself survives untouched:** recomputing `p` with `ref` = 8
 predicts all five reversals exactly. Only its input changed.
 
-## 3. The consequence: boxed collections gain almost nothing, at either oop size
+## 3. The consequence: savings depend on the box and collection structure
 
 Deep footprints, `GraphLayout.totalSize()`, **at `-Xmx6g` with compressed oops on**,
 reproduced identically on 25.0.3 and 26.0.2 `[executed]`. Boxed values are all above 100,000,
-deliberately outside the `Integer` cache — inside it the boxes are shared and the measurement
-is meaningless. The `-Xmx40g` column is the same run at 40 GB, above the oops threshold.
+outside the default `Integer` cache. A cached graph is a different, valid sharing model, not
+a distinct-box population; verify any expanded cache. The `-Xmx40g` column is the same run
+at 40 GB, above the oops threshold in this configuration.
 
 | Population                            | Classic    | Compact    | Saving | @40g classic → compact | Saving    |
 | ------------------------------------- | ---------- | ---------- | ------ | ---------------------- | --------- |
@@ -176,8 +177,9 @@ At 32 GB and above even that disappears. The same map measures **88,464 → 88,4
 saving of **8 bytes in total**, because `HashMap$Node` stops shrinking (`p` = 28) and only the
 one `HashMap` object moves. The gap against two `int[1000]` widens to **11.0×** and the flag
 closes 0.01% of it. If boxed collections are the
-footprint problem, compact object headers are not the fix at either oop size —
-`shape-decision.md` is.
+footprint problem, compare the measured gain with the required headroom and viable shapes.
+Do not generalize the near-zero `Integer` list result to `Long`/`Double` boxes or all maps;
+`shape-decision.md` covers the structural alternatives.
 
 ### Short strings: the object never shrinks; its payload sometimes does
 
@@ -191,7 +193,9 @@ payloadBytes = length × bytesPerChar        bytesPerChar = 1 if the string is
 saving = 8 iff payloadBytes mod 8 ∈ {1,2,3,4}              Latin-1-representable, else 2
 ```
 
-`COMPACT_STRINGS` is on by default, so a string containing any character above U+00FF is
+Here `length` is `String.length()` in UTF-16 code units, not Unicode code points or displayed
+characters; supplementary characters occupy two code units. `COMPACT_STRINGS` is on by default,
+so a string containing any character above U+00FF is
 UTF-16-backed and its payload doubles. Because the rule runs over payload bytes, the two
 encodings give **opposite answers wherever `length` and `2 × length` fall on different sides
 of the mod-8 window — at 3–6 and 11–12 below — and identical answers elsewhere.** Do not
@@ -220,16 +224,16 @@ Do not generalise either way without **both** the length distribution and the en
 
 **This is the most valuable content on the page.** Two conditions leave
 `-XX:+UseCompactObjectHeaders` on the command line while the JVM runs without it. Every size
-you then quote is 8 bytes per object wrong across the whole heap — the exact failure this
+you then quote may be wrong according to the class/array mix — the exact failure this
 skill exists to prevent — and the only visible evidence is one line on stderr.
 
 All executed on 25.0.3:
 
-| Condition                                                      | Result                                                                                                                                                                 |
-| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`-XX:-UseCompressedClassPointers`**                          | `warning: Compact object headers require compressed class pointers. Disabling compact object headers.` Ends `false {command line}`                                     |
-| **Heap larger than 8191 GB on a collector that moves objects** | `warning: Compact object headers require a java heap size smaller than 8191G (given: 8192G). Disabling compact object headers.` Ends `false {command line, ergonomic}` |
-| Same heap on a **non-moving** collector                        | **No warning.** Ends `true {command line}`                                                                                                                             |
+| Condition                                                 | Result                                                                                                                                                                 |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`-XX:-UseCompressedClassPointers`**                     | `warning: Compact object headers require compressed class pointers. Disabling compact object headers.` Ends `false {command line}`                                     |
+| **Heap larger than 8191 GB with header-based forwarding** | `warning: Compact object headers require a java heap size smaller than 8191G (given: 8192G). Disabling compact object headers.` Ends `false {command line, ergonomic}` |
+| Same heap on a **non-moving** collector                   | **No warning.** Ends `true {command line}`                                                                                                                             |
 
 The bound is off-by-one from how it reads: `-Xmx8191g` is fine and `-Xmx8192g` warns
 `[executed]`. Both rows reproduced on 25.0.3+9 in this pass.
@@ -254,9 +258,12 @@ are currently not compatible with larger heaps when collectors other than ZGC ar
 Measured at `-Xmx9t` on 25.0.3, G1, Parallel, Serial and Shenandoah all warn and disable —
 but **ZGC and Epsilon both keep the flag** `[executed]`, and under Epsilon `Object` is 8 bytes
 and `record Point(int,int)` is 16, so compact headers are genuinely in force. Epsilon never
-moves an object, so it is exempt for the same reason ZGC is: the JEP's own "other than ZGC"
-wording is narrower than the mechanism it describes. Derive the answer from whether the
-collector relocates, and do not trust any enumeration of names — including this one.
+moves an object; ZGC does relocate objects but uses separate forwarding metadata. Both avoid
+this header encoding constraint for different reasons. Check the target's forwarding mechanism
+and effective flags, not merely whether the collector moves objects.
+
+Source mechanisms: [JDK 25 FullGCForwarding](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/shared/fullGCForwarding.cpp)
+and [ZGC forwarding metadata](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zForwarding.hpp).
 
 ### The command that settles it
 
@@ -303,10 +310,12 @@ workload twice on the same build and measure:
 
 1. `GraphLayout.totalSize()` over a representative, bounded population, both modes — useful
    for design-time comparison but not a substitute for whole-heap retention; or
-2. live heap after a deliberately scheduled full GC (`jcmd <pid> GC.run` then
-   `GC.heap_info`), both modes, only where that disruption is acceptable; or
+2. heap usage after a deliberately scheduled, verified collection (`jcmd <pid> GC.run` then
+   `GC.heap_info`), both modes, only where that disruption is acceptable; confirm actual GC
+   completion and matched workload rather than assuming the command forces a full collection; or
 3. a heap-dump histogram diff across the flag — but read it as a **layout** delta, never as a
-   code change. `heap-dump-analysis` owns that reading.
+   code change, after validating the analyser's layout model against the JVM histogram in
+   each mode. `heap-dump-analysis` owns that reading.
 
 **What predicts the answer before you run anything.** Take the top ten classes by instance
 count in the workload, fix the reference size first — 4 bytes under compressed oops, 8 above

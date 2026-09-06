@@ -30,6 +30,15 @@ result. The phase model routes evidence; it is not a three-question completeness
 
 ## Workflow
 
+The authoring baseline is HotSpot C2 on JDK 25 (reference measurements use Temurin
+25.0.3); these are implementation details, not Java language guarantees. Before running
+recipes, inspect the project's toolchain, CI/runtime image and actual `java -version`,
+including vendor/update, product versus debug build, compiler and effective flags.
+Level 4 can be JVMCI rather than C2; route that compiler's internals to `graalvm-jit`.
+Do not upgrade the target runtime or enable preview features to match this baseline.
+For another release, check `java -Xlog:help` and flag availability first; unavailable
+diagnostics require an alternative evidence source, not an assumed result.
+
 1. **Establish the compilation history before anything else.** Run
    `-Xlog:jit+compilation=debug`/`PrintCompilation` and correlate compilation ID, level, OSR,
    invalidation and timestamp. One tier-1/3 line does not prove the method's final/current
@@ -52,7 +61,8 @@ result. The phase model routes evidence; it is not a three-question completeness
 5. **If `made not entrant: uncommon trap` recurs on the same method, treat it as
    deoptimisation**, not as a threshold to tune. `made not entrant: not used` is the tier-3
    code being retired by the tier-4 version and is normal. Investigate with
-   `-Xlog:deoptimization=debug` or the JFR `jdk.Deoptimization` event first.
+   `-Xlog:deoptimization=debug` where supported or the JFR `jdk.Deoptimization` event first;
+   verify event availability and recording settings on the target runtime.
 6. **Isolate one factor at a time in a disposable experiment** before attributing a cost:
    process-wide `-XX:-DoEscapeAnalysis`, `-XX:-EliminateAllocations`, `-XX:-Inline` and
    `-XX:TieredStopAtLevel=1` radically change compilation and are not production fixes. See
@@ -76,7 +86,10 @@ result. The phase model routes evidence; it is not a three-question completeness
   remove I/O or a query. Do not assume repeated string concatenation, collection choice or
   asymptotic complexity will be redesigned across loop iterations.
 - Escape analysis has three states — `NoEscape`, `ArgEscape`, `GlobalEscape` — not a binary.
-  Only `NoEscape` gets full scalar replacement.
+  `NoEscape` is necessary for C2's scalar replacement of an allocation, not sufficient:
+  scalar replaceability and elimination must also succeed. A surviving allocation does
+  not prove escape, and storing into a field of another non-escaping object does not
+  automatically imply `GlobalEscape`.
 - Inlining is a precondition for escape analysis reaching its best result: after inlining the
   call boundary is gone, so an argument-passed object can be reclassified `NoEscape`.
 - Receiver-type width, probability, compiler profile limits and speculative guards determine
@@ -107,6 +120,9 @@ result. The phase model routes evidence; it is not a three-question completeness
 
 ## Decision/validation checklist
 
+- If source, compilation identity or runtime evidence is missing, state the gap and the
+  smallest capture that can resolve it. Keep the proposed cause conditional; do not
+  recommend an inlining/threshold flag as a confirmed fix from source shape alone.
 - Pin JDK vendor/update, compiler (C2 versus JVMCI), flags, compilation ID/level and profile
   maturity; reproduce after warm-up and after deoptimization/recompilation.
 - State whether evidence is bytecode, ideal graph, compiler log, assembly, allocation sample or
@@ -115,6 +131,10 @@ result. The phase model routes evidence; it is not a three-question completeness
   aliasing, concurrency/publication and uncommon paths can be the guards preventing an opt.
 - Validate end-to-end throughput/tail/CPU/code-cache effects. A microbenchmark win under forced
   directives is not authorization for a process-wide production flag.
+
+Deliver the relevant compile ID and artifact location, the observed decision, the inferred
+blocking mechanism, and one confirming or falsifying check. For a proposed change, include
+the semantic constraints and before/after metric; say explicitly when it remains untested.
 
 ## References
 

@@ -7,8 +7,8 @@ Each entry: symptoms · cause · consequences · detection · direction · when 
 **Symptoms** Entities with public getters and setters and no methods; services containing
 `if` statements about entity state; the same validation in several services.
 
-**Cause** A domain model was chosen (usually because JPA entities exist) but the rules were
-written where the repositories and the transaction are.
+**Possible cause** A domain model was intended, but rules were placed beside repositories
+and transaction orchestration. JPA entities alone do not establish that architectural choice.
 
 **Consequences** Every rule can be bypassed by any new code path; rules duplicate and
 diverge; the mapping layer's cost is paid without its benefit.
@@ -16,13 +16,13 @@ diverge; the mapping layer's cost is paid without its benefit.
 **Detection**
 
 ```bash
-# Public setters on entities — each is a hole in an invariant.
-grep -rn "public void set" src/main/java --include="*.java" \
-  | grep -f <(grep -rl "@Entity" src/main/java | xargs -n1 basename | sed 's/.java//')
+# Candidate files only; inspect annotations, setters and actual invariant paths.
+rg -n -g '*.java' '@Entity|public\s+void\s+set' src/main/java
 ```
 
-**Direction** Move one rule at a time into the entity; delete the setter it used; let the
-compiler find the other callers (`architecture-refactoring-paths`).
+**Direction** Encapsulate one bypassable rule in the appropriate domain type. Check ORM access
+mode, serializers and reflective callers before removing a setter; compilation does not
+find those consumers (`architecture-refactoring-paths`).
 
 **Acceptable when** the design is Transaction Script plus a gateway. Then entities _are_ row
 objects and behaviourless is correct — but call them row objects, not a domain model
@@ -46,9 +46,11 @@ git log --format='%an|%s' --since='6 months ago' -- '*OrderService.java' \
   | sort | uniq -c | sort -rn | head -20
 ```
 
-Many authors and unrelated subjects is the confirmation; size alone is not.
+Many authors and subjects select candidates. Read the actual changes to establish unrelated
+responsibilities and resulting conflicts; commit titles and size alone do not confirm them.
 
-**Direction** Split by use case first (mechanical, safe), then push rules into the domain
+**Direction** Consider splitting one use case while preserving transactions, authorization,
+proxy entry points and behavior tests; extraction is not automatically safe. Move rules into the domain
 (`service-layer-design`).
 
 **Acceptable when** the class is genuinely one cohesive responsibility that happens to be
@@ -65,7 +67,8 @@ pattern stops being cheaper.
 **Consequences** Rules diverge silently; a fix lands in three of the four sites.
 
 **Detection** Search for a business term (`discount`, `surcharge`, `eligib`) and count the
-distinct implementations. Three or more is evidence.
+distinct implementations. Check whether they implement the same rule/version and should
+change together; even two divergent implementations can matter, while similar checks may not.
 
 **Direction** Extract the interacting rules into a domain type used by every script; convert
 the module to a domain model only if the extraction proves insufficient.
@@ -86,8 +89,9 @@ the aggregate boundary dissolves; real query needs are met elsewhere anyway.
 **Detection** A repository interface whose methods all delegate one-to-one; a base
 repository with type parameters.
 
-**Direction** Delete the generic layer; per-aggregate interfaces with the methods actually
-used (`repository-pattern`).
+**Direction** Remove redundant forwarding or narrow the exposed surface after checking shared
+policy and callers; retain useful generic implementation code behind aggregate contracts
+(`repository-pattern`).
 
 **Acceptable when** the hand-written interface narrows a wide framework surface or is owned
 by the domain for inversion — those are behaviours, and they justify the file.
@@ -105,9 +109,8 @@ are structurally identical and drift.
 **Detection**
 
 ```bash
-# Files touched per feature commit, last 20 features.
-git log --format='%h %s' --no-merges -20 --grep='feat' \
-  | while read -r sha _; do echo "$(git show --name-only --format= "$sha" | wc -l) $sha"; done
+# Candidate commits, not twenty verified features; inspect/group their diffs by feature.
+git log --format='%h %s' --name-status --no-merges -20 --grep='^feat'
 ```
 
 **Direction** Collapse structurally identical adjacent layers; keep the ones that translate,
@@ -143,10 +146,12 @@ shared DTO library upgraded in lockstep; integration testing requires everything
 
 **Cause** Extraction on the wrong boundary, or without versioning the contracts.
 
-**Consequences** The costs of distribution with none of the benefits: no independent
-deployment, no fault isolation, plus network failure modes.
+**Possible consequences** Lost deployment independence plus network and operational costs.
+Fault isolation and independent scaling are separate properties; check actual dependencies
+and failure containment rather than inferring that all benefits are absent.
 
-**Detection** Ask which services can be deployed alone, today, and check the last release.
+**Detection** Check representative releases and mixed-version contract tests. Distinguish
+technical incompatibility from organizational release policy or a one-time migration.
 
 **Direction** Version the contracts and make them tolerant, or merge the services back.
 Merging back is unpopular and frequently correct (`distribution-boundaries`).
@@ -162,8 +167,9 @@ rename breaking a client.
 
 **Cause** The convenient path; no decision was made about what crosses the boundary.
 
-**Consequences** The schema is the public contract; ORM behaviour reaches the web layer; the
-model is shaped by what maps well.
+**Possible consequences** Exposed entity fields couple persistence and API evolution;
+lazy loading and unintended writable fields can reach the web boundary. Inspect actual
+serialization/binding and column mappings before claiming that the schema is the contract.
 
 **Detection**
 
@@ -174,6 +180,11 @@ static final ArchRule no_entities_in_web =
         .should().dependOnClassesThat().areAnnotatedWith(Entity.class);
 ```
 
+This partial ArchUnit policy needs the project's ArchUnit/JUnit setup and matching
+`jakarta.persistence.Entity` or legacy `javax.persistence.Entity` import. It bans all direct
+web dependencies on entity classes, which is broader than detecting wire exposure; adopt it
+only for that intended boundary. It does not prove what reflection/serialization emits.
+
 **Direction** Projections for reads, DTOs at boundaries, assembled inside the transaction
 (`remote-facade-and-dto`).
 
@@ -182,21 +193,27 @@ as a decision with a boundary around it.
 
 ## Transaction boundary in the wrong place
 
-**Symptoms** `@Transactional` on a controller or a repository; a use case with two writes
-that can half-fail; a remote call inside a transaction; Open Session In View enabled.
+**Symptoms** A use case with writes that commit separately despite an atomicity requirement;
+remote work inside a long transaction; lazy database work during serialization. Annotation
+location and Open Session In View are investigation prompts, not defects by themselves.
 
 **Cause** The annotation applied where it was convenient rather than where the unit of work
 is.
 
-**Consequences** Partial writes; connections held through serialisation; pool exhaustion
-under a downstream slowdown.
+**Possible consequences** Partial writes or long connection occupancy. An open persistence
+context does not itself prove a connection is held throughout serialization; inspect actual
+acquisition/release, queries and transaction duration.
 
-**Detection** `grep -rn "@Transactional" --include="*Controller.java" --include="*Repository.java"`
+**Detection** `rg -n -g '*Controller.java' -g '*Repository.java' '@Transactional' src/main/java`
+is a starting point; trace effective propagation, proxy calls, rollback rules and commit sites.
 
-**Direction** One demarcation, at the application service (`enterprise-transactions`).
+**Direction** Demarcate the required unit of work, often at the application service; verify
+repository participation and failure behavior (`enterprise-transactions`).
 
-**Acceptable when** a single-statement repository method is genuinely the whole unit of work
-— and even then the annotation adds nothing.
+**Acceptable when** a repository operation is the unit of work or needs explicit transaction
+configuration. Spring Data JPA supplies defaults for inherited CRUD methods; declared query
+methods do not automatically receive them. Repository annotations can establish a transaction
+or specify policy and must not be deleted merely because there is one statement.
 
 ## Shared mutable session state
 
@@ -241,8 +258,8 @@ identifiers.
 
 **Cause** A local interface exposed remotely.
 
-**Consequences** Latency dominated by round trips; tail latency compounding; failure
-probability multiplying.
+**Possible consequences** Round-trip cost, fan-out tails and more failure opportunities.
+Measure call topology, concurrency and correlated failures before quantifying the impact.
 
 **Detection** Count calls per screen in a trace (`architecture-and-performance`).
 
@@ -251,3 +268,9 @@ probability multiplying.
 
 **Acceptable when** the calls are genuinely independent, parallel and bounded — and the
 bound is enforced.
+
+## Sources for framework-sensitive findings
+
+- [Spring Data JPA transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html) — verify against the project's release.
+- [Spring AOP proxy semantics](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) — inspect effective proxy configuration before extraction.
+- [Git log](https://git-scm.com/docs/git-log) — history filters select commits, not business features.

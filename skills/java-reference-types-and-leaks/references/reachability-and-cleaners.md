@@ -13,6 +13,9 @@ levels apply only when no stronger path exists.
 | Weak    | when the collector determines weak reachability; related weak references are cleared atomically as specified, and enqueueing may follow later                                       | “keep only while a stronger owner keeps it”; timing is not a next-GC API contract |
 | Phantom | `get()` always returns `null`; after the object is phantom reachable, the collector atomically clears the relevant phantom references, which are enqueued at the same time or later | post-mortem notification/safety-net coordination, with no referent access         |
 
+The soft-reference OOME guarantee applies to softly reachable referents, not references whose
+referents still have strong owners. It does not make a reference-based cache a capacity contract.
+
 HotSpot's soft-reference policy is time- and pressure-based: a softly reachable object
 survives roughly `-XX:SoftRefLRUPolicyMSPerMB` milliseconds per megabyte of free heap since
 its last access (default 1000). The consequences that matter:
@@ -24,8 +27,9 @@ its last access (default 1000). The consequences that matter:
   backend the cache existed to protect. This is the mechanism behind "the cache stopped
   helping exactly when we needed it".
 - Sizing is not expressible. `Caffeine.newBuilder().maximumSize(50_000)` or
-  `.expireAfterWrite(...)` states a bound the operator can reason about and the collector can
-  plan around. Prefer it; caching-strategies covers the policy choice.
+  a weight limit expresses capacity. `.expireAfterWrite(...)` expresses freshness/lifetime,
+  not a strict memory bound under unbounded arrivals; combine with capacity/entry-size limits
+  when needed. Prefer explicit policy; caching-strategies owns that choice.
 
 ## WeakHashMap
 
@@ -58,6 +62,8 @@ is appropriate only when nondeterministic best-effort cleanup/reporting is usefu
 replaces deterministic ownership of a native/OS resource.
 
 ```java
+import java.lang.ref.Cleaner;
+import static java.lang.System.Logger.Level.WARNING;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -76,7 +82,7 @@ public final class NativeIndex implements AutoCloseable {
             if (p != 0) {
                 Native.free(p);
                 if (!explicitClose.get()) {
-                    System.getLogger("NativeIndex").log(WARNING, "leaked index at 0x%x".formatted(p));
+                    System.getLogger("NativeIndex").log(WARNING, "native index was not closed");
                 }
             }
         }
@@ -99,13 +105,19 @@ public final class NativeIndex implements AutoCloseable {
 
 Rules this encodes, each of which is a defect when broken:
 
+This partial Java 9+ sketch omits `Native.free`; assume a valid exclusively owned nonzero
+handle and a nonthrowing release operation. A real factory must release on allocation or
+Cleaner-registration failure. If native use methods are added, design use-versus-close
+synchronization and any required `Reference.reachabilityFence`; at-most-once cleaning alone
+does not prevent use-after-free. Do not rely on fallback logging to run during process exit.
+
 - **The action cannot reference the registered object.** A lambda that reads any instance
   field of `NativeIndex` captures `this`, so the object is never phantom-reachable and the
   cleaner never runs. This is the single most common way a `Cleaner` silently does nothing.
 - **`close()` stays the release path.** `Cleanable.clean()` runs the action at most once and
   deregisters it, so an explicit close and a later cleanup do not double-free.
-- **Timing is not guaranteed.** Cleaning actions run on the cleaner's own daemon thread, in
-  no particular order, possibly never — `System.exit` and process kill run nothing. Never
+- **Timing is not guaranteed.** Automatic actions use the cleaner thread; explicit `clean()`
+  invokes the action directly. Fallback execution may never occur, and exit behavior is not guaranteed. Never
   place flush-my-data or release-a-lock work there.
 - **Distinguish explicit close from fallback execution.** `clean()` runs the same action on
   the normal path, so unconditional “leak” logging reports false incidents. Keep release
@@ -117,8 +129,8 @@ Deprecated for removal by JEP 421 and already disable-able with
 `--finalization=disabled`; no specific removal release is promised here. Beyond the
 deprecation, the reasons not to write one have not changed: unpredictable timing and
 thread, no ordering, an exception in a finalizer is
-swallowed and leaves the object half-cleaned, finalizable objects need at least two
-collection cycles to be reclaimed (which is itself a memory-pressure amplifier), and the
+swallowed and may leave cleanup incomplete, finalization can delay reclamation without a portable
+collection-cycle count, and the
 finalizer can resurrect the object. If existing code has one, the migration is `AutoCloseable`
 plus, only where a silent leak would otherwise be invisible, a `Cleaner`.
 
@@ -132,3 +144,6 @@ Listener/callback registry                -> explicit deregistration; weak refs 
 Native/OS handle, leak must be visible    -> AutoCloseable + Cleaner safety net
 Anything at all                           -> not finalize()
 ```
+
+Primary references: [SoftReference guarantee](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ref/SoftReference.html)
+and [Cleaner ownership/execution contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ref/Cleaner.html).

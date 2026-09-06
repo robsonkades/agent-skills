@@ -2,6 +2,9 @@
 
 ## Public contract example
 
+This is a proposed contract sketch, not an implemented registry. A point-in-time immutable view
+requires one coherent capture and immutable/copied element state, not merely an unmodifiable map.
+
 ```java
 /**
  * Thread-safe session registry.
@@ -9,7 +12,9 @@
  * <p>{@code put}, {@code remove}, and {@code find} are individually atomic. {@code snapshot}
  * returns one immutable point-in-time view. Listener callbacks run synchronously on the mutating
  * caller after the mutation is visible and after the internal lock is released. Callback failure
- * is aggregated and does not roll back the registry mutation. No fairness guarantee is made.
+ * is aggregated and does not roll back the registry mutation. Concurrent callers' callbacks may
+ * overlap or arrive out of mutation order; callback reentry is allowed and sees current state.
+ * No fairness guarantee is made.
  */
 public final class SessionRegistry { }
 ```

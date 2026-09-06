@@ -29,6 +29,10 @@ Before custom code:
 
 Custom lock-free code is justified by requirements, not by absence of `BLOCKED` threads.
 
+Inspect the project's Java baseline, concrete atomic type/library version and supported
+architectures. References use JDK 25 documentation; the `AtomicReference.getAcquire()`
+illustration needs Java 9+. This does not authorize upgrading a Java 8 project.
+
 ## Algorithm contract
 
 ```text
@@ -46,12 +50,12 @@ target JDK/architecture/topology evidence:
 
 ## Progress vocabulary
 
-| Guarantee        | Meaning                                                        | Caveat                                                   |
-| ---------------- | -------------------------------------------------------------- | -------------------------------------------------------- |
-| blocking         | a delayed owner can delay others                               | may offer fairness, simple invariants, efficient parking |
-| obstruction-free | an operation completes if it eventually runs alone             | contention manager/backoff required for system progress  |
-| lock-free        | infinitely often, some operation completes in finite own steps | individual starvation allowed                            |
-| wait-free        | each operation completes in bounded own steps                  | bound/operation/participants must be specified           |
+| Guarantee        | Meaning                                                | Caveat                                                   |
+| ---------------- | ------------------------------------------------------ | -------------------------------------------------------- |
+| blocking         | a delayed owner can delay others                       | may offer fairness, simple invariants, efficient parking |
+| obstruction-free | an operation completes if it eventually runs alone     | contention manager/backoff required for system progress  |
+| lock-free        | continued system steps ensure some operation completes | individual starvation allowed                            |
+| wait-free        | each operation completes in bounded own steps          | bound/operation/participants must be specified           |
 
 GC pauses, OS descheduling, blocking callbacks and resource waits affect observed progress even if
 the in-memory algorithm is lock-free. Do not extend the claim across the whole service.
@@ -59,11 +63,13 @@ the in-memory algorithm is lock-free. Do not extend the claim across the whole s
 ## CAS loop
 
 ```java
-for (int failures = 0; ; failures++) {
+// Partial method body: state is AtomicReference<State>; State is immutable after publication.
+for (int failures = 0; ; ) {
     State current = state.getAcquire();
     State next = derivePure(current);
     if (state.compareAndSet(current, next)) return;
     contentionPolicy.onFailure(failures); // spin/yield/backoff/park/help/cancel by policy
+    if (failures < Integer.MAX_VALUE) failures++; // diagnostic/backoff count saturates
 }
 ```
 
@@ -71,9 +77,20 @@ This is a shape, not complete code. The selected VarHandle/atomic modes must pub
 observe `current` correctly. Derivation can repeat, so it cannot perform irreversible effects.
 Allocation on every failure can create a retry/GC feedback loop.
 
+`AtomicReference.compareAndSet` compares reference identity, not `equals`; publish one immutable
+aggregate when fields must change atomically. A failed strong CAS indicates a mismatching value
+at that instant, but weak CAS can fail spuriously. Do not infer contention or another completed
+operation from every failed weak CAS. Access ordering on both success and failure belongs to
+the exact selected method, not the generic name "CAS" (`varhandles-and-memory-ordering`).
+
 `Thread.onSpinWait()` is a processor hint, not a progress policy, cancellation point, yield, or
 bound. Use short spinning when expected owner latency/topology justifies it, then yield/back off/
 park/help/fail according to the algorithm. Measure tail latency, CPU and starvation.
+
+The policy is part of the progress proof: an indefinite park awaiting another actor can make
+the operation blocking. Helping must itself progress; randomized backoff alone is not a
+deterministic lock-free proof. Scope guarantees to the atomic in-memory core and state what
+allocation, callbacks, reclamation and runtime scheduling assume.
 
 ## Linearization and failure semantics
 
@@ -104,7 +121,7 @@ explicit pools restore use-after-free/reuse hazards.
 ## Structures and trade-offs
 
 - **Atomic counter:** exact linearizable updates, one coherence hotspot under write contention.
-- **Striped adder:** distributed updates and scalable approximate/non-atomic aggregate read; suitable
+- **Striped adder:** distributed updates and non-atomic aggregate reads during updates; suitable
   for metrics, not unique sequences, balances, or exact limit enforcement.
 - **Treiber stack:** compact CAS head; contention/ABA/reclamation and LIFO semantics.
 - **Michael–Scott-style queue:** linked-node enqueue/dequeue with helping; allocation/retention,
@@ -163,14 +180,17 @@ tests challenge assumptions and integration.
 - [ ] Progress class is scoped with scheduler/participant assumptions.
 - [ ] Publication and CAS success/failure modes have a JMM proof.
 - [ ] ABA, wrap, reuse, reclamation and off-heap lifetime are handled.
-- [ ] Retry/backoff/help/cancel/shutdown are bounded and observable.
+- [ ] Backoff/help/cancel/shutdown have explicit progress and observability contracts; individual
+      retries may be unbounded under lock-freedom, and a retry cap changes the operation's outcome.
 - [ ] Library and lock-based alternatives are compared under representative topology.
 - [ ] Safety/history/stress plus performance/fairness/memory evidence support the claim.
 
 ## References
 
-- [Lock-free structures and proof obligations](references/lock-free-structures.md)
-- [Measuring CAS contention](references/measuring-cas-contention.md)
+- [Lock-free structures and proof obligations](references/lock-free-structures.md) — read when
+  selecting or proving a stack, queue, adder, ring buffer or reclamation strategy.
+- [Measuring CAS contention](references/measuring-cas-contention.md) — read when retry cost,
+  topology or a claimed performance gain drives the decision.
 - [Java atomics API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/package-summary.html)
 - [Java VarHandle API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/VarHandle.html)
 - [OpenJDK jcstress](https://github.com/openjdk/jcstress)

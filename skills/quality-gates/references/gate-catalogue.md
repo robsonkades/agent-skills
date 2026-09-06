@@ -36,8 +36,9 @@ and add categories over time.
 **Error Prone** hooks into javac and adds several hundred bug patterns — `==` on boxed types,
 format-string mismatches, misused `Optional`, ignored return values. Its findings are usually
 real; its cost is compile time and the initial cleanup. **NullAway** rides on it and enforces
-JSpecify nullability annotations, which is the only mechanism that makes `@Nullable` contracts
-load-bearing rather than documentation (java-null-safety).
+nullability contracts, including JSpecify with appropriate version/configuration. Other checkers
+also enforce nullness; annotations alone do not. Inspect supported javac/annotation versions and
+configured analysis scope before adoption (java-null-safety).
 
 ## Static analysis on bytecode and source
 
@@ -58,7 +59,8 @@ never a discussion.
 
 Unit tests belong pre-commit — if they are not fast enough for that, that is the finding
 (java-testing-strategy). Integration tests belong on the pull request with the real engine via
-Testcontainers; they are the only gate that proves the schema and the SQL.
+Testcontainers or an equivalent isolated engine. They exercise selected schema/SQL behavior,
+not every migration state, query or production configuration.
 
 Two failure modes specific to test gates:
 
@@ -66,38 +68,48 @@ Two failure modes specific to test gates:
   every other gate. Quarantine is a stopgap with an expiry date, not a resting place
   (java-test-design).
 - **Coverage thresholds**, which measure execution rather than verification. Report coverage on
-  the diff for the reviewer to read; gating on a percentage buys tests written to raise it.
+  the diff for the reviewer to read; if a threshold is required, pair it with meaningful
+  behavioral assertions and reviewed exclusions rather than treating it as sufficient quality.
 
 ## Dependency and supply-chain gates
 
 Vulnerability scanning is the noisiest gate in most pipelines: a CVE in a transitive dependency
-on a path you never call still fails the build. Run it on a schedule against main rather than
-on every pull request, triage with an owner, and record accepted risks with an expiry date so
+on a path you never call may still require investigation. Scan changed dependencies on PRs as
+required by risk/policy and scan deployed/main inventories on a schedule for newly disclosed
+issues. Triage severity, reachability, environment and fix availability with an owner, and record accepted risks with an expiry date so
 "accepted" does not silently become "forgotten".
 
-Automated dependency updates (Renovate, Dependabot) plus a real test suite is a stronger control
-than a scanner and a manual upgrade backlog, because it keeps the distance to current small
-enough that upgrading is routine.
+Automated dependency updates (Renovate, Dependabot) complement scanning and tests by reducing
+upgrade backlog. Currency alone does not establish safety or eliminate newly disclosed vulnerabilities.
 
 **Maven Enforcer** is worth one rule most teams miss: dependency convergence. Two versions of
-the same library on the classpath produce failures that look like anything except what they
-are.
+the same dependency requested along different tree paths expose conflicting expectations.
+Maven normally mediates to one version; convergence does not mean both versions were on the
+runtime classpath, nor does satisfying it prove binary compatibility.
 
 ## Release gates
 
-- **Reproducible build**: build twice, compare artefacts. `project.build.outputTimestamp` in
-  Maven removes the timestamp variance that otherwise makes this impossible. It matters because
-  it lets you prove the artefact in production is the artefact from that commit.
+- **Reproducible build**: independently rebuild specified artifacts from recorded inputs and
+  compare bytes. `project.build.outputTimestamp` controls timestamps in supporting Maven plugins;
+  plugin versions, generated content, environment and archive ordering can still differ. Confirm
+  the deployed artifact digest/provenance separately; two matching local builds do not identify
+  what production is running.
 - **SBOM** (CycloneDX, SPDX): not a gate — it produces the record you need on the day a CVE is
   announced and someone asks which services ship the affected version.
 
 ## Ratcheting a gate onto an existing codebase
 
-1. Run it and count the findings. If under about twenty, just fix them.
-2. Otherwise **baseline**: record current violations in a file the tool reads, fail only on new
-   ones. Most tools support this directly; where they do not, run against the diff.
+1. Run it and classify severity, correctness and repair cost. A finding count does not set scope.
+2. Where staged adoption is justified, **baseline**: record current violations in a file the tool reads, fail only on new
+   ones where the tool supports reliable finding identity. Diff-only analysis can miss cross-file
+   defects; run the complete relevant analysis and compare findings when possible. Do not baseline
+   an urgent exploitable defect merely because it predates the change.
 3. Give the baseline an owner and a direction — findings removed when a file is touched
    anyway. A baseline nobody shrinks is a permanent exemption with extra steps.
 4. Never fix hundreds of findings in one commit. It is unreviewable, it will contain a
    behaviour change, and it will be blamed for the next incident whether or not it caused it
    (java-refactoring).
+
+Primary references: [Maven dependency convergence](https://maven.apache.org/enforcer/enforcer-rules/dependencyConvergence.html),
+[Maven reproducible builds](https://maven.apache.org/guides/mini/guide-reproducible-builds.html), and
+[NullAway](https://github.com/uber/NullAway). Tool compatibility and configured scope require local verification.

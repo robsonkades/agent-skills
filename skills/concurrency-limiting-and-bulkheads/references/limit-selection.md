@@ -23,9 +23,17 @@ includes queue time. Do not substitute p99 into the average identity and call th
 
 ## Scoped permit wrapper
 
-Hide unowned semaphore operations from application code:
+Hide unowned semaphore operations from application code. This complete class compiles with
+`javac --release 11`; it is a fixed, single-permit gate, not a weighted or dynamically resized one.
+The returned lease has one logical operation owner even though `close()` tolerates races:
 
 ```java
+import java.time.Duration;
+import java.util.Objects;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 final class ConcurrencyGate {
     private final Semaphore permits;
 
@@ -35,16 +43,26 @@ final class ConcurrencyGate {
     }
 
     Lease tryAcquire(Duration budget) throws InterruptedException {
-        long nanos = budget.isNegative() ? 0L : saturatingNanos(budget);
+        Objects.requireNonNull(budget, "budget");
+        if (budget.isNegative()) throw new IllegalArgumentException("negative budget");
+        long nanos = saturatingNanos(budget);
         if (!permits.tryAcquire(nanos, TimeUnit.NANOSECONDS)) return null;
         return new Lease(permits);
+    }
+
+    private static long saturatingNanos(Duration budget) {
+        try {
+            return budget.toNanos();
+        } catch (ArithmeticException overflow) {
+            return Long.MAX_VALUE;
+        }
     }
 
     static final class Lease implements AutoCloseable {
         private final Semaphore permits;
         private final AtomicBoolean open = new AtomicBoolean(true);
 
-        Lease(Semaphore permits) { this.permits = permits; }
+        private Lease(Semaphore permits) { this.permits = permits; }
 
         @Override public void close() {
             if (open.compareAndSet(true, false)) permits.release();
@@ -53,22 +71,35 @@ final class ConcurrencyGate {
 }
 ```
 
-`saturatingNanos` is an application helper that converts very large durations without overflow.
-Returning `null` is illustrative; a result type can distinguish timeout, interruption, shutdown and
-policy rejection. `AtomicBoolean` makes accidental double-close harmless but does not solve leaked
-leases—ownership still must be lexical and observed.
+Zero budget makes one timed, interruptible immediate acquisition attempt, respecting semaphore
+fairness. It is not permission to launch work whose end-to-end deadline has expired. Negative
+budgets are rejected and null raises `NullPointerException`; positive overflow saturates the wait.
+`null` means admission timed out/unavailable; interruption propagates. A richer result type can
+distinguish additional lifecycle policies. Double-close is harmless but leaked or prematurely
+closed leases remain bugs; idempotent release does not prove that protected work has finished.
+
+Partial usage sketch: `deadline.remaining()` must recalculate from one monotonic request deadline,
+clamp expired time to zero and reserve response/cleanup time. The exceptions and client are
+application-defined; the client here must finish local resource cleanup before returning/throwing.
 
 ```java
-ConcurrencyGate.Lease lease = gate.tryAcquire(remainingBudget);
+ConcurrencyGate.Lease lease = gate.tryAcquire(deadline.remaining());
 if (lease == null) throw new DependencyBusyException("pricing admission expired");
 try (lease) {
-    return client.price(sku, remainingBudget);
+    Duration remaining = deadline.remaining(); // subtract the admission wait
+    if (remaining.isZero() || remaining.isNegative()) {
+        throw new DependencyBusyException("pricing request deadline expired");
+    }
+    return client.price(sku, remaining);
 }
 ```
 
 Provider timeout/cancellation remains necessary. The permit protects local concurrency and should
-usually be held until the provider operation has actually released the scarce resource, not merely
-until the caller's future timed out.
+be held until the protected local operation has actually released the scarce resource, not merely
+until the caller's future timed out. If the server continues after transport cancellation, local
+permits alone do not bound server execution; observe that late work or use server admission.
+For asynchronous clients, transfer ownership to their actual completion/cleanup callback, handle
+synchronous launch failures, and do not wrap future creation in this lexical try-with-resources.
 
 ## Weighted admission
 

@@ -34,8 +34,9 @@ justify change; several low-risk signals in a closed stable hierarchy may not.
   base can no longer change its own state layout.
 - **Overrides that call `super.method()` at a required point.** The base's algorithm has
   leaked into every subclass; forgetting the call is a silent bug.
-- **Overrides that weaken or disable base behaviour** (empty bodies,
-  `UnsupportedOperationException`). The is-a claim is already false.
+- **Overrides that weaken required base behaviour** (empty bodies,
+  `UnsupportedOperationException`). Check the promised contract first: explicitly optional
+  operations, such as unsupported collection mutations, do not by themselves violate it.
 - **Depth over two, or a subclass count that grows with the product of features** —
   `InternationalPremiumCardFee` names two axes multiplied into one class.
 
@@ -63,12 +64,12 @@ justify change; several low-risk signals in a closed stable hierarchy may not.
 
 - **Forwarding boilerplate**: every delegated method restated; a method added to the
   delegate's interface does not automatically appear on the wrapper.
-- **Lost identity**: the wrapper and the wrapped object are different objects. `equals`
-  comparisons, identity-keyed maps and listener registration that captured `this` inside
-  the delegate all cross the boundary wrongly (the "self problem" — the delegate cannot
-  call back into the wrapper).
-- **No self-type**: a base returning `this` for chaining returns the base type; Java has
-  no self-type to recover the wrapper's type without recursive generics.
+- **Distinct identity**: inspect identity-keyed maps, equality symmetry and listener removal
+  tokens. Failures depend on those contracts, not merely on having two objects. Internal
+  delegate self-calls bypass wrapper interception unless callbacks are explicitly wired.
+- **Fluent returns**: forwarding a result that is the delegate can escape the wrapper.
+  An explicit covariant wrapper return can preserve chaining when the contract permits it;
+  recursive generics are another option, not a prerequisite for every fluent wrapper.
 - **Object-graph plumbing**: dependencies must be constructed and wired where a subclass
   got them implicitly.
 
@@ -79,11 +80,14 @@ inheritance is the correct engineering decision — record it as such.
 
 - A direct permitted subtype of a sealed type must be in the same named module; in the unnamed
   module it must be in the same package. Sealing is therefore also a release/ownership choice.
+- `permits` closes only the direct subtype set. A permitted `non-sealed` branch remains open;
+  an exhaustive switch can cover that branch with one type pattern without enumerating all
+  its descendants. Do not infer that sealing makes every leaf owned or known.
 - Exhaustive switches are source checks at compilation time, not a promise that independently
   deployed old clients understand a newly added subtype.
 - Records are implicitly final and are useful leaves, but mutable record components still leak
   mutability; sealed + record does not itself establish value semantics.
 
-See [JLS §8.1.6](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.1.6),
-[JLS §13.4.2](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.4.2), and
-[JLS §8.10](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.10).
+See [JLS 21 §8.1.6](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.1.6),
+[JLS 21 switch execution](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.11),
+and [Collection optional operations](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html).

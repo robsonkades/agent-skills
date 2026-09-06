@@ -42,6 +42,10 @@ registries, per-type caches and metric registries, `ServiceLoader`-style lookups
 
 ## The two limitations
 
+The `Attributes` sketch is thread-confined (`HashMap`); sharing it requires an explicit
+concurrency contract. It permits null, so `get` cannot distinguish absent from stored null.
+Use reference-class keys: `int.class.cast(Integer.valueOf(1))` fails; use `Integer.class`.
+
 **1. Non-reifiable types have no class literal.** `List<String>.class` does not exist, so a
 type token cannot distinguish `List<String>` from `List<Integer>`. The workaround is a _super
 type token_: an abstract class whose generic supertype is recorded in the class file, captured
@@ -68,10 +72,17 @@ to accept knowingly: each token is an anonymous class (a loaded class per distin
 and the safety is now reflective — there is no `Class.cast` that can check `List<String>`, so
 the retrieval cast is unchecked and the container is only as correct as its own code.
 
+This `TypeRef` is a capture illustration, not a production container or runtime validator.
+The shown `Map` has no typed insertion contract and accepts a mismatched value. A production API
+must relate key and value through `<T>`, reject unsupported/unresolved type-variable captures,
+and keep mutable aliases from violating the invariant. Capturing `new TypeRef<List<T>>() {}`
+inside a generic method records `T`, not the caller's concrete argument. A token does not
+recursively validate existing elements; use a reviewed parser/validator when values are untrusted.
+
 **2. Malicious or careless raw keys.** A caller with a raw `Class` object can pass a key that
 does not match the value. Casting inside `put` — as above — is what closes it. A container that
-stores without checking cannot detect the mismatch later either, because by then the type
-argument is gone.
+stores without checking may detect it later with `type.cast` during retrieval, but then the
+invariant was already broken. Validate at insertion for the earliest failure.
 
 ## Bounded type tokens
 
@@ -103,8 +114,9 @@ type when the set of values is known:
   compile time, is visible to the reader, and cannot be missing a key at runtime.
 - **A sealed interface plus pattern matching beats a `Map<Class<?>, Handler>`** when the set of
   handled types is closed: the compiler then proves exhaustiveness, which the map cannot.
-- **Context propagation across threads has its own mechanism.** `ScopedValue` (and, on platform
-  threads, `ThreadLocal`) already provides typed, scoped context; an attribute map bolted onto
+- **Context propagation across threads has its own mechanism.** `ScopedValue` supports bounded
+  bindings on supported JDKs; `ThreadLocal` works on platform and virtual threads but requires
+  explicit lifetime/cleanup and does not automatically propagate across executor tasks. A map on
   a request object usually reinvents it with fewer guarantees. See scoped-values.
 
 Use the heterogeneous container when the key set is genuinely open — extensions, plugins,
@@ -113,14 +125,14 @@ framework attributes, per-type caches — and keep it behind an API narrow enoug
 
 ## Across a serialisation boundary
 
-Type tokens are also how a generic type survives deserialisation, and the failure mode when
-they are missing is the one described in `erasure-and-arrays.md`: the value is built as
-`LinkedHashMap`s and fails at first use. Two rules:
+Type tokens can tell a deserializer what to construct. Untyped object elements commonly become
+maps; primitive JSON values have other representations, and mapper configuration matters. Two rules:
 
 - Every deserialisation call site states the full parameterised type — `TypeReference`,
-  `ParameterizedTypeReference`, or a concrete DTO type. `readValue(json, List.class)` is a
-  defect even when it appears to work.
+  `ParameterizedTypeReference`, or a concrete DTO type when a typed domain value is promised.
+  An intentionally untyped JSON/tree boundary can be valid if its validation contract is explicit.
 - Never let a class name from an untrusted payload select the target type. `Class.forName` on
-  attacker-controlled input, and polymorphic deserialisation keyed by an arbitrary `@class`
-  field, are remote code execution primitives, not type tokens —
-  java-serialization-hardening covers the boundary.
+  attacker-controlled input may load/initialize an unintended available class; polymorphic
+  deserialisation can expose dangerous instantiation paths depending on libraries/configuration.
+  Neither is proof of remote code execution by itself. Allowlist the boundary and route to
+  `java-serialization-hardening`.

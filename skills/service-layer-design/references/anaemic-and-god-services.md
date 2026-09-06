@@ -25,12 +25,14 @@ public class CustomerService {
 
 ### What it costs
 
-- A file, a test file, and a mock in every test of the caller — for no behaviour.
-- A misleading contract: `save` promises a use case and delivers an upsert with no rule.
+- Extra indirection if the wrapper adds no contract; annotations may supply real behavior.
+- Generic persistence vocabulary may hide intent; `save` is not universally an upsert.
+  Check new-entity detection, merge semantics and actual SQL.
 - It teaches the codebase that the service layer is a forwarding convention, which is
   exactly the belief that produces the god service later.
-- `@Transactional` per repository call means a use case that needs two calls gets two
-  transactions and can half-fail (`enterprise-transactions`).
+- Separate calls without a surrounding transaction can commit independently. With an outer
+  transaction, REQUIRED calls usually participate in it; inspect propagation and manager
+  rather than counting annotations (`enterprise-transactions`).
 
 ### When it is nevertheless correct
 
@@ -38,7 +40,8 @@ Do not delete a thin layer reflexively. It is justified when:
 
 - **Some** methods in the module are genuine use cases, and consistency of the call site
   matters more than the empty methods.
-- The layer is where authorisation is applied uniformly, including for non-HTTP callers.
+- The layer defines transaction, authorization, audit or read consistency uniformly,
+  including for non-HTTP callers.
 - A remote or asynchronous caller needs a stable operation surface that is not the
   repository (`remote-facade-and-dto`).
 
@@ -94,17 +97,19 @@ gets it prioritised.
 ### The fix, in order
 
 1. **Split by use case first.** Move each cluster of methods into its own class named after
-   the use case. This is mechanical, safe, and immediately reduces conflicts. Do it before
-   any domain modelling — untangling logic inside a 3 000-line class is far harder than
-   untangling it inside five 200-line ones.
-2. **Then push rules down.** For each remaining conditional on entity state, move it into
-   the entity and delete the setter it depended on. The compiler finds the other callers.
-3. **Then re-check the transaction boundaries.** Splitting often reveals that one former
+   the use case. First characterize callers, proxy interception, authorization and transaction
+   behavior: moving methods can activate advice formerly bypassed by self-invocation.
+   Preserve those contracts during each extraction.
+2. **Then place domain rules according to the selected model.** In domain-model style, move
+   invariant ownership to the entity or appropriate policy. A conditional alone is not proof;
+   retain deliberate Transaction Scripts. Check reflective/serialization callers before
+   removing setters; compilation cannot find every consumer.
+3. **Re-check transaction boundaries throughout extraction.** Splitting often reveals that one former
    method was two transactions pretending to be one, or vice versa.
 4. **Only then consider a domain service** for what genuinely belongs to no object.
 
-Do not attempt this as one change. Each extracted use case should be its own commit with
-its own tests passing (`architecture-refactoring-paths`).
+Use small, independently reviewable extractions with relevant validation passing. Create
+commits only when explicitly requested (`architecture-refactoring-paths`).
 
 ## The intermediate case: the service that only validates
 
@@ -117,21 +122,20 @@ public Order approve(Long id) {
 }
 ```
 
-This is the god service at 12 lines — the same read-branch-write shape. It is worth fixing
-early precisely because it is small: `order.approve()` with a private `requireDraft()` is a
-five-minute change now and a three-week programme once forty methods share the pattern.
+This is a placement question, not proof of a god service. In a rich domain model,
+`order.approve()` can centralize the invariant; in a deliberate Transaction Script this shape
+can be appropriate. Preserve concurrency/version checks and all callers when moving it.
 
 ## Deciding whether to keep the layer at all
 
 Answer per module, with evidence:
 
-1. How many methods demarcate a transaction spanning more than one write? _(0 → the layer
-   is not carrying its main justification.)_
-2. How many contain orchestration — two or more collaborators? _(0 → same.)_
+1. Which transaction/read-consistency contracts does the layer own, including single writes?
+2. Which coordination or stable invocation contracts would callers lose?
 3. Is authorisation decided here, and is there a non-HTTP caller that depends on it?
 4. Would deleting the layer put framework types into the domain, or business rules into
    controllers? _(Yes → keep it; that is a real containment role.)_
 
-Zero, zero, no, no: delete the layer in that module and call the repositories directly.
-That is a legitimate architecture, not a lapse, and stating it deliberately stops the
-pass-through classes from being reintroduced by the next person applying the house style.
+If no meaningful duties remain, direct bounded gateway/repository use may simplify the
+module. Check caching, audit, public API and framework interception too; record why removal
+preserves behavior rather than applying a numeric deletion rule.

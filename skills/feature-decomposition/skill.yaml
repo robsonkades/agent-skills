@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-decomposition
-version: 1.1.0
+version: 1.1.1
 description: >-
   Deciding whether a feature should be split at all and, when it should, into what: child features
   only where they carry independent value someone can state, Tech Features for independently useful

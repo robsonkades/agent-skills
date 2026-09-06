@@ -21,7 +21,7 @@ description: >
 
 Read what was actually compiled, rather than what the source appears to say. The failures
 this skill prevents are the ones that only bytecode can settle: an intermittent `VerifyError`
-from instrumentation that rewrote a method without recomputing its stack map, a coverage
+from instrumentation whose final instructions and stack maps disagree, a coverage
 agent that silently instruments nothing after a JDK upgrade, a build that stops on
 `code too large`, and a performance argument built on the _shape_ of source code when the
 shape that runs is different — string concatenation that is now `invokedynamic`, a `switch`
@@ -36,7 +36,10 @@ distinct—inspect the failure phase rather than assuming “first execution” 
 
 ## Workflow
 
-1. **Compile with `-g -parameters` and disassemble at the level the question needs.** `javap`
+1. **Preserve and inspect the actual artifact first.** Record its digest, selected JAR entry,
+   loader/module, compiler release/options and target vendor/build. Recompile only for a separate
+   reproduction; use `-g -parameters` when useful without overwriting the incident artifact.
+   Examples here use JDK 25; Class-File API needs JDK 24+, not an implicit project upgrade. `javap`
    for signatures, `javap -c` for the code, `javap -c -p` to include private members,
    `javap -v` for the constant pool, the attributes and the `StackMapTable` (`-v` does not
    imply `-p`).
@@ -44,8 +47,8 @@ distinct—inspect the failure phase rather than assuming “first execution” 
    `this_class` answer most version questions on their own — see
    `references/javap-and-class-file-anatomy.md`.
 3. **Classify a `LinkageError` by its message before forming a hypothesis.** `VerifyError`,
-   `ClassFormatError`, `UnsupportedClassVersionError` and a late `NoSuchMethodError` each name
-   a different producer, and the JDK 25 texts are tabulated in
+   `ClassFormatError`, `UnsupportedClassVersionError` and a late `NoSuchMethodError` identify
+   different failure categories; locate the actual producer separately. JDK 25 texts are in
    `references/limits-and-failure-catalogue.md`.
 4. **Establish locals and stack state before tracing opcodes.** Derive parameter slots from
    the descriptor/access flags; `LocalVariableTable` is optional debug metadata with scoped
@@ -76,8 +79,9 @@ distinct—inspect the failure phase rather than assuming “first execution” 
 - Never assume the same source produces the same bytecode across JDK versions. String
   concatenation has been `invokedynamic` since JDK 9 (JEP 280), private calls have been
   `invokevirtual` since JDK 11 (JEP 181), pattern `switch` uses `SwitchBootstraps` since
-  JDK 21, and none of that exists in JDK 8 output. `grep StringBuilder` finds nothing in a
-  modern class file; the loop-concatenation smell is `makeConcatWithConstants` inside a loop.
+  JDK 21. These are javac lowering choices for the selected target, not guarantees about every
+  compiler or class file. Explicit builders, constant-folded concatenation and `--release 8`
+  output differ. Inspect control flow around concat call sites rather than using a keyword alone.
 - Treat javac primarily as a lowering compiler, with limited folding/simplification whose
   exact output can change. A measured one-line try-with-resources example was 38 bytecode
   bytes—above one tested cold-site inline threshold but still eligible under other hot/policy
@@ -98,20 +102,23 @@ distinct—inspect the failure phase rather than assuming “first execution” 
 - A bytecode library's version is coupled to class-file versions and is often shaded
   inside something else. `Unsupported class file major version 69` from
   `org.objectweb.asm.ClassReader` means the agent, coverage tool or mocking library bundles
-  an ASM older than the runtime — upgrade that tool. A `ClassFileTransformer` that throws is
+  an ASM that cannot parse the rejected class's version; identify its source and upgrade the
+  tool or produce a compatible target artifact as appropriate. A `ClassFileTransformer` that throws is
   treated like returning `null`: later transformers and class definition still proceed. The
   class may load uninstrumented and the process may succeed, so gate instrumentation/coverage
   assertions explicitly rather than trusting exit code.
 - Test instrumentation against the **same** JDK major version that runs in production, not
   only the development one. Include multi-release JAR entries, supported loaders/modules,
-  retransformation and generated/hidden classes in the compatibility matrix.
+  retransformation and generated classes in the compatibility matrix. Hidden classes have
+  instrumentation restrictions; do not promise that a normal transformer can observe or
+  retransform lambda proxy definitions.
 - Treat a Java agent or transformer as privileged production code: pin and verify its artifact,
   minimize its class/method scope, protect dumped bytecode because it may contain secrets, and
   make mandatory instrumentation fail an explicit readiness/deployment gate.
 - Never disable verification to make a `VerifyError` go away. `-Xverify:none` and `-noverify`
   have warned since JDK 13 (JDK-8214719) and `BytecodeVerificationRemote` is a diagnostic
-  flag on 25; both make the broken class run and remove the only check between a bad
-  transformer and miscompiled code. `-XX:-UseSplitVerifier` is not ignored — it is
+  flag on 25; disabling verification removes a structural/type safety gate and can turn
+  rejection into unsafe execution or a later failure. `-XX:-UseSplitVerifier` is not ignored — it is
   `Unrecognized VM option` and the JVM does not start (removed in JDK 8, JDK-8009595).
 - `invokedynamic` is not inherently slow. Resolution invokes a bootstrap and installs a linked
   call site; concurrent resolution and bootstrap failure rules are subtler than “runs exactly
@@ -125,11 +132,13 @@ distinct—inspect the failure phase rather than assuming “first execution” 
   Confirm it with JMH `-prof gc`; never assert it from the source shape.
 - A `synchronized` block uses `monitorenter`/`monitorexit` with exceptional cleanup; the exact
   number/ranges of exception-table entries are javac/version/control-flow dependent. A synchronized
-  method is only `ACC_SYNCHRONIZED` in `javap -v` and shows no monitor instruction. Both lock
-  the same way at runtime; only the bytecode size differs.
+  method uses `ACC_SYNCHRONIZED` without explicit monitor instructions. Both have monitor
+  semantics when locking the same object, but a method locks `this` (instance) or its declaring
+  `Class` (static), while a block locks its evaluated expression and can cover a smaller region.
 - The tested exhaustive pattern `switch` over a sealed type carries a synthetic `default` that
-  throws `MatchException`. Seeing one in production commonly indicates binary evolution or an
-  inconsistent runtime artifact set; preserve the thrown evidence before rebuilding everything.
+  throws `MatchException`. It can signal binary evolution at that default, but a record-pattern
+  accessor throwing can also be wrapped in `MatchException`. Inspect location and cause before
+  attributing it to stale artifacts.
 - Treat receiver diversity as a property of a runtime call site, not the language. If it is
   materially hot, compare accepting dispatch, isolating a stable hot site or redesigning the
   abstraction; do not add type switches merely to game one JIT profile.

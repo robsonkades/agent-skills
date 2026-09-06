@@ -2,38 +2,39 @@
 
 ## How long "wait" is
 
-The wait between the expand and contract halves is not a formality; it is the whole mechanism. It is
-measured in the store's retention, never in deploy time.
+The gate between expand and contract is evidence that the remaining system can use the new contract.
+Any waiting period follows from reachable client builds and data, not a fixed clock interval.
 
-| Boundary                              | Window           | What "wait" means                                                                                                        |
-| ------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Synchronous HTTP/gRPC                 | seconds          | one rolling deploy; in-flight requests drain. Both halves can be minutes apart — keep them separate deploys for rollback |
-| Kafka topic, `retention.ms=7d`        | 7 days           | every message written in the old shape must age out **and** no group may reset to an offset older than that              |
-| Kafka topic, `cleanup.policy=compact` | **never**        | the contract half is not available; the old shape stays readable forever, or you rewrite the topic                       |
-| Event-sourced store                   | **never**        | same                                                                                                                     |
-| Database column                       | until backfilled | measured by the backfill query, not by the clock                                                                         |
+| Boundary                              | Window                                   | What "wait" means                                                                                                                                                                                          |
+| ------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Synchronous HTTP/gRPC                 | supported-client horizon                 | Account for long-lived clients, retries, cached requests, in-flight work and rollback builds.                                                                                                              |
+| Kafka topic, `cleanup.policy=delete`  | effective deletion/replay horizon        | `retention.ms` is not exact deletion time; inspect segments, byte retention, offsets, replicas and restore paths.                                                                                          |
+| Kafka topic, `cleanup.policy=compact` | potentially indefinite                   | A cold key's last value can retain an old schema; overwritten values eventually compact. `compact,delete` also expires segments. Verify remaining versions rather than assuming all history or no history. |
+| Event-sourced store                   | actual replay contract                   | Check snapshots, retained events, archival/backup restore and upcasters; immutable full-history replay often requires lasting compatibility.                                                               |
+| Database column                       | verified migration and client retirement | Backfill with concurrent-write protection; retire old writers/readers and account for rollback, CDC and backups.                                                                                           |
 
-The failure mode is not subtle: expand on Monday, contract on Wednesday, everything green because the
-seven-day window means no consumer has met an old record yet. It breaks four days later, or six
-months later when someone resets a group.
+Live traffic can appear healthy while a lagging consumer, cold compacted key or restored backup
+still presents an older writer schema. The failure may occur immediately or on later replay; the
+configured retention interval does not determine when a reader first encounters that schema.
 
-A **key** schema is a special case of "never": partition assignment depends on the serialised key
-bytes, so a change that the registry calls compatible still redistributes keys. Freeze key schemas;
+A **key** schema needs a separate byte/partition identity check: with byte-hashing partitioners,
+changing serialized key bytes, including framing/schema ID, can move keys or split compaction identity.
+Not every compatible schema edit changes bytes; preserve the byte contract or migrate explicitly;
 the ordering consequence belongs to `message-ordering-and-partitioning`.
 
 ## When contraction is impossible
 
-On a compacted topic or any infinite-retention log there are only three honest options.
+When incompatible historical values remain reachable, choose a supported migration strategy.
 
-1. **Never contract.** Deprecate in documentation, keep the field in the schema forever with a
-   default, accept a monotonically growing schema. This is the default answer and it is fine: a
-   schema with tombstoned fields is cheaper than either alternative.
+1. **Keep read compatibility.** Retain defaults, aliases or a legacy decoder as needed. This does
+   not require every current schema to retain every field: Avro readers can ignore removed writer
+   fields and Protobuf readers can preserve unknown fields. Check the required semantics.
 2. **Upcast at the read boundary.** Keep every historical schema and lift v1 → v2 → v3 before the
-   domain sees it. That chain belongs to `event-sourcing`; what belongs here is that most of its
-   links exist only because the format could not carry the change — Avro defaults and Protobuf
-   `reserved` remove the need for most of them.
+   domain sees it. That chain belongs to `event-sourcing`; what belongs here is that its
+   links may implement semantic transformations that defaults and Protobuf reservations cannot.
 3. **Rewrite the topic.** Produce v2 to a new topic, migrate consumers, delete the old. Costs a full
-   replay and a dual-read period and breaks offset-based bookmarks. Confluent's own advice for the
+   replay or state migration and a controlled cutover; offset-based bookmarks need remapping. Do not
+   delete the source until replay, restore and rollback obligations permit it. Confluent's advice for the
    `NONE` case: "create a brand-new topic and start migrating applications to use the new topic and
    new schema, avoiding the need to handle two incompatible versions in the same topic."
 
@@ -42,7 +43,8 @@ On a compacted topic or any infinite-retention log there are only three honest o
 The `.avsc`/`.proto`/`.json` files in the repository are the source of truth; the registry is a
 deployment target, exactly as a database is a deployment target for migrations. If a producer's
 `auto.register.schemas` can change the registry, the source of truth is a running JVM somewhere and
-CI cannot check anything. The repo copy can drift, so add a job that fails when they disagree
+CI can still validate candidates, but no longer controls every change. The repo copy can drift, so
+restrict registration ownership and add a job that detects unexplained differences
 (`schema-registry:download` plus a diff).
 
 ## Confluent Maven plugin — `io.confluent:kafka-schema-registry-maven-plugin:8.3.1`
@@ -130,10 +132,12 @@ assertEquals(SchemaCompatibility.SchemaCompatibilityType.COMPATIBLE, result.getT
 Failures come back as `Incompatibility{type:READER_FIELD_MISSING_DEFAULT_VALUE, location:/fields/1,
 message:nick, …}` — `location` is a JSON pointer into the schema, which is what a CI log needs.
 
-Over a version history, with the level equivalences verified on 1.12.0:
+Partial Java 17 snippets: supply Avro imports, collection imports, assertions and the history loader.
+Over a version history, with the level equivalences recorded on 1.12.0:
 
 ```java
-var history = loadAll("schemas/order").reversed();          // most recent first
+var history = new ArrayList<>(loadAll("schemas/order"));   // partial: loader returns oldest first
+Collections.reverse(history);                             // most recent first, Java 17 compatible
 new SchemaValidatorBuilder().canReadStrategy().validateAll()
     .validate(current, history);                            // == BACKWARD_TRANSITIVE
 ```
@@ -164,7 +168,7 @@ The library check and the registry's check are not the same thing, and only this
 second — including registry-side surprises such as the open-content-model rejection.
 
 ```java
-// org.testcontainers:kafka — compiles, but this recipe has not been run here
+// Pseudocode: requires pinned Testcontainers/images, network/aliases and omitted configuration.
 var kafka = new ConfluentKafkaContainer("confluentinc/cp-kafka:<pin>");
 GenericContainer<?> sr = new GenericContainer<>("confluentinc/cp-schema-registry:<pin>")
                              .withEnv("SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS", ...)
@@ -174,4 +178,9 @@ GenericContainer<?> sr = new GenericContainer<>("confluentinc/cp-schema-registry
 In one test: `PUT /config/<subject> {"compatibility":"BACKWARD_TRANSITIVE"}` to the level you claim
 to run, register v1, produce a v1 record with `auto.register.schemas=false`, register v2, produce a
 v2 record, and consume **both** with a v1-generated consumer and a v2-generated one. Pin the image
-tag to the version you run in production — the wire-format default changed at 8.1.1.
+tag to the version you run in production. Assert success only for pairs the chosen level guarantees;
+BACKWARD_TRANSITIVE does not by itself guarantee that v1 readers accept v2 writers. On 8.1.1+ the
+deserializer lookup default changes; producers still need explicit configuration to emit header GUIDs.
+
+Sources: [Kafka 4.1 topic cleanup policies](https://kafka.apache.org/41/configuration/topic-configs/),
+[Confluent compatibility](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html).

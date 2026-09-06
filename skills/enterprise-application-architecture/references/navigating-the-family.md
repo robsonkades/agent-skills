@@ -118,7 +118,8 @@ This family stops where these begin:
 ## A reading order for someone new to the family
 
 1. This skill, for the forces and the decision order.
-2. `domain-logic-organization` — the highest-consequence decision.
+2. `domain-logic-organization` — rule ownership; prioritise a fixed schema, consistency or
+   deployment constraint first when it dominates the current decision.
 3. `data-source-patterns` and `orm-behavioral-patterns` — what the persistence layer
    actually does.
 4. `enterprise-transactions` — the boundary everything else assumes.

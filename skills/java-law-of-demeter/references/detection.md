@@ -14,9 +14,9 @@ against dot counts.
 - **The same chain appears at several call sites.** One navigation at an assembly point is
   wiring; the identical three-step walk in five services means five classes break when the
   middle type changes.
-- **Imports betray it.** A `ShippingFeeCalculator` that imports `Membership` — a type it
-  never receives or returns — reached it by navigation. Types that appear only mid-chain
-  are pure structural knowledge.
+- **Intermediate type use is evidence.** Trace why a `ShippingFeeCalculator` uses `Membership`:
+  an import alone may be unused or refer to a directly constructed collaborator. Conversely,
+  `var` and inferred chains need no explicit import. Inspect actual calls and declared contracts.
 - **Shape changes ripple.** If renaming or splitting `Address` produces compile errors in
   files that do not mention shipping or addresses in their name or API, those files were
   coupled through chains.
@@ -38,6 +38,10 @@ The recurring distinction: **collaborators hide representation; data/projection 
 shape.** The law guards encapsulation of the former. Data chains still carry schema coupling and
 edge cases; they are not automatically good, only a different review question.
 
+The `getFirst()` illustration requires Java 21 and throws on an empty list; Java 17 callers
+can use `get(0)` with an explicit empty-input contract. Stream callbacks can still navigate
+entities and perform I/O; dataflow syntax does not certify a pure pipeline.
+
 ## The dogmatic failure mode
 
 Mechanically eliminating every chain produces delegation layers:
@@ -54,9 +58,9 @@ API, and a change to `Address` still ripples — through the wrappers instead of
 sites, plus the wrappers themselves. This is the Middle Man smell. The chain was one
 problem; the wrapper layer is N problems with the same coupling.
 
-A forwarding method earns its place only when it states something the owner genuinely
-means — `order.shippingDestination()` is `Order`'s own concept; `order.customerCity()` is
-someone else's chain with a name on it.
+A forwarding method earns its place by protecting a stable owned query or boundary. Names
+such as `shippingDestination()` can express that intent, but neither `customerCity()` nor
+any other name proves or disproves it; demonstrate the internal change hidden from callers.
 
 ## When not to apply the law at all
 
@@ -64,4 +68,12 @@ someone else's chain with a name on it.
 - Serialisation, persistence mapping, view rendering: boundary projections.
 - Code owned and consumed inside one cohesive package where the types demonstrably co-change —
   coupling costs less, though aggregate invariants and runtime I/O can still make navigation bad.
-- Any case where the fix adds more public methods than it removes call-site knowledge.
+- A fix that adds more public methods than it removes call-site knowledge needs a clear
+  compensating boundary benefit; raw method counts alone cannot settle it.
+
+## API references
+
+- [Java 21 List.getFirst](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html#getFirst()>)
+  documents availability and empty-list failure.
+- [Java 17 Stream](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Stream.html)
+  specifies callback and pipeline behavior; it does not promise domain encapsulation.

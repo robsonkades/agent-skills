@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: feature-context-analysis
-version: 1.1.0
+version: 1.1.1
 description: >-
   Reading the repository for one specific feature: which technologies and patterns are actually
   present, which components the feature can reuse, which questions the code has already answered,
-  and — stated as findings rather than silence — which it has not. Use before asking the user
-  anything, before proposing a technology, when a feature is about to be built in a style the
+  and — stated as findings rather than silence — which it has not. Use when a scoped feature
+  needs repository evidence before clarification or technology selection, when it is about to be built in a style the
   codebase does not use, when "the project uses X" is being asserted without a path, when an
   abstraction is about to be created that already exists, or when picking up a codebase you have
   not read. Does not decide whether a found technology may be used for this feature

@@ -40,6 +40,13 @@ when corruption must not continue — unconditional internal checks, not only di
 
 ## Workflow
 
+Java 25 is the authoring baseline, not permission to upgrade a consuming project. Inspect
+compiler release/toolchains, runtime, dependencies, mapper behavior and existing caller
+contracts first. Records require Java 16+, sealed types Java 17+, pattern switches Java 21+
+and flexible constructor bodies Java 25 without preview. Use target-compatible alternatives;
+do not add dependencies, upgrade or enable preview for this skill. If evidence is missing,
+state the assumed contract and what must be verified before changing it.
+
 1. **Write the contract before touching code**: for the method or class, the
    preconditions, postconditions and invariants in one sentence each. What you cannot
    state, callers are currently guessing.
@@ -79,8 +86,10 @@ when corruption must not continue — unconditional internal checks, not only di
   persistence boundaries. Legacy rows, deserializers, reflection, ORM hydration, version skew
   and corruption can bypass the constructor path. A defense before an irreversible write should
   identify which boundary invalidates the earlier proof, not silently duplicate every guard.
-- New methods are new contracts: a stricter requirement in a _new_ method on a subtype
-  is fine; the rules above bind only overrides of an inherited contract.
+- A new subtype method can define its own input preconditions, but must still preserve
+  inherited invariants and history constraints (for example, a supertype's promise that
+  a value never changes). Being callable only through the subtype does not permit it to
+  invalidate observations made through a supertype alias.
 
 ## Contract dimensions beyond values
 
@@ -91,6 +100,11 @@ when Java's type system cannot express them. State only guarantees the implement
 datastore/protocol can actually preserve.
 
 ## References
+
+Deliver the affected contract clauses, caller/subtype evidence, chosen enforcement and
+executed checks. Test accepted/rejected boundaries and failure-state preservation through
+the supertype as well as concrete types; distinguish type checking, runtime checks and
+persistence tests. Do not label an unexecuted test plan as proof of correctness.
 
 - [Contracts in Java 25](references/contracts-in-java.md) — the contract-element →
   language-mechanism mapping table, Javadoc conventions, behavioural-subtyping

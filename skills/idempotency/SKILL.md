@@ -3,8 +3,8 @@ name: idempotency
 description: >
   Making an operation safe to apply more than once: natural idempotency versus an
   idempotency key plus durable operation state; choosing and scoping the key, and why a
-  broker message id covers only one redelivery scope; the concurrent in-flight duplicate
-  cannot handle; replaying the stored response instead of returning a conflict; and why
+  broker message id covers only one redelivery scope; handling concurrent in-flight
+  duplicates; replaying the stored response instead of returning a conflict; and why
   idempotent is not commutative. Use when a retry produces a second row, charge or email,
   when a handler starts with an exists() check before a write, when an Idempotency-Key
   header is being added or ignored, when two identical requests arrive concurrently, or when
@@ -53,9 +53,10 @@ error, so a client that retried after a timeout is told its request conflicts wi
    business rejection. Do not persist secrets, one-time credentials or unbounded bodies.
 6. **Set the retention from the client's retry horizon and the business record**, and say
    what happens after it expires. See `references/idempotency-key-filter.md`.
-7. **Test the concurrent case specifically** — two threads, one key, one barrier, assert
-   exactly one side effect and two identical responses. A sequential duplicate test proves
-   nothing about the race.
+7. **Test the concurrent case specifically** — synchronized contenders with one key must
+   produce one effect within the stated guarantee window. Allow the documented processing
+   response for an in-flight duplicate, then verify the eventual original semantic outcome.
+   A sequential duplicate test proves nothing about the race.
 
 ## Rules
 
@@ -107,6 +108,15 @@ Never delete or reopen `PENDING` merely because the caller received an exception
 and timeout describe the caller, not the effect. If a lease allows a new worker to take over,
 use an attempt epoch for ownership of local completion and still reuse the stable downstream
 operation key. A lease alone cannot prevent the first external attempt from completing late.
+Confirm downstream key scope and retention: replaying the same key after its deduplication
+window expires can apply again. A negative status lookup permits redispatch only when the
+provider also guarantees that the prior attempt cannot subsequently apply; otherwise retain
+`UNKNOWN` and reconcile. Compensation is a weaker business recovery contract, not proof of
+at-most-once effects.
+
+For implementation work, record the target Java/framework, database/isolation and downstream
+API version. Report the key/fingerprint scope, effect boundary, retention/recovery contract and
+checks actually run; do not claim exactly-once behavior from a mock or a successful local claim.
 
 ## Security and abuse controls
 

@@ -47,8 +47,9 @@ flags when its problem is a single C2 thread.
 3. **Check the code cache** before anything else on a no-recovery symptom: `jcmd <pid>
 Compiler.codecache` for `full_count` and the `Compilation:` line, `fullCount` in
    `jdk.CodeCacheStatistics`, `CodeCache is full` in the log.
-4. **Read the compiler's CPU budget off the container, not the flag.** 1-3 CPUs means one
-   C1 and one C2 thread (`CICompilerCount=2`), and a CPU limit is shared between compiling
+4. **Read the compiler's CPU budget off the container, not the flag.** In the examined default
+   C1/C2 configuration, 1-3 active processors gives a cap of one C1 and one C2 thread,
+   and a CPU limit is shared between compiling
    and serving. See `references/tiered-compilation-model.md`.
 5. **Verify defaults before adding a flag** (`-XX:+PrintFlagsFinal`). Several widely
    copied flags have been default for years.
@@ -76,8 +77,8 @@ Compiler.codecache` for `full_count` and the `Compilation:` line, `fullCount` in
   with `-XX:CompileThresholdScaling`, globally or per method through `CompileCommand`.
 - `CICompilerCount` is a cap, not a head-count: threads are added while a queue is long and
   memory allows, and retired when idle (`UseDynamicNumberOfCompilerThreads`, default).
-  Raising it on a one-CPU pod adds no CPU; the quota is the lever. Under tiered compilation
-  the minimum is 2 — `CICompilerCount (1) must be at least 2` refuses to start.
+  Raising it on a one-CPU pod adds no CPU. The default full C1/C2 mode requires at least 2;
+  C1-only `TieredStopAtLevel=1` accepts 1 on JDK 25, so inspect the compilation mode too.
 - Code-cache pressure can trigger unloading/GC and recompilation churn; allocation failure can
   stop compilation until the JVM later restarts it or space becomes available. Treat a rising
   `fullCount`, compiler stop/restart counts, per-heap free/contiguous space, and recurring
@@ -92,13 +93,19 @@ Compiler.codecache` for `full_count` and the `Compilation:` line, `fullCount` in
   Model both effects. Use slow start/readiness, rollout limits, minimum warm capacity, and an HPA
   signal/stabilization policy that distinguishes startup CPU from sustained demand.
 - The AOT cache (JEP 515) caches **profiles, not compiled code**. It shortens the profiling
-  phase; the compilations still run on compiler threads under the same CPU quota. Expect it to
-  shorten only the covered parts of the curve and measure `jdk.CompilerStatistics.totalTimeSpent`.
+  phase; compilations still run under the same CPU quota, but their amount, timing and cost can
+  change. `jdk.CompilerStatistics.totalTimeSpent` aggregates compilation elapsed durations,
+  not CPU seconds; pair it with compiler-thread/process CPU and throttling evidence.
 - Benchmark the lifecycle the decision concerns. Measure cold start/first requests when users pay
   them, and measure a separately defined steady state for peak comparisons. Label the compilation
   and application-cache state rather than discarding cold behavior.
 - Graal as a JIT left the JDK with JEP 410 (JDK 17). JVMCI remains as the interface; using
-  Graal today requires the GraalVM distribution.
+  Graal requires a compatible separately supplied compiler/runtime combination; consult
+  `graalvm-jit` for the supported distribution/version rather than assuming a stock-JDK flag installs it.
+
+Record the deployed JDK/build, compiler mode, effective flags and workload before changing policy.
+Return the observed curve and competing explanations, proposed adjustment and checks actually run;
+do not equate configured thresholds, elapsed compile time or a counter plateau with readiness.
 
 ## References
 

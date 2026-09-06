@@ -67,7 +67,7 @@ jfr help view
 jfr summary recording.jfr
 ```
 
-Programmatically inspect `FlightRecorder.getEventTypes()`, `EventType.getFields()`,
+Programmatically inspect `FlightRecorder.getFlightRecorder().getEventTypes()`, `EventType.getFields()`,
 `getSettingDescriptors()`, and annotations. A string-based `enable(name)` can create settings
 without proving a matching event is currently registered or will emit. Validate registration,
 effective active settings, and a positive-control event count.
@@ -77,14 +77,14 @@ or generated extractor tests per supported JDK epoch.
 
 ## Choose settings by event mechanism
 
-| Setting/mechanism      | Meaning                                               | Failure mode                                                  |
-| ---------------------- | ----------------------------------------------------- | ------------------------------------------------------------- |
-| `enabled`              | event can be committed to this recording              | unknown/unregistered/unsupported event yields no useful data  |
-| `threshold`            | duration event commits only at/above a bound          | many short costly events disappear; lowering can flood        |
-| `period`               | periodic event cadence/convention                     | not every periodic event samples every entity; phase aliasing |
-| `throttle`             | implementation-defined event rate or interval control | drops/subsampling require weight/lost-event interpretation    |
-| `stackTrace`           | capture commit stack when supported                   | stack walking/storage dominates high-rate events              |
-| custom filter/settings | event-specific selection                              | semantics and syntax are event/JDK-specific                   |
+| Setting/mechanism      | Meaning                                                                 | Failure mode                                                  |
+| ---------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `enabled`              | requested enablement; combined across active recordings                 | unknown/unregistered/unsupported event yields no useful data  |
+| `threshold`            | requested minimum duration; effective bound can be lower during overlap | short costly events disappear; lowering can flood             |
+| `period`               | periodic event cadence/convention                                       | not every periodic event samples every entity; phase aliasing |
+| `throttle`             | implementation-defined event rate or interval control                   | drops/subsampling require weight/lost-event interpretation    |
+| `stackTrace`           | capture commit stack when supported                                     | stack walking/storage dominates high-rate events              |
+| custom filter/settings | event-specific selection                                                | semantics and syntax are event/JDK-specific                   |
 
 For waits, choose by Java mechanism and target-JDK event metadata: monitor enter, monitor wait,
 thread park, socket/file I/O, virtual-thread pinning, and executor/application queues are not
@@ -121,9 +121,11 @@ resulting file.
 ## Concurrent recordings
 
 Multiple recordings can request different settings for the same event. JVM-side instrumentation
-and event production may run at an effective combination sufficient for active recordings,
-while each recording receives according to its settings. Therefore a temporary high-detail
-recording can increase global process overhead even if the continuous recording stays “default.”
+and event production use combined active settings. HotSpot recordings share event data;
+do not assume a file is filtered independently by that recording's requested threshold or
+enabled set. A temporary high-detail recording can increase both process overhead and the
+event population/file size of a concurrent baseline. Filter during analysis when necessary,
+and record overlap windows instead of inferring capture settings from a file's configured label.
 
 Inventory active recordings before escalation. Calibrate overlap, and stop/close by ID/name
 carefully. Event `isEnabled()`/`shouldCommit()` consider active recording settings; one permissive
@@ -187,7 +189,10 @@ Do not quote nanoseconds/cycles or an event-rate threshold as universal. Benchma
 enabled-without-stack, enabled-with-stack, burst, concurrent recording, and exporter-failure
 arms on the target JVM/workload.
 
-See [Custom events and consumers](references/custom-events-and-streaming.md).
+The snippet is partial application instrumentation: payload helpers must be bounded and safe
+on success and failure, without masking the business exception. See
+[Custom events and consumers](references/custom-events-and-streaming.md) when implementing
+the event schema, failure handling or consumer lifecycle.
 
 ## Recording APIs
 
@@ -237,8 +242,10 @@ Discover event annotations/settings/platform support in the deployed build. CPU-
 throttle, lost/quality fields, and stock enablement must be read from metadata/JFC/source for
 that update. Method timing/tracing cost scales with selected invocation rate, transformation,
 stack/threshold settings, and class behavior; use narrow filters and a canary/bounded window.
-Java 17/21 readers/collectors do not automatically understand Java 25 event types or command
-options.
+Generic Java 17/21 readers can discover many new event types through recording metadata, but
+format compatibility, event interpretation and command options still require fixture tests.
+Examples use Java 17-compatible core JFR APIs unless marked JDK 25; inspect project toolchains
+before applying newer features, without implicitly upgrading Java or enabling experiments.
 
 ## Troubleshooting
 
@@ -267,8 +274,10 @@ options.
 
 ## References
 
-- [Event discovery and configuration](references/event-catalogue.md)
-- [Custom events and consumers](references/custom-events-and-streaming.md)
+- [Event discovery and configuration](references/event-catalogue.md) — when selecting settings,
+  calibrating coverage or validating a parser against a target JDK.
+- [Custom events and consumers](references/custom-events-and-streaming.md) — when defining events
+  or implementing recording/streaming/offline consumers.
 - [JFR API Programmer's Guide](https://docs.oracle.com/en/java/javase/25/jfapi/)
 - [JFR package API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/package-summary.html)
 - [JFR consumer package](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/consumer/package-summary.html)

@@ -49,6 +49,13 @@ Use shared benchmark state and per-thread role state so each worker deterministi
 assigned logical variable. Include an invariant/result so updates are not eliminated. Avoid
 `@Group` configurations whose actor ratios/slot mapping differ from production.
 
+Keep accesses observable during measurement: a plain increment repeatedly written back only
+at the end can hide the coherence traffic being studied. Inspect generated code when needed;
+do not add a shared blackhole/counter that becomes the measured hotspot. Maintain equivalent
+memory ordering in padded and unpadded variants, and configure `@Contended` flags on JMH
+forked JVMs, not merely the launcher. Include writer/reader roles when that is the production
+sharing pattern. Validate final values after workers finish through a proper handoff.
+
 Run topology blocks:
 
 ```text
@@ -75,7 +82,7 @@ The claim “false sharing materially caused the regression” requires:
 
 ```text
 @Contended shows no layout change
-  -> restriction flag, annotation target/group, wrong JDK/launch, class-file metadata
+  -> EnableContended/RestrictContended, annotation group, fork flags, wrong JDK, metadata
 layout changes but performance does not
   -> not false sharing, insufficient write rate/topology, other bottleneck
 performance improves but coherence counter does not

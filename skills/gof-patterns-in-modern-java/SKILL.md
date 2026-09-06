@@ -36,6 +36,13 @@ mechanism           → optional; a lambda expresses the same intent
 Refusing the vocabulary because the mechanism changed is as costly as building the 1994 mechanism.
 Say "Strategy, as a function" and the design stays legible.
 
+Inspect compiler release/toolchains, resolved framework versions, CI/runtime and existing extension
+contracts before suggesting a replacement. Records/sealed types fit Java 17; record patterns and
+pattern switch need Java 21 without preview; Gatherers are final in 24 and ScopedValue in 25.
+StructuredTaskScope remains preview in Java 25: its release-specific API needs explicit project
+preview authorization and compiler/runtime flags. Do not upgrade or enable preview merely to use
+this skill. Missing environment evidence makes a version-sensitive recommendation conditional.
+
 ## Three categories
 
 ```text
@@ -47,8 +54,7 @@ COMMON MECHANISMS PROVIDED — reuse them when their guarantees match
     Observer          application events; reactive streams; brokers
     Chain of Resp.    filter chains, interceptor chains
 
-CHANGED — the intent survives; the classical mechanism is usually the
-wrong expression now
+ALTERNATIVE EXPRESSIONS — compare with the existing contract
     Strategy          a lambda or a domain functional interface
     Command           a record; often a Runnable/Callable
     Factory Method    an injected Supplier or a keyed map
@@ -57,10 +63,10 @@ wrong expression now
     Prototype         a copy factory; usually immutability instead
     Memento           an immutable state behind one reference
     Template Method   a final class taking composed steps
-    Builder           record + static factories, until arity demands one
+    Builder           compare records/factories with staged construction needs
 
-STILL HAND-WRITTEN — nothing supplies these; the classical thinking
-applies with modern types
+DOMAIN DESIGN STILL REQUIRED — libraries may supply mechanisms;
+the classical questions apply with modern types
     Composite, Bridge, Mediator, Interpreter, Abstract Factory,
     Adapter, Facade, Flyweight
 ```
@@ -68,23 +74,22 @@ applies with modern types
 ## The two changes that matter most
 
 **Sealed types plus pattern matching.** A closed hierarchy with
-an exhaustive `switch` gives, in one construct, what Visitor needed double dispatch for, what State
-needed a class per state for, and what Composite needed the transparent/safe trade-off for — with
-the compiler enumerating every switch site when a variant is added. This favors adding variants but
-can make adding operations touch many switches—the expression-problem trade-off Visitor addresses.
-Where you own every variant, consider it
+an exhaustive `switch` can express external operations and state dispatch. Adding an operation is
+often one new function; adding a variant requires updating affected exhaustive switches on
+recompilation. Catch-all cases and non-sealed branches limit that check. Sealing does not define
+valid state transitions or decide which Composite types expose child mutation. Where you own
+the relevant variants and compatibility boundary, consider it
 (`java-composition-over-inheritance`).
 
-**The container.** Dependency injection makes Singleton's uniqueness a consequence of wiring rather
-than of a static, turns the deployment-time case of Abstract Factory into one `@Configuration` per
-profile, and makes Factory Method's subclass hook unnecessary wherever you construct the object
-yourself.
+**The container.** DI can own instance lifetimes and assemble a family, but singleton scope is
+per bean definition/container, profiles can overlap, and compatible-family invariants need tests
+or validation. Supplier injection can replace application-controlled creation hooks when public
+extension and lifecycle contracts permit it.
 
 Two smaller but real ones: **records** remove the boilerplate that made Builder, Memento and
-Prototype heavy, and make immutability cheap enough that several patterns dissolve into "share the
-reference". **Virtual threads and structured concurrency** remove much of the reason to defer work
-through Command objects and asynchronous decorators — a blocking call on a virtual thread is
-usually simpler than the machinery built to avoid one (`thread-sizing-and-virtual-threads`).
+Prototype heavy, but records are only shallowly immutable. **Virtual threads** can simplify
+blocking I/O orchestration; they do not remove requests represented as Commands, durable work,
+admission control, cancellation or downstream capacity limits (`thread-sizing-and-virtual-threads`).
 
 ## Decision rules
 
@@ -94,24 +99,24 @@ THEN check whether the JDK/framework supplies the required semantics before
      hand-writing infrastructure. Do not turn categories into prohibitions.
 
 IF the framework provides the mechanism
-THEN use it. A hand-rolled chain, proxy or event bus beside the
-     framework's is invisible to its ordering, metrics and tracing.
+THEN compare ordering, lifecycle, failure and observability semantics before reuse.
+     Avoid duplicate policy; custom implementations can still integrate correctly.
 
 IF the variant set is closed and you own it
-THEN sealed + exhaustive switch, and reconsider Visitor, State and
-     Strategy against it.
+THEN consider sealed + exhaustive switch against Visitor, State and Strategy,
+     preserving behavior, compatibility and the actual direction of change.
 
 IF the variant set is open to code you do not compile
-THEN the classical mechanism is still right: an interface, or
-     accept(Visitor), because there is no closed set to switch over.
+THEN preserve an extension interface. Classic Visitor also couples visitors to
+     element types; it does not automatically solve independently added variants.
 
 IF a lambda would express the pattern
-THEN use it — and name the intent in review, so the design stays
-     recognisable.
+THEN compare a function with a named implementation for state, metadata,
+     checked failures and diagnostics; name the intent whichever form is chosen.
 
 IF diagnosability matters (a hot path, a production stack trace)
-THEN a named class beats a lambda. lambda$price$3 in an incident
-     report is a real cost (flame-graph-analysis).
+THEN inspect actual traces/profiles; named methods/classes can help, but a lambda
+     is not automatically undiagnosable (flame-graph-analysis).
 
 IF a pattern exists to defer or offload work
 THEN check whether virtual threads remove the need
@@ -136,6 +141,9 @@ THEN consider ScopedValue on Java 25+. ThreadLocal remains appropriate for
 - **"No pattern" as an answer.** Modern features make it easier to reach, not less legitimate.
 
 ## References
+
+Return the existing mechanism, proposed replacement or reason to retain it, target compatibility,
+preserved contracts and checks executed versus pending. A shorter class list is not validation.
 
 - [Feature to pattern](references/feature-to-pattern.md) — each modern Java feature with the
   patterns it changes and how: records, sealed types, pattern matching, switch expressions,

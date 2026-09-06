@@ -2,17 +2,17 @@
 
 ## Classify before rewriting
 
-| What the `ThreadLocal` holds                                                       | Replace with                                             | Why                                                                                 |
-| ---------------------------------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Per-request context read by indirect callees                                       | `ScopedValue`                                            | one-way, immutable, lifetime is the block                                           |
-| An expensive object reused per thread (`SimpleDateFormat`, a buffer, a connection) | a pool, or a shared immutable instance                   | a per-thread cache multiplied by a million threads is a leak with a nicer name      |
-| Mutable state a callee writes back to the caller                                   | a return value, or an explicit accumulator object        | the write-back is the design defect; `ScopedValue` cannot express it and should not |
-| A framework's own context (`MDC`, `SecurityContextHolder`)                         | keep it, and set it from a `ScopedValue` at the boundary | the framework owns the read path                                                    |
-| A cache keyed by thread in a **bounded** platform pool                             | leave it alone                                           | it works, it is measured, and churn has a cost                                      |
+| What the `ThreadLocal` holds                                                       | Replace with                                             | Why                                                                              |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Per-request context read by indirect callees                                       | `ScopedValue`                                            | one-way, immutable, lifetime is the block                                        |
+| An expensive object reused per thread (`SimpleDateFormat`, a buffer, a connection) | a pool, or a shared immutable instance                   | many distinct live objects can exhaust memory without being a leak               |
+| Mutable state a callee writes back to the caller                                   | a return value, or an explicit accumulator object        | make write-back explicit; mutable referents still need ownership/synchronization |
+| A framework's own context (`MDC`, `SecurityContextHolder`)                         | keep it, and set it from a `ScopedValue` at the boundary | the framework owns the read path                                                 |
+| A cache keyed by thread in a **bounded** platform pool                             | leave it alone                                           | it works, it is measured, and churn has a cost                                   |
 
 Only the first row is a `ScopedValue`. Rewriting the second row into a `ScopedValue`
-recreates the expensive object on every request, which is a latency regression disguised as
-modernisation.
+may recreate the object per request; measure lifecycle and allocation rather than assuming
+an improvement or regression.
 
 ## The mechanical rewrite
 
@@ -30,9 +30,9 @@ public final class RequestContext {
 public final class RequestContext {
     private static final ScopedValue<Tenant> TENANT = ScopedValue.newInstance();
 
-    public static <R, X extends Throwable> R with(Tenant t, ScopedValue.CallableOp<R, X> op)
+    static <R, X extends Throwable> R with(Tenant t, ScopedValue.CallableOp<R, X> op)
             throws X {
-        return ScopedValue.where(TENANT, t).call(op);        // binding lives exactly here
+        return ScopedValue.where(TENANT, Objects.requireNonNull(t)).call(op);
     }
 
     public static Tenant current() {
@@ -46,7 +46,9 @@ forget, and the failure mode for "nobody bound it" is an exception at the read r
 `null` that travels three frames before it becomes an NPE.
 
 Keep the `ScopedValue` field **private**. It is a capability: whoever can see it can bind
-it. Package-private is the widest that is usually defensible.
+it. A public binding helper also grants authority even when the key is private. Restrict
+its callers and validate privileged tenant selection from authenticated context; ScopedValue
+is not a security sandbox.
 
 ## Binding several values
 
@@ -58,7 +60,7 @@ ScopedValue.where(TENANT, tenant)
 ```
 
 One carrier, one scope, one nesting level. A chain of nested `run` calls does the same thing
-with more stack and no benefit.
+with different intermediate lifetimes; use nesting when those lifetimes matter.
 
 ## Rebinding for callees
 
@@ -70,12 +72,13 @@ void handleAdminRequest() {
     ScopedValue.where(TENANT, Tenant.SYSTEM).run(() -> {
         migrate();          // sees SYSTEM
     });
-    // TENANT is "acme" again — this frame never saw the change
+    // TENANT is "acme" again, including after exceptional unwinding of the nested binding
 }
 ```
 
-Rebinding is visible to callees only. The method that rebinds cannot change what it itself
-sees, which is what makes "who could have modified this?" answerable by reading the code.
+Code inside the nested operation sees SYSTEM, including synchronous callbacks into the same
+object. Code after it sees the restored outer binding: the boundary is dynamic execution,
+not method or object identity.
 
 ## `InheritableThreadLocal` has no equivalent, on purpose
 
@@ -91,8 +94,8 @@ try (var scope = StructuredTaskScope.open()) {       // preview API — see stru
 }
 
 Thread.ofVirtual().start(() -> useTenant());          // sees NOTHING: NoSuchElementException
-executor.submit(() -> useTenant());                   // sees NOTHING
-CompletableFuture.supplyAsync(() -> useTenant());     // sees NOTHING
+executor.submit(() -> useTenant());                   // no automatic propagation
+CompletableFuture.supplyAsync(() -> useTenant());     // no automatic propagation
 ```
 
 This is the migration's sharpest edge. Code that used `InheritableThreadLocal` and started
@@ -117,9 +120,9 @@ on that thread reads the previous task's user — a real security bug, not a tid
 The whole class of bug disappears with `ScopedValue` because the binding is popped when the
 block exits, including on exception.
 
-While both exist during a migration, keep the `finally` and add an assertion in the filter
-that the context is empty on entry. That assertion is what catches the one path that still
-sets without removing.
+While both exist, retain cleanup and check the expected entry state. Nested calls may have
+legitimate outer context: restore it instead of requiring empty entry. Explicit capture can
+retain a referent beyond the original scope; bound the task lifetime and retained state.
 
 ## Testing code that reads a binding
 
@@ -146,9 +149,13 @@ context around the test method — but keep at least one test that runs unbound.
 - [ ] Every `ThreadLocal` classified against the table above before being touched
 - [ ] `ScopedValue` fields are `private static final` and never exposed by a getter
       returning the `ScopedValue` itself
-- [ ] The bound value is deeply immutable
+- [ ] The value is immutable or has explicit confinement/synchronization for every access
 - [ ] Binding happens at one boundary per entry point, not scattered
 - [ ] No `Thread.start`, `executor.submit` or `CompletableFuture` on a path that expects to
       inherit a binding — or an explicit capture at each one
 - [ ] Unbound reads use `orElse`/`orElseThrow` with a message that names the missing context
 - [ ] A test exercises the unbound path
+
+## Primary reference
+
+- [Java 25 ScopedValue API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ScopedValue.html) — dynamic scope, capabilities, exceptional restoration and capture at scope creation.

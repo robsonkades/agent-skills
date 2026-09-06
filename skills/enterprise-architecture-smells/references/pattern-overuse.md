@@ -7,9 +7,10 @@ sometimes imaginary. This is how to tell which.
 
 For any abstraction under review:
 
-1. **What varies behind it?** Name the second implementation — existing, or scheduled with a
-   date. "We might switch databases" is not an answer; nobody switches, and if they did, the
-   abstraction would not survive contact with the new engine's features.
+1. **What responsibility does it isolate?** Identify actual variation, ownership, policy or
+   a stable caller contract. Database portability needs concrete supported operations and
+   compatibility evidence; a second implementation is useful evidence, not a prerequisite
+   for every boundary.
 2. **What would break if it were deleted?** If the answer is "nothing, callers would use the
    concrete type", it is a file.
 3. **What does it cost per change?** Files touched to add a field; mocks per test; hops in a
@@ -17,7 +18,8 @@ For any abstraction under review:
 4. **Who is it for?** An abstraction for a future team is speculative; one for a caller that
    exists today is real.
 
-Two or more weak answers is a strong signal to remove it.
+Weak answers justify investigation; remove only after establishing cost and the contracts
+that must survive. Do not turn the question count into a deletion threshold.
 
 ## Interface-per-class
 
@@ -26,26 +28,26 @@ public interface OrderService { OrderId place(PlaceOrderCommand c); }
 public class OrderServiceImpl implements OrderService { ... }
 ```
 
-**The claimed benefit:** testability and flexibility. **The reality:** modern mocking
-libraries mock classes; there is no second implementation; and the interface's methods change
-whenever the class's do, so nothing is decoupled.
+**The claimed benefit:** testability and flexibility. **Check:** does the installed mocking
+toolchain support the concrete class, and does the interface constrain callers or establish
+ownership? Co-changing methods are evidence of coupling, not proof the interface adds nothing.
 
-**Cost:** two files per concept, one indirection in every navigation, and `Impl` in a name,
-which is an admission that the interface names nothing.
+**Possible cost:** parallel edits and extra navigation. An `Impl` suffix alone is not
+evidence of a meaningless interface.
 
 **Keep it when:** the interface is owned by a different package than the implementation and
 that inversion is doing architectural work (`enterprise-base-patterns`); there is a genuine
 second implementation; or it narrows a wide framework surface deliberately.
 
-**Delete it when:** interface and implementation live in the same package, change together
-and have one implementation.
+**Consider deleting when:** it adds no required contract or boundary and its indirection has
+measurable cost. Check public API consumers, dependency injection and JDK-versus-class proxy
+behavior first; package placement and implementation count are insufficient.
 
 ## Generic repository
 
-Covered in the catalogue; the overuse-specific point is that its generality is exactly what
-makes it useless. A base offering only what **all** entities share can only offer CRUD, so
-every aggregate gets a surface it did not ask for and none gets what it needs. Generality and
-usefulness trade off directly here, and the trade is visible in the method list.
+Covered in the catalogue; inspect whether the generic surface exposes operations callers
+must not perform or forces domain queries elsewhere. Generic implementation reuse and a
+selective interface can be useful; type parameters alone establish neither harm nor value.
 
 ## The mapping chain
 
@@ -57,11 +59,13 @@ Five representations. Typically two pairs are structurally identical, and a new 
 five-file change with two chances to forget one.
 
 **The test:** for each adjacent pair, name a field that differs, or a reason one must change
-without the other. Pairs with no answer collapse into one.
+without the other, including trust and serialization policy. Pairs with no justified
+boundary are candidates for consolidation after compatibility checks.
 
-**What survives the collapse:** the domain type (if a domain model is the choice) and the
-wire type at a remote boundary. Two representations, one mapping — which is the normal
-healthy shape (`remote-facade-and-dto`).
+**What survives the collapse:** representations justified by persistence, domain, read/write
+permissions or independently versioned wire contracts. Identical fields can still have
+different trust and evolution requirements; there is no universal healthy representation
+count (`remote-facade-and-dto`).
 
 ## Speculative plugin points
 
@@ -74,16 +78,16 @@ public interface PricingStrategy { Money price(Order o); }
 **Cost:** a configuration key, a wiring test, a runtime misconfiguration failure mode, and a
 call site that no longer says what happens.
 
-**Rule:** a plugin point requires a second implementation to exist or to be scheduled with a
-date. Variation that is _anticipated_ is cheaper to add when it arrives — extracting an
-interface from a concrete class is a five-minute IDE refactor
-(`architecture-decision-making`).
+**Rule:** justify the extension contract and its present cost. A supported external SPI can
+be useful with one bundled implementation; an internal speculative switch may be cheaper to
+defer. Later extraction can break published consumers or configuration, so estimate the
+actual compatibility work (`architecture-decision-making`).
 
 ## Premature service layer
 
-Covered in `service-layer-design`. The overuse-specific point: a pass-through service is not
-just useless, it is **actively harmful**, because it establishes that the service layer is a
-forwarding convention. That belief is what later makes it the natural home for every rule.
+Covered in `service-layer-design`. Investigate forwarding conventions that attract unrelated
+rules or create repeated edits. A forwarding method may still define authorization,
+transactions or a stable application entry point through configuration/annotations.
 
 ## Premature domain model
 
@@ -101,8 +105,8 @@ forwarding convention. That belief is what later makes it the natural home for e
 onboarding — with no invariant to protect.
 
 **Rule:** a domain model is justified by interacting rules, not by an entity's importance
-(`domain-logic-organization`). Reference data with three validations wants Active Record and
-should say so.
+(`domain-logic-organization`). Simple reference data may fit Transaction Script with a gateway
+or Active Record; choose from the actual rules and repository conventions, not a validation count.
 
 ## Abstraction over a framework abstraction
 
@@ -111,48 +115,58 @@ public interface CacheService { <T> T get(String key, Supplier<T> loader); }
 class RedisCacheService implements CacheService { /* delegates to RedisTemplate */ }
 ```
 
-The framework already abstracts the cache. This layer adds a name and removes features
-(TTL per entry, conditional caching, statistics). When the framework is replaced, this
-interface will not survive either, because it was shaped by the framework it wraps.
+Inspect which cache contract callers need. This example omits expiry, type/key ownership and
+failure semantics; that may be intentional narrowing or a source of incorrect behavior.
+Framework substitution needs compatibility tests, not a portability claim based on the name.
 
-**Same shape, same verdict:** a `TransactionService` over `@Transactional`; a `HttpService`
-over `RestClient`; a `MessagingService` over a broker template. Wrap an external system
-(`enterprise-base-patterns`), not your own framework.
+**Apply the same questions to:** a `TransactionService` over `@Transactional`; a `HttpService`
+over `RestClient`; a `MessagingService` over a broker template. Each can be useful when it
+owns policy or isolates a dependency. Establish that contribution before keeping or removing it
+(`enterprise-base-patterns`).
 
 ## Configuration as a substitute for code
 
-"Make it configurable so business users can change it" produces a mechanism with no type
-checking, no tests, no version control of the rules, no IDE, and an interpreter you now
-maintain.
+"Make it configurable so business users can change it" introduces another change path.
+Inspect schema/type validation, versioned rules, tests, permissions and rollback; those
+controls can exist for configuration but must be designed and operated.
 
-**Justified when:** the variation is genuinely per-tenant and unbounded, business users
+**Justified when:** the variation serves real tenant or operational needs, authorized users
 really do change it, and there is a review and rollback path for changes.
 
-**Not justified when:** it is a way to avoid a deploy. Fix the deploy pipeline; it is
-cheaper and it benefits everything else (`architecture-decision-making`).
+**Compare with:** a code change and deploy, including the cost of improving that pipeline.
+Independent rollout, emergency controls or tenant settings can justify runtime configuration;
+avoiding deployment alone does not establish that it is cheaper (`architecture-decision-making`).
 
 ## Removing an abstraction safely
 
-1. **Inline at one call site** and run the tests. Confirms nothing hidden depended on it.
-2. **Inline the rest** mechanically, one commit.
-3. **Delete the abstraction and its tests.** Tests of a deleted indirection are not coverage
-   loss; they tested the indirection.
-4. **Re-check the files-per-change metric.** The number should drop; if it does not, the
-   abstraction was not the cost.
+1. **Inventory contracts and indirect consumers.** Include reflective/configuration uses,
+   published APIs, transactions, authorization and proxy advice. Define preserved behavior.
+2. **Change one call path** and run focused behavior/contract tests through the real boundary.
+   A passing unit test does not establish the absence of hidden dependencies.
+3. **Migrate remaining callers and remove the redundant type.** Preserve useful assertions
+   at the remaining owner; delete only tests of behavior that intentionally ceases to exist.
+4. **Check the claimed benefit**, such as simpler rule changes or less navigation, alongside
+   behavior and compatibility. A lower raw file count is neither necessary nor sufficient.
 
-Do not remove an abstraction and add a different one in the same change. If the removal is
-correct, it stands alone; if it needs a replacement, the abstraction was doing something and
-the analysis was wrong (`architecture-refactoring-paths`).
+Replacing an overly broad boundary with a narrower one can be correct. Keep the migration
+small and reviewable, and explain which responsibility survives and which cost disappears
+(`architecture-refactoring-paths`).
 
 ## The counterweight
 
 Under-abstraction is equally real and this reference is not an argument for none. The
 abstractions that reliably pay in enterprise applications:
 
-- **A gateway around every external system** — including the clock and the filesystem.
-- **The transaction boundary at one layer.**
-- **A boundary type at every remote edge.**
+- **A gateway where dependency policy or isolation needs an owner** — existing clock or
+  filesystem APIs may already provide the needed seam.
+- **Transaction demarcation matching the unit of work.**
+- **An explicit contract at a remote edge.**
 - **An aggregate boundary where an invariant spans objects.**
-- **One error shape, produced in one place.**
+- **Consistent error translation at the relevant boundary.**
 
 Each has a named, immediate benefit. That is the standard the questionable ones fail.
+
+Before Spring interface or forwarding-layer removal, consult the project's version of
+[Spring AOP proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html):
+self-invocation bypasses proxy advice, and changing interface/class proxying can change which
+methods can be advised. Verify transaction/security behavior through the configured entry point.

@@ -18,12 +18,12 @@ production attribution requires a second measurement and an intervention.
 
 | Fitted evidence                                                   | Safe reading                                                  | Do not conclude yet                                 |
 | ----------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------- |
-| `β` interval includes zero; curve saturates                       | Amdahl-like saturation is sufficient over measured range      | there is no coordination cost at larger N           |
+| `β` interval includes zero; curve saturates                       | compare beta=0 predictions/residuals before preferring it     | there is no coordination cost at larger N           |
 | positive stable `α`, `β≈0`                                        | diminishing returns consistent with a linear denominator term | a particular lock or serial fraction equals `α`     |
 | positive stable `β`; held-out throughput declines                 | USL represents a retrograde region over tested range          | pairwise network messages are the cause             |
 | coefficients unstable/correlated across bootstrap/leave-one-N-out | data do not identify the terms                                | choose an action from point estimates               |
 | negative coefficient/unconstrained superlinear fit                | standard nonnegative USL regime is unsupported                | “bad optimizer”; superlinearity is impossible       |
-| residual step at one N                                            | topology/hardware/state phase boundary                        | smooth contention/coherency coefficient explains it |
+| residual step at one N                                            | investigate phase change, drift, outlier or measurement fault | smooth contention/coherency coefficient explains it |
 
 Compare contributions at the actual operating N, with coefficient uncertainty:
 
@@ -68,9 +68,10 @@ causal path to throughput.
    downstream demand, errors and latency may change.
 6. Revert/toggle safely or use a restarted control to challenge deploy/warm-state confounding.
 
-Useful results include “lock wait fell but throughput curve did not”—the lock was visible but not
-capacity-limiting—or “β fell and α rose”—coordination was removed but a serial bottleneck became
-dominant.
+Useful results include “lock wait fell but throughput did not improve detectably”—the changed
+wait may not have limited capacity at these N, or another bottleneck/noise may mask the effect.
+“Beta fell and alpha rose” is coefficient movement; establish reduced coordination and a new
+serial bottleneck independently before claiming that mechanism changed.
 
 ## Decision framework
 

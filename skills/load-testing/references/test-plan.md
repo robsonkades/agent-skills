@@ -35,6 +35,10 @@ Verify syntax against the installed version's official documentation.
 
 Classify scheduling semantics, not names.
 
+Pin generator plugins and Java/JDK compatibility separately from the target service's Java
+baseline. A generator upgrade or a new executor is an experimental change, not a prerequisite
+to accepting this skill; use supported tools with equivalent measured scheduling semantics.
+
 ## Generator sizing
 
 For arrival scheduling, initial concurrent iterations are:
@@ -50,6 +54,11 @@ connections and overhead.
 For k6 arrival-rate executors, preallocate enough VUs to avoid allocation as a confound.
 Dropped iterations mean scheduled starts could not occur; retain the achieved arrival
 process and diagnose VU supply versus generator/iteration degradation.
+
+For these executors, no free VU can mean the target slowed and existing iterations remain
+busy. In iteration-count executors the same `dropped_iterations` metric can instead mean
+`maxDuration` expired. Interpret it against the selected executor. Measure scheduled-to-actual
+start delay; dropped-start counts alone do not quantify arrival jitter or delayed catch-up bursts.
 
 ## Environment contract
 
@@ -70,6 +79,28 @@ commitment and paging; use them only when matching production or isolating that 
 - [ ] incomplete work, timeouts and graceful stop remain visible
 - [ ] setup/reset is reproducible enough for the claim
 - [ ] telemetry overhead is measured or held constant
+
+Prove the correctness gate can fail with a deliberately invalid response in an isolated pilot.
+In k6, a false `check()` records a failed check but does not by itself fail the test's exit
+status; bind required checks to thresholds or explicit failure handling. HTTP status success
+is also insufficient for business correctness. Keep safety abort criteria separate from
+acceptance thresholds so a planned overload experiment can retain rejection evidence.
+
+## Timing and outcome boundaries
+
+For k6, `http_req_duration` measures sending, waiting and receiving; it excludes initial
+DNS/connection setup. Capture blocked/connect/TLS phases or an explicit end-to-end timer
+when the claim includes them. `http_req_*` timestamps are emitted at response completion or
+timeout, so grouping them by timestamp creates completion windows, not admission cohorts.
+Do not add per-phase percentiles to reconstruct end-to-end p99.
+
+For a wall-clock window, reconcile `end_in_flight = start_in_flight + starts − departures`
+at each boundary. Starts and completions within that window are usually different requests.
+For an admission cohort, retain IDs and terminal outcomes plus unresolved members through
+the declared follow-up period. A measured client timeout is a terminal client outcome;
+the server's eventual completion may still be unknown, and its work may retain resources.
+Keep graceful drain separate from the active offered-load interval instead of diluting rates
+by dividing active-phase work by a longer teardown-inclusive duration.
 
 ## Run validity matrix
 
@@ -105,6 +136,13 @@ metadata and analysis code.
 
 ## Safety
 
-Authorize production load; define separate safety abort and SLO thresholds; cap load;
-prevent real payments/messages; protect credentials and personal data; coordinate
-dependency quotas; verify recovery; and clean test state.
+Use existing authorization for the named target and load bounds; obtain missing authorization
+before production execution or expansion beyond those bounds. Define safety abort and SLO
+thresholds separately, cap load, isolate external effects with test accounts/sinks, protect
+credentials/data, respect dependency quotas, verify recovery and clean only owned test state.
+
+## Sources for tool-specific interpretation
+
+- [k6 built-in metric boundaries](https://grafana.com/docs/k6/latest/using-k6/metrics/reference/)
+- [k6 checks and thresholds](https://grafana.com/docs/k6/latest/using-k6/checks/)
+- [k6 dropped iterations](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/dropped-iterations/)

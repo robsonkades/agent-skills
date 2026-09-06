@@ -6,18 +6,18 @@ service assumptions are tested.
 
 ## Structural map
 
-| System                                               | Candidate structural abstraction                        | Evidence/qualification required                                                                 |
-| ---------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Fixed `ThreadPoolExecutor` + shared queue            | one queue, `c` worker positions, finite/infinite `K`    | service includes all time occupying worker; arrivals/classes/discipline are measured            |
-| Growing `ThreadPoolExecutor`                         | time/state-dependent `c` coupled to queue-full rule     | actual worker history, keep-alive, prestart and queue offer behaviour                           |
-| Connection pool with acquisition wait/deadline       | finite servers with abandonment                         | checkout-to-return service, acquisition patience, unusable connections, database bottleneck     |
-| Semaphore `tryAcquire` no wait                       | loss/admission gate                                     | retry feedback and service distribution; Erlang B only for M/M/c/c assumptions                  |
-| Event loop or one serial partition lane              | one server per lane, often general service              | scheduling/batches, handler blocking, key skew and cross-lane shared resources                  |
-| Kafka consumer group                                 | partition-affine queues mapped to consumers             | poll batches, one consumer serving multiple partitions, pause/rebalance/commit and key skew     |
-| Pods behind a load balancer                          | routed per-pod queues, not automatically a shared M/M/c | connection stickiness, policy, stale load state, retries, heterogeneity and shared dependencies |
-| Autoscaled fleet                                     | transient routed network with delayed `c(t)`            | metric/control/scheduling/readiness/warm-up delays and scale-down policy                        |
-| Fixed users with think time                          | closed network                                          | population/session semantics and think/service distributions match production                   |
-| Exogenous arriving sessions with sequential journeys | semi-open network                                       | session arrival process plus per-session closed/request routing                                 |
+| System                                               | Candidate structural abstraction                        | Evidence/qualification required                                                                              |
+| ---------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Fixed `ThreadPoolExecutor` + shared queue            | one queue, `c` worker positions, finite/infinite `K`    | service includes all time occupying worker; arrivals/classes/discipline are measured                         |
+| Growing `ThreadPoolExecutor`                         | time/state-dependent `c` coupled to queue-full rule     | actual worker history, keep-alive, prestart and queue offer behaviour                                        |
+| Connection pool with acquisition wait/deadline       | finite servers with abandonment                         | checkout-to-return service, acquisition patience, unusable connections, database bottleneck                  |
+| Semaphore `tryAcquire` no wait                       | loss/admission gate                                     | Poisson arrivals, IID holding times, independent equivalent slots and no waiting/retry feedback for Erlang B |
+| Event loop or one serial partition lane              | one server per lane, often general service              | scheduling/batches, handler blocking, key skew and cross-lane shared resources                               |
+| Kafka consumer group                                 | partition-affine queues mapped to consumers             | poll batches, one consumer serving multiple partitions, pause/rebalance/commit and key skew                  |
+| Pods behind a load balancer                          | routed per-pod queues, not automatically a shared M/M/c | connection stickiness, policy, stale load state, retries, heterogeneity and shared dependencies              |
+| Autoscaled fleet                                     | transient routed network with delayed `c(t)`            | metric/control/scheduling/readiness/warm-up delays and scale-down policy                                     |
+| Fixed users with think time                          | closed network                                          | population/session semantics and think/service distributions match production                                |
+| Exogenous arriving sessions with sequential journeys | semi-open network                                       | session arrival process plus per-session closed/request routing                                              |
 
 `c` counts model service positions, not pods or threads by naming. A hot partition can be a
 single-server bottleneck while idle partitions coexist. A consumer with several partitions is not
@@ -62,7 +62,7 @@ upstream boundary and outcome.
 
 ## Retries, hedges and feedback
 
-If each failed attempt independently retries with fixed probability `p` forever, expected attempts
+If each attempt independently requires another attempt with fixed probability `0≤p<1`, expected attempts
 per original request are `1/(1−p)`; with at most three total attempts they are `1+p+p²`. Production
 retries are normally state-dependent: timeout probability rises with queue wait, retries add load,
 and shared backoff schedules synchronize. Treat the formulas as low-load accounting checks, not a
@@ -79,15 +79,23 @@ from averaging stationary responses across regimes. Neither calculation models a
 unless each regime lasts long enough to equilibrate and routing/service remain fixed. Never replace
 mean utilisation with p95 utilisation inside the formula.
 
-For a first fluid overload bound with aggregate service capacity `μ_cap(t)`:
+For an infinite-buffer fluid approximation with work-conserving aggregate capacity `μ_cap(t)`,
+express arrivals and capacity in matching work units (items/s only for a compatible service mix):
 
 ```text
 dQ/dt ≈ admitted_rate(t) − μ_cap(t), while Q>0
-Q(t)   = max(0, Q(0) + integral(admitted−capacity))
+dQ/dt ≈ max(0, admitted_rate(t) − μ_cap(t)), while Q=0
+Y(t)   = Q(0) + integral_0^t(admitted_rate(s) − μ_cap(s)) ds
+Q(t)   = Y(t) − min(0, inf_{0≤s≤t} Y(s))
 ```
 
-This estimates backlog, not stochastic tail/fairness. During a step from capacity 1000/s to offered
-1300/s for 90 s, absent shedding, at most the simple constant-rate model accumulates 27,000 items.
+Reflect at zero throughout the path: unused capacity cannot be saved for a later burst.
+Starting empty, 10 s with arrivals 0/s and capacity 100/s followed by 10 s at 150/s leaves
+500 items, not `max(0, −1000+500)=0`. For piecewise-constant net rates, clamp at every interval
+boundary and split at rate changes; coarse averages can hide an idle period followed by a burst.
+
+This estimates fluid backlog, not a stochastic upper bound, tail or fairness. Starting empty with
+capacity 1000/s and admitted arrivals 1300/s for 90 s, this model accumulates 27,000 items.
 If new capacity is 1500/s and arrivals remain 1300/s, net drain is 200/s: 135 s to clear. Real
 service demand, warm-up, finite queues, cancellation and routing make the curve piecewise.
 
@@ -140,4 +148,5 @@ depth; verify stale work does not consume recovery capacity after callers leave.
 - [Schroeder et al., “Open Versus Closed: A Cautionary Tale”](https://www.usenix.org/conference/nsdi-06/open-versus-closed-cautionary-tale)
 - Denning and Buzen, [“The Operational Analysis of Queueing Network Models”](https://www.columbia.edu/~ww2040/8100S12/DenningBuzen1978.pdf)
 - Harchol-Balter, [_Performance Modeling and Design of Computer Systems_](https://www.cs.cmu.edu/~harchol/PerformanceModeling/book.html)
+- Fendick and Whitt, [fluid reflection models, section 4](https://www.columbia.edu/~ww2040/FW112822_submit.pdf)
 - [Oracle JDK 25 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)

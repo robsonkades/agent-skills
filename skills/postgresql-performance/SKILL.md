@@ -30,6 +30,14 @@ pool mode and session features; pgjdbc prepare, batch, fetch, timeout and autoco
 
 ## Workflow
 
+Start with available evidence; unavailable counters/plans remain explicit gaps, not a reason
+to guess or require every contract field. `EXPLAIN ANALYZE` executes the statement, including
+writes and invoked functions. Inspect side effects and use an isolated representative copy or
+an explicitly authorized bounded production measurement; transaction rollback does not undo
+sequence advancement or all external effects. Plain EXPLAIN is the first alternative when
+execution is unsuitable. Diagnosis alone does not authorize session termination, slot removal
+or blocking rewrites.
+
 1. Bound the symptom to statement, relation, database, instance, or replica and align the workload,
    plan, VACUUM/checkpoint, transaction, and deployment intervals.
 2. Classify the dominant mechanism:
@@ -50,8 +58,10 @@ pool mode and session features; pgjdbc prepare, batch, fetch, timeout and autoco
   holders can prevent removal even when VACUUM reports success.
 - Autovacuum is correctness-critical because of transaction-ID wraparound. Never disable it as a
   tuning fix; tune relation thresholds/cost/capacity from churn, table size, and completion evidence.
-- HOT avoids touching indexes only when updated columns are not index-dependent and a new version fits
-  on the same page. Choose `fillfactor` from row size/update cadence and validate the HOT ratio delta.
+- HOT avoids new ordinary index entries when updated columns are not referenced by non-summarizing
+  indexes and the new version fits on the same page. Summarizing indexes such as BRIN are an
+  exception and may still need summary maintenance. Choose `fillfactor` from row size/update cadence
+  and validate the HOT ratio delta.
 - Index-only scan is a runtime condition, not only an index definition. High `Heap Fetches` points to
   visibility-map/maintenance state.
 - `work_mem` is per sort/hash operation, per worker/session, and hash can use a multiplier. Count plan
@@ -64,7 +74,8 @@ pool mode and session features; pgjdbc prepare, batch, fetch, timeout and autoco
   statement support does not make `SET`, LISTEN, temp tables, session advisory locks, or every SQL
   PREPARE use safe.
 - READ COMMITTED, REPEATABLE READ, and SERIALIZABLE are MVCC modes with different snapshot/conflict
-  behavior. Serialization failure `40001` is an expected control path requiring safe bounded retry.
+  behavior. Serialization failure `40001` requires retrying the whole transaction, including
+  decisions that produced its SQL, under a safe bounded policy; external effects need separate protection.
 - A bigger `max_connections`, `work_mem`, WAL size, or cost-constant change is not a diagnosis. State
   the measured bottleneck, multiplication, expected effect, and failure guardrail.
 

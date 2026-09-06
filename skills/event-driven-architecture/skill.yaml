@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: event-driven-architecture
-version: 1.3.0
+version: 1.3.1
 description: >-
   Choosing facts, asynchronous commands or request/response across services; then designing
   choreography/orchestration, payload authority, evolution horizon and consumer runtime.
@@ -44,6 +44,7 @@ dependencies:
 suggests:
   - connection-pool-sizing
   - distributed-transactions-and-sagas
+  - idempotency
   - message-ordering-and-partitioning
   - schema-evolution-and-compatibility
   - startup-cds-crac-leyden

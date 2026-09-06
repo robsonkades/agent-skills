@@ -24,6 +24,13 @@ said whether null was allowed.
 
 ## Workflow
 
+Inspect compiler release/toolchains, runtime, existing annotation vocabulary, checker scope,
+JSpecify/tool versions and mapper configuration before edits. No single authoring baseline is
+declared; references discuss JSpecify 1.0 and Java SE 25, while collection factories need Java 9+,
+`List.copyOf` Java 10+, records and `Stream.toList` Java 16+. Use target-compatible alternatives;
+do not upgrade or introduce a checker/dependency unless annotation adoption is in scope.
+When tooling or a construction path is unavailable, report the gap rather than claiming null safety.
+
 1. **Name what each null means.** Absence (no promotion for this SKU), error (mandatory
    field missing), or uninitialised (lifecycle not yet complete). Different meanings get
    different treatments: absence becomes an empty collection or an Optional return, error
@@ -48,8 +55,9 @@ said whether null was allowed.
 - Public constructors and entry points reject values their contract marks non-null, preferably at
   entry with a stable field/error identifier. In records this belongs in the compact
   constructor; `List.copyOf` rejects a null list and null elements in the same move.
-- Return `List.of()` / `Map.of()` / `Set.of()` for "nothing", never null. A null
-  collection forces every caller into a check that an empty one makes unnecessary.
+- Prefer an empty collection when the contract means zero elements. `List.of()` / `Map.of()` /
+  `Set.of()` are unmodifiable; preserve a published mutable-return contract with a fresh mutable
+  empty collection. Do not collapse unknown/not-loaded/error into empty without an explicit policy.
 - Never claim an annotation prevents anything at runtime. `@NullMarked` without a checker
   in the build is documentation; with one, it is a compile-time contract. Say which.
 - `Map.get` returns null for both "absent" and "mapped to null" — resolve it with
@@ -84,6 +92,11 @@ said whether null was allowed.
    sensitive object contents while diagnosing.
 
 ## References
+
+Deliver each null's meaning, affected declaration/boundary, chosen representation and checks
+executed. Report checker version, analyzed scope and any unchecked dependencies; pair compile
+fixtures with runtime boundary regressions. Neither annotations nor a zero-warning partial scan
+prove that every runtime construction path is safe.
 
 - [Nullability contracts](references/nullability-contracts.md) — read when introducing
   JSpecify to a codebase, deciding annotation placement, or judging whether a flagged

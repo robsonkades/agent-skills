@@ -10,6 +10,18 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.5.1] — 2026-09-05
+
+### Fixed
+
+- Reviewed the 275-skill catalog and corrected version-sensitive Java/JVM guidance,
+  concurrency and resource-lifecycle contracts, database behavior, distributed-system
+  failure handling, and performance measurement assumptions.
+- Clarified evidence requirements, scope boundaries, reference routing and validation
+  limits; distinguish tested examples from unexecuted agent evaluations.
+- Updated skill versions, declared missing cross-skill dependencies and suggestions,
+  and regenerated registry integrity hashes for the revised packages.
+
 ## [1.5.0] — 2026-09-04
 
 ### Added

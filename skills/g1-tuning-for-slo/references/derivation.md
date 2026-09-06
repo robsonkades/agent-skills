@@ -5,10 +5,11 @@
 Useful for a starting point, not a description of how G1 decides:
 
 ```
-Pause_Young ≈ T_root_scan + T_merge_remset + T_object_copy + T_other
+Pause_Young ≈ T_root_scan + T_merge_remset + T_scan_heap_roots + T_object_copy + T_other
 
 T_root_scan     ≈ measured root work (varies with threads, stacks, roots and workers)
 T_merge_remset  ≈ proportional to the RSet size of the regions in the collection set
+T_scan_heap_roots ≈ measured incoming-reference card scanning after merging
 T_object_copy   ≈ live_bytes_in_young / copy_bandwidth
 T_other         ≈ measured residual (bookkeeping, reference processing, synchronization)
 
@@ -25,7 +26,8 @@ young size is usually an optimistic upper bound: the real policy runs slightly s
 keep a confidence margin.
 
 Copy bandwidth is measured, not assumed. `Object Copy` from
-`-Xlog:gc+phases=debug` is the time signal; survivor/old region counts provide a coarse
+`-Xlog:gc+phases=debug` is the time signal; distinguish worker Sum from wall/critical-worker
+duration before computing bandwidth, or parallelism gets counted twice. Survivor/old region counts provide a coarse
 capacity estimate, not exact copied bytes because regions are partially occupied and old
 growth can mix promotion with region lifecycle. Calibrate against JFR/heap evidence when
 the estimate controls a flag, and report its distribution rather than one average.
@@ -71,10 +73,10 @@ of `-Xmx` (`G1YoungGenSizer` recalculates from the current region count). With `
 below `-Xmx` the young generation starts small and grows only as the heap expands — see
 [the policy log](policy-log-and-troubleshooting.md) for the measured effect.
 
-Doubling copy bandwidth does not halve overhead: the interval doubles too, but `T_fixed` does
-not move, so the relative gain shrinks as `T_fixed` occupies more of `T_slo`. The same
-asymmetry explains why cutting `MaxGCPauseMillis` from 200 to 20 raises GC frequency by
-roughly 13× (`(200 − 5) / (20 − 5)`) while overhead percentage rises only a few points.
+This interval approximation uses fresh Eden allocation during mutator time. Survivor occupancy
+reduces available Eden; humongous allocation bypasses it. A rate measured per wall second cannot
+be substituted without accounting for pauses. Compare observed pause-start intervals and total
+pause share instead of extrapolating a universal overhead change from this simplified formula.
 
 ## Region size — required before any calculation in regions
 
@@ -101,17 +103,15 @@ produces a derivation whose numbers do not reconcile.
 
 ## IHOP
 
-Marking must finish before the old generation fills, or G1 is forced into a full GC. IHOP
+Reclamation needs enough headroom through marking and subsequent mixed collections. IHOP
 is compared against **old-generation occupancy** — the bytes in old and humongous regions —
-as a percentage of the current heap capacity, not against total heap usage (the
-`gc+ihop=trace` line reads `threshold: 483183820B (45.00), target occupancy: 1073741824B,
-current occupancy: 201673544B` on a 1 GB heap, executed on 25.0.3).
+against a capacity-derived byte threshold. Do not confuse trigger occupancy in `gc+ergo+ihop`
+with total heap usage printed by the separate `gc+ihop` statistics.
 
 ```
-marking_time      ≈ live_data_in_old / marking_bandwidth
-                    — or, better, read it: the `Concurrent Mark Cycle <ms>` line, or
-                      `predicted marking phase length` from gc+ihop=trace
-marking_bandwidth ≈ 1 GB/s — order of magnitude; measure it
+marking_time      = measured time relevant to the headroom model
+                    — the JDK 25 IHOP predictor uses concurrent-start-to-first-mixed
+                      timing, not just the `Concurrent Mark Cycle <ms>` wrapper
 
 margin = old_gen_allocation_rate × marking_time
   80 MB/s × 10 s = 800 MB of old growth DURING marking
@@ -121,9 +121,10 @@ IHOP_theoretical_max = 1 − (margin + safety_headroom) / heap_size_mb
 
 This approximates the terms used by the adaptive controller (`G1AdaptiveIHOPControl` in
 `g1IHOPControl.cpp`): threshold = internal target − predicted old-generation allocation rate × predicted
-marking time − last young size, where the internal target is the heap minus
+marking time − unrestrained young size. At full heap size, the internal target is heap minus
 `G1ReservePercent + G1HeapWastePercent` (85 percent of a 1 GB heap logs as
-`internal target occupancy: 912680550B`, executed on 25.0.3). So the safety headroom has a
+`internal target occupancy: 912680550B`, executed on 25.0.3). At smaller committed capacity,
+use the two-capacity minimum described in the policy reference. So the safety headroom has a
 policy-derived constraint on this JDK, not a timeless floor: reserve, waste, young size,
 predictor state and implementation can change. A static approximation neither reproduces
 the adaptive controller nor bounds it universally. Prefer adaptive control unless policy
@@ -138,20 +139,21 @@ Two cases where IHOP alone is unlikely to solve the problem, and the derivation 
 - Old occupancy remains near or above the effective threshold after reclamation and cycles
   restart rapidly. Distinguish an oversized live set, ineffective candidates, promotion
   pressure and humongous occupancy; moving IHOP cannot create reclaimable garbage.
-- The trigger is `G1 Humongous Allocation` rather than occupancy: the cycles are being
-  requested by large allocations, and the lever is `G1HeapRegionSize` or the allocation
-  pattern (`g1-internals`), not IHOP.
+- A `G1 Humongous Allocation` cause identifies the allocation path, not independence from
+  IHOP. Inspect the requested bytes and occupancy threshold in `gc+ergo+ihop` before
+  choosing timing, allocation-shape or contiguous-space remedies.
 
 ## Mixed GC cost
 
 ```
-Mixed_GC_pause ≈ old_regions_in_CSet × copy_time_per_region
+Mixed_GC_pause ≈ young_and_base_cost + sum(predicted_old_group_costs)
 
 old_regions_in_CSet: at least  min = ceil(candidates / G1MixedGCCountTarget)
                      at most   max = ceil(G1OldCSetRegionThresholdPercent% × total_regions)
                      and the pause predictor fills between them while time remains —
                      but max is really MAX(min, max): the minimum wins when they disagree
-copy_time_per_region ≈ region_size_mb / copy_bandwidth_mb_s
+copy_time_per_region ≈ live_bytes_in_region / effective_copy_bandwidth
+                      plus attributable root scanning and other work
 ```
 
 The bounds are `G1Policy::calc_min_old_cset_length` and `calc_max_old_cset_length`, applied
@@ -167,61 +169,64 @@ Three further facts that change the arithmetic:
 
 - `candidates` is not "old regions produced": a region with more than
   `G1MixedGCLiveThresholdPercent` (85) live bytes is never a candidate, so a workload
-  whose old regions are mostly live has few candidates and short mixed pauses however the
-  flags are set — and reclaims almost nothing (`g1-internals`).
-- Candidates are ordered by efficiency, reclaimable bytes over predicted cost, so the
-  uniform-cost model is pessimistic: the measured pause usually comes in under the
-  prediction. That makes it safe as a conservative starting point and unsafe as an
-  explanation of collector behaviour.
+  whose old regions are mostly live can have few candidates and little reclaim. This does not
+  guarantee short pauses: young work, incoming roots and other phases remain (`g1-internals`).
+- Efficiency ordering does not make a uniform-cost estimate a safe upper bound. Prediction
+  error, skewed liveness, incoming roots and worker imbalance can make it optimistic.
 - On JDK 25 old regions enter the collection set in **groups** that share one remembered
   set (JDK-8343782; the log reads `available 18 regions (1 groups)`), so the number added
   is a whole number of groups and can exceed the minimum by up to one group.
 
 ## Worked case — mixed GC violating the SLO while young GC is healthy
 
-SLO: p99 ≤ 100 ms. Two percent of peak-hour requests violate it, in specific windows.
+Illustrative arithmetic, not an executed benchmark or measured improvement.
+SLO: p99 ≤ 100 ms. Assume two percent of peak-hour requests violate it, in specific windows.
 Correlating violation timestamps with the GC log shows every violation coinciding with
-`Pause Young (Mixed)` and none with `Pause Young (Normal)` — which is what separates
-"collection set too large" from "heap too small". Raising the heap had only moved the window.
+`Pause Young (Mixed)` and none with `Pause Young (Normal)`. This routes phase analysis;
+it does not distinguish collection-set cost from underlying heap/live-set pressure by itself.
 
 ```
-Measured: alloc 800 MB/s peak, promo 120 MB/s peak
+Hypothetical inputs: alloc 800 MiB/s peak, old growth 120 MiB/s peak
           Young GC p99 = 45 ms (within MaxGCPauseMillis=50)
           Mixed GC p99 = 180 ms (violating the 100 ms SLO)
           Mixed GC interval = 8 s
           Heap 8 GB (8192 MB), region_size 4 MB, total_regions 2048
 
-180 ms = 10% × 2048 × copy_time  ->  copy_time = 180 / 204.8 ≈ 0.879 ms per region
+Observed selected old regions (assumed fixture): 180, not inferred from the 10% cap
+Calibrated young/base contribution: 36 ms
+Effective incremental old cost = (180 - 36) / 180 = 0.8 ms per region
 
 Target 80 ms (margin under the 100 ms SLO):
-  max_regions = 80 / 0.879 ≈ 91
-  max_percent = 91 / 2048 ≈ 4.44%  -> round down -> G1OldCSetRegionThresholdPercent=4
-  regions at that cap = ceil(4% × 2048) = 82   (conservative, below the 91 computed)
+  max_regions = floor((80 - 36) / 0.8) = 55
+  integer percent candidate = 2; ceil(2% × 2048) = 41 regions
+  predicted pause = 36 + 41 × 0.8 = 68.8 ms, before group/prediction effects
 
-Candidates produced per marking cycle (upper bound — regions above the live threshold
-drop out):
-  promo_rate × marking_cycle_time / region_size = 120 × 15 / 4 = 450 regions
+Candidate count from the policy log (assumed fixture): 450 regions.
+Promotion × time is not a candidate-count bound: pre-existing old regions can qualify.
 
 The count target must not force a minimum above the cap:
-  min per mixed GC = ceil(450 / G1MixedGCCountTarget) ≤ 82  ->  target ≥ 6
-  G1MixedGCCountTarget = 6 gives min 75, cap 82: the predictor bounds the pause, the
-  divisor does not. Target 4 would give min 113 > 82 and the cap would be ignored.
+  min per mixed GC = ceil(450 / G1MixedGCCountTarget) ≤ 41 -> target ≥ 11
+  Target 12 gives min 38, cap 41. Check actual group selection and reclamation progress;
+  satisfying this arithmetic does not guarantee the pause goal.
 ```
 
-Derived configuration, and the measured outcome: mixed GC p99 fell to about 78 ms, inside the
-planned 80 ms margin.
+Candidate settings to validate; no post-change result is available for this illustration:
 
 ```bash
 -XX:+UnlockExperimentalVMOptions
--XX:G1OldCSetRegionThresholdPercent=4
--XX:G1MixedGCCountTarget=6
+-XX:G1OldCSetRegionThresholdPercent=2
+-XX:G1MixedGCCountTarget=12
 -XX:InitiatingHeapOccupancyPercent=35
 ```
 
-The IHOP of 35 is derived, not chosen: 8192 MB minus 15 percent headroom (1229 MB) minus
-`120 MB/s × 15 s` (1800 MB) minus the observed young peak (300 Eden regions, 1200 MB)
-leaves 3963 MB, 48 percent of the heap — the ceiling. 35 leaves a further 1065 MB, enough
+An illustrative IHOP of 35 can be checked against the assumed inputs: 8192 MiB minus
+15 percent headroom (1229 MiB), `120 MiB/s × 15 s` (1800 MiB), and the assumed total
+young allowance (300 regions, 1200 MiB)
+leaves 3963 MiB, about 48 percent of the heap in this simplified scenario. 35 leaves about 1096 MiB, enough
 for a promotion spike of about 1.6× the measured peak across one marking cycle.
+
+With adaptive IHOP enabled, 35 sets the initial threshold, not the steady-state threshold.
+Validate startup separately; do not combine an unneeded IHOP change with the mixed-cost experiment.
 
 A `G1MixedGCCountTarget` derived well above the default may never be realised:
 `G1HeapWastePercent` stops the phase once the remaining candidates are not dense enough in

@@ -88,6 +88,13 @@ Test recording and alert rules with controlled traffic/faults; verify labels, ab
 counter resets, delayed ingestion, partial monitoring outage and alert routing. A page is a
 production interface and needs version control, review and tests.
 
+Inspect the deployed Prometheus/rule evaluator version, scrape/evaluation intervals, exporter
+and Java instrumentation library/configuration before recommending syntax or changing buckets.
+The examples are Prometheus rule fragments, not Java code or a ready-to-load rule file; no
+Java upgrade or dependency addition is implied. Return the SLI population/query, target/window,
+budget interpretation, actionable alert policy and checks performed. Keep a safety verdict
+conditional when traffic, coverage or rule-evaluation evidence is missing.
+
 ### 6. Operate and retire
 
 Review firings by precision, recall, time-to-detect, time-to-action and user impact. Merge
@@ -100,20 +107,25 @@ exercise it and verify assumptions.
 For an event-based objective target \(S\):
 
 \[
-e_b=1-S,qquad
+e_b=1-S,\qquad
 burn=\frac{e_{observed}}{e_b}
 \]
 
-At constant burn \(b\), a full objective period's budget is consumed in period divided by
-\(b\). Over alert window \(w\), approximate fraction spent is:
+For \(0<S<1\), let \(V_w\) be valid events in alert window \(w\), contained in reporting
+period \(T\), and \(V_T\) the valid events in that period. The fraction of that period's
+total allowed bad events consumed in \(w\) is:
 
 \[
-f=b\frac{w}{T}
+f=b\frac{V_w}{V_T}
 \]
 
-This assumes comparable event populations and a stable interpretation over windows. For a
-time-based SLI, denominator and harm differ. Do not translate request failures directly
-into “minutes unavailable” under variable traffic.
+Only when \(V_w/V_T\approx w/T\) does this reduce to \(f\approx bw/T\). With stable
+event rate and a fixed full-period budget, \(T/b\) projects time to spend that full budget;
+it is not time to exhaust today's remaining budget or a guarantee for a rolling window.
+An unfinished calendar period needs a stated traffic forecast for \(V_T\); rolling budgets
+also change as prior events leave. Preserve population/classification across windows and
+label forecasts as estimates. Time-based SLIs use their own valid-time denominator; request
+failures are not “minutes unavailable” under variable traffic.
 
 ## Classification decisions
 
@@ -172,9 +184,12 @@ exceptions, ownership and business authority; security/safety fixes must not be 
 
 ## Cross-skill routing
 
-- [SLI and error budgets](references/sli-and-error-budgets.md)
-- [Alerting design](references/alerting-design.md)
-- [Burn-rate rules and templates](references/burn-rate-rules-and-templates.md)
+- [SLI and error budgets](references/sli-and-error-budgets.md) — read when defining populations,
+  targets, budget policy or migrating a measurement.
+- [Alerting design](references/alerting-design.md) — read when choosing paging urgency,
+  low-volume handling, missing-data policy or alert ownership.
+- [Burn-rate rules and templates](references/burn-rate-rules-and-templates.md) — read when
+  deriving thresholds or writing/reviewing Prometheus rules.
 - metrics-and-cardinality for metric schemas and costs.
 - latency-statistics for distributions/quantiles.
 - structured-logging and distributed-tracing-design for diagnosis.

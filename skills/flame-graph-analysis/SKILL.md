@@ -58,6 +58,14 @@ Examples of different denominators:
 - PMU: sampled hardware event, not necessarily cycles or elapsed time.
 
 Never compare percentages across different event sources as if they shared a denominator.
+Thread wall-time accumulates across overlapping threads: 100 waiting threads over one second
+can contribute about 100 thread-seconds. It is neither one second of request latency nor proof
+of a critical-path delay; identify the active request cohort and its dependency timing.
+
+If only an image is available, report visible topology and labels as observations, keep event
+semantics and causal claims conditional, and request the missing recording/configuration needed
+for the next decision. Do not invent totals, infer event type from the palette, or withhold all
+useful bounded analysis because the full envelope is unavailable.
 
 ## Graph geometry
 
@@ -190,6 +198,10 @@ Choose normalization from the question:
 Blind total normalization can hide that the candidate performed less work or used more total
 CPU. A whole graph changing one color can be unequal totals, argument order, or a real broad
 shift. Validate sign/palette using synthetic folded stacks and inspect raw totals.
+Also check which profile supplies widths and whether colors describe self or inclusive change.
+In classic FlameGraph, a path removed from the second profile can have zero width and therefore
+no visible blue frame. Inspect both profiles or a complementary baseline-width differential;
+absence of blue is not evidence that no work was removed.
 
 Inlining and tree reshaping can move/merge frames while machine work remains. Aggregate by
 stable mechanism carefully and corroborate with outcome measurements and, when necessary,
@@ -240,8 +252,10 @@ Remaining limitations:
 
 ## References
 
-- [Reading and comparing graphs](references/reading-and-comparing.md)
-- [Sources, orientations, and artifact diagnosis](references/sources-and-orientations.md)
+- [Reading and comparing graphs](references/reading-and-comparing.md) — read for detailed
+  attribution arithmetic, opportunity bounds or differential comparison, including the sign fixture.
+- [Sources, orientations, and artifact diagnosis](references/sources-and-orientations.md) — read
+  when event semantics, JFR/JDK behavior, thread identity, orientation or missing frames are uncertain.
 - [Brendan Gregg: Flame Graphs](https://www.brendangregg.com/flamegraphs.html) — original methodology, tools, and variants.
 - [FlameGraph source](https://github.com/brendangregg/FlameGraph) — verify ordering, differential, and options against the pinned scripts.
 - [async-profiler options](https://github.com/async-profiler/async-profiler/blob/master/docs/ProfilerOptions.md) — use the producer/converter tag that created the artifact.

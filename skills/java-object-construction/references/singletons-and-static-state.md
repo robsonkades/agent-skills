@@ -42,6 +42,10 @@ Serializable forms 1–3 need this to preserve canonical identity, and it is rou
 private Object readResolve() { return INSTANCE; }
 ```
 
+That body fits forms 1–2. For the holder form, return `Holder.INSTANCE` (or `instance()`);
+there is no outer `INSTANCE` field. The alternatives above omit `Serializable`; add it only
+when serialization is a real contract, not merely to demonstrate this hook.
+
 `transient` is a separate state/attack-surface decision: `readResolve` discards the deserialized
 replacement object's identity, but its non-transient graph was still read and could be costly or
 unsafe.
@@ -53,8 +57,8 @@ live outside class initialization or support another lifecycle; it carries more 
 surface. java-memory-model has the proof. Laziness helps only when deferred/unused work outweighs
 the first-use latency and sticky class-initialization failure risk.
 
-Class initialization also has a sticky failure mode: an exception becomes
-`ExceptionInInitializerError`, and later active uses in that class loader can fail with
+Class initialization also has a sticky failure mode: a non-`Error` throwable is wrapped in
+`ExceptionInInitializerError`; an `Error` propagates directly. Later active uses in that class loader can fail with
 `NoClassDefFoundError` rather than retrying initialization. Do not hide recoverable network or
 configuration discovery inside a holder; make retry/backoff/lifecycle an explicit service policy.
 
@@ -72,7 +76,7 @@ skill's rule about not inventing an interface with no second implementation.
 reach production:
 
 - In a service with `replicas: 3`, a static counter, a static rate limiter, and a
-  "run-once" static flag exist three times and each sees a third of the traffic. Cluster-wide
+  "run-once" static flag exist independently; routing need not divide traffic evenly. Cluster-wide
   uniqueness is leader-election or distributed-locks-and-leases; the local object is at most a
   handle to it.
 - In an application-server or plugin deployment, an application redeploy leaves the old class

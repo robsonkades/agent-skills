@@ -1,20 +1,15 @@
 schemaVersion: 1
 
 name: architecture-refactoring-paths
-version: 1.3.0
+version: 1.4.0
 description: >-
-  Moving an enterprise application from one architectural choice to another without a
-  rewrite: transaction script to domain model, Active Record to Data Mapper, in-process call
-  to remote boundary, server session to stateless, pessimistic to optimistic locking, and
-  entity-as-payload to a boundary contract. Use when a pattern choice has been outgrown and
-  someone proposes a rewrite, when a refactor has stalled halfway with two designs
-  coexisting badly, when a migration needs to survive being paused for a quarter, when a
-  data migration and a code change must ship in the same release, when a change would break
-  API consumers, when an intermediate state has no defined behaviour, or when nobody can say
-  how the refactor would be rolled back. Does not cover recognising that a change is needed
-  (enterprise-architecture-smells), the programme-level approach to a legacy system
-  (legacy-enterprise-modernization), the target patterns themselves, or database migration
-  tooling.
+  Sequence a chosen enterprise architecture change into compatible, testable checkpoints:
+  domain and persistence refactoring, remote boundaries, session state, locking or events.
+  Use when old and new paths must coexist, a migration has stalled, code and data changes
+  interact, consumers cannot upgrade together, or rollback and safe pause points are unclear.
+  Does not select target patterns, diagnose the need for change (enterprise-architecture-smells),
+  plan a whole modernization programme (legacy-enterprise-modernization), or implement
+  database migration tooling.
 
 license: Apache-2.0
 
@@ -41,21 +36,20 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
-  - name: domain-logic-organization
-    version: ^1.0.0
-  - name: data-source-patterns
-    version: ^1.0.0
-  - name: offline-concurrency-control
-    version: ^1.0.0
-
 suggests:
+  - architecture-testing
+  - data-source-patterns
+  - delivery-semantics
+  - domain-logic-organization
   - distribution-boundaries
   - enterprise-architecture-smells
   - enterprise-transactions
   - inheritance-mapping-strategies
+  - legacy-enterprise-modernization
+  - offline-concurrency-control
   - remote-facade-and-dto
   - repository-pattern
+  - rpc-and-api-contracts
   - session-state-strategies
 
 capabilities:

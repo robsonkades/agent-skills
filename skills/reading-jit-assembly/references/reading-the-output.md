@@ -64,8 +64,8 @@ Compiled method (c2) 69   23       4       JitLab::get (4 bytes)
 
 The header line is the same as `PrintCompilation`'s: timestamp, compile id, attributes
 (`%` OSR, `!` has exception handlers, `n` native, `s` synchronized), tier, method, bytecode
-size. The size table is worth a glance — `nul chk table` non-empty means implicit null
-checks were emitted; `main code` is the number to compare when asking whether a change made
+size. The size table is worth a glance — `nul chk table` contains implicit-exception mappings,
+not proof that a particular load checks null; inspect its PC and dispatch target. `main code` is one size to compare when asking whether a change made
 the method bigger. `[Code]` as a section name is the pre-JDK 13 format. The decoded body of
 this method is in `pattern-catalogue.md`.
 
@@ -85,9 +85,11 @@ Things this shows that are easy to get wrong:
   proof of fabrication. Anchor every excerpt to compile id and `[start,end)` range; follow a
   branch by its numeric target, which may land in a separately printed cold stub.
 - **Bytecode mapping.** `;*iaload {reexecute=0 rethrow=0 return_oop=0}` followed by
-  `; - JitLab::get@2 (line 5)` ties the next address range to bytecode index 2 of the
-  method, and an inlined callee shows as a second `; - Caller::m@bci` line under the first.
-  This is how to find the code for a source line without hsdis at all.
+  `; - JitLab::get@2 (line 5)` associates the annotated PC/region with bytecode index 2;
+  call-related metadata may follow the instruction it describes. Read the address association,
+  not simply the next printed line. Multiple scope lines describe the inlined call chain.
+  Scope/PC metadata helps locate source-associated regions without hsdis. Optimization can
+  merge, move or remove operations; these mappings are not one instruction per source line.
 - **Reserved registers.** In this C2/x86-64 compressed-oop capture, `%r15` carries the
   `JavaThread` and `%r12` is usable as the zero compressed-oop base. Both are configuration-
   specific HotSpot decisions, not ISA or C-ABI rules; confirm them before interpreting an
@@ -130,19 +132,22 @@ judge it.
 
 ```
 Load of a field or array element
-├── Is there a cmp/test of the pointer immediately before it?
+├── Is there a pointer check on the relevant dominating control-flow path?
 │   └── yes → EXPLICIT check. The analysis did not eliminate it, or
 │             ImplicitNullChecks is off, or the field offset is too large to
 │             fall inside the protected page, or the use is one that needs a
 │             branch anyway (monitorenter is verified to test explicitly).
 └── no → does the load carry a "; implicit exception" comment?
     ├── yes → IMPLICIT check. The load runs, a null pointer faults on the
-    │         unmapped zero page (SIGSEGV), and HotSpot's signal handler looks
+    │         protected low-address region (e.g. SIGSEGV on Unix, access violation
+    │         on Windows), and HotSpot's platform fault handler looks
     │         the faulting PC up in the nmethod's implicit-exception table
     │         ("nul chk table" in the size header) and redirects to the
-    │         NPE-throwing stub. Default: ImplicitNullChecks=true (pd diagnostic).
-    └── no  → ELIMINATED by analysis. C2 proved non-nullity — freshly allocated
-              reference, or a dominating equivalent check.
+    │         configured exception/deoptimization continuation. Verify the target.
+    │         Default in this capture: ImplicitNullChecks=true (pd diagnostic).
+    └── no  → INCONCLUSIVE from absence alone. Check metadata visibility, the full
+              listing and dominating checks. Elimination is supported only with
+              evidence of non-nullity (e.g. allocation) or equivalent prior checking.
 ```
 
 ```
@@ -154,17 +159,19 @@ Load of a field or array element
 ; implicit — no test/je, but the comment gives it away
 0x...090:   mov    0x10(%rsi),%eax   ; implicit exception: dispatches to 0x00007f2a3c1050f0
 
-; eliminated — no test/je and no comment at all
+; no local check visible — elimination requires the surrounding proof
 0x...0a0:   mov    0x10(%rax),%eax
 ```
 
 Collapsing "no visible `cmp`" into "proved non-null" is the standard error. For references
 coming from outside the method — parameters, fields of passed objects — the implicit path is
-the common one. The comment is HotSpot's, printed from the nmethod's relocations, so it is
+the common one. The comment is HotSpot's, printed from nmethod exception metadata, so it is
 present in the abstract listing too.
 
-A safepoint poll historically used a protected polling page and modern ports use
-thread-local polling state; see `pattern-catalogue.md`. A managed implicit null check is one
+A safepoint poll can combine thread-local polling state with a protected polling page:
+[JDK 25 x86 C2 loop polls](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/x86_64.ad)
+still use that fault path, alongside polling-word tests and return-poll variants selected by
+site, compiler and port; see `pattern-catalogue.md`. A managed implicit null check is one
 intentional fault path, but not the only possible managed signal use: stack banging,
 safepoints, unsafe/native access and collector mechanisms also require context. A SIGSEGV
 inside compiled code is neither automatically benign nor automatically a VM defect; inspect
@@ -190,7 +197,8 @@ Use this evidence ladder:
 
 ## Primary references
 
-- [HotSpot disassembler implementation](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/compiler/disassembler.cpp)
-- [HotSpot x86 assembler sources](https://github.com/openjdk/jdk/tree/master/src/hotspot/cpu/x86)
+- [JDK 25 disassembler implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/disassembler.cpp)
+- [JDK 25 nmethod comments and implicit-exception metadata](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/nmethod.cpp)
+- [JDK 25 x86 assembler sources](https://github.com/openjdk/jdk/tree/jdk-25-ga/src/hotspot/cpu/x86)
 - [JEP 312: Thread-Local Handshakes](https://openjdk.org/jeps/312)
 - [JMH perfasm implementation](https://github.com/openjdk/jmh/blob/master/jmh-core/src/main/java/org/openjdk/jmh/profile/AbstractPerfAsmProfiler.java)

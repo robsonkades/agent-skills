@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: enterprise-transactions
-version: 1.3.0
+version: 1.3.1
 description: >-
   Transaction boundaries as an architectural decision: where a transaction starts and ends,
   what isolation level actually buys, how propagation and rollback rules behave in practice,
-  why a transaction must not span a network call or a user's thinking time, and what
-  replaces atomicity once it must. Use when a use case writes twice and nobody can say
+  the costs of spanning a network call or a user's thinking time, and how to handle
+  effects outside its atomic scope. Use when a use case writes twice and nobody can say
   whether it is atomic, when @Transactional sits on a repository or a controller, when a
   transaction stays open across an HTTP call or a message publish, when a rollback did not
   happen because the exception was checked or the call was self-invoked, when isolation is

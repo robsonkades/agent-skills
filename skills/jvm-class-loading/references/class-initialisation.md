@@ -17,8 +17,10 @@ does not necessarily initialize the named class. The incident-producing steps ar
    assigned so far.
 3. If initialisation previously failed, throw `NoClassDefFoundError` — every time, for the
    life of the loader.
-4. Initialize required superclasses and recursively required superinterfaces that declare
-   default methods, then run `<clinit>`: static field initializers and blocks in textual order.
+4. Mark initialization in progress, release the protocol lock, and initialize required
+   superclasses and (for a class) recursively required superinterfaces declaring default
+   methods; then run `<clinit>`. Initializing an interface itself does not automatically
+   initialize its superinterfaces. Record success/failure under the protocol lock.
 
 Steps 1 and 2 are the two traps; step 3 is the confusing error.
 
@@ -27,11 +29,13 @@ Steps 1 and 2 are the two traps; step 3 is the confusing error.
 ```java
 static class A { static final Object X; static { sleep(200); X = B.Y; } }
 static class B { static final Object Y; static { sleep(200); Y = A.X; } }
-// thread 1 touches A.X, thread 2 touches B.Y at the same time
+// Partial timing-sensitive sketch: sleep helper omitted; not a deterministic test.
+// A reproducible isolated test must coordinate both initializers with an external barrier.
+// Run in a disposable process with a timeout; do not leave deadlocked workers in a test suite.
 ```
 
-Each thread holds its own class's initialisation lock and waits for the other's — step 1 —
-forever. No exception, no timeout, no `DEADLOCK` section in the thread dump, because the
+Each thread is responsible for completing its own class's initialization and waits for the
+other's completion — step 1 — forever. It does not hold the protocol lock throughout `<clinit>`. No exception, no timeout, no `DEADLOCK` section in the thread dump, because the
 initialisation lock is not a monitor or a `java.util.concurrent` lock:
 
 ```text
@@ -89,8 +93,10 @@ separates the singleton's initialisation from the class that carries the other s
            boom in <clinit> [in thread "main"]
 ```
 
-The first touch throws `ExceptionInInitializerError` with the real cause; every later touch
-— from any thread, for the life of that definition — throws `NoClassDefFoundError: Could not
+For the shown non-Error exception, the first touch throws `ExceptionInInitializerError`.
+If the initializer throws an `Error` (for example AssertionError), that Error propagates
+without this wrapper; wrapping can itself fail with OutOfMemoryError. Later initialization attempts
+— from any thread, for the life of that definition — throw `NoClassDefFoundError: Could not
 initialize class X` (step 3). Modern HotSpot commonly preserves useful original-initialization
 detail in the later cause, but do not depend on that across vendors/releases or logging wrappers.
 The first failure remains authoritative. A `NoClassDefFoundError` caused by
@@ -98,8 +104,9 @@ The first failure remains authoritative. A `NoClassDefFoundError` caused by
 definition; classify other linkage causes from the complete chain.
 
 The operational consequence: a static initialiser that fails on a transient condition (a
-DNS lookup, a file that appears later) poisons the class until restart. Retry logic around
-the first call cannot help; the initialiser must not do the fallible work.
+DNS lookup, a file that appears later) marks that definition erroneous. Retrying the same definition cannot rerun its initializer;
+a fresh defining loader can create a new definition where a safe reload lifecycle exists.
+Prefer explicit fallible initialization with a recovery policy.
 
 ## Observing it
 
@@ -109,9 +116,9 @@ java -Xlog:class+load ...          # order of loading, and the source (jar, jrt,
 jcmd <pid> Thread.print            # the deadlock signature above
 ```
 
-`class+init` shows which thread initialised which class and in what order — enough to see a
-cycle forming before it deadlocks, and to confirm that an initialiser suspected of doing I/O
-is the one that took the time.
+`class+init` provides initialization chronology, not complete duration or I/O attribution.
+Correlate timestamps with stacks/JFR or application markers; adjacent log lines alone do not
+prove where initialization time was spent.
 
 ## Acceptance tests for initialization changes
 

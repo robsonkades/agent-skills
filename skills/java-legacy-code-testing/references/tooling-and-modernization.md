@@ -7,19 +7,20 @@ large to assert on. The online corpus for this topic is dominated by material wr
 ## What is dead, and why it matters
 
 **PowerMock.** Last release `org.powermock:powermock-core:2.0.9`, published 2020-11-01.
-`powermock-api-mockito2:2.0.9` pins `org.mockito:mockito-core:3.3.3` in its published POM, so a
-project on Mockito 5 cannot have it on the classpath without a hard downgrade. Its own
-documentation claims support only to JDK 9. **Any legacy-testing advice built on PowerMock is dead
-material** — and there is a lot of it.
+`powermock-api-mockito2:2.0.9` declares `org.mockito:mockito-core:3.3.3` in its published POM.
+Dependency management may override it, but that does not prove compatibility with Mockito 5.
+Do not introduce PowerMock into a newer stack based on old instructions. An existing legacy
+stack may depend on it; inspect resolved versions and preserve the working harness while
+planning a compatible seam rather than removing it during unrelated work.
 
 **`mockito-inline`.** The inline mock maker became Mockito's **default in 5.0.0**; the Mockito
 javadoc states the artifact "may be abolished in future versions", and `org.mockito:mockito-inline`
 is frozen at 5.2.0 (2023-03-09). Adding it to a Mockito 5 build is a no-op at best and a version
 conflict at worst. This is the single most common stale instruction in this topic.
 
-**Hand-rolled time abstractions.** Superseded by `java.time.Clock` since Java 8 — do not write a
-`TimeProvider` interface. How to inject and use one, and why static-mocking `Instant.now()` is the
-wrong tool, are `java-test-design/references/determinism.md` and
+**Wall-clock abstractions.** Prefer `java.time.Clock` (Java 8+) for instants and dates; it does
+not replace a monotonic elapsed-time source or business-calendar policy. How to inject one is in
+`java-test-design/references/determinism.md` and
 `java-test-doubles/references/mockito-hazards.md`; this skill only records that the 2004 mechanics
 are dead.
 
@@ -79,11 +80,10 @@ inconvenience.
 ## Whether the pinned suite survives
 
 Not this skill's call. `java-refactoring/references/safety-workflow.md` owns characterisation
-policy and states it plainly: the pinned suite documents the present, not the intent, and must not
-survive as the permanent suite. Approval-testing practitioners argue the opposite for legacy
-specifically — where the requirements are lost, the pinned suite is the only executable
-description of what the business receives — but the repo's position is `java-refactoring`'s.
-Follow it, and take any disagreement there rather than forking the rule here.
+policy: the pinned suite documents the present, not the intent. Replace opaque assertions with
+intent-revealing tests when intent is known, retaining valuable regression rows. Do not delete
+the only protection merely because it began as characterization; route the retention decision
+to that skill rather than imposing a second blanket policy here.
 
 ## The one ArchUnit rule that earns its place here
 
@@ -99,17 +99,17 @@ classes. Everything broader belongs to `architecture-testing`.
 The book's _reasoning_ survives essentially intact. A significant fraction of its _mechanics_ does
 not.
 
-| Feathers (2004)                                                                    | Status                                                                                                                                                                                                                  |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| JUnit 3/4 idioms — `extends TestCase`, `setUp()`, `@RunWith`                       | **Superseded.** JUnit 5, `@BeforeEach`, extensions instead of runners                                                                                                                                                   |
-| Hand-rolled time abstractions                                                      | **Superseded by `java.time.Clock`** (Java 8)                                                                                                                                                                            |
-| Setter injection / Supersede Instance Variable as the realistic substitution route | **Largely superseded.** Constructor injection is the default; a `final` field assigned once in the constructor _is_ the seam. Supersede Instance Variable is now a smell                                                |
-| Replace Function with Function Pointer (C only)                                    | **Java equivalent is idiomatic:** a `Supplier`/`Function` field or parameter. A single-method behaviour seam needs no interface                                                                                         |
-| Value objects as hand-written classes; parameter objects                           | **Records (JEP 395, JDK 16) make value seams trivial** — correct `equals`/`hashCode`/`toString` for free, which also stabilises approval output                                                                         |
-| Subclass and Override, Extract Implementer, Push Down Dependency                   | **Still current, still the workhorse.** Modern caveat: a `sealed` type (JEP 409) cannot be subclassed in a test — sealing is a decision to give up that seam, so the seam must then come from a parameter               |
-| Extract and Override / test subclasses generally                                   | **Still current**, with a caveat Feathers did not face: `final` classes and methods block it. Mockito 5 can mock `final`, but that is instrumentation, not a seam — the design answer is still Parameterize Constructor |
-| In-memory / fake databases to get persistence code under test                      | **Superseded by Testcontainers.** An HSQLDB stand-in for SQL Server pins behaviour that differs from production. Feathers's reason for faking was speed; container reuse has weakened that argument a lot               |
-| "The tests are too slow to run often"                                              | Partially superseded — parallel execution, container reuse, modern hardware. The _design_ argument for small units survives; the _speed_ argument should not be the headline                                            |
+| Feathers (2004)                                                                    | Status                                                                                                                                                                                                                              |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JUnit 3/4 idioms — `extends TestCase`, `setUp()`, `@RunWith`                       | **Superseded.** JUnit 5, `@BeforeEach`, extensions instead of runners                                                                                                                                                               |
+| Hand-rolled time abstractions                                                      | Prefer `java.time.Clock` for wall-clock instants/dates; monotonic elapsed time or domain calendars may need another abstraction                                                                                                     |
+| Setter injection / Supersede Instance Variable as the realistic substitution route | **Largely superseded.** Constructor injection is the default; a `final` field assigned once in the constructor _is_ the seam. Supersede Instance Variable is now a smell                                                            |
+| Replace Function with Function Pointer (C only)                                    | **Java equivalent is idiomatic:** a `Supplier`/`Function` field or parameter. A single-method behaviour seam needs no interface                                                                                                     |
+| Value objects as hand-written classes; parameter objects                           | **Records (JEP 395, JDK 16) make value seams trivial** — correct `equals`/`hashCode`/`toString` for free, which also stabilises approval output                                                                                     |
+| Subclass and Override, Extract Implementer, Push Down Dependency                   | **Still current, still the workhorse.** Modern caveat: a sealed type restricts direct subclasses to its permits/module/package contract; use an allowed extension seam or injection rather than assuming any test subclass is legal |
+| Extract and Override / test subclasses generally                                   | **Still current**, with a caveat Feathers did not face: `final` classes and methods block it. Mockito 5 can mock `final`, but that is instrumentation, not a seam — the design answer is still Parameterize Constructor             |
+| In-memory / fake databases to get persistence code under test                      | Use the real database engine for SQL/transaction semantics; a fake port remains useful for isolated domain policy. Testcontainers needs a compatible runtime and does not replace every fake                                        |
+| "The tests are too slow to run often"                                              | Partially superseded — parallel execution, container reuse, modern hardware. The _design_ argument for small units survives; the _speed_ argument should not be the headline                                                        |
 
 **Not superseded, and rarely covered by modern material:** effect analysis (ch. 11) and
 interception/pinch points (ch. 12). Both are in `references/seams-and-interception.md` — they are
@@ -117,6 +117,7 @@ what answers "where do I put the test?".
 
 ## Sources
 
+- [Java 21 Clock](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Clock.html) — `systemDefaultZone()` captures the selected zone; it is not a monotonic timer.
 - Maven Central metadata, read 2026-08-27, for every coordinate above.
 - Mockito javadoc on `main` for the inline-mock-maker default and the JDK 21+ instrumentation note.
 - Published `powermock-api-mockito2:2.0.9` POM for the Mockito 3.3.3 pin.

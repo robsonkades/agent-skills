@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: refactoring-automation
-version: 1.1.0
+version: 1.1.1
 description: >-
   Applying a code change by machine rather than by hand: choosing between an IDE
   refactoring, an OpenRewrite recipe, structural search-and-replace, a compiler-driven
-  change and hand-editing; what each tool can and cannot see; the places a rename never
-  reaches; making a change spanning hundreds of files reviewable, reproducible and
+  change and hand-editing; what each tool can and cannot see; checking rename coverage
+  beyond resolved symbols; making a change spanning hundreds of files reviewable, reproducible and
   revertible; and proving a mechanical change was mechanical. Use when one edit must land
   across many files, when a framework or library migration must be applied repo-wide (javax
   to jakarta, JUnit 4 to 5, a Spring major version), when a rename must reach names that

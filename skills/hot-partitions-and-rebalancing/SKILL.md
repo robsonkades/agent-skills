@@ -28,9 +28,13 @@ hot key; they usually move that bottleneck to a different owner.
 
 The failure this prevents is diagnosing the wrong thing. A hot partition and an overloaded
 fleet look identical on an aggregate dashboard — elevated p99, elevated error rate — and
-their repairs are opposite: one needs a key spread or a cache, the other capacity or load
-shedding. The distinguishing evidence is per-shard, and it does not exist unless someone
-added the shard label to the metric before the incident.
+require different investigation paths. Per-shard evidence distinguishes skew from fleet-wide
+pressure; logs, traces or store statistics may supply it when metric labels are missing.
+Without that evidence, keep the diagnosis conditional and capture a bounded incident sample.
+
+Inspect the store, driver and topology versions before recommending an online split or
+ownership protocol. The Java examples are partial Java 17-compatible sketches, not a storage
+implementation; inspect the project's toolchain and APIs without assuming upgrade permission.
 
 ## Workflow
 
@@ -63,7 +67,8 @@ added the shard label to the metric before the incident.
 ```text
 Salt (split) the key across S sub-partitions when:
 - one write-hot key exceeds a single shard's write capacity, and reads for that key are rare
-  enough, or aggregate in nature, that fanning them out to S is acceptable
+  enough, or aggregate in nature, that fanning them out to S is acceptable; operations can
+  be partitioned with a valid merge without violating required atomicity or ordering
 Give the tenant a dedicated shard when:
 - one known, named tenant is persistently large or hot, the set of such tenants is small and
   changes slowly, and per-tenant isolation is independently valuable
@@ -77,9 +82,9 @@ Coalesce concurrent requests for the key when:
 Split the partition when:
 - the store supports online split, the hot range is contiguous, and the skew is a range
   boundary rather than a single key
-Do nothing but add capacity when:
-- max/mean is near 1 on every per-shard series — the fleet is uniformly loaded, so this is
-  capacity-planning or rate-limiting-and-load-shedding, not skew
+Investigate fleet capacity or common-mode failure when:
+- normalized load is similar across shards and saturation, queueing or rejection is elevated;
+  a ratio near 1 alone does not establish overload or justify adding capacity
 Change the shard key when:
 - the concentration is structural rather than incidental — the key design guarantees it
   recurs. Accept that this is a full migration (sharding-and-partitioning)
@@ -91,14 +96,17 @@ Change the shard key when:
   mean's excess is diluted by roughly N. Report a normalized distribution: maximum or high
   quantile, median, top-shard share and capacity utilization. `max/mean` is useful but highly
   sensitive to one outlier and says nothing about two clusters or heterogeneous capacity.
-- Every per-shard metric needs the shard as a label from the beginning. Adding the label
-  during an incident is the same as not having it: there is no history to compare against.
+- Add bounded shard identity before incidents to preserve history. Instrumenting during an
+  incident still provides current evidence; record that the historical baseline is missing.
 - Read-hot, write-hot and storage-hot are three problems. A cache removes read load and does
   nothing for writes; salting spreads writes and makes reads more expensive; a dedicated
-  shard addresses all three at the cost of an operational special case. Name the class first.
+  shard isolates the tenant but only relieves its bottleneck if available capacity is sufficient.
+  Name the class first; ordinary read caching does not remove write throughput requirements.
 - **Rehashing is not a repair for a hot key.** The key still has one owner under every
   placement function in `consistent-hashing`; the hash decides _which_ node melts, not
   whether one does.
+- Salt only when independent operations have a valid merge and the required atomicity and
+  ordering survive the split; write heat alone is insufficient evidence.
 - Salting is `key#i` for `i` in `[0, S)`: writers route by a deliberate sub-key (random,
   round-robin or an entity identifier), readers query the required buckets and merge. The
   cost includes read fan-out, loss of single-key atomicity/global order, retries and future
@@ -139,6 +147,10 @@ Change the shard key when:
 - Source deletion starts only after a retention window, reconciliation and a tested restore
   point. Retention alone is not rollback unless post-cutover writes are reverse-replicated or
   replayable.
+
+Return the observed distribution and missing evidence, the hypothesis and its falsifier,
+the chosen repair's semantic costs, and the before/after SLO and recovery checks. Keep
+unmeasured benefits conditional.
 
 ## Anti-patterns
 

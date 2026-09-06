@@ -7,6 +7,10 @@ error at the moment the damage becomes visible.
 
 ## The four ways to get it
 
+The code blocks are partial Java 21 snippets: domain types (`Money`, `Entry`, `Rule`), fields,
+imports and helper methods are elided. `validate` must not mutate existing rules or external
+state; copying the list alone does not isolate mutable elements or side effects.
+
 **1. Immutability.** An immutable object cannot be left half-modified; a failed operation
 simply produces no new instance. This is the strongest form and needs no discipline at the
 call site — see java-immutability.
@@ -49,7 +53,7 @@ public void replaceAll(List<Rule> rules) {
 ```
 
 Some operations use copy-then-swap, but do not assume library sorts are failure-atomic: the
-`List.sort` contract explicitly permits elements to be reordered if the comparator throws. Read
+`List.sort` contract does not promise rollback if the comparator throws. Read
 the target API contract and test exceptional paths.
 
 **4. Recovery code.** A rollback in a `catch` that undoes what was already done. It is the
@@ -67,8 +71,9 @@ Failure atomicity is not free and not always desirable:
 - **Concurrent/fail-fast collections** may detect interference with
   `ConcurrentModificationException`, but detection is best effort and does not promise rollback.
   Thread safety and failure atomicity are separate contracts.
-- **`Error`s (OOM, stack overflow) are not recoverable** and no method is expected to stay
-  atomic across them.
+- **VM/resource failures such as OOM or stack overflow** can defeat recovery itself. Define
+  the failures covered by the atomicity guarantee; do not promise universal rollback across
+  arbitrary `Error`s, or infer that every `Error` has the same recovery policy.
 
 What matters is that the choice is stated. Document non-atomic methods explicitly:
 "if this throws, the collection may contain some of the added elements" is a contract; silence
@@ -90,12 +95,14 @@ over-claimed:
   not. This mismatch is the standard bug behind "the cache says shipped, the database says
   pending"; enterprise-transactions and ddd-adjacent skills cover the pattern of publishing
   effects only after commit.
-- **Across services there is no atomicity to preserve**, only compensation. A partially
-  applied multi-service operation needs an explicit saga with compensating actions and an
-  outbox — distributed-transactions-and-sagas.
+- **A local exception does not establish cross-service atomicity.** Coordinated transaction
+  protocols can provide atomic commit for participating resources under their assumptions;
+  ordinary independent HTTP calls do not inherit it. Route the choice among coordinated
+  transactions, reconciliation and compensation to distributed-transactions-and-sagas. A saga
+  or outbox is not mandatory for every remote call, and compensation is not rollback isolation.
 
 The practical rule: make the in-memory object atomic, make the persistent state
-transactional, and make everything beyond the process idempotent and compensable. Do not
+transactional where required, and define remote outcome/reconciliation semantics explicitly. Do not
 substitute one for another.
 
 ## Review checks
@@ -116,5 +123,6 @@ substitute one for another.
 
 ## Authoritative references
 
+- [XAResource, Java SE 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.transaction.xa/javax/transaction/xa/XAResource.html) — participating resource managers and coordinated commit; not a guarantee for arbitrary HTTP services.
 - [List.sort exceptional-state contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#sort(java.util.Comparator)>)
 - [try-with-resources and suppressed exceptions, Java Language Guide](https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html)

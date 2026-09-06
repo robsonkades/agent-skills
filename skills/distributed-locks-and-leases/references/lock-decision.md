@@ -35,8 +35,8 @@ Two structural observations from the table:
   server transaction/session; failure detection and connection cleanup still affect how long
   waiters block. This is paid for with an open transaction/connection and the database's
   availability becoming the lock's.
-- **Fencing support is a property of the lock service _and_ of your resource.** etcd and
-  etcd revisions or ZooKeeper sequential-node numbers can seed a token protocol; they help
+- **Fencing support is a property of the lock service _and_ of your resource.** etcd revisions
+  or ZooKeeper sequential-node numbers can seed a token protocol with lifecycle limits; they help
   only if the external resource atomically claims and enforces them. Redis does not attach a
   monotonic grant token, and an ad hoc `INCR` needs its own durability/atomicity analysis.
 
@@ -53,8 +53,9 @@ The dispute is about which assumptions a distributed system may make, not about 
 - **Antirez's position.** The algorithm measures _elapsed_ time locally rather than comparing
   absolute clocks, so it tolerates offset better than the critique implies; large clock steps are
   an operational fault that can be prevented; and the fencing objection is not specific to
-  Redlock, since every lease-based lock has it. His conclusion: Redlock is a reasonable
-  efficiency lock and is honest about being one.
+  Redlock, since every lease-based lock has it. He defends Redlock's correctness under its
+  timing/system assumptions and disputes the critique; do not attribute an efficiency-only
+  position to him.
 
 **The decision criterion, which does not require picking a winner:** ask what breaks if the
 assumption fails.
@@ -81,3 +82,11 @@ Treat it as a correctness control (fencing at the resource is mandatory) when:
   lifetimes, and the Redis lease can expire while the transaction is still open.
 - A lock key that is a constant (`"import-lock"`) where the invariant is per entity.
 - `pg_advisory_lock` (session-scoped) called on a pooled `DataSource` connection.
+
+Also inspect owner-conditional renewal, acquisition return values, unknown timeout outcomes,
+and whether cleanup preserves the original failure. A session advisory lock is a finding when
+its lifetime/cleanup is unmanaged, not merely because the API name appears.
+
+Sources: [Kleppmann's critique](https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html),
+[Antirez's response](https://antirez.com/news/101),
+and [Redis lock acquisition/release assumptions](https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/).

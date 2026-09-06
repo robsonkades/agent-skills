@@ -16,8 +16,9 @@
 
 The first is the one most often answered by assertion. "The domain is complex" is not an
 answer; "seven pricing rules, four of them conditional on the outcome of another" is, and it
-points directly at a Domain Model. Two independent validations point just as directly at a
-Transaction Script.
+makes a Domain Model a candidate. Two independent validations may favor Transaction Script;
+rule counts alone do not decide ownership, complexity or migration cost. Inspect representative
+changes and preserve justified existing boundaries.
 
 ## Four worked selections
 
@@ -33,15 +34,15 @@ Distribution          none
 Performance           irrelevant volumes
 Team                  one team, long-lived, small
 
-→ Active Record (JPA entity with its validations)
-→ Spring Data repository used directly — no hand-written interface
-→ No service layer (nothing to orchestrate)
+→ Simple mapper-backed CRUD (JPA entity plus Spring Data repository is not Active Record)
+→ Existing Spring Data repository API; no extra pass-through wrapper
+→ Service layer only if shared authorization, transaction or caller contracts warrant it
 → No DTO internally; a response record at the HTTP boundary
-→ @Version, because two admins exist and it costs one column
+→ @Version plus expected-version propagation and a tested conflict response
 ```
 
-The temptation is to apply the house layered architecture. It would add four files per
-concept and protect nothing. Record the choice so the next person does not "fix" it.
+Check what the house layers protect before adding or removing them: authorization, validation,
+testing and ownership may still justify a small boundary. Record the force and trade-off.
 
 ### B. Order management with pricing rules
 
@@ -67,8 +68,9 @@ Team                  two teams, long-lived
 ```
 
 Note the two that are usually missing from a design like this: the read model, and the
-explicit SQL for the bulk path. Without them, the list screen becomes an N+1 and the nightly
-job loads 400 000 aggregates.
+explicit SQL for the bulk path. Without deliberate fetch/bulk planning, the list may produce
+N+1 and the job may hydrate excessive aggregates. Prove the query/load shape, and ensure
+the SQL path implements the same required pricing invariants and conflict behavior.
 
 ### C. Public API over an existing system
 
@@ -106,12 +108,13 @@ Team                  analysts plus one engineer
 → SQL, in gateways, per report
 → Projections/records as the result types
 → No entities, no repositories, no domain model, no service layer
-→ Read replica or a separate schema; never the write path's connections
+→ Isolate reporting capacity when measured contention warrants it; replica if freshness permits
 ```
 
-Applying the transactional system's architecture here produces something slower and less
-maintainable than the SQL. This is the clearest case where "consistency with the rest of the
-codebase" is the wrong criterion.
+Projection-oriented SQL can avoid unnecessary hydration. A separate schema alone does not
+isolate CPU/I/O; a separate pool bounds admission but still shares database resources.
+Compare representative reports, write latency and required freshness before adding a replica.
+Shared security/operational conventions remain useful even when data access differs.
 
 ## Decisions that belong per module, not per system
 
@@ -135,7 +138,8 @@ complexity (`enterprise-architecture-smells`).
 
 ## The order of decisions
 
-Later decisions depend on earlier ones; taking them out of order produces rework.
+Use this as an iteration order, checking fixed deployment, schema and consistency constraints
+at the beginning. Existing authorized boundaries can constrain earlier choices.
 
 ```text
 1. Logic organisation        (script / model / table module)
@@ -148,5 +152,6 @@ Later decisions depend on earlier ones; taking them out of order produces rework
 8. Distribution              (last, and only with a named driver)
 ```
 
-Deciding 8 first — "we are building microservices" — fixes every earlier decision by
-implication, and usually badly (`distribution-boundaries`).
+Choosing distribution by habit constrains other decisions without evidence; a mandated
+ownership or deployment boundary is legitimate input. Revisit the composition when the
+driver or measured costs change (`distribution-boundaries`).

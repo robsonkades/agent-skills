@@ -5,17 +5,20 @@
 The goal is a reproduction where removing any element makes the fault disappear. Work in this
 order, because each step makes the next cheaper:
 
-1. **Data** — halve the input, keep the failing half. On a 40-column CSV this usually reaches
-   one row and three columns in six steps.
+1. **Data** — try subsets and their complements, keeping a smaller input only when the same
+   failure persists. If neither half fails, retain interacting elements and use smaller removals;
+   a pairwise interaction can span both halves. Preserve a known failing original.
 2. **Steps** — remove operations from the sequence. Many "only fails after a full checkout
    flow" faults collapse to two calls in a particular order (which is itself the finding:
    temporal coupling, java-clean-code).
 3. **Configuration** — revert to defaults one property at a time. A fault that disappears at a
-   default is a fault about that setting, and you have just found it.
+   default implicates that setting or an interaction; it does not by itself identify a defect.
 4. **Environment** — drop from the cluster to a single node, from the container to the JVM,
-   from the framework to a `main`. Each layer removed is a layer eliminated as the cause.
-5. **Concurrency** — if it reproduces single-threaded, it is not a race. That is one of the
-   most valuable facts you can establish early, in either direction.
+   from the framework to a `main`. Preserve the failure signature; changing a layer can mask a
+   cause or expose a different failure rather than eliminate that layer as a contributor.
+5. **Concurrency** — one application caller does not eliminate background threads, callbacks,
+   other processes or prior corrupted state. A fully controlled sequential reproduction can
+   demonstrate that the reproduced failure does not require concurrent execution.
 
 When shrinking stops working — the fault needs the full system — that is data too: the cause is
 in an interaction, and the candidates are the boundaries you cannot remove.
@@ -40,16 +43,24 @@ on the 1st, or the Sunday a clock changed, is telling you its cause in its timin
 
 ## Bisection
 
-`git bisect` needs one thing to be useful: a script that exits non-zero on the fault and zero
-otherwise, reliably. Build that first — even a slow one. Over 500 commits it is nine runs.
+`git bisect run` needs a reliable classifier: exit `0` for good; `1`–`127` except `125` for bad;
+`125` for an untestable revision; `128` or higher to abort. A missing command (`127`) or an
+unrelated build failure must not silently classify the target fault as present. Deliberately map
+known revision incompatibilities to skip and infrastructure/harness failures to abort. Verify
+both endpoints, keep dependencies/data stable and use an isolated checkout to preserve edits.
 
 ```
 git bisect start <bad> <good>
 git bisect run ./reproduce.sh
+git bisect log
+git bisect reset
 ```
 
-If the reproduction is intermittent, bisect lies. Make the script run the case enough times
-that a false "good" is unlikely, and accept the runtime.
+The sketch assumes a POSIX shell and executable harness. Save the log before reset. Skipped
+revisions can leave several possible first-bad commits. Re-test the candidate and its relevant
+parent with the same harness; a regression boundary is not automatically the original defect.
+For intermittent faults, repeat enough to bound false-good risk under stated independence/rate
+assumptions; finite successful runs do not prove absence. Preserve counts and uncertain outcomes.
 
 Bisection also applies to things that are not commits: halve the config file, halve the
 dataset, halve the list of enabled modules. Any monotone property can be bisected.
@@ -65,12 +76,13 @@ Caused by: java.sql.SQLException: deadlock victim
 
 - The **top** line is the outermost translation — usually your own layer boundary, and usually
   the least informative about the cause.
-- The **bottom** `Caused by` is the original fault. Read it first.
+- The deepest recorded `Caused by` is a useful starting point, not proof of the initiating fault;
+  earlier corruption, translation or omitted causes may be outside the chain.
 - The deepest frame **in your own package** is often the first useful boundary breakpoint. It is
   not proof of ownership: framework callbacks, generated adapters, reflection, native transitions,
   and genuine library defects can put the causal behaviour elsewhere.
-- `Suppressed:` entries come from try-with-resources — a close() that failed while another
-  exception was propagating. They are easy to miss and sometimes carry the real cause.
+- `Suppressed:` often records try-with-resources cleanup failures, but application/library code
+  can also call `addSuppressed`. Read these alongside the primary exception without assuming origin.
 
 An exception rewrapped without its cause (`throw new X(e.getMessage())`) destroys this entire
 structure. If you meet one while debugging, fixing it is the fastest available progress
@@ -99,21 +111,23 @@ observation itself changed the timing or the optimisation. That is evidence, not
 - Disappears under a debugger or with extra logging → timing sensitivity. A race is one candidate;
   changed deadlines, queueing, buffering, resource pressure, compilation, or instrumentation side
   effects are others. Design the next experiment to separate them.
-- Disappears in a debug build or with `-Xint` → a JIT-visible data race, or reliance on
-  behaviour the optimiser is entitled to change (java-memory-model).
-- Disappears when a field is made `volatile` → a visibility bug. Do not stop there: `volatile`
-  may have fixed the symptom while the atomicity problem remains.
+- Disappears in a debug build or with `-Xint` → execution mode matters. Timing, resource usage,
+  data races and compiler defects remain candidates; this is not proof of invalid application code.
+- Disappears when a field is made `volatile` → ordering or timing may matter. Prove the needed
+  happens-before relation and compound-operation atomicity before accepting a visibility diagnosis.
 
-Prefer instrumentation that does not change timing — sampling profilers, JFR events, counters
-read afterwards — over synchronous logging inside the suspect path.
+Prefer bounded, lower-perturbation instrumentation over synchronous logging inside the suspect
+path. Sampling, JFR and counters also change execution; compare instrumented/control runs.
 
 ## When the model is wrong
 
-Two hours of refuted hypotheses means the mental model of the system is wrong, not that the
-next hypothesis needs to be cleverer. Recovery:
+After repeated refutations within the agreed timebox, inspect the model and experiment itself:
 
 - Go back to raw observations and re-read them without the current theory.
 - Verify an assumption you have not checked because it is "obviously" true — that the config
   in use is the config in the repo, that the version deployed is the version tagged, that the
   request reached the service at all.
 - State the theory out loud to someone. Most of the value arrives before they answer.
+
+Sources: [Git bisect exit protocol](https://git-scm.com/docs/git-bisect)
+and [Throwable cause/suppression API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html).

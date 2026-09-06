@@ -30,37 +30,42 @@ the fix is to make the behaviour reachable without the container, not to abandon
 - **Designing a new API from the caller's side.** Writing the call first exposes an awkward
   signature before there is an implementation defending it (java-api-design).
 - **Anything with a stated invariant** — sums that must balance, state machines with illegal
-  transitions, idempotent handlers. Write the invariant as a parameterised test; it finds cases
-  you would not have chosen by hand, as it did in `references/loop-mechanics.md`.
+  transitions, idempotent handlers. A parameterised test checks the cases supplied to it;
+  generation can explore additional inputs, but neither replaces the invariant's justification.
+  The walkthrough's six hand-selected counts pass immediately; its separate zero-count test fails.
 
 ## Where test-after or a different approach is correct
 
-**Exploration and spikes.** When the question is "is this library capable of X", tests
-presuppose an answer you do not have. Spike without tests, learn the answer, then **throw the
-spike away** and build it back with tests. The failure mode is keeping the spike — untested
-code written while ignorant, now load-bearing.
+**Exploration and spikes.** When the expected behavior is unknown, use a bounded experiment;
+an executable assertion may still be an effective way to test a hypothesis. After learning,
+discard the spike or deliberately harden it with requirements, error handling and tests.
+The failure mode is promoting exploratory code without that review.
 
-**Legacy code with no seams.** You cannot write a unit test for a class that constructs its own
-dependencies and reads statics. The order is: characterisation tests at whatever level
+**Legacy code with no seams.** A class that constructs dependencies and reads statics can be
+hard to isolate; inspect reachable behavior before declaring it untestable. A useful order is:
+characterisation tests at whatever level
 currently works, then refactor to create a seam, then unit tests, then change behaviour. That
 sequence belongs to java-legacy-code-testing (creating the seam) and java-refactoring (the
-characterisation tests and the refactoring itself); starting with TDD here means starting with a
-rewrite.
+characterisation tests and the refactoring itself). Avoid a rewrite merely to enforce unit-first.
 
 **Wiring and configuration.** Serialisation config, security filter chains, connection pools,
-framework registration. There is no interesting logic to drive out; write the integration test
-after the wiring exists, to lock in behaviour you have observed and verified.
+framework registration. When the required contract is known, an integration test can drive
+the wiring first; otherwise inspect or explore it, then assert intended behavior. Do not
+bless observed behavior without checking the requirement, particularly for security rules.
 
-**UI layout and anything judged by appearance.** Assertions on structure do not capture the
-requirement, and they break constantly.
+**UI layout and anything judged by appearance.** Structural assertions alone do not establish
+visual quality. Use an appropriate visual/accessibility check; test-first can still fit known
+interaction or accessibility requirements.
 
-**Performance work.** A test asserts correctness; performance needs a benchmark with a warmed
-JIT and a distribution, not an assertion on one run (jmh-microbenchmarks, load-testing). Write
-the correctness tests first, then measure — but the measurement is not a TDD cycle.
+**Performance work.** Preserve correctness and use a repeatable measurement appropriate to
+the boundary (jmh-microbenchmarks, load-testing). Warm-up fits steady-state questions; startup
+requires cold-start measurements. A predeclared performance gate can guide a change, but one
+timing failure/pass is not evidence of a reliable regression or improvement.
 
 **Concurrency.** A test that passes proves the interleaving it happened to run. Correctness
 here comes from the design and from reasoning about happens-before (java-memory-model), with
-tests as a supplement (concurrency-testing) — not from driving the design with a red test.
+tests as a supplement (concurrency-testing). A controlled schedule or model can provide a
+useful red regression test, but its passing does not prove all interleavings safe.
 
 ## The three laws, and what to do with them
 
@@ -68,7 +73,7 @@ Uncle Bob's formulation — write no production code except to pass a failing te
 of a test than sufficient to fail, write no more production code than sufficient to pass — is a
 training constraint. It is deliberately extreme so that a learner feels the loop.
 
-As a rule imposed on production work it produces a characteristic damage: dozens of trivial
+Applied mechanically to production work it can produce dozens of trivial
 tests written to satisfy the letter, a design pinned by tests that assert the implementation,
 and a refactor step nobody has time for. Keep the intent — small steps, verified failures,
 design pressure — and set the granularity by the table above.
@@ -78,11 +83,12 @@ design pressure — and set the granularity by the table above.
 Give a reason, not a position:
 
 > "For the discount rules, yes — the boundaries are the risk and the cycle is milliseconds.
-> For the Kafka consumer wiring, no: there is nothing to drive out, and I will write the
-> integration test after the wiring works and verify it fails when the topic name is wrong."
+> For Kafka consumer wiring, I will first check whether the integration harness can express
+> the required topic/offset behavior cheaply. If exploration must come first, I will then
+> validate the intended contract and check that the test detects a wrong topic."
 
-That answer is checkable and it commits you to the same total amount of testing. "We always
-TDD" and "TDD is a waste of time" are both unfalsifiable, and both end with untested wiring.
+That answer is checkable. Choose enough validation for the risk; test order alone does not
+determine test completeness or guarantee tested wiring.
 
 ## The agent-specific failure
 
@@ -93,3 +99,7 @@ asserting a tautology looks identical to a working test in that output.
 The minimum honest version: write the test, run it, quote the red output, implement, run again,
 quote the green. Two runs. Anything less is test-after wearing TDD's name — which is a
 legitimate choice, but must be reported as what it is (coding-agent-discipline).
+
+See [Fowler's TDD account](https://martinfowler.com/bliki/TestDrivenDevelopment.html) for the
+small test/code/refactoring cycle; these applicability choices depend on the actual contract
+and feedback cost, not a blanket prohibition on an entire type of work.

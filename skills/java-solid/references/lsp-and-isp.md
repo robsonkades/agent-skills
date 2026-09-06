@@ -1,5 +1,9 @@
 # LSP and ISP: substitution and interface shape
 
+Java examples are partial violation fixtures: supply `BigDecimal` imports and an `Order`
+domain fixture, put public types in separate files, and use Java 17+ for the shown `instanceof`
+pattern. Compilation alone intentionally will not detect these behavioral violations.
+
 ## Liskov substitution
 
 LSP is a contract rule, not an inheritance style: any code correct against the
@@ -15,7 +19,7 @@ java-design-by-contract skill; this section is the review checklist.
 public class SettlementAccount {
     protected BigDecimal balance = BigDecimal.ZERO;
 
-    /** Precondition: {@code amount} is positive and no greater than the balance. */
+    /** For a positive covered amount, succeeds and reduces balance by that amount. */
     public void withdraw(BigDecimal amount) {
         balance = balance.subtract(amount);
     }
@@ -34,7 +38,8 @@ public final class InstantSettlementAccount extends SettlementAccount {
 
 Every caller holding a `SettlementAccount` was promised that a covered, positive
 amount succeeds. Hand it the subtype and a legal call now throws. Detection: any
-argument check in an override that the supertype does not make. Fix: change the supertype
+argument check in an override that rejects an input the documented supertype contract accepts;
+a base class need not enforce every precondition itself. Fix: change the supertype
 operation to an honest outcome/capability contract every subtype honours, or stop pretending the
 subtype is substitutable and model it separately. A `maxWithdrawal()` query followed by
 `withdraw()` merely creates a check-then-act race unless the operation enforces the same rule.
@@ -44,6 +49,7 @@ subtype is substitutable and model it separately. A `maxWithdrawal()` query foll
 ```java
 public interface OrderRepository {
     Order find(String id);
+    /** Persists a valid order; saving is required, not an optional capability. */
     void save(Order order);
 }
 
@@ -56,9 +62,9 @@ public final class ReadReplicaRepository implements OrderRepository {
 ```
 
 The implementor is announcing that the interface promised more than it can honour
-— which is simultaneously the ISP evidence (see below). A new unchecked exception
-from an override is a strengthened precondition in disguise: "callable only if you
-never call `save`". Detection: `UnsupportedOperationException` or any `throw new`
+— which is simultaneously the ISP evidence (see below). Rejecting every valid save contradicts
+the required operation. An unchecked exception is not inherently a violation if it represents
+a failure already allowed by the contract. Detection: `UnsupportedOperationException` or any `throw new`
 in an override with no counterpart in the supertype's documented behaviour.
 
 ### Violation 3: asymmetric equals across a subclass
@@ -126,9 +132,10 @@ it cannot work.
 
 ### Default methods: pressure valve and trap
 
-A `default` method lets a published interface gain a method without breaking
-implementors — the legitimate use, and the reason `Collection.stream()` could
-ship. The trap: a default that cannot be implemented meaningfully at the interface
+A compatible `default` can let a published interface gain behavior without requiring an
+implementation in every class, as with `Collection.stream()`. Check inherited method conflicts
+and separately compiled consumers; a default is not an unconditional compatibility guarantee.
+The trap: a default that cannot be implemented meaningfully at the interface
 level (returning `null`, throwing, or silently doing nothing) is a fat interface
 hiding behind source compatibility. Every implementor that _should_ have made a
 decision now silently inherits a wrong one. Rule: a default must satisfy the documented contract
@@ -143,3 +150,7 @@ behavioral compatibility.
 - **Splitting to one-method interfaces everywhere** trades a fat interface for an
   interface explosion — N names, N seams, and composition roots juggling them. Cut
   along observed client groupings, not along method boundaries.
+
+See [Collection optional operations](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html)
+and [JLS 21 interface evolution](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.5.7)
+when deciding whether throwing or adding a default is actually a contract defect.

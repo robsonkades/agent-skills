@@ -29,11 +29,16 @@ class unloading, code-cache sweeping, native cleaners/arenas and OS reclaim coup
 other domains to different lifecycles. Not every domain has a hard flag or a distinct
 `OutOfMemoryError`; that is why accounting starts from evidence rather than six fixed boxes.
 
+Inspect the target JDK/vendor/update, collector, effective flags, OS and cgroup hierarchy
+before applying a budget. JDK 25 examples describe one HotSpot environment; neither a newer
+feature nor a measurement here authorizes changing the project's runtime.
+
 ## Workflow
 
-1. **Read the full OOM message first.** It names the region, and the region decides the
-   investigation. `Metaspace`, `Direct buffer memory` and `unable to create native
-thread` are three unrelated problems, and none of them is fixed by raising `-Xmx`.
+1. **Read the full OOM message first.** It suggests an allocation path or resource limit, not necessarily
+   the root cause; preserve causes and external process/container evidence. `Metaspace`, `Direct buffer memory` and `unable to create native
+thread` require different evidence; raising `-Xmx` is not a general repair and can increase
+   native/cgroup pressure even when it also raises an implicit direct-buffer limit.
 2. **Measure JVM-tracked non-heap with NMT under your own load**, and model untracked domains:
    `-XX:NativeMemoryTracking=summary` at start, then
    `jcmd <pid> VM.native_memory summary`; `baseline` followed later by `summary.diff`
@@ -46,8 +51,8 @@ thread` are three unrelated problems, and none of them is fixed by raising `-Xmx
    the arithmetic and the RSS-versus-NMT gap table are in
    `references/container-budget.md`.
 4. **Distinguish virtual reserved, NMT committed, resident and cgroup-charged.** `ps` exposes
-   both VSZ and RSS; neither is identical to NMT totals or `memory.current`. Half of all wrong memory diagnoses come
-   from comparing the wrong number with the wrong limit.
+   both VSZ and RSS; neither is identical to NMT totals or `memory.current`. A residual
+   obtained by subtracting NMT committed from RSS is not a measured untracked-native total.
 5. **Judge normalized trends, not instants** — compare equivalent reclamation points,
    native/RSS/cgroup peaks and the workload regime that produced them.
 
@@ -65,8 +70,9 @@ thread` are three unrelated problems, and none of them is fixed by raising `-Xmx
 - The compressed-oop cutoff for applicable HotSpot collectors is often near 32 GiB but
   depends on alignment, heap base/reservation and build. Confirm effective flags/layout;
   ZGC's colored-pointer scheme is not a compressed-oops workaround.
-- `-Xss × platform-thread count` is a virtual reservation bound, not automatically resident
-  bytes. Reduce stacks only after testing Java/native call depth and guard-page behavior;
+- `-Xss × platform-thread count` is only an approximate Java-stack reservation model,
+  not a process-wide bound or resident bytes. JVM/native threads, main-thread policy,
+  rounding and guard regions can differ; inspect actual reservations. Reduce stacks only after testing Java/native call depth and guard-page behavior;
   stack overflow is a correctness failure, not merely a tuning regression.
 - Code-cache pressure can stop compilation and trigger flushing/sweeping/restart behavior
   that varies by tier/segment and release. `jdk.CodeCacheFull` is strong evidence of an

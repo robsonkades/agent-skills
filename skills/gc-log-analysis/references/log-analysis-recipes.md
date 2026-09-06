@@ -1,15 +1,26 @@
 # Log analysis recipes
 
-Every script here uses **POSIX awk only** — it works on Linux, macOS and BSD with nothing
-installed. The three-argument `match($0, /re/, arr)` form found in most examples online is
-a GNU extension: elsewhere it silently populates nothing and the script prints zero, which
-in a diagnostic tool is the worst possible failure.
+These recipes use POSIX awk syntax plus shell utilities; check their availability (Windows may
+need an existing Unix tool environment). Unsupported awk extensions can fail at parse time.
+Use `LC_ALL=C`, inspect stderr and stage exit codes; pipeline success alone can hide earlier failure.
+
+The recipes below deliberately target G1 unified logs with tags, GC IDs and millisecond completion
+summaries. First create `completed.log` in an analysis-owned directory, preserving the source:
+
+```bash
+LC_ALL=C awk '/\[gc *\]/ && /GC\([0-9]+\) Pause (Young|Full|Remark|Cleanup)/ && /[0-9]+([.][0-9]+)?ms$/ {
+  print; n++
+} END { if (!n) { print "no supported G1 pause completions" > "/dev/stderr"; exit 1 } }' gc.log > completed.log
+```
+
+Verify collector/process identity separately; split other collectors and unsupported formats rather
+than feeding their phase lines into this filter. Reconcile counts against raw logs and drop notices.
 
 ## Pause distribution
 
 ```bash
-awk '/Pause/ && match($0, /[0-9]+\.[0-9]+ms/) {
-       print substr($0, RSTART, RLENGTH - 2) }' gc.log \
+awk '/Pause/ && match($0, /[0-9]+([.][0-9]+)?ms$/) {
+       print substr($0, RSTART, RLENGTH - 2) }' completed.log \
 | sort -n \
 | awk '{ v[n++] = $1; total += $1 }
        END {
@@ -21,7 +32,9 @@ awk '/Pause/ && match($0, /[0-9]+\.[0-9]+ms/) {
        }'
 ```
 
-`total` divided by the log's wall-clock span is the logged stop-the-world pause share. It
+`total` divided by an explicitly measured wall-clock window covering those pauses is the logged
+stop-the-world pause share. Use the same units; do not include the first pause in a denominator
+starting at its completion. It
 does not include concurrent GC CPU or barrier cost. The sample count is essential: under
 nearest-rank estimation, p99 is the maximum until at least 100 observations and remains a
 noisy tail estimate for small windows.
@@ -31,22 +44,28 @@ noisy tail estimate for small windows.
 ```bash
 # Pause types
 awk '/Pause/ { for (i = 1; i <= NF; i++)
-                 if ($i == "Pause") { print $i, $(i+1); break } }' gc.log \
+                 if ($i == "Pause") { print $i, $(i+1); break } }' completed.log \
   | sort | uniq -c | sort -rn
 
-# Causes (the parenthesised field)
-grep -oE '\([A-Za-z0-9 ]+\)' gc.log | sort | uniq -c | sort -rn | head
+# G1 causes: strip event type first; retain the remainder, including nested parentheses.
+# Failure suffixes remain labelled context rather than being confused with the cause.
+awk '{ s=$0; sub(/.*GC\([0-9]+\) Pause /,"",s)
+       sub(/^Young \([^)]*\) /,"",s); sub(/^(Full|Remark|Cleanup) /,"",s)
+       sub(/ [0-9]+[KMG]->.*/,"",s); sub(/ [0-9]+([.][0-9]+)?ms$/,"",s)
+       if (s !~ /^\(/) s="(no explicit cause)"
+       print s }' completed.log | sort | uniq -c | sort -rn
 ```
 
 ```bash
-grep -c "Pause Full" gc.log     # investigate unplanned events in an online SLO window
-grep -i humongous gc.log        # humongous allocations
+grep -c "Pause Full" completed.log # one completion per event; grep exits 1 for zero matches
+grep -i humongous gc.log           # occupancy/candidates/causes, not an allocation-event count
 ```
 
 ## Headroom after each collection
 
 ```bash
-awk 'match($0, /[0-9]+M->[0-9]+M\([0-9]+M\)/) {
+awk 'match($0, / [0-9]+M->[0-9]+M\([0-9]+M\)/) {
+       matched++
        s = substr($0, RSTART, RLENGTH)
        sub(/M->.*/, "", s);  before = s + 0
        t = substr($0, RSTART, RLENGTH)
@@ -56,11 +75,14 @@ awk 'match($0, /[0-9]+M->[0-9]+M\([0-9]+M\)/) {
        if (capacity > 0)
          printf "after=%dM  headroom=%dM (%.0f%%)\n",
                 after, capacity - after, (capacity - after) * 100 / capacity
-     }' gc.log
+     }
+     END { if (!matched) { print "no supported integer-M heap summaries"; exit 1 } }' completed.log
 ```
 
-The number that matters is `after`, and more than the value, its **trend**. A floor that
-rises after every complete cycle is retention.
+This narrow integer-M recipe does not normalize K/G or fractional units. Inspect and report skipped
+formats before using totals; convert units explicitly if present. Headroom is rounded committed
+capacity minus occupancy, not a guarantee of usable evacuation/contiguous space. A rising floor at
+comparable reclamation points supports a retention hypothesis, not a verdict independent of workload.
 
 ## Premature promotion
 
@@ -83,10 +105,13 @@ jfr print --events jdk.GCPhasePause           /tmp/gc.jfr   # phases
 jfr print --events jdk.ObjectAllocationSample /tmp/gc.jfr   # WHO allocated
 ```
 
-On JDK 16+, use `jdk.ObjectAllocationSample` — enabled by default and throttled.
-`jdk.ObjectAllocationInNewTLAB` and `jdk.ObjectAllocationOutsideTLAB` still exist but have
-been **disabled by default** since JDK 16 (JDK-8257602): requesting them in a `profile`
-recording returns empty, which is easily misread as "no significant allocation".
+On JDK 16+, `jdk.ObjectAllocationSample` provides sampled attribution. The shipped OpenJDK 25
+profile enables it with throttling and disables the two TLAB allocation events by default;
+custom settings can differ. Inspect recording settings and event counts rather than treating
+empty output as no allocation. Samples identify observed sites, not every allocation.
+
+Sources: [OpenJDK 25 profile settings](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/jdk.jfr/share/conf/jfr/profile.jfc)
+and [Java 25 logging configuration](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html).
 
 ## Visual analysers
 

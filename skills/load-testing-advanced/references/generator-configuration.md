@@ -14,11 +14,17 @@ preallocation from the observed concurrency distribution plus explicit headroom,
 generator CPU, memory, network, sockets and metrics output remain below their limits.
 
 In current k6 arrival-rate executors, each iteration needs an available VU. Insufficient
-allocation causes dropped iterations. Dynamic allocation up to maxVUs can itself consume
+allocation causes dropped iterations, including when target slowdown holds VUs longer;
+this does not uniquely identify generator hardware saturation. Zero drops also do not
+prove starts met their planned timestamps. Dynamic allocation up to maxVUs can itself consume
 resources, so official guidance favors adequate preallocation for stable tests. Pin the k6
 version and inspect the achieved start timestamps.
 
 ## k6 example
+
+Partial options for an illustrative HTTP capacity scenario, not a runnable workload.
+Supply the iteration body, expected response classification and business correctness checks;
+derive thresholds and VU counts from the target SLO and pilot, not these example numbers.
 
 ```javascript
 export const options = {
@@ -35,6 +41,8 @@ export const options = {
   thresholds: {
     // Acceptance: the service objective.
     http_req_duration: ['p(99)<500'],
+    http_req_failed: ['rate<0.01'], // configure which responses count as expected
+    checks: ['rate==1'], // requires emitted business checks and non-empty validation
     // Fidelity: configured starts occurred.
     dropped_iterations: ['count<1'],
   },
@@ -44,6 +52,16 @@ export const options = {
 One iteration can issue zero, one or many requests. If target demand is request/s or
 business operations/s, measure requests/useful operations per iteration and configure the
 iteration rate accordingly.
+
+`http_req_duration` measures sending, waiting and receiving, excluding DNS/connection/TLS
+setup. If the objective includes these or multiple requests, instrument the logical operation
+boundary separately. A failed `check()` alone does not fail the process; thresholds gate it.
+Require non-empty request/check populations, reconcile attempts and useful completions, and
+scope metrics to the intended scenario/phase before claiming this predicate passed.
+Built-in HTTP samples are timestamped at request completion: a completion-window summary can
+include requests started earlier and omit unfinished ones. Declare start cohorts, drain
+allowances, client timeouts and interrupted iterations; timed-out clients can leave server
+work running. Do not silently mix warmup, test and recovery samples.
 
 A dropped-iteration threshold is a useful CI gate for a configured-arrival claim. Preserve
 the raw count and phase: it does not erase valid lower-load phases, and a deliberately
@@ -119,6 +137,8 @@ so inspect the effective implementation and metrics before attributing a plateau
 
 - [k6 constant arrival rate](https://grafana.com/docs/k6/latest/using-k6/scenarios/executors/constant-arrival-rate/)
 - [k6 arrival-rate VU allocation](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/arrival-rate-vu-allocation/)
+- [k6 built-in metrics](https://grafana.com/docs/k6/latest/using-k6/metrics/reference/)
+- [k6 thresholds](https://grafana.com/docs/k6/latest/using-k6/thresholds/)
 - [Gatling injection](https://docs.gatling.io/concepts/injection/)
 - [Apache JMeter component reference](https://jmeter.apache.org/usermanual/component_reference.html)
 - [JDK jcmd](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)

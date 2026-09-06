@@ -12,8 +12,8 @@
 - **The invariant lives in comments or wiki, not in a type.** "Callers must check the
   credit limit before debiting" is documentation doing a constructor's job.
 - **Check-then-act on shared state.** A read, a decision, then a write on the same object
-  with time in between is a race window; a single command method narrows it and gives one
-  place to synchronise or version.
+  is a race window; a single command gives one place to synchronize or version but does not
+  reduce the legal interleavings until that concurrency protocol is actually applied.
 - **Tests for a domain rule construct a service with five mocks.** The rule is trapped in
   orchestration; in the domain object it tests with a constructor call.
 - **Queries with observable side effects.** "Touch on read" timestamps, emitted business events

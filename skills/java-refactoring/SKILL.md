@@ -26,8 +26,14 @@ line nobody checked.
 
 ## Workflow
 
+The catalogue is authored for Java 25; inspect the target release/toolchain, preview policy,
+resolved framework versions and CI/runtime before using a version-sensitive technique. Java 21
+supports pattern switches but not the final Java 25 flexible-constructor-body feature; do not
+upgrade or enable preview to make a refactoring example fit. Snippets elide imports, enclosing
+classes and domain helpers; they are illustrations rather than standalone compilation units.
+
 1. **Establish and record the baseline.** Run the affected tests. They should be green;
-   if unrelated failures already exist, quarantine or record them precisely and require the
+   if unrelated failures already exist, record them precisely and require the
    same baseline after each step rather than claiming an all-green suite. If the changed path
    has no meaningful coverage, write
    characterisation tests first — read `references/safety-workflow.md`, which includes
@@ -55,7 +61,8 @@ line nobody checked.
    `references/catalogue-api-shape.md` for signatures,
    `references/catalogue-inheritance.md` for hierarchies. Every entry in the four
    catalogue files carries a labelled precondition — check it before the step, not after.
-5. **Take one mechanical step: transform, compile, test, commit.** Where an IDE
+5. **Take one mechanical step: transform, compile, test, inspect the diff.** Commit only when
+   explicitly requested; the small-step discipline also applies to uncommitted work. Where an IDE
    refactoring is available, use it: it resolves references the compiler will not report.
    Editing by hand — which is the agent's case — the substitute is the compiler plus an
    explicit caller enumeration: make the old symbol inaccessible and compile, then search

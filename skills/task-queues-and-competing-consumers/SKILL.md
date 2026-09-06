@@ -21,11 +21,11 @@ description: >
 
 Decide whether work belongs on a queue consumed by a pool of interchangeable workers, and
 then operate that pool so the queue's own mechanics do not corrupt the work. The queue owns
-assignment: a worker pulls, so the fastest worker gets the next item and no scheduler has to
-know how loaded anyone is.
+assignment through pull or broker delivery/credit. Ready workers can take more work, but
+prefetch, task size, priority and dispatch policy determine actual balance.
 
-The failure this prevents is the silent double-execution. A worker does not remove a message;
-it **leases** it for a bounded time, and when that time expires the message becomes visible
+The failure this prevents is silent double-execution. In an SQS-style visibility model, receiving
+does not remove a message; it hides it for a bounded time, and when that time expires it becomes visible
 again for another worker. If the first worker is still running — slow dependency, long GC
 pause, a batch that grew — the message is now being processed twice, concurrently, with
 nothing failing and nothing retrying. **The visibility timeout is a bet on how long the work
@@ -33,8 +33,14 @@ takes, and losing the bet duplicates the work.**
 
 ## Workflow
 
-1. **Run the decision block below** before designing anything: independent items, stateless
-   workers, no ordering requirement across items.
+Inspect broker/queue type, acknowledgement mode, client/framework and Java versions, prefetch,
+retention and redelivery configuration. RabbitMQ channel acknowledgements and JMS sessions
+are not SQS receipt leases. Preserve the deployed baseline. Missing evidence is unknown;
+deliver the ownership/ack/recovery path, budgets and actual validation. Run crash/requeue
+experiments only in isolated or already authorized environments.
+
+1. **Run the decision block below**: interchangeable workers and independent items, or explicit
+   per-key lanes with ordering/recovery semantics.
 2. **Measure lease exposure**, not just handler time: prefetch/permit wait + queue client work +
    handler + acknowledgement, under degraded dependencies and pauses. Select an explicit
    premature-redelivery versus crash-recovery objective; there is no universal percentile.
@@ -44,13 +50,15 @@ takes, and losing the bet duplicates the work.**
 4. **Bound accepted backlog by age, bytes/items, retention and recovery capacity.** If the
    managed broker cannot reject at a depth, enforce admission upstream and specify what the
    producer sees (`rate-limiting-and-load-shedding`).
-5. **Bound worker concurrency at the poll**, not after it: acquire the permit before fetching
-   the message. The limit itself is `concurrency-limiting-and-bulkheads`.
+5. **Bound intake before delivery**: reserve permits before pulling, or configure broker credit/
+   prefetch and bounded dispatch for push consumers. Handle receive failure and submission rejection
+   without leaking permits or deliveries. The limit is `concurrency-limiting-and-bulkheads`.
 6. **Scale from a signal set.** Age is closest to a latency SLO, but combine it with depth,
    arrival/drain rate, in-flight saturation and startup delay; broker age can be approximate or
    reset by redelivery. `references/worker-loop-and-scaling.md` gives the control model.
 7. **Prove it by killing a worker mid-lease** and asserting redelivery, one observable side
-   effect, and no lost item. A happy-path test proves nothing here.
+   effect under the declared contract, and no unexplained missing item. Happy paths alone do
+   not exercise recovery; sample fault cases do not prove every failure mode.
 
 ## Decision block
 
@@ -89,9 +97,9 @@ Prefer an in-process executor instead when:
 - Size from the measured **receive-to-ack** distribution plus safety/resolution margin, against
   a stated premature-redelivery error budget and maximum crash-recovery delay. Segment by task
   class; censored timings from already-expired work do not reveal the unseen tail.
-- A heartbeat that extends the lease has its own failure mode: a heartbeat thread that keeps
-  renewing while the work thread is wedged means the item is **never** redelivered. Cap total
-  lease time, and drive the heartbeat from observable progress, not from thread liveness.
+- A heartbeat that extends the lease can keep wedged work hidden until renewal stops or a
+  broker limit is reached. Cap total
+  lease time and use credible progress where available, never thread liveness as proof of progress.
 - **A batch fetch starts every lease at receive time.** For `B` records processed serially, the
   last sees the sum of preceding durations; with `C` handler slots it waits behind roughly
   `ceil(B/C)-1` waves, but correlated tails and scheduling matter. Measure receive-to-start and
@@ -108,15 +116,16 @@ Prefer an in-process executor instead when:
   approximate, reset by retry, or dominated by one poison item. Use age for SLO alerting and a
   controller signal set—visible/in-flight depth, arrival/drain rate, service-time distribution,
   saturation, startup delay and downstream capacity. Validate stability and scale-down hysteresis.
-- A single shared queue _is_ work stealing: workers pull, so heterogeneous task cost
-  self-balances. Per-worker queues with push assignment do not, and need explicit stealing; the
-  in-JVM mechanics are `forkjoinpool-and-work-stealing`.
+- A shared queue can balance work dynamically, but it is not the per-worker-deque work-stealing
+  algorithm. Prefetch can strand work behind slow handlers; measure distribution and credit.
+  The in-JVM mechanics are `forkjoinpool-and-work-stealing`.
 - Strict priority starves the low class permanently while high-priority arrivals sustain above
   capacity. Bound the starvation explicitly — age items into a higher class after a stated time
   in queue, or give each class a weighted share of workers. "Rarely happens" is not a policy.
-- On shutdown, stop polling **first**, then finish or return what is held. Returning an
-  unfinished item (nack, or letting the lease lapse) beats being killed mid-handler with the
-  lease running; the sequence and grace-period budget are `kubernetes-service-lifecycle`.
+- On shutdown, stop intake and resolve polls racing with shutdown, then drain or cancel held
+  work. Releasing a delivery while its old handler still runs invites overlap; retain resource
+  guards/idempotency. Interruption does not prove termination. The grace budget and ordering
+  are `kubernetes-service-lifecycle`.
 - A durable broker may intentionally have no hard depth rejection, but accepted backlog is never
   economically unbounded. Set maximum useful age, retention/storage quotas and catch-up/recovery
   objectives; shed or defer admission before work becomes guaranteed-expired.
@@ -144,7 +153,7 @@ Prefer an in-process executor instead when:
   extension with its failure mode and its cap, and what to do instead of treating a lease as a
   lock. Read when setting or reviewing a visibility timeout, or when duplicate side effects
   appear with no retry in the code.
-- [Worker loop and scaling](references/worker-loop-and-scaling.md) — a competing-consumer loop
-  in Java with bounded concurrency, lease heartbeat and drain-on-shutdown; the autoscaling
+- [Worker loop and scaling](references/worker-loop-and-scaling.md) — a competing-consumer ownership
+  protocol with bounded concurrency, lease heartbeat and drain-on-shutdown; the autoscaling
   signal against the wrong ones; priority with ageing; and a test that kills a worker mid-lease.
   Read before writing or reviewing a worker, or when deciding what the pool scales on.

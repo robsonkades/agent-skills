@@ -27,8 +27,9 @@ producer.send(new ProducerRecord<>("orders", event));            // no key: part
 producer.send(new ProducerRecord<>("orders", order.id(), event)); // key: per-key ordering possible
 ```
 
-Nothing fails. Records spread across partitions by round-robin or sticky batching, and per-key
-ordering never existed. Grep for `ProducerRecord<>(topic, value)` with two arguments.
+With default unkeyed placement across multiple partitions, domain-key ordering is not ensured.
+An explicit partition, single-partition topic or custom mapping changes that conclusion.
+Inspect producer configuration and actual serialized routing, not just constructor arity.
 
 **2 — Parallel dispatch inside the consumer.**
 
@@ -36,16 +37,20 @@ ordering never existed. Grep for `ProducerRecord<>(topic, value)` with two argum
 for (var rec : records) executor.submit(() -> handle(rec));   // per-partition order destroyed
 ```
 
-One simple ordering-preserving scheme is a serial lane per key (usually many keys share a
-lane):
+One ordering-preserving shape is a serial lane per key (usually many keys share a lane).
+This partial snippet assumes non-null keys, nonempty workers, stable routing, FIFO submission
+and one worker per lane. `handle` must finish its effect before returning; merely enqueueing
+another asynchronous operation does not preserve completion order:
 
 ```java
 int worker = Math.floorMod(rec.key().hashCode(), workers.length);
 workers[worker].submit(() -> handle(rec));    // one slow key now blocks every key sharing it
 ```
 
-Offsets advance only through the highest **contiguous** completed offset per partition. A
-maximum completed offset skips unfinished lower records on crash. Keyed lanes also need bounded
+Offsets advance only through the completed prefix of **delivered records** per partition;
+numeric offsets can have gaps. Use an explicit safe next-offset commit map and ownership epoch;
+`Future.isDone()` includes failure/cancellation, not only success. A maximum completed offset
+skips unfinished lower records on crash. Keyed lanes also need bounded
 queues and cancellation/revocation semantics.
 
 **3 — Retry by republish.**
@@ -56,6 +61,11 @@ catch (TransientException e) { producer.send(new ProducerRecord<>("orders.retry"
 
 The record goes to the back; later records for the same key are applied first. Three options,
 and the bug is choosing one without noticing:
+
+In-place retry must stop later records already returned by the same poll, not just future
+fetches. `pause` does not cancel those records or in-flight handlers. Keep polling within
+the membership budget; serialize seek/retry on the owning consumer thread, resume deliberately
+and reconcile pause/ownership after rebalance (`kafka-consumers-in-java`).
 
 | Option                                              | Ordering                    | Cost                                                  |
 | --------------------------------------------------- | --------------------------- | ----------------------------------------------------- |
@@ -70,7 +80,7 @@ catch (Exception e) { dlq.send(rec); }   // and the loop continues to the next r
 ```
 
 The next record for that key is applied to a state the skipped record never produced. The
-result is _wrong_, not late, and nothing reports it. Where per-key order matters, park the key
+result violates sequencing if the skipped transition is required. Where that requirement holds, park the key
 or pause the partition instead (`poison-messages-and-dlq`).
 
 **5 — Rebalance overlap.** A handler can outlive ownership; the new owner resumes from the
@@ -79,8 +89,8 @@ crash/eviction and Kafka does not fence the external sink. Use cancellation plus
 effects, or propagate an ownership epoch the sink can enforce. Mechanics are
 `kafka-consumers-in-java`.
 
-**6 — Producer in-flight retries.** With several request batches in flight on one connection, a
-batch that fails and is retried lands _after_ a later batch that succeeded — reordering inside
+**6 — Producer in-flight retries.** Without producer idempotence, with several request batches
+in flight and retries enabled, a failed/retried batch can land after a later success — reordering inside
 the partition, at the producer, with no consumer involved. Prevent it by role: bound in-flight
 requests per connection to one, or enable the idempotent producer, which preserves per-partition
 order across retries within its in-flight window. Read your client's documented limit for that
@@ -93,12 +103,13 @@ CompletableFuture.runAsync(() -> producer.send(rec));   // enqueue order is now 
 ```
 
 Ordering is decided by arrival at the broker. Producing one key from several threads, or from
-several instances, means the log's order is not the domain's order — no consumer-side fix
-exists.
+several instances does not establish domain order unless source sequencing constrains sends.
+A consumer can buffer/reorder using trustworthy source sequence metadata; it cannot recover
+an unrecorded domain order from broker arrival alone.
 
 **8 — Ordering assumed across channels/topics.** Independent logs usually expose no shared
-order. A transaction may atomically publish to several Kafka partitions, but atomic visibility
-does not assign one consumer processing order across them. Carry causal/version information or
+order. A Kafka transaction can commit records across partitions, but `read_committed` consumers
+do not receive them as one atomic cross-partition snapshot or processing unit. Carry causal/version information or
 use an explicit sequencer when the invariant spans streams.
 
 ## The partition count is a one-way door
@@ -115,8 +126,9 @@ Consequences to plan for at creation:
   is not literally permanent because Kafka permits increases, but changing it may violate key
   mapping/order and Kafka does not support an in-place decrease. Partitions cost broker
   metadata, files, replication, recovery and rebalance time.
-- Increasing in place is safe when per-key ordering is not required, or when the topic is
-  quiescent: no unconsumed records exist for any key at the moment of the change.
+- Increasing in place can preserve the ordering contract when per-key ordering is unnecessary
+  or writers are quiesced, buffered/retried sends are resolved and old effects are drained
+  through a known barrier. Zero consumer lag alone does not prove these conditions.
 - Otherwise it is a protocol: establish a source-side cutover epoch/barrier, stop or dual-write
   under a deduplicated operation ID, drain every old partition through its barrier, then allow
   effects from the new mapping. Merely consuming old and new topics concurrently can apply new-
@@ -127,5 +139,5 @@ Consequences to plan for at creation:
 ## Primary references
 
 - [Apache Kafka design: ordering guarantees](https://kafka.apache.org/documentation/#intro_guarantees)
-- [Kafka producer configuration: idempotence and in-flight requests](https://kafka.apache.org/documentation/#producerconfigs)
+- [Kafka 4.1 producer configuration: idempotence and in-flight requests](https://kafka.apache.org/41/configuration/producer-configs/)
 - [KafkaConsumer API: offsets and assignment](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)

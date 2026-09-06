@@ -26,8 +26,8 @@ failure distribution rather than making the call reliable.
 
 The decision is made per failure, not per call site: transient, permanent, or **ambiguous**.
 The ambiguous class causes the incidents. A timeout is a failure of the wait, not of the
-operation: the write may already have been applied. Retrying it is safe only when the
-operation is idempotent, which is idempotency's subject, not this skill's.
+operation: the write may already have been applied. Require replay-safe semantics or
+reconciliation evidence before reissuing it; idempotency owns that guarantee.
 
 ## Workflow
 
@@ -44,11 +44,13 @@ operation is idempotent, which is idempotency's subject, not this skill's.
    default for large correlated fleets; then check total time and attempt timeout against the
    caller's remaining deadline before the policy ships.
 5. **Add a retry budget.** Cap retries as a fraction of successful traffic; attempt counts
-   bound one call site, budgets bound the fleet.
+   bound one call site; budgets bound their declared scope, with coordinated grants needed
+   for a fleet-wide guarantee.
 6. **Respect server guidance within the deadline.** Do not retry before a valid `Retry-After`;
    use at least the greater of local backoff and server delay, unless it cannot fit. Validate/
-   cap untrusted or absurd dates and do not assume another replica bypasses a shared quota.
-7. **Instrument ratios, not counts** — attempts per logical call, budget rejections, and
+   reject untrusted or unrepresentable dates. If a valid delay exceeds the allowed wait, stop
+   retrying rather than truncating it and retrying early. Another replica may share the quota.
+7. **Derive ratios from scoped counters** — attempts per logical call, budget rejections, and
    the dependency's inbound rate against yours. See `references/retry-failure-modes.md`.
 
 ## Rules
@@ -81,8 +83,13 @@ operation is idempotent, which is idempotency's subject, not this skill's.
 - Never sleep a backoff while holding a transaction or a pooled connection. The dependency's
   slowdown then becomes your pool exhaustion, and the transaction stays open across it.
   Retry outside the transactional boundary.
+- Start each retried transaction from fresh transactional state; rollback/release the failed
+  attempt before backoff and reread/recompute when the concurrency contract requires it.
+- A caller timeout/cancel does not establish that previous work stopped. Propagate cancellation,
+  retain accounting until actual completion, and bound any overlapping attempts explicitly.
 - Never retry a response already streaming to the caller: bytes delivered cannot be
-  withdrawn. Buffer the response or restart the whole operation.
+  withdrawn. Before delivery, bounded buffering may permit retry; after delivery, only an
+  explicit resumable/restart protocol can preserve the caller-visible contract.
 - Compose retry and breaker deliberately, and state which nesting you chose.
   `Retry(Breaker(call))` records **every attempt** in the breaker, so it trips after fewer
   logical calls than the threshold suggests — and once open the remaining attempts fail fast,
@@ -110,6 +117,9 @@ operation is idempotent, which is idempotency's subject, not this skill's.
 Record logical operation ID, attempt ordinal, parent layer, endpoint, per-attempt timeout,
 backoff/server delay, classification evidence and final outcome. Keep metric labels bounded;
 high-cardinality IDs belong in traces/logs.
+Report policy versions, total attempts across layers, deadline/reserve, retry-safety evidence,
+observed amplification and remaining validation. Missing outcome evidence stays unknown; do
+not upgrade dependencies or change established retry/API contracts merely to fit an example.
 
 ## References
 

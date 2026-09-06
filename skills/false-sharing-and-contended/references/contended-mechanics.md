@@ -6,13 +6,37 @@ Read the exact target JDK annotation/source. Conceptually, contention groups req
 between grouped fields/classes according to HotSpot's layout policy. Empty/default group semantics
 and class-level versus field-level use matter; multiple fields can intentionally share a group.
 
+The pinned JDK 25 annotation contract specifies:
+
+- Each field with an empty/default tag has a distinct anonymous group.
+- Fields with the same nonempty tag in one class share a group; they are not isolated
+  from one another. Use different groups for different hot owners.
+- Class-level annotation groups otherwise unannotated declared fields together; it does
+  not separate every field. Its tag is ignored.
+- Class annotation does not cover newly declared subclass fields. Superclass groups retain
+  their effect, but the same tag in parent and child does not combine those groups.
+
+Partial application layout example, compiled with the target JDK's internal annotation export:
+
+```java
+final class Counters {
+    @jdk.internal.vm.annotation.Contended("producer")
+    volatile long produced;
+    @jdk.internal.vm.annotation.Contended("consumer")
+    volatile long consumed;
+}
+```
+
+Distinct groups request separation; the volatile fields preserve visibility but `++` still
+is not an atomic multi-writer increment. Verify runtime offsets and actual ownership.
+
 Verification protocol:
 
 ```text
 1. Pin JDK vendor/version/build, architecture, collector and header flags.
 2. Confirm compilation used the required module export for the internal annotation.
 3. Inspect class-file annotation presence.
-4. Capture effective RestrictContended and padding-width support/value.
+4. Capture effective EnableContended, RestrictContended and padding-width support/value.
 5. Inspect runtime field offsets/layout under the exact launch flags.
 6. Calculate total instance/array/fleet memory impact.
 7. Validate actual writer placement and performance evidence.
@@ -34,6 +58,14 @@ needed if application code/reflection resolves/accesses the internal annotation 
 not add it solely by folklore when the VM only consumes annotation metadata. In all cases,
 `-XX:-RestrictContended` may be required for application classes on HotSpot. Verify startup/effective
 flags because internal options can change or disappear.
+
+For HotSpot builds exposing these flags, `EnableContended=false` disables layout handling
+even when restrictions are relaxed. Inspect flags rather than assuming `-XX:-RestrictContended`
+alone is sufficient. `javac --release` cannot be combined with exporting an internal package
+from a system module for that release. Use the intended JDK toolchain and its supported build
+configuration; do not remove the project's release compatibility requirement or upgrade its
+JDK just to compile this annotation. If those constraints exclude internal API use, select an
+ownership/array/standard-library alternative.
 
 ## Layout evidence
 
@@ -68,10 +100,13 @@ owner mapping.
 Compute:
 
 ```text
-extra bytes per instance * peak live instances
-+ additional cache/TLB/GC scanning effects
-+ allocation rate/lifetime consequences
+extra shallow bytes per instance * peak live instances = extra live shallow bytes
+extra bytes per allocation * allocations per second = extra allocated bytes per second
 ```
+
+Measure retained graphs, cache/TLB behaviour and GC effects separately; these are not byte
+quantities to add to the formula. Padding bytes are not extra reference fields for GC to scan,
+though larger objects can affect copying, heap occupancy and locality.
 
 Padding one singleton can be cheap; padding millions of short-lived objects can dominate. Larger
 objects may cross size classes/region/card boundaries and reduce locality. Measure retained/live and
@@ -80,6 +115,7 @@ allocated footprint, not only shallow size.
 ## Authoritative references
 
 - [JEP 142](https://openjdk.org/jeps/142)
-- [OpenJDK `Contended` source](https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/jdk/internal/vm/annotation/Contended.java)
+- [OpenJDK 25 `Contended` source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/jdk/internal/vm/annotation/Contended.java) — grouping contract; inspect the target build as well.
+- [OpenJDK 25 VM flags](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/globals.hpp) — enable/restriction/padding controls.
 - [OpenJDK class layout source](https://github.com/openjdk/jdk/tree/master/src/hotspot/share/classfile)
 - [JOL project](https://github.com/openjdk/jol)

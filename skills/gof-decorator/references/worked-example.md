@@ -3,6 +3,10 @@
 `PriceLookup` fetches a price from a supplier's API. It needs metrics, a circuit breaker, retry,
 a per-attempt timeout and a short cache. Every one of those is a separate concern, several are
 optional per environment, and their order determines behaviour.
+Java 17 partial teaching example: domain, deadline, policy and wrapper types are illustrative;
+Spring/JUnit snippets require the project's actual dependencies. `Deadline` uses a monotonic clock.
+`sleepBefore` must cap waiting to the remaining budget and propagate interruption as cancellation,
+not as `PricingUnavailable`. The transport must enforce remaining time for each attempt.
 
 ## The interface, and one layer
 
@@ -15,26 +19,33 @@ public final class RetryingPriceLookup implements PriceLookup {
     private final PriceLookup delegate;
     private final RetryPolicy policy;
 
+    public RetryingPriceLookup(PriceLookup delegate, RetryPolicy policy) {
+        this.delegate = java.util.Objects.requireNonNull(delegate);
+        this.policy = java.util.Objects.requireNonNull(policy);
+        if (policy.maxAttempts() < 1) throw new IllegalArgumentException("maxAttempts");
+    }
+
     @Override
     public Price of(Sku sku, Deadline deadline) {
-        PricingUnavailable last = null;
-        for (int attempt = 1; attempt <= policy.maxAttempts(); attempt++) {
+        int maxAttempts = policy.maxAttempts(); // policy is immutable for this instance
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             if (deadline.hasExpired()) throw new PricingDeadlineExceeded(sku, attempt - 1);
             try {
                 return delegate.of(sku, deadline);
             } catch (PricingUnavailable e) {        // transient only
-                last = e;
+                if (attempt == maxAttempts) throw e; // no sleep after the last failure
                 policy.sleepBefore(attempt + 1, deadline);
             }
         }
-        throw last;
+        throw new AssertionError("validated attempt limit");
     }
 }
 ```
 
 Two properties this layer must have and hand-written retries usually lack. It retries **only the
 transient exception** — a `PriceRejected` (unknown SKU) is permanent and is not caught. And it
-respects the **deadline**, so it cannot spend the caller's whole budget on attempt three.
+checks the **deadline** before each attempt. Total-call enforcement additionally depends on
+budget-aware backoff/transport and cancellation; this loop alone cannot bound an arbitrary delegate.
 
 ## The wiring, with its order justified
 
@@ -51,9 +62,9 @@ PriceLookup priceLookup(RestClient restClient, MeterRegistry meters,
     return new MetricsPriceLookup(meters,
              new CachingPriceLookup(cache,
                new CircuitBreakingPriceLookup(breaker,
-                 new RetryingPriceLookup(RetryPolicy.exponential(3),
+                 new RetryingPriceLookup(
                    new TimeoutPriceLookup(Duration.ofMillis(300),
-                     new HttpPriceLookup(restClient))))));
+                     new HttpPriceLookup(restClient)), RetryPolicy.exponential(3)))));
 }
 ```
 
@@ -69,10 +80,11 @@ Per-attempt timeout                   300 ms
 Backoff                          100 + 200 ms
 Worst case without a deadline check   1200 ms  → exceeds the caller's budget
 
-With the deadline checked before each attempt:
+With deadline-aware sleep and transport as well as the pre-attempt check:
   attempt 1 at   0 ms  (fails at 300)
   attempt 2 at 400 ms  (fails at 700)
-  attempt 3 would start at 900 ms → deadline expired, PricingDeadlineExceeded at 800
+  second backoff has only 100ms remaining → no attempt 3 after expiry
+  failure is observed near the 800ms budget, subject to scheduling/cleanup delay
 ```
 
 Without the deadline check the third attempt runs after the caller has already timed out —
@@ -138,38 +150,31 @@ void an_open_breaker_prevents_retries_entirely() {
 }
 ```
 
-The second test is the one that catches a reordering. If someone moves the breaker below the
-retry, the stack still compiles, every per-layer test still passes, and this test fails —
-which is the only signal that the semantics changed.
+Zero delegate calls with an open breaker does not distinguish the two nestings: both can reject
+before reaching HTTP. To test order, start closed and script two transient failures then success;
+use a recording breaker configured not to open. Assert one successful logical observation outside
+retry versus three attempt observations inside. Clear the cache and instrument retry entries too.
 
 Extract `productionStack(...)` so the test composes the layers in the same order as the `@Bean`
 method. A test that hand-assembles its own order proves nothing about production.
 
-## The reordering that caused an outage
+## Illustrative retry amplification
 
-An earlier version had retry outside the breaker **and** the service mesh configured with two
-retries of its own, which nobody had checked:
+Suppose the client allows three total attempts and the mesh two total attempts (one retry):
 
 ```text
-3 (client retry) × 2 (mesh retry) = 6 requests per logical call
-
-Supplier degrades to 40% errors
-  → 60% of logical calls retry
-  → traffic to the supplier rises ~2.4×
-  → supplier saturates, error rate goes to 100%
-  → every call now costs 6 requests and 1.2 s before failing
-  → caller thread pool fills; the outage becomes ours
+3 client attempts × 2 mesh attempts = at most 6 dependency requests per logical call
+provided all failures are retryable and no deadline/breaker stops them earlier.
+Two mesh retries instead means 3 mesh attempts and a bound of 9, not 6.
 ```
 
-Two changes fixed it: mesh retries disabled for this route, so retry exists at exactly one layer;
-and the deadline check inside the retry loop, so a doomed call fails at 800 ms instead of 1200 ms
-and stops holding a worker. Neither change is visible in any single layer's code — which is why
-the composition needs its own test and its own comment (`cascading-failures`,
-`retries-and-backoff`).
+The realized load multiplier and latency require failure correlation, retry eligibility, budgets,
+backoff and breaker state; no error percentage alone establishes them. Prefer one owner and test
+the shared bounds. This is an illustrative scenario, not a measured incident.
 
 ## What was left to the framework
 
 Tracing and connection pooling were not written as decorators. The `RestClient` builder supplies
-both, propagates trace context automatically, and reports metrics under the conventional names —
-a hand-rolled tracing decorator would have produced spans the platform's dashboards do not know
-about (`rpc-and-api-contracts`, `distributed-tracing-design`).
+integration hooks; actual pooling depends on the HTTP request factory, and observations/tracing
+need configured registries/instrumentation. Verify them in the target project rather than inferring
+automatic propagation from the builder name (`rpc-and-api-contracts`, `distributed-tracing-design`).

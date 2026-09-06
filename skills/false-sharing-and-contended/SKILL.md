@@ -1,7 +1,7 @@
 ---
 name: false-sharing-and-contended
 description: >
-  Proving and mitigating cache-line false sharing between logically independent hot writes.
+  Proving and mitigating cache-line false sharing between independent locations with hot writes.
   Covers ownership and address/layout hypotheses, coherence/HITM evidence limits, JMH topology,
   arrays and object placement, `@Contended` module/restriction mechanics, grouping and padding,
   JOL/address validation, manual padding fragility, striping, compact headers, memory cost and
@@ -13,7 +13,8 @@ description: >
 
 ## Purpose
 
-Establish that independent writers repeatedly invalidate the same coherence granule/cache line,
+Establish that writes invalidate a coherence granule/cache line used by another core for a
+different logical variable (writing or reading),
 then choose ownership/layout changes whose throughput/latency benefit exceeds memory and maintenance
 cost. Cache misses or poor scaling alone do not prove false sharing.
 
@@ -27,7 +28,7 @@ cost. Cache misses or poor scaling alone do not prove false sharing.
 ## Proof contract
 
 ```text
-independent logical variables/slots and writer ownership:
+independent logical variables/slots, writer ownership and readers:
 write/read frequency and production thread/key topology:
 actual address offsets/alignment and cache-line size(s):
 JDK/layout/header/GC/allocation stability assumptions:
@@ -46,6 +47,9 @@ memory/GC/locality cost and next bottleneck:
 | capacity/cache locality  | working set misses without writer invalidation | miss/working-set/topology                   | compact/block/localize/prefetch |
 
 Padding true contention does not make the logical hotspot independent.
+At least one participant must write; read-only sharing does not create this invalidation
+mechanism. Padding and `@Contended` do not add happens-before, visibility or atomicity:
+retain required volatile/atomic/locking semantics or explicit ownership and handoff.
 
 ## Evidence ladder
 
@@ -59,6 +63,11 @@ Padding true contention does not make the logical hotspot independent.
 Generic `cache-misses`/LLC misses are not specific and false sharing may manifest as coherence traffic
 without the naive counter pattern. A cache-miss flame graph compared with CPU samples is not a
 standalone proof.
+
+If PMU access, addresses or placement cannot be verified, report a hypothesis with the
+available perturbation evidence and its limits. Do not fabricate zero contention from an
+unsupported counter or call a padded speedup alone proof. Return the affected variables,
+evidence, proposed change, correctness constraints and measured or pending production check.
 
 ## Layout and placement
 
@@ -88,7 +97,7 @@ every run needs `--add-exports`.
 Verify on the exact JDK:
 
 - annotation is present in compiled class and applied in runtime layout;
-- effective `RestrictContended`/padding settings and support;
+- effective `EnableContended`, `RestrictContended` and padding settings/support;
 - field/class contention group semantics;
 - actual gaps/offsets and object/array placement;
 - memory footprint across number of instances and GC consequence.
@@ -165,8 +174,8 @@ allocation/GC and placement. A fixed three-fork rule or expected “magical magn
 
 ## References
 
-- [`@Contended` mechanics and layout](references/contended-mechanics.md)
-- [Proving and fixing false sharing](references/proving-and-fixing.md)
+- [`@Contended` mechanics and layout](references/contended-mechanics.md) — read when applying the annotation, choosing groups, or checking ignored padding/module access.
+- [Proving and fixing false sharing](references/proving-and-fixing.md) — read when designing the separation experiment or interpreting PMU/JMH results.
 - [JEP 142: Reduce cache contention on specified fields](https://openjdk.org/jeps/142)
 - [OpenJDK `Contended`](https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/jdk/internal/vm/annotation/Contended.java)
 - [OpenJDK Striped64](https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/util/concurrent/atomic/Striped64.java)

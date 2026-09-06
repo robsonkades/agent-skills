@@ -14,7 +14,7 @@ spec:
       startupProbe:
         httpGet: { path: /actuator/health/liveness, port: 8081 }
         periodSeconds: 5
-        failureThreshold: 30 # 5 × 30 = 150 s of boot budget
+        failureThreshold: 30 # nominal boot allowance ≈ 150 s; measure actual timing
       livenessProbe:
         httpGet: { path: /actuator/health/liveness, port: 8081 }
         periodSeconds: 10
@@ -40,10 +40,10 @@ Read the three numbers as answers to three questions:
   the EndpointSlice change takes to reach every data plane — not bounded by the manifest, and
   the reason preStop exists.
 
-With a `startupProbe` present, `initialDelaySeconds` on the other two is redundant: neither
-runs until startup first succeeds. Delete it rather than tuning it. `timeoutSeconds` is a hard
-ceiling on the check, so it must sit above the endpoint's worst case under the safepoint
-pauses and CPU throttling the pod actually sees — not the numbers from a laptop.
+Startup success gates the other probes, but do not assume their configured initial delays
+have no effect. Inspect the target kubelet behavior and remove old delay settings only when
+the startup check covers their intent. Derive timeouts from measured local-check tails under
+throttling and pauses plus margin; an unbounded worst case is not a usable timeout target.
 
 ## Version-dependent pieces
 
@@ -54,7 +54,7 @@ pauses and CPU throttling the pod actually sees — not the numbers from a lapto
 - **`grpc` probe** — a first-class probe type, stable since 1.27. On older clusters use
   `exec` with a gRPC health-check client binary shipped in the image.
 - **Probe-level `terminationGracePeriodSeconds`** — overrides the pod value when a liveness
-  or startup probe kills the container; GA in 1.25. Useful when a wedged process should be
+  or startup probe kills the container; GA in 1.28. Useful when a wedged process should be
   killed faster than a normal rollout drains.
 - **Native sidecars** — an init container with `restartPolicy: Always` runs for the whole pod
   lifetime, starts before the app containers and terminates after them. Introduced as alpha
@@ -67,32 +67,35 @@ Verify the cluster version before relying on any of these. Assume nothing from a
 ## The shutdown budget is one sum
 
 ```
-terminationGracePeriodSeconds  >  preStop  +  application drain  +  margin
-       45 s                    >   10 s    +        20 s          +  15 s
+terminationGracePeriodSeconds  >=  preStop  +  total application shutdown  +  margin
+       45 s                    >=   10 s    +            20 s             +  15 s
 ```
 
 The countdown starts when the pod is marked for deletion. `preStop` runs inside it, and the
 runtime stop signal is requested after the hook returns. If a hook is still running at grace
 expiry, kubelet currently requests a small one-off extension; this is emergency behavior,
-not budget. Whatever remains is what the application has — here,
-`spring.lifecycle.timeout-per-shutdown-phase`. Get the inequality backwards and forced
+not budget. The application shares the remainder across all sequential lifecycle phases,
+bean destruction and other shutdown hooks. A 20 s timeout per phase does not bound the whole
+application to 20 s: enumerate phases, dependencies and other waits before using this example.
+Get the inequality backwards and forced
 termination can cut a request without giving the JVM a final logging opportunity.
 
-The preStop value is not "how long shutdown takes" — it is how long endpoint removal takes to
-propagate to every proxy in the path. Measure it: deploy repeatedly under an open-loop client
-and raise it until the error count reaches zero.
+A sleep-only preStop allowance can cover measured routing propagation, while hooks doing
+actual work also consume that time. Correlate failures with endpoint and connection events;
+do not keep increasing sleep for errors caused by application failures or incompatible
+versions. Test repeated deploys with the real ingress, keep-alive and stream behavior.
 
 ## Spring Boot side
 
 ```yaml
 server:
-  shutdown: graceful # explicit across baselines; current Boot 4 defaults to graceful
+  shutdown: graceful # explicit across baselines; Boot 3.4+ defaults to graceful
 spring:
   lifecycle:
-    timeout-per-shutdown-phase: 20s # default 30s; must fit the pod budget above
+    timeout-per-shutdown-phase: 20s # per phase, NOT total; measure all phases
 management:
   server:
-    port: 8081 # probes hit this port, not the traffic port
+    port: 8081 # example only; separate management listener has blind spots below
   endpoint:
     health:
       probes:
@@ -101,7 +104,7 @@ management:
         liveness:
           include: livenessState
         readiness:
-          include: readinessState # add a dependency here only if it is pod-local
+          include: readinessState # evaluate dependency failure semantics before adding
       show-details: never
   endpoints:
     web:
@@ -120,13 +123,19 @@ Notes that decide correctness:
   `LivenessState.BROKEN`; Spring already moves readiness to `REFUSING_TRAFFIC` when the
   context begins closing.
 - A group with `include: readinessState,db` fails on every replica when the database fails.
-  Put a dependency in readiness only when losing it makes _this pod_ useless while other pods
-  stay useful.
-- Moving management to its own port means the probe `port` must be that port, and the port
-  must be exposed on the container. A probe left on the traffic port after a
-  `management.server.port` change gets a 404, and a 404 counts as a probe failure.
-- `management.endpoint.health.group.readiness.additional-path` publishes the readiness group
-  on the main server port as well, for environments where only one port is reachable.
+  Prefer checks that distinguish an unusable pod from replicas that can still serve. A shared
+  dependency can justify a deliberate fail-closed readiness policy, but first compare losing
+  all ready backends with serving degraded responses or using a fallback. Document the
+  availability tradeoff and verify what clients and upstream routers do when none remain.
+- A separate management listener can stay healthy while the main listener is broken. Prefer
+  probing health groups on the main server when that matches the failure to detect. On Boot
+  versions supporting `management.endpoint.health.probes.add-additional-paths=true`, this
+  exposes `/livez` and `/readyz` there; update probe paths and ports together. Alternatively
+  configure a group additional path such as `server:/readyz` where supported.
+- The configured probe must reach the actual listener at the pod IP with the correct path
+  and security rules. Numeric probe ports do not require a `containerPort` declaration or
+  a Service port; named ports require a matching named container port. A stale path can
+  return 404 and fail the probe.
 
 ## Resources and disruption
 
@@ -144,3 +153,9 @@ Notes that decide correctness:
   enough replicas for the availability objective or explicitly accept/bypass the disruption.
 - A PDB whose pods are already unhealthy can block the very drain that would fix them.
   `unhealthyPodEvictionPolicy: AlwaysAllow` (beta since 1.27) exists for that case.
+
+## Sources
+
+- [Kubernetes probe configuration](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/): scheduling, thresholds and probe-level grace.
+- [Boot 3.4 release notes](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.4-Release-Notes): graceful shutdown default.
+- [Boot Actuator probes](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.kubernetes-probes): main-port health groups and management-port blind spots. Match properties to the deployed Boot line.

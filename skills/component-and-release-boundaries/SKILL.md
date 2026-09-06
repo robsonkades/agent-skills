@@ -24,16 +24,22 @@ consumed through a versioned contract. Internal Maven or JPMS modules can still 
 encapsulation/build components; they simply do not acquire the same external compatibility and
 release obligations. State which meaning applies before using component metrics.
 
-The two failures this exists to prevent: the `commons` jar every service depends on, so a
-change to it means a coordinated release of the fleet — a distributed monolith created at
-build time rather than by RPC; and the premature split into twelve modules whose versions are
-always bumped together, which is one component wearing twelve `pom.xml` files.
+Prevent shared-library changes from unnecessarily forcing fleet-wide upgrades, and avoid
+publication boundaries whose compatibility and release costs exceed their value. A shared
+jar or shared version number alone does not establish either failure.
+
+Inspect the project's JDK/compiler release, Maven/Gradle configuration, resolved dependency
+graph, module path versus classpath, publication policy and deployed consumer versions.
+This skill does not mandate a Java baseline: JPMS requires Java 9+, records Java 16+ and
+sealed types Java 17+ without preview. Examples are partial illustrations; do not upgrade
+the project or add modules/dependencies just to reproduce their syntax.
 
 ## Workflow
 
 1. **Ask what is released, not what is grouped.** If two candidate components have never been
-   released at different versions and there is no plan to, they are one component. The
-   directory split may still be worth having — as packages, not as artefacts.
+   released on different schedules, investigate why. A release train or shared parent version
+   can coordinate independently buildable components without requiring that coordination.
+   Preserve justified encapsulation/build boundaries even when publication stays combined.
 2. **Name the consumers and ownership boundary.** One consumer does not make a module pointless:
    plugin isolation, optional deployment, security boundaries and build ownership can justify it.
    Independent consumers upgrading at different times create the strongest compatibility duty
@@ -47,8 +53,9 @@ always bumped together, which is one component wearing twelve `pom.xml` files.
    weak.
 5. **Point dependencies toward stability.** A component many things depend on must be hard to
    change; if it is also volatile, its churn reaches everything.
-6. **Recheck against the release history.** Components whose versions always moved together
-   were never separate.
+6. **Recheck against release history and compatibility tests.** Distinguish required lockstep
+   from habitual batching; with missing history or consumer evidence, report a hypothesis
+   and the compatibility experiment needed rather than a proven boundary failure.
 
 ## The tension you must resolve, not solve
 
@@ -62,10 +69,10 @@ easy to change is worth more than one that is easy to reuse, because there are n
 reusers yet. As reusers appear the cost shifts onto them and common reuse starts to win — that
 is the moment to split, not before.
 
-**Common reuse is the principle a `commons` jar violates by construction.** Depending on it
-for one string helper drags in its Jackson version, its logging binding, its release cadence
-and its blast radius. In a service fleet this is the most frequent single cause of "we cannot
-deploy that service on its own".
+A catch-all `commons` jar can violate common reuse: one helper may pull in unrelated
+libraries and release obligations. Inspect actual resolved dependencies, scopes, exclusions
+and optionality; neither the name nor the presence of unrelated classes proves that every
+dependency or defect affects every consumer.
 
 ## Decision rules
 
@@ -82,27 +89,29 @@ Code is duplicated in two services and a shared library is proposed
           deliberately and record why.
 
 The shared thing is a domain invariant both sides must agree on
-        → a component is justified, and must be versioned and compatible,
-          not "everyone tracks main".
+        → compare a versioned library with a single authoritative service or
+          versioned rule/data contract. A library alone does not ensure deployed
+          consumers run the same rule; identify effective-version policy.
 
 The shared thing is a wire contract between two services
-        → not a shared implementation library. Share the schema and
-          generate both sides (rpc-and-api-contracts). A shared DTO jar
-          makes the consumer's compile depend on the producer's release.
+        → define the wire contract independently of implementation. Schema/code
+          generation is one option, not a compatibility guarantee. Version DTOs
+          independently and test old/new peers (rpc-and-api-contracts).
 
 A source/build dependency cycle exists between two components
         → break it or merge the release unit. Either move the classes creating
           the edge into one of them, or invert the edge with an interface
-          owned by the depended-upon side (java-dependency-inversion).
+          owned by the policy requiring the behavior, with the implementation
+          depending on that contract (java-dependency-inversion).
 
 A component is depended on by many AND changes often
         → the highest-risk position in the graph. Either stabilise it
-          (freeze the surface, make it abstract) or shrink it until only
+          (reduce incompatible surface changes) or shrink it until only
           the stable part is shared.
 
 A component is depended on by many and is hard to change on purpose
-        → correct. Stability here is a feature, paid for with abstraction,
-          so extension does not require modification.
+        → potentially appropriate. Stable concrete values can be sound; add
+          extension points only for an actual variation boundary.
 
 Nothing outside this repository consumes it
         → default to keeping it internal. Publish only for a concrete independent
@@ -113,26 +122,35 @@ Nothing outside this repository consumes it
 ## Rules
 
 - **The unit of release is the unit of the decision.** Folders, packages, and JPMS modules
-  used only for encapsulation are organisation, and are reversible almost for free.
-  Publishing an artefact is not, because consumers pin it.
-- A dependency between components is a coupling to a **release schedule**, not only to code.
-  This is the cost teams price at zero, and it usually dominates.
+  used only for encapsulation are a different boundary, with their own tooling, reflection
+  and access costs; they need not be independently published.
+  Publication adds obligations to consumers that pin released artifacts.
+- A dependency creates compatibility and upgrade obligations. It becomes coupling to a
+  release schedule when support, security deadlines or incompatible changes require it.
 - **Version numbers must mean something or they mean nothing.** A consumer should read the
-  bump and know the risk: patch for corrected behaviour, minor for added surface, major for
-  removed or changed behaviour. A team that ships a breaking change as a minor has a version
-  string, not a contract.
-- `SNAPSHOT`, floating ranges and "everyone tracks main" turn an independent release into a
-  lockstep one while looking like the opposite. If a consumer cannot stay on last month's
-  version for a sprint, the components are not independent.
+  bump under the declared policy. For SemVer after 1.0: patch is a compatible fix, minor a
+  compatible addition, major an incompatible public-contract change. Not every behavior
+  change is breaking, and adding surface can break consumers. Verify compatibility rather
+  than treating the number as evidence; inspect the policy for pre-1.0 versions.
+- Mutable snapshots, floating ranges and tracking main weaken reproducibility and upgrade
+  control. Inspect resolved versions and the support window; they are risks, not proof that
+  all consumers must deploy simultaneously. Prefer immutable versions for released consumers.
 - Prefer dependencies on contracts whose rate of incompatible change is lower than their consumers
   can tolerate. Instability/abstractness metrics are diagnostic prompts, not laws: generated models,
   stable concrete value types and internal modules routinely sit away from the proposed diagonal.
-- A `common`/`util`/`shared` component has no common closure by construction: it is grouped
-  by "generic", which is not a reason to change. Expect the widest blast radius and the least
-  clear ownership. Where one exists, split it by reason to change and let the pieces be
-  depended on individually.
+- A `common`/`util`/`shared` name is a prompt to inspect cohesion, consumers and ownership.
+  Split only when measured change reasons and usage justify the new release obligations;
+  a narrowly governed shared component may already be coherent.
 - Prefer discovering component boundaries from change history over designing them up front.
   Files that change together are evidence; a diagram is a hypothesis.
+
+## Minimum result
+
+State the proposed release unit, consumers/owners, current versus proposed dependency
+edges, compatibility/support policy and evidence for keeping, merging or splitting it.
+Include migration order, old-consumer retention and a focused old/new compatibility check.
+Mark assumptions and runtime compatibility not exercised; a clean build alone does not
+prove independently deployable services.
 
 ## References
 

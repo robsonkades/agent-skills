@@ -29,18 +29,23 @@ Each of those is removed silently by a change that appears to be about performan
 
 ## Workflow
 
+Inspect the compiler/toolchain, deployed JDK/vendor/build, framework/client versions and effective
+executor configuration. Standard virtual threads require Java 21+; Java 17 cannot use the virtual
+factory examples. Java 24 removes monitor-only pinning, and ScopedValue is final only in Java 25.
+Do not upgrade Java/frameworks or enable preview merely to perform this migration.
+
 1. **Baseline first, and keep it.** Record p50/p99 at the target rate, in-flight concurrency,
    thread counts, heap, connection-pool utilisation and the downstream's error rate. A
    migration with no baseline cannot be evaluated and cannot be rolled back on evidence.
 2. **Inventory every pool and write down what it was limiting.** For each: how many threads,
    what resource sat behind it, and what happens if that number becomes unbounded. This
-   document is the actual deliverable of the migration's first week.
+   inventory is the first deliverable; include queues, ordering, context and lifecycle ownership.
 3. **Audit for blockers** — native/foreign pinning, carrier-capturing or file-heavy
    paths, `ThreadLocal` caches, thread-name dependencies, executors that encode ordering.
    The greps are in the playbook.
 4. **Declare the replacement limits** next to each scarce resource, and deploy _that_ change
-   first, on platform threads. If it is correct, throughput and latency do not move — which
-   is exactly the proof you want before changing anything else.
+   first, on platform threads. Compare predeclared SLO, correctness and overload criteria;
+   two gates can change waiting, and unchanged throughput is not proof of equivalence.
 5. **Flip one workload, behind a flag**, starting with an I/O-bound path whose downstream has
    a known bound. Canary at real load against the baseline.
 6. **Revalidate the connection pool deliberately**, using measured hold time, required throughput,
@@ -51,21 +56,21 @@ Each of those is removed silently by a change that appears to be about performan
 
 ## Rules
 
-- **A migration is a sequence of small deploys.** A single service-wide flag is not a
-  migration; it is a change of every concurrency limit in the application, at once, in the
-  same release.
-- **Every removed pool bound needs a named replacement before the flip.** Write the pairs
-  down: "Tomcat's 200 workers protected the payment API → semaphore of 24 in
-  `PaymentClient`". A pair with an empty right-hand side is the incident.
+- **Prefer staged changes with an observed scope.** A framework flag may affect several
+  execution paths while leaving custom executors and client pools unchanged. Inventory which
+  paths actually switch; the flag alone neither establishes safe migration nor removes every limit.
+- **Every required property of a removed pool needs a replacement before the flip.** Write the pairs
+  down: "payment concurrency was limited by request workers → measured provider gate plus
+  bounded ingress". Record a justified removal when a limit served no required property.
+  Bound waiting tasks as well as active calls, across replicas, retries and fan-out.
 - **`newSingleThreadExecutor` and `newFixedThreadPool(1)` are often correctness, not
   performance.** They serialise. Replacing them with per-task virtual threads silently
   removes ordering and mutual exclusion. Find every one and classify it before touching it.
-- **Expect the bottleneck to move downstream and become visible.** That is the migration
-  working. It is also a change to somebody else's service, so it needs their capacity
-  numbers and, usually, their agreement.
+- **Downstream pressure can increase.** Treat that as a hypothesis to measure, not proof of
+  success. Respect existing shared-capacity budgets and coordination arrangements before
+  increasing aggregate demand.
 - **The connection pool is not the thing to grow first.** More concurrent requests do not
-  make the database faster; a pool sized past the database's capacity converts a fast
-  rejection into a slow timeout for everyone.
+  make the database faster; excess concurrency can worsen queueing and timeout rates.
 - **Do not expect CPU-bound work to improve.** Virtual threads add no CPU capacity. A request can
   still use one virtual lifetime while CPU-heavy phases are isolated/bounded; migrate only for a
   demonstrated lifecycle/operability reason.
@@ -75,6 +80,7 @@ Each of those is removed silently by a change that appears to be about performan
   holding a monitor can pin; on 24+ (JEP 491) monitor use/`Object.wait` no longer causes pinning, and
   `-Djdk.tracePinnedThreads` was removed and does nothing. Migrating on 21 and migrating on
   25 are different projects.
+  Blocking with a native/foreign frame still present can pin on 24+, including Java callbacks.
 - **Keep or introduce bounded platform execution where evidence requires it**: CPU parallelism,
   thread affinity/priority, or causal native/foreign/file paths that the current JDK cannot handle
   efficiently. A migration need not be total.
@@ -84,9 +90,13 @@ Each of those is removed silently by a change that appears to be about performan
 - **Load-test against the real dependency or a faithful simulator.** The entire mechanism
   being changed is what happens while waiting; a mocked dependency that returns instantly
   removes the phenomenon under test.
-- **Judge the result at fixed arrival rate, not fixed concurrency.** Throughput at saturation
-  will look better simply because more work is admitted; the questions that matter are
-  latency at the target rate, error rate at the dependency, and memory.
+- **Compare at the workload's controlled demand.** For open traffic, compare target arrival
+  rate/mix and count offered, admitted, useful completions, timeouts and drops. A closed-user
+  workload can use fixed population/think time; capacity sweeps can also be useful. Neither
+  increased admission nor a faster saturation result alone proves target-rate SLO improvement.
+
+Record the workload/limit inventory, observed baseline and canary outcomes, context/order/cancellation
+checks, rollback/drain procedure and unresolved evidence. Keep this proportionate to the changed scope.
 
 ## References
 

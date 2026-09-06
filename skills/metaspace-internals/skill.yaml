@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: metaspace-internals
-version: 1.3.0
+version: 1.3.1
 description: >-
   Metaspace internals on JDK 16+: chunk and arena allocation per ClassLoaderData, the
   compressed class space and its separately configured reservation/limit, chunk waste and fragmentation, when
@@ -11,7 +11,7 @@ description: >-
   committed grows monotonically, when `MaxMetaspaceSize` is unset or copied from another
   service, when `waste` in the class space is climbing, or when proxies, hidden classes or a
   scripting engine generate classes at runtime. Does not cover the process-wide memory
-  memory map and container budget (jvm-memory-regions), classloader identity, unloading and
+  map and container budget (jvm-memory-regions), classloader identity, unloading and
   the retainer hunt for a leak (jvm-class-loading), or anything about compiled code and the
   code cache (code-cache-segments).
 

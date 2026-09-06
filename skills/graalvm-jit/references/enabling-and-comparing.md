@@ -8,11 +8,10 @@ they go into a script: an unknown Graal option is fatal at start-up.
 ## Where the compiler comes from
 
 ```bash
-# A full GraalVM distribution — the only supported production route in 2026.
-# libgraal is embedded and is the default.
-sdk install java 25-graalce      # SDKMAN identifier; confirm with: sdk list java
-export JAVA_HOME=$GRAALVM_HOME
-java MyApp                       # Graal is already the tier-4 compiler; no flags
+# Bash; GRAALVM_HOME names the selected, already provisioned distribution.
+# Use its executable explicitly: setting JAVA_HOME does not change PATH.
+"$GRAALVM_HOME/bin/java" -version
+"$GRAALVM_HOME/bin/java" MyApp   # libgraal is the default in the full distribution
 ```
 
 What a GraalVM 25 distribution actually contains: the compiler as the `jdk.graal.compiler`
@@ -50,9 +49,10 @@ $ java -XX:+UnlockExperimentalVMOptions -XX:+UseGraalJIT Hot
 Cannot use JVMCI compiler: JVMCI compiler 'graal' specified by jvmci.Compiler not found
 ```
 
-`-version` is therefore not a smoke test. `-XX:+BootstrapJVMCI` forces the compiler to load
-at start-up and fails there with the same message, which is the check to put in a launch
-script. On GraalVM the same three flags print as `{JVMCI product}` (`EnableJVMCIProduct=true
+`-version` alone is therefore not a compiler smoke test. With JVMCI compilation enabled,
+`-XX:+BootstrapJVMCI` forces compiler loading in a preflight and exposes this missing-compiler
+failure. Bootstrap adds work; use it for validation rather than automatically adding it to
+every production launch. On GraalVM the same three flags print as `{JVMCI product}` (`EnableJVMCIProduct=true
 {jimage}`), and `-XX:+UseGraalJIT` is accepted as a synonym for the default.
 
 Bringing the Graal compiler onto a stock OpenJDK through `--upgrade-module-path` with the
@@ -76,8 +76,9 @@ java -Djdk.graal.ShowConfiguration=info -cp app.jar Main
 run has `UseG1GC=true {ergonomic}` in `-XX:+PrintFlagsFinal`. Do not file it as "Graal
 switched my GC".
 
-`-XX:+PrintFlagsFinal -version | grep UseJVMCINativeLibrary` gives the same answer as a
-boolean (`true` libgraal, `false` jargraal) without running the application.
+`-XX:+PrintFlagsFinal -version | grep UseJVMCINativeLibrary` records the configured mode.
+It does not prove Graal ran: C2 can be selected while that flag remains true. Pair it with
+the configuration message and compilation events from the actual workload.
 
 Which compiler produced a given nmethod is **not** in `-XX:+PrintCompilation`: under Graal the
 lines are identical to C2's, tier column `4`, same `made not entrant: uncommon trap` reasons.
@@ -88,16 +89,18 @@ The two places that do name it:
 java -Djdk.graal.PrintCompilation=true Main
 # HotSpotCompilation-146  Ljava/util/HashMap;  afterNodeInsertion  (Z)V | 231us  2B bytecodes  128B codesize ...
 
-# JFR: the compiler field of jdk.Compilation. The default and profile settings carry a
-# 1000 ms threshold that drops every ordinary compilation, so set it to zero.
-java -XX:StartFlightRecording=filename=g.jfr,jdk.Compilation#threshold=0ms Main
+# JFR: the compiler field of jdk.Compilation. A recording threshold can exclude short
+# compilations; explicitly enable the event and set its threshold to zero.
+java '-XX:StartFlightRecording=filename=g.jfr,jdk.Compilation#enabled=true,jdk.Compilation#threshold=0ms' Main
 jfr print --events jdk.Compilation g.jfr | grep -c 'compiler = "jvmci"'   # Graal tier 4
 jfr print --events jdk.Compilation g.jfr | grep -c 'compiler = "c2"'      # C2 tier 4
 ```
 
 On Temurin the tier-4 events say `compiler = "c2"`; on GraalVM CE they say `"jvmci"`; C1
-says `"c1"` on both. This is the check that survives into production, because it needs no
-flag at launch.
+says `"c1"` on both. A JVMCI event identifies the JVMCI compiler path; confirm the Graal
+implementation through distribution/configuration evidence. Recording can also start with
+`jcmd JFR.start`, but it cannot recover compilations that completed before recording began.
+No tier-4 events is inconclusive until event settings and compilation activity are checked.
 
 ## Comparing with JMH: one binary, one variable
 
@@ -126,8 +129,7 @@ prove that every selected runtime value stayed equal.
 ## Warm-up: how much is enough
 
 ```java
-@Warmup(iterations = 10, time = 2)   // a starting point for Graal;
-                                     // C2 usually stabilises with fewer
+@Warmup(iterations = 10, time = 2)   // partial JMH annotation: starting point, not a guarantee
 ```
 
 The stabilisation criterion is evidence of a stationary measurement region, not an iteration
@@ -136,14 +138,16 @@ forks to separate process effects, and retain raw JSON with uncertainty. If the 
 trends, compilation events/code-cache growth continue, or forks settle at different levels,
 increase warm-up or report the workload as non-steady rather than averaging it away.
 
-If the run is in jargraal mode the picture is different in kind, not only in degree. Under
-`-XX:-UseJVMCINativeLibrary` on CE 25.0.2, `-XX:+PrintCompilation` shows 1,903 compilations
-of `jdk.graal.compiler.*` classes, 1,554 of them at tier **1** — `CompileGraalWithC1Only=true`
-is the default, so the compiler is compiled by C1 without profiling and never reaches tier 4.
-A program that runs in 25 ms under libgraal and 26 ms under C2 took 306–333 ms under jargraal
-across three runs. That is the compiler's own C1-level speed on every compilation, for the
-life of the process; more warm-up iterations do not amortise it. Confirm the mode before
-treating "Graal needs N warm-up iterations" as a property of the compiler.
+If the run is in jargraal mode, distinguish compilation of the compiler from compilation
+of the application. On CE 25.0.2, `CompileGraalWithC1Only=true` is the default; under
+`-XX:-UseJVMCINativeLibrary`, inspect `jdk.graal.compiler.*` in `PrintCompilation` to
+observe the compiler's own C1 activity. Under this setting it does not reach tier 4.
+That can make each compilation more expensive. It does not establish an application
+slowdown after compilation stops: installed application code can run without paying that
+cost again until further compilation/recompilation. Compare cold lifetime, time to steady
+state and compilation CPU; additional warm-up can amortise prior compilation work but cannot
+make the compiler itself tier-4 compiled under this setting. Confirm the mode before
+generalising a warm-up requirement. No timing ratio is supplied without a reproducible workload.
 
 ## Compiler configurations
 
@@ -172,7 +176,7 @@ Names and defaults from `-XX:+JVMCIPrintProperties -Djdk.graal.PrintPropertiesAl
 -Djdk.graal.ShowConfiguration=info            # which compiler, which mode
 -Djdk.graal.PrintCompilation=true             # one line per Graal compilation
 -Djdk.graal.TraceInlining=true                # per-call-site verdicts with relevance/probability
--Djdk.graal.MethodFilter=Hot.sum              # <class>.<method>, dot not ::; narrows any of the above
+-Djdk.graal.MethodFilter=Hot.sum              # <class>.<method>, dot not ::; scope supported debug output
 -Djdk.graal.Dump=:2 -Djdk.graal.DumpPath=dir  # IGV graphs; default dir graal_dumps/, very verbose
 -Djdk.graal.CompilationFailureAction=Diagnose # Silent|Print|Diagnose|ExitVM — retries with dumps
 -Djdk.graal.PrintIntrinsics=true              # which intrinsics this runtime actually uses

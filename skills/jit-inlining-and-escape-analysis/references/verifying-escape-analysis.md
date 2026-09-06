@@ -1,15 +1,14 @@
 # Verifying escape analysis
 
-Every number below was measured on Temurin 25.0.3 with the method described in the third
-section: 2 000 000 iterations after fifteen warm-up runs, result consumed, opaque callees
-pinned with `-XX:CompileCommand=dontinline`. They are one build's answers to one program.
-Reproduce them on yours before they become a decision.
+Defaults below are scoped to Temurin 25.0.3. Allocation costs require complete benchmark
+sources, inputs and raw results. Use the cases below to construct an experiment for the
+target build; they are hypotheses, not measured B/op or ns/op guarantees.
 
 ## Confirm the optimisations are on
 
 ```bash
 java -XX:+PrintFlagsFinal -version \
-  | grep -E 'DoEscapeAnalysis|EliminateAllocations|EliminateLocks'
+  | rg 'DoEscapeAnalysis|EliminateAllocations|EliminateLocks'
 ```
 
 For the ordinary C2 scalar-replacement experiment, confirm these optimisations are enabled
@@ -45,76 +44,70 @@ hypothesis patterns, not a decoder:
 | 0 B/op   | near aligned object size | one object-shaped allocation likely survives; profile type/stack |
 | 0 B/op   | a repeatable multiple    | several allocations or iterations/path effects; attribute them   |
 
-The listed JDK 25 default-layout examples used compressed class pointers, 8-byte alignment
-and non-compact headers. Compact headers, pointer modes, alignment, subclass fields and array
+Record compressed-pointer settings, alignment and header mode. Compact headers, pointer
+modes, alignment, subclass fields and array
 layout change the sizes. Use JOL/`object-layout-and-footprint` on the same VM, then treat a
 size match as a lead rather than proof of identity.
 
-To quantify what the analysis is actually delivering, run the same benchmark with
-`-XX:-DoEscapeAnalysis` and compare. "The JIT resolves it" is exactly as unverified as
-"allocation is expensive" until this comparison exists. `-XX:-EliminateAllocations` keeps
-the analysis but stops scalar replacement, which separates the allocation gain from the
-lock-elision gain; `-XX:-EliminateLocks` does the reverse.
+Compare separate, otherwise matched forks with `-XX:-DoEscapeAnalysis` where this can test
+an elimination hypothesis. `-XX:-EliminateAllocations` retains EA while disabling scalar
+replacement; `-XX:-EliminateLocks` targets lock elimination. These switches also interact
+with inlining and graph optimization, so they are perturbations, not perfectly independent
+factors or proof that a particular source allocation accounts for the entire delta.
 
 ## Outside JMH
 
 A controlled approximation in another harness, including a production-shaped integration
 test, can use allocated-thread bytes when the implementation supports and enables it:
 
+Partial Java 17+ harness fragment; `run(n)` returns a consumed primitive result and `sink`
+is a harness field. Check support before enabling measurement; modular applications need
+`java.management` and `jdk.management`. Do not run this counter experiment on a virtual thread.
+
 ```java
-var tmx = (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
-if (!tmx.isThreadAllocatedMemorySupported()) throw new UnsupportedOperationException();
+var bean = ManagementFactory.getThreadMXBean();
+if (!(bean instanceof com.sun.management.ThreadMXBean tmx)
+        || !tmx.isThreadAllocatedMemorySupported()) {
+    throw new UnsupportedOperationException("Thread allocation counters unavailable");
+}
 if (!tmx.isThreadAllocatedMemoryEnabled()) tmx.setThreadAllocatedMemoryEnabled(true);
-for (int w = 0; w < 15; w++) sink += run(n);          // warm into C2 first
+if (n <= 0) throw new IllegalArgumentException("n must be positive");
+for (int w = 0; w < 15; w++) sink += run(n); // illustrative; verify convergence separately
 long before = tmx.getCurrentThreadAllocatedBytes();
-sink += run(n);                              // consume the result, or C2 removes the work
-System.out.println((tmx.getCurrentThreadAllocatedBytes() - before) / (double) n + " B/op");
+long result = run(n);
+long after = tmx.getCurrentThreadAllocatedBytes(); // finish before formatting/output
+sink += result;
+if (before < 0 || after < before) throw new IllegalStateException("Invalid counters");
+System.out.println((after - before) / (double) n + " B/op");
 ```
 
 Also measure/subtract an empty harness path, isolate work performed on other threads, and
 record compilation/deoptimization events. Warm-up must cover representative receiver/path
 mix; “fifteen” is an example, not a convergence criterion.
 
-## Measured outcomes on JDK 25
+## Reproduction cases, not allocation guarantees
 
-| Pattern                                                         | EA on                               | EA off    |
-| --------------------------------------------------------------- | ----------------------------------- | --------- |
-| `new Point(i, j)` consumed in the same compilation unit         | 0                                   | 24        |
-| Same, with `if (rare) field = p` where the branch **never ran** | 0                                   | 24        |
-| Same, with the branch taken once per 262 144 iterations         | **24**                              | 24        |
-| Same, object constructed inside the rare branch                 | 0                                   | 0         |
-| Same, fields passed to a method that constructs it on that path | 0                                   | 24        |
-| `Point` passed to a `dontinline` callee that only reads a field | **24**                              | 24        |
-| `cond ? new Point(a) : new Point(b)` merge                      | 0 (24 if `-ReduceAllocationMerges`) | 24        |
-| `Optional.of(i).map(v -> v + 1).orElse(0)` fully inlined        | 0                                   | 64        |
-| `Optional` returned from a `dontinline` method, then `orElse`   | **28**                              | 28        |
-| `Optional.ofNullable(s).map(String::length).orElse(0)` inlined  | 0                                   | 28        |
-| Lambda capturing an `int`, consumed by an inlined call          | 0                                   | 32        |
-| Lambda capturing a `Point`, consumed by an inlined call         | 0                                   | 56        |
-| Same lambda passed to a `dontinline` callee                     | **40**                              | 56        |
-| `IntStream.range(0, 4).sum()`                                   | **56**                              | 128       |
-| `IntStream.range(0, 100).map(v -> v * 2).sum()`, per element    | **2.0**                             | 2.2       |
-| `Integer b = i` for `i > 127`, unboxed in the same unit         | 0                                   | 16        |
-| `record R(int a, int b)` constructed and read locally           | 0                                   | 24        |
-| `for (Integer v : List.of(1, 2, 3, 4))` iterator                | 0                                   | 32        |
-| `"k" + i`                                                       | **24**                              | 48        |
-| `new int[8]` written at a constant index                        | 0                                   | —         |
-| `new int[8]` written at `a[i & 7]`                              | **48**                              | 48        |
-| `new int[65]` (over `EliminateAllocationArraySizeLimit`)        | **280**                             | 280       |
-| `synchronized (new Object())` — B/op and ns/op                  | 0, 0.2 ns                           | 16, 13 ns |
-| `synchronized (p)` with `p` `ArgEscape` — B/op and ns/op        | 24, **2.8 ns**                      | 24, 13 ns |
+| Pattern                                                   | What the experiment must distinguish                                              |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Local Point or record, fields consumed                    | Scalar replacement versus dead-code elimination; use changing inputs              |
+| Rare branch publishes the object                          | Unobserved trapped path versus retained escape path; exercise realistic frequency |
+| Object constructed only on publishing branch              | Rare allocations still exist; report precision and bytes per whole operation      |
+| Point passed to a dontinline reader                       | Opaque boundary versus inlined uses; intrinsics/known calls are exceptions        |
+| Same-class allocation merge                               | Compare supported ReduceAllocationMerges setting and actual eligibility           |
+| Optional, boxing and capturing lambda                     | Cache/input ranges, target inlining and capture escape; attribute surviving types |
+| Stream sum with and without map                           | Pipeline shape, per-invocation versus per-element normalization and runtime calls |
+| Constant-length array with constant versus variable index | Length/offset eligibility, bounds checks and retained uses                        |
+| Local monitor versus escaping argument                    | Allocation and lock elimination separately; validate concurrency semantics        |
 
-What the table says about this program/build: inlining exposed many objects to C2, while
-ordinary opaque calls, retained escape paths and array-offset limits blocked several
-eliminations. Compiler-known calls/intrinsics are exceptions, and another JDK can differ.
-`opto/escape.cpp` names array cases
-directly — "has a non-constant length", "has a length that is too big", "has field with
-unknown offset" — and the last is the variable index.
+For every case retain source, input distribution, complete commands, JDK/CPU/layout,
+warm-up evidence, compiler logs, baseline harness cost and repeated raw results.
+A rounded 0 B/op does not imply zero allocations, especially with rare publishing paths.
+C2's `opto/escape.cpp` rejects some nonconstant lengths, oversized arrays and unknown offsets;
+non-escape alone does not guarantee scalar replacement.
 
-The stream row is the one to remember: the pipeline itself is the allocation, and it sits
-behind `no static binding` and `callee is too large` verdicts inside the JDK, which no
-application-side change reaches. Choose a loop on a hot path by design; do not expect EA to
-turn one into the other.
+A stream pipeline can retain allocations or non-inlined calls, but application pipeline shape
+and compilation context can change that result. Compare a behaviorally equivalent loop only
+when the pipeline is hot and the measured benefit justifies the change.
 
 ## In production
 
@@ -124,15 +117,15 @@ jfr print --events jdk.ObjectAllocationSample recording.jfr
 
 `jdk.ObjectAllocationSample` is enabled in the referenced default configuration; it is a
 sample, not an allocation census. The TLAB events are not
-(JDK-8257602, JDK 16), so a zero from `jdk.ObjectAllocationInNewTLAB` proves only that the
-session did not enable it. For each of the top allocated types, ask in order:
+(JDK-8257602, JDK 16), so a zero from `jdk.ObjectAllocationInNewTLAB` requires checking enablement,
+thresholds, workload opportunity and loss before concluding anything. For each of the top allocated types, ask in order:
 
 1. Should this object be local at all?
 2. Is it returned, stored in a field, or handed to another thread?
 3. Does it cross a call that was not inlined? — `PrintInlining` on the tier-4 tree, or
    `-Xlog:jit+inlining=debug` when the diagnostic unlock is not an option
-4. **Has a rare path that leaks it executed at least once in this JVM?** — the number
-   changes at the first incident, not at the deploy
+4. **Has a rare path that leaks it executed at least once in this JVM?** — correlate with the
+   current graph and deoptimization/recompilation; one execution does not fix policy forever
 5. Is it captured by a lambda that itself escapes? The capture is not the escape; the
    lambda's destination is.
 6. Does it cross reflection or method-handle machinery? Since JEP 416, constant reflective
@@ -141,18 +134,19 @@ session did not enable it. For each of the top allocated types, ask in order:
 ## Reading the inlining chain
 
 ```bash
-java -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining -XX:CompileCommand=quiet \
+java -XX:+UnlockDiagnosticVMOptions -XX:CompileCommand=quiet \
      -XX:CompileCommand=PrintInlining,com.example.Hot::* -jar app.jar
 ```
 
-Scope it with `CompileCommand=PrintInlining,Class::method` or it prints every compilation
-in the process. Under default tiered policy, read the C2/tier-4 tree—the tier-3 tree is C1's
-and says `callee is too large` for anything over 35 bytes regardless of hotness. On the
+The method-specific option prints inlining while compiling matching root methods; it is not
+an arbitrary caller bytecode-index filter. Adding global `-XX:+PrintInlining` enables output
+for other compilations too. Under default tiered policy, read the C2/tier-4 tree—the tier-3 tree is C1's
+and follows C1's separate budgets/policy, which can also use profile information. On the
 hot path, three verdicts matter most:
 
 - `hot method too big` — the callee exceeds `FreqInlineSize` (325 bytecode bytes).
-  Everything downstream of that frontier loses escape analysis, constant propagation and
-  dead-code elimination. Extract the callee's rare part so the hot remainder fits.
+  The caller loses visibility across that ordinary boundary; the callee can still optimize
+  its own compilation, and compiler-known calls are exceptions. Extract the callee's rare part so the hot remainder fits.
 - `virtual call`—C2 found no usable static/guarded target under the current bounded receiver
   profile and policy. Inspect the actual type distribution and profile-width overflow rather
   than applying a universal “three types/90%” rule.
@@ -168,8 +162,8 @@ fix for each is `inlining-verdicts-and-fixes.md`.
 - [ ] The measurement exercised representative common, rare, exceptional and receiver paths
 - [ ] The allocation affects a relevant metric—CPU, allocation/GC pressure, memory footprint
       or tail latency—under realistic concurrency
-- [ ] The object is large or expensive to construct — otherwise manual reuse probably makes
-      it worse
+- [ ] If reuse is proposed, measured lifecycle savings justify pooling's ownership,
+      retention and synchronization costs; small hot allocations may still merit elimination
 - [ ] A baseline exists from before the change, under the same load
 - [ ] After the change, the **same** metric was measured again
 

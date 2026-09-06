@@ -14,57 +14,55 @@ t=20.0  store: lease expired
 t=20.3  B: acquire            -> granted, valid to t=35.3.   B is now the leader.
 t=20.4  B: begins the batch
 t=25.0  A: renew              -> connection refused; A finally concludes it has lost
-        ================ split-brain window: t=20.0 .. t=25.0 ================
+        stale-authority window: t=20.0 .. t=25.0
+        overlapping leader activity starts when B begins work at t=20.4
 ```
 
-The window is not the partition. It is the interval between **the lease expiring** and **the
-former leader acting on that fact**, and it exists in every implementation: expiry happens on the
-store, the reaction in a process that may be unreachable, paused, or inside a long operation.
+This is a stale-authority window in a store-TTL example, not necessarily simultaneous work
+throughout it. Local admission can stop conservatively before expiry; delayed remote effects
+can still land later. Store expiry and a paused holder's reaction are separate events.
 Renewing more often shortens the _expected_ window and does not bound it.
 
 Two consequences decide the design. A failed renewal must not extend authority, but need not
 stop work immediately while a conservative grant budget remains. The leader must quiesce by
 that local deadline rather than wait to be told it lost. Anything that arrives after a newer
-term is claimed must be rejected by the resource, committed under an atomic authority check,
+term is activated at the sink must be rejected by that resource, committed under an atomic authority check,
 or safe/reconcilable when repeated.
 
 ## The stop-acting check, in Java
 
-The deadline is local and monotonic: an NTP step moves `currentTimeMillis()` and does not move
-the store's opinion.
+The deadline is local and monotonic. This Java 17 value object illustrates admission arithmetic,
+not a complete election loop. The caller obtains the actual granted duration under the
+provider's semantics; it must not assume that a requested 15-second TTL was granted unchanged.
 
 ```java
-// Conceptual: the leader loop. Omits back-off, metrics and the store client.
-final class LeaderLoop {
-    private static final Duration LEASE = Duration.ofSeconds(15);
-    // Grant-response uncertainty + clock-rate drift + time to stop admission/quiesce.
-    private static final Duration MARGIN = Duration.ofSeconds(4);
-
-    private volatile long safeUntilNanos;   // monotonic; set only by a successful renew
-    private volatile long fence;            // token issued with the current grant
-
-    void run() {
-        while (running) {
-            if (System.nanoTime() >= safeUntilNanos) {
-                stopLeading();              // renewal has not succeeded in time
-                return;                     // do not "keep trying while working"
-            }
-            doOneUnitOfWork(fence);         // small enough to fit inside MARGIN
+record GrantBudget(long fence, long admissionDeadlineNanos) {
+    static GrantBudget fromAcknowledgedGrant(long fence, long requestStartedNanos,
+                                             long grantedTtlNanos, long marginNanos) {
+        if (grantedTtlNanos <= 0 || marginNanos <= 0 || marginNanos >= grantedTtlNanos) {
+            throw new IllegalArgumentException("invalid grant budget");
         }
+        return new GrantBudget(fence, requestStartedNanos + grantedTtlNanos - marginNanos);
     }
-
-    void onRenewSucceeded(long grantedFence, long requestStartedNanos) {
-        this.fence = grantedFence;
-        // Anchor conservatively at request start, not response receipt: the store may have
-        // started the lease before the response arrived.
-        this.safeUntilNanos = requestStartedNanos + LEASE.minus(MARGIN).toNanos();
+    boolean mayAdmit(long nowNanos) {
+        return nowNanos - admissionDeadlineNanos < 0;
     }
 }
 ```
 
-Three properties to preserve when adapting it:
+Use subtraction for `nanoTime` comparisons: its origin can be negative and addition can wrap.
+All compared intervals must be shorter than half the counter range; discard budgets on
+restart. The margin covers drift/uncertainty plus the bounded work/quiescence duration.
 
-1. `safeUntilNanos` is written **only** on a successful renewal; a failed or timed-out renewal
+Integrate it on one owner thread: start with no grant (no work), process renewal outcomes
+through a queue, and snapshot the accepted budget/fence together before admission. Reject
+responses belonging to an invalidated lifecycle, old request or different election term;
+a late acknowledgement must not revive a stopped leader. A valid but already-expired response
+also admits no work. Serialize renewal requests or explicitly order their results.
+
+Properties to preserve when adapting it:
+
+1. The budget changes **only** on an accepted successful grant/renewal; a failed or timed-out renewal
    must not extend it, nor be retried in a way that blocks the deadline check.
 2. Stop **admission** early enough that every admitted unit can finish or become safely
    abandonable inside the margin. A check before a forty-minute indivisible operation is not
@@ -102,7 +100,7 @@ first useful unit of work completes_, not time until the process claims leadersh
 
 ## Rolling deploys
 
-A rolling deploy terminates the leader on purpose, so every release contains a failover. Three
+A rolling deploy may terminate the leader and trigger failover. Three
 behaviours worth getting right, in order of impact:
 
 1. **Stop admitting work and readiness at SIGTERM.** Continue renewal only as needed to drain
@@ -116,9 +114,12 @@ behaviours worth getting right, in order of impact:
 ## Proving it
 
 - **Partition the leader from the coordination store** while leaving its path to the database
-  open — a packet-dropping proxy is enough. Assert it stopped within the lease, and that any
-  later write was rejected at the resource.
-- **`kill -STOP` the leader** for longer than the lease, let the standby take over, then `-CONT`.
+  open — a packet-dropping proxy is enough. Assert local admission stops by its conservative
+  deadline. After activating the successor's fence at the sink, assert rejection of old-term
+  writes; test pre-activation late effects against the separate authority/idempotency contract.
+- **Pause an isolated test leader child process** for longer than the lease, let the standby
+  take over and activate its fence at the resource, then resume the child (`STOP`/`CONT` on
+  supported POSIX hosts). Never signal a real user/agent process.
   This is the case renewal cannot save and the one most designs have never run.
 - Compare local role/term metrics, but assert the safety invariant at the mutable resource:
   stale-term writes are rejected even after the old process resumes. Also assert bounded time
@@ -138,3 +139,4 @@ from remote wall time.
 - [The Chubby lock service](https://research.google/pubs/the-chubby-lock-service-for-loosely-coupled-distributed-systems/)
 - [Leases: an efficient fault-tolerant mechanism for distributed file cache consistency](https://dl.acm.org/doi/10.1145/74850.74870)
 - [Kubernetes Lease API](https://kubernetes.io/docs/concepts/architecture/leases/)
+- [Java 17 System.nanoTime: subtraction and overflow](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/System.html#nanoTime()>)

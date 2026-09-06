@@ -15,8 +15,8 @@ description: >
 ## Purpose
 
 Choose Native Image only when its measured lifecycle economics and runtime behavior fit the
-workload. AOT removes runtime compilation and can materially improve cold startup and initial
-footprint, but it exchanges HotSpot's adaptive optimization and dynamic runtime for a longer,
+workload. Ordinary closed-world AOT avoids runtime compilation and can materially improve cold
+startup and initial footprint, but it exchanges HotSpot's adaptive optimization and dynamic runtime for a longer,
 more resource-intensive build, a closed-world compatibility contract, and different GC and
 diagnostic capabilities. Neither Native Image nor a warmed JVM has a universal throughput or
 latency advantage.
@@ -53,6 +53,8 @@ startup number is compelling.
    target OS/architecture/libc, framework/plugin versions, required dynamic features, workload
    lifetime, SLO, memory limit, and deployment CPU floor. Recheck flags against the installed
    release; Native Image options and edition-specific features change.
+   Inspect the project's compiler release/toolchain and CI image; this skill's GraalVM 25.0/25.1
+   examples do not authorize a Java, framework, distribution, or experimental-feature upgrade.
 2. **Build the framework-supported baseline first.** Prefer the framework's AOT integration and
    Native Build Tools over a hand-written command. It may generate substitutions and reachability
    metadata that a raw agent run cannot infer.
@@ -109,8 +111,8 @@ startup number is compelling.
 - **Treat `-H:` options as unstable expert controls.** Discover them with the installed tool's
   expert-option help, capture effective arguments in CI, and retest after every upgrade. Do not
   silently carry copied flags across releases.
-- **Separate file size from runtime memory.** `--strip-debug` or separate debug symbols can reduce
-  shipped bytes. Executable packers such as UPX alter packaging, not live Java-heap demand, and can
+- **Separate file size from runtime memory.** Platform-supported stripping or separate debug
+  symbols can reduce shipped bytes. Executable packers such as UPX alter packaging, not live Java-heap demand, and can
   interfere with code signing, scanning, page sharing, startup, crash analysis, or platform policy;
   use only after measuring and validating the delivery environment.
 - **Compile for the fleet CPU floor.** Current AMD64 defaults use `x86-64-v3`; AArch64 defaults are
@@ -155,6 +157,11 @@ RSS or tail latency violates the SLO
 ```
 
 Use [troubleshooting](references/troubleshooting.md) for the detailed symptom matrix.
+
+Return the decision or diagnosed cause with the exact target/toolchain, supporting evidence,
+proposed configuration or fix, and native-artifact checks actually executed. Separate pending
+compatibility and performance measurements from verified results; a successful JVM test or native
+build alone does not establish runtime correctness or migration benefit.
 
 ## References
 

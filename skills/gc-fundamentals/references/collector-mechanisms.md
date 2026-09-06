@@ -1,33 +1,28 @@
 # Collector mechanisms
 
-Flag defaults and log text below were read off Temurin 25.0.3 (`-XX:+PrintFlagsFinal`,
-`-Xlog:gc*`); behaviour attributed to another release cites the JEP or JBS issue that
-establishes it.
+Flag checks use Temurin 25.0.3 (`-XX:+PrintFlagsFinal`); diagnostic log excerpts illustrate
+that baseline. Timings and flags must be checked on the target collector/build. Other-release
+claims identify the JEP or JBS record, separately from local runtime validation.
 
 ## The three base algorithms
 
-| Algorithm    | Moves objects | Fragments | Cost proportional to            | Space overhead    |
-| ------------ | ------------- | --------- | ------------------------------- | ----------------- |
-| Mark-sweep   | no            | yes       | live data (mark) + heap (sweep) | none              |
-| Mark-compact | yes           | no        | live data, visited twice        | none              |
-| Copying      | yes           | no        | **survivors only**              | reserved to-space |
+| Algorithm    | Moves objects | Fragments            | Cost proportional to                      | Space overhead      |
+| ------------ | ------------- | -------------------- | ----------------------------------------- | ------------------- |
+| Mark-sweep   | no            | possible             | reachable graph + swept space             | metadata/free lists |
+| Mark-compact | yes           | reduces it           | marking, relocation and reference updates | metadata/work space |
+| Copying      | yes           | compacts destination | survivors plus roots/reference processing | reserved to-space   |
 
-Copying is why a young collection is cheap: with 99% mortality, almost nothing is copied,
-and the whole Eden is reclaimed by moving a pointer. This is also why the same collection
-becomes expensive the moment survival rises — the algorithm did not change, the input did.
+The table isolates algorithmic work, not total pause time or all metadata overhead. Copying
+compacts its destination but requires space and root/reference processing; mark-compact algorithms
+do not universally visit live data exactly twice. High mortality reduces copying, while other
+pause phases may dominate even when almost nothing survives.
 
-The evacuation component is often better predicted by survivor count than allocated
-bytes. Every
-survivor is visited, its references are followed, its forwarding pointer is installed and
-checked; the memcpy of its body is the cheap part. Executed on 25.0.3 with a linked list of
-ten million 24-byte nodes: the young pause that evacuated it spent 327.93 ms in `Evacuate
-Collection Set`, and the full collection took 241 ms with 8-byte-aligned headers and 240 ms
-with `-XX:+UseCompactObjectHeaders`, although the live set shrank from 230 MB to 154 MB.
-In this object graph, fewer bytes bought more room in Eden and therefore fewer collections,
-while object count dominated traversal. Copy bandwidth, cache locality, reference density,
-roots, remembered sets and worker balance can change the result; treat the numbers as a
-falsifiable example, not a universal cost model. The layout arithmetic is
-object-layout-and-footprint.
+Evacuation visits surviving objects, follows references, manages forwarding and copies bodies.
+Object count can dominate a graph of small nodes; byte volume can dominate large arrays.
+To compare object layouts, hold the object graph, collector, heap, CPU and workload constant,
+record actual layout and compare the same GC phases across repeated runs. Include roots,
+remembered sets, worker balance and copy bandwidth. Layout arithmetic belongs to
+object-layout-and-footprint; fewer bytes alone does not establish a pause-time improvement.
 
 ## Tri-colour marking and the two invariants
 
@@ -40,62 +35,63 @@ decides the barrier and the floating garbage:
 
 - **Snapshot-at-the-beginning (SATB)** — G1, Shenandoah. A pre-write barrier records the
   reference being _overwritten_, so everything reachable when marking started is marked.
-  Everything allocated during the cycle is treated as live without being looked at. The
-  cost is floating garbage: an object that dies during the cycle is reclaimed only by the
-  next one, and the occupancy after a cycle overstates the live set by roughly the
+  Newly allocated areas are treated conservatively for that marking cycle. Objects that die
+  after the snapshot can remain as floating garbage, but young collections may reclaim some
+  allocations and old reclamation can occur after marking. Occupancy error is not simply the
   allocation of one cycle. The cycle mechanics are g1-concurrent-marking.
 - **Incremental update** — CMS historically (removed in JDK 14, JEP 363). A post-write
   barrier records the reference being _stored_, so marking follows the new edge. Less
   floating garbage, but marking can never be sure it is finished until a final
   stop-the-world remark rescans what changed.
 
-ZGC marks through its load barrier instead of a store barrier: a reference loaded with a
-stale colour is marked and repaired on the way out, so the invariant is enforced on reads
-(zgc-generational-internals).
+Non-generational ZGC used load barriers for marking. Generational ZGC (the only mode on 25)
+moves SATB marking work to store barriers, alongside remembered-set maintenance; load barriers
+remove pointer metadata and repair relocated addresses ([JEP 439](https://openjdk.org/jeps/439)).
+See zgc-generational-internals for the exact fast/slow paths.
 
 ## Generations, survivors and promotion
 
 Serial and Parallel split the heap into Eden, two survivor spaces and old, with sizes
 from `NewRatio` (2), `SurvivorRatio` (8) and adaptive resizing (`UseAdaptiveSizePolicy`,
 true). G1 keeps the same roles but assigns them to regions, so the young generation is a
-set of regions whose count changes at every pause; ZGC and Shenandoah do the same at page
-and region granularity. In all of them:
+set of regions whose count is adaptive. Generational ZGC and generational Shenandoah use
+different page/region aging and promotion policies; Shenandoah's default `satb` mode on 25
+is non-generational. The following survivor-space model applies to Serial/Parallel/G1:
 
 - A young collection copies survivors from Eden and the from-survivor space into the
   to-survivor space, bumping each object's age in its header, and promotes an object to
   old when its age reaches the **tenuring threshold** — at most `MaxTenuringThreshold`
-  (15), computed each pause so that the survivor space stays under `TargetSurvivorRatio`
-  (50%) full. `InitialTenuringThreshold` (7) is Parallel's starting point.
+  (15 default in the tested build). Effective age selection and overflow promotion depend
+  on collector policy and available space; the target is not a guaranteed survivor occupancy.
+  Do not project these flags or header-age mechanics onto ZGC or Shenandoah.
 - **Premature promotion** is the threshold being driven down because the survivor space
   cannot hold what survived: objects that would have died in one more young collection
   are copied to old instead. `-Xlog:gc+age=trace` prints the computed threshold each
-  pause; a `new threshold` below `max threshold` is the signal, and its reading is
-  gc-log-analysis.
+  pause for applicable collectors. A threshold below the maximum is normal adaptive policy,
+  not proof of harmful promotion; correlate survival, promoted bytes and old pressure.
 - **Promotion is one-way.** Old is collected by a mixed collection (G1), a major cycle
-  (ZGC, Shenandoah) or a full collection (Serial, Parallel), all much rarer than a young
-  pause. Until then a promoted object costs at every young pause through its card.
+  (generational ZGC/Shenandoah) or a full collection (Serial, Parallel). Their frequency depends
+  on workload and collector policy. Remembered old-to-young edges add young-scan work,
+  but old objects without relevant edges need not be revisited each time.
 - **Nepotism.** A dead object in old that references young objects still has its card
-  dirty, so young collections treat those referents as live and copy them — and promote
-  them, where they in turn keep _their_ referents alive. A queue or linked structure whose
-  head was promoted drags its tail into old one node per pause. The mechanism is described
-  in Jones, Hosking and Moss, _The Garbage Collection Handbook_ (2nd ed., ch. 9); the
-  symptom is a young pause whose copying cost rises while the application retains
-  nothing, and a mixed or full collection that then frees far more than expected.
+  represented in remembered metadata, so a partial young collection can retain its referents
+  without proving the old source reachable. This may prolong young lifetimes and lead to
+  promotion; neither a permanently dirty card nor one promoted node per pause is required.
+  Confirm the graph and reclamation behavior rather than inferring nepotism from timings alone.
 
-G1 has no `-Xmn` in the Serial sense: the young size is derived from the pause target
-each pause, which is why lowering `MaxGCPauseMillis` (200) shrinks Eden and raises
-promotion. The flag's contract is g1-tuning-for-slo.
+G1 normally adapts young size to its pause goal. `-Xmn` is accepted and fixes young bounds,
+constraining that adaptation; it is not a general tuning shortcut. A lower pause goal can
+shrink Eden and raise frequency/promotion, but observe the result. See g1-tuning-for-slo.
 
 ## Where the generational hypothesis fails
 
 The hypothesis — most objects die young — is empirical. It breaks in four recognisable
 shapes:
 
-- **Caches.** Entries are created to survive. Everything promoted, nothing reclaimed
-  cheaply — and an LRU cache at steady state evicts _old_ objects, so the churn lands on
-  the generation that is most expensive to collect.
-- **Object pools.** The same objects live forever by design and are repeatedly scanned;
-  every pooled object that points at a young one is a dirty card.
+- **Caches.** Long residence times can shift entries and eviction churn into old; bounded
+  short-lived entries can still die young. Measure residence and survival.
+- **Object pools.** Retained pooled objects can add remembered edges when referencing young
+  data; primitive-only payloads and cleared references have different costs.
 - **High downstream latency.** By `N = λ × R`, slower dependencies mean more requests in
   flight, so more per-request objects are alive at any young collection. GC gets more
   expensive without anything in the JVM having changed.
@@ -103,7 +99,8 @@ shapes:
   a consumer that holds a batch of messages until the batch commits, keeps per-request
   objects alive across several young pauses and promotes them wholesale.
 
-The third is the one that gets misdiagnosed as a GC problem. The fix is upstream.
+For the third case, verify stable throughput, residence time and admission limits before
+attributing live-data growth to the dependency; investigate its owner when evidence supports it.
 
 ## Anatomy of a young pause
 
@@ -118,7 +115,7 @@ is not yet a diagnosis.
 | `Evacuate Collection Set` → `Ext Root Scanning`         | thread count × stack depth, class-loader and JNI roots                  | thousands of platform threads with deep stacks; the stacks are scanned inside the pause          |
 | `Evacuate Collection Set` → `Scan Heap Roots`           | cards merged above                                                      | same as `Merge Heap Roots`                                                                       |
 | `Evacuate Collection Set` → `Code Root Scan`            | compiled methods holding references into the collection set             | large code cache, many embedded constants                                                        |
-| `Evacuate Collection Set` → `Object Copy`               | **survivors, in objects**                                               | survival rises: hypothesis failing, premature promotion, a burst of retained requests            |
+| `Evacuate Collection Set` → `Object Copy`               | survivor objects/bytes, graph and bandwidth                             | retained data, mixed old work or reduced CPU/bandwidth                                           |
 | `Evacuate Collection Set` → `Termination`               | imbalance between GC workers                                            | one huge object graph on one worker, too many workers for the work                               |
 | `Post Evacuate Collection Set` → `Reference Processing` | discovered `Reference` objects                                          | soft/weak/final/phantom references in the collection set — see below                             |
 | `Post Evacuate Collection Set` → `Weak Processing`      | JNI weak handles, string table, resolved-method table entries           | many interned strings or classes being unloaded                                                  |
@@ -126,12 +123,10 @@ is not yet a diagnosis.
 
 Two readings this table makes immediate:
 
-- A long young pause with **few survivors** is `Merge Heap Roots`/`Scan Heap Roots` (old
-  pointing at young), `Ext Root Scanning` (threads) or `Reference Processing`. None of
-  those is fixed by a smaller young generation, and the first is made worse by a bigger
-  old one.
-- `Object Copy` dominating with a stable allocation rate means survival changed — ask what
-  is holding the objects (a slow dependency, a batch, a cache), not which flag.
+- With **few survivors**, inspect roots/cards/references plus scheduling, faults and worker
+  balance. Young sizing can change the collection set and phase work; it is not a universal fix.
+- `Object Copy` dominating is a hypothesis about evacuation cost, not proof of more survival.
+  Compare survivor bytes/count, object shape, mixed old work and CPU/bandwidth before attributing it.
 
 Serial and Parallel print the same information with fewer phases; the equivalent JFR
 events are `jdk.GCPhasePause` and its level-1/2 children, `jdk.G1EvacuationYoungStatistics`
@@ -141,19 +136,19 @@ detail — remembered sets, refinement, the collection-set choice — is g1-inte
 ## Write barriers
 
 Generational and regional collectors need to know about references that cross their
-boundary, and the only way is to intercept every reference store — and, for the
-concurrent collectors, every reference load.
+boundary. Barriers are a common mechanism; compiler proofs can eliminate some barriers,
+fast paths differ by GC phase, and not every concurrent collector uses load barriers.
 
-| Collector            | Barrier on store                                                                                                                                                                                                                           | Barrier on load                                          |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
-| Serial, Parallel     | Card mark: one byte per card (`GCCardSizeInBytes` 512) set dirty, unconditionally (`UseCondCardMark` false)                                                                                                                                | none                                                     |
-| G1 (through 25)      | SATB pre-barrier enqueuing the overwritten value while marking is active, plus a post-barrier that filters same-region and null stores, dirties the card and enqueues it for the refinement threads (`G1ConcRefinementThreads`, ergonomic) | none                                                     |
-| G1 (JDK 26, JEP 522) | Same pre-barrier; the post-barrier writes to a second card table and refinement scans it, removing the queue and its memory fences — JEP 522, integrated in 26 (not verified here)                                                         | none                                                     |
-| ZGC (generational)   | Store barrier maintaining the remembered set for old-to-young references (JEP 439)                                                                                                                                                         | Load barrier on coloured pointers: mark, relocate, remap |
-| Shenandoah           | SATB pre-barrier; in `ShenandoahGCMode=generational` (JEP 521) a card-marking post-barrier as well                                                                                                                                         | Load-reference barrier resolving forwarded objects       |
+| Collector            | Barrier on store                                                                                                                                                                                                                           | Barrier on load                                       |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| Serial, Parallel     | Card mark: one byte per card (`GCCardSizeInBytes` 512) set dirty, unconditionally (`UseCondCardMark` false)                                                                                                                                | none                                                  |
+| G1 (through 25)      | SATB pre-barrier enqueuing the overwritten value while marking is active, plus a post-barrier that filters same-region and null stores, dirties the card and enqueues it for the refinement threads (`G1ConcRefinementThreads`, ergonomic) | none                                                  |
+| G1 (JDK 26, JEP 522) | Same pre-barrier; the post-barrier writes to a second card table and refinement scans it, removing the queue and its memory fences — JEP 522, integrated in 26 (not verified here)                                                         | none                                                  |
+| ZGC (generational)   | SATB marking and remembered-set maintenance (JEP 439)                                                                                                                                                                                      | remove colour metadata and repair relocated addresses |
+| Shenandoah           | SATB pre-barrier; in `ShenandoahGCMode=generational` (JEP 521) a card-marking post-barrier as well                                                                                                                                         | Load-reference barrier resolving forwarded objects    |
 
-This is why "the same code" has different throughput under different collectors even
-when no collection happens: the barrier runs on every reference store or load regardless.
+This can change the throughput of the same code under different collectors even
+outside pauses: required fast paths can remain, while slow-path work is conditional.
 It is also why a benchmark of reference-heavy code — pointer chasing, collections of
 collections — separates the collectors more than a numeric one does. Measure before
 attributing a throughput gap to the collector; the split by reads versus writes is
@@ -161,16 +156,14 @@ zgc-generational-internals and the LRB is epsilon-and-shenandoah-internals.
 
 ## Allocation on the fast path
 
-TLAB allocation is a pointer bump — a few nanoseconds. TLAB refill is sub-microsecond and
-sized adaptively (`ResizeTLAB` true, `TLABWasteTargetPercent` 1). The millisecond spikes
-people attribute to allocation are the **collection** the slow path eventually triggers,
-not the allocation itself.
+TLAB fast allocation commonly bumps a pointer, with initialization and checks. Refill timing
+depends on collector, allocation space and memory commitment; it is not guaranteed sub-microsecond.
+Slow allocation can include GC, pacing/stalls, commitment, page faults, synchronization and zeroing.
 
-Two allocations do not take the fast path: an object larger than the TLAB's waste limit
-goes to a shared, CAS-protected Eden allocation, and an array large enough must be zeroed
-in full before it is returned. Zeroing is proportional to size and happens with no
-safepoint poll — a 256 MB `int[]` cost 18–108 ms of Time-To-SafePoint on 25.0.3
-(references/safepoints.md). `-Xlog:gc+tlab=debug` prints the refill and waste statistics;
+An object that does not fit the remaining TLAB may trigger refill or allocation outside it,
+depending on the remaining waste and collector. Large-array zeroing can be expensive and
+some VM/intrinsic paths have sparse polls (references/safepoints.md); optimized initialization
+need not always zero the whole object in a separate step. `-Xlog:gc+tlab=debug` prints refill/waste;
 finding the allocating code is allocation-profiling.
 
 The consequence: "don't create objects" is almost never the right answer. Managing
@@ -187,8 +180,8 @@ allocation; a `byte[530_000]` is humongous and logs
 [gc,humongous] GC(0) Humongous region 0 (object size 530016 @ 0x…) remset 0 code roots 0 marked 0 pinned count 0 reclaim candidate 1 type array 1
 ```
 
-under `-Xlog:gc+humongous=debug`, and the pause that follows carries the cause
-`G1 Humongous Allocation`. Three costs follow from the mechanism:
+under `-Xlog:gc+humongous=debug`. A humongous allocation can request concurrent marking,
+but each allocation need not trigger a pause or that cause. Three costs follow from the mechanism:
 
 - **Waste.** A humongous object owns whole regions; that 530 KB array occupies 1 MB, and
   a 1.1 MB one occupies two. Region size grows with the heap (4 MB at the 8 GB default on
@@ -196,11 +189,10 @@ under `-Xlog:gc+humongous=debug`, and the pause that follows carries the cause
   in different pods.
 - **Fragmentation.** The regions must be contiguous. A heap with plenty of free regions
   can still fail a humongous allocation and force a full collection to compact.
-- **Reclaim timing.** An unreferenced humongous _array_ with an empty remembered set
-  (`reclaim candidate 1` above) is freed at the next young pause — eager reclaim, part of
-  g1-concurrent-marking. Anything else waits for the marking cycle, and repeated
-  humongous allocation drives `Request concurrent cycle initiation … source: concurrent
-humongous allocation` back to back.
+- **Reclaim timing.** Eager reclaim considers eligible primitive arrays with sufficiently small
+  remembered sets, subject to tracking and pinning checks. A candidate is not proof of death:
+  evacuation can discover references and retain it. Other objects may require marking/full
+  reclamation. Repeated allocation can drive marking requests; confirm the logged cause.
 
 ```bash
 grep -i humongous gc.log
@@ -213,11 +205,11 @@ make them ordinary is a g1-tuning-for-slo decision with its own costs.
 ## Reference processing
 
 `SoftReference`, `WeakReference`, `FinalReference` (finalizers) and `PhantomReference`
-are discovered during marking and processed inside the pause, in the `Reference
-Processing` phase, in that order (`-Xlog:gc+ref=debug` shows `SoftWeakFinalRefsPhase`,
-`KeepAliveFinalRefsPhase`, `PhantomRefsPhase`). `ParallelRefProcEnabled` is true by
-default on 25. A finalizable object is kept alive through one more collection so its
-`finalize()` can run, so it costs two copies and a queue hand-off. A pause whose
+are discovered and processed according to collector-specific phases; concurrent collectors
+can move processing outside pauses. G1 pause logs can show `SoftWeakFinalRefsPhase`,
+`KeepAliveFinalRefsPhase`, `PhantomRefsPhase`. `ParallelRefProcEnabled` is true for G1/Parallel
+but false for Serial in the tested 25 build. Finalization can delay reclamation and resurrect
+objects; it does not guarantee one extra collection or exactly two copies. A pause whose
 `Reference Processing` line dominates has a reference-heavy structure in the collection
 set — a `WeakHashMap`, a soft-reference cache, a finalizer-backed resource; the levels,
 when each is cleared and the leak catalogue are java-reference-types-and-leaks, and the
@@ -226,49 +218,61 @@ count per type is `jdk.GCReferenceStatistics`.
 ## What the concurrent collectors trade
 
 ZGC and Shenandoah do their marking and relocation while the application runs, so their
-stop-the-world pauses are bounded by root work rather than by heap or live-set size
+normal stop-the-world pauses avoid much of the work scaling with heap/live-set size, but are
+not a hard bound on latency
 (ZGC scans thread stacks concurrently since JEP 376, JDK 16). The mechanism has four
 costs that a pause-time comparison hides:
 
-- **Barrier cost on every load** (and store), paid whether or not a cycle is running.
+- **Barrier work** on relevant reference accesses, with conditional slow paths and compiler optimizations.
 - **Concurrent CPU.** GC threads run alongside the mutators; on a pod with one or two
   CPUs they are the same cores. Thread counts and the throughput consequence are
   jvm-gc-tuning.
 - **Headroom.** The cycle must finish before the application exhausts the free memory it
-  started with, so the heap needs `allocation rate × cycle time` above the live set. Lose
+  started with. `allocation rate × cycle time` is a first budget estimate, not a sufficient
+  sizing formula: account for relocation reserves, bursts and reclaim timing. Lose
   the race and the mutators block on allocation — ZGC's `Allocation Stall`
   (`jdk.ZAllocationStall`), Shenandoah's degenerated or full GC. Operating that boundary
   is zgc-and-shenandoah.
 - **Floating garbage**, as above, which makes their post-cycle occupancy a poor estimate
   of the live set.
 
-None of this argues against them; it says a service that moved to ZGC and lost
-throughput, or stalls at traffic peaks, is seeing the mechanism, not a defect.
+These are candidate explanations for throughput loss or stalls after a collector change,
+not grounds to exclude a regression or misconfiguration without evidence.
 
 ## The JDK 25 collector landscape
 
-| Collector  | Pause depends on                                                                       | Generational                           | Status on 25                                                                                                                                     | Design point                           |
-| ---------- | -------------------------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
-| Serial     | young: survivors; full: live data and heap                                             | yes                                    | product; ergonomic choice observed with one CPU on JDK 25                                                                                        | tiny heaps, single core                |
-| Parallel   | young: survivors; full: live data and heap                                             | yes                                    | product                                                                                                                                          | throughput, batch, no latency SLO      |
-| G1         | young: survivors, roots, cards and phase overhead                                      | yes (regions)                          | product; default on a server-class machine on the verified JDK 25 build; JEP 523 proposes broadening the default but is Candidate with no target | balanced default                       |
-| ZGC        | normal pauses: primarily roots and bounded coordination; fallback behavior differs     | yes, by definition (JEP 490)           | product                                                                                                                                          | large heaps, latency SLO               |
-| Shenandoah | normal pauses: primarily roots and bounded coordination; degenerated/full paths differ | generational mode is product (JEP 521) | product in builds that ship it (Temurin does); `ShenandoahGCMode` defaults to `satb` on the verified JDK 25 build                                | large heaps, latency SLO               |
-| Epsilon    | never collects                                                                         | no                                     | experimental (JEP 318): `-XX:+UnlockExperimentalVMOptions` required, executed                                                                    | measurement instrument, not production |
-| CMS        | —                                                                                      | —                                      | **removed** in JDK 14 (JEP 363); 25.0.3 refuses `-XX:+UseConcMarkSweepGC` with `Unrecognized VM option`                                          | —                                      |
+| Collector  | Pause depends on                                                                       | Generational                           | Status on 25                                                                                                      | Design point                                        |
+| ---------- | -------------------------------------------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Serial     | young: survivors; full: live data and heap                                             | yes                                    | product; ergonomic choice observed with one CPU on JDK 25                                                         | tiny heaps, single core                             |
+| Parallel   | young: survivors; full: live data and heap                                             | yes                                    | product                                                                                                           | throughput, batch, no latency SLO                   |
+| G1         | young: survivors, roots, cards and phase overhead                                      | yes (regions)                          | product; server-class default on tested 25; JEP 523 Delivered for 27, not tested here                             | balanced default                                    |
+| ZGC        | normal pauses: primarily roots and bounded coordination; fallback behavior differs     | yes, by definition (JEP 490)           | product                                                                                                           | large heaps, latency SLO                            |
+| Shenandoah | normal pauses: primarily roots and bounded coordination; degenerated/full paths differ | generational mode is product (JEP 521) | product in builds that ship it (Temurin does); `ShenandoahGCMode` defaults to `satb` on the verified JDK 25 build | large heaps, latency SLO                            |
+| Epsilon    | never collects                                                                         | no                                     | experimental (JEP 318); requires UnlockExperimentalVMOptions                                                      | finite allocation windows; all allocations must fit |
+| CMS        | —                                                                                      | —                                      | **removed** in JDK 14 (JEP 363); 25.0.3 refuses `-XX:+UseConcMarkSweepGC` with `Unrecognized VM option`           | —                                                   |
 
-Baseline corrections that invalidate older comparisons, all executed on 25.0.3:
+Baseline corrections; 25 behavior was checked on 25.0.3, later releases use primary metadata:
 
-- `-XX:+ZGenerational` **does not exist** any more (JEP 490, JDK 24). ZGC is generational,
+- `-XX:+ZGenerational` **no longer selects a mode** (JEP 490, JDK 24). ZGC is generational,
   period. Carrying the flag forward is an upgrade failure in waiting: 25.0.3 starts and
   warns `Ignoring option ZGenerational; support was removed in 24.0`, which is HotSpot's
   _obsolete_ stage; the flag is scheduled to _expire_ in 26, where an unrecognised option
   stops the JVM (see the lifecycle in references/diagnosis-and-versions.md).
 - Generational Shenandoah is product (JEP 521), not experimental. On the verified JDK 25
-  build, `-XX:+UseShenandoahGC` alone runs `satb` mode. A 2026 draft (JDK-8379682)
-  proposes making generational mode the default, but as of 2026-09-03 it has neither a JEP
-  number nor a target release.
+  build, `-XX:+UseShenandoahGC` alone runs `satb` mode. As of 2026-09-05,
+  [JEP 535](https://openjdk.org/jeps/535) (JDK-8379682) is Targeted for JDK 28 to change
+  the default; it is not delivered or verified on this runtime.
 - `-XX:+UseCompactObjectHeaders` is a product flag on 25 (JEP 519) and **off by default**.
-  It changes object size, not collector behaviour — see the measurement at the top.
+  It changes layout and can affect allocation/GC costs; verify the actual object graph and phases.
 - `-XX:+UseBiasedLocking` is gone (deprecated JDK 15, JEP 374; removed JDK 18, JDK-8256425):
   25.0.3 refuses it. Biased-lock revocation is no longer a safepoint cause.
+
+## Primary sources
+
+- [G1 mechanisms on JDK 25](https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-g1-garbage-collector1.html)
+  and [G1 tuning](https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-garbage-collector-tuning.html):
+  adaptive young sizing, marking versus reclamation and evacuation/humongous behavior.
+- [JEP 439](https://openjdk.org/jeps/439): generational ZGC store/load responsibilities,
+  aging and inter-generational retention.
+- [JDK 25u G1 source](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/gc/g1/g1CollectedHeap.cpp):
+  eager-reclaim candidacy and allocation paths; verify the matching tag for a deployed build.

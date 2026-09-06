@@ -113,8 +113,11 @@ exact equality.
 
 If latency is recorded only for successful completions, a slower treatment may appear faster by
 timing out its worst requests. Reconcile offered/admitted/terminal counts and report outcome rates.
-A request cut off at deadline `d` is known only to have `T ≥ d` unless eventual completion is
-observed. Kaplan–Meier or other survival methods require defensible censoring assumptions;
+A timeout response's terminal latency is observed. For a different variable—time to an
+eventual completion that remains unobserved—stopping observation at `d` gives a lower
+bound only if the operation was still unfinished then. Cancellation that prevents completion
+also changes the outcome process; do not automatically treat it as independent censoring.
+Kaplan–Meier or other survival methods require defensible censoring assumptions;
 deadline censoring concentrated at one value cannot identify tail latency beyond that point
 without a model. Often the operational estimand should be the timeout/error fraction plus the
 successful-latency distribution, not a fabricated completion time.

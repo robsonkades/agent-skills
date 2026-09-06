@@ -20,15 +20,15 @@ system to work. Work distribution to interchangeable workers is
 
 ## Choreography versus orchestration
 
-| Dimension              | Choreography                                                                      | Orchestration                                                      |
-| ---------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Where the flow lives   | Distributed across event contracts/subscriptions; may have a derived process view | Explicit coordinator/state machine                                 |
-| Adding a step          | Subscribe a new consumer; no existing service changes                             | Edit the coordinator; participants unchanged                       |
-| Answering "where is X" | Reconstruct from correlated logs and traces                                       | Query the instance's state                                         |
-| Coupling               | Producers ignorant of consumers; consumers bound to schemas                       | Participants bound to the coordinator's command contract           |
-| Failure handling       | Each consumer owns its retry and DLQ; compensation is ad hoc                      | Timeouts and compensating steps are explicit states                |
-| Availability           | No central component to lose                                                      | Coordinator down means the flow stops (its state persists)         |
-| Practical fit          | Independent reactions or a small stable dependency graph                          | Explicit branching, deadlines, compensation and recovery ownership |
+| Dimension              | Choreography                                                                              | Orchestration                                                             |
+| ---------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Where the flow lives   | Distributed across event contracts/subscriptions; may have a derived process view         | Explicit coordinator/state machine                                        |
+| Adding a step          | Independent reaction may only need a subscriber; sequencing can change existing contracts | Edit coordinator; participant contracts may also change                   |
+| Answering "where is X" | Query a durable derived process view, with logs/traces for diagnosis                      | Query the instance's state                                                |
+| Coupling               | Producers ignorant of consumers; consumers bound to schemas                               | Participants bound to the coordinator's command contract                  |
+| Failure handling       | Participants own retries and recovery; cross-step compensation needs an explicit protocol | Timeouts and compensating steps are explicit states                       |
+| Availability           | Broker, stores and shared dependencies can still halt progress                            | Coordinator outage delays new decisions; already-issued work may continue |
+| Practical fit          | Independent reactions or a small stable dependency graph                                  | Explicit branching, deadlines, compensation and recovery ownership        |
 
 ```text
 Choose choreography when:
@@ -85,8 +85,9 @@ What FaaS costs a **Java** consumer specifically:
   partition sequentially even though function invocations are ephemeral. Verify provider
   behavior for retries, partial batches, parallelization and rebalances rather than assuming
   ordering is absent or guaranteed.
-- **Platform retries are still at-least-once**, and often less configurable than a consumer
-  loop's. The handler must be repeat-safe regardless (`delivery-semantics`, `idempotency`).
+- **Verify the event-source retry contract**, including acknowledgement timing, attempt/age
+  limits and terminal handling. Many sources can redeliver; repeat-safe handlers alone do not
+  establish no-loss delivery (`delivery-semantics`, `idempotency`).
 
 Prefer a long-lived consumer when protocol control, predictable warm latency, custom
 backpressure/commit behavior or connection limits dominate. Prefer managed functions when its

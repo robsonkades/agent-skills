@@ -31,7 +31,8 @@ the investigation, not because the process is virtuous.
    and cannot be fixed. The indicator's definition is `slo-and-alerting`.
 2. **Record the baseline and its workload** before touching anything: p50/p90/p99/p99.9,
    throughput, CPU, heap, GC, the JDK version and effective flags
-   (`java -XX:+PrintFlagsFinal -version`), and the request mix, data volume and uptime
+   (for HotSpot, inspect the target with `jcmd <pid> VM.version`, `VM.command_line` and
+   `VM.flags -all`, subject to attach access), and the request mix, data volume and uptime
    that produced them. A baseline without its workload cannot be reproduced.
 3. **Characterise before diagnosing, with a method.** Use RED for the service, USE for
    bounded resources, workload characterisation, and then a drill-down whose clock matches
@@ -56,9 +57,9 @@ the investigation, not because the process is virtuous.
    block when possible; alternate only when it is the justified blocking scheme. Choose sample
    size from variance and desired precision or power. Use factorial designs for interactions;
    do not hide several changes in one treatment.
-7. **Validate by explaining the mechanism.** A graph that improved is not a result until
-   you can say why, until the mechanism accounts for the size of the effect, and until
-   plausible alternative causes have been challenged. A reversible feature flag can support
+7. **Validate effect and mechanism separately.** A controlled comparison can support an effect
+   before its exact mechanism is known. Label that uncertainty; assess whether the proposed
+   mechanism accounts for the effect's size and challenge plausible alternative causes. A reversible feature flag can support
    an AB/BA test; otherwise use randomised traffic allocation, a restarted control, bisection,
    or another defensible counterfactual. Do not add a runtime toggle merely to satisfy this
    recipe if the toggle changes the mechanism or raises production risk.
@@ -84,9 +85,10 @@ the investigation, not because the process is virtuous.
   "over days" is insufficient when seasonality, traffic mix or deployments differ.
 - The instances still running are not a sample of the instances that failed. Evidence
   from a degrading instance is captured before its restart, in the order
-  `incident-evidence-capture` sets out, or it does not exist.
-- A result that changes with the duration of the measurement is not a measurement. It is
-  accumulated state impersonating performance.
+  `incident-evidence-capture` sets out where possible. Missing local evidence limits the
+  inference; exported metrics, traces or retained artifacts may still exist.
+- A result that changes with run duration may expose warm-up, drift, queue growth or leaked
+  state. Report the time-dependent behavior; do not discard it to manufacture a plateau.
 - A benchmark that improves while the SLO does not is a finding about the benchmark. The
   metric that gates the work is the SLO's, under production-shaped load.
 - Observe in production only within an explicit collection budget and data-handling policy;
@@ -94,8 +96,9 @@ the investigation, not because the process is virtuous.
   expose sensitive data. Experiment where blast radius is acceptable. A canary is not
   automatically randomised or isolated: routing bias, shared dependencies and fresh-process
   state can confound it.
-- Never measure with `System.currentTimeMillis()` in a loop: dead-code elimination, wrong
-  clock, JIT warmup included, GC unisolated, no percentiles. Use JMH.
+- Use JMH for JVM microbenchmarks. For application elapsed-time instrumentation, a monotonic
+  clock such as `System.nanoTime()` is appropriate within one JVM; clock choice alone does
+  not solve benchmark dead-code elimination, warm-up or workload validity.
 - Warm-up is a workload- and runtime-dependent state transition, not a fixed clock. Measure
   compilation, cache and resource state; include cold/ramp behaviour when users experience it.
 - Staging is not production until data volume, access pattern (hot keys), concurrency and
@@ -109,8 +112,15 @@ the investigation, not because the process is virtuous.
   Real arrivals, service-time tails, finite pools and backpressure often violate that model.
   Less arrival work, more capacity, or faster service can all lower utilisation; measure the
   actual queue and service demand (`littles-law-and-queueing`).
-- Days without a refuted hypothesis is the symptom of a bad investigation, not of a hard
-  problem. The symptom-to-fix table is in `references/methods-and-failure-modes.md`.
+- Days without a discriminating measurement warrant reviewing hypotheses and collection
+  gaps; rare incidents or missing access can also explain delay. The symptom-to-fix table
+  in `references/methods-and-failure-modes.md` lists candidates, not proven diagnoses.
+
+Treat missing evidence as unknown. A fresh `java -XX:+PrintFlagsFinal -version` describes
+that new process, not the deployed target; use it only for a labelled baseline under its
+own launch conditions. Tool availability, profiler coverage and lack of samples must be
+reported separately from absence of a mechanism. Keep Java/provider guidance tied to the
+project's deployed version, without implying an upgrade.
 
 ## References
 

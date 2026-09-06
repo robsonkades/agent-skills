@@ -23,14 +23,23 @@ accepted on behalf of unknown callers — publish deliberately, evolve deliberat
 
 ## Workflow
 
+Before proposing code, inspect compiler release/toolchains, dependencies, CI/runtime versions,
+the previous public API and supported consumers. No single authoring baseline is declared;
+the references use Java SE 25, while the record snippets require Java 16+.
+JPMS and enhanced deprecation require Java 9+, `List.copyOf` Java 10+, and record patterns
+Java 21+ without preview. Adapt to the project's target; do not upgrade it or enable preview.
+If release or consumer evidence is missing, state the gap and keep compatibility claims
+conditional rather than declaring a safe minor release.
+
 1. **Name from the caller's side.** The vocabulary is the caller's domain (`settle`,
    `authorise`, `refund`), never the implementation (`processData`, `handleRequest`).
    When choosing or reviewing names, read [references/naming.md](references/naming.md)
    for the heuristics and the false positives.
 2. **Minimise the surface.** Package-private is the default; `public` is the exception
-   that needs a caller. In a modular build, an unexported package is invisible regardless
-   of modifiers — use `exports` for the API packages only. What is not published never
-   needs a deprecation cycle.
+   that needs a caller. In named modules, an unexported package is inaccessible to ordinary
+   external source access; classpath use, reflective access and explicit overrides need
+   separate review. Use `exports` for intended API packages only and identify the actual
+   supported surface before deciding a deprecation cycle is unnecessary.
 3. **Shape the signatures.** Parameter count is a signal, not a threshold. Boolean flags,
    transposable same-typed arguments, recurring data clumps, optionality and independent
    evolution often justify a parameter object or split method; a cohesive four-argument
@@ -84,6 +93,11 @@ accepted on behalf of unknown callers — publish deliberately, evolve deliberat
   java-exception-design.
 
 ## References
+
+For a review, deliver the affected declaration and caller evidence, compatibility impact,
+proposed adjustment and focused validation. For an implementation, compile representative
+callers at the target release; for published changes also run old binaries and relevant
+contract tests. Separate executed checks from proposed checks and unavailable consumer evidence.
 
 - [Naming](references/naming.md) — heuristics for method, boolean, collection and type
   names, and the false positives (long names, domain jargon, family symmetry). Read when

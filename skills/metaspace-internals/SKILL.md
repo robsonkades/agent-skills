@@ -9,7 +9,7 @@ description: >
   committed grows monotonically, when `MaxMetaspaceSize` is unset or copied from another
   service, when `waste` in the class space is climbing, or when proxies, hidden classes or a
   scripting engine generate classes at runtime. Does not cover the process-wide memory
-  memory map and container budget (jvm-memory-regions), classloader identity, unloading and
+  map and container budget (jvm-memory-regions), classloader identity, unloading and
   the retainer hunt for a leak (jvm-class-loading), or anything about compiled code and the
   code cache (code-cache-segments).
 ---
@@ -21,24 +21,28 @@ description: >
 Decide which ceiling a metaspace problem is actually hitting, and whether the fix is a
 number or a code change. Metaspace has an overall commitment boundary and, when compressed
 class pointers are used, a separately reserved class-space boundary; they interact rather
-than form two perfectly independent pools. A heap dashboard shows neither, so teams often
-raising `MaxMetaspaceSize` against an error that names `Compressed class space`, where
-that flag has no effect at all.
+than form two perfectly independent pools. A heap dashboard alone does not distinguish them.
+Inspect effective constraints: changing MaxMetaspaceSize can also change class-space reservation
+at startup, while a running exhausted class-space reservation cannot expand beyond its limit.
 
 On the verified 64-bit JDK 25 build, `MaxMetaspaceSize` defaults to `SIZE_MAX`. In a
 container, metadata growth can therefore compete with the whole cgroup before a configured
 fail-fast cap is reached; depending on allocation and kernel policy, either a JVM Metaspace
 OOM or an external OOM kill may occur. Do not infer one outcome from the missing flag.
 
+Inspect the target toolchain, JDK build, collector, compressed-pointer mode and deployment
+before applying the JDK 25 observations below. JDK 16 introduced Elastic Metaspace, but flags,
+allocation granularity and diagnostic layouts vary. This skill does not authorize an upgrade.
+
 ## Workflow
 
 1. **Read the exception text before touching a flag.** `OutOfMemoryError: Metaspace` and
    `OutOfMemoryError: Compressed class space` identify different failed allocation domains.
-   Inspect both effective constraints; raising the overall cap cannot enlarge an exhausted
-   class-space reservation.
-2. **Confirm the heap is healthy first.** If heap usage is normal and the process is
-   `OOMKilled` or growing in RSS, the hypothesis moves to metaspace and other native
-   memory — not to a heap leak.
+   Inspect both effective constraints and startup ergonomics; increasing an overall cap is
+   not a general repair for an independently exhausted class-space reservation.
+2. **Compare all memory domains.** Normal heap occupancy does not identify metaspace as
+   the cause of RSS growth/OOMKilled; abnormal heap and metadata retention can coexist,
+   including Java objects retaining loaders. Correlate cgroup, residency and metadata evidence.
 3. **Take a time series, not a sample.** Run low-impact `VM.metaspace basic` deliberately,
    use periodic class-loading statistics, and interpret `jdk.MetaspaceSummary` at the GC
    boundaries where it is emitted. Growth in used/committed/classes/loaders plus unload/
@@ -55,9 +59,9 @@ OOM or an external OOM kill may occur. Do not infer one outcome from the missing
    regimes, class/non-class growth, fragmentation and correlated native peaks. Choose a cap
    that fails before the cgroup only when that fail-fast behavior is desirable; no universal
    `committed × 1.5` margin exists.
-7. **Attack the generation rate when classes are generated at runtime.** Raising a
-   ceiling against dynamic proxy or script class generation moves the same incident to a
-   later date and a larger load. Record the raise explicitly as mitigation.
+7. **Classify runtime generation before changing it.** Unbounded retained generation needs
+   lifecycle/cardinality control; a legitimate bounded class population may instead need
+   capacity. Record raising a ceiling against unresolved growth as mitigation.
 
 ## Rules
 
@@ -70,10 +74,9 @@ OOM or an external OOM kill may occur. Do not infer one outcome from the missing
   live in the non-class space.
 - `UseCompressedClassPointers` is independent of `UseCompressedOops`. Above roughly
   32 GB of heap `UseCompressedOops` turns itself off ergonomically while
-  `UseCompressedClassPointers` stays `true` — so every 64-bit HotSpot process reserves
-  the same 1 GB of class space regardless of `-Xmx`. The flag is **deprecated from JDK 25
-  and obsolete from JDK 27**, where compressed class pointers are always on: on 27 the
-  reservation is no longer something a flag can switch off.
+  `UseCompressedClassPointers` can stay enabled. Actual class-space reservation depends on
+  effective flags, alignment and MaxMetaspaceSize ergonomics; 1 GB is not universal. Check
+  flag availability on the exact release rather than using deprecation history as a runtime test.
 - `-XX:MetaspaceExpansionSize` does not exist. The real flags are
   `-XX:MinMetaspaceExpansion` (327680 bytes) and `-XX:MaxMetaspaceExpansion`
   (5439488 bytes). `-XX:MetaspaceSize` (22020096 bytes) is the threshold that triggers
@@ -84,23 +87,27 @@ OOM or an external OOM kill may occur. Do not infer one outcome from the missing
   large blocks stayed committed. Do not quote pre-16 behaviour for a JDK 17, 21 or 25
   baseline.
 - `System.gc()` does not release a ClassLoader that is still strongly reachable. Remove
-  the reference; the collection follows on its own.
+  retainers, then verify unloading with the selected collector, flags and collection opportunities;
+  reachability changes do not promise immediate collection.
 - Distinguish `reserved`, NMT/metaspace `committed`, used, process-resident and cgroup-
   charged in every reading. Committed is not identical to RSS or `memory.current`; reconcile
   timestamps instead of treating it as the bytes the OOM killer sees.
 - `jstat -gcmetacapacity` reports `MC` and `CCSC` (the column is `CCSC`, not `CCS`) as
   **capacity**, not usage, and its counters update on internal GC accounting events — a
   freshly started process can report `MC = 0.0` while `VM.metaspace` already shows
-  committed memory. Prefer `jcmd VM.metaspace` for a guaranteed-current reading.
+  committed memory on some builds. Cross-check `VM.metaspace`; basic output reads live
+  counters but is not a guaranteed atomic snapshot of concurrent activity. MC includes class
+  and non-class committed space on JDK 25; CCSC is its class-space subset.
 - Every non-strong hidden class is its own `ClassLoaderData` with its own chunks —
   3 KB committed for the smallest one on 25.0.3 (`VM.metaspace show-loaders`). Growth from
   runtime generation is classified by the generator's cache key and loader lifetime.
   Lambdas/proxies are commonly code-keyed and plateau; scripts, expressions and per-instance
   proxies can be data-keyed and grow with distinct inputs. Verify the implementation cache.
-- CDS and AppCDS reduce metaspace pressure: classes mapped from the shared archive appear
+- CDS and AppCDS can reduce newly allocated metadata when eligible classes are shared; mapped archives appear
   under `Shared class space` in `VM.native_memory`, not as newly committed metaspace.
 - None of this applies to a GraalVM `native-image` binary, where classes are frozen at
-  build time. It applies unchanged when Graal runs as a JIT on HotSpot.
+  build time under its own constraints. HotSpot with a Graal JIT still uses HotSpot metaspace;
+  verify build-specific flags and account separately for compiler allocations.
 
 ## References
 

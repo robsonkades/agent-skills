@@ -68,8 +68,9 @@ Because a virtual thread can remount elsewhere:
 
 JEP 444 distinguishes blocking operations that cannot unmount but for which the scheduler may expand
 from pinning, where a virtual thread cannot unmount because of protected execution. On Java 21,
-monitor ownership and native/foreign execution pin. JEP 491 removes the monitor case in Java 24;
-native/foreign remains.
+monitor ownership and native/foreign execution pin. JEP 491 removes monitor-only pinning in Java 24;
+native/foreign frames remain, including callbacks into Java. Blocking in or waiting for class
+initialization can also encounter a residual VM-frame restriction on JDK 25.
 
 Many file-system operations can capture an OS/carrier thread because the OS lacks non-blocking support;
 the JDK may compensate by adding scheduler platform threads. A native pin is not promised the same
@@ -77,7 +78,7 @@ compensation. The evidence difference is operationally important:
 
 ```text
 pool size > target + file-operation stacks/events -> candidate capture/compensation
-pin events + native/foreign frames               -> candidate pinning
+pin events + pinnedReason/blockingOperation      -> instrumented pinned blocking; inspect frame cause
 queued VTs + CPU saturation                      -> candidate CPU starvation
 ```
 
@@ -86,7 +87,7 @@ queued VTs + CPU saturation                      -> candidate CPU starvation
 | Release | Relevant status                                                                                                   |
 | ------- | ----------------------------------------------------------------------------------------------------------------- |
 | Java 21 | virtual threads final; monitor and native/foreign pinning described by JEP 444                                    |
-| Java 24 | JEP 491 removes monitor/`Object.wait` pinning; scheduler MXBean available since 24                                |
+| Java 24 | JEP 491 removes monitor-only/`Object.wait` pinning; native/VM-frame cases remain; scheduler MXBean since 24       |
 | Java 25 | same residual native/foreign pinning model in official guide; scoped values final; structured concurrency preview |
 
 Vendor backports and runtime flags can vary. Store this ledger with the deployed runtime facts, not as
@@ -97,4 +98,5 @@ a timeless assumption.
 - [JEP 444 scheduling and memory model](https://openjdk.org/jeps/444)
 - [JEP 491](https://openjdk.org/jeps/491)
 - [Java 25 virtual-thread scheduling](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
-- [OpenJDK continuation header (implementation reference)](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/runtime/continuation.hpp)
+- [OpenJDK 25 continuation header (implementation reference)](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/continuation.hpp)
+- [OpenJDK 25 pinned-event reasons](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/javaThread.cpp)

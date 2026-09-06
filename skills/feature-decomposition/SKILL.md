@@ -18,7 +18,7 @@ description: >
 
 ## Purpose
 
-Decomposition earns its cost in exactly three situations: work that can be **validated
+Decomposition commonly earns its cost through work that can be **validated
 independently**, work that must be **ordered** because of a real dependency, and work that will
 be **shared** across people or sessions. Outside those, a breakdown is a table of contents for a
 change that would have been easier to read as a diff.
@@ -33,6 +33,8 @@ what gets implemented, validated and tracked.
    one-line list. That is a complete answer.
 2. **Produce the resource list first**, from the impact map. Each element in the map becomes a
    resource or joins one; nothing in the map is unaccounted for.
+   Reuse the current map/scope revision. If none exists, record a minimal source-to-resource
+   mapping for the known work; leave material unknowns open rather than inventing files or scope.
 3. **Give each resource a `RES-*` identifier, a dependency list and a validation** — the fields are in
    `references/resource-catalogue.md`. A resource with no stated validation is not finished
    being defined.
@@ -43,6 +45,8 @@ what gets implemented, validated and tracked.
    with its own acceptance. Do not manufacture a Tech Feature from a phase or layer.
 6. **Order the resources** by their dependencies, and say where the order is forced versus
    merely convenient.
+   Check missing IDs and cycles. A cycle calls for clarifying a shared contract, splitting a
+   producer from its consumer, or merging inseparable work; do not invent a linear order over it.
 7. **Say why the shape is what it is** — including "not decomposed, because it is one resource".
 
 ## When to decompose
@@ -67,25 +71,28 @@ transcription of the layer diagram.
 IF a child cannot state independent product or engineering value and its own acceptance
 THEN it is not a child feature; keep its work as RES-* under the parent.
 
-IF a resource depends on more than three others
-THEN look again — usually it is two resources, or the dependencies are ordering
-     preferences rather than real ones.
+IF a resource has many dependencies
+THEN verify each necessary input and distinguish implementation, validation and release order.
+     A legitimate integration resource may consume many outputs; count alone does not justify a split.
 
 IF two resources always change together and are always validated together
-THEN they are one resource.
+THEN consider merging unless ownership, staged compatibility or a real handoff requires separation.
 
 IF a resource cannot be validated without another resource existing
 THEN say so in its validation, and let the order follow from it.
 
-IF the breakdown has more items than the impact map has entries
-THEN it is inventing work. Every resource traces to map entries.
+IF a resource lacks a path to in-scope impact and acceptance
+THEN identify the missing mapping or scope decision. One impact entry can justify several
+     resources, and one resource can satisfy several entries; counts are not a scope test.
 
 IF a resource is "write the tests"
 THEN it is misplaced: tests belong to the resource whose behaviour they establish.
      A separate test resource is legitimate only for shared harness or fixture work.
 
 IF the feature is Light
-THEN there is no decomposition. Implement it.
+THEN return one concise resource with its validation when it remains one local outcome.
+     If material dependencies or boundaries emerge, report the changed driver for reclassification;
+     this analysis does not itself authorize implementation.
 ```
 
 ## Constraints
@@ -97,6 +104,8 @@ THEN there is no decomposition. Implement it.
 - **Every resource traces to the impact map and to scope.** A resource that traces to neither is
   scope creep with an identifier.
 - **Do not estimate here.** Sizes and dates are a separate concern with separate discipline.
+- Preserve supplied Java/framework/runtime and compatibility constraints in each affected
+  resource. Decomposition does not choose upgrades or a new technical baseline.
 
 ## Output
 
@@ -111,11 +120,15 @@ PF-01  <independently valuable product outcome and BAC-*>
 TF-01  <independently valuable engineering outcome and TC-*>
   RES-03  <resource>
 
-Parent resources (when there are no child features)
+Parent resources (including work not assigned to a child)
   RES-04  <resource>
 
-Order       RES-01 -> RES-02 -> RES-03 -> RES-04
-Forced by   RES-02 needs the column RES-01 adds; RES-04 has no dependency and may move
+Dependencies RES-02 needs RES-01's column; RES-03 needs RES-02's contract
+Ready first  RES-01, RES-04 (no dependency between them)
+Then         RES-02 -> RES-03; RES-04 may proceed independently
 ```
 
-The order line is the one the execution phase reads. Everything above it is context for a human.
+Execution consumes resource scope, acceptance, ownership and dependencies together. Independence
+in the graph permits parallel planning only when shared-file/resource ownership is also resolved.
+Before handoff, check scope coverage, unique/stable IDs, an acyclic dependency graph and validation
+for each resource; report unresolved dependencies rather than claiming the breakdown ready.

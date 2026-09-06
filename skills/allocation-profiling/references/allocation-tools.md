@@ -1,210 +1,184 @@
 # Allocation tools and events
 
-Every command and number here was executed on Temurin 25.0.3 unless a sentence says
-otherwise; the HotSpot file names are from the JDK 25 GA sources.
+Use this reference when selecting or interpreting allocation measurements. The source
+baseline below is OpenJDK 25 GA and async-profiler 4.1; it is not a claim that these commands
+were executed on a service. Check the deployed build and local help before use.
 
-## Pick the tool from the question
+## Match the measurement to the question
 
-| Question                                                               | Tool                                                                                        | Granularity                                                    |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Where do the allocated bytes come from, by source line?                | `asprof -e alloc`                                                                           | Full stack, aggregated by bytes                                |
-| Same question, no agent deployable                                     | `jcmd <pid> JFR.view allocation-by-site` (JDK 21+)                                          | Top frame per sample, from the running recording               |
-| What is the sustained allocation rate in continuous production?        | JFR `jdk.ObjectAllocationSample`                                                            | Sampled, fixed throttle, always on                             |
-| How many cumulative bytes did this supported platform thread allocate? | `com.sun.management.ThreadMXBean.getThreadAllocatedBytes`, `jdk.ThreadAllocationStatistics` | Counter, no stack; query/recording overhead is low but nonzero |
-| Which of the allocated objects are still alive?                        | `asprof -e alloc --live`, `jdk.OldObjectSample`                                             | Survivors at session end / at recording end                    |
-| How much did _this thread_ waste on TLAB refills?                      | `-Xlog:gc+tlab=trace`, `jfr view tlabs` (legacy events)                                     | Per thread, per refill; short window                           |
-| What is retained in the heap right now?                                | `jcmd GC.class_histogram`                                                                   | Point-in-time snapshot, not a rate                             |
-| How does Eden allocated relate to the interval between GCs?            | GC log                                                                                      | Aggregate, correlates to alloc rate                            |
-| Bytes per operation of one method                                      | JMH `-prof gc`, `gc.alloc.rate.norm`                                                        | Exact B/op, isolated from the system                           |
+| Question                                      | Evidence                                                                  | Limit                                                                              |
+| --------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Which stacks produce heap bytes?              | async-profiler alloc or JFR allocation samples                            | Weighted estimates, not object counts or retained bytes                            |
+| How fast does the process allocate?           | Supported process-total counter deltas, or matched platform-thread deltas | Missing thread lifetimes and unsupported counters can invalidate the total         |
+| How many bytes per isolated operation?        | JMH `-prof gc`, `gc.alloc.rate.norm`                                      | Harness/fork measurement; warm-up, background work and operation definition matter |
+| Which sampled allocations remain uncollected? | async-profiler `--live`                                                   | Only allocations sampled during this session; no generation or root proof          |
+| Which objects may be retained?                | JFR `jdk.OldObjectSample`                                                 | A selected population of aged objects, not a heap census                           |
+| Is TLAB waste/refill relevant?                | `gc+tlab` logging and legacy JFR events                                   | Buffer accounting, not every in-TLAB allocation                                    |
+| What occupies heap now?                       | Histogram or heap dump                                                    | Snapshot, not allocation rate; collection and inspection can perturb the process   |
 
-## async-profiler alloc mode
+Do not add values from different populations or sampling engines. A recording produced by
+async-profiler can use legacy JFR event names for its sampled data; identify the producer
+before treating those events as exhaustive HotSpot events.
+
+## Bounded capture examples
+
+These shell examples require an accessible HotSpot process, compatible tools, permission to
+attach/load the native library, and a writable output path. Replace `<pid>` and use a unique
+artifact path. async-profiler requires a supported OS/build; use JFR where it is unavailable.
+Validate capture overhead against the service's budget, even in alloc-only mode.
 
 ```bash
-# 30s allocation profile, HTML flame graph
-asprof -e alloc -d 30 -f alloc.html <pid>
+# Average sampling interval in bytes, not exactly every Nth object
+asprof -e alloc --alloc 512k --total -d 30 -f alloc.html <pid>
 
-# One sample per 512 KB allocated (the JVMTI sampling interval on JDK 11+)
-asprof -e alloc --alloc 512k -d 30 -f alloc.html <pid>
+# Sampled objects not collected by session end; requires the JVMTI allocation engine
+asprof -e alloc --live --total -d 60 -f live.html <pid>
 
-# Only objects still alive when the session ends: promotion and leak candidates
-asprof -e alloc --live -d 60 -f live.html <pid>
-
-# CPU and allocation in one session (one session per JVM)
-asprof -e cpu,alloc -d 30 -f combined.html <pid>
-
-# JFR output, for JMC or jfrconv
-asprof -e alloc -d 30 -o jfr -f alloc.jfr <pid>
+# Multiple event types require JFR output (CPU mode has additional access requirements)
+asprof -e cpu,alloc -d 30 -f combined.jfr <pid>
 ```
 
-What samples the allocations depends on the async-profiler and JDK versions
-(`profiler.cpp`, `Profiler::selectAllocEngine`; CHANGELOG 2.8 "JVM TI based allocation
-profiling for JDK 11+", 3.0 "Prefer ObjectSampler to TLAB hooks"):
+On JDK 11+, async-profiler 3.0+ normally selects the JVMTI heap sampler
+(`SetHeapSamplingInterval` / `SampledObjectAlloc`, JEP 331). Older/fallback engines use
+HotSpot TLAB hooks, where the effective interval cannot go below TLAB granularity. Check
+engine selection and local help for the deployed version; do not assume an option such
+as `--tlab` exists in every release (it is absent from the
+[4.1 argument parser](https://github.com/async-profiler/async-profiler/blob/v4.1/src/arguments.cpp)).
+See the [4.1 engine selection](https://github.com/async-profiler/async-profiler/blob/v4.1/src/profiler.cpp)
+and [JEP 331](https://openjdk.org/jeps/331).
 
-| async-profiler     | JDK | Sampler                                                                           | `--alloc N` means                                        |
-| ------------------ | --- | --------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| 3.0+               | 11+ | `ObjectSampler`: JVMTI `SetHeapSamplingInterval` + `SampledObjectAlloc` (JEP 331) | The heap-sampling interval in bytes                      |
-| 3.0+ `--tlab`      | any | `AllocTracer`: HotSpot's `send_allocation_in_new_tlab` / `_outside_tlab` hooks    | Ignored below the TLAB size — one sample per refill      |
-| ≤ 2.7, or JDK ≤ 10 | any | `AllocTracer` TLAB hooks                                                          | Same limitation ("prior to JDK 11", `ProfilingModes.md`) |
+Alloc-only profiling does not need Linux perf events. This does **not** remove attach,
+PID/mount namespace, library-path, dynamic-agent policy or container security constraints.
+A readable socket alone is not sufficient. General access diagnosis belongs to
+`jfr-and-async-profiler`.
 
-Consequences: on a current stack the sample points are the JVMTI ones, so the interval is
-honoured below the TLAB size and the profile is not biased towards threads with small TLABs;
-`--live` needs the JVMTI path (the profiler refuses it otherwise). Neither path uses
-`perf_events` — `perf_event_paranoid`, seccomp and `CAP_PERFMON` have no bearing on alloc
-mode. The only access requirement is the attach socket `/tmp/.java_pid<PID>`, which the JVM
-accepts from its own uid and gid. Alloc mode collects the Java stack only (`--cstack` does
-not apply, per `ProfilerOptions.md`), and the sampler does not disable escape analysis: an
-allocation C2 eliminated never reaches it, which is the property that makes the profile
-trustworthy for "did scalar replacement happen".
+For HTML byte attribution, explicitly use `--total`: without it, the graph can show sample
+counts. Neither sample counts nor byte weights are exact object counts. When converting JFR,
+select allocation events and byte weighting explicitly in the converter/viewer.
+The class frame labels the sampled allocation; follow its stack to the producing code.
+An array class alone does not identify strings versus I/O/codec buffers. Sampling observes
+actual heap allocation without disabling escape analysis, but absence of a sample is not
+proof of elimination. See [profiling modes](https://github.com/async-profiler/async-profiler/blob/v4.1/docs/ProfilingModes.md)
+and [live/interval options](https://github.com/async-profiler/async-profiler/blob/v4.1/docs/ProfilerOptions.md).
 
-Reading the flame graph: box width is sampled/weighted **bytes**, not object count; do not present
-it as an exact allocator ledger without reconciling against independent counters. `byte[]` or `char[]` at the
-top usually means `String` — compact strings (JEP 254) store content in those arrays. With
-the TLAB hooks, aqua frames are in-TLAB samples and brown frames outside-TLAB.
+## JFR: capability and recording checks
 
-## JFR allocation events
+Offline `jfr view` is available from JDK 21. Live `jcmd JFR.view` is a separate capability:
+it is documented for JDK 25 but absent from the JDK 21 command list. Query the target's help.
+A view summarizes available recording data; it does not establish that the desired event
+was collected over the affected window. See the [JDK 21 jfr manual](https://docs.oracle.com/en/java/javase/21/docs/specs/man/jfr.html),
+[JDK 21 jcmd manual](https://docs.oracle.com/en/java/javase/21/docs/specs/man/jcmd.html)
+and [JDK 25 jcmd manual](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html).
 
 ```bash
-# At startup, with the throttle raised for this run — no custom .jfc needed (JDK 17+)
-java -XX:StartFlightRecording:filename=alloc.jfr,jdk.ObjectAllocationSample#throttle=2000/s -jar app.jar
-
-# On a running process
-jcmd <pid> JFR.start settings=profile duration=60s filename=alloc.jfr
-
-# Aggregate without JMC (JDK 21+; the same views work live through jcmd <pid> JFR.view)
+jcmd <pid> help JFR.start
+jcmd <pid> JFR.check
+# If a new recording is needed; filename is resolved by the target JVM
+jcmd <pid> JFR.start name=alloc-hunt settings=profile duration=60s filename=alloc.jfr
+# After completion, inspect the resulting recording
+jfr summary alloc.jfr
+jfr metadata --events jdk.ObjectAllocationSample alloc.jfr
 jfr view allocation-by-site alloc.jfr
 jfr view allocation-by-class alloc.jfr
-jfr view allocation-by-thread alloc.jfr
-jfr view thread-allocation alloc.jfr     # from jdk.ThreadAllocationStatistics, exact bytes
-
-# Read the raw samples
-jfr print --events jdk.ObjectAllocationSample alloc.jfr | head -40
+# Only if the target supports this command:
+jcmd <pid> help JFR.view
+jcmd <pid> JFR.view allocation-by-site
 ```
 
-```
-jdk.ObjectAllocationSample {
-  startTime   = 12:13:32.191
-  objectClass = byte[] (classLoader = bootstrap)
-  weight      = 17.2 MB
-  eventThread = "main" (javaThreadId = 3)
-  stackTrace  = [ TlabAllocDemo.main(String[]) line: 17 ]
-}
-```
+If events are absent, check settings, capture times, target identity, supported schema,
+workload activity and stack-trace settings. Do not interpret an empty legacy-event view as
+zero allocation. Use `jfr print --events jdk.ObjectAllocationSample alloc.jfr` or JMC if a
+view is unavailable. Restrict raw printing to a small capture rather than flooding output.
 
-```
-                                   Allocation by Site
-Method                                                               Allocation Pressure
--------------------------------------------------------------------- -------------------
-AllocDemo.main(String[])                                                          99.92%
-jdk.internal.classfile.impl.EntryMap.<init>(int, float)                            0.08%
-```
+### Event meaning
 
-| Event                             | Since                | Mechanism                                                                                           | Overhead                          | Default                                           |
-| --------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------- | ------------------------------------------------- |
-| `jdk.ObjectAllocationInNewTLAB`   | pre-JDK 11           | One event per TLAB refill (`allocTracer.cpp`)                                                       | Proportional to refill frequency  | **Off**                                           |
-| `jdk.ObjectAllocationOutsideTLAB` | pre-JDK 11           | One event per outside-TLAB allocation                                                               | Proportional to large-object rate | **Off**                                           |
-| `jdk.ObjectAllocationSample`      | JDK 16 (JDK-8257602) | The same two hooks, behind a throttle (`jfrAllocationTracer.cpp` → `jfrObjectAllocationSample.cpp`) | Bounded by the throttle           | **On** — 150/s `default.jfc`, 300/s `profile.jfc` |
+| HotSpot event                     | Measurement                  | Interpretation                                                                                       |
+| --------------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `jdk.ObjectAllocationSample`      | `weight`                     | Estimated allocation pressure attributed to the sampled class/stack; never the sampled object's size |
+| `jdk.ObjectAllocationInNewTLAB`   | `allocationSize`, `tlabSize` | Size of the object triggering refill, versus size of the entire new TLAB                             |
+| `jdk.ObjectAllocationOutsideTLAB` | `allocationSize`             | Size of that outside-TLAB allocation                                                                 |
+| `jdk.ThreadAllocationStatistics`  | `allocated`                  | Cumulative counter; difference observations for the same thread, never sum snapshots                 |
 
-How `jdk.ObjectAllocationSample` is built, from the JDK 25 source: every TLAB refill and every
-outside-TLAB allocation constructs a `JfrAllocationTracer`, which calls
-`JfrObjectAllocationSample::send_event`. The throttle decides whether to emit; when it does,
-`weight = thread allocated bytes − bytes at the thread's last emitted sample`, and an
-outside-TLAB allocation is first normalised into TLAB-sized chunks so a single huge array is
-not undersampled. Two properties follow and both were confirmed in a 3 s run at 2000/s:
+In OpenJDK 25's shipped configurations, the sampled event is enabled (150/s in default,
+300/s in profile); the two legacy events are disabled. Custom configurations can differ.
+Legacy events, when explicitly enabled in HotSpot, observe refill and outside-TLAB
+allocations, not all objects. Summing their `allocationSize` fields misses allocations
+inside existing TLABs. For TLAB-space pressure, sum `tlabSize` on refill plus outside
+`allocationSize`, while stating buffer waste and window-boundary limitations.
 
-- The weights sum to the allocation total: 6,081 samples, Σ`weight` = 22.98 GB, against
-  22.96 GB reported by `ThreadMXBean.getCurrentThreadAllocatedBytes` for the same window.
-- A single sample can be enormous — the largest was 1.39 GB, the median 662 KB — because the
-  throttle skipped the samples in between and the next one carries their bytes. Never read
-  one sample's `weight` as an object size; aggregate.
+JFR's sampled event uses the TLAB allocation hooks with throttling, not the JVMTI sampler.
+In the JDK 25 implementation, emitted weight is the allocation-counter delta since the
+previous emitted sample. Aggregated weights can approximate total pressure; recording
+boundaries, unreported tails and thread churn prevent an exact ledger. Short or sparse
+captures can mis-rank sites. Never combine this weight with legacy sizes into one total.
 
-JEP 331 (JDK 11) delivered the JVMTI extension — `SetHeapSamplingInterval()`,
-`JVMTI_EVENT_SAMPLED_OBJECT_ALLOC`, `can_generate_sampled_object_alloc_events` — which is what
-async-profiler 3.0+ consumes. JFR's event does **not** sit on it; the two samplers run
-independently and can be on at the same time.
+Sources: [event schema](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml),
+[default configuration](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/jdk.jfr/share/conf/jfr/default.jfc),
+[profile configuration](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/jdk.jfr/share/conf/jfr/profile.jfc),
+[allocation tracer](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/support/jfrAllocationTracer.cpp)
+and [sample weighting](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/support/jfrObjectAllocationSample.cpp).
 
-The legacy events are only worth enabling for `jfr view tlabs` or the per-event `tlabSize`
-field, which `ObjectAllocationSample` does not carry — a TLAB-subsystem debugging case, not
-application profiling. The cost is visible: in the same 2 s workload the pair produced 16,967
-`InNewTLAB` plus 8,844 `OutsideTLAB` events against 330 throttled samples.
+When writing an event consumer, branch on the event type and inspect its schema. Read
+`weight` only from `ObjectAllocationSample`; reading a nonexistent `allocationSize`
+field fails instead of returning zero. Keep outputs labelled by their distinct units and
+populations.
+
+### Increasing detail
+
+If a repeat capture cannot resolve an important site, extend the representative window or
+increase the sample rate within the overhead budget. There is no universal sample count
+that guarantees visibility of a given percentage site.
 
 ```bash
-# Legacy events for one short window, then the TLAB summary
-java -XX:StartFlightRecording:filename=tlab.jfr,jdk.ObjectAllocationInNewTLAB#enabled=true,jdk.ObjectAllocationOutsideTLAB#enabled=true -jar app.jar
-jfr view tlabs tlab.jfr
-```
-
-### Consuming events programmatically
-
-The field name differs per event, and getting it wrong throws rather than returning zero:
-
-```java
-if (type.equals("jdk.ObjectAllocationSample")) {
-    bytes = e.getLong("weight");
-} else if (type.equals("jdk.ObjectAllocationInNewTLAB")
-        || type.equals("jdk.ObjectAllocationOutsideTLAB")) {
-    bytes = e.getLong("allocationSize");
-}
-String className = e.getClass("objectClass").getName();
-```
-
-Exact counts without stacks: `jdk.ThreadAllocationStatistics` (`allocated`, per live thread,
-`everyChunk` in both shipped configurations) and, in process,
-`com.sun.management.ThreadMXBean.getThreadAllocatedBytes(long[])`. Both read the thread's
-allocated-bytes counter that the TLAB code maintains, so the number is exact to the TLAB, not
-sampled. Bracket a request with `getCurrentThreadAllocatedBytes()` on a platform thread to get
-bytes per request for free; the same call from a virtual thread is not supported — see below.
-
-### Raising the throttle for one investigation
-
-```bash
-# Direct on the start command (JDK 17+), or through a derived configuration:
+# JDK 17+ configuration tooling; shell example, JAVA_HOME must name the intended JDK
 jfr configure --input "$JAVA_HOME/lib/jfr/profile.jfc" --output alloc-hunt.jfc \
     jdk.ObjectAllocationSample#throttle=2000/s
 java -XX:StartFlightRecording=settings=alloc-hunt.jfc,filename=alloc.jfr,duration=30s -jar app.jar
 ```
 
-2000/s produced 6,081 samples in 3 s; the shipped 150/s gives about 9,000 in a minute, which
-is enough to rank sites but not to see a 1% site reliably. A higher throttle costs more
-overhead. Use it during the investigation, never as permanent configuration.
+Enable legacy events only when their refill/individual outside-TLAB data is needed, using
+a derived JFC with each event's `enabled=true`. Verify event counts afterwards. Higher
+rates and legacy events have workload-dependent cost; do not describe them as inherently safe.
 
-## Virtual threads
+## Counters and virtual threads
 
-- `ThreadMXBean.getThreadAllocatedBytes(vt.threadId())` returns `-1` (executed on 25.0.3):
-  per-thread management statistics are not supported for virtual threads (JEP 444).
-  `getCurrentThreadAllocatedBytes()` inside a virtual thread is likewise unsupported —
-  measure at the carrier or at the boundary of the platform thread that submits the work.
-- JFR attributes `jdk.ObjectAllocationSample` and `jdk.ThreadAllocationStatistics` to the
-  virtual thread by name (`allocation-by-thread` listed `vt-parker` in the reproduction), so
-  the recording is the tool for "which virtual-thread workload allocates".
-- The TLAB belongs to the carrier. A virtual thread's allocations land in whichever carrier's
-  TLAB it is mounted on, so `-Xlog:gc+tlab=trace` rows are carriers, not tasks.
-- Bytes under `jdk.internal.vm.StackChunk` at `park`/`yield` sites are the frozen stacks of
-  unmounting virtual threads (JEP 444). A deep stack parked often is a real allocation cost of
-  the thread model; shallow the stack at the park point or park less often.
+Check `isThreadAllocatedMemorySupported()` and `isThreadAllocatedMemoryEnabled()` before
+using `com.sun.management.ThreadMXBean`. Its allocation methods promise approximations.
+A `-1` can mean disabled measurement, a virtual thread, or a nonexistent/terminated thread;
+unsupported functionality may throw. Do not subtract invalid values.
 
-## TLAB trace logging
+For synchronous work wholly on one platform thread, bracketing with
+`getCurrentThreadAllocatedBytes()` (JDK 14+) estimates that thread's allocation; on older
+supported JDKs use `getThreadAllocatedBytes(Thread.currentThread().getId())` for that
+platform thread. Subtract harness work and measure query overhead. Both exclude delegated
+asynchronous work. On supported JDK 21+ implementations, process-total
+`getTotalThreadAllocatedBytes()` deltas can avoid
+summing only surviving threads, but include unrelated work.
+See the [ThreadMXBean contract](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/com/sun/management/ThreadMXBean.html).
 
-```bash
-java -Xlog:gc+tlab=trace:file=tlab.log:time,uptime -jar app.jar
-```
+In JDK 25, `ThreadAllocationStatistics` iterates JVM JavaThreads (platform/carrier
+threads); it is not per-virtual-thread accounting. A sample's `eventThread` may identify
+the mounted virtual thread, whereas its weight comes from allocation accounting on the
+carrier. Check the actual recording before using thread grouping: do not infer exact
+task bytes from either event. Summing periodic statistics also misses threads that start
+and finish between observations.
+See [periodic statistics](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/periodic/jfrPeriodic.cpp)
+and the sample-weighting source above.
 
-```
-[0.014s][trace][gc,tlab] ThreadLocalAllocBuffer::compute_size(2) returns 125831
-[0.014s][trace][gc,tlab] TLAB: fill thread: 0x000001ddbdc251f0 [id: 20504] desired_size: 983KB slow allocs: 0  refill waste: 15728B alloc: 1.00000     4096KB refills: 1 waste  0.0% gc: 0B slow: 0B
-```
+Neither the submitting platform thread's counter nor an individual carrier delta measures
+an asynchronous virtual-thread request. Prefer sampled producing stacks plus a controlled,
+isolated workload and process-total bytes/op; report shared-workload attribution limits.
+`StackChunk` allocation can arise from virtual-thread stack freezing; verify the stack and
+rate before changing blocking structure. An empty pinned-thread view does not prove this cause.
 
-- `desired_size` — target TLAB size computed for this thread this cycle
-- `slow allocs` — allocations by this thread that took the slow path
-- `refill waste` — accumulated bytes wasted in previous refills
-- `refills` — TLABs this thread has consumed
-- `waste %` — fraction of total allocated that was refill waste
+## TLAB trace interpretation
 
-`trace` emits a line per refill and per `compute_size` call, per thread. `debug` is the
-production-tolerable level; `trace` belongs to a short window during an active investigation.
+Use `-Xlog:gc+tlab=debug` for a bounded summary; use `trace` only when per-thread refill
+detail is needed and its volume fits the budget. The correct combined tag is `gc+tlab`;
+legacy `TraceTLAB` / `PrintTLAB` options are not substitutes on modern HotSpot.
 
-The wrong tag set fails loudly, which is the easiest way to remember the right one:
-
-```
-$ java -Xlog:tlab=trace -version
-[warning][logging] No tag set matches selection: tlab. Did you mean any of the following? tlab* gc+tlab
-```
+In JDK 25 trace rows, `refill waste` is the current allowed refill-waste **limit**, not
+accumulated waste. `gc` and `slow` report accumulated GC-retirement and refill waste;
+`waste %` combines those relative to allocated TLAB space. `slow allocs` counts slow
+allocations, not their latency. Verify fields against
+[ThreadLocalAllocBuffer::print_stats](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/shared/threadLocalAllocBuffer.cpp).

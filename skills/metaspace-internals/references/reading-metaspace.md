@@ -19,8 +19,7 @@ and shape, reusable free chunks, uncommit policy, class unloading opportunities 
 
 ## `jcmd <pid> VM.metaspace`
 
-The right command when NMT is off (it usually is in production — the JDK Troubleshooting
-Guide puts NMT at a 5–10% performance cost, and it must be enabled at start) or when the
+Use when NMT is off (NMT requires startup enablement and its overhead must be measured) or when the
 question is specifically about chunk fragmentation. It reports, separately for `Non-Class`,
 `Class` and `Both`:
 
@@ -39,13 +38,15 @@ with its chunks, and each non-strong hidden class appears there as its own
 `<hidden class>` CLD; `show-classes` adds the class names under each loader;
 `by-chunktype`, `by-spacetype`, `vslist` and `chunkfreelist` break the numbers down. The
 `Internal statistics` block of `basic` includes `num_arena_births` / `num_arena_deaths` —
-loaders created versus collected since start — which is the fastest confirmation that
-loaders are, or are not, dying.
+arena creation/destruction, not a one-to-one loader count: class/non-class arenas and hidden
+CLDs complicate that mapping. Correlate with CLD/class unloading evidence.
 
 ## `jcmd <pid> VM.native_memory summary`
 
 Requires `-XX:NativeMemoryTracking=summary` at start. The output is **nested**, not a flat
-list of categories — the `Class` category contains both metaspace halves:
+list of independent totals. The Class section displays both metaspace halves as diagnostic
+breakdowns, but its top-level NMT accounting does not include the Metadata mapping: non-class
+metaspace is charged to the separate Metaspace category. Do not sum nested lines into totals.
 
 ```text
 -                     Class (reserved=1048774KB, committed=1478KB)
@@ -66,10 +67,10 @@ list of categories — the `Class` category contains both metaspace halves:
 
 - `Metadata:` is the non-class metaspace. `Class space:` is compressed class metadata; the
   shown 1 GB reservation is the verified default for this run, not a universal fixed value.
-- `waste` inside `Class space:` is internal chunk fragmentation — committed but not usable
-  for the next allocation. A rising percentage in an application that mints many small
-  classes (proxies, lambdas, hidden classes) warrants investigation. Waste alone does not
-  predict whether class space or the overall metadata allocation will fail first.
+- NMT `waste` here is committed minus used; it includes free/reusable capacity, not only
+  unusable fragmentation. VM.metaspace chunk waste is a different breakdown. Inspect free
+  chunks, committed slack and allocation shape before diagnosing fragmentation or predicting
+  which limit will fail.
 - `Shared class space` is the CDS/AppCDS contribution, mapped from the archive rather than
   materialised into metaspace.
 
@@ -80,10 +81,11 @@ list of categories — the `Class` category contains both metaspace halves:
        0.0  1048576.0        0.0       0.0 1048576.0       0.0      0     0 ...
 ```
 
-`MCMN`/`MCMX` are min/max capacity in KB for the non-class metaspace; `CCSMN`/`CCSMX`/`CCSC`
-are the same three fields for the compressed class space. All of them are **capacity**, not
-usage. The counters are refreshed by internal GC accounting events, so a young process can
-show `MC = 0.0` while `VM.metaspace` reports committed memory at the same instant.
+On JDK 25, `MC` is combined class/non-class commitment; `CCSC` is the class subset.
+`MCMX`/`CCSMX` come from reserved sizes in that implementation, not simply configured hard
+caps; `MCMN`/`CCSMN` are initialized to zero. Values are displayed in KB (1024 bytes).
+These are not usage measurements. Update timing differs by build; interpret the schematic
+zero-capacity row only as a possible stale/initial observation, not a required startup state.
 
 ## Per-loader counts
 
@@ -95,25 +97,38 @@ jcmd <pid> VM.classloaders        # the hierarchy as a tree
 On 25 the `classloader_stats` table adds a `+ hidden classes` sub-row under a loader when it
 has any, with their own count and chunk sizes — the JDK's own lambdas (`java.lang.reflect.Proxy$$Lambda/0x…`) and method-handle `LambdaForm` classes show up
 this way under the boot loader even in a trivial program. Many rows of the _same_ loader
-type with similar class counts is the leak shape. Confirming that and finding the retainer
+type with similar class counts can suggest retained generations but can also be legitimate.
+Confirming a leak and finding the retainer
 belongs to `jvm-class-loading`; deciding which generator minted the classes is
 `runtime-class-generation.md`.
 
 ## JFR events (confirmed against `jfr metadata`, JDK 25)
 
 ```bash
-jcmd <pid> JFR.start settings=profile duration=300s filename=metaspace.jfr
-jfr print --events jdk.MetaspaceSummary,jdk.ClassLoadingStatistics metaspace.jfr
+jcmd <pid> JFR.start name=meta_review settings=profile duration=300s filename=/verified/target/path/metaspace.jfr
+# Start returns immediately. Wait for completion and verify the target-side file before copying/reading it.
+# To capture early, use JFR.dump name=meta_review filename=<verified-other-target-path>.
+jfr print --events jdk.MetaspaceSummary,jdk.ClassLoadingStatistics /local/copy/metaspace.jfr
 ```
 
-| Event                               | Kind                   | Use                                                         |
-| ----------------------------------- | ---------------------- | ----------------------------------------------------------- |
-| `jdk.MetaspaceSummary`              | GC-boundary            | Before/after-GC metaspace state; correlate with GC timing   |
-| `jdk.ClassLoadingStatistics`        | periodic               | `loadedClassCount` vs `unloadedClassCount` over time        |
-| `jdk.ClassLoaderStatistics`         | chunk/end-of-recording | Per-loader snapshot, cross-checks the leak shape            |
-| `jdk.MetaspaceAllocationFailure`    | one-off                | Carries `stackTrace` — points at the code loading the class |
-| `jdk.MetaspaceOOM`                  | one-off                | Fires on the `OutOfMemoryError: Metaspace` itself           |
-| `jdk.ClassLoad` / `jdk.ClassUnload` | one-off                | Individual loads; high volume, use a filter                 |
+| Event                               | Kind                   | Use                                                                      |
+| ----------------------------------- | ---------------------- | ------------------------------------------------------------------------ |
+| `jdk.MetaspaceSummary`              | GC-boundary            | Before/after-GC metaspace state; correlate with GC timing                |
+| `jdk.ClassLoadingStatistics`        | periodic               | `loadedClassCount` vs `unloadedClassCount` over time                     |
+| `jdk.ClassLoaderStatistics`         | chunk/end-of-recording | Per-loader snapshot, cross-checks the leak shape                         |
+| `jdk.MetaspaceAllocationFailure`    | one-off                | Allocation failure; stack attribution when enabled, possibly recoverable |
+| `jdk.MetaspaceOOM`                  | one-off                | Terminal metadata allocation failure; inspect class/non-class domain     |
+| `jdk.ClassLoad` / `jdk.ClassUnload` | one-off                | Individual loads; high volume, use a filter                              |
+
+Use a unique recording name and budget storage/overhead; manage only the recording you own.
+An event field existing in metadata does not prove the event or its stack trace was enabled or
+emitted. Absence of a GC-boundary summary without GC is not zero metaspace. Allocation-failure
+events can precede successful recovery and are not themselves proof of terminal OOME.
 
 Never cite a JFR event name from memory — check it with `jfr metadata` first. Plausible names
 that do not exist are a recurring source of wrong instrumentation.
+
+## Implementation sources
+
+- [JDK 25 metaspace counters](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/memory/metaspaceCounters.cpp): combined versus class counters and reserved/committed values.
+- [JDK 25 NMT reporter](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/nmt/memReporter.cpp): accounting categories and displayed metadata breakdown.

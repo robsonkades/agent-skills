@@ -18,7 +18,7 @@ description: >
 
 ## Purpose
 
-A gate is a claim the build makes on your behalf: "this class of defect is not in this change".
+A gate reports evidence about a defined defect class within its checked scope and assumptions.
 Its value is the defects it stops; its cost is paid by every change, including the ones that
 could never have contained that defect.
 
@@ -30,9 +30,11 @@ orders of magnitude more.
 ## Workflow
 
 1. **Name the defect classes that actually reach your production**, from incidents and from
-   review comments. That list — not a generic checklist — is what the pipeline exists to stop.
+   review comments, plus prospective material risks. Inspect existing required checks, versions
+   and accepted exception policy first; this skill does not authorize bypassing them.
 2. **Assign each class to the cheapest mechanism that catches it**: the compiler, a static
-   analyser, a test, a review. Anything a human catches repeatedly is a missing gate
+   analyser, a test, a review. Repeated human findings suggest an automation candidate when
+   detection is reliable enough; contextual judgment may remain a review responsibility
    (code-review).
 3. **Place each gate where its cost is bearable** (`references/gate-catalogue.md`): seconds
    pre-commit, minutes on the pull request, longer on main, longest at release.
@@ -50,26 +52,30 @@ orders of magnitude more.
 - Every gate needs a stated defect class it prevents. A check that is enabled because it came
   with the template will be the first one someone disables under deadline, and nobody will know
   what was lost.
-- Gates must be deterministic. A gate that fails intermittently teaches everyone to re-run the
-  build, which trains away the response you need when a real failure appears.
-- Speed is a correctness property of a pipeline. Past roughly ten minutes to feedback, people
-  batch changes and stop running it locally, and both effects make quality worse — so a slow,
-  thorough pipeline can catch fewer defects than a fast, narrower one.
-- Turn a warning into an error or delete it. `javac -Xlint:all -Werror` fails the build on
+- Make deterministic checks reproducible and calibrate inherently noisy checks. Distinguish
+  product failures, infrastructure failures and insufficient evidence; retain retries instead
+  of rerunning until green. Vulnerability-feed updates can legitimately change a result.
+- Treat feedback time as an operational budget. Measure queue/runtime, bypasses and escaped
+  defects before moving checks; ten minutes is not a universal behavioral threshold.
+- Give warnings a deliberate disposition: blocking, tracked advisory or justified suppression.
+  `javac -Xlint:all -Werror` fails the build on
   warnings; a warning nobody must act on is output nobody reads (verified: with `-Werror`,
   javac reports `error: warnings found and -Werror specified`).
-- Never gate on a coverage percentage. It is satisfiable by tests that assert nothing, and the
-  number moves for reasons unrelated to quality. Publish coverage of the diff as _information_
-  for the reviewer instead (java-testing-strategy).
+- Coverage is execution evidence, not assertion quality. A calibrated coverage ratchet can
+  complement behavioral tests; preserve an existing required threshold unless changing it is
+  in scope. Report uncovered relevant paths and exclusions rather than chasing a universal number
+  (java-testing-strategy).
 - A bypass mechanism must exist, must be logged, and must be visible after the fact. Teams
   without one do not stop bypassing; they bypass by disabling the gate for everyone.
 - Suppressions carry a reason and an owner: `@SuppressWarnings("unchecked") // JDBC row map,
 checked by the query's projection`. A bare suppression is a silent removal of the gate at
   that line.
-- The gate set is not the definition of done. Passing every check says the known defect classes
-  are absent, not that the change does what was asked (requirements-and-acceptance).
-- Pin and reproduce: fixed toolchain version, locked dependency versions, no `LATEST` ranges. A
-  build whose result depends on when it ran cannot gate anything.
+- The gate set is not the definition of done. Passing checks establishes only their tested
+  properties under the observed conditions, not absence of the entire defect class or fulfillment
+  of the request (requirements-and-acceptance).
+- Pin build inputs and record toolchain/dependency versions; do not silently upgrade them to
+  enable a gate. Time-varying inputs such as vulnerability databases need source/version and
+  evaluation timestamps so changed results remain explainable.
 
 ## References
 

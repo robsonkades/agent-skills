@@ -8,8 +8,11 @@ Use three independently testable components:
 2. **Comparison** consumes two compatible evidence sets and emits a structured decision.
 3. **Promotion** runs only in a trusted context and publishes an immutable baseline.
 
-This prevents a pull request from redefining its comparator, replacing the baseline, or
-turning malformed input into a pass.
+Separation alone does not establish trust. An authoritative comparator, compatibility policy,
+benchmark inventory and enforcement logic must come from a trusted immutable revision and run
+outside the candidate's writable environment. PR-owned scripts or background processes can
+alter later steps in the same runner. Treat candidate artifacts as hostile data; checksums
+establish integrity relative to a manifest, not that measurements are genuine.
 
 ## Result bundle contract
 
@@ -35,7 +38,8 @@ match.
 
 The comparator should:
 
-1. validate schema, checksums, finite numeric values, and expected entries;
+1. validate schema, checksums, finite decision inputs, and expected entries (diagnostic-only
+   fields such as unsupported JMH `scoreError` may be non-finite if explicitly handled);
 2. enforce the compatibility/epoch policy;
 3. normalize direction so positive means worse;
 4. analyze independent blocks/units under the predeclared method;
@@ -63,7 +67,7 @@ Example decision object:
 
 Use separate statuses for `pass`, `regression`, `invalid`, and `inconclusive`. A new optional
 benchmark can be `unbaselined`; disappearance of a required benchmark is invalid. Invalid
-numeric values, duplicate keys, incompatible units, empty input, or unknown schema must not
+decision inputs, duplicate keys, incompatible units, empty input, or unknown schema must not
 be silently skipped.
 
 ## JMH configuration is an experimental input
@@ -101,15 +105,19 @@ python3 scripts/compare_benchmarks.py \
   --baseline results/baseline \
   --current results/current \
   2>&1 | tee results/comparison.txt
-compare_status=${PIPESTATUS[0]}
+pipeline_status=("${PIPESTATUS[@]}")
+compare_status=${pipeline_status[0]}
+log_status=${pipeline_status[1]}
 set -e
 
 printf 'exit_code=%s\n' "$compare_status" >> "$GITHUB_OUTPUT"
+printf 'log_exit_code=%s\n' "$log_status" >> "$GITHUB_OUTPUT"
 exit 0
 ```
 
 The step exits zero only to allow unconditional report/artifact steps to run; a later policy
-step interprets the recorded code. Capture `PIPESTATUS` immediately—any subsequent command
+step interprets both codes and artifact availability. Logging/upload failure must not silently
+become a valid pass when retained evidence is required. Capture `PIPESTATUS` immediately—any subsequent command
 overwrites it. If the comparator may be killed before producing a decision, the policy step
 must map missing output to `invalid`, not pass.
 
@@ -119,8 +127,11 @@ repository tests on its actual shell.
 
 ## Workflow sketch
 
-This is architecture, not copy-paste production YAML; pin action SHAs and permissions under
-the repository's supply-chain policy.
+This is an **untrusted diagnostic screen**, not an authoritative merge gate: the candidate
+controls the scripts in this checkout. Its apparent green result must not satisfy the trusted
+required check or promote a baseline. Pin action SHAs and permissions under repository policy;
+the self-hosted label below must resolve to a disposable isolated runner, not a persistent host.
+Use the project's declared Java baseline; 25 below is only an example.
 
 ```yaml
 name: performance-screen
@@ -159,9 +170,12 @@ jobs:
           set +e
           ./scripts/compare-performance.sh results/baseline results/current \
             2>&1 | tee results/comparison.txt
-          status=${PIPESTATUS[0]}
+          pipeline_status=("${PIPESTATUS[@]}")
+          status=${pipeline_status[0]}
+          log_status=${pipeline_status[1]}
           set -e
           printf 'exit_code=%s\n' "$status" >> "$GITHUB_OUTPUT"
+          printf 'log_exit_code=%s\n' "$log_status" >> "$GITHUB_OUTPUT"
         shell: bash
       - name: Upload evidence
         if: always()
@@ -173,13 +187,19 @@ jobs:
         if: always()
         env:
           STATUS: ${{ steps.compare.outputs.exit_code }}
-        run: ./scripts/enforce-performance-status.sh "$STATUS"
+          LOG_STATUS: ${{ steps.compare.outputs.log_exit_code }}
+        run: ./scripts/enforce-performance-status.sh "$STATUS" "$LOG_STATUS"
         shell: bash
 ```
 
 The promotion workflow is separate and triggered from trusted trunk/scheduled/manual policy.
 It rebuilds or verifies the artifact, rejects incompatible/invalid evidence, and publishes a
-content-addressed baseline plus provenance. A `pull_request`-only workflow cannot contain a
+content-addressed baseline plus provenance.
+Authoritative evaluation also needs a clean isolated environment and trusted evaluator code;
+never execute candidate-provided scripts during privileged artifact processing. A digest-verified
+candidate is still executable untrusted code. Confirm benchmark/harness changes under the
+established trust policy rather than accepting candidate-reported values as attested measurements.
+A `pull_request`-only workflow cannot contain a
 reachable `github.ref == 'refs/heads/main'` promotion path.
 
 ## Trust boundary
@@ -214,20 +234,23 @@ enough evidence.
 
 ## End-to-end validation matrix
 
-| Scenario                             | Expected result                                          |
-| ------------------------------------ | -------------------------------------------------------- |
-| Compatible no-change trials          | Calibrated pass/inconclusive distribution                |
-| Injected effect below MPIR           | Usually pass or inconclusive per declared error rate     |
-| Injected effect at/above MPIR        | Target detection power; confirmation blocks              |
-| Missing/malformed/empty baseline     | Invalid; no promotion                                    |
-| Unit, mode, JDK, or epoch mismatch   | Invalid or explicit recalibration path                   |
-| Comparator exits 1 through `tee`     | Report uploaded; policy blocks                           |
-| Comparator crashes/exits 2           | Report uploaded; policy fails closed or routes by policy |
-| Evidence remains inconclusive        | No fabricated pass; bounded escalation/retry             |
-| Required benchmark disappears        | Invalid unless removal approval is supplied              |
-| Runner cancellation/timeout/OOM      | Outcome retained with diagnostics                        |
-| Untrusted PR attempts baseline write | Denied                                                   |
-| Gradual series of sub-MPIR changes   | Champion/guardrail trend detects budget exhaustion       |
+| Scenario                                                  | Expected result                                             |
+| --------------------------------------------------------- | ----------------------------------------------------------- |
+| Compatible no-change trials                               | Calibrated pass/inconclusive distribution                   |
+| Injected effect below MPIR                                | Usually pass or inconclusive per declared error rate        |
+| Injected effect exactly at MPIR                           | Calibrated boundary decision rates; often inconclusive      |
+| Injected effect at declared above-MPIR alternative        | Target detection power under confirmation rule              |
+| Missing/malformed/empty baseline                          | Invalid; no promotion                                       |
+| Unit, mode, JDK, or epoch mismatch                        | Invalid or explicit recalibration path                      |
+| Comparator exits 1 through `tee`                          | Report uploaded; policy blocks                              |
+| Comparator crashes/exits 2                                | Report uploaded; policy fails closed or routes by policy    |
+| Comparator passes but tee/upload fails                    | Preserve failure status; required evidence loss cannot pass |
+| Evidence remains inconclusive                             | No fabricated pass; bounded escalation/retry                |
+| Required benchmark disappears                             | Invalid unless removal approval is supplied                 |
+| Runner cancellation/timeout/OOM                           | Outcome retained with diagnostics                           |
+| Untrusted PR attempts baseline write                      | Denied                                                      |
+| PR rewrites comparator/enforcer or forges its JSON result | Diagnostic output cannot satisfy authoritative check        |
+| Gradual series of sub-MPIR changes                        | Champion/guardrail trend detects budget exhaustion          |
 
 Test the real workflow trigger and permissions, not only the comparator locally. Exercise
 cancellation and artifact-upload behavior because “always” does not make a step immune to

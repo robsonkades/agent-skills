@@ -31,10 +31,11 @@ If the answer includes policy files, the edge points the wrong way.
 
 - One implementation, no boundary, and tests are already easy — a port here is a
   file you open on every navigation, for nothing.
-- The "abstraction" would mirror the concrete class method-for-method. That is the
-  class's surface with an `I` in front; substitutability was never designed in.
-- The candidate is pure computation (a tax table, a rounding rule). Call it
-  directly; deterministic code needs no double.
+- The abstraction merely mirrors a concrete surface and adds no ownership, capability or
+  testing seam. Matching signatures alone do not prove that the contract is unnecessary.
+- The candidate is stable pure computation with no independent variation/release boundary.
+  Determinism makes direct testing easy; independently changing tax policy may still justify
+  a strategy even though it performs no I/O.
 - You would wrap a JDK port (`Clock`, `Random` via `RandomGenerator`) in a local
   interface. Inject the JDK type instead.
 
@@ -43,6 +44,10 @@ If the answer includes policy files, the edge points the wrong way.
 `requires` edges are the dependency graph the compiler enforces. A layering rule
 that lives in a wiki is advice; the same rule in `module-info.java` is a compile
 error when broken:
+
+These are three separate `module-info.java` sketches. The adapter's `jakarta.mail` module
+is an assumed dependency: inspect the actual artifact with `jar --describe-module` before
+using that name. They are not a complete build or a requirement to adopt Jakarta Mail.
 
 ```java
 module shop.orders {            // policy: no requires on any mechanism
@@ -61,11 +66,16 @@ module shop.app {               // composition root: the only module seeing both
 }
 ```
 
-Two properties fall out. The policy module's `module-info` documents — and
-enforces — that it depends on nothing replaceable. And the module system rejects
-cyclic `requires` at resolution, so an accidental policy→adapter edge cannot creep
-in as a cycle; it fails the build. Without JPMS, the same edges can be enforced
-with an architecture test over the package graph — weaker, but better than prose.
+Here the policy reads only the mandated `java.base` module, so ordinary static use of
+adapter types fails compilation. In larger graphs inspect `requires transitive` readability
+and launch-time `--add-reads`; absence of a direct edge alone proves less. JPMS rejects cyclic
+`requires`, but not every undesired edge creates a cycle. Keep the permitted direction under
+review and test that a forbidden source dependency fails to compile.
+
+`jdeps -verbose:class <policy-classes-or-jar>` exposes class-file dependencies, not arbitrary
+reflective class names, service-provider behavior or configuration/schema coupling. Inspect
+those separately. Without JPMS, package architecture tests can enforce finer-grained edge
+rules; their strength depends on the rule and coverage, not merely on being tests.
 
 ## Factories
 
@@ -82,8 +92,8 @@ way:
 
 ## The testability check, made concrete
 
-After inverting, all of these should hold; if any fails, the inversion is
-incomplete or was not needed:
+After inverting, use these checks to locate remaining coupling. A failure needs explanation;
+it does not by itself prove that the port was unnecessary:
 
 - The double implements only the policy capability and has no vendor/framework setup; line count
   is a smell locator, not an acceptance criterion.
@@ -91,3 +101,13 @@ incomplete or was not needed:
 - The test asserts on policy outcomes (what was sent, what was decided), not on
   interaction scripts ("verify method X was called once").
 - Deleting the adapter module leaves the policy module compiling.
+
+## Primary sources
+
+- [JLS 17 module dependencies](https://docs.oracle.com/javase/specs/jls/se17/html/jls-7.html#jls-7.7.1)
+  defines readability, transitive dependencies and cycle restrictions.
+- [JDK 17 jdeps](https://docs.oracle.com/en/java/javase/17/docs/specs/man/jdeps.html)
+  documents the class-file analysis and output options.
+- [Clock](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Clock.html)
+  and [RandomGenerator](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/random/RandomGenerator.html)
+  provide existing time/randomness seams; verify the target API version before choosing one.

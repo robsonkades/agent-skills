@@ -2,7 +2,7 @@
 name: gof-flyweight
 description: >
   Flyweight in modern Java: sharing one immutable instance across many logical occurrences to
-  bound memory, and why the modern JVM makes that pay only for long-lived duplicates. Covers the
+  reduce retained memory, with benefits dependent on duplicate lifetimes and lookup cost. Covers the
   intrinsic/extrinsic split, why cheap TLAB allocation does not make reclamation free, the memory
   arithmetic deciding whether a cache entry costs more than the object it
   saves, string deduplication and boundary canonicalisation as cheaper alternatives, the
@@ -51,7 +51,7 @@ The distinct-value count is small and bounded, and known in advance
   promotes state and adds lookup work, but high allocation rate can still matter. Compare scalar
   replacement, compact representations and canonicalization with evidence (`gc-fundamentals`).
 - **The distinct-value count is not much smaller than the occurrence count.** Sharing saves
-  nothing and the map costs everything.
+  few duplicates; compare their actual size with table overhead before rejecting or accepting it.
 - **The saving is smaller than the cache.** Measure map/table, key, reference and alignment
   overhead for the actual JVM options; fixed byte estimates change with compressed references,
   implementation and load factor.
@@ -63,6 +63,9 @@ The distinct-value count is small and bounded, and known in advance
 - **It is meant to be shared across processes.** A flyweight pool is process-local; see below.
 
 ## Modern Java expression
+
+Snippets use Java 17 APIs and are partial examples. Inspect the project's toolchain, collector and
+runtime flags before applying JVM-specific advice; this skill does not authorize upgrades.
 
 ```text
 Classical                          Modern
@@ -79,20 +82,21 @@ extrinsic state stored per         extrinsic state as a method
 occurrence                         parameter, or a parallel primitive
                                    array
 
-hand-rolled string interning       -XX:+UseStringDeduplication (G1/ZGC),
-                                   which deduplicates the char arrays
-                                   with no code and no cache
+hand-rolled string interning       -XX:+UseStringDeduplication where the
+                                   target JDK/collector supports it;
+                                   shares backing arrays, with GC/table cost
 ```
 
 The JDK's own flyweights are the model: `Integer.valueOf` caches −128..127, `Boolean.valueOf`
-returns two constants, enum constants are one instance each, `List.of()` returns a shared empty
-list. All are immutable, all are bounded, none is a general-purpose pool.
+returns two constants, enum constants are one instance each per defining class loader.
+Empty list factories may reuse instances, but `List.of()` has no identity guarantee.
 
 ## Decision rules
 
 ```text
-IF the proposal is not backed by a heap dump showing the duplicates
-THEN measure first. "Lots of small objects" is not evidence
+IF the proposal lacks evidence of duplicate retention or expensive repeated construction
+THEN measure first. A heap dump can establish retention; profiles can establish construction cost.
+     "Lots of small objects" is not evidence
      (heap-dump-analysis).
 
 IF the duplicates are Strings
@@ -114,9 +118,8 @@ THEN test contention and mapping-function cost. `ConcurrentHashMap.computeIfAbse
      implementation-specific; mapping functions must be short and non-recursive.
 
 IF any code compares flyweights with ==
-THEN it works by accident and will break when a value falls outside
-     the cache or an entry is evicted. Use equals; the Integer 127/128
-     boundary is the canonical demonstration.
+THEN require a documented identity contract (such as enums); otherwise use equals.
+     Integer.valueOf guarantees caching -128..127 but may cache more; 128 is not a portable miss.
 
 IF the "flyweight" must be seen by other processes
 THEN it is not this pattern. Serialisation recreates copies on the
@@ -139,33 +142,34 @@ THEN it is not this pattern. Serialisation recreates copies on the
 - **Performance.** The pattern is a memory optimisation with a CPU cost. Judge it on the live-set
   size before and after, measured from a heap dump, and on allocation rate and GC overhead
   measured before and after (`gc-log-analysis`). Watch for the second-order effect that motivates
-  it honestly: a smaller live set means shorter concurrent marking and less copying work, which
-  can improve pause times more than the byte count suggests.
-- **Testing.** Test that flyweights are equal by value, never that they are identical, unless
-  identity is a documented guarantee for a closed set (enums). Include an eviction in the test if
-  the cache is bounded: code that silently relied on stable identity fails only after eviction,
-  which in production means under load.
+  it honestly: a smaller live set may reduce marking/copying work, but GC phase times also depend
+  on graph shape, collector and workload; verify rather than promise shorter pauses.
+- **Testing.** Application behavior must use value equality unless identity is a documented
+  contract (enums). Implementation tests may verify reuse itself. Exercise eviction or admission
+  bypass according to the bound policy, and separate pools; all must preserve application results.
 
 ## Review checklist
 
 - [ ] A heap dump or allocation profile justifies the change
-- [ ] The duplicated objects are long-lived, not per-request garbage
-- [ ] Distinct values are far fewer than occurrences
+- [ ] Duplicate lifetimes or repeated construction costs justify lookup and retention overhead
+- [ ] Avoided duplicate bytes/construction costs are estimated from actual distinctness
 - [ ] The saving exceeds the cache's own overhead, with the arithmetic written down
 - [ ] The shared type is deeply immutable
 - [ ] The cache is bounded, or keyed by a closed set
-- [ ] No code depends on `==` between flyweights
+- [ ] Value comparisons use equals unless identity is an explicit stable contract
 - [ ] String deduplication was considered before hand-written interning
 - [ ] The pool's contention under the expected thread count was measured
 
 ## References
+
+Deliver the sharing key and ownership scope, estimated net saving, correctness constraints and
+before/after evidence. Label unmeasured benefits as hypotheses rather than confirmed fixes.
 
 - [When sharing pays](references/when-sharing-pays.md) — the memory arithmetic per object and per
   cache entry, the JDK's own flyweights and their limits, alternatives that usually win
   (deduplication, boundary canonicalisation, primitive and columnar layouts, enums), the
   measurement method before and after, and the leak and contention failure modes. Read before
   writing any pool.
-- [Worked example](references/worked-example.md) — an ingest pipeline holding 40 million parsed
-  records: the heap dump that justified canonicalisation, the boundary interning that replaced a
-  per-object cache, the numbers before and after, the `==` trap that appeared during the change,
-  and what was reverted. Read when implementing.
+- [Worked example](references/worked-example.md) — a hypothetical ingest pipeline holding 40 million
+  records: bounded boundary canonicalisation, lifetime and thread ownership, value equality and
+  the measurements required before accepting a saving. Read when implementing.

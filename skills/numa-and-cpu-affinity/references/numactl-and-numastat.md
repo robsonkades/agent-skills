@@ -13,9 +13,9 @@
 | `--hardware`            | `-H`  | Query  | Nodes, CPUs per node, memory per node, distance matrix                |
 | `--show`                | `-s`  | Query  | The current process or shell NUMA policy                              |
 
-`--cpubind` is **not** a flag. It is a plausible name that is not in the man page; the
-CPU-axis equivalent of `--membind` is `--cpunodebind`. The naming asymmetry
-(`cpu`-`node`-`bind`) is what makes the mistake easy.
+numactl 2.0.19 retains `--cpubind` as a deprecated option; prefer `--cpunodebind` for node
+selection and `--physcpubind` for CPU selection. Check installed help/source and actual
+allowed masks; affinity and memory policy remain constrained by cpusets.
 
 ```bash
 # Confine the whole process to one node — both axes together:
@@ -34,9 +34,9 @@ processes (not remote memory accesses):
 
 ```
                    node0        node1
-numa_hit          842391       798102     served from the local node
-numa_miss           1204        18932     had to come from another node
-numa_foreign       18932         1204     should have been local, diverted elsewhere
+numa_hit          842391       798102     served on intended node
+numa_miss           1204        18932     allocated here, intended another node
+numa_foreign       18932         1204     intended here, allocated elsewhere
 interleave_hit      2048         2048
 ```
 
@@ -48,14 +48,17 @@ read the page. Baseline it for host pressure; do not convert it into a remote-ac
 hit/miss counters:
 
 ```
-Per-node process memory:
+Illustrative per-node process memory (MB as printed by numastat):
              Node 0      Node 1       Total
-Heap          34.20       61.80       96.00  (GB)
+Heap          34.20       61.80       96.00
 Stack          0.01        0.02        0.03
 Private        0.40        0.35        0.75
 ```
 
-`numastat -s <pid>` gives a more compact per-process summary.
+The `Heap` category follows the kernel heap mapping label, not HotSpot heap boundaries;
+Java heap mappings commonly contribute to Private/Huge categories. Correlate mapping address
+ranges with JVM evidence before calling any row Java heap. `numastat -s` sorts by total (or
+selected node); `-c` controls compact display. Use `-p <pid>` explicitly for process selection.
 
 ## Valid `perf` events
 
@@ -79,9 +82,10 @@ or `<not supported>` in `perf stat` output, is not the same as zero NUMA misses.
 
 ## Attributing node misses to Java methods
 
-async-profiler has no NUMA event in any version — it reads CPU PMU counters and JVM hooks,
-not kernel NUMA counters. `mem:<address>[:rwx][:size]` is a hardware watchpoint on one
-specific address, used to prove false sharing line by line. Combine two tools instead:
+async-profiler v4.4 supports Linux perf events, including supported raw/named PMU events.
+Availability and access semantics are platform-specific. A `mem:` hardware watchpoint observes
+an address; it does not establish false sharing or NUMA locality by itself. One possible
+collection pair is below; start captures in coordinated sessions if claiming the same window:
 
 ```bash
 perf record -e node-load-misses -p <pid> -g -- sleep 30
@@ -98,20 +102,20 @@ page was remotely accessed. Confirm with controlled placement changes and outcom
 
 ```bash
 numactl --hardware | head -1                  # available: N nodes (0-N)
-numactl --hardware | grep -A3 "node distances"
+numactl --hardware                          # retain the complete matrix
 # node distances:
 # node   0   1
 #   0:  10  21
 #   1:  21  10
 ```
 
-`grep` alone captures only the `node distances:` header — the matrix is on the following
-lines. `-A3` is the minimum for two nodes; use `-A(N+1)` for N nodes.
+Node IDs may be sparse. Distances are relative firmware topology values, not measured access
+latencies; preserve all nodes and correlate with memory bandwidth/latency evidence.
 
 ```bash
 cat /proc/<pid>/status | grep -i cpus_allowed
-taskset -p <pid>                              # current CPU affinity mask
-java -XX:+PrintFlagsFinal -version 2>&1 | grep UseNUMA   # default is false
+taskset -ap <pid>                             # masks for all current threads; support varies
+java <same-collector-and-options> -XX:+PrintFlagsFinal -version 2>&1 | grep UseNUMA
 jcmd <pid> VM.flags | grep -i numa
 ```
 
@@ -128,21 +132,23 @@ java -XX:+UseG1GC -Xlog:gc+init=debug -version 2>&1 | grep -iE "worker|numa"
 ```
 
 Labels and counts vary by build and hardware — confirm on the target JDK before using them
-in automation. This log never says which node a worker is on, and no unified-logging tag
-does. The information lives in `/proc`:
+in automation. This init summary does not provide per-thread placement history. A Linux
+procps snapshot avoids parsing whitespace inside `/proc` stat command names:
 
 ```bash
-PID=<pid>
-for task in /proc/$PID/task/*; do
-    tid=$(basename "$task")
-    name=$(cut -d' ' -f2 "$task/stat" | tr -d '()')
-    # field 39 = processor last executed on: a sample, not affinity or residency history
-    cpu=$(awk '{print $39}' "$task/stat")
-    case "$name" in
-        GC\ Thread*|G1\ *) echo "$name (tid=$tid) -> cpu $cpu" ;;
-    esac
-done
+ps -L -p <pid> -o pid,tid,psr,comm
 ```
+
+Identify collector thread names for the target build; names may be truncated. PSR is the last
+executed CPU, not the affinity mask or a migration history. For raw stat parsing, read the
+whole record through its final `)` before splitting the suffix; suffix index 36 (zero-based)
+is field 39. Sample repeatedly and verify thread identity; threads can exit during capture.
 
 Cross each CPU number with `numactl --hardware`, which lists the CPUs belonging to each
 node.
+
+## Sources
+
+- [numactl 2.0.19 options](https://github.com/numactl/numactl/blob/v2.0.19/numactl.c): deprecated cpubind retained.
+- [numastat 2.0.19](https://github.com/numactl/numactl/blob/v2.0.19/numastat.c): mapping categories, units and sorting.
+- [async-profiler v4.4 profiling modes](https://github.com/async-profiler/async-profiler/blob/v4.4/docs/ProfilingModes.md): supported perf event forms.

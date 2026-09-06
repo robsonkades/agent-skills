@@ -4,6 +4,11 @@ A payment client constructs charge requests. Customer, amount and a caller-stabl
 are required; capture mode and statement descriptor are optional. Treating the key as optional
 would make retry safety depend on a stylistic builder call.
 
+These are partial sketches with omitted domain types/accessors and imports (`BigDecimal`,
+`Objects`, `Optional`). Compile public types in separate files; the `var` call sites need
+Java 10+. The example's role types must be immutable as well as validated for the product's
+immutability claim to hold. This is API-shape guidance, not provider-specific payment rules.
+
 ## Before
 
 ```java
@@ -103,8 +108,14 @@ public final class ChargeRequest {
 }
 ```
 
-The call site, one call per line so breakpoints and stack-trace lines land on individual
-calls:
+This builder is reusable and thread-confined: options persist for subsequent builds, and
+each build returns a distinct product. Previously built products remain unchanged because
+the shown fields refer only to immutable values. The sample descriptor bound is 22 UTF-16
+code units (`String.length`), not 22 Unicode code points, bytes or grapheme clusters; replace
+it only with the actual provider's documented unit/character policy.
+
+The call site, one call per line to improve breakpoint placement and source diagnostics
+(exact per-invocation line mapping remains compiler/debugger-dependent):
 
 ```java
 var request = ChargeRequest.charge(
@@ -135,7 +146,9 @@ public interface OptionsStage {
 ```
 
 One hidden class implements all four; the entry point returns `CustomerStage`, and `build()` is
-unreachable until all required stages have run. The factory already provides that guarantee more
+not exposed on the normal statically typed path until required-stage methods were called.
+This does not prove non-null values or enforce single-use aliases: the hidden implementation
+must reject incomplete/invalid state at build time. The factory already requires the arguments more
 cheaply here; staging is shown only to expose its cost for APIs that truly require ordered gradual
 construction.
 
@@ -158,6 +171,8 @@ open.
 
 ## Verification
 
+Acceptance checks for the concrete implementation, not recorded test results:
+
 - Recompile every module that constructs `ChargeRequest`; delete the old public
   constructors only once no caller remains (search for `new ChargeRequest(`).
 - If the artefact is published, run a binary-compatibility check (for example japicmp)
@@ -166,4 +181,10 @@ open.
 - Add tests for every local and cross-field invariant, repeated `build()` behavior, and defensive
   copies of mutable inputs; assert stable failure codes/types rather than brittle prose when the
   API is published.
+- For this sample, test null required values/capture mode, descriptor length 22 versus 23
+  UTF-16 units (including supplementary characters), and build → change option → build to
+  verify old-product independence and retained defaults. For staging, test invalid values and
+  stale aliases as well as source snippets that intentionally fail before the final stage.
+- Confirm the descriptor unit against [String.length](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html#length()>)
+  and the provider contract; the sample does not establish provider acceptance.
 - Confirm formatting: chains one call per line in the touched call sites.

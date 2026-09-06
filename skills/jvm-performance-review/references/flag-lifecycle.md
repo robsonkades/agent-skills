@@ -18,6 +18,13 @@ that will deploy.
 
 Warnings and state terminology are HotSpot implementation details, not a JVM-spec promise.
 
+For a concrete distinction, Temurin 25.0.3+9 on Windows accepted
+`java -XX:+ZGenerational -version` with exit 0 and printed that the option was ignored
+because support was removed in 24.0 (executed during this review). The warning's
+"removed" does not mean this binary rejected the spelling. Inspect effective behavior
+and repeat on the upgrade target; this observation predicts neither future acceptance
+nor another vendor's lifecycle.
+
 ## Exact-build preflight
 
 In a disposable environment using the production image/JDK and architecture:

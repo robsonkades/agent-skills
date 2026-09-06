@@ -1,6 +1,6 @@
 # Removing non-determinism
 
-A test is deterministic when its result is a function of the code under test alone. Every
+A test is deterministic when controlled code, inputs and environment produce repeatable results. Every
 input below is one the JVM or the machine supplies silently, and each is a source of "green
 on my machine, red in CI".
 
@@ -20,7 +20,7 @@ on my machine, red in CI".
 | Test execution order        | Passes alone, fails in the suite                                 | Remove shared state; do not impose an order to fix it                         |
 | Wall-clock waiting          | Fails on a loaded CI agent                                       | Await a condition, never a duration (concurrency-testing)                     |
 
-Since JDK 18, `Charset.defaultCharset()` is UTF-8 regardless of platform, which removes the
+Since JDK 18, UTF-8 is the default unless configured otherwise (for example `-Dfile.encoding=COMPAT`), which removes the
 most common charset surprise — but the _console_ encoding still follows the platform, so a
 test that captures `System.out` can still differ. Pass the charset explicitly rather than
 relying on the default having converged.
@@ -44,10 +44,12 @@ part of the domain) once at the composition root. In tests,
 For code that must observe time _passing_, use a mutable test clock you advance explicitly —
 a small `Clock` subclass over an `AtomicReference<Instant>` — never a sleep. Advancing time
 by hand also lets you test the boundary at exactly the timeout, which a sleep cannot.
+Advancing a Clock does not advance an executor's scheduler or System.nanoTime; test scheduled
+work with an appropriate scheduler seam and bounded completion checks (concurrency-testing).
 
-Mocking `Instant.now()` statically is the alternative offered by Mockito's inline mock maker.
-It works and it is the wrong tool: it makes the test pass while leaving production code that
-cannot be reasoned about, and it fixes only the calls in the classes you remembered to mock.
+Scoped static mocking can be a temporary legacy seam when constructor changes are impractical.
+Check the installed Mockito/JDK support, close the mock and respect its thread scope; prefer
+an injected Clock for new design. Do not assume a mock controls worker-thread calls.
 
 ## "Passes alone, fails together" — the checklist
 
@@ -63,7 +65,8 @@ Run the failing test alone; if it passes, work down this list.
 6. **An unclosed resource** — a connection, a file handle, a mock static — leaking into the
    next test.
 
-The fix is always to remove the sharing. Imposing an order with `@TestMethodOrder` makes the
+Prefer removing accidental sharing; when an external resource must be shared, isolate namespaces,
+reset reliably or serialize its users with the runner's resource protocol. Imposing an order with `@TestMethodOrder` makes the
 symptom disappear and preserves the defect: the tests still depend on each other, and the
 next person to add a test in the middle gets the failure back.
 
@@ -80,6 +83,7 @@ A test that fails one run in twenty is telling you one of three things:
   and the one that a retry throws away (concurrency-diagnostics, concurrency-testing);
 - the environment is not reproducible — a shared database, a fixed port, an external service.
 
-Retry extensions, `@RepeatedTest` as a workaround and `@Disabled` with no ticket all convert
-the report into silence. If a test must be removed to unblock a release, delete it and say
-so explicitly — a disabled test is worse than no test, because it looks like coverage.
+Retry-until-green and unexplained disabling hide the report. Preserve the test and capture all
+outcomes during bounded diagnostic repetition. Do not delete or weaken it to unblock a release.
+If repository policy permits quarantine, retain visible failures with an owner, issue and expiry;
+quarantine is a tracked limitation, not proof of a fix or permission to bypass required checks.

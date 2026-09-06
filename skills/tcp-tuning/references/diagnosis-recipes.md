@@ -3,11 +3,11 @@
 ## From symptom to suspect
 
 ```
-High but stable latency on every small request ...... Nagle + delayed ACK
+High but stable latency on every small request ...... Nagle/ACK, RTT, batching or proxy timer
 Local connect errors under burst ..................... ports/source address/routing
-SYNs dropped at peak ................................ backlog (kernel and/or listen())
-One core pinned, the others idle, multi-core host ... no SO_REUSEPORT, single accept()
-Low throughput on a high bandwidth-delay link ....... autotuning ceiling below BDP
+SYNs dropped at peak ................................ SYN/accept queues, NIC or path drops
+One core pinned, the others idle, multi-core host ... accept, RSS/RPS, event loop or application
+Low throughput on a high bandwidth-delay link ....... window, cwnd, loss, CPU or sender limits
 ```
 
 ## Which tool answers which question
@@ -18,16 +18,16 @@ Low throughput on a high bandwidth-delay link ....... autotuning ceiling below B
 | Are Nagle and delayed ACK causing the delay?   | `tcpdump` plus Wireshark Time Sequence graph     | Packets on the wire |
 | Is `TCP_NODELAY` really active on this socket? | `getOption()` in Java, or `strace -e setsockopt` | Application/syscall |
 | What is the real RTT to the destination?       | `hping3 -S` (TCP) or `ping` (ICMP approximation) | Network             |
-| Is the connection retransmitting?              | `ss -ti`, `nstat -az \| grep retrans`            | Kernel, per socket  |
-| How deep is TIME_WAIT right now?               | `ss -tn state time-wait \| wc -l`                | Kernel, aggregate   |
+| Is the connection retransmitting?              | `ss -ti`; `nstat -az` for namespace totals       | Socket vs aggregate |
+| How deep is TIME_WAIT right now?               | `ss -Htn state time-wait \| wc -l`               | Kernel, aggregate   |
 
 ## Connection state
 
 ```bash
 ss -s                                  # summary by state
 ss -tnp                                # all TCP connections with owning process
-ss -tn state time-wait | wc -l         # TIME_WAIT depth
-ss -tnp state established | wc -l
+ss -Htn state time-wait | wc -l        # no header counted
+ss -Htn state established | wc -l
 netstat -s | grep -E "retransmit|error|timeout"
 ```
 
@@ -39,14 +39,16 @@ capacity equation.
 ## Catching Nagle in a capture
 
 ```bash
-sudo tcpdump -i eth0 -w /tmp/capture.pcap 'port 8080' &
-# run the workload
-kill %1
+sudo timeout --signal=INT 30s tcpdump -i eth0 -s 128 -c 10000 -w /tmp/capture.pcap 'tcp port 8080'
 ```
 
 In Wireshark: filter `tcp.port == 8080`, then look for a small packet followed by roughly 40 ms
 of silence before the next segment. `Statistics -> TCP Stream Graphs -> Time Sequence` makes the
-gap visible at a glance.
+gap visible at a glance. A gap alone is not proof: correlate application write times,
+outstanding unacknowledged bytes and the ACK that releases a queued small write. Capture
+both directions; host offloads/capture placement can distort segment sizes. The bounded
+Linux recipe requires GNU timeout, a chosen interface and protected output location;
+even a truncated capture can contain payload or credentials. Inspect capture drops.
 
 ## Confirming a socket option actually applied
 
@@ -54,14 +56,16 @@ gap visible at a glance.
 output without checking it against the installed `iproute2`. Two forms that do work:
 
 ```bash
-strace -f -e trace=setsockopt -p $(pgrep -f MyApp) 2>&1 | grep -i TCP_NODELAY
+sudo timeout --signal=INT 15s strace -f -e trace=setsockopt -p "$PID" 2>&1 | grep -i TCP_NODELAY
 ```
 
 ```java
 boolean noDelay = channel.getOption(StandardSocketOptions.TCP_NODELAY);
 ```
 
-The socket itself is the source of truth.
+Use one verified PID. Attachment can perturb the process and only sees calls made after
+attachment: no observed setsockopt is not proof that the option is disabled. Check the
+syscall result. The socket's current option is the stronger evidence.
 
 ## RTT
 
@@ -76,13 +80,20 @@ measure latency and is not needed to read the RTT.
 ## Retransmissions and congestion window
 
 ```bash
-sysctl net.ipv4.tcp_congestion_control
+sysctl net.ipv4.tcp_congestion_control  # default for new connections, not every live socket
 nstat -az | grep -i retrans
 ss -ti                                # per-connection cwnd, rtt, retrans
 ```
 
-An abnormally small `cwnd` alongside a retransmission count that climbs points at loss on the
-path. Confirm which algorithm is active before blaming it for anything.
+Read the affected connection's algorithm in `ss -ti` (or TCP_CONGESTION), not only the
+namespace default; listener inheritance and per-socket overrides matter. Sample `nstat -az`
+twice over a known interval: it reports cumulative namespace counters, not a request's loss
+rate. A retransmission increase is consistent with loss but also reordering/spurious recovery;
+small cwnd can reflect startup or idle restart. Correlate both endpoints and queue counters.
+
+For backlog hypotheses, compare `ss -ltn` listener queues and requested backlog with
+`ss -Htn state syn-recv` and interval deltas of TcpExtListenOverflows/ListenDrops and syncookie
+counters. SYN cookies can hide pressure from the visible SYN queue; a snapshot is insufficient.
 
 ## Incident checklist
 
@@ -92,5 +103,8 @@ path. Confirm which algorithm is active before blaming it for anything.
 - [ ] Capture taken if Nagle is suspected, and repeated small-write/ACK timing correlated.
 - [ ] `ss -ti` checked for retransmissions and an unexpectedly small `cwnd`.
 - [ ] Kernel backlog **and** the Java `listen()` backlog checked together, never in isolation.
-- [ ] Active congestion control confirmed by `sysctl` before it is blamed.
-- [ ] Latency reported as p50/p99/p99.9, never a mean or a total.
+- [ ] Affected connection's congestion control confirmed, with namespace default recorded separately.
+- [ ] Latency distribution supported by sample count, with timeout/error totals retained.
+
+Sources: [ss options and TCP diagnostics](https://man7.org/linux/man-pages/man8/ss.8.html),
+[Linux TCP defaults and queue settings](https://docs.kernel.org/networking/ip-sysctl.html).

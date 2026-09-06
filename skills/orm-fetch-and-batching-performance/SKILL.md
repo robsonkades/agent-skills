@@ -23,39 +23,51 @@ from the mapping.
 
 The failure this prevents is the global fix for a local symptom: switching an association to
 `EAGER`, or turning on open-session-in-view, because one screen threw
-`LazyInitializationException`. Both make the exception go away. Neither reduces the query count,
-and the first raises it for every other query in the system.
+`LazyInitializationException`. Both can hide that symptom while changing loading scope and
+cost. Neither establishes a correct fetch plan or a performance improvement.
+
+Inspect the project's Java release/toolchain, Jakarta versus javax API, resolved Hibernate
+version, enhancement settings, database/dialect, JDBC driver and transaction boundaries first.
+Examples use Hibernate 6.6-era APIs and Spring Boot property forwarding where shown; they
+are partial snippets, not authorization to upgrade the project. A DTO record requires Java 16+.
+Reproduce with the deployed stack; JPA fetch contracts do not prescribe a SQL statement count.
 
 ## Workflow
 
 1. **Count the statements before forming any theory.** Turn on statement counting for one
    request and read the number. "It feels slow" and "this request issues 431 selects" lead to
    different investigations, and only the second is falsifiable.
-2. **Classify what the count is proportional to.** Constant is fine. Proportional to rows
-   rendered is N+1. Proportional to rows _written_ is missing write batching. Proportional to
-   nothing visible is usually a listener, an interceptor or a validator.
+2. **Classify what the count is proportional to.** Repeated selects growing with accessed
+   associations suggest N+1; a constant query count can still transfer excessive rows or be
+   slow. Writes remain one logical DML operation per row even when JDBC batching works.
+   Measure batch executions separately; inspect listeners, cascades, implicit flushes and
+   identifier allocation rather than diagnosing from a count alone.
 3. **Find the traversal that triggers it.** For N+1 the statement log shows one query followed by
-   many near-identical ones differing only in a parameter. The many are the lazy association
-   being resolved per row.
+   many near-identical ones differing only in a parameter. The many can be associations
+   being resolved per row, possibly through eager secondary selects as well as lazy traversal.
 4. **Choose the mechanism deliberately** — join fetch, entity graph, batch fetching, or a
    projection — using the table in `references/n-plus-one-remedies.md`. They are not
-   interchangeable and two of them still issue extra round trips.
+   interchangeable; query counts depend on the provider, mappings and population.
 5. **Check what the fix cost.** A join fetch that solved N+1 can return a cartesian product; a
    projection that solved it can bypass a cache you were relying on.
-6. **Re-count, on the same request.** The deliverable is a number that went down, not a
-   changed annotation.
+6. **Re-measure the same operation through rendering/serialization**, with matched row counts,
+   cache state and transaction scope. Report selects, prepared statements/batches where relevant,
+   returned rows, duration and result correctness before/after. Accept a change only against
+   the actual objective; fewer statements with worse row volume or latency is not a success.
 
 ## Rules
 
-- **`FetchType.EAGER` on a mapping is a decision applied to every query in the system**,
-  including the ones that never touch the association. `LAZY` plus a per-query fetch is the
-  reversible arrangement; there is no per-query way to _undo_ eager.
+- **`FetchType.EAGER` is a default loading obligation for entities**, not a join instruction
+  or a requirement on scalar projections. Prefer local fetch plans when appropriate.
+  A JPA `fetchgraph` treats unspecified attributes as lazy even if mapped eager, whereas
+  `loadgraph` preserves their mapping defaults; providers may fetch additional state. Verify
+  the actual provider behavior instead of promising either one SQL query or mandatory laziness.
 - **`LazyInitializationException` reports a boundary, not a defect in `LAZY`.** Something read
-  the association after the persistence context closed. The fix is fetching it in the query that
+  uninitialized state after its entity became detached or its context closed. The fix is fetching it in the query that
   needs it, or mapping to a DTO before the boundary — not widening the context's lifetime.
-- **Open-session-in-view converts the exception into invisible queries.** The N+1 still happens;
-  it now happens during rendering, outside any transaction, where it is harder to see and holds
-  the connection longer. Treat enabling it as an admission, not a fix.
+- **Open-session-in-view permits additional queries during rendering.** Reads may occur outside
+  the service transaction and see a different database state; connection acquisition/release
+  depends on configuration. Include this phase in counting. Enabling it does not fix N+1.
 - **Join fetching multiple to-many associations can multiply rows.** Ten line items and five
   shipments may produce fifty rows carrying the same order. Hibernate rejects some multiple-bag
   shapes, while other collection combinations may execute and still explode the result. Prefer one
@@ -64,20 +76,22 @@ and the first raises it for every other query in the system.
   Hibernate query shapes warn and page in memory because SQL row limits do not equal root-entity
   limits. Fail on that warning in tests; use a root-id page followed by a bounded fetch, or a
   provider feature whose generated SQL and ordering you have verified.
-- **Batch fetching turns N+1 into N/batch + 1, not into 1.** It is the right answer when the
+- **Batch fetching can approach `1 + ceil(N / batch)` for one eligible association role.** It is a candidate when the
   association is needed for most rows and a join fetch would multiply, and it is still round
   trips.
-- **A DTO projection often reduces read cost**, because the rows never become managed entities:
-  fewer columns, no persistence-context growth, no dirty checking, nothing to flush. It can lose
+- **A scalar DTO projection often reduces read cost**, because its results are not managed entities:
+  fewer columns and no additional managed result graph to dirty-check or flush. It can lose
   identity-map and second-level-cache benefits and may duplicate rows or computation, so prefer it
-  when measurement and ownership fit a read model.
-- **The persistence context is not a cache you want large.** Flush cost scales with the number of
-  managed entities, because dirty checking visits each one. A batch job that loads 100,000
-  entities into one context is paying that on every flush.
-- **Write batching needs both halves.** The JDBC batch size must be configured _and_ the id
-  generation strategy must not require a round trip per row — identity-column generation forces
-  the ORM to execute each insert immediately to learn the id, which disables batching entirely.
-  A sequence with an allocation size is the arrangement that batches.
+  when measurement and ownership fit a read model. Selecting entities into a DTO does not
+  remove their managed/lazy behavior, and an AUTO-flush query can still flush earlier writes.
+- **Bound persistence-context growth.** Flush traversal, snapshots, collections and dirty
+  entities can make a large context expensive; enhancement, immutability and read-only state
+  change the work. Profile the actual flush and bound the input pipeline as well as the context.
+- **Write batching needs eligibility as well as configuration.** The JDBC batch size must be configured _and_ the
+  statement/driver/flush arrangement must permit batching. Hibernate 6.6 disables JDBC insert
+  batching for entities using IDENTITY; this does not disable unrelated updates/deletes.
+  Pre-insert identifiers (for example sequences or assigned UUIDs) permit insert batching;
+  sequence pooling reduces identifier round trips separately and needs a compatible schema.
 - **The `count` query for a page is frequently the expensive half.** Optimise or avoid it
   separately; do not assume the page query is the problem because it is the one you were reading.
 - **A statement whose plan is bad is a different problem.** Once the count is right and one

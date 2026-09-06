@@ -3,12 +3,13 @@
 ## The contract
 
 `poll()` returns buffered/fetched records, advances client coordination work and proves the
-application is still making processing progress.
+application is still polling; it does not prove asynchronous effects are progressing.
 The contract is therefore _temporal_: **call `poll()` again within `max.poll.interval.ms`.**
 Everything the handler does between two polls is spent against that budget.
 
 ```java
 // Conceptual: error handling, DLQ routing and metrics omitted.
+// Required: props has enable.auto.commit=false; every returned record succeeds before commit.
 try (var consumer = new KafkaConsumer<String, Payload>(props)) {
     consumer.subscribe(List.of("orders"), rebalanceListener(consumer));
     while (running) {
@@ -18,12 +19,12 @@ try (var consumer = new KafkaConsumer<String, Payload>(props)) {
         }
         consumer.commitSync();                           // after the side effects
     }
-} // close() leaves the group; without it the group waits out session.timeout.ms
+} // bounded close releases resources; membership departure depends on protocol/static identity
 ```
 
-`poll(Duration)` — the timeout argument — is only how long to wait for records. It has nothing
-to do with `max.poll.interval.ms`, and confusing the two is common enough to be worth checking
-in review.
+`poll(Duration)` controls the poll call's wait budget, not the permitted processing interval.
+Rebalance callbacks can extend the call beyond that duration. Include the observed total
+poll cycle in the interval budget; do not treat this argument as a handler deadline.
 
 ## What each timeout bounds
 
@@ -38,7 +39,9 @@ The common classic-client case is that a slow handler keeps heartbeating but vio
 interval. Raising `session.timeout.ms` does not fix that. With static membership, a poll-
 interval breach stops heartbeats and reassignment waits for session timeout; the newer
 consumer group protocol also moves heartbeat timing to broker configuration. Check the
-deployed protocol. A first conservative budget for serial homogeneous work is:
+deployed protocol: `session.timeout.ms` and `heartbeat.interval.ms` are classic-client
+settings; `group.protocol=consumer` uses broker `group.consumer.session.timeout.ms` and
+`group.consumer.heartbeat.interval.ms`. A first conservative budget for serial homogeneous work is:
 
 ```
 poll-cycle tail (not p99.9 × N assumed independent) < max.poll.interval.ms - margin
@@ -54,21 +57,24 @@ When one record can exceed the interval on its own, the loop must keep polling w
 happens elsewhere. `pause()` stops records being returned for the given partitions without
 leaving the group; `poll()` still runs, so the member stays alive.
 
-```java
-// Conceptual only: production code tracks records and offsets independently per partition.
-var records = consumer.poll(Duration.ofMillis(500));
-if (!records.isEmpty()) {
-    consumer.pause(consumer.assignment());              // stop returning assigned records
-    inFlight = executor.submit(() -> process(records)); // bounded pool
-}
-if (inFlight != null && inFlight.isDone()) {
-    consumer.commitSync(nextContiguousOffsets(records)); // commit next offset, per partition
-    consumer.resume(consumer.assignment());
-    inFlight = null;
-}
+```text
+State per partition: ownership epoch, retained delivered records, completion outcomes,
+                   safe next offset, and bounded worker admission. Auto commit is disabled.
+On each owner-thread loop:
+  poll; retain new records with their partition and current ownership epoch
+  pause partitions with admitted/pending work; submit only within capacity
+  drain worker results; accept only results matching current partition ownership
+  advance safe next offset only across successfully completed delivered records
+  commit an explicit map of safe next offsets for still-owned partitions
+  resume only still-owned partitions with capacity and an appropriate completed prefix
+On failed/cancelled work: do not mark it successful; retry/route under the delivery contract.
 ```
 
-Three things this changes, all of which must be accepted deliberately:
+This is a state-machine outline, not executable code. Retain each batch across later polls;
+do not derive its checkpoint from a subsequent empty poll. `Future.isDone()` includes failure
+and cancellation: inspect the result/exception before recording successful completion.
+
+Things this changes, all of which must be accepted deliberately:
 
 - **`poll()` stays on one thread** — `KafkaConsumer` is not thread-safe. The worker must never
   touch the consumer; offsets travel back to the poll thread and are committed there.
@@ -76,21 +82,27 @@ Three things this changes, all of which must be accepted deliberately:
   partition's records in parallel destroys ordering within it, whatever the broker delivered.
   That is a design decision belonging with `message-ordering-and-partitioning`.
 - Completion can be out of order even when submission was ordered. Maintain a per-partition
-  completion gap tracker and commit `lastContiguousCompletedOffset + 1`; committing the
-  maximum completed offset loses unfinished lower records on crash.
+  delivered-order tracker; numeric offsets need not be consecutive. Commit the next pending
+  record's offset or, when a fetched partition batch is exhausted, its `nextOffsets()` entry
+  on clients supporting that API (including leader epoch). A completed record's offset + 1
+  is a conservative fallback on older clients. Never skip an unfinished delivered record.
 - **The executor must be bounded**, and paused partitions are the backpressure. An unbounded
   executor with no pause turns the topic into heap.
 
-On revocation, stop admission for those partitions, cancel/wait within a deadline, commit only
-safe contiguous completions while ownership is valid, and make late work idempotent. A commit
-can fail because the generation changed; never let an old worker mutate a non-idempotent sink
-after ownership moves.
+On revocation, stop admission for those partitions, cancel/wait within a deadline and commit
+only safe completions while ownership is valid. On `onPartitionsLost`, ownership may already
+belong to another member: invalidate its epoch and discard commit/resume eligibility rather
+than attempting a last ownership-based commit. Cancellation does not stop an external effect;
+use repeat-safe effects and sink-side fencing where stale writers must be excluded.
+Pause state is not preserved across rebalances: reconcile assignments and reapply pauses for
+retained work before admitting more. Never let a late old-epoch result advance a new assignment.
 
 ## The rebalance sequence, and where duplicates enter
 
-Triggers: a member joins (scale-up, rolling deploy), a member leaves (`close()`, crash,
+Possible triggers: a member joins (scale-up, rolling deploy), a member leaves (protocol-dependent close, crash,
 eviction), a member exceeds `max.poll.interval.ms`, the subscribed topic's partition count
-changes, or the group coordinator moves.
+changes. Coordinator changes cause rediscovery and can disrupt coordination; they do not
+necessarily require partition reassignment.
 
 ```
 1  member B joins the group
@@ -99,7 +111,8 @@ changes, or the group coordinator moves.
    COOPERATIVE: only partitions that must move are revoked; other members keep going
 4  onPartitionsRevoked → last chance to commit what has been processed
 5  assignment computed and distributed
-6  onPartitionsAssigned → members resume from the LAST COMMITTED OFFSET
+6  newly acquired partitions initialise from a checkpoint/reset/explicit seek policy
+   retained cooperative partitions keep their position and local processing state
 7  records after the last committed next offset may be delivered again
 ```
 
@@ -124,8 +137,8 @@ copying numbers:
   shutdown behavior deliberately.
 - **Smaller `max.poll.records`** — the cheapest lever for a poll-interval eviction, and the
   first to try, because it changes no code. A poll interval, if raised, comes from the measured
-  handler tail rather than a copied number, and raising it also delays reassignment of a
-  genuinely dead member.
+  handler tail rather than a copied number. Raising it delays detection of a live member
+  that stops polling; process death is normally detected by heartbeat/session expiry.
 - **Fewer, longer-lived members.** Aggressive autoscaling of a consumer group buys throughput
   and pays rebalances; with many partitions and a short scale interval a group can spend more
   time rebalancing than consuming.
@@ -147,5 +160,7 @@ documented cross-thread escape hatch.
 ## Primary references
 
 - [KafkaConsumer API (Kafka 4.1)](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
-- [Kafka consumer configuration](https://kafka.apache.org/documentation/#consumerconfigs)
+- [ConsumerRebalanceListener: revoked versus lost partitions](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/ConsumerRebalanceListener.html)
+- [Kafka 4.1 consumer configuration](https://kafka.apache.org/41/configuration/consumer-configs/)
+- [Kafka 3.8.1 source: poll callback timeout and pause state](https://github.com/apache/kafka/blob/3.8.1/clients/src/main/java/org/apache/kafka/clients/consumer/KafkaConsumer.java)
 - [KIP-848: the next-generation consumer rebalance protocol](https://cwiki.apache.org/confluence/display/KAFKA/KIP-848%3A+The+Next+Generation+of+the+Consumer+Rebalance+Protocol)

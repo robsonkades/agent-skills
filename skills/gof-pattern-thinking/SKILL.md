@@ -40,16 +40,23 @@ Forces         the concerns that compete: change rate, coupling,
     ↓
 Variation      what varies, along how many axes, and against what
     ↓
-Alternatives   the ladder below, cheapest rung first
+Alternatives   relevant options below, direct implementation first
     ↓
-Decision       the cheapest rung that resolves the forces
+Decision       lowest justified lifecycle cost among viable options
     ↓
 Consequences   what got worse, written down
 ```
 
 Skipping straight to Decision is what "cargo cult" means concretely. A design that cannot
-answer _Variation_ has not earned any structural pattern, because every structural GoF pattern
-buys the ability to vary something independently and pays for it in indirection.
+identify a concrete variation, collaboration or boundary has not justified the indirection.
+Adapters and facades can earn their place through compatibility or a stable subsystem boundary
+without forecasts of new variants.
+
+Java compatibility is a decision constraint: inspect compiler release/toolchains and dependencies.
+Records/sealed types are final in Java 17; pattern switch is final in Java 21. Do not introduce
+preview features or upgrade a project to fit an example. On older targets, compare supported
+language features and ordinary method dispatch. Missing evidence keeps a forecast or performance
+benefit conditional, rather than turning it into an assumed requirement.
 
 ## Workflow
 
@@ -62,19 +69,22 @@ buys the ability to vary something independently and pays for it in indirection.
 3. **Identify axes of variation and evidence.** Two present variants are strong evidence, but a
    single implementation can still sit behind a justified external, ownership, security or testing
    boundary. Price forecast variation explicitly (`java-dry-kiss-yagni`).
-4. **Walk the alternatives ladder** below and stop at the first rung that resolves the forces.
+4. **Compare relevant alternatives** below, starting with the direct implementation. The ladder
+   is a search aid, not a universal cost ranking: configuration, DI and function values can compose.
    Read [references/alternatives-ladder.md](references/alternatives-ladder.md) for the rung
    definitions and worked eliminations.
 5. **If a pattern is selected, name its consequences out loud** — the indirection, the extra
    lifecycle, the dispatch site that moved out of sight, the thing that got harder to read. If
    none can be named, the pattern is not yet understood well enough to adopt.
-6. **Re-check the boundary.** If the collaboration crosses a process, the local pattern's
+6. **Deliver a proportionate decision:** problem, evidence, chosen mechanism, relevant alternative,
+   consequence and verification. “No change” needs no catalogue-wide elimination report.
+7. **Re-check the boundary.** If the collaboration crosses a process, the local pattern's
    guarantees do not travel with it (`gof-patterns-and-distribution`).
 
 ## The alternatives ladder
 
 ```text
-0  Nothing              inline it; the variation is not real yet
+0  Nothing              keep it direct when no force requires indirection
 1  Language feature     record, sealed interface + exhaustive switch,
                         enum, generics, Optional, method reference
 2  Composition          hold a collaborator in a field and delegate
@@ -110,20 +120,23 @@ IF variation is one axis and each variant is one behaviour
 THEN rung 3 — a function value — before Strategy classes.
 
 IF variation is along two or more independent axes
-THEN one axis as types, the others composed. Never as subclass layers.
+THEN compare composition to a subclass cross-product. Keep a small hierarchy when
+     substitutability and shared invariants justify it; do not multiply classes mechanically.
 
 IF the set of variants is closed and you own all of them
-THEN sealed interface + exhaustive switch, and re-examine Visitor,
-     State and Strategy against it (gof-patterns-in-modern-java).
+THEN compare sealed types/switch against method dispatch, accounting for Java version,
+     state-owned behavior and type-versus-operation evolution (gof-patterns-in-modern-java).
 
 IF the set of variants is open to code you will never see
-THEN an interface, and usually a creational pattern to select it.
+THEN define an extension contract and discovery/selection/lifecycle policy.
+     An injected implementation or registry may suffice; a factory is not mandatory.
 
 IF the "variation" is data — rates, limits, endpoints, flags
 THEN configuration. Class-per-value is the commonest false pattern.
 
 IF the pattern is being adopted for performance
-THEN measure first; indirection is a cost, not a benefit
+THEN state the proposed mechanism and measure against a baseline; a pattern name
+     proves neither overhead nor speedup, and caching/sharing can avoid work
      (java-performance, jmh-microbenchmarks).
 
 IF the collaboration crosses a process boundary
@@ -140,26 +153,28 @@ THEN first remove hidden ambient dependencies where possible. A seam over
 
 - **A dispatch site moves out of sight.** After Strategy, State, Visitor or Chain of
   Responsibility, "what runs here" is answered by wiring rather than by reading. That is the
-  trade, and it pays only when the wiring changes more often than the reading.
+  trade; stable boundaries, testability and ownership can justify it even if wiring rarely changes.
 - **A lifecycle appears.** Creational patterns, Flyweight, Proxy and Singleton each introduce
   "who makes this, when, and how many" — and with it the thread-safety and
-  initialisation-order questions a plain `new` does not have.
+  initialization-order questions. Direct construction also needs ownership and safe publication;
+  the pattern may centralize an existing responsibility rather than create it.
 - **The type count rises faster than the behaviour count.** Two variants behind an interface is
-  three types where there was one; the ratio improves only if variants keep arriving.
+  more declarations to navigate. Count only added complexity, and weigh boundary guarantees;
+  type ratios are not a quality metric and more variants are not required to justify a seam.
 - **Stack traces and debugging sessions get longer.** Decorator stacks and handler chains are
   read at 3 a.m. by someone who did not write them.
-- **Tests gain seams and lose reality.** More seams mean more mock-based tests, which pass
-  while the composed whole is broken (`java-test-doubles`).
+- **Tests can overuse seams.** Mock-only tests can pass while composition is broken.
+  Keep contract and integration checks where wiring or collaborator semantics matter (`java-test-doubles`).
 
 ## Review checklist
 
 - [ ] The problem is stated in observable terms, with no pattern name in it
 - [ ] The forces and material tension/boundary are named
 - [ ] What varies is identified, with its axes and today's cardinality
-- [ ] Rungs 0–6 were each rejected for a stated reason
+- [ ] Relevant simpler alternatives were compared; mechanisms can combine without visiting every rung
 - [ ] The pattern's consequences are written down, including what got worse
 - [ ] Every one-implementation interface has a concrete boundary, authority or testability reason
-- [ ] The variation is code, not data that belongs in configuration
+- [ ] Data-only variation uses validated configuration when appropriate; behavior and invariants stay explicit
 - [ ] Any performance claim rests on a measurement, not on structure
 - [ ] If the collaboration crosses a process, failure semantics are designed, not inherited
 

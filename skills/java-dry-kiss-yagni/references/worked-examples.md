@@ -1,5 +1,10 @@
 # Worked examples
 
+These are illustrative scenarios, not reported production incidents. Java blocks are partial
+snippets: imports from `java.math`, `java.time` and `java.util`, enclosing class for the old
+static method, and domain fixtures are omitted. Records use Java 16+; validate with the
+project's target (Java 17 is sufficient here), without preview or extra dependencies.
+
 ## Example 1: inline the wrong abstraction
 
 **Before.** One helper serves both dunning reminders and shipment confirmations. It began
@@ -28,37 +33,38 @@ static String buildEmail(Customer customer, List<OrderLine> lines, BigDecimal am
 
 **Analysis.** The knowledge test fails on every question. Dunning content is owned by the
 finance team and changes with collection policy; shipment content changes with logistics.
-`date` means "due date" for one caller and "delivery date" for the other — one parameter,
+`date` means "due date" for one caller and "ship date" for the other — one parameter,
 two meanings. Callers select behaviour through three booleans, so `finalNotice` is
 meaningful for one caller and a trap for the other (`buildEmail(c, lines, amount, date,
 false, true, true)` compiles and quietly ignores the last flag). What the copies actually
 shared was shape — "build a greeting, a body, maybe a list" — not a rule.
 
-**After.** One function per piece of knowledge; only the genuinely shared mechanics
-(postal address formatting, owned by no business rule but by the postal format) stay
-shared. Parameters become types that make wrong calls unrepresentable:
+**After.** Assume caller inspection proves reminders use `includeLines=false` and shipment
+confirmations use `includeLines=true`. The split below preserves those paths, including the
+caller's existing final-notice decision. If reminders also contain lines or shipments omit
+them, preserve those real cases explicitly before deleting the helper. The input types make
+the email kind explicit; they do not enforce nullability or every domain invariant.
 
 ```java
-record OverdueInvoice(Customer customer, BigDecimal amountDue, LocalDate dueDate, int reminderCount) {}
+record OverdueInvoice(Customer customer, BigDecimal amountDue, LocalDate dueDate, boolean finalNotice) {}
 
 final class DunningEmails {
     static String reminder(OverdueInvoice invoice) {
-        var tone = invoice.reminderCount() >= 3 ? "FINAL NOTICE: " : "Reminder: ";
+        var tone = invoice.finalNotice() ? "FINAL NOTICE: " : "Reminder: ";
         return "Dear " + invoice.customer().name() + ",\n"
                 + tone + "payment of " + invoice.amountDue()
-                + " was due " + invoice.dueDate() + ".\n"
-                + PostalFormat.formatAddress(invoice.customer().address());
+                + " was due " + invoice.dueDate() + ".\n";
     }
 }
 
 final class ShipmentEmails {
     static String confirmation(Shipment shipment) {
         var sb = new StringBuilder("Dear " + shipment.customer().name() + ",\n");
-        sb.append("Your order ships on ").append(shipment.expectedDelivery()).append(".\n");
+        sb.append("Your order ships on ").append(shipment.shipDate()).append(".\n");
         for (var line : shipment.lines()) {
             sb.append(line.quantity()).append(" x ").append(line.description()).append('\n');
         }
-        return sb.append(PostalFormat.formatAddress(shipment.customer().address())).toString();
+        return sb.toString();
     }
 }
 ```
@@ -67,9 +73,10 @@ final class ShipmentEmails {
 files. Total line count grew. Accepted: the two emails have never changed for the same
 reason, and each method is now readable without simulating flag combinations.
 
-**Verification.** No call site passes a boolean. Each method's tests describe one email
-kind with no mention of the other. The next dunning requirement (a fourth reminder tier)
-touched one file.
+**Verification.** Compare exact output for regular/final reminders and empty/non-empty
+shipment lines against the mapped old calls, including newline layout. No call site chooses
+the email kind with a flag; `finalNotice` remains a legitimate dunning input. A new reminder
+tier should affect dunning only, but that change must be tested before claiming isolation.
 
 ## Example 2: merge knowledge duplication
 
@@ -82,14 +89,15 @@ line.amount().multiply(VAT_RATE).setScale(2, RoundingMode.HALF_UP);
 refunded.multiply(new BigDecimal("0.19")).setScale(2, RoundingMode.HALF_UP);
 ```
 
-A rate change was applied to `InvoiceService` and missed in `RefundService`; refunds
-over-refunded for a week.
+Assume a confirmed defect: these particular invoice/refund calculations were required to use
+the same rule version, but only one copy was updated. Do not infer that every refund should
+use today's rate: it may need the rate/rule recorded on the original transaction.
 
-**Analysis.** The knowledge test passes: the rule is "VAT is computed per line, rounded
-half-up to two decimal places, at the jurisdiction's rate" — a legal fact with one
-authority, so every plausible change (rate, rounding regime, scale) must hit both copies
-on the same day. This is also a monetary rule, so the rule of three does not apply: merge
-at the second occurrence.
+**Analysis.** For this fictional exercise only, the agreed rule is per-line multiplication
+rounded half-up to two decimal places. It is not a statement of any jurisdiction's tax law.
+The authority and computation are shared, while selecting the applicable rule version/date
+remains a caller responsibility. If that authority is confirmed, extracting this nucleus
+can prevent drift without waiting for a third copy.
 
 **After.**
 
@@ -99,20 +107,27 @@ final class VatPolicy {
 
     VatPolicy(BigDecimal rate) { this.rate = rate; }
 
-    /** VAT per line, rounded half-up to 2 dp — the legal rule, stated once. */
+    /** Illustrative agreed policy: per-line multiplication, half-up to 2 dp. */
     BigDecimal vatOf(BigDecimal netLineAmount) {
         return netLineAmount.multiply(rate).setScale(2, RoundingMode.HALF_UP);
     }
 }
 ```
 
-Both services take a `VatPolicy`; the literal `"0.19"` appears once, in configuration.
+Both services take the appropriate `VatPolicy`; the illustrative `"0.19"` comes from
+authoritative rate data. Historical versions may coexist. Real implementation additionally
+needs agreed currency/scale, valid input and refund allocation rules; these are not inferred here.
 
 **Trade-offs.** Both services are now coupled to `VatPolicy`: a change there must be
-assessed against both. Accepted — the law already couples them; the code now says so.
+assessed against both. Accepted — the confirmed authority already couples the computation.
 Note what was _not_ merged: the services' loops over lines stayed separate, because "loop
 and sum" is shape, not knowledge.
 
-**Verification.** One test pins the rounding behaviour (`10.05 × 0.19 → 1.91`) against
-`VatPolicy` alone. A repository-wide search for `setScale(2, RoundingMode.HALF_UP)` next
-to a VAT rate finds only the policy class.
+**Verification.** Check a regular value (`10.05 × 0.19 → 1.91`) and a true tie
+(`1.50 × 0.19 → 0.29`, whereas HALF_EVEN yields `0.28`). If signed amounts are supported,
+also test the negative tie (`-0.29`). Consumer tests must prove the invoice/refund choose
+the required current or historical policy; a policy unit test cannot prove that wiring.
+Search for remaining implementations as a coverage aid, not proof of semantic equivalence.
+The arithmetic follows [BigDecimal](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/math/BigDecimal.html)
+and [RoundingMode](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/math/RoundingMode.html)
+contracts; tax-policy selection requires project evidence.

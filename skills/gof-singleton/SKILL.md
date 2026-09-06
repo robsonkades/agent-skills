@@ -2,7 +2,7 @@
 name: gof-singleton
 description: >
   Singleton in modern Java, treated as a high-risk pattern: it conflates "one instance" with
-  "reachable from anywhere", and only the second is usually wanted. Covers why dependency
+  "reachable from anywhere", which must be justified separately. Covers why dependency
   injection gives uniqueness as a consequence of wiring, the scale ladder showing a Java
   singleton is unique per class loader and never per cluster, the safe lazy-initialisation
   idioms and the class-initialisation deadlock they invite, the static-state leakage that makes
@@ -28,13 +28,18 @@ Almost always the requirement is "one instance", and dependency injection delive
 by constructing one and wiring it. The instance is then unique because nothing else makes one —
 without any type having to enforce it, and without any caller reaching around its constructor.
 
+Inspect compiler/toolchain, container definitions and deployment topology first. Implementation
+examples use Java 17 without preview; ScopedValue is final in Java 25 and represents dynamic
+context binding, not instance uniqueness. Do not upgrade a project to adopt an idiom.
+
 ## The uniqueness ladder
 
 ```text
-Thread          ThreadLocal / ScopedValue
+Thread binding  ThreadLocal (not a uniqueness guarantee)
+Dynamic scope   ScopedValue (may share the same value across structured forks)
 Defining class loader    a static field — the same class may exist in several loaders
 Process (JVM)   a static field, if one class loader; a DI container's
-                singleton scope, if one container
+                singleton scope, if one relevant bean definition/container
 Container/pod   the process, restated — one JVM per pod by convention
 Node            an OS-coordinated lock/socket, with stale-owner and namespace handling
 Cluster         leader election or a distributed lock with a lease
@@ -42,15 +47,16 @@ Region          the above, plus a consensus system that spans zones
 System          a protocol and authority boundary, not a language primitive
 ```
 
-A `getInstance()` gives you row two. Every requirement expressed as "there must be only one" in
+A conventional static `getInstance()` is bounded by the defining class loader. A requirement for
 a horizontally scaled service — one scheduler, one cache warmer, one sequence generator, one
-outbox relay — needs row six or seven, and no amount of `static` will produce it. This is the
+outbox relay — needs an explicit coordination/effect contract, and no amount of `static` will produce it. This is the
 single most expensive misunderstanding in this pattern (`leader-election`,
 `distributed-locks-and-leases`).
 
-Spring's `@Scope("singleton")` is row three at most: one instance _per application context_.
-Two contexts in one JVM — common in tests — give two instances. It is a lifecycle scope, not
-this pattern, and it carries none of the global-access problems because nothing calls a static.
+Spring singleton scope is one instance per bean definition per container, not per type/JVM.
+Two definitions of the same class can produce two instances in one context; child contexts may
+inherit a parent's bean or define their own. DI avoids global access only when callers actually
+receive dependencies rather than consulting a static service locator.
 
 ## When it is the answer
 
@@ -106,8 +112,9 @@ THEN use the holder idiom or an enum. Double-checked locking is correct
      only with a volatile field and is rarely worth the risk.
 
 IF the singleton's initialiser touches another class's static initialiser
-THEN two threads can deadlock on class initialisation locks. Keep static
-     initialisers free of cross-class work and of I/O.
+THEN inspect cycles and blocking: cross-class initialization alone is normal,
+     but circular waits between initializing threads can deadlock. Avoid cyclic
+     initialization and keep fallible/blocking acquisition in an owned lifecycle.
 
 IF tests need a reset() method on it
 THEN treat that as evidence of hidden mutable lifetime. Prefer an owned instance;
@@ -140,17 +147,22 @@ THEN the serialisation and reflection safety it buys is irrelevant, and
   (`false-sharing-and-contended`, `lock-inflation`).
 - **Testing.** Static state survives between tests in the same JVM, so tests pass alone and fail
   in a suite, or pass in one order and fail in another. Parallel test execution makes it worse.
-  The absence of a constructor parameter also means a test cannot substitute the collaborator at
-  all without a bytecode-level tool (`java-test-design`).
+  The absence of a constructor parameter also means a test cannot substitute the collaborator
+  through constructor injection; legacy seams, wrappers or isolated processes may help during
+  migration (`java-test-design`).
 
 ## Review checklist
+
+Return the required scope, actual creation/call sites, owner and close/retry policy, chosen
+mechanism and observed checks versus pending. Missing topology or external callers leaves
+uniqueness and removal safety conditional.
 
 - [ ] "One per what?" is answered explicitly and matches the mechanism used
 - [ ] Nothing that must be unique across replicas relies on a static field
 - [ ] The instance holds no mutable state, or every mutation is documented as thread-safe
 - [ ] Lazy initialisation uses the holder idiom or an enum, not unguarded or non-volatile checks
-- [ ] No static initialiser performs I/O, blocking work, or triggers another class's init
-- [ ] No test requires a `reset()` on it
+- [ ] Initialization has no cyclic/blocking dependency and has an explicit failure policy
+- [ ] Legacy resets are isolated from concurrent tests and tracked for removal
 - [ ] Dependency injection was considered and rejected for a stated reason
 - [ ] Spring's singleton scope is not described as this pattern in review comments
 

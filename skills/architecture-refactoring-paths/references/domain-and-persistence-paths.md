@@ -2,7 +2,7 @@
 
 ## Transaction Script → Domain Model
 
-**Trigger:** the same business rule implemented in three or more scripts, diverging
+**Trigger:** duplicated business rules are diverging or interactions have outgrown scripts
 (`domain-logic-organization`).
 
 ```text
@@ -25,18 +25,19 @@
                      already there.
 
 6. Protect state     Remove the setters the moved rules depended on; the
-                     compiler finds anything that bypassed the model.
+                     compiler finds direct callers of those setters.
 
-7. Aggregate         Only now decide the aggregate boundary and add the
-                     version column (offline-concurrency-control).
+7. Reassess          Revisit aggregate boundaries using the extracted
+                     invariants; preserve concurrency protection throughout
+                     (offline-concurrency-control).
 ```
 
 **Intermediate state:** a script that calls the domain type for one rule and does the rest
 itself. This is fine, readable, and may persist for months.
 
-**Where it goes wrong:** starting at step 7 — designing aggregates before the rules have
-been extracted. The aggregate boundary is derived from which invariants exist, and that is
-only known after step 4.
+Identify cross-record invariants and their transaction protection before moving rules;
+extraction can refine this understanding. Do not postpone required concurrency protection.
+Removing setters finds direct callers, not reflection, bulk SQL or every invariant bypass.
 
 ## Active Record → Data Mapper
 
@@ -55,21 +56,22 @@ its shape is dictating the domain (`data-source-patterns`).
 4. Widen             Method by method, caller by caller.
 
 5. Contain           The entity is now reachable only from the mapper.
-                     Make it package-private — the compiler enforces the
-                     boundary from here on.
+                     Use package/module visibility where the ORM supports
+                     it, plus dependency checks and integration tests.
 
-6. Diverge           Now, and only now, the model may change without a
-                     migration, and the schema without a model change.
-                     This is where the investment pays back.
+6. Diverge           Evolve model and schema through the mapping. Mapping
+                     changes and data migrations can still be necessary.
 ```
 
 **Stopping points that are good outcomes:** after step 3 for the one aggregate that hurt;
 after step 5 for a module. A codebase where the complex aggregate uses a mapper and the CRUD
 modules stay Active Record is a good final state, not an unfinished one.
 
-**Reconstitution is the detail to get right at step 2:** loading must produce states the
-public constructor forbids (a cancelled order). Use a package-private static factory; do not
-weaken the public constructor (`repository-pattern`).
+**Reconstitution:** loading may restore valid lifecycle states that a creation factory does
+not create (a cancelled order). A dedicated factory may help; validate persisted invariants
+and handle invalid legacy rows explicitly (`repository-pattern`). Test identity, dirty tracking,
+cascades and transaction ownership while both representations coexist. A Data Mapper does
+not inherently require separate ORM and domain classes; this sequence is for that chosen design.
 
 ## Entity as API payload → boundary contract
 
@@ -80,10 +82,10 @@ lazy initialisation error during serialisation (`remote-facade-and-dto`).
 1. Snapshot          A test asserting the CURRENT JSON shape, field by
                      field. This is the contract you must not break.
 
-2. Introduce         A response record with exactly those fields, and a
-                     projection query that produces it.
+2. Introduce         A response DTO with the agreed fields and an explicit
+                     mapper or projection query that produces it.
 
-3. Switch one        One endpoint returns the record instead of the
+3. Switch one        One endpoint returns the DTO instead of the
                      entity. The snapshot test must still pass unchanged.
                      SHIP.
 
@@ -99,7 +101,14 @@ lazy initialisation error during serialisation (`remote-facade-and-dto`).
 
 **Why the snapshot comes first:** serialising an entity produces a shape nobody designed —
 including fields added incidentally. Clients depend on it. Step 1 turns an accidental shape
-into a stated contract, which is the whole risk of this migration.
+into evidence of compatibility. Include nulls, omission, dates, errors and authorization;
+a snapshot is not proof all clients were covered. Do not perpetuate exposed secrets merely
+to keep a snapshot green: isolate the intentional security correction and affected contract.
+
+Choose a record only when the target Java release and serializer support it. Records are a
+standard feature from Java 16; on older targets use an ordinary DTO class. This is a boundary
+representation choice, not permission to upgrade the runtime or replace an ORM entity with a
+record. See [Oracle's record-class guide](https://docs.oracle.com/en/java/javase/17/language/records.html).
 
 ## Inheritance strategy change
 
@@ -130,7 +139,9 @@ This one is a data migration, so it follows expand/contract strictly:
 7. Contract          Drop the old columns/tables after a soak period.
 ```
 
-Seven deploys. Each is reversible, and the only irreversible one is the last.
+These are logical phases, not seven necessarily separate deploys. Step 6 starts divergence:
+once new-only writes occur, switching to the old representation requires catch-up or repair
+even before tables are dropped. Apply the data protocol below.
 
 ## Splitting an aggregate that is too large
 
@@ -157,8 +168,14 @@ parts, or an unbounded load (`offline-concurrency-control`).
                      contention — verify with the conflict metric.
 ```
 
-**Verification:** the optimistic-conflict rate per aggregate type, before and after. If it
-did not move, the split was on the wrong line.
+**Verification:** test cross-part invariants and mixed old/new writers before separating versions.
+Two roots over the same rows must not bypass each other's concurrency checks. Compare conflicts,
+load and work completed under comparable traffic; an unchanged rate warrants investigation,
+not proof the boundary was wrong. Eventual consistency requires business acceptance of the
+temporary state and failure recovery before operations move to it.
+An atomic transaction alone does not protect a cross-part read predicate from concurrent
+transactions. Before splitting versions, apply the invariant checks in the boundary reference's
+pessimistic-to-optimistic path; test conflicting decisions that update different rows.
 
 ## Adding optimistic locking to an existing table
 
@@ -174,15 +191,16 @@ did not move, the split was on the wrong line.
                      concurrent modifications between load and flush, even before
                      an HTTP client carries the version. DEPLOY and observe.
 
-3. Bulk statements   Audit every bulk UPDATE and native query on the
-                     table; add `version = version + 1`. Test it.
-                     ← Skipping this silently defeats the whole exercise.
+3. All writers       Audit bulk/native SQL, jobs and old deployed binaries.
+                     Version advancement invalidates stale readers; a write
+                     based on a prior read also needs an atomic expected-version
+                     predicate and affected-row check. Test both directions.
 
 4. Carry the version Include it in read payloads (or an ETag); accept it
                      on write (or If-Match). DEPLOY.
 
 5. Enforce           Reject writes with a missing or stale version, with
-                     a 409/412 and a usable message.
+                     the documented API conflict/precondition response.
 
 6. Observe           A conflict counter per aggregate type, plus tests that
                      deterministically create stale writers. Zero production
@@ -192,3 +210,33 @@ did not move, the split was on the wrong line.
 
 The forced-conflict test and audit of bulk/native writes are what reveal a mechanism that exists in
 mapping metadata but is bypassed on important update paths.
+
+Stage enforcement so every writer participates before removing older protection. A compatibility
+release or controlled write pause may be needed; adding `@Version` on only new instances does not
+protect against unversioned old writers. A bulk update can leave managed objects stale: clear or
+refresh the affected persistence context as appropriate. Do not blindly retry stale user intent.
+
+## Data coexistence protocol
+
+Before using dual writes or a backfill, specify:
+
+- One authoritative representation per phase, including deletes, generated IDs, defaults and
+  subtype changes. If both writes share a transaction, verify rollback of either failure.
+  Across stores, use durable change capture/outbox or another explicit recovery protocol;
+  two best-effort writes plus periodic comparison do not prevent divergence.
+- A restart cursor and bounded transactions. Avoid overwriting newer live writes with stale
+  backfill values: use conditional/versioned writes or snapshot plus ordered change catch-up.
+  Include deletes/tombstones, retry deduplication and lag limits before switching reads.
+- Reconciliation of logical records and invariants, not counts alone. Checksums require a
+  canonical projection and comparable snapshot/watermark; investigate mismatches before cutover.
+- Mixed-version compatibility and the last phase where old data remains current. Retain the
+  old representation only as long as the recovery plan requires, with an explicit owner.
+
+## Verified technical anchors
+
+- [Jakarta Persistence 3.2, locking and bulk updates](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html):
+  bulk operations bypass optimistic checks and do not synchronize the persistence context.
+  The mixed-writer rollout above is a design consequence; it still needs application tests.
+- [PostgreSQL 17 lock modes](https://www.postgresql.org/docs/17/explicit-locking.html): UPDATE
+  takes a table ROW EXCLUSIVE lock and row locks; this is not an exclusive lock against all
+  table access. Validate DDL and backfill costs for the actual engine/version and workload.

@@ -33,6 +33,13 @@ the program has a data race?
 
 ## Proof contract
 
+The specification reference is Java SE 25; distinguish it from the project's compiler release,
+runtime and concurrency-library versions. Inspect those, relevant JVM flags and all participating
+access paths before applying a release-sensitive API rule. Do not upgrade or enable preview.
+If a write path or handoff contract is unavailable, report an incomplete proof and name the missing
+edge evidence; do not substitute a successful run for it. Java snippets below are partial patterns
+with omitted types/enclosing declarations, not standalone executable tests.
+
 ```text
 shared locations and conflicting reads/writes:
 threads/tasks and action lifecycle:
@@ -67,7 +74,10 @@ Happens-before is stronger than “earlier in time” and subtler than “read B
 read is allowed to observe a write only under the JLS rules; intervening/unordered writes and races
 matter. Draw actual actions rather than using “visibility” as a magic word.
 
-## Synchronizes-with edges used in reviews
+## Synchronization and derived happens-before edges used in reviews
+
+Monitor/volatile pairs are primitive synchronizes-with edges; lifecycle/API rows summarize
+derived guarantees. Expand them into actual actions before treating them as a proof graph.
 
 | Source action                   | Destination action                         | Scope/caveat                                      |
 | ------------------------------- | ------------------------------------------ | ------------------------------------------------- |
@@ -81,10 +91,13 @@ matter. Draw actual actions rather than using “visibility” as a magic word.
 
 Default initialization also has a happens-before rule. Final-field semantics are special freeze/
 dereference rules and should not be mislabeled as a generic publication happens-before edge.
+Timed `join` can return before termination, and `isAlive() == false` on an unstarted thread
+does not detect completed work. Confirm the actual lifecycle before using termination ordering.
 
 ## Volatile publication
 
-For immutable or safely isolated data built before publication:
+For immutable or safely isolated data built before publication, with exactly one publisher
+and one publication per holder instance (`ready` initially false, never reset):
 
 ```java
 private Config config;
@@ -104,6 +117,9 @@ Config current() {
 The proof uses program order, volatile synchronizes-with, and transitivity. Every reader must read
 the anchor before dependent state, and every publishing path must perform the ordered anchor write.
 Post-publication mutation needs its own synchronization.
+This flag is not a reusable version protocol: a reader can observe an earlier `true` while
+a later publisher overwrites ordinary `config`. For replacement updates publish the immutable
+configuration through one volatile reference and read it once, as in the publication reference.
 
 `volatile` makes each access to that variable atomic and ordered as specified; it does not make a
 compound read-modify-write (`x++`) atomic, nor a multi-field invariant a snapshot. Multi-field state
@@ -131,8 +147,9 @@ memory effects.
 
 ## Constructor escape and lifecycle
 
-Escape includes registering listeners, submitting/staring work with `this`, publishing to static or
-shared state, callbacks from overridable methods, and lambdas capturing `this`. Subclass fields may
+Escape includes exposing `this` through listener registration, submitted/started work, static/shared
+state or callbacks. Merely creating a lambda that captures `this` is not escape until that callback
+is exposed; constructor-time callbacks can still observe partial state without another thread. Subclass fields may
 not be initialized when base-constructor escape invokes overridden behavior. Construct privately,
 then publish from a factory or owner after completion.
 
@@ -178,15 +195,15 @@ specific instructions or “volatile reads are free” as portable correctness/p
 
 ## Anti-patterns
 
-| Anti-pattern                           | Why wrong                                        | Better approach                           | Narrow exception |
-| -------------------------------------- | ------------------------------------------------ | ----------------------------------------- | ---------------- |
-| Sleep as synchronization               | creates no edge                                  | latch/future/join/condition               |
-| Final reference means safe mutable map | freeze is not later mutation safety              | immutable snapshot or concurrent protocol |
-| Volatile each field in invariant       | no atomic snapshot/transition                    | immutable aggregate/lock/proven protocol  |
-| Test passed on x86                     | finite observations do not prove JMM correctness | formal hb graph + jcstress                |
-| Log statement fixed race               | timing/compiler perturbation only                | establish missing ordering/atomicity      |
-| Different locks for reader/writer      | no shared monitor edge                           | one guard or another explicit edge        |
-| JFR found no contention                | races need not block                             | outcome/model/static analysis             |
+| Anti-pattern                           | Why wrong                                               | Better approach                                      | Narrow exception |
+| -------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------- | ---------------- |
+| Sleep as synchronization               | creates no edge                                         | latch/future/join/condition                          |
+| Final reference means safe mutable map | freeze is not later mutation safety                     | immutable snapshot or concurrent protocol            |
+| Volatile each field in invariant       | no atomic snapshot/transition                           | immutable aggregate/lock/proven protocol             |
+| Test passed on x86                     | finite observations do not prove JMM correctness        | formal hb graph + jcstress                           |
+| Log statement fixed race               | timing or incidental logger synchronization may mask it | establish an intentional ordering/atomicity protocol |
+| Different locks for reader/writer      | no shared monitor edge                                  | one guard or another explicit edge                   |
+| JFR found no contention                | races need not block                                    | outcome/model/static analysis                        |
 
 ## Definition of done
 
@@ -200,8 +217,8 @@ specific instructions or “volatile reads are free” as portable correctness/p
 
 ## References
 
-- [Happens-before and publication proofs](references/happens-before.md)
-- [Concurrency review and incident checklist](references/review-checklist.md)
+- [Happens-before and publication proofs](references/happens-before.md) — read when proving publication, initialization or a compound operation.
+- [Concurrency review and incident checklist](references/review-checklist.md) — read for incident evidence, outcome classification and test planning.
 - [JLS 17: Threads and Locks](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
 - [JLS 17.4: Memory Model](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4)
 - [JLS 17.5: Final Field Semantics](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5)

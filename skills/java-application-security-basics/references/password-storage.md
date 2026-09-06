@@ -192,8 +192,12 @@ from the password database", in a secrets vault or an HSM. NIST 800-63B-4 says *
   `bcrypt(base64(hmac-sha384(data:$password, key:$pepper)), $salt, $cost)`. The base64 is not
   decorative — it defeats null-byte truncation; the HMAC is not interchangeable with a plain
   hash — it defeats _password shucking_.
-- **Rotation is solvable and nobody writes the code**: verify with the current pepper, fall
-  back to the previous, rehash and store on success. That is the `upgradeEncoding` shape — but
+- **Rotation requires a key version and a retirement plan**: store a non-secret pepper version
+  with each credential and select only an allowlisted key version. Rehash on successful login
+  with the new pepper, using compare-and-set so a concurrent password reset is not overwritten.
+  If legacy rows require fallback, bound it to an explicit transition window and account for
+  the extra KDF work. Reset inactive accounts before retiring the old key; a compromised pepper
+  cannot be made safe merely by waiting for logins. This is the `upgradeEncoding` shape — but
   `Pbkdf2PasswordEncoder`, the one Spring encoder with a pepper, does not override it (§3), so
   here you write the rehash yourself.
 
@@ -233,7 +237,8 @@ with a thin entropy pool that is a real startup hang.
   condition."_ — the standard names them explicitly as not meeting the 128-bit bar. So: where
   ASVS L2 is claimed or audited, emit 16 bytes from `SecureRandom` and Base64url-encode them;
   everywhere else leave an existing `UUID.randomUUID()` token alone rather than spending a
-  change on 6 bits. `UUID.nameUUIDFromBytes` (v3/MD5) is deterministic and genuinely unsafe.
+  change on 6 bits. `UUID.nameUUIDFromBytes` (v3/MD5) is deterministic and unsuitable for
+  unguessable credentials; this is not a ban on non-secret deterministic identifiers.
 
 ## 6. Secrets in the running system
 
@@ -245,11 +250,12 @@ a mounted volume, or an in-memory fetch from a secret store. This contradicts th
 habit of `SPRING_DATASOURCE_PASSWORD` in the environment, and is worth stating plainly rather
 than letting a team believe the variable is the remediation.
 
-Lifecycle: creation, rotation, revocation, expiration. "You should regularly rotate secrets so
-that any stolen credentials will only work for a short time." A secret committed to
-`application.yml` is permanent in git history — rotating without purging history is not
-remediation. Without `gitleaks`/`trufflehog` or platform secret scanning in CI, this class of
-defect is found by an outsider.
+Lifecycle: creation, rotation, revocation, expiration. For an exposed credential, revoke or
+rotate first and verify that the old value is rejected. Remove the source literal and review
+access/audit evidence. History cleanup is a separate, coordinated operation: it reduces future
+discovery but cannot invalidate copies in clones or backups. Do not delay revocation for a
+history rewrite or perform that rewrite without authorization. Secret scanning in CI helps
+detect future leaks but does not prove their absence.
 
 ## 7. `char[]` versus `String`
 
@@ -260,8 +266,8 @@ overwritten when done."
 
 **Memory scrubbing has bounded value and must not be sold as guaranteed erasure:**
 
-1. A moving/compacting collector — G1, ZGC, Shenandoah, i.e. every collector you will run on
-   Java 21+ — may have copied the array repeatedly. `Arrays.fill(pw, '\0')` zeroes one copy.
+1. A moving/compacting collector such as G1, ZGC or Shenandoah may have copied the array
+   repeatedly. `Arrays.fill(pw, '\0')` zeroes one copy, not every possible historical copy.
 2. The password almost certainly existed as a `String` before it reached you: HTTP parameter
    decoding, Jackson, JDBC.
 3. `PasswordEncoder.encode(CharSequence)` calls `.toString()` internally (verified in
@@ -288,6 +294,11 @@ encoder bean. A cost factor chosen in 2018 breaks no test and fails no health ch
 in the system makes it visible.
 
 ## Authoritative sources
+
+The incident-response ordering and wrapped-key distinction were checked on 2026-09-05:
+
+- [GitHub: removing sensitive data](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository)
+- [AWS KMS data keys](https://docs.aws.amazon.com/kms/latest/developerguide/data-keys.html) — plaintext versus encrypted data keys; this does not require adopting AWS.
 
 - [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)
 - [Spring Security password storage reference](https://docs.spring.io/spring-security/reference/features/authentication/password-storage.html)

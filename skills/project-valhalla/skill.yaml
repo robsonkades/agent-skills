@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: project-valhalla
-version: 1.0.0
+version: 1.0.1
 description: >-
   Evaluating Project Valhalla value-class proposals and Early-Access builds without presenting
   draft syntax or flattening heuristics as released Java behavior. Use when code or documentation

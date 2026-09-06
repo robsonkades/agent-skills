@@ -24,11 +24,22 @@ still suspends and can destabilize the target; core-file analysis is the safe po
 mode.
 
 The failure this prevents is arriving at the incident with no readable artefact. Automatic
-core dumps need three independent settings to be right **before** the crash; hs_err is
+core dumps need a tested JVM/OS/collector/storage path **before** the crash; hs_err is
 routinely deleted by log rotation; and a `jhsdb` from a slightly different build reads the
 wrong binary offsets and fails in ways that do not name their own cause.
 
 ## Workflow
+
+Inspect the target HotSpot vendor/update/build, CPU architecture, OS, container namespaces
+and deployed tool availability. Command examples use JDK 25; Linux core/systemd recipes do
+not apply unchanged to Windows minidumps or other platforms. Missing matching tools/binaries
+is an evidence limitation, not permission to upgrade the target. Preserve originals and work
+on copies. Report artifact identity/completeness, observed state, competing hypotheses and
+remaining gaps rather than attributing a crash solely from its frame letter.
+
+Live SA attach, core capture and deliberate termination require authority for that target,
+capacity and recovery budget. Reuse existing incident/session authorization; ask only for
+missing scope. A redundant replica alone is not authorization or proof of safe disruption.
 
 1. **Triage the artefacts before touching a tool.** hs_err present? Core present?
    `OutOfMemoryError` in the application log? Nothing at all? Each combination points
@@ -49,14 +60,15 @@ wrong binary offsets and fails in ways that do not name their own cause.
 6. **Name the gaps in the evidence.** Unmounted virtual threads appear in neither
    `jstack` nor `jhsdb jstack`; say so rather than concluding from their absence.
 7. **Size from measurement, not a rule of thumb.** Before concluding "the container was
-   too small", recompute expected JVM memory from an NMT reading under load —
+   too small", correlate process/container footprint with NMT and other evidence under load —
    jvm-memory-regions owns that budget.
 
 ## Rules
 
 - Three artefacts, three mechanisms: a heap dump is a JVM concept (the Java object graph),
-  a core dump is an OS concept (all mapped process memory), hs_err is text the JVM writes
-  from a signal handler. Do not look for one where another exists.
+  a core dump is an OS/debugger memory snapshot (selected mappings, possibly truncated),
+  hs_err is text HotSpot's fatal-error path attempts to write for signals or internal fatal
+  errors. Do not assume any artifact is complete merely because it exists.
 - Run `jhsdb` from the **same exact vendor/update/build** as the target and retain its
   launcher, `libjvm`, dependent libraries and symbols. The SA reads HotSpot
   internals by binary offset via `VMStructs`, not through a stable API, so a different
@@ -65,16 +77,18 @@ wrong binary offsets and fails in ways that do not name their own cause.
 - `jcmd <pid> VM.native_memory summary` produces no core dump. It prints an NMT text report
   and requires `-XX:NativeMemoryTracking` on the target. There is no NMT path to a core
   dump.
-- `gcore -o core <pid>` and GDB `generate-core-file` suspend the process while capturing
-  and normally resume it afterwards; that pause, page pressure and debugger attach are
-  production-impacting and the process may still need restart. `kill -ABRT <pid>`
-  `kill -ABRT <pid>` **kills it**. Use the last one only where losing the process is
-  acceptable — a redundant replica the orchestrator will recreate.
-- Automatic core dumps on crash need all three of `ulimit -c` (not `0`),
-  `/proc/sys/kernel/core_pattern` pointing somewhere with room, and
-  `-XX:+CreateCoredumpOnCrash` (default `true` since JDK 9). Without the ulimit the flag
-  does nothing, because the kernel writes the core, not the JVM. Under systemd this also
-  means `LimitCORE=infinity`.
+- `gcore -o core <pid>` suspends the process and normally detaches afterward. In an
+  interactive GDB session, `generate-core-file` does not itself detach/resume the target;
+  the operator must do so explicitly. That pause, page pressure and debugger attach are
+  production-impacting and the process may still need restart. `kill -ABRT <pid>` is an
+  intentionally terminating signal under its default disposition; it is not a promise of
+  either a core or hs_err. Use it only within an authorized termination/capture plan.
+- For automatic HotSpot fatal-error cores on Linux, inspect `CreateCoredumpOnCrash`, the
+  target's limits/dumpability and `core_pattern`. Direct-file cores need sufficient
+  `RLIMIT_CORE`/`RLIMIT_FSIZE` and writable storage. Piped handlers bypass the kernel's
+  `RLIMIT_CORE` size limit but have their own acceptance/storage limits. Thus `CORE 0` alone
+  does not explain a missing piped core. Check systemd `LimitCORE` and collector policy as
+  applicable; three settings alone never guarantee capture.
 - Size the destination from representative mapped/resident state, sparse-file behavior,
   `coredump_filter`, compression and retention. Worst-case planning approaches heap plus
   native mappings, but core size is not a fixed `-Xmx + constant` formula.
@@ -83,7 +97,8 @@ wrong binary offsets and fails in ways that do not name their own cause.
   artefact of a crash and the most commonly deleted. Where no persistent path exists,
   `-XX:+ErrorFileToStderr` (or `ErrorFileToStdout`) writes the whole report to the
   stream the log pipeline already captures, so a pod that is replaced seconds after the
-  crash still leaves its hs_err in the log store.
+  crash can leave hs_err in the log store if capture, delivery and retention complete; test
+  truncation/loss limits in that pipeline rather than assuming the full report survived.
 - A `-XX:+CrashOnOutOfMemoryError` crash is an hs_err whose header reads
   `fatal error: OutOfMemory encountered: <region>` with an `Internal Error (debug.cpp…)`
   line, not a signal — do not hunt for a native bug in it. Which of `Exit…`/`Crash…` to
@@ -97,21 +112,26 @@ wrong binary offsets and fails in ways that do not name their own cause.
   to **unmounted virtual threads** — both enumerate from threads, and an unmounted virtual
   thread's stack lives as a `StackChunk`/`Continuation` on the Java heap. Use
   `jcmd <pid> Thread.dump_to_file -format=json` while the process is still alive; against a
-  core there is no equivalent, and that gap must be stated, not glossed over.
+  core this command cannot run. SA's normal thread listing is not a complete virtual-thread
+  census; specialized heap/continuation inspection may recover additional state. State the
+  tested tool/build's coverage rather than claiming all such state is unrecoverable.
 - SIGKILL cannot be handled, so a Linux OOM kill produces no JVM hs_err/core and may leave
-  no application log. Exit code 137 means SIGKILL—not its cause; manual kill, orchestrator
+  no application log. Exit code 137 conventionally encodes SIGKILL but a process can also
+  exit with that numeric code; confirm signal/runtime termination metadata. Manual kill, orchestrator
   grace-time expiry and node action look identical. Confirm an OOM kill from cgroup/kernel/
   orchestrator evidence rather than treating absence plus 137 as a signature.
-- Never enter `#` comments inside a systemd `ExecStart=` line continuation. Comments are
-  only recognised at the start of a line, so one placed inside a `\` continuation becomes
-  part of the value.
+- Do not append inline `#` comments to systemd command arguments. Full comment lines are
+  ignored, including between continued lines; inline text is not a shell comment. Check the
+  effective unit with the target systemd parser before deployment.
 - `-XX:+AlwaysPreTouch` is not an anti-swap flag. It moves initial heap-page population to
   startup, raising startup time and RSS sooner; it can reduce later first-touch faults but
   cannot guarantee absence of faults, reclaim or swapping.
-- Total JVM memory is `-Xmx` plus every non-heap region. Measure it with NMT under
+- `-Xmx` is a heap capacity limit, not current resident memory. Correlate RSS/container charge
+  with NMT categories and coverage gaps under
   representative load — not once, at idle, and not with a generic "+500 MB to 1 GB". The
   per-region budget and the NMT reading are jvm-memory-regions; with NMT on, the hs_err
-  itself carries a `Native Memory Tracking:` section with the last known decomposition.
+  may carry a `Native Memory Tracking:` section if fatal reporting can complete it. NMT
+  reserved/committed totals are not RSS and exclude some third-party native allocations.
 - Record the time, approximate load and process uptime alongside the artefacts. A dump
   without that context supports far fewer conclusions.
 - Treat cores and hs_err as secrets: cores contain heap/native plaintext, keys and tokens;

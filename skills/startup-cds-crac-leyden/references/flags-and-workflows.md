@@ -27,7 +27,11 @@
 | Leyden, assembly     | `JDK_AOT_VM_OPTIONS`                     | Pass JVM options to the assembly child process                  |
 | Leyden, diagnostic   | `-Xlog:aot*`                             | Cache creation and use; confirm the exact tag with `-Xlog:help` |
 
-¹ Fails with `Unrecognized VM option` on a standard JDK 25.
+¹ Requires a CRaC-enabled build; standard Temurin 25 does not supply these flags.
+
+Shell fragments assume Bash and a finite training workload or an application-owned clean-stop
+mechanism. Adapt quoting and exit-status handling for the actual shell. Do not wait for a server
+command to terminate unless the training lifecycle defines how it stops.
 
 ## Choosing an AppCDS creation flow
 
@@ -76,9 +80,13 @@ details in logs; do not parse incidental `JAVA_TOOL_OPTIONS` text as a stable pr
 
 - Treat parent exit status as necessary but not sufficient: assert a newly created non-empty
   cache and consume it once with `AOTMode=on`.
-- The training run is the parent; the child only assembles. Memory limits, agents and
-  `-Xlog` settings on the parent do not apply to the child unless repeated in
-  `JDK_AOT_VM_OPTIONS`.
+- The training run is the parent; the child assembles. Do not assume every parent flag is
+  discarded or every flag is forwarded. JEP 514 documents a same-sized assembly heap while the
+  training heap still exists. In a Temurin 25.0.3+9 Windows probe, parent `-Xms16m -Xmx32m`
+  produced child InitialHeapSize=16777216 and MaxHeapSize=33554432 without repeating them in
+  `JDK_AOT_VM_OPTIONS`. Budget simultaneous heaps and native overhead; inherited environment
+  options and container limits can also affect both. Inspect child logs and use separate
+  record/create processes when their overlapping resource demand does not fit.
 
 The legacy three-step flow remains supported and ends at the same consumption flag:
 
@@ -97,11 +105,11 @@ Spring Boot documentation pairs CDS/AOT workflows with extraction so classes use
 loaders/layout. Follow the documentation for the exact Boot/buildpack version; do not assume a
 fat-JAR layout or loader remains compatible across releases.
 
-The switch decides what the artefact contains. For a `.jsa`, refresh-and-exit loads every
-class the context needs, which is most of the win. For JEP 515 profiles, refresh-and-exit
-records the profile of _startup_, not of request handling — the endpoints the cache is
-supposed to warm were never executed. Drive representative traffic before exit when the target
-is time-to-first-good-response rather than time-to-context-refresh.
+The switch changes coverage. Refresh-and-exit loads what context refresh actually reaches;
+lazy beans and request-specific paths may be absent. It can profile startup and code shared with
+requests, but does not establish representative request-path profiles. Drive realistic traffic
+before a controlled exit when those paths dominate the measured first-response target. Training
+must isolate or safely redirect side effects and use representative non-production credentials/data.
 
 ## Verifying the archive or cache is actually in use
 
@@ -126,8 +134,17 @@ java -XX:+PrintFlagsFinal -version | grep -i crac
 Effectiveness is confirmed, never assumed. Count application classes specifically: the
 JDK's own classes come from the default base archive whether or not yours loaded, so a bare
 `grep -c "source: shared"` is high even when the application archive was rejected.
+These pipelines are diagnostic filters, not CI exit gates: preserve the complete Java log and
+Java exit status before filtering (Bash pipelines otherwise normally return the final command's
+status). A class loaded from a JAR can be untrained/unshareable while other application classes
+use the archive. Correlate per-class coverage with explicit cache mapping/linking messages.
 
 ## A CRaC resource lifecycle
+
+Partial Java 17-compatible shape: supply `org.crac.Core`, `Context`, `Resource`, the matching
+CRaC library/runtime, and application `RemoteClient`/connection factory. Request use must be
+quiesced/drained by the surrounding lifecycle; synchronization below serializes resource close
+and restore callbacks, not in-flight request use.
 
 ```java
 public final class RemoteClientResource implements Resource, AutoCloseable {
@@ -144,12 +161,14 @@ public final class RemoteClientResource implements Resource, AutoCloseable {
     }
 
     @Override
-    public void afterRestore(Context<? extends Resource> context) {
-        client = connectFromCurrentEnvironment(); // re-resolve DNS/credentials/identity
+    public synchronized void afterRestore(Context<? extends Resource> context) {
+        if (client == null) {
+            client = connectFromCurrentEnvironment(); // re-resolve DNS/credentials/identity
+        }
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
         RemoteClient old = client;
         client = null;
         if (old != null) old.close();
@@ -179,6 +198,7 @@ after the maximum planned snapshot age.
 ## Primary references
 
 - [Java 25 launcher: CDS and AOT cache](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
+- [JEP 514 assembly process and memory requirements](https://openjdk.org/jeps/514)
 - [Spring Framework checkpoint/restore](https://docs.spring.io/spring-framework/reference/integration/checkpoint-restore.html)
 - [Spring Boot checkpoint/restore](https://docs.spring.io/spring-boot/reference/packaging/checkpoint-restore.html)
 - [AWS Lambda SnapStart Java runtime hooks](https://docs.aws.amazon.com/lambda/latest/dg/snapstart-runtime-hooks-java.html)

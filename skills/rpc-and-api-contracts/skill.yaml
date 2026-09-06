@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: rpc-and-api-contracts
-version: 1.1.0
+version: 1.1.1
 description: >-
   The contract between two services and how it changes without a coordinated deploy: partial
   failure as a first-class outcome, an error surface a machine caller can act on (stable

@@ -12,7 +12,7 @@ The policy lives in `src/hotspot/share/compiler/compilationPolicy.cpp`; the thre
 
 | Level | Code                  | Profile collected             | Role                                                                      |
 | ----- | --------------------- | ----------------------------- | ------------------------------------------------------------------------- |
-| 0     | Template interpreter  | counters, then types/branches | Entry point for every method                                              |
+| 0     | Template interpreter  | counters, then types/branches | Normal interpreted entry; native/intrinsic/compiled-entry cases differ    |
 | 1     | C1, no profiling      | none                          | Low-overhead terminal code for trivial/C2-ineligible cases in this policy |
 | 2     | C1, limited profiling | counters/limited data         | Intermediate route commonly selected under C2 queue pressure              |
 | 3     | C1, full profiling    | counters, branches, types     | Stepping stone; pays additional profiling instrumentation                 |
@@ -23,8 +23,9 @@ The transitions that actually occur (`CompilationPolicy::common`):
 - **0 → 3 → 4** — the common path. Verified: `JitLab::hot` compiled at tier 3 at 33 ms, at
   tier 4 at 39 ms, then the tier-3 code `made not entrant: not used`.
 - **0 → 1** — a method the policy classifies as trivial (`is_trivial`: accessors, constant
-  getters, empty methods) or that C2 refuses (`not compilable at level 4`). No profile is ever
-  collected, and the method never appears at tier 4. Correct, not a defect.
+  getters, empty methods) or that C2 refuses (`not compilable at level 4`). Tier 1 itself adds
+  no profiling instrumentation; interpreter/prior-tier data may exist. A terminal tier 1 can
+  be correct rather than a defect.
 - **0 → 2 → 3 → 4** — observed when the C2 queue is congested. Tier 2 is C1 with limited profiling, cheap
   to compile and cheap to run; when the queue drains the method is recompiled at tier 3 to
   collect the profile C2 needs. Do not turn “no tier 2 in this idle lab” into an invariant.
@@ -108,11 +109,12 @@ Two of those rows change decisions:
 
 - **Turning tiered compilation off, or stopping at level 1, shrinks the code cache to 48 MB.**
   A service that adds `-XX:-TieredCompilation` "to get C2 faster" and later reports
-  `CodeCache is full` has hit the ergonomic default, not a leak. Set `ReservedCodeCacheSize`
+  `CodeCache is full` may have hit changed ergonomics; investigate growth too. Set `ReservedCodeCacheSize`
   explicitly when changing the mode.
 - **`-Xcomp` is not simply “C2 without profile”—it requests blocking compilation.** Reached,
-  compilable methods in this lab were compiled at tier 3 and then tier 4, on the calling
-  thread, before it runs (`b` in the flags column). Start-up is dominated by compile time,
+  compilable methods in this lab were compiled at tier 3 and then tier 4. The requesting
+  application thread waits for the compiler task; the compiler thread performs compilation
+  (`b` in the flags column denotes blocking). Start-up can be dominated by compile elapsed time,
   and the tier-4 code is built from a profile that saw a handful of calls. It is a testing
   mode for compiler bugs, not a warm-up strategy.
 
@@ -135,8 +137,9 @@ Treat the exact source formula as policy, not a sizing contract. Verified values
 | 8                 | 4                 | 1          | 3          |
 | 24                | 12                | 4          | 8          |
 
-`-XX:CICompilerCount=1` under tiered compilation refuses to start: `CICompilerCount (1) must
-be at least 2`. Under `-XX:-TieredCompilation` a single thread is accepted.
+`-XX:CICompilerCount=1` in the default full C1/C2 mode refuses to start. Single-compiler
+modes differ: both `-XX:-TieredCompilation` and `-XX:TieredStopAtLevel=1` accept one thread
+on the examined JDK 25 runtime.
 
 The count is a **cap**, not a head-count. Since JDK 11 (`UseDynamicNumberOfCompilerThreads`,
 JDK-8198756) the JVM starts one C1 and one C2 thread and adds more while a queue is long
@@ -163,11 +166,12 @@ and scheduling contention even without synchronously waiting for that compile.
 
 ### What compilation costs
 
-`-XX:+CITime` (product) prints at exit what the compilers consumed; on the 4000-method class
+`-XX:+CITime` (product) prints compilation timing at exit; on the recorded 4000-method class
 under one processor: `Total compilation time: 0.833 s`, `C1 0.101 s`, `C2 0.721 s`. C2 is
-where the CPU goes, and where a one-CPU pod's start-up burst competes with the application
-threads for the same quota. In production the same numbers are `jdk.CompilerStatistics`
-(`totalTimeSpent`, `peakTimeSpent`, every second) — no restart, no flag.
+the larger elapsed component in that fixture. These are elapsed compilation durations,
+not thread CPU time: scheduling/throttling delays contribute, and concurrent tasks overlap.
+`jdk.CompilerStatistics.totalTimeSpent` and `peakTimeSpent` use those compiler timers.
+Measure compiler-thread/process CPU separately before converting them into quota cost.
 
 Compiler working memory varies by concurrent task and method/graph complexity, so both task size
 and live compiler-thread count matter. Measure with
@@ -198,8 +202,9 @@ Three consequences:
 - In this lab, the `uncommon trap` on exit occurred because the compiled OSR path had not seen
   that exit. Do not generalize every OSR invalidation or loop exit to that cause; inspect reason,
   action, BCI, rate, and successor compilation.
-- A hand-written "warm-up loop" in `main` warms OSR code for `main`, not the methods a request
-  path will call. Warm-up traffic has to go through the real entry points.
+- A warm-up loop in `main` can compile both its OSR body and invoked methods, including
+  inlined code. That does not prove the real request entry/call-site profiles are warm;
+  train through representative entry points and verify their compilations.
 
 `-XX:-UseOnStackReplacement` is mainly a diagnostic/compiler experiment. Disabling OSR can leave
 long-running loops interpreted and should not be routine tuning.
@@ -254,19 +259,18 @@ Invalid Time FailedType FailedMethod` (the column is `Failed` on 25.0.3).
 
 ## Small containers and autoscaled fleets
 
-The JVM sizes the compiler from the CPUs it believes it has. Under a cgroup CPU **limit** the
-count is the quota rounded up (JDK-8146115); a CPU **request** alone has not affected the
-count since JDK 19 (JDK-8281181, `UseContainerCpuShares` off by default), so a pod with
-`requests: cpu: 1` and no limit sees every CPU on the node and starts up to a dozen compiler
-threads.
+The JVM sizes the compiler from active processors, subject to affinity/cpuset, quota and
+explicit overrides. A CPU request alone no longer supplies the former CPU-shares count
+on the examined modern HotSpot line; without a limit the process may see many host CPUs,
+but not necessarily every CPU. Read the actual detection and effective compiler cap.
 `container-awareness` owns the detection; what follows is what the JIT does with the result.
 
-| Pod shape              | Compiler threads | What happens at start-up                                                                                                                                 |
-| ---------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `limits: cpu: 1`       | 1 C1 + 1 C2      | The one C2 thread and the application threads share 100 ms of CPU per 100 ms period; the C2 queue congests, tier 2 appears, throttling stretches warm-up |
-| `limits: cpu: 2`       | 1 C1 + 1 C2      | Same thread count; the application gets the second core, but the C2 queue is still single-threaded                                                       |
-| `limits: cpu: 4`       | 1 C1 + 2 C2      | The first shape where C2 keeps up with a framework start-up burst                                                                                        |
-| request only, no limit | up to the cap    | Fast warm-up, at a start-up CPU spike the scheduler sees as real load                                                                                    |
+| Pod shape              | Compiler threads | What happens at start-up                                                                                               |
+| ---------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `limits: cpu: 1`       | 1 C1 + 1 C2      | Compilers and application share quota; congestion/tier2/throttling are workload-dependent; inspect actual quota period |
+| `limits: cpu: 2`       | 1 C1 + 1 C2      | More aggregate CPU budget, not a dedicated second core for the application                                             |
+| `limits: cpu: 4`       | 1 C1 + 2 C2      | Higher compiler cap may help; no guarantee it drains a framework startup queue                                         |
+| request only, no limit | up to the cap    | Potentially more parallelism; shared-node contention can still dominate                                                |
 
 Decisions that follow:
 
@@ -282,33 +286,33 @@ Decisions that follow:
   arithmetic; the fleet-level corollary is that a rollout replacing many pods at once divides
   the traffic that would have warmed each of them, and a load balancer without slow-start
   sends a cold pod the same share as a warm one from its first second.
-- **The AOT cache moves the profiling phase, not the compile CPU.** JEP 515 profiles let C2
+- **The AOT cache preserves profiles, not application machine code on JDK 25.** JEP 515 profiles let C2
   start on hot methods without waiting for tier-3 statistics; the compilations themselves
   still run on the same one or two threads under the same quota. Expect a shorter curve, not
   a flat one — `startup-cds-crac-leyden` owns the mechanism.
 
 ## Symptom to cause
 
-| Symptom                                                                                  | First hypothesis                                  | Confirm with                                                                                |
-| ---------------------------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| p99 bad for minutes after deploy, then converges                                         | Warm-up                                           | `jdk.CompilerStatistics.compileCount` slope flattens as latency converges                   |
-| Low-traffic service never converges                                                      | Invocation rate below the ladder                  | Hot path still at tier 3 in `PrintCompilation`; compute invocations / rate                  |
-| Tier 2 lines in the log, or many methods sitting at 2/3 during start-up                  | C2 queue/policy pressure is a candidate           | queue utilization, live compiler threads, throttling, failures/directives, code cache       |
-| Same image warms up far slower in a 1-2 CPU pod than on a workstation                    | 2 compiler threads plus CPU throttling            | `PrintFlagsFinal` inside the pod: `CICompilerCount=2`; cgroup `nr_throttled` climbing       |
-| Warm-up got worse after adding replicas or after an HPA scale-out                        | Per-instance rate diluted; cold-start cascade     | Request rate per pod against the warm baseline; HPA events during the deploy                |
-| `CodeCache is full` after switching to `-XX:-TieredCompilation` or `TieredStopAtLevel=1` | Ergonomic 48 MB code cache                        | `jcmd Compiler.codecache`: `size=49152Kb`                                                   |
-| Periodic young GCs tagged `CodeCache GC Threshold`, CPU up, no load change               | Code cache thrashing under `UseCodeCacheFlushing` | `-Xlog:gc` cause; `-Xlog:codecache=info` "Triggering threshold GC"; `code-cache.md`         |
-| Degraded until restart                                                                   | Code-cache/compiler state is one candidate        | compilation stop/restart and full counts; compare GC, host, load and dependencies           |
-| A threshold flag "changed nothing"                                                       | `-XX:CompileThreshold` under tiered compilation   | `PrintFlagsFinal`: `TieredCompilation=true`; use `CompileThresholdScaling`                  |
-| Start-up several times slower after a flag change                                        | `-Xcomp` (blocking compilation)                   | `b` in the flags column of every line                                                       |
-| JFR shows no `jdk.Compilation` events                                                    | Threshold 1000 ms (default) or 100 ms (profile)   | `jdk.CompilerStatistics` has the counts                                                     |
-| Cache full but `jdk.CodeCacheFull` absent from the recording                             | Exhaustion preceded the recording                 | `jdk.CodeCacheStatistics.fullCount`, `Compiler.codecache full_count`                        |
-| Same method `made not entrant: uncommon trap` again and again                            | Unstable speculation                              | `deoptimization` — not a threshold problem                                                  |
-| AOT cache adopted, warm-up still long                                                    | Profiles cached, compile CPU unchanged            | `jdk.CompilerStatistics.totalTimeSpent` before and after; `AOTReplayTraining=true` in flags |
+| Symptom                                                                                  | First hypothesis                                  | Confirm with                                                                                     |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| p99 bad for minutes after deploy, then converges                                         | Warm-up                                           | `jdk.CompilerStatistics.compileCount` slope flattens as latency converges                        |
+| Low-traffic service never converges                                                      | Invocation rate below the ladder                  | Hot path still at tier 3 in `PrintCompilation`; compute invocations / rate                       |
+| Tier 2 lines in the log, or many methods sitting at 2/3 during start-up                  | C2 queue/policy pressure is a candidate           | queue utilization, live compiler threads, throttling, failures/directives, code cache            |
+| Same image warms up far slower in a 1-2 CPU pod than on a workstation                    | 2 compiler threads plus CPU throttling            | `PrintFlagsFinal` inside the pod: `CICompilerCount=2`; cgroup `nr_throttled` climbing            |
+| Warm-up got worse after adding replicas or after an HPA scale-out                        | Per-instance rate diluted; cold-start cascade     | Request rate per pod against the warm baseline; HPA events during the deploy                     |
+| `CodeCache is full` after switching to `-XX:-TieredCompilation` or `TieredStopAtLevel=1` | Ergonomic 48 MB code cache                        | `jcmd Compiler.codecache`: `size=49152Kb`                                                        |
+| Periodic young GCs tagged `CodeCache GC Threshold`, CPU up, no load change               | Code cache thrashing under `UseCodeCacheFlushing` | `-Xlog:gc` cause; `-Xlog:codecache=info` "Triggering threshold GC"; `code-cache.md`              |
+| Degraded until restart                                                                   | Code-cache/compiler state is one candidate        | compilation stop/restart and full counts; compare GC, host, load and dependencies                |
+| A threshold flag "changed nothing"                                                       | `-XX:CompileThreshold` under tiered compilation   | `PrintFlagsFinal`: `TieredCompilation=true`; use `CompileThresholdScaling`                       |
+| Start-up several times slower after a flag change                                        | `-Xcomp` (blocking compilation)                   | `b` in the flags column of every line                                                            |
+| JFR shows no `jdk.Compilation` events                                                    | Threshold 1000 ms (default) or 100 ms (profile)   | `jdk.CompilerStatistics` has the counts                                                          |
+| Cache full but `jdk.CodeCacheFull` absent from the recording                             | Exhaustion preceded the recording                 | `jdk.CodeCacheStatistics.fullCount`, `Compiler.codecache full_count`                             |
+| Same method `made not entrant: uncommon trap` again and again                            | Unstable speculation                              | `deoptimization` — not a threshold problem                                                       |
+| AOT cache adopted, warm-up still long                                                    | Remaining compilation or application startup work | cache replay evidence, elapsed compilation, measured compiler CPU and application initialization |
 
 ## Primary references
 
 - [HotSpot compilation policy](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/compiler/compilationPolicy.cpp)
-- [HotSpot compile broker](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/compiler/compileBroker.cpp)
+- [HotSpot 25 compile broker: waiting and elapsed timers](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compileBroker.cpp)
 - [JDK 25 `java` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
 - [JDK 25 `jcmd` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)

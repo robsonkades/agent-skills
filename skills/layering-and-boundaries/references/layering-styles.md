@@ -54,10 +54,11 @@ driven side is genuinely expected to be replaced, or the same use cases are driv
 several places (HTTP, batch, message consumer) — the last is the most under-appreciated and
 the most convincing.
 
-**Failure mode:** ports declared for things that will never be swapped, so the codebase has
-`OrderRepository` (interface, domain) and `JpaOrderRepository` (implementation, adapter)
-with identical method lists and a mapper between two structurally identical types. That is
-indirection wearing an architecture's name (`enterprise-architecture-smells`).
+**Failure mode:** ports and duplicate representations with no demonstrated isolation,
+testing, contract or substitution benefit. A single `JpaOrderRepository` implementing
+`OrderRepository` can still protect an inside-owned contract even if replacement is never
+planned. Identical field/method lists alone do not establish redundant indirection
+(`enterprise-architecture-smells`).
 
 ## Clean / onion
 
@@ -65,15 +66,15 @@ Same rule as hexagonal — dependencies point inward — with prescribed concent
 (entities, use cases, interface adapters, frameworks) and, usually, a use-case class per
 operation.
 
-**Adds over hexagonal:** an explicit application layer of use cases, which is genuinely
-useful when transaction and authorisation boundaries need to be visible
+**Makes explicit:** an application layer of use cases, also possible in hexagonal designs,
+which is useful when transaction and authorisation boundaries need to be visible
 (`service-layer-design`).
 
 **Costs:** the ring vocabulary and, in most implementations, a request/response object per
 use case, which is a second mapping layer on top of the adapter's.
 
-**Practical guidance:** treat clean and hexagonal as one style with two vocabularies. Do
-not run both sets of names in one codebase. Adopt the ring discipline only where the
+**Practical guidance:** use consistent names and explicit dependency rules instead of
+assuming a style label establishes them. Adopt the ring discipline only where the
 inversion is doing work; in most systems that is the persistence and integration edges, not
 every ring.
 
@@ -109,16 +110,17 @@ features/cancel-order/{...}
 **Constrains:** almost nothing globally. Cohesion is per feature; each slice may reach the
 database in whatever way suits it.
 
-**Costs:** duplication across slices, and no single place enforcing an invariant. This is
-tolerable when the rules are thin and intolerable when they are not.
+**Costs:** possible duplication across slices and inconsistent enforcement if shared
+invariants have no owner. Slices can call shared domain policies/aggregates; feature
+packaging does not require duplicating or bypassing invariants.
 
 **Driver that justifies it:** many independent, simple operations over shared data, where
 the layered version scatters each feature across three packages and every change is a
 five-file diff. CQRS read sides are the archetype.
 
-**The honest trade:** slices optimise for change locality and against invariant
-enforcement. Systems with real invariants tend towards a hybrid — slices on the read side,
-a shared domain model on the write side (`pattern-selection-and-composition`).
+**The trade:** slices optimize change locality; cross-feature invariants still require
+an explicit owner and transaction contract. A shared write-side domain model is one
+option, alongside independently packaged query slices (`pattern-selection-and-composition`).
 
 ## Choosing
 
@@ -134,7 +136,10 @@ a shared domain model on the write side (`pattern-selection-and-composition`).
 ## What these styles do not decide
 
 None of them says where business logic goes — that is `domain-logic-organization`, and a
-hexagonal codebase with all its rules in a service class is an anaemic domain wearing a
-hexagon. None says whether a boundary should be remote — that is
+hexagonal codebase can deliberately use Transaction Script for thin rules or Domain Model
+for richer invariants. None says whether a boundary should be remote — that is
 `distribution-boundaries`. And none removes the need to decide what crosses the boundary,
 which is where most of the actual coupling lives.
+
+Primary account: [Cockburn, Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture)
+describes isolation and alternative driving/driven adapters, not a required number of implementations.

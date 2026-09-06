@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: feature-solution-analysis
-version: 1.1.0
+version: 1.1.1
 description: >-
   Producing the option set for a feature-level choice and the block that recommends one: always
-  including the simplest thing that satisfies the constraints, keeping the options the same
-  category of thing, evaluating only the axes this feature is actually sensitive to, and saying
+  considering the simplest feasible approach, comparing complete options for the same boundary,
+  evaluating the axes this feature is actually sensitive to, and saying
   what would have to be true for a rejected option to win. Use when a feature has a real choice in
   it — a mechanism, a storage strategy, a place to put the work — when one approach has already
   been assumed and nobody wrote down what else was possible, when a design is justified by what a

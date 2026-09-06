@@ -1,12 +1,16 @@
 # Strategy Comparison
 
 The running example: `Payment` with `CardPayment`, `BankTransfer` and `VoucherPayment`.
+SQL is PostgreSQL-style illustrative DDL; snippets omit associations, identifiers or subtype
+tables where marked. Java snippets require the project's persistence API imports and mappings,
+not just the shown annotations. SQL shapes below are typical, not provider guarantees.
 
 ## Single table
 
 ```sql
 CREATE TABLE payment (
     id             BIGINT PRIMARY KEY,
+    order_id       BIGINT NOT NULL,         -- order association/FK omitted
     payment_type   VARCHAR(20) NOT NULL,     -- discriminator
     amount         DECIMAL(19,2) NOT NULL,
     currency       CHAR(3) NOT NULL,
@@ -47,20 +51,21 @@ ALTER TABLE payment ADD CONSTRAINT ck_transfer_fields CHECK (
     payment_type <> 'TRANSFER' OR (iban IS NOT NULL));
 ```
 
-This is the step that makes single table defensible for anything important, and it is
-almost always skipped. It costs one constraint per subtype and it survives bulk imports,
-manual fixes and other services.
+These checks enforce the shown required fields on database writes. They do not restrict
+unknown discriminator values or forbid fields belonging to another subtype. Add those rules
+if required, with a rolling-deploy policy for future types; application validation alone
+does not protect imports or other writers.
 
-**Indexing.** Subtype-specific columns are mostly null; a plain index is largely dead
-weight. Use a partial/filtered index:
+**Indexing.** For a sparse subtype and matching predicates, consider a partial index:
 
 ```sql
 CREATE INDEX ix_payment_voucher ON payment (voucher_code) WHERE payment_type = 'VOUCHER';
 ```
 
-**Where it stops scaling:** roughly when subtype-specific columns outnumber shared ones, or
-when a subtype needs a column type incompatible with the others. A table with 60 columns of
-which 8 are shared is a signal to move to joined.
+The query must imply the index predicate for PostgreSQL to use it; inspect actual plans,
+including prepared statements. Column ratios such as 60 total/8 shared are not scaling
+thresholds. Measure populated row width, I/O, indexes and workload; different subtype fields
+may have different SQL types without requiring a strategy change.
 
 ## Class table (joined)
 
@@ -86,17 +91,18 @@ CREATE TABLE bank_transfer (
 | All card payments     | `payment JOIN card_payment`                                                |
 | Insert a card payment | two `INSERT`s                                                              |
 
-The polymorphic list is the cost that surprises people: rendering "all payments" joins every
-subtype table, and the join count grows with each new subtype. On a high-traffic list screen
-this is the case to measure before committing.
+Full polymorphic entity materialization can join every subtype table; the illustrative
+`voucher` table is omitted above. Base-field DTO projections may avoid those joins. Capture
+the provider's actual SQL and plans for both shapes before choosing a mapping.
 
-A discriminator column is optional here and is worth adding anyway: it lets a polymorphic
-query determine the type without the joins, which is what makes a read-model projection
-possible (`schema-evolution.md`).
+Check provider/version support for a JOINED discriminator. A stored type can help a base-only
+summary identify the subtype; it does not remove joins needed to load subtype attributes.
+A projection without subtype information does not require a discriminator.
 
-**What you buy:** real `NOT NULL` constraints, real foreign keys per subtype, no nullable
-columns, and a schema a DBA will recognise as correct. For hierarchies where the subtypes
-are large and genuinely different, this is worth the joins.
+**What you buy:** subtype-local `NOT NULL` and FKs. Optional fields can remain nullable.
+The shown FKs alone do not ensure each abstract base row has exactly one subtype row or
+prevent the same ID appearing in two sibling tables. If database-enforced completeness and
+exclusivity are required, design that enforcement and test raw SQL paths too.
 
 ## Concrete table per class
 
@@ -111,23 +117,24 @@ CREATE TABLE bank_transfer  (id BIGINT PRIMARY KEY, amount ..., currency ..., ib
 | Polymorphic list  | `UNION ALL` over every subtype table                                   |
 | All card payments | one table, no join — the one thing this strategy is good at            |
 
-**The disqualifier:** no base table exists, so no other table can hold a foreign key to
-`Payment`. An `order_payment` link table becomes impossible without denormalising the type
-into it. Check this before considering the strategy.
+Without a base table an ordinary FK cannot reference all subtype tables. Separate subtype
+FKs or a shared identity registry can provide alternatives, with extra schema and integrity
+costs. A type-and-ID pair alone is not an ordinary cross-table FK.
 
-Identifiers must also be unique across all the tables (a shared sequence), or a polymorphic
-reference is ambiguous.
+Identifiers must be unique within an entity hierarchy. Use a provider-supported allocation
+scheme such as a shared sequence; independent per-table generators can collide. Check
+TABLE_PER_CLASS support and generator restrictions in the actual provider.
 
 ## Side by side
 
 | Dimension                     | Single table                         | Joined                       | Concrete table                     |
 | ----------------------------- | ------------------------------------ | ---------------------------- | ---------------------------------- |
-| Read one, type known          | 1 table                              | 1 + depth joins              | 1 table                            |
-| Read polymorphic              | 1 table                              | joins to every subtype       | UNION over every subtype           |
+| Read one, type known          | 1 table                              | mapped ancestor joins        | 1 table                            |
+| Read polymorphic              | 1 table                              | often subtype joins          | UNION over every subtype           |
 | Insert                        | 1 statement                          | 1 per level                  | 1 statement                        |
 | `NOT NULL` on subtype fields  | no (check constraint)                | yes                          | yes                                |
 | FK from elsewhere to the base | yes                                  | yes                          | **no**                             |
-| Add a subtype                 | ADD COLUMN                           | new table + FK               | new table                          |
+| Add a subtype                 | columns/checks if needed             | new table + FK               | new table                          |
 | Add a shared field            | ADD COLUMN                           | ADD COLUMN (base)            | ADD COLUMN in every table          |
 | Schema readability            | poor at scale                        | good                         | duplicated                         |
 | Best for                      | polymorphic reads, few extra columns | integrity, distinct subtypes | isolated subtypes, no polymorphism |
@@ -135,8 +142,9 @@ reference is ambiguous.
 ## Alternatives to mapping a hierarchy
 
 **`@MappedSuperclass`** — shared mapping without polymorphism. Correct for audit fields and
-shared identifiers; there is no base table and no polymorphic query, which is exactly right
-when you never wanted one:
+shared identifiers; there is no base table or JPQL entity root for the mapped superclass.
+The Spring Data audit annotations below additionally require auditing to be enabled and
+listeners configured; `@MappedSuperclass` does not populate timestamps:
 
 ```java
 @MappedSuperclass
@@ -169,6 +177,17 @@ the behaviour genuinely varies:
 public sealed interface PaymentInstrument permits Card, BankAccount, Voucher { }
 ```
 
-with exhaustive `switch` in the domain and a converter or a discriminator at the persistence
-edge. The behaviour is polymorphic and compiler-checked; the storage stays flat
+Sealed types require Java 17; exhaustive pattern-switch is standard in Java 21. Keep these
+as domain types rather than assuming final/sealed implementations are portable JPA entities.
+Map explicitly at the persistence edge: an AttributeConverter maps one basic attribute, not
+an arbitrary multi-column hierarchy. The storage can stay flat
 (`patterns-and-modern-frameworks`).
+
+## Primary sources
+
+- [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),
+  sections 2.4, 2.13–2.14 and discriminator mappings: identity, inheritance and portability.
+- [PostgreSQL 18 partial indexes](https://www.postgresql.org/docs/18/indexes-partial.html):
+  predicate implication and query-plan limitations.
+- [Spring Data JPA auditing](https://docs.spring.io/spring-data/jpa/reference/auditing.html):
+  auditing infrastructure and listener setup for the optional timestamp example.

@@ -19,30 +19,34 @@ description: >
 
 Decide which layer owns an observed pause before anything is tuned. Endpoint latency mixes
 execution, queueing and downstream time; a JVM safepoint is only one candidate interval. The
-GC log publishes one term of a safepoint cycle. Between the sources sit the time threads
-took to reach the safepoint, the cleanup after the operation, and whatever the host did to the
+GC log times collector-specific intervals within a safepoint cycle. Between the sources sit
+synchronization, VM work/cleanup and whatever the host did to the
 process — and each of those is a different fix with a different owner.
 
 The failure this prevents is attributing the whole pause to the layer that happens to be
-instrumented. `Pause Young (Normal) 45ms` against a 200 ms p99 is not a GC tuning problem
-until the other 155 ms have been assigned to something. Every fix applied before that
-assignment is a guess, and the two most common guesses — reasserting a flag that is already
+instrumented. A 45 ms GC pause and a 200 ms endpoint p99 do not establish a 155 ms residual:
+the percentile and pause may describe different requests/windows. Align individual intervals
+before attributing any remainder. Two common guesses — reasserting a flag that is already
 the default, and tuning the pause that was logged — leave the real cause untouched.
 
 ## Workflow
 
+Inspect the deployed JVM/vendor/build, collector, actual flags and recording configuration;
+the measurements below use HotSpot 25.0.3 and do not authorize a runtime upgrade or global
+diagnostic changes. Historical executed figures are prior evidence, not a fresh run on the target.
+
 1. **Write down the decomposition before collecting anything.** Safepoint `Total` = time to
-   reach + operation + leaving (disarm/wake-up). Do not call an endpoint p99 “application-
+   reach + at-safepoint interval + leaving (disarm/wake-up) on the tested JDK 25 layout. Do not call an endpoint p99 “application-
    visible STW” until aligned thread/request evidence shows process-wide loss of progress.
    Residual latency can be queueing, a per-thread stall, a downstream wait or a host effect.
 2. **Enable the safepoint log with decorators the analyser expects.**
    `-Xlog:safepoint=info:file=safepoint.log:time,uptime,level,tags`, and validate any parser
    against a small sample of the real log before trusting an aggregate report.
 3. **Read `Total`; do not reconstruct it as `Reaching + At`.** The manual sum omits `Leaving safepoint` and
-   understates the real STW event after event.
+   understates that logged cycle interval; threads do not all stop at the start of TTSP.
 4. **Split the pause at the sync/operation boundary.** Large `Reaching safepoint` with small
-   `At safepoint` is a time-to-safepoint problem — a specific thread, not the collector. The
-   reverse is the named VM operation; only GC operations belong to the GC skills.
+   `At safepoint` directs investigation to synchronization and delayed threads/VM or host
+   scheduling. Large `At` requires operation/cleanup evidence; host stalls can inflate it too.
 5. **Cross-check `Total` against JFR** by correlating `jdk.SafepointBegin` and
    `jdk.SafepointEnd` on `safepointId`. Agreement detects parser/window mistakes, but both
    expose the same JVM mechanism and are not independent proof of user-visible impact.
@@ -52,7 +56,7 @@ the default, and tuning the pause that was logged — leave the real cause untou
    the other does not close the attribution.
 7. **Classify the cause before proposing a flag**, using
    `references/attributing-time-to-safepoint.md`, and confirm every flag's effective value
-   with `-XX:+PrintFlagsFinal -version` on the target runtime before prescribing or removing
+   with `jcmd <pid> VM.flags -all`, or a matched invocation including all target flags, before prescribing or removing
    it.
 
 ## Rules
@@ -70,8 +74,9 @@ the default, and tuning the pause that was logged — leave the real cause untou
 - High TTSP can arise from long intervals between polls, compiler/runtime/native regions,
   thread transitions, page faults or OS descheduling. Counted-loop strip mining is one common
   model, not an exhaustive catalogue; prove the delayed thread and stack/time window.
-- `-XX:+UseCountedLoopSafepoints` is a fix only under Parallel or Serial, where it is `false`
-  by default and counted loops carry **no poll** (executed, 25.0.3). Under G1, ZGC and
+- `-XX:+UseCountedLoopSafepoints` is a candidate only when the effective value and compiled
+  loop show missing backedge polls. Parallel/Serial defaults were `false` (executed, 25.0.3);
+  calls and other points inside a loop may still poll. Under G1, ZGC and
   Shenandoah it is already `true` with `-XX:LoopStripMiningIter=1000` on the verified 25.0.3
   build, and prescribing it changes nothing. Prefer reducing per-strip work or restructuring
   the code; a global `LoopStripMiningIter` experiment can trade optimisation/throughput for
@@ -84,16 +89,16 @@ the default, and tuning the pause that was logged — leave the real cause untou
   in JDK 18 (JDK-8256425). Virtual-thread pinning is a scheduling problem and is unrelated.
 - `jdk.SafepointLatency` is not a TTSP measurement. It carries `stackTrace` and
   `threadState`, has no `safepointId` (executed, `jfr metadata`, 25.0.3), and measures the
-  interrupt-to-poll delay of one profiling sample — JEP 518's own instrumentation of its
-  residual sampling bias. Never correlate it by `safepointId`.
+  sample-request-to-poll latency of a sampled thread. It is not a direct measure of the
+  magnitude of attribution bias, and descheduling can contribute. Never correlate it by `safepointId`.
 - JEP 518 (Cooperative Sampling) is not something to activate: it is the JFR method sampler's
   default behaviour on JDK 25. JEP 509 (CPU-Time Profiling) is the experimental, Linux-only,
   opt-in one. They address different problems — where a sample may be taken versus what
   triggers it.
 - `-XX:GuaranteedSafepointInterval=0` has been the default since JDK 23, and the flag is
   **diagnostic** on 25 — it needs `-XX:+UnlockDiagnosticVMOptions` or the JVM refuses to
-  start (executed). Its effect on the safepoint log is cadence, not correctness: gaps are the
-  real absence of safepoints. Setting it back to `1000` is a diagnostic-window tool, never
+  start (executed). Its effect is cadence: gaps may be real, but absence requires validating
+  completed-event coverage and log loss. Setting it back to `1000` is a diagnostic-window tool, never
   permanent configuration.
 - Confirm every event's field names on the build in use — `jfr metadata --events
 jdk.SafepointBegin,jdk.SafepointEnd,jdk.SafepointLatency` — before depending on one. Field

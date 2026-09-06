@@ -62,9 +62,12 @@ bottleneck.
 
 ### Define the target
 
-Forecast the scenario statistic used for sizing: for example, maximum admitted successful
-checkout starts per five-minute interval during the weekly business peak. Daily average
-requests cannot size a short seasonal peak.
+Forecast the scenario statistic used for sizing: for example, the maximum offered checkout
+starts per five-minute interval during the weekly business peak. Predict admission and
+successful completion separately under the declared policy. If only admitted traffic is
+available, account for censored demand from rejection/outage or mark the forecast as a
+lower bound; completed throughput alone cannot reveal demand beyond saturation. Retain
+shorter burst shapes when a five-minute average hides deadline-threatening queues.
 
 Distinguish organic baseline/seasonality, known launches and campaigns, tenant/region
 concentration, structural changes, and demand censored by rejection, quota or outage.
@@ -101,6 +104,11 @@ Choose a dated pricing basis and currency. Include:
 C_{total}=C_{compute}+C_{memory}+C_{nodes}+C_{storage}+C_{network}
 +C_{platform}+C_{licence}+C_{observability}+C_{risk}
 \]
+
+These are accounting categories, not automatically additive bill items. Use mutually
+exclusive charges: when a VM/node price already includes CPU and memory, count that price
+once and set separate compute/memory charges to zero (or use them only as allocations of
+that same bill). Match numerator and successful-work denominator to the same time window.
 
 Represent concrete interruption, replacement, unused commitment and availability
 scenarios separately rather than inventing one risk premium.

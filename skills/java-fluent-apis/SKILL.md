@@ -24,6 +24,12 @@ breaking binary compatibility.
 
 ## Workflow
 
+Inspect compiler release/toolchains, runtime, framework/generated construction paths and
+published callers before choosing a form. No single authoring baseline is declared; records
+require Java 16+, local `var` Java 10+, and `Optional` Java 8+. Adapt to the project's target;
+do not upgrade, enable preview or add builder-generation dependencies. If caller/lifecycle
+evidence is missing, identify the uncertainty and keep migration claims conditional.
+
 1. **Inspect call-site risk before designing.** Count parameters/options as signals, then examine
    same-type transposition, defaults, invalid combinations, construction frequency, API audience
    and evolution. Apply the decision table in
@@ -31,7 +37,8 @@ breaking binary compatibility.
    counts, not a builder.
 2. **Exhaust the cheaper forms first.** A record with a compact constructor, a second
    constructor, or a named static factory each beat a builder when they fit. A record with
-   three components does not need a builder.
+   three cohesive components often needs no builder; positional ambiguity or named optionality
+   can still justify one regardless of count.
 3. **If a builder: mutable builder, immutable product.** Validate each setter's local input when
    useful; `build()` rechecks required and cross-field invariants, snapshots mutable inputs and
    returns a valid product. Specify whether builders are reusable; default to confined,
@@ -49,14 +56,17 @@ breaking binary compatibility.
   invalid combinations or positional confusion impose demonstrated call-site cost; prefer a
   constructor/factory when one coherent required value fits clearly. Distinct role types can
   solve same-type transposition without a builder.
-- Chaining methods return `this` with the concrete builder type. Changing that return type
+- Mutable chaining methods commonly return `this` with a concrete builder or declared stage
+  interface; immutable fluent methods return the resulting value. Changing a published return type
   later — even concrete class to interface — changes the method descriptor and breaks
-  binary compatibility, even when the call sites still compile. Choose the return type at
+  binary compatibility when the old descriptor no longer resolves, even when callers compile.
+  Covariant bridges/inherited methods require separate inspection. Choose the return type at
   first release.
 - Setters may reject context-free invalid values immediately. `build()` is the authoritative
   completeness/cross-field check; enforcing a cross-field rule in the first setter makes validity
   order-dependent and is usually wrong.
-- Wither-style immutable APIs allocate a new instance per call. That is a cost mechanism,
+- Wither-style immutable APIs may create a new instance per changed value; no-op calls may
+  return the receiver and unchanged immutable substructure may be shared. That is a cost mechanism,
   not a verdict: escape analysis may eliminate the copies, and only a profile of the real
   workload justifies abandoning the design.
 - Prefer one chain call per source line once diagnosis matters. Line-number tables can then point
@@ -66,7 +76,8 @@ breaking binary compatibility.
   into statements against a local builder variable — that is what the mutable builder is
   for.
 - Fluency that forces the reader to scan the whole chain before knowing what happens is a
-  net readability loss. Two parameters never justify a builder.
+  net readability loss. Prefer clear constructors/factories for a small required parameter set;
+  justify an exception using concrete call-site needs rather than a numeric threshold.
 - A fluent chain that keeps returning the same conceptual object exposes no structure and
   is not a Law of Demeter violation; navigation through distinct objects' structure is —
   see java-law-of-demeter.
@@ -86,6 +97,11 @@ breaking binary compatibility.
   fluent methods can still create source ambiguity, erasure clashes or lambda overload changes.
 
 ## References
+
+Deliver the caller risk, selected form and lifecycle (reuse, thread confinement, snapshot or
+ownership transfer), plus compatibility impact and checks executed. Exercise invalid values,
+option ordering, repeated build and alias mutation where applicable. Distinguish compilation
+from runtime/framework validation and unmeasured performance expectations.
 
 - [Builder decision table](references/builder-decision.md) — read when deciding whether a
   type needs a builder at all, and for the false positives: framework-constrained classes,

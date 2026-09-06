@@ -79,30 +79,36 @@ Many blocking JDK operations integrate with virtual threads and unmount. Some OS
 notably many file-system paths, may capture a carrier and cause the scheduler to temporarily expand
 platform-thread count up to its configured maximum. This compensation is not the same as pinning.
 
-Java 24 JEP 491 removed pinning caused by `synchronized` monitor ownership/acquisition and
-`Object.wait`. Residual documented pinning occurs while executing a native method or foreign
-function. If such a virtual thread blocks, it retains its carrier. JEP 444 explicitly states the
+Java 24 JEP 491 removed pinning caused solely by `synchronized` monitor ownership/acquisition and
+`Object.wait`. Native/foreign frames still prevent unmounting, including when native code calls
+back into Java that blocks or acquires a monitor. JDK 25 also reports residual VM-frame cases,
+including class initialization; inspect the event's reason instead of assuming every pin is JNI.
+If such a virtual thread blocks, it retains its carrier. JEP 444 explicitly states the
 scheduler does not compensate for pinning by expanding parallelism; do not claim automatic
 `ManagedBlocker` compensation for native pins.
 
-`jdk.VirtualThreadPinned` reports pin durations crossing its active threshold. It is strong evidence
-that pinning occurred, not that pinning caused the SLO. Sampling/profile/JFR settings can miss events,
-and application/library instrumentation may provide additional evidence. The old
+`jdk.VirtualThreadPinned` reports instrumented pinned blocking intervals that meet the active
+threshold. It is not a census of native-call duration: a native syscall can occupy its carrier
+without passing through an instrumented Java/VM blocking path. Enabled settings, threshold,
+recording window and event loss affect coverage; the event itself is not a statistical sample.
+It establishes the reported blocking, not its SLO impact. Native profiling and operation-level
+instrumentation provide complementary evidence. The old
 `jdk.tracePinnedThreads` property was removed with JDK 24 behavior changes; an arbitrary `-D` property
 can still be accepted without any runtime consumer, so silence is meaningless.
 
 ## Scheduler capacity and compensation
 
-On Java 24+, prefer `VirtualThreadSchedulerMXBean` to thread-name counting. Its counts are estimates
-and may be unavailable (`-1`). Interpret:
+On Java 24+, prefer `VirtualThreadSchedulerMXBean` to thread-name counting. Pool/mounted/queued
+counts may be unavailable (`-1`); target parallelism is a configured value. These independently
+read values do not form an atomic snapshot or count all live/parked virtual threads. Interpret:
 
-| Evidence                                                                | Candidate mechanism                           | Do not conclude yet                                                   |
-| ----------------------------------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------- |
-| queued rises, CPU saturated/throttled                                   | CPU-ready demand beyond effective parallelism | that increasing parallelism creates CPU                               |
-| pool size exceeds target, file/native blocking stacks but no pin events | carrier capture/compensation                  | that every extra carrier is pinning                                   |
-| pin events and queued rise                                              | pinning may constrain carriers                | that every pin is causal without time alignment                       |
-| many parked VTs, scheduler queue low                                    | normal unmounted wait at resource             | that more carriers help                                               |
-| submit-failed events                                                    | start/unpark resource failure                 | exact exhausted resource without associated exception/system evidence |
+| Evidence                                       | Candidate mechanism                           | Do not conclude yet                                                   |
+| ---------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------- |
+| queued rises, CPU saturated/throttled          | CPU-ready demand beyond effective parallelism | that increasing parallelism creates CPU                               |
+| pool size exceeds target, file blocking stacks | carrier capture/compensation candidate        | that extra carriers or absence of pin events proves its cause         |
+| pin events and queued rise                     | pinning may constrain carriers                | that every pin is causal without time alignment                       |
+| many parked VTs, scheduler queue low           | normal unmounted wait at resource             | that more carriers help                                               |
+| submit-failed events                           | start/unpark resource failure                 | exact exhausted resource without associated exception/system evidence |
 
 `jdk.virtualThreadScheduler.maxPoolSize` bounds platform threads available to the scheduler for cases
 that expand the pool; it is not an admission limit for virtual threads. Raising it consumes native
@@ -138,14 +144,14 @@ contention, timeouts, interruption, fairness and conditions; route that decision
 - [ ] Claims are scoped to exact Java/JDK implementation version.
 - [ ] Scheduler MXBean replaces carrier-name heuristics where Java 24+ is available.
 - [ ] JFR settings and time alignment are recorded; event absence is not overinterpreted.
-- [ ] Native/foreign stack is identified before isolation or scheduler tuning.
+- [ ] Native/VM-frame, capture or CPU cause is identified before isolation or scheduler tuning.
 - [ ] Heap/GC attribution uses retained-object and phase evidence.
 - [ ] Intervention validates useful completion, tail SLO, scheduler queue and resource health.
 
 ## References
 
-- [Continuation and scheduler mechanics](references/continuation-mechanics.md)
-- [Pinning and carrier diagnostics](references/pinning-diagnostics.md)
+- [Continuation and scheduler mechanics](references/continuation-mechanics.md) — when inspecting heap stacks, scheduling or version-specific carrier behavior.
+- [Pinning and carrier diagnostics](references/pinning-diagnostics.md) — when collecting JFR/MXBean evidence or choosing an intervention.
 - [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)
 - [JEP 491: Synchronize Virtual Threads without Pinning](https://openjdk.org/jeps/491)
 - [Java 25 virtual threads](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)

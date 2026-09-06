@@ -35,9 +35,11 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
 
 1. **Establish whether the question is one method or a post-deploy pattern**, and fix a
    reference window (a deploy, a config change, a library or plugin rollout) to correlate
-   against.
+   against. Inspect the deployed vendor/build, compiler mode and flags alongside project
+   toolchains; JDK 25 observations are not authorization to upgrade the target or enable flags.
 2. **Collect the reason, the action and the compile id**, not just the fact. JFR
-   `jdk.Deoptimization` (on in `default.jfc`; stack traces only with `profile.jfc`) for
+   `jdk.Deoptimization` (enabled in the baseline `default.jfc`; stacks enabled by `profile.jfc`
+   or explicit event settings) for
    production, `-Xlog:deoptimization=debug` for a session. Both see **uncommon traps only**:
    a class-loading or `RedefineClasses` invalidation appears in neither, so collect
    `-Xlog:jit+compilation=debug` and `-Xlog:dependencies=debug` alongside. See
@@ -45,8 +47,8 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
 3. **Group by method and bci, reason and action, over a stated window.** The criterion is
    the rate per site and its decay, not presence: a site trapping once, or up to four times
    with `maybe_recompile`, then going quiet is converging. A site emitting `none` at a
-   steady rate is the compiler having given up — every hit is a full deoptimisation and
-   nothing is learned.
+   steady rate needs its compilation history checked — the action preserves compiled code
+   and does not update trap state, but the action alone does not identify why it was emitted.
 4. **For a `class_check`, decide which of the two routes it took.** Trap lines and events
    with `instruction = invokeinterface` at one `cid` are a per-invocation guard. Several
    unrelated methods `made not entrant: marked for deoptimization` in the same millisecond,
@@ -56,32 +58,35 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
    at the call site, warm-up that exercises every expected type, loading generated classes
    before traffic. See `references/reasons-and-actions.md` for the reason-to-fix table and
    `references/production-patterns.md` for the levers and what each costs.
-6. **Validate on the deoptimisation signal, not on latency.** Confirm through
-   `jdk.Deoptimization` and the compilation log that the target site stopped, and remove
-   every diagnostic flag afterwards.
+6. **Validate mechanism and service outcome together.** Check the target site's rate and
+   compilation state under comparable workload, then CPU, allocation and latency guardrails.
+   Eliminating events by disabling compilation can worsen performance. Restore temporary
+   diagnostics to their prior settings; retain intentionally configured monitoring.
 
 ## Rules
 
 - The correct log invocation is `-Xlog:deoptimization=debug:file=deopt.log:time,uptime`.
   `jit+deoptimization` is not a tag set: the JVM prints `No tag set matches selection` and
   starts anyway; `info` emits nothing; `trace` adds nothing over `debug` (executed, 25.0.3).
-  Verify the produced file is non-empty before depending on it.
+  Verify tag acceptance and collection coverage. An empty file can also mean no traps occurred;
+  do not force a production trap merely to make it non-empty.
 - `jdk.Deoptimization` exists since JDK 14 (JDK-8216041). Fields: `compileId`, `compiler`,
   `method`, `lineNumber`, `bci`, `instruction`, `reason`, `action`, `eventThread`,
   `stackTrace`. There is **no** `topFrame`; asking for one throws
   `IllegalArgumentException`.
 - `reason` and `action` answer different questions. `reason` is the cause; `action` is the
   runtime's response, and there are five: `none`, `maybe_recompile`, `reinterpret`,
-  `make_not_entrant`, `make_not_compilable`. Only the last three invalidate the nmethod. All
+  `make_not_entrant`, `make_not_compilable`. The last three request invalidation;
+  `maybe_recompile` can also invalidate after sufficient traps. All
   five deoptimise the frame that hit the trap.
 - Reason names come from `_trap_reason_name[]` in `deoptimization.cpp`, not from any
   specification. On the tested JVMCI-enabled Temurin 25.0.3 build, three are suffixed:
   `intrinsic_or_type_checked_inlining`, `bimorphic_or_optimized_type_check`,
   `null_assert_or_unreached0`. Confirm any name a script matches against a real collection.
-- A method converges because the MDO records every trap and C2 does not speculate again at a
-  bci that has trapped (`Compile::too_many_traps`, `compile.cpp`). An oscillating `if`
-  therefore yields **one** `unstable_if` per bci, after which both sides are compiled
-  (executed: a branch flipped sixty times produced one event). Do not split it into methods.
+- Recorded trap history can suppress the same speculation at a bci through
+  `Compile::too_many_traps`. The prior oscillating-branch experiment produced one `unstable_if`,
+  but concurrent frames, compiled versions, missing/replaced profiles and action `none` prevent
+  a universal one-event bound. Do not split an `if` merely because its first trap appeared.
 - The observed defaults on Temurin 25.0.3 are `PerBytecodeTrapLimit=4`, `PerMethodTrapLimit=100`,
   `PerMethodSpecTrapLimit=5000` (experimental), `PerBytecodeRecompilationCutoff=200`,
   `PerMethodRecompilationCutoff=400`. C2 stops recompiling — emitting traps with action
@@ -89,10 +94,11 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
   bci has 25 overflow recompiles under those defaults. These are HotSpot implementation
   details, not Java contracts; verify flags and source on the deployed build. A sustained
   same-site storm is the signal to investigate, not a magic count copied from this baseline.
-- `make_not_compilable` from the cutoff is at C2 level only. `PrintCompilation` prints
+- C2 recompilation-cutoff exclusion is at C2 level in the baseline. `PrintCompilation` prints
   `made not compilable on level 4 … give up compiling` and the method is recompiled by C1 —
-  tier 1, no profiling — not interpreted (executed; `jcmd <pid> Compiler.codelist` shows
-  it). Treat the exclusion as lasting for that loaded method; redefinition/reloading and
+  tier 1, no profiling — in the prior tiered experiment (`Compiler.codelist`). C1 fallback
+  requires enabled/available C1 and policy scheduling; inspect live code instead of assuming it.
+  Treat the exclusion as lasting for that loaded method; redefinition/reloading and
   another JVM release can alter the lifecycle.
 - `made zombie` no longer exists (JDK 20, JDK-8290025). JDK 25 prints the reason after
   `made not entrant:` — `not used` and `OSR invalidation of lower level` are tier
@@ -103,18 +109,18 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
   `RedefineClasses` is a global safepoint and flushes every nmethod with an `evol_method`
   dependency on the class — callers and inliners alike. `safepoints` owns the cost model of
   each.
-- A second lambda for a functional interface is a new hidden class and a
-  `unique_concrete_method` failure for every nmethod that assumed one implementor
-  (executed). Proxies, generated accessors and scripting do the same; `jvm-class-loading`
+- Linking another lambda implementation can load a hidden class and invalidate a still-valid
+  unique-implementor dependency (observed in the prior lab). Re-evaluating one lambda expression
+  does not imply a new class each time. Proxies, generated accessors and scripting can do the same; `jvm-class-loading`
   covers where they come from.
-- A mutable feature flag in the hot path costs one `unstable_if` per bci and then a real
+- A mutable feature flag with stable retained profiling usually converges to a real
   branch — the lost constant folding, not recurring deoptimisation. A flag that swaps the
   **type** at a hot call site costs the inline tree: monomorphic to bimorphic to a virtual
   call (`jit-inlining-and-escape-analysis`). Put the choice one level up.
-- Do not confuse `jdk.CompilationFailure` (the compiler never produced code) with
-  `jdk.Deoptimization` (code was produced and later invalidated). Both on one method
-  suggests pathologically complex, likely generated, bytecode.
-- Budget scalar replacement into the cost: every scalar-replaced object is rematerialised on
+- Do not confuse `jdk.CompilationFailure` (that compilation attempt failed) with
+  `jdk.Deoptimization` (an active compiled frame was deoptimised; its nmethod may remain usable).
+  Both on one method require failure text, compile IDs and timing before diagnosing complexity.
+- Budget scalar replacement into the cost: eliminated objects needed by reconstructed live state may be rematerialised on
   the heap during frame reconstruction (`realloc_objects`, `deoptimization.cpp`). A reason
   to care about recurrence, not to disable `EliminateAllocations`.
 - `-XX:+TraceDeoptimization` is `diagnostic` since JDK 18 (JDK-8154011) and needs

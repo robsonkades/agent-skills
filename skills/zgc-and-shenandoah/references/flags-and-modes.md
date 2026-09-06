@@ -14,14 +14,17 @@
 | Generational Shenandoah                       | 404 | Experimental (needs unlock)    | 24  |
 | Generational Shenandoah                       | 521 | **Product, still not default** | 25  |
 
-Two corrections follow, and they are the two most commonly repeated errors about these
-collectors:
+Apply these release distinctions:
 
 - There is no ZGC "generational mode" to enable on JDK 24+. There is only ZGC.
 - There _is_ a Shenandoah generational mode to enable on JDK 25, and it is off unless asked
   for.
-- As of 2026-09-03, making generational Shenandoah the default is only draft JDK-8379682,
-  with no target release/JEP number. Do not label it “JDK 28” or “JEP 535.”
+- Verified 2026-09-05: [JEP 535](https://openjdk.org/jeps/535), issue JDK-8379682, is
+  **Targeted for release 28**. This is not the JDK 25 default and does not establish that a
+  deployed binary contains it. Recheck status and startup logs before applying future defaults.
+- [JEP 523](https://openjdk.org/jeps/523) is **Closed/Delivered for release 27**. It concerns
+  default collector selection (G1), not Shenandoah's selected mode. Delivered status is not
+  proof of GA availability, vendor inclusion or the collector running in an installed build.
 
 ## ZGC
 
@@ -29,7 +32,7 @@ collectors:
 # Correct on the JDK 25 baseline:
 java -XX:+UseZGC -jar app.jar
 
-# Obsolete since JDK 24 — accepted, possibly warned about, no effect:
+# Obsolete since JDK 24 — ignored with warning on tested Temurin 25.0.3+9:
 java -XX:+UseZGC -XX:+ZGenerational -jar app.jar
 ```
 
@@ -38,7 +41,7 @@ Diagnostic/tuning surface to verify on the target build, not a sequence to apply
 ```bash
 -Xmx / -Xms                        # size the heap first; this is the real lever
 -XX:ConcGCThreads=N                # concurrent GC threads (default: auto)
--XX:ZCollectionInterval=N          # minimum seconds between cycles
+-XX:ZCollectionInterval=N          # JDK 25 fixed interval trigger; alias of ZCollectionIntervalMajor
 -XX:ZAllocationSpikeTolerance=N    # allocation spike tolerance (default 2.0)
 -XX:ZFragmentationLimit=N          # max fragmentation % before compacting; large heaps
 ```
@@ -48,6 +51,9 @@ default in your build with `-XX:+PrintFlagsFinal` rather than quoting a remember
 Start with ergonomics and change a knob only for a measured failure mode. `SoftMaxHeapSize`,
 hard `-Xmx`, available CPU and `ConcGCThreads` can trade memory headroom, mutator CPU and
 stall risk; interval/spike/fragmentation options are advanced, release-sensitive controls.
+The interval is not a minimum spacing guarantee: other triggers may start cycles sooner.
+The JDK 25 source also has minor/major intervals and a separate `ZCollectionIntervalOnly`
+policy; do not disable adaptive triggers merely to force a benchmark schedule.
 
 ## Shenandoah
 
@@ -73,9 +79,8 @@ The heuristic list is diagnostic context, not a recommendation to bypass ergonom
 On JDK 24 the generational mode additionally required
 `-XX:+UnlockExperimentalVMOptions`. On JDK 25 it does not.
 
-`-XX:ShenandoahMaxSATBBufferSize` does **not** exist, and has not on any supported release. The
-JVM refuses to start on it and names the real flag itself — executed on Temurin 11, 17, 18, 19,
-20, 21, 24 and 25, identical on every one:
+`-XX:ShenandoahMaxSATBBufferSize` is not a valid flag on the tested Temurin 25.0.3+9 Windows
+build. The JVM refuses to start and suggests the existing flag:
 
 ```
 Unrecognized VM option 'ShenandoahMaxSATBBufferSize=1024'
@@ -83,9 +88,14 @@ Did you mean 'ShenandoahSATBBufferSize=<value>'?
 Error: Could not create the Java Virtual Machine.
 ```
 
-The flag that exists is `ShenandoahSATBBufferSize` (experimental, default `1024`), accepted on
-every one of those releases. `ShenandoahMaxSATBBufferFlushes` (experimental, default `5`) is a
-different knob and not a longer spelling of the same one.
+The JDK 25 flags `ShenandoahSATBBufferSize` and `ShenandoahMaxSATBBufferFlushes` are distinct
+experimental controls. Verify their defaults and unlock requirements on the target binary,
+rather than extending one tested build's behavior to every supported release.
+
+On the same Temurin build, both ZGC and Shenandoah start successfully; Shenandoah defaults
+to `satb`, and explicit `generational` needs no unlock. Combining generational mode with
+`ShenandoahGCHeuristics=compact` still exits successfully but warns that compact is ignored
+because only adaptive is supported. Exit status alone therefore does not validate effective policy.
 
 ## Verifying the mode that is actually running
 
@@ -122,3 +132,5 @@ No p99 or core-count threshold selects a collector portably. Build a representat
 
 Declare numeric SLO, achieved load, build, mode, heap/live set, allocation rate, quota and
 failure behavior. “Faster” and a collector name alone are not reproducible inputs.
+
+Source for interval semantics: [OpenJDK 25 ZGC flags](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/z_globals.hpp).

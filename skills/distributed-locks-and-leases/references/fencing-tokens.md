@@ -19,10 +19,9 @@ t=42.701 A: writes where current fence=33 -> REJECTED; current fence is 34
 t=44.000 B: writes where current fence=34 -> ACCEPTED by the resource
 ```
 
-Two writers, no exception, no log line above INFO. The lock service is not consulted at
-t=42.701, because the holder has no reason to consult it — from inside process A, no time has
-passed. This is why _checking the lease before the write_ is a mitigation and not a fix: the
-pause can land between the check and the write, and frequently does.
+The resource rejects the stale write in this fenced sequence. Without that enforcement, both
+writes could succeed. Process A may observe elapsed time after resuming, but _checking the lease
+before the write_ is still insufficient: a pause can land between the check and the effect.
 
 The pause need not be a garbage collection: a CPU-throttled container, a page fault on a
 swapping host, an `fsync` on a degraded disk, a live migration, or an `IOException` retried
@@ -47,7 +46,11 @@ All four parts are obligations:
    restart of the lock service. A committed Raft log index (or term/index pair), ZooKeeper
    sequential-node suffix, etcd creation revision, or durable database sequence can qualify
    when its lifecycle is specified. A Raft term alone or znode version can repeat across
-   grants; `System.currentTimeMillis()` is not a fencing source.
+   grants; `System.currentTimeMillis()` is not a fencing source. Token allocation must follow
+   grant order, not a separate increment an expired holder can obtain after a newer grant.
+   Define recovery across restore/recreation and counter wrap: ZooKeeper sequence suffixes are
+   parent-scoped signed 32-bit counters, not an eternal global order. Do not reset token history
+   while an old holder can still reach a resource that accepts it.
 2. **Claim.** The new holder atomically advances the resource fence before reading or doing
    expensive work. Merely receiving token 34 does not magically inform the resource.
 3. **Carry.** The token travels with every write in the critical section.
@@ -56,6 +59,7 @@ All four parts are obligations:
 
 ```sql
 -- Claim before work. COALESCE handles a nullable/uninitialized fence if the schema permits it.
+-- Assumes an existing unique job_id row and non-negative, non-reused tokens.
 UPDATE job_state
    SET fence = :token
  WHERE job_id = :id
@@ -66,11 +70,18 @@ UPDATE job_state
    SET result = :result
  WHERE job_id = :id
    AND fence = :token;
--- 0 rows updated => claim failed, row vanished, or a newer holder exists. Distinguish and stop.
+-- Check affected-row semantics and unknown prior outcomes; do not proceed on an unproven claim.
 ```
 
+The claim must commit before the subsequent read/compute, which must read a snapshot that includes
+that claim and the relevant current state. The final ownership predicate and protected mutation
+must be atomic in the resource's concurrency model; checking a fence row and later writing a
+different row without a protecting transaction/lock leaves a race. SQL syntax, isolation and
+affected-row reporting are engine/driver inputs, not portable guarantees from this sketch.
+
 ```java
-// Conceptual: the holder's half. Omits retry policy, metrics and the lock client.
+// Conceptual: holder's half; adapt named SQL parameters to the chosen JDBC binding API.
+// Omits lease handle/conditional release, retry policy, metrics and client definitions.
 long token = lock.acquire("job-42");
 if (jdbc.update(CLAIM_FENCE, token, jobId, token) != 1) {
     throw new LostLeaseException("claim rejected", token);
@@ -78,13 +89,19 @@ if (jdbc.update(CLAIM_FENCE, token, jobId, token) != 1) {
 Result result = compute();
 int updated = jdbc.update(PUBLISH_IF_CURRENT, result, jobId, token);
 if (updated == 0) {
-    // Do not publish/retry this attempt: it is no longer current.
+    // Stop this attempt; reconcile zero/unknown outcomes before any retry.
     throw new LostLeaseException("job-42", token);
 }
 ```
 
 Release is always owner-conditional, making a stale release a no-op. It is safe to attempt
 that conditional release in `finally`; a bare delete is not.
+
+A lost claim response can make a retry return zero because the fence already equals the token.
+Reconcile that outcome under the ownership protocol or abort safely; do not infer another owner
+solely from zero rows. A lost publish response is also ambiguous. Repeating a same-token effect
+passes the fence check, so non-repeatable effects still require operation identity, deduplication
+or a transactional result record. A fence orders owners; it does not deduplicate one owner's work.
 
 Fencing orders effects after a newer claim. It does not prove that a client whose lease has
 expired but has no successor is still authorized, and it cannot retract an irreversible effect
@@ -100,7 +117,7 @@ with a transactional ownership check or make the effect repeat-safe.
 | Object storage with preconditions | Partly     | Compare-and-set on an entity tag; fences replacement, not append                                                              |
 | Kafka topic (transactional)       | Partly     | Producer epoch fences a _previous producer instance_, per its own protocol — it does not fence your business write            |
 | Filesystem / NFS share            | Depends    | Requires a protocol whose conditional/locking semantics survive client and server failures; do not infer from POSIX API shape |
-| Third-party HTTP API              | Rarely     | Only if it exposes a conditional write or accepts an idempotency key                                                          |
+| Third-party HTTP API              | Depends    | Must atomically enforce ownership/version preconditions; an idempotency key alone deduplicates an operation, not stale owners |
 | Sending an email or SMS           | No         | The side effect is external and irreversible                                                                                  |
 | A message you publish             | Indirectly | Carry the fence and make the consumer/resource enforce it; publication alone does not reject stale business effects           |
 
@@ -112,7 +129,9 @@ business effect. An opaque third-party or irreversible side effect often cannot 
 In priority order:
 
 1. **Make the operation idempotent** under a key derived from the work, not from the lease.
-   Repetition then costs nothing and the lock becomes an optimisation. Mechanics: `idempotency`.
+   Verify concurrent duplicate handling, key lifetime and payload conflicts. Idempotency preserves
+   the same operation's effect, but has processing/storage cost and does not serialize different
+   operations that can violate an invariant. Mechanics: `idempotency`.
 2. **Make concurrent writers converge.** A set union or a deterministic version-order rule can
    converge. Counter deltas need unique operation identities or duplicates still overcount.
    Idempotence, commutativity and convergence are distinct — see `idempotency`.
@@ -125,14 +144,20 @@ In priority order:
 
 ## Proving it in a test
 
-A two-thread contention test proves nothing here: both threads are live, so the lock works.
-Reproduce the stall instead.
+A contention-only test misses lease expiry. A deterministic protocol test can control a fake
+clock and pause point; complement it with process/network faults in an isolated environment.
 
 - **Stop the holder.** `kill -STOP <pid>` after it acquires, wait past the TTL, let a second
-  process acquire, then `kill -CONT`. Assert the resource **rejected** the first process's
+  process acquire and commit its resource claim, then `kill -CONT <pid>`. Assert the resource **rejected** the first process's
   write — assert on rows updated or on a rejected-token counter, never on the client's exception.
 - **Partition the holder from the lock service** (a proxy that drops packets) while leaving its
   path to the resource open. This is the case a renewal watchdog cannot save, and it is the
   realistic production shape.
 - **Assert at the resource**, not on the lock client's behaviour: the bug being hunted is a
   second accepted write, and the lock client cannot see it.
+- Exercise stale renewal/release, token history reset, lost claim/publish responses and duplicate
+  same-token effects. Unix `kill -STOP`/`kill -CONT <pid>` sketches apply only to controlled test
+  processes; use a supported pause mechanism on other platforms.
+
+Sources: [ZooKeeper sequence and session lifecycle](https://zookeeper.apache.org/doc/r3.7.2/zookeeperProgrammers.html)
+and [PostgreSQL transaction/advisory lock scope](https://www.postgresql.org/docs/18/explicit-locking.html).

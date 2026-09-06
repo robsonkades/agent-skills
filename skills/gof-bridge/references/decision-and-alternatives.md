@@ -19,8 +19,9 @@ Three questions decide it:
 3. **Will both keep growing?** If one axis is closed and small, a sealed set with an exhaustive
    `switch` may beat a second hierarchy.
 
-Only "yes, yes, yes" justifies Bridge. Two of three usually justifies composition without the
-second hierarchy, which is the same code with a less imposing name.
+These are evidence prompts, not mandatory counts. A concrete public boundary can justify one
+current provider, a closed abstraction set can vary independently, and sparse legal combinations
+can be encoded explicitly. Compare simpler composition rather than inventing future variants.
 
 ## Bridge against its neighbours
 
@@ -38,17 +39,19 @@ has variants of its own. `Notification` with `Alert`, `Digest` and `Receipt` sub
 delivered over any `Channel`, is a bridge. One `Notification` class holding a `Channel` is
 Strategy — and that is fine; it does not need a grander name.
 
-The second commonest is Bridge/Adapter, and the discriminator is authorship and timing. Bridge is
-planned; Adapter is retrofitted. A bridge whose implementors are all adapters over foreign
-libraries is a normal and healthy combination — JDBC is precisely that.
+Bridge/Adapter differ in intent, not authorship or timing. Bridge separates evolving roles;
+Adapter translates an existing interface. Introducing a bridge while refactoring existing code
+and implementing its backend ports with adapters is a normal combination.
 
 ## When the matrix has holes
 
-Some combinations are meaningless: a `StreamingReport` cannot be delivered over `SmsChannel`; an
-`EncryptedStore` cannot use a backend with no random access.
+Some combinations are meaningless under a particular contract: a report stream cannot fit a
+single SMS payload, or an encrypted random-update store may require capabilities absent from an
+append-only backend. Encryption alone does not require random access; name the actual operation.
 
-Do not solve this with a runtime check inside the abstraction — that makes an illegal object
-constructible, and the failure appears far from the wiring that caused it. Two better options:
+Reject static illegal pairings at construction where possible. When legality depends on each
+message or current configuration, validate before the side effect and keep authoritative validation
+in the backend as needed; an earlier capability snapshot may be stale. Static options include:
 
 ```java
 // 1. Enumerate the legal pairs at the composition root
@@ -106,7 +109,7 @@ Once this appears, adding a backend means editing the abstraction, which is the 
 bridge was paying indirection to avoid. The fix is one of:
 
 - Add the concept to the interface, if every backend can meaningfully answer it
-  (`Backend.durability(Durability)`, with a documented no-op).
+  (`Backend.durability(Durability)`, only if the promised durability can actually be met).
 - Move the decision to construction: the caller who knows it is S3 configures it when wiring.
 - Accept that this abstraction has one backend after all, and delete the interface.
 

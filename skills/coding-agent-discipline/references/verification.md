@@ -2,37 +2,46 @@
 
 ## Claim to evidence
 
-| Claim you want to make     | Minimum evidence                                                        |
-| -------------------------- | ----------------------------------------------------------------------- |
-| "It compiles"              | The build command ran and reported success                              |
-| "Tests pass"               | The suite ran; you read the counts; the count of executed tests is > 0  |
-| "This test covers the bug" | You saw it **fail** before the fix and pass after                       |
-| "The bug is fixed"         | The reproduction that failed now succeeds, by the reported symptom      |
-| "This is faster"           | A measurement with a distribution, not one run (jmh-microbenchmarks)    |
-| "Nothing else uses this"   | A search you ran, whose scope you state — including non-code references |
-| "The API behaves this way" | The signature in the pinned version, or a run                           |
-| "This is the cause"        | It explains the symptom, the timing and the distribution (debugging)    |
-| "The change is complete"   | Every part of the request is done, or the exceptions are named          |
+| Claim you want to make     | Minimum evidence                                                                                                              |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| "It compiles"              | The relevant compile task succeeded for the final inputs, or a valid cache result covers them                                 |
+| "Tests pass"               | The named relevant suite executed for the final state; failures, executed counts and skipped coverage were inspected          |
+| "This test covers the bug" | You saw it **fail** before the fix and pass after                                                                             |
+| "The bug is fixed"         | The reproduction that failed now succeeds, by the reported symptom                                                            |
+| "This is faster"           | A measurement with a distribution, not one run (jmh-microbenchmarks)                                                          |
+| "Nothing else uses this"   | A search you ran, whose scope you state — including non-code references                                                       |
+| "The API behaves this way" | Version-matched contract/source or a focused run for the claimed behavior; signature alone establishes availability/types     |
+| "This is the cause"        | Evidence discriminates it from plausible alternatives, ideally a controlled reproduction/intervention; otherwise a hypothesis |
+| "The change is complete"   | Every required part and required verification is finished; remaining required work means a partial or blocked result          |
 
-The pattern: an observation, with the command that produced it. If you cannot name the command,
-the claim is an inference and must be labelled as one.
+State the scope and source of evidence: command, inspected artifact or versioned reference.
+A documented contract is not an observed application outcome. Bind test/build evidence to
+the relevant revision, module, configuration and environment; checks before later edits do
+not establish the final state. Re-run affected checks when subsequent changes invalidate them.
 
 ## Traps that produce a false green
 
 - **Exit code 0 with zero tests.** A misconfigured filter, a wrong path, a module that did not
   build — the runner exits successfully having run nothing. Always read the count.
-- **Skipped tests.** `@Disabled`, an unmet assumption, a missing container runtime. "12 passed,
-  40 skipped" is not a passing suite.
-- **A cached build.** Nothing recompiled; the result describes the previous state. If a change
-  produced no rebuild, that is itself suspicious.
-- **A test that cannot fail.** No assertion, an assertion on a stubbed value, a `verify` on a
-  mock the test itself configured. Green proves it ran (java-test-doubles).
+- **Skipped tests.** `@Disabled`, an unmet assumption, a missing container runtime. Report
+  "12 passed, 40 skipped" and identify whether required coverage was skipped; a successful
+  runner status does not establish the skipped behavior.
+- **Unverified cache provenance.** Valid incremental/cache reuse can cover current inputs.
+  Inspect task outcomes and whether sources, generated files, toolchain and configuration
+  are tracked inputs. Missing inputs or wrong outputs justify a targeted uncached rerun;
+  `FROM-CACHE` alone does not prove staleness, nor does a cache hit prove correct setup.
+- **A test insensitive to the defect.** Assertions only on fixture/stub values, or mock
+  verification unrelated to the changed path. Identify what incorrect behavior would make
+  it fail; absence of an explicit assertion alone is not proof of insensitivity (a test can
+  deliberately check that an operation completes without throwing).
 - **The wrong module.** The suite ran, in a different package from the one you changed.
 - **Compilation without execution.** Type-checking proves shape, not behaviour, and it proves
   nothing at all about configuration, wiring or SQL.
 
-The single strongest defence is having watched the test fail first. A test observed red then
-green cannot be any of the above (tdd).
+Watching a relevant test fail for the reported defect and then pass after the fix is strong
+evidence, not immunity: unrelated environment changes, retries or flakiness can also produce
+red then green. Check failure cause, exercised path and unchanged test conditions. Do not
+claim regression sensitivity when the pre-fix failure was not observed.
 
 ## Reporting a partial verification
 
@@ -69,10 +78,11 @@ mentioning nothing.
 - Add a broad `catch` that swallows the failure.
 - Loosen a matcher (`isEqualTo` → `isNotNull`) to get past it.
 
-Each of these turns a signal into silence, and each is invisible in a summary. If a test is
-genuinely wrong — it encodes an old requirement, or it asserts an implementation detail that
-legitimately changed — say that explicitly, show the assertion, and let the user decide. That
-is a real and common case; it just is not yours to decide silently.
+These are prohibited as shortcuts to green. If a test encodes an obsolete requirement or an
+implementation detail legitimately changed by the authorized task, identify the old
+assertion and controlling requirement, then repair the test and retain meaningful boundary
+and failure coverage. Report that adjustment; do not require fresh approval for an already
+authorized contract change. Ask when evidence does not settle the expected behavior.
 
 ## Confidence vocabulary
 
@@ -96,6 +106,14 @@ and mean inference, which is precisely the ambiguity that destroys trust.
 - [ ] I read the test counts, not just the exit code
 - [ ] I said what I could not run, and why
 - [ ] No test was weakened, skipped or deleted to get to green
-- [ ] Everything in the diff was asked for, or is explained
-- [ ] Every part of the request is done, or the exceptions are named
+- [ ] My edits are requested or necessary; unrelated pre-existing work is preserved
+- [ ] Required work is finished, or the result is explicitly partial/blocked with named gaps
 - [ ] Assumptions I made are stated where the user can contradict them
+
+## Sources for tool interpretation
+
+- [Gradle build cache](https://docs.gradle.org/current/userguide/build_cache.html): task
+  input/output caching and `FROM-CACHE`; check the project's Gradle version and task setup.
+- [Node test runner](https://nodejs.org/api/test.html): filtering, skipping and reporting;
+  use the installed runner's output and documentation rather than assuming other runners
+  share its discovery or exit behavior.
